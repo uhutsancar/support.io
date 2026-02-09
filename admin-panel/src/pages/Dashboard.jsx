@@ -36,14 +36,14 @@ const Dashboard = () => {
           const conversationsResponse = await conversationsAPI.getAll(site._id);
           totalConversations += conversationsResponse.data.conversations?.length || 0;
         } catch (error) {
-          console.log('Conversations fetch error for site:', site._id);
+          // Site conversation fetch failed
         }
         
         try {
           const faqsResponse = await faqsAPI.getAll(site._id);
           totalFaqs += faqsResponse.data.faqs?.length || 0;
         } catch (error) {
-          console.log('FAQs fetch error for site:', site._id);
+          // Site FAQ fetch failed
         }
       }
       

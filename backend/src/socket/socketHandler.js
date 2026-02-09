@@ -15,7 +15,6 @@ class SocketHandler {
 
   setupWidgetHandlers() {
     this.widgetNamespace.on('connection', async (socket) => {
-      console.log('Widget connected:', socket.id);
 
       // Join conversation room
       socket.on('join-conversation', async (data) => {
@@ -147,14 +146,13 @@ class SocketHandler {
       });
 
       socket.on('disconnect', () => {
-        console.log('Widget disconnected:', socket.id);
+        // Widget disconnected
       });
     });
   }
 
   setupAdminHandlers() {
     this.adminNamespace.on('connection', async (socket) => {
-      console.log('Admin connected:', socket.id);
 
       // Join site rooms
       socket.on('join-site', async (data) => {
@@ -163,10 +161,8 @@ class SocketHandler {
           socket.join(`site:${siteId}`);
           socket.siteId = siteId;
           socket.userId = userId;
-
-          console.log(`Admin ${userId} joined site ${siteId}`);
         } catch (error) {
-          console.error('Join site error:', error);
+          console.error('Join site error:', error.message);
         }
       });
 
@@ -242,7 +238,7 @@ class SocketHandler {
       });
 
       socket.on('disconnect', () => {
-        console.log('Admin disconnected:', socket.id);
+        // Admin disconnected
       });
     });
   }

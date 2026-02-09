@@ -7,10 +7,6 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/database');
 const SocketHandler = require('./socket/socketHandler');
 
-console.log('🔧 DestekChat Backend başlatılıyor...');
-console.log('📁 Environment:', process.env.NODE_ENV || 'development');
-console.log('🔑 Port:', process.env.PORT || 3000);
-
 // Import routes
 const authRoutes = require('./routes/auth');
 const siteRoutes = require('./routes/sites');
@@ -28,22 +24,16 @@ const io = new Server(server, {
   }
 });
 
-console.log('✅ Express ve Socket.IO yapılandırıldı');
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-console.log('✅ Middleware\'ler yüklendi');
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/conversations', conversationRoutes);
-
-console.log('✅ API route\'ları yüklendi');
 
 // Health check
 app.get('/health', (req, res) => {
@@ -87,32 +77,22 @@ const PORT = process.env.PORT || 3000;
 
 connectDB().then(() => {
   server.listen(PORT, () => {
-    console.log('\n' + '='.repeat(50));
-    console.log('🎉 DestekChat Backend başarıyla başlatıldı!');
-    console.log('='.repeat(50));
-    console.log(`🚀 Server: http://localhost:${PORT}`);
-    console.log(`📡 WebSocket: ws://localhost:${PORT}`);
-    console.log(`🔗 Widget: http://localhost:${PORT}/widget.js`);
-    console.log(`❤️  Health: http://localhost:${PORT}/health`);
-    console.log('='.repeat(50) + '\n');
+    console.log(`✅ Server started on port ${PORT}`);
   });
 }).catch((error) => {
-  console.error('\n❌ Server başlatılamadı!');
-  console.error('🔴 Hata:', error.message);
+  console.error('❌ Server failed to start:', error.message);
   process.exit(1);
 });
 
 // Error handling
 process.on('unhandledRejection', (err) => {
-  console.error('\n⚠️  Beklenmeyen hata yakalandı!');
-  console.error('🔴 Hata:', err);
+  console.error('❌ Unhandled error:', err.message);
   process.exit(1);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n👋 SIGTERM sinyali alındı, server kapatılıyor...');
+  console.log('\n🛑 Server shutting down...');
   server.close(() => {
-    console.log('✅ Server başarıyla kapatıldı');
     process.exit(0);
   });
 });

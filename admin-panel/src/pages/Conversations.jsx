@@ -25,7 +25,9 @@ const Conversations = () => {
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('Connected to admin socket');
+      if (selectedSiteId && user) {
+        newSocket.emit('join-site', { siteId: selectedSiteId, userId: user._id });
+      }
     });
 
     newSocket.on('new-message', (data) => {

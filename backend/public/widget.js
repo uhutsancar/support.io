@@ -437,7 +437,7 @@
         this.socket = io(`${SOCKET_URL}/widget`);
 
         this.socket.on('connect', () => {
-          console.log('Connected to SupportChat');
+          this.joinConversation();
         });
 
         this.socket.on('conversation-joined', (data) => {
