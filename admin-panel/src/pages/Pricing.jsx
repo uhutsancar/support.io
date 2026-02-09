@@ -94,7 +94,7 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <Header />
       
       {/* Hero Section */}
@@ -103,7 +103,7 @@ const Pricing = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Basit ve Şeffaf Fiyatlandırma
           </h1>
-          <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
+          <p className="text-xl text-indigo-100 dark:text-indigo-200 max-w-3xl mx-auto">
             İşletmenizin büyüklüğüne uygun planı seçin. Gizli ücret yok, dilediğiniz zaman iptal edebilirsiniz.
           </p>
         </div>
@@ -119,7 +119,7 @@ const Pricing = () => {
                 className={`rounded-2xl p-8 ${
                   plan.popular 
                     ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-2xl scale-105' 
-                    : 'bg-white border-2 border-gray-200'
+                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700'
                 }`}
               >
                 {plan.popular && (
@@ -131,19 +131,19 @@ const Pricing = () => {
                   </div>
                 )}
 
-                <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
+                <h3 className={`text-2xl font-bold mb-2 ${plan.popular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                   {plan.name}
                 </h3>
-                <p className={`mb-6 ${plan.popular ? 'text-indigo-100' : 'text-gray-600'}`}>
+                <p className={`mb-6 ${plan.popular ? 'text-indigo-100' : 'text-gray-600 dark:text-gray-300'}`}>
                   {plan.description}
                 </p>
 
                 <div className="mb-6">
-                  <span className={`text-5xl font-bold ${plan.popular ? 'text-white' : 'text-gray-900'}`}>
+                  <span className={`text-5xl font-bold ${plan.popular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                     {plan.price}
                   </span>
                   {plan.period && (
-                    <span className={`text-lg ${plan.popular ? 'text-indigo-100' : 'text-gray-600'}`}>
+                    <span className={`text-lg ${plan.popular ? 'text-indigo-100' : 'text-gray-600 dark:text-gray-300'}`}>
                       {plan.period}
                     </span>
                   )}
@@ -164,9 +164,9 @@ const Pricing = () => {
                   {plan.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start">
                       <Check className={`w-5 h-5 mr-3 flex-shrink-0 ${
-                        plan.popular ? 'text-green-300' : 'text-green-500'
+                        plan.popular ? 'text-green-300' : 'text-green-500 dark:text-green-400'
                       }`} />
-                      <span className={plan.popular ? 'text-indigo-100' : 'text-gray-700'}>
+                      <span className={plan.popular ? 'text-indigo-100' : 'text-gray-700 dark:text-gray-300'}>
                         {feature}
                       </span>
                     </li>
@@ -179,13 +179,13 @@ const Pricing = () => {
       </section>
 
       {/* Feature Comparison */}
-      <section className="bg-gray-50 py-20">
+      <section className="bg-gray-50 dark:bg-gray-800 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Tüm Planlar Şunları İçerir
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               Temel özellikler tüm planlarda mevcuttur
             </p>
           </div>
@@ -201,9 +201,9 @@ const Pricing = () => {
               'Çalışma saatleri',
               'Otomatik mesajlar'
             ].map((feature, index) => (
-              <div key={index} className="flex items-center bg-white p-4 rounded-lg shadow-sm">
-                <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                <span className="text-gray-700">{feature}</span>
+              <div key={index} className="flex items-center bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm">
+                <Check className="w-5 h-5 text-green-500 dark:text-green-400 mr-3 flex-shrink-0" />
+                <span className="text-gray-700 dark:text-gray-200">{feature}</span>
               </div>
             ))}
           </div>
@@ -214,21 +214,21 @@ const Pricing = () => {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Sıkça Sorulan Sorular
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 dark:text-gray-300">
               Merak ettiğiniz her şey burada
             </p>
           </div>
 
           <div className="space-y-6">
             {faqs.map((faq, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   {faq.question}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {faq.answer}
                 </p>
               </div>
@@ -243,7 +243,7 @@ const Pricing = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Hemen Başlamaya Hazır mısınız?
           </h2>
-          <p className="text-xl text-indigo-100 mb-8">
+          <p className="text-xl text-indigo-100 dark:text-indigo-200 mb-8">
             14 gün boyunca tüm özellikleri ücretsiz deneyin. Kredi kartı gerekmez.
           </p>
           <Link
@@ -257,9 +257,9 @@ const Pricing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-12">
+      <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-600">
+          <div className="text-center text-gray-600 dark:text-gray-300">
             <Link to="/" className="text-indigo-600 hover:text-indigo-700 font-medium">
               Ana Sayfaya Dön
             </Link>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Pages
 import Home from './pages/Home';
@@ -13,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import Sites from './pages/Sites';
 import Conversations from './pages/Conversations';
 import FAQs from './pages/FAQs';
+import Settings from './pages/Settings';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -49,8 +51,9 @@ const PublicRoute = ({ children }) => {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
@@ -88,14 +91,15 @@ function App() {
             <Route path="sites" element={<Sites />} />
             <Route path="conversations" element={<Conversations />} />
             <Route path="faqs" element={<FAQs />} />
-            <Route path="settings" element={<div className="p-6">Ayarlar sayfası (yakında)</div>} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

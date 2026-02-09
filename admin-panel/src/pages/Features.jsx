@@ -154,16 +154,16 @@ const Features = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
+      <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             İhtiyacınız Olan Her Özellik
           </h1>
-          <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
+          <p className="text-xl text-indigo-100 dark:text-indigo-200 max-w-3xl mx-auto">
             DestekChat, modern müşteri destek sistemi için gereken tüm özellikleri barındırır. 
             Profesyonel bir deneyim sunmak için tasarlandı.
           </p>
@@ -177,21 +177,21 @@ const Features = () => {
             {mainFeatures.map((feature, index) => (
               <div 
                 key={index}
-                className="bg-white rounded-xl p-8 shadow-sm hover:shadow-xl transition border border-gray-200"
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm hover:shadow-xl transition border border-gray-200 dark:border-gray-700"
               >
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 w-14 h-14 rounded-xl flex items-center justify-center mb-6">
                   <feature.icon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
                   {feature.description}
                 </p>
                 <ul className="space-y-2">
                   {feature.benefits.map((benefit, idx) => (
-                    <li key={idx} className="flex items-start text-sm text-gray-700">
-                      <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mr-2 mt-1.5 flex-shrink-0"></div>
+                    <li key={idx} className="flex items-start text-sm text-gray-700 dark:text-gray-300">
+                      <div className="w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></div>
                       <span>{benefit}</span>
                     </li>
                   ))}
@@ -203,23 +203,23 @@ const Features = () => {
       </section>
 
       {/* Integration Section */}
-      <section className="bg-gray-50 py-20">
+      <section className="bg-gray-50 dark:bg-gray-800 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Kolay Entegrasyon
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Web sitenize dakikalar içinde entegre edin. Sadece birkaç satır kod yeterli.
             </p>
           </div>
 
-          <div className="bg-gray-900 rounded-xl p-8 max-w-3xl mx-auto">
+          <div className="bg-gray-900 dark:bg-gray-950 rounded-xl p-8 max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm font-mono">widget-integration.html</span>
-              <span className="text-green-400 text-xs">✓ Aktif</span>
+              <span className="text-gray-400 dark:text-gray-500 text-sm font-mono">widget-integration.html</span>
+              <span className="text-green-400 dark:text-green-500 text-xs">✓ Aktif</span>
             </div>
-            <pre className="text-green-400 font-mono text-sm overflow-x-auto">
+            <pre className="text-green-400 dark:text-green-500 font-mono text-sm overflow-x-auto">
 {`<!-- DestekChat Widget -->
 <script>
   window.destekChatConfig = {
@@ -232,23 +232,23 @@ const Features = () => {
           </div>
 
           <div className="text-center mt-8">
-            <p className="text-gray-600 mb-4">Bu kadar basit! 5 dakikada kurulum tamamlanır.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Bu kadar basit! 5 dakikada kurulum tamamlanır.</p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-indigo-600 text-white py-20">
+      <section className="bg-indigo-600 dark:bg-indigo-700 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             DestekChat'i Hemen Deneyin
           </h2>
-          <p className="text-xl text-indigo-100 mb-8">
+          <p className="text-xl text-indigo-100 dark:text-indigo-200 mb-8">
             Ücretsiz hesap oluşturun ve tüm özellikleri keşfedin. Kredi kartı gerekmez.
           </p>
           <Link
             to="/register"
-            className="inline-flex items-center bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 transition"
+            className="inline-flex items-center bg-white dark:bg-gray-100 text-indigo-600 dark:text-indigo-700 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 dark:hover:bg-gray-200 transition"
           >
             Ücretsiz Başlayın
             <ArrowRight className="ml-2 w-5 h-5" />
@@ -257,10 +257,10 @@ const Features = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-12">
+      <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-600">
-            <Link to="/" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <div className="text-center text-gray-600 dark:text-gray-300">
+            <Link to="/" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
               Ana Sayfaya Dön
             </Link>
           </div>
