@@ -19,17 +19,20 @@ const conversationRoutes = require('./routes/conversations');
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io setup with proper CORS
+// Socket.io setup with CORS for widget
 const io = new Server(server, {
   cors: {
-    origin: process.env.ADMIN_URL || 'http://localhost:3002',
+    origin: '*', // Widget her yerden bağlanabilir (demo için)
     methods: ['GET', 'POST'],
-    credentials: true
+    credentials: false
   }
 });
 
-// Security middleware
-app.use(helmet());
+// Security middleware - with exceptions for widget
+app.use(helmet({
+  contentSecurityPolicy: false, // Widget için CSP devre dışı
+  crossOriginResourcePolicy: false // Widget dosyası için
+}));
 
 // Data sanitization against NoSQL injection
 app.use(mongoSanitize());
@@ -37,19 +40,25 @@ app.use(mongoSanitize());
 // Rate limiting - prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  max: 20, // limit each IP to 20 requests per windowMs (development için daha esnek)
   message: 'Too many login attempts, please try again later.'
 });
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 500 // Development için daha yüksek limit
 });
 
-// CORS with specific origin
-app.use(cors({
-  origin: [process.env.ADMIN_URL, process.env.WIDGET_URL],
+// CORS - development için herkese açık
+app.use('/api', cors({
+  origin: '*',
   credentials: true
+}));
+
+// Widget files için herkese açık CORS
+app.use('/widget.js', cors({
+  origin: '*',
+  credentials: false
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -92,10 +101,15 @@ app.get('/', (req, res) => {
   });
 });
 
-// Widget static file
-app.get('/widget.js', (req, res) => {
-  res.sendFile(__dirname + '/../public/widget.js');
-});
+// Widget static file - public folder serve et
+app.use(express.static('public', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  }
+}));
 
 console.log('✅ Endpoint\'ler yapılandırıldı');
 

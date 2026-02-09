@@ -7,8 +7,8 @@
 (function() {
   'use strict';
 
-  const API_URL = 'http://localhost:3000';
-  const SOCKET_URL = 'http://localhost:3000';
+  const API_URL = 'http://localhost:5000';
+  const SOCKET_URL = 'http://localhost:5000';
 
   class SupportChatWidget {
     constructor(config) {

@@ -8,8 +8,7 @@ const { auth } = require('../middleware/auth');
 // Validation middleware
 const validateRegistration = [
   body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
-  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain uppercase, lowercase and number'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Name must be between 2-50 characters')
 ];
 
