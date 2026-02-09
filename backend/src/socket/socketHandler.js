@@ -78,6 +78,7 @@ class SocketHandler {
           this.adminNamespace.to(`site:${site._id}`).emit('conversation-update', {
             conversation
           });
+          console.log(`🔔 Conversation update sent to site: ${site._id}`);
 
         } catch (error) {
           console.error('Join conversation error:', error);
@@ -121,11 +122,19 @@ class SocketHandler {
             message
           });
 
-          // Send to admin
+          // Send to admins in conversation room
           this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message,
             conversation
           });
+
+          // Also send to all admins watching this site (for real-time updates)
+          this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
+            message,
+            conversation
+          });
+
+          console.log(`📨 Message sent to admins: conversation:${conversationId} & site:${conversation.siteId}`);
 
           // Try to auto-respond with FAQ
           await this.tryAutoResponse(conversation, content);
@@ -161,6 +170,7 @@ class SocketHandler {
           socket.join(`site:${siteId}`);
           socket.siteId = siteId;
           socket.userId = userId;
+          console.log(`👤 Admin ${userId} joined site room: ${siteId}`);
         } catch (error) {
           console.error('Join site error:', error.message);
         }
@@ -171,6 +181,7 @@ class SocketHandler {
         try {
           const { conversationId } = data;
           socket.join(`conversation:${conversationId}`);
+          console.log(`💬 Admin joined conversation room: ${conversationId}`);
           
           // Mark messages as read
           await Message.updateMany(
@@ -187,6 +198,10 @@ class SocketHandler {
       socket.on('send-message', async (data) => {
         try {
           const { conversationId, content, senderName, senderId } = data;
+          
+          // Use provided senderId, fallback to socket.userId, or 'support'
+          const actualSenderId = senderId || socket.userId || 'support';
+          const actualSenderName = senderName || 'Support';
 
           const conversation = await Conversation.findById(conversationId);
           if (!conversation) {
@@ -204,8 +219,8 @@ class SocketHandler {
           const message = new Message({
             conversationId,
             senderType: 'agent',
-            senderId: senderId,
-            senderName,
+            senderId: actualSenderId,
+            senderName: actualSenderName,
             content,
             isRead: true
           });
@@ -219,11 +234,19 @@ class SocketHandler {
             message
           });
 
-          // Send to all admins
+          // Send to admins in conversation room
           this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message,
             conversation
           });
+
+          // Also send to all admins watching this site
+          this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
+            message,
+            conversation
+          });
+
+          console.log(`📤 Agent message sent to: conversation:${conversationId} & site:${conversation.siteId}`);
 
         } catch (error) {
           console.error('Send message error:', error);
@@ -278,11 +301,19 @@ class SocketHandler {
           message: autoMessage
         });
 
-        // Send to admin
+        // Send to admins in conversation room
         this.adminNamespace.to(`conversation:${conversation._id}`).emit('new-message', {
           message: autoMessage,
           conversation
         });
+
+        // Also send to all admins watching this site
+        this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
+          message: autoMessage,
+          conversation
+        });
+
+        console.log(`🤖 Bot message sent to: conversation:${conversation._id} & site:${conversation.siteId}`);
       }
     } catch (error) {
       console.error('Auto-response error:', error);

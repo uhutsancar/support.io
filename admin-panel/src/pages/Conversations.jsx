@@ -17,50 +17,90 @@ const Conversations = () => {
   const messagesEndRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Setup socket connection
   useEffect(() => {
     fetchSites();
     
-    // Setup socket connection
-    const newSocket = io('http://localhost:3000/admin');
-    setSocket(newSocket);
-
+    const newSocket = io('http://localhost:5000/admin', {
+      transports: ['websocket', 'polling']
+    });
+    
     newSocket.on('connect', () => {
-      if (selectedSiteId && user) {
-        newSocket.emit('join-site', { siteId: selectedSiteId, userId: user._id });
-      }
+      console.log('✅ Admin socket connected!');
     });
 
-    newSocket.on('new-message', (data) => {
-      setMessages(prev => [...prev, data.message]);
+    newSocket.on('disconnect', () => {
+      console.log('❌ Admin socket disconnected');
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      console.log('🔌 Closing socket connection');
+      newSocket.close();
+    };
+  }, []);
+
+  // Listen to socket events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (data) => {
+      console.log('📨 New message received:', data);
+      
+      // Add message to current conversation if it's the selected one
+      if (selectedConversation && data.message.conversationId === selectedConversation._id) {
+        setMessages(prev => {
+          // Prevent duplicates
+          if (prev.some(msg => msg._id === data.message._id)) {
+            return prev;
+          }
+          return [...prev, data.message];
+        });
+      }
+
       // Update conversation in list
       setConversations(prev => 
         prev.map(conv => 
           conv._id === data.message.conversationId 
             ? { ...conv, lastMessage: data.message, lastMessageAt: new Date() }
             : conv
-        )
+        ).sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
       );
-    });
+    };
 
-    newSocket.on('conversation-update', (data) => {
-      fetchConversations(selectedSite?._id);
-    });
+    const handleConversationUpdate = (data) => {
+      console.log('🔄 Conversation update:', data);
+      if (selectedSite) {
+        fetchConversations(selectedSite._id);
+      }
+    };
 
-    return () => newSocket.close();
-  }, []);
+    socket.on('new-message', handleNewMessage);
+    socket.on('conversation-update', handleConversationUpdate);
 
+    return () => {
+      socket.off('new-message', handleNewMessage);
+      socket.off('conversation-update', handleConversationUpdate);
+    };
+  }, [socket, selectedConversation, selectedSite]);
+
+  // Join site room when site is selected
   useEffect(() => {
-    if (selectedSite && socket) {
+    if (selectedSite && socket && user) {
+      console.log('🏢 Joining site room:', selectedSite._id);
       socket.emit('join-site', {
         siteId: selectedSite._id,
-        userId: user.id
+        userId: user._id
       });
       fetchConversations(selectedSite._id);
     }
-  }, [selectedSite, socket]);
+  }, [selectedSite, socket, user]);
 
+  // Join conversation room when conversation is selected
   useEffect(() => {
     if (selectedConversation && socket) {
+      console.log('💬 Joining conversation room:', selectedConversation._id);
       socket.emit('join-conversation', {
         conversationId: selectedConversation._id
       });
@@ -106,11 +146,14 @@ const Conversations = () => {
     e.preventDefault();
     if (!newMessage.trim() || !socket || !selectedConversation) return;
 
+    console.log('📤 Sending message:', newMessage);
+    console.log('👤 User data:', user);
+
     socket.emit('send-message', {
       conversationId: selectedConversation._id,
       content: newMessage,
-      senderName: user.name,
-      senderId: user.id
+      senderName: user?.name || 'Support',
+      senderId: user?.id || user?._id || 'support'
     });
 
     setNewMessage('');
