@@ -11,6 +11,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Header from '../components/Header';
+import logo from '../public/support.io_logo.png';
 
 const Home = () => {
   const features = [
@@ -67,7 +68,7 @@ const Home = () => {
               Müşteri Hizmetlerinizi Bir Üst Seviyeye Taşıyın
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-indigo-100 dark:text-indigo-200">
-              DestekChat ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.
+              Support.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -127,7 +128,7 @@ const Home = () => {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                Neden DestekChat?
+                Neden Support.io?
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
                 Web sitenize entegre edebileceğiniz en modern canlı destek sistemi. 
@@ -188,7 +189,7 @@ const Home = () => {
             Müşterilerinizle Daha İyi İletişim Kurmaya Hazır mısınız?
           </h2>
           <p className="text-xl text-gray-300 dark:text-gray-400 mb-8">
-            Binlerce işletme DestekChat ile müşteri memnuniyetini artırıyor.
+            Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor.
           </p>
           <Link
             to="/register"
@@ -205,11 +206,8 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="bg-indigo-600 dark:bg-indigo-500 rounded-lg p-2">
-                  <MessageSquare className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">DestekChat</span>
+              <div className="flex items-center mb-4">
+                <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
               </div>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Modern müşteri destek sistemi
@@ -241,7 +239,7 @@ const Home = () => {
           </div>
           
           <div className="border-t border-gray-200 dark:border-gray-700 mt-12 pt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>&copy; 2026 DestekChat. Tüm hakları saklıdır.</p>
+            <p>&copy; 2026 Support.io. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>

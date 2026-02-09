@@ -12,6 +12,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import logo from '../public/support.io_logo.png';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
@@ -38,11 +39,8 @@ const DashboardLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-indigo-600 dark:bg-indigo-500 rounded-xl flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">DestekChat</span>
+            <div className="flex items-center">
+              <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500 dark:text-gray-400">
               <X className="w-6 h-6" />
@@ -104,9 +102,8 @@ const DashboardLayout = () => {
           <button onClick={() => setSidebarOpen(true)} className="text-gray-700 dark:text-gray-300">
             <Menu className="w-6 h-6" />
           </button>
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-            <span className="font-bold text-gray-900 dark:text-white">DestekChat</span>
+          <div className="flex items-center">
+            <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
           </div>
           <div className="w-6" /> {/* Spacer */}
         </header>

@@ -31,7 +31,7 @@ const About = () => {
 
   const team = [
     {
-      name: 'DestekChat Ekibi',
+      name: 'Support.io Ekibi',
       role: 'Geliştiriciler & Destek',
       description: 'Deneyimli yazılım geliştiricileri ve müşteri destek uzmanlarından oluşan ekibimiz, sizin için çalışıyor.'
     }
@@ -48,7 +48,7 @@ const About = () => {
             Müşteri İletişimini Yeniden Tanımlıyoruz
           </h1>
           <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
-            DestekChat olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan 
+            Support.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan 
             modern ve kullanıcı dostu bir platform sunuyoruz.
           </p>
         </div>
@@ -63,7 +63,7 @@ const About = () => {
             </h2>
             <div className="prose prose-lg mx-auto text-gray-600 dark:text-gray-300">
               <p className="mb-4">
-                DestekChat, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin 
+                Support.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin 
                 müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler 
                 ya çok karmaşık ya da çok pahalıydı.
               </p>
@@ -73,7 +73,7 @@ const About = () => {
                 uygun fiyatlı bir platform oluşturmaktı.
               </p>
               <p>
-                Bugün, binlerce işletme DestekChat ile müşterileriyle daha iyi iletişim kuruyor 
+                Bugün, binlerce işletme Support.io ile müşterileriyle daha iyi iletişim kuruyor 
                 ve müşteri memnuniyetini artırıyor. Ve biz hala geliştirmeye devam ediyoruz.
               </p>
             </div>
@@ -119,7 +119,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Rakamlarla DestekChat
+              Rakamlarla Support.io
             </h2>
           </div>
 
@@ -182,7 +182,7 @@ const About = () => {
               Teknolojimiz
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Modern web teknolojileri ile geliştirilen DestekChat, yüksek performans ve 
+              Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve 
               güvenilirlik sunar. React, Node.js, Socket.IO ve MongoDB gibi güçlü 
               teknolojiler üzerine kurulu.
             </p>
@@ -210,7 +210,7 @@ const About = () => {
               Bize Katılın
             </h2>
             <p className="text-xl text-indigo-100 mb-8">
-              Binlerce işletme DestekChat ile müşteri memnuniyetini artırıyor. 
+              Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. 
               Siz de aramıza katılın!
             </p>
             <Link

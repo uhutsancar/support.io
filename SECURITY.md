@@ -1,7 +1,7 @@
 # 🔒 Security Documentation
 
 ## Overview
-This document outlines the security measures implemented in the DestekChat application.
+This document outlines the security measures implemented in the Support.io application.
 
 ## 🛡️ Security Features
 

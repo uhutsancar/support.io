@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageSquare } from 'lucide-react';
+import logo from '../public/support.io.png';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -31,11 +32,11 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 flex items-center justify-center p-4 transition-colors duration-200">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8 transition-colors duration-200">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 dark:bg-indigo-500 rounded-2xl mb-4">
-            <MessageSquare className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src={logo} alt="Support.io" style={{ height: '7rem', width: 'auto', maxWidth: '100%' }} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hesap Oluşturun</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">DestekChat ile başlayın</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Support.io ile başlayın</p>
         </div>
 
         {error && (

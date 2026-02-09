@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import logo from '../public/support.io_logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -18,11 +19,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-indigo-600 dark:bg-indigo-500 rounded-lg p-2 transition-colors duration-200">
-              <MessageSquare className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-200">DestekChat</span>
+          <Link to="/" className="flex items-center">
+            <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
           </Link>
 
           {/* Desktop Navigation */}

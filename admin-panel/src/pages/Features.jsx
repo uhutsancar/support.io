@@ -164,7 +164,7 @@ const Features = () => {
             İhtiyacınız Olan Her Özellik
           </h1>
           <p className="text-xl text-indigo-100 dark:text-indigo-200 max-w-3xl mx-auto">
-            DestekChat, modern müşteri destek sistemi için gereken tüm özellikleri barındırır. 
+            Support.io, modern müşteri destek sistemi için gereken tüm özellikleri barındırır. 
             Profesyonel bir deneyim sunmak için tasarlandı.
           </p>
         </div>
@@ -220,9 +220,9 @@ const Features = () => {
               <span className="text-green-400 dark:text-green-500 text-xs">✓ Aktif</span>
             </div>
             <pre className="text-green-400 dark:text-green-500 font-mono text-sm overflow-x-auto">
-{`<!-- DestekChat Widget -->
+{`<!-- Support.io Widget -->
 <script>
-  window.destekChatConfig = {
+  window.supportioConfig = {
     siteId: "your-site-id",
     position: "bottom-right"
   };
@@ -241,7 +241,7 @@ const Features = () => {
       <section className="bg-indigo-600 dark:bg-indigo-700 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            DestekChat'i Hemen Deneyin
+            Support.io'i Hemen Deneyin
           </h2>
           <p className="text-xl text-indigo-100 dark:text-indigo-200 mb-8">
             Ücretsiz hesap oluşturun ve tüm özellikleri keşfedin. Kredi kartı gerekmez.
