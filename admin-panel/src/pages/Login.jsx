@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageSquare } from 'lucide-react';
@@ -28,7 +29,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 flex items-center justify-center p-4 transition-colors duration-200">
+    <>
+      <Helmet>
+        <title>Giriş Yap - Support.io Admin Paneli</title>
+        <meta name="description" content="Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, rapor ları görüntüleyin ve destek ekibinizi yönetin." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://support.io/login" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 flex items-center justify-center p-4 transition-colors duration-200">)
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8 transition-colors duration-200">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
@@ -90,7 +98,8 @@ const Login = () => {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

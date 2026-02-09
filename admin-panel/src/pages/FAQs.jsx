@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { sitesAPI, faqsAPI } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 
@@ -105,7 +106,13 @@ const FAQs = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <>
+      <Helmet>
+        <title>SSS - Support.io Admin</title>
+        <meta name="description" content="Sıkça sorulan soruları ve otomatik yanıtları yönetin. Yardım makalelerini düzenleyin." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SSS</h1>
@@ -318,7 +325,8 @@ const FAQs = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { sitesAPI, conversationsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -181,7 +182,13 @@ const Conversations = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-100px)]">
+    <>
+      <Helmet>
+        <title>Konuşmalar - Support.io Admin</title>
+        <meta name="description" content="Müşterilerinizle gerçek zamanlı sohbet edin. Canlı destek konuşmalarını yönetin ve anında yanıt verin." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="max-w-7xl mx-auto h-[calc(100vh-100px)]">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200">Konuşmalar</h1>
@@ -344,7 +351,8 @@ const Conversations = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

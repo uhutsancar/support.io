@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { MessageSquare } from 'lucide-react';
@@ -29,7 +30,17 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 flex items-center justify-center p-4 transition-colors duration-200">
+    <>
+      <Helmet>
+        <title>Hesap Oluştur - Support.io | Ücretsiz Başlayın</title>
+        <meta name="description" content="Support.io'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez." />
+        <meta name="keywords" content="support.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla" />
+        <link rel="canonical" href="https://support.io/register" />
+        <meta property="og:title" content="Hesap Oluştur - Support.io | Ücretsiz Başlayın" />
+        <meta property="og:description" content="Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez." />
+        <meta property="og:url" content="https://support.io/register" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 flex items-center justify-center p-4 transition-colors duration-200">)
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8 transition-colors duration-200">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
@@ -107,7 +118,8 @@ const Register = () => {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

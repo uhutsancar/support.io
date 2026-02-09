@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Check, ArrowRight, Zap } from 'lucide-react';
 import Header from '../components/Header';
@@ -94,8 +95,18 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <Header />
+    <>
+      <Helmet>
+        <title>Fiyatlandırma - Support.io | Basit ve Şeffaf Planlar</title>
+        <meta name="description" content="Support.io fiyatlandırma planlarını inceleyin. Ücretsiz plan ile başlayın veya işletmenize uygun profesyonel planları keşfedin. Gizli ücret yok, dilediğiniz zaman iptal edin." />
+        <meta name="keywords" content="support.io fiyat, canlı sohbet fiyatlandırma, ücretsiz müşteri desteği, destek sistemi fiyat" />
+        <link rel="canonical" href="https://support.io/fiyatlandirma" />
+        <meta property="og:title" content="Fiyatlandırma - Support.io | Basit ve Şeffaf Planlar" />
+        <meta property="og:description" content="Ücretsiz plan ile başlayın veya işlet menize uygun profesyonel planları keşfedin." />
+        <meta property="og:url" content="https://support.io/fiyatlandirma" />
+      </Helmet>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <Header />
       
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
@@ -266,7 +277,8 @@ const Pricing = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 };
 

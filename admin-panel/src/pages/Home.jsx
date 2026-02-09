@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { 
   MessageSquare, 
@@ -57,8 +58,19 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <Header />
+    <>
+      <Helmet>
+        <title>Support.io - Modern Müşteri Destek ve Canlı Sohbet Sistemi</title>
+        <meta name="description" content="Support.io ile müşterilerinizle gerçek zamanlı iletişim kurun. Modern canlı sohbet widget'ı, detaylı raporlama ve çoklu operatör desteği ile müşteri memnuniyetini artırın." />
+        <meta name="keywords" content="canlı sohbet, müşteri desteği, live chat, chat widget, destek sistemi, müşteri hizmetleri, customer support" />
+        <link rel="canonical" href="https://support.io/" />
+        <meta property="og:title" content="Support.io - Modern Müşteri Destek Sistemi" />
+        <meta property="og:description" content="Müşterilerinizle gerçek zamanlı iletişim kurun. Modern ve kullanıcı dostu canlı sohbet çözümü." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://support.io/" />
+      </Helmet>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <Header />
       
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-700 dark:to-pink-600 text-white">
@@ -243,7 +255,8 @@ const Home = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 };
 

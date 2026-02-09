@@ -1,3 +1,5 @@
+import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -5,7 +7,13 @@ const Settings = () => {
   const { theme, setLightTheme, setDarkTheme, isDark } = useTheme();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <>
+      <Helmet>
+        <title>Ayarlar - Support.io Admin</title>
+        <meta name="description" content="Support.io uygulama ayarlarınızı yönetin. Tema, bildirim ve diğer tercihleri düzenleyin." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Ayarlar</h1>
@@ -115,7 +123,8 @@ const Settings = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

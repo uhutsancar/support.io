@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { sitesAPI } from '../services/api';
 import { Plus, Globe, Copy, Check, Settings, Trash2 } from 'lucide-react';
 
@@ -56,7 +57,13 @@ const Sites = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <>
+      <Helmet>
+        <title>Siteler - Support.io Admin</title>
+        <meta name="description" content="Web sitelerinizi ve canlı sohbet widget'ınızı yönetin. Widget kodlarını alın ve site ayarlarını düzenleyin." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Siteler</h1>
@@ -208,7 +215,8 @@ const Sites = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

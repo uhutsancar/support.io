@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { MessageSquare, Target, Users, Heart, ArrowRight } from 'lucide-react';
 import Header from '../components/Header';
@@ -38,8 +39,18 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <Header />
+    <>
+      <Helmet>
+        <title>Hakkımızda - Support.io | Müşteri İletişimini Yeniden Tanımlıyoruz</title>
+        <meta name="description" content="Support.io hakkında daha fazla bilgi edinin. Misyonumuz, vizyonumuz ve değerlerimizi keşfedin. Müşteri hizmetlerinde yeni standartlar belirlemek için çalışıyoruz." />
+        <meta name="keywords" content="support.io hakkında, şirket bilgileri, misyon, vizyon, müşteri odaklılık" />
+        <link rel="canonical" href="https://support.io/hakkimizda" />
+        <meta property="og:title" content="Hakkımızda - Support.io" />
+        <meta property="og:description" content="Müşteri hizmetlerinde yeni standartlar belirlemek için çalışıyoruz." />
+        <meta property="og:url" content="https://support.io/hakkimizda" />
+      </Helmet>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <Header />
       
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
@@ -234,7 +245,8 @@ const About = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 };
 

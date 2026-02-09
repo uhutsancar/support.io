@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Globe, Users, TrendingUp } from 'lucide-react';
 import { sitesAPI, conversationsAPI, faqsAPI } from '../services/api';
@@ -94,10 +95,16 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <>
+      <Helmet>
+        <title>Gösterge Paneli - Support.io Admin</title>
+        <meta name="description" content="Support.io yönetim paneli ana sayfa. Müşteri konuşmaları, site istatistikleri ve performans ölçümlerini görüntüleyin." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gösterge Paneli</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">DestekChat yönetim panelinize hoş geldiniz</p>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Support.io yönetim panelinize hoş geldiniz</p>
       </div>
 
       {/* Stats Grid */}
@@ -186,7 +193,8 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
