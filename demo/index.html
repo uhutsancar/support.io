@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Website - SupportChat Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .cta {
+            background: #f7f7f7;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .cta button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .cta button:hover {
+            background: #5568d3;
+        }
+
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .notice h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .notice p {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .notice code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>🚀 SupportChat Demo</h1>
+        <p>Experience real-time customer support with our embeddable chat widget</p>
+    </div>
+
+    <div class="container">
+        <div class="notice">
+            <h3>📝 How to use this demo:</h3>
+            <p><strong>Step 1:</strong> Make sure your backend server is running on <code>http://localhost:3000</code></p>
+            <p><strong>Step 2:</strong> Create a site in the admin panel and copy your site key</p>
+            <p><strong>Step 3:</strong> Replace <code>YOUR-SITE-KEY-HERE</code> in this HTML file with your actual site key</p>
+            <p><strong>Step 4:</strong> Click the chat bubble in the bottom-right corner to start chatting!</p>
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 40px;">Why Choose SupportChat?</h2>
+        
+        <div class="features">
+            <div class="feature-card">
+                <h3>⚡ Real-time Chat</h3>
+                <p>Instant communication with your customers using WebSocket technology. No delays, no refreshes needed.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🤖 AI-Powered FAQs</h3>
+                <p>Automatically respond to common questions with smart FAQ matching. Save time, help more customers.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🎨 Fully Customizable</h3>
+                <p>Match your brand with customizable colors, positioning, and welcome messages.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>📱 Mobile Ready</h3>
+                <p>Perfect on any device - desktop, tablet, or mobile. Your customers chat where they are.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>👥 Team Management</h3>
+                <p>Assign conversations to agents, track performance, and manage your support team efficiently.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>📊 Analytics</h3>
+                <p>Track conversations, response times, and customer satisfaction to improve your support.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="cta">
+        <h2>Need Help?</h2>
+        <p style="margin-bottom: 30px; font-size: 18px;">Click the chat bubble to test our widget!</p>
+        <button onclick="alert('Click the chat bubble in the bottom-right corner!')">Try It Now</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 SupportChat. Built with ❤️ for amazing customer experiences.</p>
+    </footer>
+
+    <!-- SupportChat Widget Integration -->
+    <script>
+        // IMPORTANT: Replace 'YOUR-SITE-KEY-HERE' with your actual site key from the admin panel
+        window.SupportChatConfig = {
+            siteKey: 'YOUR-SITE-KEY-HERE',
+            position: 'bottom-right',
+            primaryColor: '#667eea'
+        };
+    </script>
+    <script src="http://localhost:3000/widget.js"></script>
+</body>
+</html>

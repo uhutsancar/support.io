@@ -1,0 +1,16 @@
+{
+  "name": "supportchat-workspace",
+  "version": "1.0.0",
+  "description": "SaaS Customer Support Chat System",
+  "private": true,
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../admin-panel && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:admin": "cd admin-panel && npm run dev",
+    "start:backend": "cd backend && npm start",
+    "build:admin": "cd admin-panel && npm run build"
+  },
+  "keywords": ["support", "chat", "saas", "customer-service"],
+  "author": "",
+  "license": "MIT"
+}
