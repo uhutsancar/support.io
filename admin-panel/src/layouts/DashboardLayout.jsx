@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -41,9 +41,9 @@ const DashboardLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center">
+            <Link to="/" className="flex items-center cursor-pointer">
               <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
-            </div>
+            </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500 dark:text-gray-400">
               <X className="w-6 h-6" />
             </button>

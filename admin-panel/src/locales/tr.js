@@ -4,6 +4,7 @@ export default {
     features: 'Özellikler',
     pricing: 'Fiyatlandırma',
     about: 'Hakkımızda',
+    docs: 'Dokümantasyon',
     panel: 'Panel',
     logout: 'Çıkış Yap',
     login: 'Giriş Yap',
@@ -727,5 +728,106 @@ export default {
     error: 'Hata!',
     warning: 'Uyarı!',
     info: 'Bilgi',
+  },
+
+  // Documentation Page
+  docs: {
+    meta: {
+      title: 'Dokümantasyon',
+      description: 'Support.io widget\'ını web sitenize nasıl entegre edeceğinizi öğrenin. Detaylı kurulum rehberi ve özellikler.',
+    },
+    hero: {
+      title: 'Dokümantasyon',
+      description: 'Web sitenize dakikalar içinde entegre edin. Sadece birkaç satır kod yeterli.',
+    },
+    nav: {
+      title: 'İçindekiler',
+      gettingStarted: 'Başlangıç',
+      installation: 'Kurulum',
+      configuration: 'Yapılandırma',
+      features: 'Özellikler',
+      benefits: 'Avantajlar',
+    },
+    gettingStarted: {
+      title: 'Başlangıç',
+      description: 'Support.io, web sitenize kolayca entegre edebileceğiniz modern bir canlı destek sistemidir. Müşterilerinizle gerçek zamanlı iletişim kurmanıza olanak tanır.',
+      whatIs: {
+        title: 'Support.io Nedir?',
+        description: 'Support.io, işletmelerin web sitelerinde ziyaretçileriyle anlık iletişim kurmasını sağlayan, kullanımı kolay ve güçlü bir canlı sohbet platformudur. Müşteri memnuniyetini artırır ve satışlarınızı yükseltir.',
+      },
+    },
+    installation: {
+      title: 'Kolay Entegrasyon',
+      description: 'Widget\'ı web sitenize entegre etmek oldukça basittir. Aşağıdaki adımları takip edin:',
+      step1: {
+        title: 'İlk web sitenizi ekleyin',
+        description: 'Siteler bölümüne giderek web sitenizi ekleyin ve benzersiz bir site ID\'si alın.',
+      },
+      step2: {
+        title: 'Widget\'i yükleyin',
+        description: 'Widget kodunu kopyalayıp web sitenizin HTML koduna yapıştırın.',
+      },
+      step3: {
+        title: 'Sohbet etmeye başlayın',
+        description: 'Aşağıdaki kodu web sitenizin </body> etiketinden hemen önce yapıştırın:',
+      },
+      copy: 'Kopyala',
+      copied: 'Kopyalandı',
+      ready: {
+        title: 'Hepsi bu kadar!',
+        description: 'Widget sitenizde aktif oldu. Artık müşterilerinizle gerçek zamanlı sohbet edebilirsiniz.',
+      },
+    },
+    configuration: {
+      title: 'Yapılandırma',
+      description: 'Widget\'ı ihtiyaçlarınıza göre özelleştirebilirsiniz:',
+      required: 'Gerekli',
+      optional: 'İsteğe Bağlı',
+      siteId: 'Panelden aldığınız benzersiz site kimliğiniz. Bu parametre zorunludur.',
+      position: 'Widget\'ın sayfada görüneceği konum. Varsayılan: bottom-right',
+    },
+    features: {
+      title: 'Özellikler',
+      realtime: {
+        title: 'Gerçek Zamanlı Mesajlaşma',
+        description: 'WebSocket teknolojisi ile anında iletilen mesajlar. Müşterilerinizle gecikme olmadan sohbet edin.',
+      },
+      easy: {
+        title: 'Kolay Kurulum',
+        description: 'Tek satır kod ile web sitenize entegre edin. Teknik bilgi gerektirmez, 5 dakikada hazır.',
+      },
+      customizable: {
+        title: 'Özelleştirilebilir Tasarım',
+        description: 'Widget\'ın konumunu, renklerini ve görünümünü markanıza uygun şekilde özelleştirin.',
+      },
+      analytics: {
+        title: 'Detaylı Analitik',
+        description: 'Konuşma geçmişi, operatör performansı ve müşteri istatistiklerini detaylı olarak takip edin.',
+      },
+    },
+    benefits: {
+      title: 'Neden Support.io?',
+      satisfaction: {
+        title: 'Müşteri Memnuniyetini Artırın',
+        description: 'Anında destek sunarak müşteri memnuniyetini %40\'a kadar artırın. Sorunları hızlıca çözün.',
+      },
+      conversion: {
+        title: 'Dönüşüm Oranlarını Yükseltin',
+        description: 'Ziyaretçilerin sorularına anında cevap vererek satın alma kararlarını kolaylaştırın ve dönüşüm oranlarınızı artırın.',
+      },
+      availability: {
+        title: '7/24 Hazır Olun',
+        description: 'Müşterileriniz istedikleri zaman size ulaşabilir. Otomatik yanıtlar ile çalışma saatleri dışında bile destek sağlayın.',
+      },
+      insights: {
+        title: 'Değerli İçgörüler Edinin',
+        description: 'Müşteri sorularını ve ihtiyaçlarını anlayın. Ürün ve hizmetlerinizi bu verilere göre iyileştirin.',
+      },
+    },
+    cta: {
+      title: 'Hemen Başlamaya Hazır mısınız?',
+      description: 'Ücretsiz hesap oluşturun ve 5 dakika içinde web sitenize canlı sohbet ekleyin.',
+      button: 'Ücretsiz Başlayın',
+    },
   },
 };

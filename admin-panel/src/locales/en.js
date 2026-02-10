@@ -4,6 +4,7 @@ export default {
     features: 'Features',
     pricing: 'Pricing',
     about: 'About',
+    docs: 'Documentation',
     panel: 'Dashboard',
     logout: 'Logout',
     login: 'Login',
@@ -727,5 +728,106 @@ export default {
     error: 'Error!',
     warning: 'Warning!',
     info: 'Info',
+  },
+
+  // Documentation Page
+  docs: {
+    meta: {
+      title: 'Documentation',
+      description: 'Learn how to integrate the Support.io widget into your website. Detailed installation guide and features.',
+    },
+    hero: {
+      title: 'Documentation',
+      description: 'Integrate to your website in minutes. Just a few lines of code are enough.',
+    },
+    nav: {
+      title: 'Table of Contents',
+      gettingStarted: 'Getting Started',
+      installation: 'Installation',
+      configuration: 'Configuration',
+      features: 'Features',
+      benefits: 'Benefits',
+    },
+    gettingStarted: {
+      title: 'Getting Started',
+      description: 'Support.io is a modern live support system that can be easily integrated into your website. It allows you to communicate with your customers in real-time.',
+      whatIs: {
+        title: 'What is Support.io?',
+        description: 'Support.io is an easy-to-use and powerful live chat platform that allows businesses to communicate instantly with visitors on their websites. It increases customer satisfaction and boosts your sales.',
+      },
+    },
+    installation: {
+      title: 'Easy Integration',
+      description: 'Integrating the widget into your website is very simple. Follow the steps below:',
+      step1: {
+        title: 'Add your first website',
+        description: 'Go to Sites section and add your website to get a unique site ID.',
+      },
+      step2: {
+        title: 'Install the widget',
+        description: 'Copy the widget code and paste it into your website\'s HTML code.',
+      },
+      step3: {
+        title: 'Start chatting',
+        description: 'Paste the code below just before the </body> tag of your website:',
+      },
+      copy: 'Copy',
+      copied: 'Copied',
+      ready: {
+        title: 'That\'s it!',
+        description: 'Widget is now active on your site. You can now chat with your customers in real-time.',
+      },
+    },
+    configuration: {
+      title: 'Configuration',
+      description: 'You can customize the widget according to your needs:',
+      required: 'Required',
+      optional: 'Optional',
+      siteId: 'Your unique site identifier from the panel. This parameter is required.',
+      position: 'Position where the widget will appear on the page. Default: bottom-right',
+    },
+    features: {
+      title: 'Features',
+      realtime: {
+        title: 'Real-Time Messaging',
+        description: 'Instantly delivered messages with WebSocket technology. Chat with your customers without delay.',
+      },
+      easy: {
+        title: 'Easy Setup',
+        description: 'Integrate to your website with a single line of code. No technical knowledge required, ready in 5 minutes.',
+      },
+      customizable: {
+        title: 'Customizable Design',
+        description: 'Customize the widget\'s position, colors, and appearance to match your brand.',
+      },
+      analytics: {
+        title: 'Detailed Analytics',
+        description: 'Track conversation history, operator performance, and customer statistics in detail.',
+      },
+    },
+    benefits: {
+      title: 'Why Support.io?',
+      satisfaction: {
+        title: 'Increase Customer Satisfaction',
+        description: 'Increase customer satisfaction by up to 40% by providing instant support. Solve problems quickly.',
+      },
+      conversion: {
+        title: 'Boost Conversion Rates',
+        description: 'Facilitate purchasing decisions by answering visitors\' questions instantly and increase your conversion rates.',
+      },
+      availability: {
+        title: 'Be Available 24/7',
+        description: 'Your customers can reach you whenever they want. Provide support even outside business hours with auto-responses.',
+      },
+      insights: {
+        title: 'Get Valuable Insights',
+        description: 'Understand customer questions and needs. Improve your products and services based on this data.',
+      },
+    },
+    cta: {
+      title: 'Ready to Get Started?',
+      description: 'Create a free account and add live chat to your website in 5 minutes.',
+      button: 'Get Started Free',
+    },
   },
 };

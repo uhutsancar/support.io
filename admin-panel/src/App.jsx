@@ -10,6 +10,7 @@ const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const About = lazy(() => import('./pages/About'));
+const Docs = lazy(() => import('./pages/Docs'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -71,6 +72,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/ozellikler" element={<Features />} />
           <Route path="/fiyatlandirma" element={<Pricing />} />
+          <Route path="/dokumantasyon" element={<Docs />} />
           <Route path="/hakkimizda" element={<About />} />
           
           <Route

@@ -35,6 +35,9 @@ const Header = () => {
             <Link to="/fiyatlandirma" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
               {t('header.pricing')}
             </Link>
+            <Link to="/dokumantasyon" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
+              {t('header.docs')}
+            </Link>
             <Link to="/hakkimizda" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
               {t('header.about')}
             </Link>
@@ -119,6 +122,13 @@ const Header = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 {t('header.pricing')}
+              </Link>
+              <Link 
+                to="/dokumantasyon" 
+                className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {t('header.docs')}
               </Link>
               <Link 
                 to="/hakkimizda" 
