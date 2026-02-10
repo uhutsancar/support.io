@@ -15,36 +15,38 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-200">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-200" role="banner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
+          <Link to="/" className="flex items-center" aria-label="Ana sayfaya git">
+            <img src={logo} alt="Support.io Logo" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/ozellikler" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200">
+          <nav className="hidden md:flex items-center space-x-8" aria-label="Ana navigasyon">
+            <Link to="/ozellikler" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
               Özellikler
             </Link>
-            <Link to="/fiyatlandirma" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200">
+            <Link to="/fiyatlandirma" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
               Fiyatlandırma
             </Link>
-            <Link to="/hakkimizda" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200">
+            <Link to="/hakkimizda" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
               Hakkımızda
             </Link>
             {isAuthenticated ? (
               <>
                 <Link 
                   to="/dashboard" 
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                  className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
+                  aria-label="Gösterge paneline git"
                 >
                   Panel
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                  aria-label="Hesaptan çıkış yap"
                 >
                   Çıkış Yap
                 </button>
@@ -53,13 +55,15 @@ const Header = () => {
               <>
                 <Link 
                   to="/login" 
-                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                  className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
+                  aria-label="Hesabınıza giriş yapın"
                 >
                   Giriş Yap
                 </Link>
                 <Link 
                   to="/register" 
                   className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors duration-200"
+                  aria-label="Ücretsiz hesap oluşturun"
                 >
                   Ücretsiz Başla
                 </Link>
@@ -71,36 +75,39 @@ const Header = () => {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+            aria-label={isMenuOpen ? "Menüyü kapat" : "Menüyü aç"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
           >
             {isMenuOpen ? (
-              <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              <X className="w-6 h-6 text-gray-700 dark:text-gray-300" aria-hidden="true" />
             ) : (
-              <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+              <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" aria-hidden="true" />
             )}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
-            <nav className="flex flex-col space-y-4">
+          <div id="mobile-menu" className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
+            <nav className="flex flex-col space-y-4" aria-label="Mobil navigasyon">
               <Link 
                 to="/ozellikler" 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Özellikler
               </Link>
               <Link 
                 to="/fiyatlandirma" 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Fiyatlandırma
               </Link>
               <Link 
                 to="/hakkimizda" 
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Hakkımızda
@@ -109,7 +116,7 @@ const Header = () => {
                 <>
                   <Link 
                     to="/dashboard" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                    className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Panel
@@ -128,7 +135,7 @@ const Header = () => {
                 <>
                   <Link 
                     to="/login" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors duration-200"
+                    className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Giriş Yap
