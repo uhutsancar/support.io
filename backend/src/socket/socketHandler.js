@@ -103,13 +103,14 @@ class SocketHandler {
             return;
           }
 
-          // Create message
+          // Create message (visitor messages default to unread)
           const message = new Message({
             conversationId,
             senderType: 'visitor',
             senderId: conversation.visitorId,
             senderName: senderName || conversation.visitorName,
-            content
+            content,
+            isRead: false // Visitor messages start as unread for admin
           });
           await message.save();
 
@@ -134,7 +135,17 @@ class SocketHandler {
             conversation
           });
 
+          // Send notification to all connected admins
+          this.adminNamespace.emit('notification', {
+            type: 'new-message',
+            message: `New message from ${conversation.visitorName}`,
+            siteId: conversation.siteId,
+            conversationId: conversation._id,
+            timestamp: new Date()
+          });
+
           console.log(`📨 Message sent to admins: conversation:${conversationId} & site:${conversation.siteId}`);
+          console.log(`🔔 Notification sent to all admins`);
 
           // Try to auto-respond with FAQ
           await this.tryAutoResponse(conversation, content);

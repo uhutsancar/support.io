@@ -11,8 +11,11 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react';
+import { conversationsAPI } from '../services/api';
+import { io } from 'socket.io-client';
 import logo from '../public/support.io_logo.webp';
 
 const DashboardLayout = () => {
@@ -20,10 +23,53 @@ const DashboardLayout = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [socket, setSocket] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  // Socket connection and notification setup
+  useEffect(() => {
+    // Initial unread count fetch
+    fetchUnreadCount();
+
+    // Setup socket for real-time notifications
+    const newSocket = io('http://localhost:5000/admin', {
+      transports: ['websocket', 'polling']
+    });
+
+    newSocket.on('connect', () => {
+      console.log('✅ Dashboard layout socket connected!');
+    });
+
+    newSocket.on('notification', (notification) => {
+      console.log('🔔 Notification received:', notification);
+      setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10
+      fetchUnreadCount(); // Refresh unread count
+    });
+
+    newSocket.on('messages-read', () => {
+      fetchUnreadCount(); // Refresh unread count when messages marked as read
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await conversationsAPI.getUnreadCount();
+      setUnreadCount(response.data.totalUnreadCount || 0);
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
   };
 
   const navItems = [
@@ -57,7 +103,7 @@ const DashboardLayout = () => {
                 to={item.path}
                 end={item.path === '/dashboard'}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
+                  `flex items-center justify-between px-4 py-3 rounded-lg transition ${
                     isActive
                       ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -65,8 +111,16 @@ const DashboardLayout = () => {
                 }
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <div className="flex items-center space-x-3">
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                {/* Badge for conversations with unread messages */}
+                {item.path === '/dashboard/conversations' && unreadCount > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center animate-pulse">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>

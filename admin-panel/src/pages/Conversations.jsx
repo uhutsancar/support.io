@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { sitesAPI, conversationsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
-import { Send, Search, MessageCircle, User, Clock, CheckCheck } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2 } from 'lucide-react';
 
 const Conversations = () => {
   const { t } = useTranslation();
@@ -142,6 +142,30 @@ const Conversations = () => {
       setMessages(response.data.messages);
     } catch (error) {
       console.error('Failed to fetch messages:', error);
+    }
+  };
+
+  const deleteConversation = async (conversationId) => {
+    if (!window.confirm('Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    try {
+      await conversationsAPI.delete(selectedSite._id, conversationId);
+      
+      // Silinenen conversation'ı listeden kaldır
+      setConversations(prev => prev.filter(conv => conv._id !== conversationId));
+      
+      // Eğer silinen conversation seçili ise, seçimi kaldır
+      if (selectedConversation?._id === conversationId) {
+        setSelectedConversation(null);
+        setMessages([]);
+      }
+
+      console.log('✅ Conversation deleted successfully');
+    } catch (error) {
+      console.error('❌ Failed to delete conversation:', error);
+      alert('Konuşma silinirken hata oluştu: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -292,6 +316,13 @@ const Conversations = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
+                <button
+                  onClick={() => deleteConversation(selectedConversation._id)}
+                  className="p-1.5 sm:p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                  title="Konuşmayı Sil"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
                 <span className={`px-1.5 sm:px-2 lg:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-full whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}>
                   {selectedConversation.status}
                 </span>

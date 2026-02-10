@@ -64,6 +64,9 @@ app.use((req, res, next) => {
 // Data sanitization against NoSQL injection
 app.use(mongoSanitize());
 
+// Set socket.io instance for use in routes
+app.set('io', io);
+
 // Rate limiting - prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

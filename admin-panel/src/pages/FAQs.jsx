@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { sitesAPI, faqsAPI } from '../services/api';
+import { sitesAPI, faqsAPI, clearCache } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 
 const FAQs = () => {
@@ -60,16 +60,22 @@ const FAQs = () => {
       };
 
       if (editingFaq) {
-        await faqsAPI.update(editingFaq._id, data);
+        const response = await faqsAPI.update(editingFaq._id, data);
+        // Güncellenmiş FAQ'ı listede değiştir
+        setFaqs(faqs.map(faq => faq._id === editingFaq._id ? response.data.faq : faq));
       } else {
-        await faqsAPI.create(data);
+        const response = await faqsAPI.create(data);
+        // Yeni FAQ'ı direkt listeye ekle
+        setFaqs([...faqs, response.data.faq]);
       }
 
       setShowModal(false);
       resetForm();
-      fetchFAQs(selectedSite._id);
+      // Cache'i temizle
+      clearCache('/faqs');
     } catch (error) {
       console.error('Failed to save FAQ:', error);
+      alert('FAQ kaydedilemedi: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -85,14 +91,20 @@ const FAQs = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (faqId) => {
-    if (confirm(t('faqs.confirmDelete'))) {
-      try {
-        await faqsAPI.delete(faqId);
-        fetchFAQs(selectedSite._id);
-      } catch (error) {
-        console.error('Failed to delete FAQ:', error);
-      }
+  const handleDelete = async (faqId, faqQuestion) => {
+    if (!confirm(`"${faqQuestion}" sorusunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
+      return;
+    }
+
+    try {
+      await faqsAPI.delete(faqId);
+      // FAQ'ı listeden direkt kaldır
+      setFaqs(faqs.filter(faq => faq._id !== faqId));
+      // Cache'i temizle
+      clearCache('/faqs');
+    } catch (error) {
+      console.error('Failed to delete FAQ:', error);
+      alert('FAQ silinemedi: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -216,7 +228,7 @@ const FAQs = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(faq._id)}
+                          onClick={() => handleDelete(faq._id, faq.question)}
                           className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -246,7 +258,7 @@ const FAQs = () => {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(faq._id)}
+                      onClick={() => handleDelete(faq._id, faq.question)}
                       className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                     >
                       <Trash2 className="w-4 h-4" />

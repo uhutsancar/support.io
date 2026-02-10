@@ -799,6 +799,11 @@
         this.elements.window.classList.add('open');
         this.elements.bubble.style.display = 'none';
         
+        // Notify parent window that widget is opened
+        window.parent.postMessage({
+          type: 'widget-opened'
+        }, '*');
+        
         // Update status time
         const now = new Date();
         const timeString = now.toLocaleString('en-US', { 
@@ -967,20 +972,39 @@
       const script = document.createElement('script');
       script.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
       script.onload = () => {
+        console.log('🔌 Socket.io script loaded, connecting...');
         this.socket = io(`${SOCKET_URL}/widget`);
 
         this.socket.on('connect', () => {
+          console.log('✅ Widget socket connected!');
           this.joinConversation();
         });
 
+        this.socket.on('disconnect', () => {
+          console.log('❌ Widget socket disconnected');
+        });
+
         this.socket.on('conversation-joined', (data) => {
+          console.log('🎯 Conversation joined:', data.conversation._id);
           this.conversationId = data.conversation._id;
           this.renderMessages(data.messages);
         });
 
         this.socket.on('new-message', (data) => {
+          console.log('📨 Widget received new message:', data.message);
           this.addMessage(data.message);
           this.scrollToBottom();
+          
+          // Send notification to parent window if widget is closed
+          if (!this.isOpen) {
+            console.log('🔔 Sending notification to parent window');
+            window.parent.postMessage({
+              type: 'new-message',
+              message: data.message
+            }, '*');
+          } else {
+            console.log('📱 Widget is open, no notification needed');
+          }
         });
 
         this.socket.on('agent-typing', () => {
@@ -997,6 +1021,11 @@
 
     joinConversation() {
       if (!this.socket) return;
+
+      console.log('🏠 Joining conversation...', {
+        siteKey: this.config.siteKey,
+        visitorId: this.visitorId
+      });
 
       this.socket.emit('join-conversation', {
         siteKey: this.config.siteKey,
@@ -1083,12 +1112,27 @@
       div.textContent = text;
       return div.innerHTML;
     }
+
+    // Public method to open widget
+    openWidget() {
+      if (!this.isOpen) {
+        this.toggleChat();
+      }
+    }
   }
 
   // Initialize widget
   function initSupportIO() {
     if (window.SupportIOConfig) {
-      window.SupportIO = new SupportIOWidget(window.SupportIOConfig);
+      const widget = new SupportIOWidget(window.SupportIOConfig);
+      window.SupportIO = widget;
+      
+      // Global access for demo integration
+      window.SupportIOWidget = {
+        openWidget: function() {
+          widget.openWidget();
+        }
+      };
     } else {
       console.error('SupportIOConfig not found. Please configure the widget.');
     }

@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MessageSquare, Globe, Users, TrendingUp } from 'lucide-react';
-import { sitesAPI, conversationsAPI, faqsAPI } from '../services/api';
+import { MessageSquare, Globe, Users, TrendingUp, RefreshCw } from 'lucide-react';
+import { sitesAPI, conversationsAPI, faqsAPI, clearCache } from '../services/api';
+import { io } from 'socket.io-client';
 
 const Dashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
     totalConversations: 0,
     activeSites: 0,
@@ -16,14 +18,64 @@ const Dashboard = () => {
     responseRate: 0,
     totalFaqs: 0
   });
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Socket.io bağlantısını kur
+    const newSocket = io('http://localhost:5000/admin', {
+      transports: ['websocket', 'polling']
+    });
+    
+    newSocket.on('connect', () => {
+      console.log('✅ Dashboard socket connected!');
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('❌ Dashboard socket disconnected');
+    });
+
+    // İstatistik güncellemelerini dinle
+    newSocket.on('stats-update', (data) => {
+      console.log('📊 Stats update received:', data);
+      // İstatistikleri yeniden yükle
+      fetchDashboardData(true);
+    });
+
+    setSocket(newSocket);
+    
+    // Her 30 saniyede bir otomatik güncelle
+    const interval = setInterval(() => {
+      fetchDashboardData(true);
+    }, 30000);
+    
+    // Sayfa görünür hale geldiğinde güncelle
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchDashboardData(true);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      newSocket.close();
+    };
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+      
+      // Cache'i temizle
+      clearCache();
       
       // Sites verilerini çek
       const sitesResponse = await sitesAPI.getAll();
@@ -62,6 +114,7 @@ const Dashboard = () => {
       console.error('Dashboard verisi yüklenemedi:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -104,9 +157,19 @@ const Dashboard = () => {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">{t('dashboard.subtitle')}</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('dashboard.subtitle')}</p>
+        </div>
+        <button
+          onClick={() => fetchDashboardData()}
+          disabled={loading || refreshing}
+          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <span>{refreshing ? 'Güncelleniyor...' : 'Yenile'}</span>
+        </button>
       </div>
 
       {/* Stats Grid */}

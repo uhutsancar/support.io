@@ -109,6 +109,8 @@ export const conversationsAPI = {
   getOne: (siteId, conversationId) => api.get(`/conversations/${siteId}/${conversationId}`),
   assign: (conversationId, agentId) => api.put(`/conversations/${conversationId}/assign`, { agentId }),
   updateStatus: (conversationId, status) => api.put(`/conversations/${conversationId}/status`, { status }),
+  delete: (siteId, conversationId) => api.delete(`/conversations/${siteId}/${conversationId}`),
+  getUnreadCount: () => api.get('/conversations/unread-count'),
 };
 
 export default api;
