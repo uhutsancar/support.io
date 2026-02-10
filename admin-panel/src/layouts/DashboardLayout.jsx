@@ -12,7 +12,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import logo from '../public/support.io_logo.png';
+import logo from '../public/support.io_logo.webp';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();

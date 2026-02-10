@@ -4,6 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const mongoose = require('mongoose');
@@ -33,6 +34,31 @@ app.use(helmet({
   contentSecurityPolicy: false, // Widget için CSP devre dışı
   crossOriginResourcePolicy: false // Widget dosyası için
 }));
+
+// Compression middleware - gzip compression for responses
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6, // Compression level (0-9)
+}));
+
+// Cache control middleware
+app.use((req, res, next) => {
+  // Static files için cache
+  if (req.url.includes('/widget.js')) {
+    res.set('Cache-Control', 'public, max-age=3600'); // 1 saat
+  } else if (req.url.startsWith('/api')) {
+    // API responses için no-cache (her zaman fresh data)
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
 
 // Data sanitization against NoSQL injection
 app.use(mongoSanitize());

@@ -1,24 +1,31 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
-// Pages
-import Home from './pages/Home';
-import Features from './pages/Features';
-import Pricing from './pages/Pricing';
-import About from './pages/About';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Sites from './pages/Sites';
-import Conversations from './pages/Conversations';
-import FAQs from './pages/FAQs';
-import Settings from './pages/Settings';
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const Features = lazy(() => import('./pages/Features'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const About = lazy(() => import('./pages/About'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Sites = lazy(() => import('./pages/Sites'));
+const Conversations = lazy(() => import('./pages/Conversations'));
+const FAQs = lazy(() => import('./pages/FAQs'));
+const Settings = lazy(() => import('./pages/Settings'));
 
-// Layouts
-import DashboardLayout from './layouts/DashboardLayout';
+// Layouts - Lazy load
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+  </div>
+);
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -56,6 +63,7 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
+          <Suspense fallback={<LoadingSpinner />}>
           <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
@@ -99,6 +107,7 @@ function App() {
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </Suspense>
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

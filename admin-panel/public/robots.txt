@@ -1,17 +1,11 @@
 # robots.txt for Support.io
 User-agent: *
-
-# Allow public pages
 Allow: /
+
+# Public pages (explicitly allowed for SEO)
 Allow: /ozellikler
 Allow: /fiyatlandirma
 Allow: /hakkimizda
-
-# Disallow admin and authentication pages
-Disallow: /login
-Disallow: /register
-Disallow: /dashboard
-Disallow: /dashboard/*
 
 # Sitemap
 Sitemap: https://support.io/sitemap.xml

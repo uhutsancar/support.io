@@ -12,7 +12,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Header from '../components/Header';
-import logo from '../public/support.io_logo.png';
+import logo from '../public/support.io_logo.webp';
 
 const Home = () => {
   const features = [

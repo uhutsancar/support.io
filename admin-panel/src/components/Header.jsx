@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MessageSquare, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../public/support.io_logo.png';
+import logo from '../public/support.io_logo.webp';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
