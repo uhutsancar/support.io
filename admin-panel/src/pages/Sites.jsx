@@ -65,15 +65,15 @@ const Sites = () => {
         <meta name="description" content={t('sites.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <div className="max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('sites.title')}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('sites.title')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">{t('sites.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+          className="flex items-center justify-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition w-full sm:w-auto"
         >
           <Plus className="w-5 h-5" />
           <span>{t('sites.addSite')}</span>
@@ -94,9 +94,9 @@ const Sites = () => {
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {sites.map((site) => (
-            <div key={site._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition">
+            <div key={site._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
@@ -135,7 +135,7 @@ const Sites = () => {
                 <div>
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('sites.installCode')}</label>
                   <div className="relative">
-                    <pre className="text-xs bg-gray-50 dark:bg-gray-700 dark:text-white px-3 py-2 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto">
+                    <pre className="text-xs bg-gray-50 dark:bg-gray-700 dark:text-white px-2 sm:px-3 py-2 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto max-w-full whitespace-pre-wrap sm:whitespace-pre">
                       {getInstallCode(site.siteKey)}
                     </pre>
                     <button
@@ -151,12 +151,12 @@ const Sites = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 pt-2">
-                  <button className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                  <button className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-lg transition text-xs sm:text-sm">
                     <Settings className="w-4 h-4" />
-                    <span>{t('sites.settings')}</span>
+                    <span className="leading-tight text-center whitespace-normal">{t('sites.settings')}</span>
                   </button>
-                  <button className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">
+                  <button className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition flex items-center justify-center">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -169,7 +169,7 @@ const Sites = () => {
       {/* Create Site Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('sites.newSiteModal.title')}</h2>
             <form onSubmit={handleCreateSite} className="space-y-4">
               <div>

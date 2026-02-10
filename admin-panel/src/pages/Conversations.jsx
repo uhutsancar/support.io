@@ -190,76 +190,77 @@ const Conversations = () => {
         <meta name="description" content={t('conversations.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <div className="max-w-7xl mx-auto h-[calc(100vh-100px)]">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200">{t('conversations.title')}</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1 transition-colors duration-200">{t('conversations.subtitle')}</p>
-        </div>
+      <div className="w-full h-full max-w-full overflow-hidden">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 h-screen max-h-screen overflow-hidden flex flex-col py-2 sm:py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 lg:mb-4 flex-shrink-0">
+          <div className="min-w-0 flex-shrink-1">
+            <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200 truncate">{t('conversations.title')}</h1>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 transition-colors duration-200 truncate">{t('conversations.subtitle')}</p>
+          </div>
         
-        {/* Site selector */}
-        <select
-          value={selectedSite?._id || ''}
-          onChange={(e) => {
-            const site = sites.find(s => s._id === e.target.value);
-            setSelectedSite(site);
-            setSelectedConversation(null);
-          }}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200"
-        >
-          {sites.map(site => (
-            <option key={site._id} value={site._id}>{site.name}</option>
-          ))}
-        </select>
-      </div>
+          {/* Site selector */}
+          <select
+            value={selectedSite?._id || ''}
+            onChange={(e) => {
+              const site = sites.find(s => s._id === e.target.value);
+              setSelectedSite(site);
+              setSelectedConversation(null);
+            }}
+            className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200 w-full sm:w-auto flex-shrink-0"
+          >
+            {sites.map(site => (
+              <option key={site._id} value={site._id}>{site.name}</option>
+            ))}
+          </select>
+        </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex h-[calc(100%-100px)] transition-colors duration-200">
+      <div className="w-full max-w-full bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col lg:flex-row transition-colors duration-200 min-h-0">
         {/* Conversations List */}
-        <div className="w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-colors duration-200">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
+        <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 xl:w-96 lg:max-w-md border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 flex-col transition-colors duration-200 overflow-hidden`}>
+          <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 flex-shrink-0">
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
               <input
                 type="text"
                 placeholder={t('conversations.searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                className="w-full pl-8 sm:pl-9 pr-2 sm:pr-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
             {conversations.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
-                <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
-                <p>{t('conversations.noConversations')}</p>
+              <div className="p-4 sm:p-6 text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
+                <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
+                <p className="text-xs sm:text-sm">{t('conversations.noConversations')}</p>
               </div>
             ) : (
               conversations.map((conv) => (
                 <div
                   key={conv._id}
                   onClick={() => setSelectedConversation(conv)}
-                  className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 ${
+                  className={`p-2 sm:p-3 lg:p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 ${
                     selectedConversation?._id === conv._id ? 'bg-indigo-50 dark:bg-indigo-900' : ''
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center transition-colors duration-200">
-                        <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
+                  <div className="flex items-start justify-between mb-1.5 sm:mb-2 gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center transition-colors duration-200 flex-shrink-0">
+                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white transition-colors duration-200">{conv.visitorName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200">{conv.currentPage}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-xs sm:text-sm lg:text-base text-gray-900 dark:text-white transition-colors duration-200 truncate">{conv.visitorName}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">{conv.currentPage}</p>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${getStatusColor(conv.status)}`}>
+                    <span className={`px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full flex-shrink-0 whitespace-nowrap ${getStatusColor(conv.status)}`}>
                       {conv.status}
                     </span>
                   </div>
                   {conv.lastMessage && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate transition-colors duration-200">{conv.lastMessage.content}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 truncate transition-colors duration-200">{conv.lastMessage.content}</p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 transition-colors duration-200">
+                  <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 sm:mt-1 transition-colors duration-200">
                     {formatTime(conv.lastMessageAt)}
                   </p>
                 </div>
@@ -270,38 +271,46 @@ const Conversations = () => {
 
         {/* Chat Area */}
         {selectedConversation ? (
-          <div className="flex-1 flex flex-col">
+          <div className="flex flex-1 flex-col w-full min-w-0 overflow-hidden min-h-0">
             {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center transition-colors duration-200">
-                  <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
+            <div className="p-2 sm:p-2.5 lg:p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-700 transition-colors duration-200 flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 overflow-hidden">
+                <button
+                  onClick={() => setSelectedConversation(null)}
+                  className="lg:hidden p-1.5 sm:p-2 -ml-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex-shrink-0"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white transition-colors duration-200">{selectedConversation.visitorName}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">{selectedConversation.visitorEmail || 'E-posta yok'}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white transition-colors duration-200 truncate">{selectedConversation.visitorName}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">{selectedConversation.visitorEmail || 'E-posta yok'}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(selectedConversation.status)}`}>
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
+                <span className={`px-1.5 sm:px-2 lg:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-full whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}>
                   {selectedConversation.status}
                 </span>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-2.5 lg:p-3 xl:p-4 space-y-2 sm:space-y-2.5 lg:space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0">
               {messages.map((message) => (
                 <div
                   key={message._id}
                   className={`flex ${message.senderType === 'visitor' ? 'justify-start' : 'justify-end'}`}
                 >
-                  <div className={`max-w-md ${message.senderType === 'visitor' ? '' : 'order-2'}`}>
+                  <div className={`max-w-[90%] sm:max-w-[80%] md:max-w-md lg:max-w-lg ${message.senderType === 'visitor' ? '' : 'order-2'}`}>
                     {message.senderType !== 'visitor' && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 text-right transition-colors duration-200">{message.senderName}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-0.5 sm:mb-1 text-right transition-colors duration-200 truncate">{message.senderName}</p>
                     )}
                     <div
-                      className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+                      className={`px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 rounded-lg transition-colors duration-200 break-words overflow-wrap-anywhere ${
                         message.senderType === 'visitor'
                           ? 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white'
                           : message.senderType === 'bot'
@@ -309,7 +318,7 @@ const Conversations = () => {
                           : 'bg-indigo-600 text-white'
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-xs sm:text-sm">{message.content}</p>
                     </div>
                     <div className="flex items-center justify-end space-x-1 mt-1">
                       <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">{formatTime(message.createdAt)}</p>
@@ -324,36 +333,37 @@ const Conversations = () => {
             </div>
 
             {/* Message Input */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200">
-              <div className="flex space-x-3">
+            <form onSubmit={handleSendMessage} className="p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0">
+              <div className="flex gap-1.5 sm:gap-2">
                 <input
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder={t('conversations.messagePlaceholder')}
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                  className="flex-1 min-w-0 px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm lg:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
                 />
                 <button
                   type="submit"
                   disabled={!newMessage.trim()}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-1.5 flex-shrink-0"
                 >
-                  <Send className="w-5 h-5" />
-                  <span>{t('conversations.send')}</span>
+                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                  <span className="hidden sm:inline text-xs sm:text-sm lg:text-base">{t('conversations.send')}</span>
                 </button>
               </div>
             </form>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-            <div className="text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
-              <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
-              <p className="text-lg">{t('conversations.selectConversation')}</p>
+          <div className="hidden lg:flex flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0">
+            <div className="text-center text-gray-500 dark:text-gray-400 transition-colors duration-200 p-4">
+              <MessageCircle className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-3 sm:mb-4 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
+              <p className="text-base sm:text-lg">{t('conversations.selectConversation')}</p>
             </div>
           </div>
         )}
       </div>
       </div>
+    </div>
     </>
   );
 };
