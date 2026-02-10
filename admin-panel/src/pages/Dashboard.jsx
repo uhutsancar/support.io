@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare, Globe, Users, TrendingUp } from 'lucide-react';
 import { sitesAPI, conversationsAPI, faqsAPI } from '../services/api';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -65,28 +67,28 @@ const Dashboard = () => {
 
   const statsData = [
     {
-      label: 'Toplam Konuşma',
+      label: t('dashboard.totalConversations'),
       value: loading ? '...' : stats.totalConversations.toString(),
       icon: MessageSquare,
       color: 'bg-blue-500',
       change: '+0%'
     },
     {
-      label: 'Aktif Siteler',
+      label: t('dashboard.activeSites'),
       value: loading ? '...' : stats.activeSites.toString(),
       icon: Globe,
       color: 'bg-green-500',
       change: '+0%'
     },
     {
-      label: 'Toplam SSS',
+      label: t('dashboard.totalFaqs'),
       value: loading ? '...' : stats.totalFaqs.toString(),
       icon: Users,
       color: 'bg-purple-500',
       change: '+0%'
     },
     {
-      label: 'Yanıt Oranı',
+      label: t('dashboard.responseRate'),
       value: loading ? '...' : `${stats.responseRate}%`,
       icon: TrendingUp,
       color: 'bg-orange-500',
@@ -97,14 +99,14 @@ const Dashboard = () => {
   return (
     <>
       <Helmet>
-        <title>Gösterge Paneli - Support.io Admin</title>
-        <meta name="description" content="Support.io yönetim paneli ana sayfa. Müşteri konuşmaları, site istatistikleri ve performans ölçümlerini görüntüleyin." />
+        <title>{t('dashboard.title')} - Support.io Admin</title>
+        <meta name="description" content={t('dashboard.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gösterge Paneli</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Support.io yönetim panelinize hoş geldiniz</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Stats Grid */}
@@ -125,38 +127,38 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-colors duration-200">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Hızlı İşlemler</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button 
             onClick={() => navigate('/dashboard/sites')}
             className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
           >
             <Globe className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Yeni Site Ekle</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Yeni bir web sitesine sohbet widget'i ekleyin</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.newSite')}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.newSiteDescription')}</p>
           </button>
           <button 
             onClick={() => navigate('/dashboard/conversations')}
             className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
           >
             <MessageSquare className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Konuşmaları Görüntüle</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Müşterilerinizle sohbet edin</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.viewConversations')}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.viewConversationsDescription')}</p>
           </button>
           <button 
             onClick={() => navigate('/dashboard/faqs')}
             className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
           >
             <TrendingUp className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">SSS Oluştur</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Otomatik yanıtlar ekleyin</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.createFaq')}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.createFaqDescription')}</p>
           </button>
         </div>
       </div>
 
       {/* Getting Started */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 rounded-xl shadow-sm p-8 text-white transition-colors duration-200">
-        <h2 className="text-2xl font-bold mb-4">🚀 Başlangıç</h2>
+        <h2 className="text-2xl font-bold mb-4">🚀 {t('dashboard.gettingStarted')}</h2>
         <div className="space-y-3">
           <button
             onClick={() => navigate('/dashboard/sites')}
@@ -166,8 +168,8 @@ const Dashboard = () => {
               <span className="text-sm font-bold">1</span>
             </div>
             <div>
-              <h3 className="font-semibold">İlk web sitenizi ekleyin</h3>
-              <p className="text-indigo-100 dark:text-indigo-200 text-sm">Siteler bölümüne giderek web sitenizi ekleyin ve benzersiz bir site anahtarı alın</p>
+              <h3 className="font-semibold">{t('dashboard.step1')}</h3>
+              <p className="text-indigo-100 dark:text-indigo-200 text-sm">{t('dashboard.step1Description')}</p>
             </div>
           </button>
           <div className="flex items-start space-x-3 p-3">
@@ -175,8 +177,8 @@ const Dashboard = () => {
               <span className="text-sm font-bold">2</span>
             </div>
             <div>
-              <h3 className="font-semibold">Widget'i yükleyin</h3>
-              <p className="text-indigo-100 dark:text-indigo-200 text-sm">Widget kodunu kopyalayıp web sitenizin HTML koduna yapıştırın</p>
+              <h3 className="font-semibold">{t('dashboard.step2')}</h3>
+              <p className="text-indigo-100 dark:text-indigo-200 text-sm">{t('dashboard.step2Description')}</p>
             </div>
           </div>
           <button
@@ -187,8 +189,8 @@ const Dashboard = () => {
               <span className="text-sm font-bold">3</span>
             </div>
             <div>
-              <h3 className="font-semibold">Sohbet etmeye başlayın!</h3>
-              <p className="text-indigo-100 dark:text-indigo-200 text-sm">Müşterileriniz artık sohbet widget'ı üzerinden size ulaşabilir</p>
+              <h3 className="font-semibold">{t('dashboard.step3')}</h3>
+              <p className="text-indigo-100 dark:text-indigo-200 text-sm">{t('dashboard.step3Description')}</p>
             </div>
           </button>
         </div>

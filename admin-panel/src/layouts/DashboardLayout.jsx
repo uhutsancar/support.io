@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   MessageSquare, 
@@ -16,6 +17,7 @@ import logo from '../public/support.io_logo.webp';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -25,11 +27,11 @@ const DashboardLayout = () => {
   };
 
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Gösterge Paneli' },
-    { path: '/dashboard/sites', icon: Globe, label: 'Siteler' },
-    { path: '/dashboard/conversations', icon: MessageCircle, label: 'Konuşmalar' },
-    { path: '/dashboard/faqs', icon: HelpCircle, label: 'SSS' },
-    { path: '/dashboard/settings', icon: Settings, label: 'Ayarlar' },
+    { path: '/dashboard', icon: LayoutDashboard, label: t('sidebar.dashboard') },
+    { path: '/dashboard/sites', icon: Globe, label: t('sidebar.sites') },
+    { path: '/dashboard/conversations', icon: MessageCircle, label: t('sidebar.conversations') },
+    { path: '/dashboard/faqs', icon: HelpCircle, label: t('sidebar.faqs') },
+    { path: '/dashboard/settings', icon: Settings, label: t('sidebar.settings') },
   ];
 
   return (
@@ -89,7 +91,7 @@ const DashboardLayout = () => {
               className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
             >
               <LogOut className="w-4 h-4" />
-              <span>Çıkış Yap</span>
+              <span>{t('sidebar.logout')}</span>
             </button>
           </div>
         </div>

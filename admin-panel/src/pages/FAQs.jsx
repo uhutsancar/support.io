@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { sitesAPI, faqsAPI } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 
 const FAQs = () => {
+  const { t } = useTranslation();
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
   const [faqs, setFaqs] = useState([]);
@@ -84,7 +86,7 @@ const FAQs = () => {
   };
 
   const handleDelete = async (faqId) => {
-    if (confirm('Are you sure you want to delete this FAQ?')) {
+    if (confirm(t('faqs.confirmDelete'))) {
       try {
         await faqsAPI.delete(faqId);
         fetchFAQs(selectedSite._id);
@@ -108,15 +110,15 @@ const FAQs = () => {
   return (
     <>
       <Helmet>
-        <title>SSS - Support.io Admin</title>
-        <meta name="description" content="Sıkça sorulan soruları ve otomatik yanıtları yönetin. Yardım makalelerini düzenleyin." />
+        <title>{t('faqs.title')} - Support.io Admin</title>
+        <meta name="description" content={t('faqs.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SSS</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Otomatik yanıtları ve yardım makalelerini yönetin</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('faqs.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('faqs.subtitle')}</p>
         </div>
         <div className="flex items-center space-x-4">
           <select
@@ -139,7 +141,7 @@ const FAQs = () => {
             className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
           >
             <Plus className="w-5 h-5" />
-            <span>SSS Ekle</span>
+            <span>{t('faqs.addFaq')}</span>
           </button>
         </div>
       </div>
@@ -147,14 +149,14 @@ const FAQs = () => {
       {faqs.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
           <HelpCircle className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz SSS yok</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Otomatik yanıtlar sağlamak için ilk SSS'inizi oluşturun</p>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('faqs.noFaqs')}</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{t('faqs.noFaqsDescription')}</p>
           <button
             onClick={() => setShowModal(true)}
             className="inline-flex items-center space-x-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition"
           >
             <Plus className="w-5 h-5" />
-            <span>İlk SSS'inizi Oluşturun</span>
+            <span>{t('faqs.createFirstFaq')}</span>
           </button>
         </div>
       ) : (
@@ -162,20 +164,20 @@ const FAQs = () => {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase tracking-wider">
-                  Soru
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {t('faqs.question')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Kategori
+                  {t('faqs.category')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Sayfa
+                  {t('faqs.page')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Durum
+                  {t('faqs.status')}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  İşlemler
+                  {t('faqs.actions')}
                 </th>
               </tr>
             </thead>
@@ -194,13 +196,13 @@ const FAQs = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {faq.pageSpecific === '*' ? 'Tüm sayfalar' : faq.pageSpecific}
+                    {faq.pageSpecific === '*' ? t('faqs.allPages') : faq.pageSpecific}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       faq.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                     }`}>
-                      {faq.isActive ? 'Aktif' : 'Pasif'}
+                      {faq.isActive ? t('faqs.active') : t('faqs.inactive')}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -231,33 +233,33 @@ const FAQs = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              {editingFaq ? 'SSS Düzenle' : 'Yeni SSS Ekle'}
+              {editingFaq ? t('faqs.editFaq') : t('faqs.newFaq')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Soru *
+                  {t('faqs.questionLabel')}
                 </label>
                 <input
                   type="text"
                   value={formData.question}
                   onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                  placeholder="Şifremi nasıl sıfırlarım?"
+                  placeholder={t('faqs.questionPlaceholder')}
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Yanıt *
+                  {t('faqs.answerLabel')}
                 </label>
                 <textarea
                   value={formData.answer}
                   onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                   rows={4}
-                  placeholder="Şifrenizi sıfırlamak için..."
+                  placeholder={t('faqs.answerPlaceholder')}
                   required
                 />
               </div>
@@ -265,20 +267,20 @@ const FAQs = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Kategori
+                    {t('faqs.categoryLabel')}
                   </label>
                   <input
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                    placeholder="Genel"
+                    placeholder={t('faqs.categoryPlaceholder')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Sayfa (* tüm sayfalar için)
+                    {t('faqs.pageLabel')}
                   </label>
                   <input
                     type="text"
@@ -292,14 +294,14 @@ const FAQs = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Anahtar Kelimeler (virgülle ayrılmış)
+                  {t('faqs.keywordsLabel')}
                 </label>
                 <input
                   type="text"
                   value={formData.keywords}
                   onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                  placeholder="şifre, sıfırlama, giriş"
+                  placeholder={t('faqs.keywordsPlaceholder')}
                 />
               </div>
 
@@ -312,13 +314,13 @@ const FAQs = () => {
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
-                  İptal
+                  {t('faqs.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition"
                 >
-                  {editingFaq ? 'SSS Güncelle' : 'SSS Oluştur'}
+                  {editingFaq ? t('faqs.update') : t('faqs.create')}
                 </button>
               </div>
             </form>

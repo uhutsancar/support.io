@@ -1,6 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   MessageSquare, 
   Zap, 
@@ -19,150 +20,24 @@ import {
 import Header from '../components/Header';
 
 const Features = () => {
-  const mainFeatures = [
-    {
-      icon: MessageSquare,
-      title: 'Gerçek Zamanlı Canlı Sohbet',
-      description: 'Müşterilerinizle anlık olarak iletişime geçin. WebSocket teknolojisi sayesinde mesajlar anında iletilir.',
-      benefits: [
-        'Anlık mesajlaşma',
-        'Yazıyor bildirimi',
-        'Okundu işareti',
-        'Dosya paylaşımı'
-      ]
-    },
-    {
-      icon: Users,
-      title: 'Çoklu Operatör Desteği',
-      description: 'Tüm ekibiniz aynı platform üzerinden çalışabilir. Konuşmaları paylaşın ve müşteri memnuniyetini artırın.',
-      benefits: [
-        'Sınırsız operatör',
-        'Rol yönetimi',
-        'Konuşma transferi',
-        'Ekip performansı takibi'
-      ]
-    },
-    {
-      icon: Globe,
-      title: 'Çoklu Site Yönetimi',
-      description: 'Birden fazla web sitesini tek bir panelden yönetin. Her site için ayrı ayarlar ve özelleştirmeler.',
-      benefits: [
-        'Sınırsız site',
-        'Site bazlı raporlama',
-        'Özel widget tasarımı',
-        'Alan adı kontrolü'
-      ]
-    },
-    {
-      icon: Sparkles,
-      title: 'Otomatik Yanıtlar & Botlar',
-      description: 'Sık sorulan soruları otomatik yanıtlayarak zamandan tasarruf edin. Akıllı bot sistemi.',
-      benefits: [
-        'Özelleştirilebilir bot',
-        'Hoş geldin mesajları',
-        'Çalışma saatleri',
-        'Otomatik yönlendirme'
-      ]
-    },
-    {
-      icon: BarChart,
-      title: 'Detaylı Analitik & Raporlar',
-      description: 'Müşteri etkileşimlerinizi detaylı olarak analiz edin. Performansınızı ölçün ve iyileştirin.',
-      benefits: [
-        'Konuşma istatistikleri',
-        'Yanıt süreleri',
-        'Operatör performansı',
-        'Ziyaretçi analitiği'
-      ]
-    },
-    {
-      icon: Bell,
-      title: 'Akıllı Bildirimler',
-      description: 'Yeni mesajları kaçırmayın. Masaüstü, e-posta ve mobil bildirimleri ile her zaman haberdar olun.',
-      benefits: [
-        'Masaüstü bildirimleri',
-        'E-posta bildirimleri',
-        'Sesli uyarılar',
-        'Özelleştirilebilir bildirimler'
-      ]
-    },
-    {
-      icon: Smartphone,
-      title: 'Mobil Uyumlu',
-      description: 'Her cihazda mükemmel çalışır. Müşterileriniz mobil, tablet veya masaüstünden rahatlıkla ulaşabilir.',
-      benefits: [
-        'Responsive tasarım',
-        'PWA desteği',
-        'Her cihazda hızlı',
-        'Dokunmatik optimize'
-      ]
-    },
-    {
-      icon: Settings,
-      title: 'Kolay Entegrasyon',
-      description: 'Web sitenize dakikalar içinde entegre edin. Tek satır kod ile canlı destek sistemini aktif edin.',
-      benefits: [
-        'Basit kurulum',
-        'Her platforma uyumlu',
-        'API desteği',
-        'Detaylı dokümantasyon'
-      ]
-    },
-    {
-      icon: FileText,
-      title: 'Sohbet Geçmişi',
-      description: 'Tüm konuşmaları kaydedin ve arşivleyin. Müşteri geçmişine kolayca erişin.',
-      benefits: [
-        'Sınırsız arşiv',
-        'Gelişmiş arama',
-        'Dışa aktarma',
-        'GDPR uyumlu'
-      ]
-    },
-    {
-      icon: Shield,
-      title: 'Güvenlik & Gizlilik',
-      description: 'Verileriniz SSL ile şifrelenir ve güvenle saklanır. GDPR ve veri koruma yasalarına tam uyum.',
-      benefits: [
-        'SSL şifreleme',
-        'GDPR uyumlu',
-        'Veri yedekleme',
-        'İki faktörlü doğrulama'
-      ]
-    },
-    {
-      icon: Zap,
-      title: 'Hızlı ve Performanslı',
-      description: 'Optimize edilmiş altyapı sayesinde yüksek performans. Gecikme yok, hızlı yanıt süreleri.',
-      benefits: [
-        'CDN desteği',
-        'Optimize kod',
-        'Hızlı yükleme',
-        'Yüksek erişilebilirlik'
-      ]
-    },
-    {
-      icon: Clock,
-      title: '7/24 Erişilebilirlik',
-      description: 'Sistem kesintisiz çalışır. Müşterileriniz her zaman size ulaşabilir.',
-      benefits: [
-        '%99.9 uptime',
-        'Otomatik yedekleme',
-        'Yük dengeleme',
-        'Hızlı destek'
-      ]
-    }
-  ];
+  const { t } = useTranslation();
+  const mainFeatures = (t('featuresPage.features', { returnObjects: true }) || []).map((feature, index) => {
+    const icons = [MessageSquare, Users, Globe, Sparkles, BarChart, Bell, Smartphone, Settings, FileText, Shield, Zap, Clock];
+    return {
+      ...feature,
+      icon: icons[index] || MessageSquare
+    };
+  });
 
   return (
     <>
       <Helmet>
-        <title>Özellikler - Support.io | Modern Müşteri Destek Sistemi</title>
-        <meta name="description" content="Support.io'nun güçlü özelliklerini keşfedin: Gerçek zamanlı canlı sohbet, çoklu operatör desteği, detaylı raporlama, mobil uyumluluk ve daha fazlası. Müşteri desteğinizi bir üst seviyeye taşıyın." />
+        <title>{t('features.title')} - Support.io | {t('features.subtitle')}</title>
+        <meta name="description" content={t('features.chat.description')} />
         <meta name="keywords" content="canlı sohbet özellikleri, müşteri destek araçları, chat widget, operatör paneli, rapor ve analiz" />
         <link rel="canonical" href="https://support.io/ozellikler" />
-        <meta property="og:title" content="Özellikler - Support.io | Modern Müşteri Destek Sistemi" />
-        <meta property="og:description" content="Support.io'nun güçlü özelliklerini keşfedin. Gerçek zamanlı canlı sohbet, çoklu operatör ve daha fazlası." />
+        <meta property="og:title" content={`${t('features.title')} - Support.io`} />
+        <meta property="og:description" content={t('features.chat.description')} />
         <meta property="og:url" content="https://support.io/ozellikler" />
       </Helmet>
       <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -172,11 +47,10 @@ const Features = () => {
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            İhtiyacınız Olan Her Özellik
+            {t('featuresPage.subtitle')}
           </h1>
           <p className="text-xl text-indigo-100 dark:text-indigo-200 max-w-3xl mx-auto">
-            Support.io, modern müşteri destek sistemi için gereken tüm özellikleri barındırır. 
-            Profesyonel bir deneyim sunmak için tasarlandı.
+            {t('featuresPage.description')}
           </p>
         </div>
       </section>
@@ -200,7 +74,7 @@ const Features = () => {
                   {feature.description}
                 </p>
                 <ul className="space-y-2">
-                  {feature.benefits.map((benefit, idx) => (
+                  {feature.benefits && feature.benefits.map((benefit, idx) => (
                     <li key={idx} className="flex items-start text-sm text-gray-700 dark:text-gray-300">
                       <div className="w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full mr-2 mt-1.5 flex-shrink-0"></div>
                       <span>{benefit}</span>
@@ -218,10 +92,10 @@ const Features = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Kolay Entegrasyon
+              {t('featuresPage.integrationTitle')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Web sitenize dakikalar içinde entegre edin. Sadece birkaç satır kod yeterli.
+              {t('featuresPage.integrationDescription')}
             </p>
           </div>
 
@@ -243,7 +117,7 @@ const Features = () => {
           </div>
 
           <div className="text-center mt-8">
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Bu kadar basit! 5 dakikada kurulum tamamlanır.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">{t('featuresPage.integrationNote')}</p>
           </div>
         </div>
       </section>
@@ -261,7 +135,7 @@ const Features = () => {
             to="/register"
             className="inline-flex items-center bg-white dark:bg-gray-100 text-indigo-600 dark:text-indigo-700 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 dark:hover:bg-gray-200 transition"
           >
-            Ücretsiz Başlayın
+            {t('featuresPage.cta')}
             <ArrowRight className="ml-2 w-5 h-5" />
           </Link>
         </div>
@@ -272,7 +146,7 @@ const Features = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 dark:text-gray-300">
             <Link to="/" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
-              Ana Sayfaya Dön
+              {t('featuresPage.backToHome')}
             </Link>
           </div>
         </div>

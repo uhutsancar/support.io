@@ -1,12 +1,16 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { MessageSquare, Menu, X } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import logo from '../public/support.io_logo.webp';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { isAuthenticated, logout } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -19,36 +23,47 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center" aria-label="Ana sayfaya git">
+          <Link to="/" className="flex items-center" aria-label={t('header.goToHome')}>
             <img src={logo} alt="Support.io Logo" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8" aria-label="Ana navigasyon">
+          <nav className="hidden md:flex items-center space-x-8" aria-label={t('header.mainNavigation')}>
             <Link to="/ozellikler" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
-              Özellikler
+              {t('header.features')}
             </Link>
             <Link to="/fiyatlandirma" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
-              Fiyatlandırma
+              {t('header.pricing')}
             </Link>
             <Link to="/hakkimizda" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
-              Hakkımızda
+              {t('header.about')}
             </Link>
+            
+            {/* Language Toggle */}
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
+              aria-label={t('header.switchLanguage')}
+            >
+              <Globe className="w-4 h-4" />
+              <span className="text-sm font-semibold">{language.toUpperCase()}</span>
+            </button>
+            
             {isAuthenticated ? (
               <>
                 <Link 
                   to="/dashboard" 
                   className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
-                  aria-label="Gösterge paneline git"
+                  aria-label={t('header.goToDashboard')}
                 >
-                  Panel
+                  {t('header.panel')}
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-                  aria-label="Hesaptan çıkış yap"
+                  aria-label={t('header.logoutAccount')}
                 >
-                  Çıkış Yap
+                  {t('header.logout')}
                 </button>
               </>
             ) : (
@@ -56,16 +71,16 @@ const Header = () => {
                 <Link 
                   to="/login" 
                   className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
-                  aria-label="Hesabınıza giriş yapın"
+                  aria-label={t('header.loginAccount')}
                 >
-                  Giriş Yap
+                  {t('header.login')}
                 </Link>
                 <Link 
                   to="/register" 
                   className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors duration-200"
-                  aria-label="Ücretsiz hesap oluşturun"
+                  aria-label={t('header.createAccount')}
                 >
-                  Ücretsiz Başla
+                  {t('header.register')}
                 </Link>
               </>
             )}
@@ -75,7 +90,7 @@ const Header = () => {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-            aria-label={isMenuOpen ? "Menüyü kapat" : "Menüyü aç"}
+            aria-label={isMenuOpen ? t('header.closeMenu') : t('header.openMenu')}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
           >
@@ -90,28 +105,41 @@ const Header = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div id="mobile-menu" className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
-            <nav className="flex flex-col space-y-4" aria-label="Mobil navigasyon">
+            <nav className="flex flex-col space-y-4" aria-label={t('header.mobileMenu')}>
               <Link 
                 to="/ozellikler" 
                 className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Özellikler
+                {t('header.features')}
               </Link>
               <Link 
                 to="/fiyatlandirma" 
                 className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Fiyatlandırma
+                {t('header.pricing')}
               </Link>
               <Link 
                 to="/hakkimizda" 
                 className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Hakkımızda
+                {t('header.about')}
               </Link>
+              
+              {/* Language Toggle Mobile */}
+              <button
+                onClick={() => {
+                  toggleLanguage();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200 text-left"
+              >
+                <Globe className="w-4 h-4" />
+                <span>{language === 'tr' ? 'Switch to English' : 'Türkçe\'ye Geç'}</span>
+              </button>
+              
               {isAuthenticated ? (
                 <>
                   <Link 
@@ -119,7 +147,7 @@ const Header = () => {
                     className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Panel
+                    {t('header.panel')}
                   </Link>
                   <button
                     onClick={() => {
@@ -128,7 +156,7 @@ const Header = () => {
                     }}
                     className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 text-left"
                   >
-                    Çıkış Yap
+                    {t('header.logout')}
                   </button>
                 </>
               ) : (
@@ -138,14 +166,14 @@ const Header = () => {
                     className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Giriş Yap
+                    {t('header.login')}
                   </Link>
                   <Link 
                     to="/register" 
                     className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors duration-200 text-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Ücretsiz Başla
+                    {t('header.register')}
                   </Link>
                 </>
               )}

@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { sitesAPI, conversationsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
 import { Send, Search, MessageCircle, User, Clock, CheckCheck } from 'lucide-react';
 
 const Conversations = () => {
+  const { t } = useTranslation();
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
   const [conversations, setConversations] = useState([]);
@@ -184,15 +186,15 @@ const Conversations = () => {
   return (
     <>
       <Helmet>
-        <title>Konuşmalar - Support.io Admin</title>
-        <meta name="description" content="Müşterilerinizle gerçek zamanlı sohbet edin. Canlı destek konuşmalarını yönetin ve anında yanıt verin." />
+        <title>{t('conversations.title')} - Support.io Admin</title>
+        <meta name="description" content={t('conversations.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto h-[calc(100vh-100px)]">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200">Konuşmalar</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1 transition-colors duration-200">Müşterilerinizle gerçek zamanlı sohbet edin</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200">{t('conversations.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1 transition-colors duration-200">{t('conversations.subtitle')}</p>
         </div>
         
         {/* Site selector */}
@@ -219,7 +221,7 @@ const Conversations = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
               <input
                 type="text"
-                placeholder="Konuşmalarda ara..."
+                placeholder={t('conversations.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
               />
             </div>
@@ -229,7 +231,7 @@ const Conversations = () => {
             {conversations.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
                 <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
-                <p>Henüz konuşma yok</p>
+                <p>{t('conversations.noConversations')}</p>
               </div>
             ) : (
               conversations.map((conv) => (
@@ -328,7 +330,7 @@ const Conversations = () => {
                   type="text"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Mesajınızı yazın..."
+                  placeholder={t('conversations.messagePlaceholder')}
                   className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
                 />
                 <button
@@ -337,7 +339,7 @@ const Conversations = () => {
                   className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                 >
                   <Send className="w-5 h-5" />
-                  <span>Gönder</span>
+                  <span>{t('conversations.send')}</span>
                 </button>
               </div>
             </form>
@@ -346,7 +348,7 @@ const Conversations = () => {
           <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
             <div className="text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
-              <p className="text-lg">Sohbet başlatmak için bir konuşma seçin</p>
+              <p className="text-lg">{t('conversations.selectConversation')}</p>
             </div>
           </div>
         )}

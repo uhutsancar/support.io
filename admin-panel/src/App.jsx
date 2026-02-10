@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
@@ -61,8 +62,9 @@ function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <BrowserRouter>
+        <LanguageProvider>
+          <AuthProvider>
+            <BrowserRouter>
           <Suspense fallback={<LoadingSpinner />}>
           <Routes>
           {/* Public routes */}
@@ -110,6 +112,7 @@ function App() {
         </Suspense>
         </BrowserRouter>
       </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
     </HelmetProvider>
   );

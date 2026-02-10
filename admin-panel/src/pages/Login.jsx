@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare } from 'lucide-react';
 import logo from '../public/support.io.webp';
 
 const Login = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,8 +33,8 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>Giriş Yap - Support.io Admin Paneli</title>
-        <meta name="description" content="Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, rapor ları görüntüleyin ve destek ekibinizi yönetin." />
+        <title>{t('login.metaTitle')}</title>
+        <meta name="description" content={t('login.metaDescription')} />
         <meta name="robots" content="noindex, nofollow" />
         <link rel="canonical" href="https://support.io/login" />
       </Helmet>
@@ -42,7 +44,7 @@ const Login = () => {
           <div className="inline-flex items-center justify-center mb-4">
             <img src={logo} alt="Support.io" style={{ height: '7rem', width: 'auto', maxWidth: '100%' }} />
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Yönetim panelinize giriş yapın</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('login.subtitle')}</p>
         </div>
 
         {error && (
@@ -54,28 +56,28 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              E-posta Adresi
+              {t('login.email')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-              placeholder="ornek@mail.com"
+              placeholder={t('login.emailPlaceholder')}
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Şifre
+              {t('login.password')}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-              placeholder="••••••••"
+              placeholder={t('login.passwordPlaceholder')}
               required
             />
           </div>
@@ -85,15 +87,15 @@ const Login = () => {
             disabled={loading}
             className="w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+            {loading ? t('common.loading') : t('login.loginButton')}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Hesabınız yok mu?{' '}
+            {t('login.noAccount')}{' '}
             <Link to="/register" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">
-              Kayıt Olun
+              {t('login.register')}
             </Link>
           </p>
         </div>

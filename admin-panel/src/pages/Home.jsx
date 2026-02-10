@@ -1,6 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   MessageSquare, 
   Zap, 
@@ -15,46 +16,48 @@ import Header from '../components/Header';
 import logo from '../public/support.io_logo.webp';
 
 const Home = () => {
+  const { t } = useTranslation();
+  
   const features = [
     {
       icon: MessageSquare,
-      title: 'Canlı Sohbet',
-      description: 'Müşterilerinizle anlık olarak iletişime geçin. Hızlı ve etkili destek sağlayın.'
+      title: t('home.features.realtime.title'),
+      description: t('home.features.realtime.description')
     },
     {
       icon: Zap,
-      title: 'Hızlı Yanıt',
-      description: 'Otomatik yanıtlar ve hazır şablonlarla müşteri sorularını anında cevaplayın.'
+      title: t('home.features.ai.title'),
+      description: t('home.features.ai.description')
     },
     {
       icon: Users,
-      title: 'Çoklu Operatör',
-      description: 'Ekip arkadaşlarınızla birlikte çalışın. Konuşmaları paylaşın ve verimli olun.'
+      title: t('home.features.multisite.title'),
+      description: t('home.features.multisite.description')
     },
     {
       icon: BarChart,
-      title: 'Detaylı Raporlar',
-      description: 'Müşteri etkileşimlerinizi analiz edin. Performansınızı sürekli iyileştirin.'
+      title: t('home.features.analytics.title'),
+      description: t('home.features.analytics.description')
     },
     {
       icon: Clock,
-      title: '7/24 Erişilebilir',
-      description: 'Müşterileriniz her zaman size ulaşabilir. Kaçırılan fırsat yok.'
+      title: t('home.features.secure.title'),
+      description: t('home.features.secure.description')
     },
     {
       icon: Shield,
-      title: 'Güvenli',
-      description: 'Verileriniz şifrelenir ve güvenle saklanır. GDPR uyumlu altyapı.'
+      title: t('home.features.customizable.title'),
+      description: t('home.features.customizable.description')
     }
   ];
 
   const benefits = [
-    'Kolay kurulum - 5 dakikada başlayın',
-    'Mobil uyumlu arayüz',
-    'Sınırsız konuşma',
-    'Özelleştirilebilir widget',
-    'E-posta bildirimleri',
-    'Sohbet geçmişi'
+    t('home.why.benefits.0'),
+    t('home.why.benefits.1'),
+    t('home.why.benefits.2'),
+    t('home.why.benefits.3'),
+    t('home.why.benefits.4'),
+    t('home.why.benefits.5')
   ];
 
   return (
@@ -78,10 +81,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Müşteri Hizmetlerinizi Bir Üst Seviyeye Taşıyın
+              {t('home.hero.title')} {t('home.hero.titleHighlight')}
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-indigo-100 dark:text-indigo-200">
-              Support.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.
+              {t('home.hero.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -89,7 +92,7 @@ const Home = () => {
                 className="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-gray-800 transition flex items-center justify-center"
                 aria-label="Ücretsiz hesap oluşturmak için kayıt olun"
               >
-                Ücretsiz Başlayın
+                {t('home.hero.cta')}
                 <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
               </Link>
               <Link
@@ -97,7 +100,7 @@ const Home = () => {
                 className="bg-indigo-600 bg-opacity-30 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-opacity-40 dark:bg-purple-600 dark:bg-opacity-40 dark:hover:bg-opacity-50 transition border-2 border-white border-opacity-30 dark:border-opacity-40"
                 aria-label="Ürün özelliklerini keşfedin"
               >
-                Özellikleri Keşfedin
+                {t('home.hero.demo')}
               </Link>
             </div>
           </div>
@@ -109,10 +112,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Güçlü Özellikler
+              {t('home.features.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Müşteri desteğinizi kolaylaştırmak için ihtiyacınız olan her şey
+              {t('home.features.subtitle')}
             </p>
           </div>
 
@@ -143,11 +146,10 @@ const Home = () => {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                Neden Support.io?
+                {t('home.why.title')}
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-                Web sitenize entegre edebileceğiniz en modern canlı destek sistemi. 
-                Müşterilerinizle gerçek zamanlı iletişim kurmanın en kolay yolu.
+                {t('home.why.description')}
               </p>
               <div className="space-y-4">
                 {benefits.map((benefit, index) => (
@@ -161,9 +163,9 @@ const Home = () => {
             
             <div className="bg-gradient-to-br from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 rounded-2xl p-8 text-white">
               <div className="bg-white bg-opacity-10 dark:bg-opacity-20 backdrop-blur-sm rounded-xl p-6 mb-6">
-                <h3 className="text-2xl font-bold mb-2">Hemen Başlayın</h3>
+                <h3 className="text-2xl font-bold mb-2">{t('home.getStarted.title')}</h3>
                 <p className="text-indigo-100 dark:text-indigo-200">
-                  Birkaç dakika içinde kurulumu tamamlayın ve müşterilerinizle iletişime geçin.
+                  {t('home.getStarted.description')}
                 </p>
               </div>
               <ul className="space-y-3 mb-6">
@@ -171,19 +173,19 @@ const Home = () => {
                   <div className="bg-white bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
                     <span className="font-bold">1</span>
                   </div>
-                  <span>Ücretsiz hesap oluşturun</span>
+                  <span>{t('home.getStarted.step1')}</span>
                 </li>
                 <li className="flex items-center">
                   <div className="bg-white bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
                     <span className="font-bold">2</span>
                   </div>
-                  <span>Widget kodunu sitenize ekleyin</span>
+                  <span>{t('home.getStarted.step2')}</span>
                 </li>
                 <li className="flex items-center">
                   <div className="bg-white bg-opacity-20 rounded-full w-8 h-8 flex items-center justify-center mr-3 flex-shrink-0">
                     <span className="font-bold">3</span>
                   </div>
-                  <span>Müşterilerinizle konuşmaya başlayın</span>
+                  <span>{t('home.getStarted.step3')}</span>
                 </li>
               </ul>
               <Link
@@ -191,7 +193,7 @@ const Home = () => {
                 className="block w-full bg-white text-indigo-600 py-3 rounded-lg font-semibold text-center hover:bg-indigo-50 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-gray-800 transition"
                 aria-label="Ücretsiz denemeye başlayın"
               >
-                Şimdi Deneyin
+                {t('home.getStarted.cta')}
               </Link>
             </div>
           </div>
@@ -202,17 +204,17 @@ const Home = () => {
       <section className="bg-gray-900 dark:bg-gray-950 text-white py-20" aria-label="Harekete geçirici mesaj">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Müşterilerinizle Daha İyi İletişim Kurmaya Hazır mısınız?
+            {t('home.cta.title')}
           </h2>
           <p className="text-xl text-gray-300 dark:text-gray-400 mb-8">
-            Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor.
+            {t('home.cta.description')}
           </p>
           <Link
             to="/register"
             className="inline-flex items-center bg-indigo-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition"
             aria-label="Ücretsiz hesap oluşturun"
           >
-            Ücretsiz Hesap Oluştur
+            {t('home.cta.button')}
             <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
           </Link>
         </div>
@@ -228,36 +230,36 @@ const Home = () => {
                 <img src={logo} alt="Support.io Logo" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
               </div>
               <p className="text-gray-700 dark:text-gray-300 text-sm">
-                Modern müşteri destek sistemi
+                {t('home.footer.description')}
               </p>
             </div>
             
             <nav aria-label="Ürün menüsü">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">Ürün</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">{t('home.footer.product')}</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/ozellikler" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Özellikler</Link></li>
-                <li><Link to="/fiyatlandirma" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Fiyatlandırma</Link></li>
+                <li><Link to="/ozellikler" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.features')}</Link></li>
+                <li><Link to="/fiyatlandirma" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.pricing')}</Link></li>
               </ul>
             </nav>
             
             <nav aria-label="Şirket menüsü">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">Şirket</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">{t('home.footer.company')}</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/hakkimizda" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Hakkımızda</Link></li>
+                <li><Link to="/hakkimizda" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.about')}</Link></li>
               </ul>
             </nav>
             
             <nav aria-label="Destek menüsü">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">Destek</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">{t('home.footer.support')}</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/login" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Giriş Yap</Link></li>
-                <li><Link to="/register" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">Kayıt Ol</Link></li>
+                <li><Link to="/login" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.login')}</Link></li>
+                <li><Link to="/register" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.register')}</Link></li>
               </ul>
             </nav>
           </div>
           
           <div className="border-t border-gray-200 dark:border-gray-700 mt-12 pt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>&copy; 2026 Support.io. Tüm hakları saklıdır.</p>
+            <p>{t('home.footer.copyright')}</p>
           </div>
         </div>
       </footer>

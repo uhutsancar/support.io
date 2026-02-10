@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare } from 'lucide-react';
 import logo from '../public/support.io.webp';
 
 const Register = () => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,12 +34,12 @@ const Register = () => {
   return (
     <>
       <Helmet>
-        <title>Hesap Oluştur - Support.io | Ücretsiz Başlayın</title>
-        <meta name="description" content="Support.io'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez." />
-        <meta name="keywords" content="support.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla" />
+        <title>{t('register.metaTitle')}</title>
+        <meta name="description" content={t('register.metaDescription')} />
+        <meta name="keywords" content={t('register.metaKeywords')} />
         <link rel="canonical" href="https://support.io/register" />
-        <meta property="og:title" content="Hesap Oluştur - Support.io | Ücretsiz Başlayın" />
-        <meta property="og:description" content="Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez." />
+        <meta property="og:title" content={t('register.metaOgTitle')} />
+        <meta property="og:description" content={t('register.metaOgDescription')} />
         <meta property="og:url" content="https://support.io/register" />
       </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 flex items-center justify-center p-4 transition-colors duration-200">)
@@ -46,8 +48,8 @@ const Register = () => {
           <div className="inline-flex items-center justify-center mb-4">
             <img src={logo} alt="Support.io" style={{ height: '7rem', width: 'auto', maxWidth: '100%' }} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Hesap Oluşturun</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Support.io ile başlayın</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('register.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('register.subtitle')}</p>
         </div>
 
         {error && (
@@ -59,42 +61,42 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Ad Soyad
+              {t('register.name')}
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-              placeholder="Ahmet Yılmaz"
+              placeholder={t('register.namePlaceholder')}
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              E-posta Adresi
+              {t('register.email')}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-              placeholder="ornek@mail.com"
+              placeholder={t('register.emailPlaceholder')}
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Şifre
+              {t('register.password')}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-              placeholder="••••••••"
+              placeholder={t('register.passwordPlaceholder')}
               required
               minLength={6}
             />
@@ -105,15 +107,15 @@ const Register = () => {
             disabled={loading}
             className="w-full bg-indigo-600 dark:bg-indigo-500 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Hesap oluşturuluyor...' : 'Hesap Oluştur'}
+            {loading ? t('common.loading') : t('register.registerButton')}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Zaten hesabınız var mı?{' '}
+            {t('register.hasAccount')}{' '}
             <Link to="/login" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">
-              Giriş Yapın
+              {t('register.login')}
             </Link>
           </p>
         </div>

@@ -1,51 +1,53 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare, Target, Users, Heart, ArrowRight } from 'lucide-react';
 import Header from '../components/Header';
 
 const About = () => {
+  const { t } = useTranslation();
   const values = [
     {
       icon: Target,
-      title: 'Misyonumuz',
-      description: 'Her büyüklükteki işletmenin profesyonel müşteri desteği sunabilmesini sağlamak. Kullanımı kolay, uygun fiyatlı ve güçlü araçlar sunarak müşteri memnuniyetini artırmak.'
+      title: t('aboutPage.values.mission.title'),
+      description: t('aboutPage.values.mission.description')
     },
     {
       icon: Users,
-      title: 'Vizyonumuz',
-      description: 'Müşteri hizmetlerinde yeni standartlar belirlemek. İşletmeler ve müşterileri arasındaki iletişimi daha anlamlı, daha hızlı ve daha etkili hale getirmek.'
+      title: t('aboutPage.values.vision.title'),
+      description: t('aboutPage.values.vision.description')
     },
     {
       icon: Heart,
-      title: 'Değerlerimiz',
-      description: 'Müşteri odaklılık, sürekli iyileştirme, şeffaflık ve güvenilirlik. Kullanıcılarımızın başarısı bizim başarımızdır.'
+      title: t('aboutPage.values.culture.title'),
+      description: t('aboutPage.values.culture.description')
     }
   ];
 
   const stats = [
-    { number: '10,000+', label: 'Aktif Kullanıcı' },
-    { number: '1M+', label: 'Aylık Konuşma' },
-    { number: '50+', label: 'Ülke' },
-    { number: '%99.9', label: 'Uptime' }
+    { number: '10,000+', label: t('aboutPage.stats.users') },
+    { number: '1M+', label: t('aboutPage.stats.conversations') },
+    { number: '50+', label: t('aboutPage.stats.countries') },
+    { number: '%99.9', label: t('aboutPage.stats.uptime') }
   ];
 
   const team = [
     {
-      name: 'Support.io Ekibi',
-      role: 'Geliştiriciler & Destek',
-      description: 'Deneyimli yazılım geliştiricileri ve müşteri destek uzmanlarından oluşan ekibimiz, sizin için çalışıyor.'
+      name: t('aboutPage.team.name'),
+      role: t('aboutPage.team.role'),
+      description: t('aboutPage.team.description')
     }
   ];
 
   return (
     <>
       <Helmet>
-        <title>Hakkımızda - Support.io | Müşteri İletişimini Yeniden Tanımlıyoruz</title>
-        <meta name="description" content="Support.io hakkında daha fazla bilgi edinin. Misyonumuz, vizyonumuz ve değerlerimizi keşfedin. Müşteri hizmetlerinde yeni standartlar belirlemek için çalışıyoruz." />
+        <title>{t('about.title')} - Support.io | {t('about.subtitle')}</title>
+        <meta name="description" content={t('about.mission.description')} />
         <meta name="keywords" content="support.io hakkında, şirket bilgileri, misyon, vizyon, müşteri odaklılık" />
         <link rel="canonical" href="https://support.io/hakkimizda" />
-        <meta property="og:title" content="Hakkımızda - Support.io" />
+        <meta property="og:title" content={`${t('about.title')} - Support.io`} />
         <meta property="og:description" content="Müşteri hizmetlerinde yeni standartlar belirlemek için çalışıyoruz." />
         <meta property="og:url" content="https://support.io/hakkimizda" />
       </Helmet>
@@ -56,11 +58,10 @@ const About = () => {
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Müşteri İletişimini Yeniden Tanımlıyoruz
+            {t('aboutPage.title')}
           </h1>
           <p className="text-xl text-indigo-100 max-w-3xl mx-auto">
-            Support.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan 
-            modern ve kullanıcı dostu bir platform sunuyoruz.
+            {t('aboutPage.subtitle')}
           </p>
         </div>
       </section>
@@ -70,22 +71,17 @@ const About = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-              Hikayemiz
+              {t('aboutPage.story.title')}
             </h2>
             <div className="prose prose-lg mx-auto text-gray-600 dark:text-gray-300">
               <p className="mb-4">
-                Support.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin 
-                müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler 
-                ya çok karmaşık ya da çok pahalıydı.
+                {t('aboutPage.story.paragraph1')}
               </p>
               <p className="mb-4">
-                Bu sorunu çözmek için yola çıktık. Amacımız, her büyüklükteki işletmenin 
-                profesyonel müşteri desteği sunabilmesini sağlayacak, kullanımı kolay ve 
-                uygun fiyatlı bir platform oluşturmaktı.
+                {t('aboutPage.story.paragraph2')}
               </p>
               <p>
-                Bugün, binlerce işletme Support.io ile müşterileriyle daha iyi iletişim kuruyor 
-                ve müşteri memnuniyetini artırıyor. Ve biz hala geliştirmeye devam ediyoruz.
+                {t('aboutPage.story.paragraph3')}
               </p>
             </div>
           </div>
@@ -97,10 +93,10 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Değerlerimiz
+              {t('aboutPage.values.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Bizi biz yapan değerler
+              {t('aboutPage.values.subtitle') || 'Bizi biz yapan değerler'}
             </p>
           </div>
 
@@ -130,7 +126,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Rakamlarla Support.io
+              {t('aboutPage.stats.title')}
             </h2>
           </div>
 
@@ -154,10 +150,10 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Ekibimiz
+              {t('aboutPage.team.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Tutkulu ve deneyimli profesyonellerden oluşan ekibimiz
+              {t('aboutPage.team.subtitle')}
             </p>
           </div>
 
@@ -171,13 +167,13 @@ const About = () => {
                   <Users className="w-12 h-12 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  {member.name}
+                  {t('aboutPage.team.name')}
                 </h3>
                 <p className="text-indigo-600 dark:text-indigo-400 font-medium mb-4">
-                  {member.role}
+                  {t('aboutPage.team.role')}
                 </p>
                 <p className="text-gray-600 dark:text-gray-300">
-                  {member.description}
+                  {t('aboutPage.team.description')}
                 </p>
               </div>
             ))}
@@ -190,12 +186,10 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Teknolojimiz
+              {t('aboutPage.technology.title')}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve 
-              güvenilirlik sunar. React, Node.js, Socket.IO ve MongoDB gibi güçlü 
-              teknolojiler üzerine kurulu.
+              {t('aboutPage.technology.description')}
             </p>
           </div>
 
@@ -217,18 +211,17 @@ const About = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-12">
             <MessageSquare className="w-16 h-16 mx-auto mb-6 text-white" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Bize Katılın
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+              {t('home.cta.title')}
             </h2>
             <p className="text-xl text-indigo-100 mb-8">
-              Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. 
-              Siz de aramıza katılın!
+              {t('home.cta.description')}
             </p>
             <Link
               to="/register"
               className="inline-flex items-center bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 transition"
             >
-              Ücretsiz Başlayın
+              {t('home.cta.button')}
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
           </div>
