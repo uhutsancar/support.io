@@ -1,4 +1,4 @@
-# 🚀 SupportChat - Professional SaaS Customer Support System
+# 🚀 Support.io - Professional SaaS Customer Support System
 
 > Modern, real-time customer support chat widget system - like Intercom, Zendesk, but **yours**!
 
@@ -36,7 +36,7 @@
 ```html
 <!-- Add to your website -->
 <script>
-  window.SupportChatConfig = { siteKey: 'your-key' };
+  window.SupportIOConfig = { siteKey: 'your-key' };
 </script>
 <script src="http://localhost:3000/widget.js"></script>
 ```
@@ -178,9 +178,9 @@ npm run dev
 
 ---
 
-## 🌟 Why SupportChat?
+## 🌟 Why Support.io?
 
-| Feature | SupportChat | Intercom | Zendesk |
+| Feature | Support.io | Intercom | Zendesk |
 |---------|-------------|----------|---------|
 | Price | **Free** (Self-hosted) | $39+/mo | $49+/mo |
 | Setup Time | **5 minutes** | 15 min | 20 min |

@@ -16,6 +16,7 @@ const authRoutes = require('./routes/auth');
 const siteRoutes = require('./routes/sites');
 const faqRoutes = require('./routes/faqs');
 const conversationRoutes = require('./routes/conversations');
+const widgetRoutes = require('./routes/widget');
 
 const app = express();
 const server = http.createServer(app);
@@ -100,6 +101,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/widget', widgetRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -136,6 +138,9 @@ app.use(express.static('public', {
     }
   }
 }));
+
+// Demo page serve et
+app.use('/demo', express.static('../demo'));
 
 console.log('✅ Endpoint\'ler yapılandırıldı');
 

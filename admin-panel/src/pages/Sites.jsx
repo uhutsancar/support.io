@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { sitesAPI } from '../services/api';
+import { sitesAPI, clearCache } from '../services/api';
 import { Plus, Globe, Copy, Check, Settings, Trash2 } from 'lucide-react';
 
 const Sites = () => {
@@ -30,12 +30,33 @@ const Sites = () => {
   const handleCreateSite = async (e) => {
     e.preventDefault();
     try {
-      await sitesAPI.create(newSite);
+      const response = await sitesAPI.create(newSite);
       setShowModal(false);
       setNewSite({ name: '', domain: '' });
-      fetchSites();
+      // Yeni site'ı direkt listeye ekle
+      setSites([...sites, response.data.site]);
+      // Cache'i temizle
+      clearCache('/sites');
     } catch (error) {
       console.error('Failed to create site:', error);
+      alert('Site oluşturulamadı: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleDeleteSite = async (siteId, siteName) => {
+    if (!confirm(`"${siteName}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
+      return;
+    }
+
+    try {
+      await sitesAPI.delete(siteId);
+      // Site'ı listeden direkt kaldır
+      setSites(sites.filter(site => site._id !== siteId));
+      // Cache'i temizle
+      clearCache('/sites');
+    } catch (error) {
+      console.error('Failed to delete site:', error);
+      alert('Site silinemedi: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -47,7 +68,7 @@ const Sites = () => {
 
   const getInstallCode = (siteKey) => {
     return `<script>
-  window.SupportChatConfig = {
+  window.SupportIOConfig = {
     siteKey: '${siteKey}'
   };
 </script>
@@ -156,7 +177,10 @@ const Sites = () => {
                     <Settings className="w-4 h-4" />
                     <span className="leading-tight text-center whitespace-normal">{t('sites.settings')}</span>
                   </button>
-                  <button className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition flex items-center justify-center">
+                  <button 
+                    onClick={() => handleDeleteSite(site._id, site.name)}
+                    className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition flex items-center justify-center"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
