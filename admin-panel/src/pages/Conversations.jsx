@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { sitesAPI, conversationsAPI } from '../services/api';
+import { sitesAPI, conversationsAPI, departmentsAPI, teamAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
-import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2, Paperclip, X, File, Image, FileText } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2, Paperclip, X, File, Image, FileText, UserPlus, Folder, Flag } from 'lucide-react';
 
 const Conversations = () => {
   const { t } = useTranslation();
@@ -17,6 +17,10 @@ const Conversations = () => {
   const [newMessage, setNewMessage] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [socket, setSocket] = useState(null);
+  const [departments, setDepartments] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -129,10 +133,30 @@ const Conversations = () => {
     }
   };
 
+  const fetchDepartments = async (siteId) => {
+    try {
+      const response = await departmentsAPI.getAll(siteId);
+      setDepartments(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+    }
+  };
+
+  const fetchTeamMembers = async (siteId) => {
+    try {
+      const response = await teamAPI.getAll(siteId);
+      setTeamMembers(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch team members:', error);
+    }
+  };
+
   const fetchConversations = async (siteId) => {
     try {
       const response = await conversationsAPI.getAll(siteId);
       setConversations(response.data.conversations);
+      fetchDepartments(siteId);
+      fetchTeamMembers(siteId);
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
     }
@@ -276,13 +300,76 @@ const Conversations = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      open: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+      unassigned: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
       assigned: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+      pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
       resolved: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
       closed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
     };
-    return colors[status] || colors.open;
+    return colors[status] || colors.unassigned;
   };
+
+  const getPriorityColor = (priority) => {
+    const colors = {
+      low: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+      normal: 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400',
+      high: 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400',
+      urgent: 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400'
+    };
+    return colors[priority] || colors.normal;
+  };
+
+  const handleClaimConversation = async (conversationId) => {
+    try {
+      await conversationsAPI.claim(conversationId);
+      // Refresh conversation
+      if (selectedSite) {
+        fetchConversations(selectedSite._id);
+      }
+    } catch (error) {
+      console.error('Failed to claim conversation:', error);
+      alert(error.response?.data?.error || 'Failed to claim conversation');
+    }
+  };
+
+  const handleAssignConversation = async (conversationId, agentId) => {
+    try {
+      await conversationsAPI.assign(conversationId, agentId, user?._id || user?.id);
+      if (selectedSite) {
+        fetchConversations(selectedSite._id);
+      }
+    } catch (error) {
+      console.error('Failed to assign conversation:', error);
+    }
+  };
+
+  const handleSetDepartment = async (conversationId, departmentId) => {
+    try {
+      await conversationsAPI.setDepartment(conversationId, departmentId);
+      if (selectedSite) {
+        fetchConversations(selectedSite._id);
+      }
+    } catch (error) {
+      console.error('Failed to set department:', error);
+    }
+  };
+
+  const handleSetPriority = async (conversationId, priority) => {
+    try {
+      await conversationsAPI.setPriority(conversationId, priority);
+      if (selectedSite) {
+        fetchConversations(selectedSite._id);
+      }
+    } catch (error) {
+      console.error('Failed to set priority:', error);
+    }
+  };
+
+  const filteredConversations = conversations.filter(conv => {
+    const matchesStatus = statusFilter === 'all' || conv.status === statusFilter;
+    const matchesDepartment = departmentFilter === 'all' || conv.department?._id === departmentFilter;
+    return matchesStatus && matchesDepartment;
+  });
 
   return (
     <>

@@ -18,6 +18,8 @@ const Sites = lazy(() => import('./pages/Sites'));
 const Conversations = lazy(() => import('./pages/Conversations'));
 const FAQs = lazy(() => import('./pages/FAQs'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Team = lazy(() => import('./pages/Team'));
+const Departments = lazy(() => import('./pages/Departments'));
 
 // Layouts - Lazy load
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -105,6 +107,8 @@ function App() {
             <Route path="sites" element={<Sites />} />
             <Route path="conversations" element={<Conversations />} />
             <Route path="faqs" element={<FAQs />} />
+            <Route path="team" element={<Team />} />
+            <Route path="departments" element={<Departments />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

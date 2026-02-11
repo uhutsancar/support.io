@@ -119,17 +119,179 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
 // Assign conversation to agent
 router.put('/:conversationId/assign', auth, async (req, res) => {
   try {
-    const { agentId } = req.body;
+    const { agentId, assignedBy } = req.body;
+    
+    const updateData = {
+      assignedAgent: agentId || null,
+      assignedBy: assignedBy || req.user.id,
+      status: agentId ? 'assigned' : 'unassigned'
+    };
+    
+    if (agentId) {
+      updateData.assignedAt = new Date();
+    } else {
+      updateData.assignedAt = null;
+    }
     
     const conversation = await Conversation.findByIdAndUpdate(
       req.params.conversationId,
-      { 
-        assignedAgent: agentId || null,
-        status: agentId ? 'assigned' : 'open'
-      },
+      updateData,
       { new: true }
-    ).populate('assignedAgent', 'name avatar status');
+    )
+      .populate('assignedAgent', 'name avatar status')
+      .populate('department', 'name color icon');
 
+    // Update agent stats
+    if (agentId) {
+      await require('../models/User').findByIdAndUpdate(agentId, {
+        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+      });
+    }
+    
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('conversation-assigned', {
+        conversationId: conversation._id,
+        agentId,
+        assignedBy
+      });
+    }
+
+    res.json({ conversation });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Claim conversation (agent self-assigns)
+router.put('/:conversationId/claim', auth, async (req, res) => {
+  try {
+    const agentId = req.user.id;
+    
+    // Check if conversation is unassigned
+    const conversation = await Conversation.findById(req.params.conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    if (conversation.assignedAgent) {
+      return res.status(400).json({ error: 'Conversation is already assigned' });
+    }
+    
+    // Check agent's current load
+    const agent = await require('../models/User').findById(agentId);
+    if (agent.stats.activeConversations >= agent.preferences.maxActiveConversations) {
+      return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
+    }
+    
+    conversation.assignedAgent = agentId;
+    conversation.assignedBy = agentId;
+    conversation.assignedAt = new Date();
+    conversation.status = 'assigned';
+    
+    await conversation.save();
+    await conversation.populate('assignedAgent', 'name avatar status');
+    await conversation.populate('department', 'name color icon');
+    
+    // Update agent stats
+    await require('../models/User').findByIdAndUpdate(agentId, {
+      $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+    });
+    
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('conversation-claimed', {
+        conversationId: conversation._id,
+        agentId
+      });
+    }
+
+    res.json({ conversation });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Set conversation department
+router.put('/:conversationId/department', auth, async (req, res) => {
+  try {
+    const { departmentId } = req.body;
+    
+    const conversation = await Conversation.findByIdAndUpdate(
+      req.params.conversationId,
+      { department: departmentId || null },
+      { new: true }
+    )
+      .populate('assignedAgent', 'name avatar status')
+      .populate('department', 'name color icon');
+    
+    // Update department stats
+    if (departmentId) {
+      await require('../models/Department').findByIdAndUpdate(departmentId, {
+        $inc: { 'stats.totalConversations': 1, 'stats.activeConversations': 1 }
+      });
+    }
+    
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('conversation-department-changed', {
+        conversationId: conversation._id,
+        departmentId
+      });
+    }
+
+    res.json({ conversation });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Set conversation priority
+router.put('/:conversationId/priority', auth, async (req, res) => {
+  try {
+    const { priority } = req.body;
+    
+    if (!['low', 'normal', 'high', 'urgent'].includes(priority)) {
+      return res.status(400).json({ error: 'Invalid priority' });
+    }
+    
+    const conversation = await Conversation.findByIdAndUpdate(
+      req.params.conversationId,
+      { priority },
+      { new: true }
+    )
+      .populate('assignedAgent', 'name avatar status')
+      .populate('department', 'name color icon');
+
+    res.json({ conversation });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Add internal note to conversation
+router.post('/:conversationId/notes', auth, async (req, res) => {
+  try {
+    const { note } = req.body;
+    
+    const conversation = await Conversation.findById(req.params.conversationId);
+    
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    conversation.internalNotes.push({
+      userId: req.user.id,
+      note,
+      createdAt: new Date()
+    });
+    
+    await conversation.save();
+    await conversation.populate('internalNotes.userId', 'name avatar');
+    
     res.json({ conversation });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -142,8 +304,10 @@ router.put('/:conversationId/status', auth, async (req, res) => {
     const { status } = req.body;
     
     const updateData = { status };
-    if (status === 'closed' || status === 'resolved') {
+    if (status === 'closed') {
       updateData.closedAt = new Date();
+    } else if (status === 'resolved') {
+      updateData.resolvedAt = new Date();
     }
 
     const conversation = await Conversation.findByIdAndUpdate(

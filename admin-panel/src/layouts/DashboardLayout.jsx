@@ -12,7 +12,9 @@ import {
   LogOut,
   Menu,
   X,
-  Bell
+  Bell,
+  Users,
+  Folder
 } from 'lucide-react';
 import { conversationsAPI } from '../services/api';
 import { io } from 'socket.io-client';
@@ -20,12 +22,22 @@ import logo from '../public/support.io_logo.webp';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
+
+  // Debug i18n
+  useEffect(() => {
+    console.log('🌍 Current language:', i18n.language);
+    console.log('📝 Sidebar translations:', {
+      dashboard: t('sidebar.dashboard'),
+      departments: t('sidebar.departments'),
+      team: t('sidebar.team'),
+    });
+  }, [i18n.language, t]);
 
   const handleLogout = async () => {
     await logout();
@@ -76,6 +88,8 @@ const DashboardLayout = () => {
     { path: '/dashboard', icon: LayoutDashboard, label: t('sidebar.dashboard') },
     { path: '/dashboard/sites', icon: Globe, label: t('sidebar.sites') },
     { path: '/dashboard/conversations', icon: MessageCircle, label: t('sidebar.conversations') },
+    { path: '/dashboard/departments', icon: Folder, label: t('sidebar.departments') },
+    { path: '/dashboard/team', icon: Users, label: t('sidebar.team') },
     { path: '/dashboard/faqs', icon: HelpCircle, label: t('sidebar.faqs') },
     { path: '/dashboard/settings', icon: Settings, label: t('sidebar.settings') },
   ];

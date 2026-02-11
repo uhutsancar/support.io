@@ -20,8 +20,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'agent'],
-    default: 'admin'
+    enum: ['owner', 'admin', 'manager', 'agent'],
+    default: 'agent'
   },
   avatar: {
     type: String,
@@ -33,13 +33,78 @@ const userSchema = new mongoose.Schema({
   },
   // For agent users
   assignedSites: [{
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Site'
+  }],
+  departments: [{
+    departmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Department'
+    },
+    role: {
+      type: String,
+      enum: ['manager', 'agent'],
+      default: 'agent'
+    }
   }],
   status: {
     type: String,
-    enum: ['online', 'offline', 'busy'],
+    enum: ['online', 'offline', 'busy', 'away'],
     default: 'offline'
+  },
+  permissions: {
+    canManageTeam: {
+      type: Boolean,
+      default: false
+    },
+    canManageDepartments: {
+      type: Boolean,
+      default: false
+    },
+    canViewAllConversations: {
+      type: Boolean,
+      default: false
+    },
+    canAssignConversations: {
+      type: Boolean,
+      default: true
+    },
+    canDeleteConversations: {
+      type: Boolean,
+      default: false
+    }
+  },
+  preferences: {
+    autoAcceptAssignments: {
+      type: Boolean,
+      default: true
+    },
+    maxActiveConversations: {
+      type: Number,
+      default: 10
+    },
+    notificationSound: {
+      type: Boolean,
+      default: true
+    }
+  },
+  stats: {
+    totalConversations: {
+      type: Number,
+      default: 0
+    },
+    activeConversations: {
+      type: Number,
+      default: 0
+    },
+    resolvedConversations: {
+      type: Number,
+      default: 0
+    },
+    averageResponseTime: {
+      type: Number,
+      default: 0
+    }
   }
 }, {
   timestamps: true

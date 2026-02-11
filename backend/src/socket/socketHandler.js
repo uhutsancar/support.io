@@ -32,7 +32,7 @@ class SocketHandler {
           let conversation = await Conversation.findOne({
             siteId: site._id,
             visitorId,
-            status: { $in: ['open', 'assigned'] }
+            status: { $in: ['unassigned', 'assigned', 'pending'] }
           });
 
           if (!conversation) {
@@ -285,6 +285,143 @@ class SocketHandler {
       socket.on('typing', (data) => {
         const { conversationId } = data;
         this.widgetNamespace.to(`conversation:${conversationId}`).emit('agent-typing');
+      });
+
+      // Agent status update
+      socket.on('update-status', async (data) => {
+        try {
+          const { status } = data;
+          const User = require('../models/User');
+          await User.findByIdAndUpdate(socket.userId, { status });
+          
+          // Broadcast to all admins
+          this.adminNamespace.emit('agent-status-changed', {
+            userId: socket.userId,
+            status
+          });
+        } catch (error) {
+          console.error('Update status error:', error);
+        }
+      });
+
+      // Assign conversation
+      socket.on('assign-conversation', async (data) => {
+        try {
+          const { conversationId, agentId } = data;
+          const User = require('../models/User');
+          
+          const conversation = await Conversation.findById(conversationId);
+          if (!conversation) {
+            socket.emit('error', { message: 'Conversation not found' });
+            return;
+          }
+          
+          conversation.assignedAgent = agentId;
+          conversation.assignedBy = socket.userId;
+          conversation.assignedAt = new Date();
+          conversation.status = 'assigned';
+          await conversation.save();
+          
+          // Update agent stats
+          await User.findByIdAndUpdate(agentId, {
+            $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+          });
+          
+          // Broadcast to all admins in site
+          this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-assigned', {
+            conversationId,
+            agentId,
+            assignedBy: socket.userId
+          });
+          
+          console.log(`👤 Conversation ${conversationId} assigned to ${agentId}`);
+        } catch (error) {
+          console.error('Assign conversation error:', error);
+          socket.emit('error', { message: error.message });
+        }
+      });
+
+      // Claim conversation (self-assign)
+      socket.on('claim-conversation', async (data) => {
+        try {
+          const { conversationId } = data;
+          const User = require('../models/User');
+          
+          const conversation = await Conversation.findById(conversationId);
+          if (!conversation) {
+            socket.emit('error', { message: 'Conversation not found' });
+            return;
+          }
+          
+          if (conversation.assignedAgent) {
+            socket.emit('error', { message: 'Conversation is already assigned' });
+            return;
+          }
+          
+          // Check agent's load
+          const agent = await User.findById(socket.userId);
+          if (agent.stats.activeConversations >= agent.preferences.maxActiveConversations) {
+            socket.emit('error', { message: 'Maximum active conversations reached' });
+            return;
+          }
+          
+          conversation.assignedAgent = socket.userId;
+          conversation.assignedBy = socket.userId;
+          conversation.assignedAt = new Date();
+          conversation.status = 'assigned';
+          await conversation.save();
+          
+          // Update agent stats
+          await User.findByIdAndUpdate(socket.userId, {
+            $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+          });
+          
+          // Broadcast to all admins in site
+          this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-claimed', {
+            conversationId,
+            agentId: socket.userId
+          });
+          
+          console.log(`👋 Agent ${socket.userId} claimed conversation ${conversationId}`);
+        } catch (error) {
+          console.error('Claim conversation error:', error);
+          socket.emit('error', { message: error.message });
+        }
+      });
+
+      // Update conversation department
+      socket.on('set-department', async (data) => {
+        try {
+          const { conversationId, departmentId } = data;
+          const Department = require('../models/Department');
+          
+          const conversation = await Conversation.findById(conversationId);
+          if (!conversation) {
+            socket.emit('error', { message: 'Conversation not found' });
+            return;
+          }
+          
+          conversation.department = departmentId;
+          await conversation.save();
+          
+          // Update department stats
+          if (departmentId) {
+            await Department.findByIdAndUpdate(departmentId, {
+              $inc: { 'stats.activeConversations': 1 }
+            });
+          }
+          
+          // Broadcast to all admins in site
+          this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-department-changed', {
+            conversationId,
+            departmentId
+          });
+          
+          console.log(`📁 Conversation ${conversationId} moved to department ${departmentId}`);
+        } catch (error) {
+          console.error('Set department error:', error);
+          socket.emit('error', { message: error.message });
+        }
       });
 
       socket.on('disconnect', () => {

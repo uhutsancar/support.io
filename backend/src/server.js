@@ -18,6 +18,8 @@ const faqRoutes = require('./routes/faqs');
 const conversationRoutes = require('./routes/conversations');
 const widgetRoutes = require('./routes/widget');
 const filesRoutes = require('./routes/files');
+const departmentRoutes = require('./routes/departments');
+const teamRoutes = require('./routes/team');
 
 const app = express();
 const server = http.createServer(app);
@@ -107,6 +109,8 @@ app.use('/api/faqs', faqRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/widget', widgetRoutes);
 app.use('/api/files', filesRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/team', teamRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -156,7 +160,21 @@ console.log('✅ WebSocket handler\'ları başlatıldı');
 // Connect to database and start server
 const PORT = process.env.PORT || 3000;
 
-connectDB().then(() => {
+connectDB().then(async () => {
+  // Migration: Update old 'open' status to 'unassigned'
+  try {
+    const Conversation = require('./models/Conversation');
+    const result = await Conversation.updateMany(
+      { status: 'open' },
+      { $set: { status: 'unassigned' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`✅ Migrated ${result.modifiedCount} conversations from 'open' to 'unassigned'`);
+    }
+  } catch (error) {
+    console.log('⚠️  Migration warning:', error.message);
+  }
+
   server.listen(PORT, () => {
     console.log(`✅ Server started on port ${PORT}`);
   });

@@ -89,28 +89,147 @@ export const authAPI = {
 export const sitesAPI = {
   getAll: () => api.get('/sites'),
   getOne: (siteId) => api.get(`/sites/${siteId}`),
-  create: (data) => api.post('/sites', data),
-  update: (siteId, data) => api.put(`/sites/${siteId}`, data),
-  delete: (siteId) => api.delete(`/sites/${siteId}`),
-  regenerateKey: (siteId) => api.post(`/sites/${siteId}/regenerate-key`),
+  create: async (data) => {
+    const response = await api.post('/sites', data);
+    clearCache('/sites');
+    return response;
+  },
+  update: async (siteId, data) => {
+    const response = await api.put(`/sites/${siteId}`, data);
+    clearCache('/sites');
+    return response;
+  },
+  delete: async (siteId) => {
+    const response = await api.delete(`/sites/${siteId}`);
+    clearCache('/sites');
+    return response;
+  },
+  regenerateKey: async (siteId) => {
+    const response = await api.post(`/sites/${siteId}/regenerate-key`);
+    clearCache('/sites');
+    return response;
+  },
 };
 
 // FAQs API
 export const faqsAPI = {
   getAll: (siteId) => api.get(`/faqs/admin/${siteId}`),
-  create: (data) => api.post('/faqs/admin', data),
-  update: (faqId, data) => api.put(`/faqs/admin/${faqId}`, data),
-  delete: (faqId) => api.delete(`/faqs/admin/${faqId}`),
+  create: async (data) => {
+    const response = await api.post('/faqs/admin', data);
+    clearCache('/faqs');
+    return response;
+  },
+  update: async (faqId, data) => {
+    const response = await api.put(`/faqs/admin/${faqId}`, data);
+    clearCache('/faqs');
+    return response;
+  },
+  delete: async (faqId) => {
+    const response = await api.delete(`/faqs/admin/${faqId}`);
+    clearCache('/faqs');
+    return response;
+  },
 };
 
 // Conversations API
 export const conversationsAPI = {
   getAll: (siteId, status) => api.get(`/conversations/${siteId}`, { params: { status } }),
   getOne: (siteId, conversationId) => api.get(`/conversations/${siteId}/${conversationId}`),
-  assign: (conversationId, agentId) => api.put(`/conversations/${conversationId}/assign`, { agentId }),
-  updateStatus: (conversationId, status) => api.put(`/conversations/${conversationId}/status`, { status }),
-  delete: (siteId, conversationId) => api.delete(`/conversations/${siteId}/${conversationId}`),
+  assign: async (conversationId, agentId, assignedBy) => {
+    const response = await api.put(`/conversations/${conversationId}/assign`, { agentId, assignedBy });
+    clearCache('/conversations');
+    return response;
+  },
+  claim: async (conversationId) => {
+    const response = await api.put(`/conversations/${conversationId}/claim`);
+    clearCache('/conversations');
+    return response;
+  },
+  setDepartment: async (conversationId, departmentId) => {
+    const response = await api.put(`/conversations/${conversationId}/department`, { departmentId });
+    clearCache('/conversations');
+    return response;
+  },
+  setPriority: async (conversationId, priority) => {
+    const response = await api.put(`/conversations/${conversationId}/priority`, { priority });
+    clearCache('/conversations');
+    return response;
+  },
+  addNote: async (conversationId, note) => {
+    const response = await api.post(`/conversations/${conversationId}/notes`, { note });
+    clearCache('/conversations');
+    return response;
+  },
+  updateStatus: async (conversationId, status) => {
+    const response = await api.put(`/conversations/${conversationId}/status`, { status });
+    clearCache('/conversations');
+    return response;
+  },
+  delete: async (siteId, conversationId) => {
+    const response = await api.delete(`/conversations/${siteId}/${conversationId}`);
+    clearCache('/conversations');
+    return response;
+  },
   getUnreadCount: () => api.get('/conversations/unread-count'),
+};
+
+// Departments API
+export const departmentsAPI = {
+  getAll: (siteId) => api.get(`/departments/site/${siteId}`),
+  getOne: (departmentId) => api.get(`/departments/${departmentId}`),
+  create: async (data) => {
+    const response = await api.post('/departments', data);
+    clearCache('/departments'); // Clear cache after create
+    return response;
+  },
+  update: async (departmentId, data) => {
+    const response = await api.put(`/departments/${departmentId}`, data);
+    clearCache('/departments'); // Clear cache after update
+    return response;
+  },
+  delete: async (departmentId) => {
+    const response = await api.delete(`/departments/${departmentId}`);
+    clearCache('/departments'); // Clear cache after delete
+    return response;
+  },
+  addMember: async (departmentId, userId, role) => {
+    const response = await api.post(`/departments/${departmentId}/members`, { userId, role });
+    clearCache('/departments'); // Clear cache after adding member
+    return response;
+  },
+  removeMember: async (departmentId, userId) => {
+    const response = await api.delete(`/departments/${departmentId}/members/${userId}`);
+    clearCache('/departments'); // Clear cache after removing member
+    return response;
+  },
+  getStats: (departmentId) => api.get(`/departments/${departmentId}/stats`),
+};
+
+// Team API
+export const teamAPI = {
+  getAll: (siteId) => api.get('/team', { params: { siteId } }),
+  getOne: (userId) => api.get(`/team/${userId}`),
+  create: async (data) => {
+    const response = await api.post('/team', data);
+    clearCache('/team'); // Clear cache after create
+    return response;
+  },
+  update: async (userId, data) => {
+    const response = await api.put(`/team/${userId}`, data);
+    clearCache('/team'); // Clear cache after update
+    return response;
+  },
+  updateStatus: async (userId, status) => {
+    const response = await api.patch(`/team/${userId}/status`, { status });
+    clearCache('/team'); // Clear cache after status update
+    return response;
+  },
+  delete: async (userId) => {
+    const response = await api.delete(`/team/${userId}`);
+    clearCache('/team'); // Clear cache after delete
+    return response;
+  },
+  getStats: (userId) => api.get(`/team/${userId}/stats`),
 };
 
 export default api;
