@@ -474,6 +474,30 @@
           gap: 8px;
           align-items: flex-end;
         }
+        .sc-file-btn {
+          background: transparent;
+          border: none;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+          transition: background 0.2s;
+        }
+        .sc-file-btn:hover {
+          background: #f0f0f0;
+        }
+        .sc-file-btn svg {
+          width: 20px;
+          height: 20px;
+          fill: currentColor;
+        }
+        .sc-file-input {
+          display: none;
+        }
         .sc-input {
           flex: 1;
           border: 1px solid #e5e5e5;
@@ -513,6 +537,116 @@
           width: 20px;
           height: 20px;
           fill: white;
+        }
+
+        /* File Upload Styles */
+        .sc-file-preview {
+          display: none;
+          padding: 8px 16px;
+          background: #f0f0f0;
+          border-radius: 8px;
+          margin-bottom: 8px;
+          align-items: center;
+          gap: 8px;
+        }
+        .sc-file-preview.active {
+          display: flex;
+        }
+        .sc-file-preview-icon {
+          width: 32px;
+          height: 32px;
+          background: white;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: ${this.config.primaryColor};
+        }
+        .sc-file-preview-info {
+          flex: 1;
+          min-width: 0;
+        }
+        .sc-file-preview-name {
+          font-size: 13px;
+          font-weight: 500;
+          color: #333;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .sc-file-preview-size {
+          font-size: 11px;
+          color: #666;
+        }
+        .sc-file-preview-remove {
+          background: none;
+          border: none;
+          color: #999;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .sc-file-preview-remove:hover {
+          color: #ef4444;
+        }
+
+        /* File Message Styles */
+        .sc-file-attachment {
+          background: rgba(255,255,255,0.2);
+          border-radius: 8px;
+          padding: 12px;
+          margin-top: 4px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .sc-message.agent .sc-file-attachment,
+        .sc-message.bot .sc-file-attachment {
+          background: #f0f0f0;
+        }
+        .sc-file-attachment:hover {
+          opacity: 0.9;
+        }
+        .sc-file-attachment-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .sc-file-attachment-icon {
+          width: 32px;
+          height: 32px;
+          background: rgba(255,255,255,0.3);
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .sc-message.agent .sc-file-attachment-icon,
+        .sc-message.bot .sc-file-attachment-icon {
+          background: white;
+        }
+        .sc-file-attachment-info {
+          flex: 1;
+          min-width: 0;
+        }
+        .sc-file-attachment-name {
+          font-size: 13px;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .sc-file-attachment-size {
+          font-size: 11px;
+          opacity: 0.8;
+        }
+        .sc-file-image {
+          max-width: 100%;
+          max-height: 200px;
+          border-radius: 8px;
+          margin-top: 4px;
+          cursor: pointer;
         }
 
         .sc-disabled-message {
@@ -658,7 +792,29 @@
                 <!-- Messages will be appended here -->
               </div>
               <div class="sc-input-container">
+                <div class="sc-file-preview" id="sc-file-preview">
+                  <div class="sc-file-preview-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                    </svg>
+                  </div>
+                  <div class="sc-file-preview-info">
+                    <div class="sc-file-preview-name" id="sc-file-preview-name"></div>
+                    <div class="sc-file-preview-size" id="sc-file-preview-size"></div>
+                  </div>
+                  <button class="sc-file-preview-remove" id="sc-file-preview-remove">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                  </button>
+                </div>
                 <div class="sc-input-wrapper">
+                  <input type="file" class="sc-file-input" id="sc-file-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" />
+                  <button class="sc-file-btn" id="sc-file-btn" title="Attach file">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                    </svg>
+                  </button>
                   <textarea 
                     class="sc-input" 
                     id="sc-input" 
@@ -725,6 +881,12 @@
         messages: document.getElementById('sc-messages'),
         input: document.getElementById('sc-input'),
         send: document.getElementById('sc-send'),
+        fileInput: document.getElementById('sc-file-input'),
+        fileBtn: document.getElementById('sc-file-btn'),
+        filePreview: document.getElementById('sc-file-preview'),
+        filePreviewName: document.getElementById('sc-file-preview-name'),
+        filePreviewSize: document.getElementById('sc-file-preview-size'),
+        filePreviewRemove: document.getElementById('sc-file-preview-remove'),
         viewHome: document.getElementById('sc-view-home'),
         viewMessages: document.getElementById('sc-view-messages'),
         viewHelp: document.getElementById('sc-view-help'),
@@ -732,6 +894,8 @@
         searchFaq: document.getElementById('sc-search-faq'),
         navMessages: document.getElementById('sc-nav-messages')
       };
+      
+      this.selectedFile = null;
     }
 
     setupEventListeners() {
@@ -782,6 +946,19 @@
       this.elements.input.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
+      });
+
+      // File upload handlers
+      this.elements.fileBtn.addEventListener('click', () => {
+        this.elements.fileInput.click();
+      });
+
+      this.elements.fileInput.addEventListener('change', (e) => {
+        this.handleFileSelect(e.target.files[0]);
+      });
+
+      this.elements.filePreviewRemove.addEventListener('click', () => {
+        this.clearFileSelection();
       });
 
       // FAQ search
@@ -1041,17 +1218,112 @@
       });
     }
 
-    sendMessage() {
+    async sendMessage() {
       const content = this.elements.input.value.trim();
-      if (!content || !this.socket) return;
+      if ((!content && !this.selectedFile) || !this.socket) return;
 
-      this.socket.emit('send-message', {
-        content,
-        senderName: localStorage.getItem('sc_visitor_name') || 'You'
-      });
+      // Dosya varsa yükle
+      if (this.selectedFile) {
+        await this.uploadAndSendFile(content || 'File attachment');
+      } else {
+        // Sadece metin mesajı gönder
+        this.socket.emit('send-message', {
+          content,
+          senderName: localStorage.getItem('sc_visitor_name') || 'You'
+        });
+      }
 
       this.elements.input.value = '';
       this.elements.input.style.height = 'auto';
+      this.clearFileSelection();
+    }
+
+    async uploadAndSendFile(content) {
+      try {
+        const formData = new FormData();
+        formData.append('file', this.selectedFile);
+
+        // Site authentication için site key ekle
+        const response = await fetch(`${API_URL}/api/files/upload`, {
+          method: 'POST',
+          headers: {
+            'X-Site-Key': this.config.siteKey
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('File upload failed');
+        }
+
+        const data = await response.json();
+        
+        // Dosya bilgisi ile mesaj gönder
+        const messageType = this.selectedFile.type.startsWith('image/') ? 'image' : 'file';
+        
+        this.socket.emit('send-message', {
+          content,
+          senderName: localStorage.getItem('sc_visitor_name') || 'You',
+          messageType,
+          fileData: data.file
+        });
+
+      } catch (error) {
+        console.error('File upload error:', error);
+        alert('Dosya yüklenemedi. Lütfen tekrar deneyin.');
+      }
+    }
+
+    handleFileSelect(file) {
+      if (!file) return;
+
+      // Dosya boyutu kontrolü (10MB)
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.');
+        return;
+      }
+
+      // İzin verilen dosya türleri
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain',
+        'application/zip'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        alert('Bu dosya türü desteklenmiyor. Lütfen resim, PDF, Office belgesi veya metin dosyası yükleyin.');
+        return;
+      }
+
+      this.selectedFile = file;
+      this.showFilePreview(file);
+    }
+
+    showFilePreview(file) {
+      const size = this.formatFileSize(file.size);
+      this.elements.filePreviewName.textContent = file.name;
+      this.elements.filePreviewSize.textContent = size;
+      this.elements.filePreview.classList.add('active');
+    }
+
+    clearFileSelection() {
+      this.selectedFile = null;
+      this.elements.fileInput.value = '';
+      this.elements.filePreview.classList.remove('active');
+    }
+
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
 
     renderMessages(messages) {
@@ -1069,13 +1341,56 @@
         minute: '2-digit'
       });
 
+      let fileAttachment = '';
+      if (message.fileData && (message.messageType === 'file' || message.messageType === 'image')) {
+        if (message.messageType === 'image') {
+          fileAttachment = `
+            <img src="${API_URL}${message.fileData.url}" 
+                 class="sc-file-image" 
+                 alt="${this.escapeHtml(message.fileData.originalName)}"
+                 onclick="window.open('${API_URL}${message.fileData.url}', '_blank')" />
+          `;
+        } else {
+          const fileIcon = this.getFileIcon(message.fileData.mimeType);
+          fileAttachment = `
+            <div class="sc-file-attachment" onclick="window.open('${API_URL}${message.fileData.url}', '_blank')">
+              <div class="sc-file-attachment-header">
+                <div class="sc-file-attachment-icon">
+                  ${fileIcon}
+                </div>
+                <div class="sc-file-attachment-info">
+                  <div class="sc-file-attachment-name">${this.escapeHtml(message.fileData.originalName)}</div>
+                  <div class="sc-file-attachment-size">${this.formatFileSize(message.fileData.size)}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       messageEl.innerHTML = `
         ${message.senderType !== 'visitor' ? `<div class="sc-message-sender">${message.senderName}</div>` : ''}
-        <div class="sc-message-content">${this.escapeHtml(message.content)}</div>
+        <div class="sc-message-content">
+          ${this.escapeHtml(message.content)}
+          ${fileAttachment}
+        </div>
         <div class="sc-message-time">${time}</div>
       `;
 
       this.elements.messages.appendChild(messageEl);
+    }
+
+    getFileIcon(mimeType) {
+      if (mimeType.includes('pdf')) {
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>';
+      } else if (mimeType.includes('word')) {
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
+      } else if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h5v2zm0-4H5v-2h5v2zm0-4H5V7h5v2zm4 8h-2l-2-4 2-4h2l-2 4 2 4zm6 0h-5v-2h5v2zm0-4h-5v-2h5v2zm0-4h-5V7h5v2z"/></svg>';
+      } else if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('7z')) {
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>';
+      }
+      return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>';
     }
 
     showTypingIndicator() {

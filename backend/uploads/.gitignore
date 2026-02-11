@@ -1,0 +1,3 @@
+# Uploaded files should not be committed to git
+files/*
+!files/.gitkeep

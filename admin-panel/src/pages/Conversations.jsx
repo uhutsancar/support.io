@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { sitesAPI, conversationsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
-import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2 } from 'lucide-react';
+import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2, Paperclip, X, File, Image, FileText } from 'lucide-react';
 
 const Conversations = () => {
   const { t } = useTranslation();
@@ -15,9 +15,11 @@ const Conversations = () => {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
   const [socket, setSocket] = useState(null);
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Setup socket connection
@@ -169,21 +171,96 @@ const Conversations = () => {
     }
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !socket || !selectedConversation) return;
+    if ((!newMessage.trim() && !selectedFile) || !socket || !selectedConversation) return;
 
-    console.log('📤 Sending message:', newMessage);
-    console.log('👤 User data:', user);
+    if (selectedFile) {
+      await uploadAndSendFile();
+    } else {
+      console.log('📤 Sending message:', newMessage);
+      console.log('👤 User data:', user);
 
-    socket.emit('send-message', {
-      conversationId: selectedConversation._id,
-      content: newMessage,
-      senderName: user?.name || 'Support',
-      senderId: user?.id || user?._id || 'support'
-    });
+      socket.emit('send-message', {
+        conversationId: selectedConversation._id,
+        content: newMessage,
+        senderName: user?.name || 'Support',
+        senderId: user?.id || user?._id || 'support'
+      });
 
-    setNewMessage('');
+      setNewMessage('');
+    }
+  };
+
+  const uploadAndSendFile = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('http://localhost:5000/api/files/upload', {
+        method: 'POST',
+        headers: {
+          'X-Site-Key': selectedSite.siteKey,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('File upload failed');
+      }
+
+      const data = await response.json();
+      const messageType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
+
+      socket.emit('send-message', {
+        conversationId: selectedConversation._id,
+        content: newMessage.trim() || 'File attachment',
+        senderName: user?.name || 'Support',
+        senderId: user?.id || user?._id || 'support',
+        messageType,
+        fileData: data.file
+      });
+
+      setNewMessage('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Dosya yüklenemedi. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.');
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const clearFileSelection = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (mimeType) => {
+    if (mimeType?.includes('image')) return <Image className="w-4 h-4" />;
+    if (mimeType?.includes('pdf')) return <FileText className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
   };
 
   const scrollToBottom = () => {
@@ -350,6 +427,41 @@ const Conversations = () => {
                       }`}
                     >
                       <p className="text-xs sm:text-sm">{message.content}</p>
+                      
+                      {/* File Attachment Display */}
+                      {message.fileData && (message.messageType === 'file' || message.messageType === 'image') && (
+                        <div className="mt-2">
+                          {message.messageType === 'image' ? (
+                            <img 
+                              src={`http://localhost:5000${message.fileData.url}`}
+                              alt={message.fileData.originalName}
+                              className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => window.open(`http://localhost:5000${message.fileData.url}`, '_blank')}
+                            />
+                          ) : (
+                            <div 
+                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:opacity-90 transition-opacity ${
+                                message.senderType === 'visitor' 
+                                  ? 'bg-gray-100 dark:bg-gray-700' 
+                                  : 'bg-white/20'
+                              }`}
+                              onClick={() => window.open(`http://localhost:5000${message.fileData.url}`, '_blank')}
+                            >
+                              <div className={`p-2 rounded ${
+                                message.senderType === 'visitor'
+                                  ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400'
+                                  : 'bg-white/30 text-white'
+                              }`}>
+                                {getFileIcon(message.fileData.mimeType)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{message.fileData.originalName}</p>
+                                <p className="text-[10px] opacity-75">{formatFileSize(message.fileData.size)}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-end space-x-1 mt-1">
                       <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">{formatTime(message.createdAt)}</p>
@@ -365,7 +477,42 @@ const Conversations = () => {
 
             {/* Message Input */}
             <form onSubmit={handleSendMessage} className="p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0">
+              {/* File Preview */}
+              {selectedFile && (
+                <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center gap-2">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded">
+                    {getFileIcon(selectedFile.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{selectedFile.name}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">{formatFileSize(selectedFile.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearFileSelection}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  </button>
+                </div>
+              )}
+              
               <div className="flex gap-1.5 sm:gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-2 py-1.5 sm:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Dosya Ekle"
+                >
+                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
                 <input
                   type="text"
                   value={newMessage}
@@ -375,7 +522,7 @@ const Conversations = () => {
                 />
                 <button
                   type="submit"
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() && !selectedFile}
                   className="px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-1.5 flex-shrink-0"
                 >
                   <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />

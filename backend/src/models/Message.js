@@ -29,6 +29,14 @@ const messageSchema = new mongoose.Schema({
     enum: ['text', 'image', 'file', 'system'],
     default: 'text'
   },
+  // Dosya bilgileri (messageType 'file' veya 'image' ise)
+  fileData: {
+    filename: String,        // Sunucudaki dosya adı
+    originalName: String,    // Orijinal dosya adı
+    mimeType: String,        // MIME type
+    size: Number,            // Dosya boyutu (byte)
+    url: String              // Dosya URL'i
+  },
   isRead: {
     type: Boolean,
     default: false

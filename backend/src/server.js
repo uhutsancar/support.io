@@ -17,6 +17,7 @@ const siteRoutes = require('./routes/sites');
 const faqRoutes = require('./routes/faqs');
 const conversationRoutes = require('./routes/conversations');
 const widgetRoutes = require('./routes/widget');
+const filesRoutes = require('./routes/files');
 
 const app = express();
 const server = http.createServer(app);
@@ -105,6 +106,7 @@ app.use('/api/sites', siteRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/widget', widgetRoutes);
+app.use('/api/files', filesRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

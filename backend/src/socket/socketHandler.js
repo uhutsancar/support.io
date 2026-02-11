@@ -89,7 +89,7 @@ class SocketHandler {
       // Send message from visitor
       socket.on('send-message', async (data) => {
         try {
-          const { content, senderName } = data;
+          const { content, senderName, messageType, fileData } = data;
           const conversationId = socket.conversationId;
 
           if (!conversationId) {
@@ -104,14 +104,22 @@ class SocketHandler {
           }
 
           // Create message (visitor messages default to unread)
-          const message = new Message({
+          const messageData = {
             conversationId,
             senderType: 'visitor',
             senderId: conversation.visitorId,
             senderName: senderName || conversation.visitorName,
             content,
+            messageType: messageType || 'text',
             isRead: false // Visitor messages start as unread for admin
-          });
+          };
+
+          // Dosya varsa ekle
+          if (fileData && (messageType === 'file' || messageType === 'image')) {
+            messageData.fileData = fileData;
+          }
+
+          const message = new Message(messageData);
           await message.save();
 
           // Update conversation
@@ -208,7 +216,7 @@ class SocketHandler {
       // Send message from agent
       socket.on('send-message', async (data) => {
         try {
-          const { conversationId, content, senderName, senderId } = data;
+          const { conversationId, content, senderName, senderId, messageType, fileData } = data;
           
           // Use provided senderId, fallback to socket.userId, or 'support'
           const actualSenderId = senderId || socket.userId || 'support';
@@ -227,14 +235,22 @@ class SocketHandler {
             await conversation.save();
           }
 
-          const message = new Message({
+          const messageData = {
             conversationId,
             senderType: 'agent',
             senderId: actualSenderId,
             senderName: actualSenderName,
             content,
+            messageType: messageType || 'text',
             isRead: true
-          });
+          };
+
+          // Dosya varsa ekle
+          if (fileData && (messageType === 'file' || messageType === 'image')) {
+            messageData.fileData = fileData;
+          }
+
+          const message = new Message(messageData);
           await message.save();
 
           conversation.lastMessageAt = new Date();

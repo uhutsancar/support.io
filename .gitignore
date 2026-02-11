@@ -11,3 +11,4 @@ coverage/
 *.swp
 *.swo
 .cache/
+backend/uploads/files/
