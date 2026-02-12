@@ -31,9 +31,9 @@ const Register = () => {
     try {
       await register(name, email, password);
       navigate(routes.dashboard);
-      toast.success('Başarıyla kayıt oldunuz!');
+      toast.success(t('register.success'));
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Kayıt başarısız');
+      toast.error(err.response?.data?.error || t('register.error'));
     } finally {
       setLoading(false);
     }

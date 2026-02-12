@@ -94,10 +94,10 @@ const Team = () => {
       console.log('✅ Team member deleted:', response.data);
       // Fetch fresh data
       await fetchTeam();
-      toast.success('Ekip üyesi başarıyla silindi!');
+      toast.success(t('team.deleteSuccess'));
     } catch (error) {
       console.error('❌ Error deleting member:', error);
-      toast.error(error.response?.data?.error || 'Ekip üyesi silinemedi!');
+      toast.error(error.response?.data?.error || t('team.deleteError'));
     }
   };
 
@@ -411,12 +411,12 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
       // Let parent handle data refresh and modal closing
       await onSave(member ? null : response.data);
       console.log('✅ onSave completed');
-      toast.success(member ? 'Ekip üyesi başarıyla güncellendi!' : 'Ekip üyesi başarıyla eklendi!');
+      toast.success(member ? t('team.updateSuccess') : t('team.createSuccess'));
       setSaving(false);
     } catch (error) {
       console.error('❌ Error saving member:', error);
       console.error('Error details:', error.response?.data);
-      toast.error(error.response?.data?.error || error.message || 'Ekip üyesi kaydedilemedi!');
+      toast.error(error.response?.data?.error || error.message || t('team.saveError'));
       setSaving(false);
     }
   };

@@ -30,9 +30,9 @@ const Login = () => {
     try {
       await login(email, password);
       navigate(routes.dashboard);
-      toast.success('Başarıyla giriş yaptınız!');
+      toast.success(t('login.success'));
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Giriş başarısız');
+      toast.error(err.response?.data?.error || t('login.error'));
     } finally {
       setLoading(false);
     }

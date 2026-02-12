@@ -106,10 +106,10 @@ const Departments = () => {
       console.log('✅ Department deleted:', response.data);
       // Remove from state and fetch fresh data
       await fetchDepartments();
-      toast.success('Departman başarıyla silindi!');
+      toast.success(t('departments.deleteSuccess'));
     } catch (error) {
       console.error('❌ Error deleting department:', error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Departman silinemedi!');
+      toast.error(error.response?.data?.error || error.response?.data?.message || t('departments.deleteError'));
     }
   };
 
@@ -354,10 +354,10 @@ const Departments = () => {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, departmentId: null, departmentName: '' })}
         onConfirm={handleDeleteDepartment}
-        title="Departmanı Sil"
-        message={`"${confirmDialog.departmentName}" departmanını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Evet, Sil"
-        cancelText="İptal"
+        title={t('departments.deleteTitle')}
+        message={t('departments.deleteMessage', { name: confirmDialog.departmentName })}
+        confirmText={t('departments.deleteConfirm')}
+        cancelText={t('departments.deleteCancel')}
         type="danger"
       />
     </div>
@@ -441,12 +441,12 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       // Let parent handle data refresh and modal closing
       await onSave(department ? null : response.data);
       console.log('✅ onSave completed');
-      toast.success(department ? 'Departman başarıyla güncellendi!' : 'Departman başarıyla oluşturuldu!');
+      toast.success(department ? t('departments.modal.updateSuccess') : t('departments.modal.createSuccess'));
       setSaving(false);
     } catch (error) {
       console.error('❌ Error saving department:', error);
       console.error('Error details:', error.response?.data);
-      toast.error(error.response?.data?.error || error.message || 'Departman kaydedilemedi!');
+      toast.error(error.response?.data?.error || error.message || t('departments.saveError'));
       setSaving(false);
     }
   };

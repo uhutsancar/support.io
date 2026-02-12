@@ -162,7 +162,7 @@ const Header = () => {
                 className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200 text-left"
               >
                 <Globe className="w-4 h-4" />
-                <span>{language === 'tr' ? 'Switch to English' : 'Türkçe\'ye Geç'}</span>
+                <span>{language === 'tr' ? t('header.switchToEnglish') : t('header.switchToTurkish')}</span>
               </button>
               
               {isAuthenticated ? (

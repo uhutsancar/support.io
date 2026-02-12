@@ -40,10 +40,10 @@ const Sites = () => {
       setSites([...sites, response.data.site]);
       // Cache'i temizle
       clearCache('/sites');
-      toast.success('Site başarıyla oluşturuldu!');
+      toast.success(t('sites.createSuccess'));
     } catch (error) {
       console.error('Failed to create site:', error);
-      toast.error('Site oluşturulamadı: ' + (error.response?.data?.error || error.message));
+      toast.error(t('sites.createError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -56,10 +56,10 @@ const Sites = () => {
       setSites(sites.filter(site => site._id !== siteId));
       // Cache'i temizle
       clearCache('/sites');
-      toast.success('Site başarıyla silindi!');
+      toast.success(t('sites.deleteSuccess'));
     } catch (error) {
       console.error('Failed to delete site:', error);
-      toast.error('Site silinemedi: ' + (error.response?.data?.error || error.message));
+      toast.error(t('sites.deleteError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -70,7 +70,7 @@ const Sites = () => {
   const copyToClipboard = (text, siteId) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(siteId);
-    toast.success('Kopyalandı!');
+    toast.success(t('sites.copiedSuccess'));
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -254,10 +254,10 @@ const Sites = () => {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, siteId: null, siteName: '' })}
         onConfirm={handleDeleteSite}
-        title="Site Sil"
-        message={`"${confirmDialog.siteName}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site'ye ait tüm konuşmalar silinecektir.`}
-        confirmText="Evet, Sil"
-        cancelText="İptal"
+        title={t('sites.deleteTitle')}
+        message={t('sites.deleteMessage', { name: confirmDialog.siteName })}
+        confirmText={t('sites.deleteConfirm')}
+        cancelText={t('common.cancel')}
         type="danger"
       />
       </div>

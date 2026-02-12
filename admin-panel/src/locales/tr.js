@@ -1,4 +1,16 @@
 export default {
+  // Common
+  common: {
+    ok: 'Tamam',
+    cancel: 'İptal',
+    yes: 'Evet',
+    no: 'Hayır',
+    confirm: 'Onayla',
+    delete: 'Sil',
+    save: 'Kaydet',
+    close: 'Kapat',
+  },
+  
   // Header
   header: {
     features: 'Özellikler',
@@ -19,6 +31,7 @@ export default {
     openMenu: 'Menüyü aç',
     closeMenu: 'Menüyü kapat',
     mobileMenu: 'Mobil menü',
+    switchToEnglish: 'Switch to English',
   },
   
   // Sidebar
@@ -249,6 +262,8 @@ export default {
       passwordRequired: 'Şifre gerekli',
       invalidCredentials: 'Geçersiz e-posta veya şifre',
     },
+    success: 'Başarıyla giriş yaptınız!',
+    error: 'Giriş başarısız',
     metaTitle: 'Giriş Yap - Support.io Admin Paneli',
     metaDescription: 'Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, raporları görüntüleyin ve destek ekibinizi yönetin.',
   },
@@ -276,6 +291,8 @@ export default {
       passwordMismatch: 'Şifreler eşleşmiyor',
       termsRequired: 'Kullanım koşullarını kabul etmelisiniz',
     },
+    success: 'Başarıyla kayıt oldunuz!',
+    error: 'Kayıt başarısız',
     metaTitle: 'Hesap Oluştur - Support.io | Ücretsiz Başlayın',
     metaDescription: 'Support.io\'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.',
     metaKeywords: 'support.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla',
@@ -323,6 +340,23 @@ export default {
     messagePlaceholder: 'Mesajınızı yazın...',
     send: 'Gönder',
     selectConversation: 'Sohbet başlatmak için bir konuşma seçin',
+    deleteSuccess: 'Konuşma başarıyla silindi!',
+    deleteError: 'Konuşma silinirken hata oluştu',
+    fileUploadError: 'Dosya yüklenemedi. Lütfen tekrar deneyin.',
+    fileTooLarge: 'Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.',
+    assignedToYou: 'Konuşma size atandı!',
+    assignSuccess: 'Konuşma başarıyla atandı!',
+    assignError: 'Konuşma atanamadı!',
+    departmentChangeSuccess: 'Departman başarıyla değiştirildi!',
+    departmentChangeError: 'Departman değiştirilemedi!',
+    priorityChangeSuccess: 'Öncelik başarıyla değiştirildi!',
+    priorityChangeError: 'Öncelik değiştirilemedi!',
+    deleteTitle: 'Konuşmayı Sil',
+    deleteMessage: 'Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+    deleteConfirm: 'Evet, Sil',
+    claimError: 'Konuşma alınamadı!',
+    noEmail: 'E-posta yok',
+    deleteConversationTooltip: 'Konuşmayı Sil',
   },
   
   // Sites
@@ -354,6 +388,14 @@ export default {
       create: 'Site Ekle',
       cancel: 'İptal',
     },
+    createSuccess: 'Site başarıyla oluşturuldu!',
+    createError: 'Site oluşturulamadı',
+    deleteSuccess: 'Site başarıyla silindi!',
+    deleteError: 'Site silinemedi',
+    copiedSuccess: 'Kopyalandı!',
+    deleteTitle: 'Siteyi Sil',
+    deleteMessage: '"{{name}}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site\'ye ait tüm konuşmalar silinecektir.',
+    deleteConfirm: 'Evet, Sil',
   },
   
   // Settings
@@ -415,6 +457,11 @@ export default {
     active: 'Aktif',
     inactive: 'Pasif',
     confirmDelete: 'Bu SSS\'yi silmek istediğinizden emin misiniz?',
+    deleteSuccess: 'FAQ başarıyla silindi!',
+    deleteError: 'FAQ silinemedi',
+    createSuccess: 'FAQ başarıyla oluşturuldu!',
+    updateSuccess: 'FAQ başarıyla güncellendi!',
+    allPages: 'Tüm sayfalar',
   },
   
   // Sidebar
@@ -888,6 +935,14 @@ export default {
       createSuccess: 'Ekip üyesi başarıyla oluşturuldu!',
       updateSuccess: 'Ekip üyesi başarıyla güncellendi!',
     },
+    deleteSuccess: 'Ekip üyesi başarıyla silindi!',
+    deleteError: 'Ekip üyesi silinemedi!',
+    deleteTitle: 'Ekip Üyesini Sil',
+    deleteMessage: '"{{name}}" kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+    deleteConfirm: 'Evet, Sil',
+    saveError: 'Ekip üyesi kaydedilemedi!',
+    createSuccess: 'Ekip üyesi başarıyla eklendi!',
+    updateSuccess: 'Ekip üyesi başarıyla güncellendi!',
   },
 
   // Departments Page
@@ -915,6 +970,13 @@ export default {
     businessHours: 'Çalışma saatleri',
     edit: 'Düzenle',
     delete: 'Sil',
+    deleteTitle: 'Departmanı Sil',
+    deleteMessage: '"{{name}}" departmanını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+    deleteConfirm: 'Evet, Sil',
+    deleteCancel: 'İptal',
+    deleteSuccess: 'Departman başarıyla silindi!',
+    deleteError: 'Departman silinemedi!',
+    saveError: 'Departman kaydedilemedi!',
     confirmDelete: 'Bu departmanı silmek istediğinizden emin misiniz?',
     modal: {
       addTitle: 'Departman Ekle',

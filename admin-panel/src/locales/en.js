@@ -1,4 +1,16 @@
 export default {
+  // Common
+  common: {
+    ok: 'OK',
+    cancel: 'Cancel',
+    yes: 'Yes',
+    no: 'No',
+    confirm: 'Confirm',
+    delete: 'Delete',
+    save: 'Save',
+    close: 'Close',
+  },
+  
   // Header
   header: {
     features: 'Features',
@@ -19,6 +31,7 @@ export default {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     mobileMenu: 'Mobile menu',
+    switchToTurkish: 'Türkçe\'ye Geç',
   },
   
   // Sidebar
@@ -249,6 +262,8 @@ export default {
       passwordRequired: 'Password is required',
       invalidCredentials: 'Invalid email or password',
     },
+    success: 'Successfully logged in!',
+    error: 'Login failed',
     metaTitle: 'Login - Support.io Admin Panel',
     metaDescription: 'Sign in to your Support.io management panel. Manage customer conversations, view reports, and manage your support team.',
   },
@@ -276,6 +291,8 @@ export default {
       passwordMismatch: 'Passwords do not match',
       termsRequired: 'You must accept the terms and conditions',
     },
+    success: 'Successfully registered!',
+    error: 'Registration failed',
     metaTitle: 'Create Account - Support.io | Get Started Free',
     metaDescription: 'Join Support.io and improve your customer support. Start with our free plan, no credit card required.',
     metaKeywords: 'support.io registration, free account, customer support system registration, live chat start',
@@ -321,6 +338,23 @@ export default {
     messagePlaceholder: 'Type your message...',
     send: 'Send',
     selectConversation: 'Select a conversation to start chatting',
+    deleteSuccess: 'Conversation deleted successfully!',
+    deleteError: 'Error deleting conversation',
+    fileUploadError: 'Failed to upload file. Please try again.',
+    fileTooLarge: 'File is too large. Maximum 10MB allowed.',
+    assignedToYou: 'Conversation assigned to you!',
+    assignSuccess: 'Conversation assigned successfully!',
+    assignError: 'Failed to assign conversation!',
+    departmentChangeSuccess: 'Department changed successfully!',
+    departmentChangeError: 'Failed to change department!',
+    priorityChangeSuccess: 'Priority changed successfully!',
+    priorityChangeError: 'Failed to change priority!',
+    deleteTitle: 'Delete Conversation',
+    deleteMessage: 'Are you sure you want to delete this conversation and all messages? This action cannot be undone.',
+    deleteConfirm: 'Yes, Delete',
+    claimError: 'Failed to claim conversation!',
+    noEmail: 'No email',
+    deleteConversationTooltip: 'Delete conversation',
   },
   
   // Sites
@@ -352,6 +386,14 @@ export default {
       create: 'Add Site',
       cancel: 'Cancel',
     },
+    createSuccess: 'Site created successfully!',
+    createError: 'Failed to create site',
+    deleteSuccess: 'Site deleted successfully!',
+    deleteError: 'Failed to delete site',
+    copiedSuccess: 'Copied!',
+    deleteTitle: 'Delete Site',
+    deleteMessage: 'Are you sure you want to delete "{{name}}" site? This action cannot be undone and all conversations for this site will be deleted.',
+    deleteConfirm: 'Yes, Delete',
   },
   
   // Settings
@@ -413,6 +455,11 @@ export default {
     active: 'Active',
     inactive: 'Inactive',
     confirmDelete: 'Are you sure you want to delete this FAQ?',
+    deleteSuccess: 'FAQ deleted successfully!',
+    deleteError: 'Failed to delete FAQ',
+    createSuccess: 'FAQ created successfully!',
+    updateSuccess: 'FAQ updated successfully!',
+    allPages: 'All pages',
   },
   
   // Sidebar
@@ -884,6 +931,14 @@ export default {
       createSuccess: 'Team member created successfully!',
       updateSuccess: 'Team member updated successfully!',
     },
+    deleteSuccess: 'Team member deleted successfully!',
+    deleteError: 'Failed to delete team member!',
+    deleteTitle: 'Delete Team Member',
+    deleteMessage: 'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
+    deleteConfirm: 'Yes, Delete',
+    saveError: 'Failed to save team member!',
+    createSuccess: 'Team member added successfully!',
+    updateSuccess: 'Team member updated successfully!',
   },
 
   // Departments Page
@@ -911,6 +966,13 @@ export default {
     businessHours: 'Business hours',
     edit: 'Edit',
     delete: 'Delete',
+    deleteTitle: 'Delete Department',
+    deleteMessage: 'Are you sure you want to delete "{{name}}" department? This action cannot be undone.',
+    deleteConfirm: 'Yes, Delete',
+    deleteCancel: 'Cancel',
+    deleteSuccess: 'Department deleted successfully!',
+    deleteError: 'Failed to delete department!',
+    saveError: 'Failed to save department!',
     confirmDelete: 'Are you sure you want to delete this department?',
     modal: {
       addTitle: 'Add Department',

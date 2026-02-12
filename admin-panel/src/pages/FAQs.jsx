@@ -76,7 +76,7 @@ const FAQs = () => {
       resetForm();
       // Cache'i temizle
       clearCache('/faqs');
-      toast.success(editingFaq ? 'FAQ başarıyla güncellendi!' : 'FAQ başarıyla oluşturuldu!');
+      toast.success(editingFaq ? t('faqs.updateSuccess') : t('faqs.createSuccess'));
     } catch (error) {
       console.error('Failed to save FAQ:', error);
       toast.error('FAQ kaydedilemedi: ' + (error.response?.data?.error || error.message));
@@ -104,10 +104,10 @@ const FAQs = () => {
       setFaqs(faqs.filter(faq => faq._id !== faqId));
       // Cache'i temizle
       clearCache('/faqs');
-      toast.success('FAQ başarıyla silindi!');
+      toast.success(t('faqs.deleteSuccess'));
     } catch (error) {
       console.error('Failed to delete FAQ:', error);
-      toast.error('FAQ silinemedi: ' + (error.response?.data?.error || error.message));
+      toast.error(t('faqs.deleteError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -278,12 +278,12 @@ const FAQs = () => {
                     {faq.category}
                   </span>
                   <span className="text-gray-500 dark:text-gray-400">
-                    {faq.pageSpecific === '*' ? 'Tüm sayfalar' : faq.pageSpecific}
+                    {faq.pageSpecific === '*' ? t('faqs.allPages') : faq.pageSpecific}
                   </span>
                   <span className={`px-2 py-1 rounded-full ${
                     faq.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                   }`}>
-                    {faq.isActive ? 'Aktif' : 'Pasif'}
+                    {faq.isActive ? t('faqs.active') : t('faqs.inactive')}
                   </span>
                 </div>
               </div>
@@ -396,10 +396,10 @@ const FAQs = () => {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, faqId: null, faqQuestion: '' })}
         onConfirm={handleDelete}
-        title="FAQ Sil"
-        message={`"${confirmDialog.faqQuestion}" sorusunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Evet, Sil"
-        cancelText="İptal"
+        title={t('faqs.confirmDelete')}
+        message={`"${confirmDialog.faqQuestion}" ${t('faqs.confirmDelete')}`}
+        confirmText={t('common.yes')}
+        cancelText={t('common.cancel')}
         type="danger"
       />
       </div>

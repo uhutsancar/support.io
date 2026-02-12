@@ -190,10 +190,10 @@ const Conversations = () => {
       }
 
       console.log('✅ Conversation deleted successfully');
-      toast.success('Konuşma başarıyla silindi!');
+      toast.success(t('conversations.deleteSuccess'));
     } catch (error) {
       console.error('❌ Failed to delete conversation:', error);
-      toast.error('Konuşma silinirken hata oluştu: ' + (error.response?.data?.error || error.message));
+      toast.error(t('conversations.deleteError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -257,7 +257,7 @@ const Conversations = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       console.error('File upload error:', error);
-      toast.error('Dosya yüklenemedi. Lütfen tekrar deneyin.');
+      toast.error(t('conversations.fileUploadError'));
     }
   };
 
@@ -267,7 +267,7 @@ const Conversations = () => {
 
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      toast.error('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.');
+      toast.error(t('conversations.fileTooLarge'));
       return;
     }
 
@@ -332,10 +332,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
-      toast.success('Konuşma size atandı!');
+      toast.success(t('conversations.assignedToYou'));
     } catch (error) {
       console.error('Failed to claim conversation:', error);
-      toast.error(error.response?.data?.error || 'Konuşma alınamadı!');
+      toast.error(error.response?.data?.error || t('conversations.claimError'));
     }
   };
 
@@ -345,10 +345,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
-      toast.success('Konuşma başarıyla atandı!');
+      toast.success(t('conversations.assignSuccess'));
     } catch (error) {
       console.error('Failed to assign conversation:', error);
-      toast.error('Konuşma atanamadı!');
+      toast.error(t('conversations.assignError'));
     }
   };
 
@@ -358,10 +358,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
-      toast.success('Departman başarıyla değiştirildi!');
+      toast.success(t('conversations.departmentChangeSuccess'));
     } catch (error) {
       console.error('Failed to set department:', error);
-      toast.error('Departman değiştirilemedi!');
+      toast.error(t('conversations.departmentChangeError'));
     }
   };
 
@@ -371,10 +371,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
-      toast.success('Öncelik başarıyla değiştirildi!');
+      toast.success(t('conversations.priorityChangeSuccess'));
     } catch (error) {
       console.error('Failed to set priority:', error);
-      toast.error('Öncelik değiştirilemedi!');
+      toast.error(t('conversations.priorityChangeError'));
     }
   };
 
@@ -489,14 +489,14 @@ const Conversations = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white transition-colors duration-200 truncate">{selectedConversation.visitorName}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">{selectedConversation.visitorEmail || 'E-posta yok'}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">{selectedConversation.visitorEmail || t('conversations.noEmail')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
                 <button
                   onClick={() => openDeleteConfirm(selectedConversation._id)}
                   className="p-1.5 sm:p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
-                  title="Konuşmayı Sil"
+                  title={t('conversations.deleteConversationTooltip')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -646,10 +646,10 @@ const Conversations = () => {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, conversationId: null })}
         onConfirm={deleteConversation}
-        title="Konuşmayı Sil"
-        message="Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-        confirmText="Evet, Sil"
-        cancelText="İptal"
+        title={t('conversations.deleteTitle')}
+        message={t('conversations.deleteMessage')}
+        confirmText={t('conversations.deleteConfirm')}
+        cancelText={t('common.cancel')}
         type="danger"
       />
     </div>
