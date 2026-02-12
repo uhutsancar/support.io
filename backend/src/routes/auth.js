@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const Team = require('../models/Team');
 const { auth } = require('../middleware/auth');
 
 // Validation middleware
@@ -74,7 +75,16 @@ router.post('/login', validateLogin, async (req, res) => {
 
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email, isActive: true });
+    // First try to find in Users (admin/owner)
+    let user = await User.findOne({ email, isActive: true });
+    let userType = 'user';
+    
+    // If not found in Users, try Team (agent/manager)
+    if (!user) {
+      user = await Team.findOne({ email, isActive: true });
+      userType = 'team';
+    }
+    
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -84,9 +94,11 @@ router.post('/login', validateLogin, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = jwt.sign(
+      { userId: user._id, userType }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '7d' }
+    );
 
     // Update status to online
     user.status = 'online';
@@ -98,7 +110,8 @@ router.post('/login', validateLogin, async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        userType // 'user' or 'team'
       },
       token
     });

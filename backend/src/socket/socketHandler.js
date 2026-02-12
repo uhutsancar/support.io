@@ -2,6 +2,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const Site = require('../models/Site');
 const FAQ = require('../models/FAQ');
+const Team = require('../models/Team');
 
 class SocketHandler {
   constructor(io) {
@@ -283,8 +284,7 @@ class SocketHandler {
       socket.on('update-status', async (data) => {
         try {
           const { status } = data;
-          const User = require('../models/User');
-          await User.findByIdAndUpdate(socket.userId, { status });
+          await Team.findByIdAndUpdate(socket.userId, { status });
           
           // Broadcast to all admins
           this.adminNamespace.emit('agent-status-changed', {
@@ -300,7 +300,6 @@ class SocketHandler {
       socket.on('assign-conversation', async (data) => {
         try {
           const { conversationId, agentId } = data;
-          const User = require('../models/User');
           
           const conversation = await Conversation.findById(conversationId);
           if (!conversation) {
@@ -315,7 +314,7 @@ class SocketHandler {
           await conversation.save();
           
           // Update agent stats
-          await User.findByIdAndUpdate(agentId, {
+          await Team.findByIdAndUpdate(agentId, {
             $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
           });
           
@@ -335,7 +334,6 @@ class SocketHandler {
       socket.on('claim-conversation', async (data) => {
         try {
           const { conversationId } = data;
-          const User = require('../models/User');
           
           const conversation = await Conversation.findById(conversationId);
           if (!conversation) {
@@ -349,8 +347,9 @@ class SocketHandler {
           }
           
           // Check agent's load
-          const agent = await User.findById(socket.userId);
-          if (agent.stats.activeConversations >= agent.preferences.maxActiveConversations) {
+          const agent = await Team.findById(socket.userId);
+          const maxConversations = agent.permissions?.maxActiveConversations || 10;
+          if (agent.stats.activeConversations >= maxConversations) {
             socket.emit('error', { message: 'Maximum active conversations reached' });
             return;
           }
@@ -362,7 +361,7 @@ class SocketHandler {
           await conversation.save();
           
           // Update agent stats
-          await User.findByIdAndUpdate(socket.userId, {
+          await Team.findByIdAndUpdate(socket.userId, {
             $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
           });
           

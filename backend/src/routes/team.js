@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const User = require('../models/User');
+const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
 const Department = require('../models/Department');
 const { auth } = require('../middleware/auth');
@@ -17,7 +17,7 @@ router.get('/', auth, async (req, res) => {
       query.assignedSites = siteId;
     }
     
-    const members = await User.find(query)
+    const members = await Team.find(query)
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
@@ -32,7 +32,7 @@ router.get('/', auth, async (req, res) => {
 // Get single team member
 router.get('/:id', auth, async (req, res) => {
   try {
-    const member = await User.findById(req.params.id)
+    const member = await Team.findById(req.params.id)
       .select('-password')
       .populate('departments.departmentId', 'name color icon')
       .populate('assignedSites', 'name domain');
@@ -53,13 +53,13 @@ router.post('/', auth, async (req, res) => {
   try {
     const { email, password, name, role, assignedSites, departments, permissions } = req.body;
     
-    // Check if user already exists (only active users)
-    const existingUser = await User.findOne({ email, isActive: true });
-    if (existingUser) {
+    // Check if team member already exists (only active members)
+    const existingTeamMember = await Team.findOne({ email, isActive: true });
+    if (existingTeamMember) {
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
     }
     
-    const user = new User({
+    const teamMember = new Team({
       email,
       password,
       name,
@@ -71,9 +71,9 @@ router.post('/', auth, async (req, res) => {
       status: 'offline'
     });
     
-    await user.save();
+    await teamMember.save();
     
-    // Add user to departments
+    // Add team member to departments
     if (departments && departments.length > 0) {
       for (const dept of departments) {
         await Department.findByIdAndUpdate(
@@ -81,7 +81,7 @@ router.post('/', auth, async (req, res) => {
           {
             $addToSet: {
               members: {
-                userId: user._id,
+                userId: teamMember._id,
                 role: dept.role || 'agent'
               }
             }
@@ -90,7 +90,7 @@ router.post('/', auth, async (req, res) => {
       }
     }
     
-    const memberData = await User.findById(user._id)
+    const memberData = await Team.findById(teamMember._id)
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .populate('assignedSites', 'name domain');
@@ -117,7 +117,7 @@ router.put('/:id', auth, async (req, res) => {
       isActive
     };
     
-    const member = await User.findByIdAndUpdate(
+    const member = await Team.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true }
@@ -146,7 +146,7 @@ router.patch('/:id/status', auth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
     
-    const member = await User.findByIdAndUpdate(
+    const member = await Team.findByIdAndUpdate(
       req.params.id,
       { status },
       { new: true }
@@ -166,7 +166,7 @@ router.patch('/:id/status', auth, async (req, res) => {
 // Get team member statistics
 router.get('/:id/stats', auth, async (req, res) => {
   try {
-    const member = await User.findById(req.params.id);
+    const member = await Team.findById(req.params.id);
     
     if (!member) {
       return res.status(404).json({ error: 'Team member not found' });
@@ -180,7 +180,7 @@ router.get('/:id/stats', auth, async (req, res) => {
       closed: await Conversation.countDocuments({ assignedAgent: member._id, status: 'closed' }),
       avgResponseTime: member.stats.averageResponseTime || 0,
       currentLoad: member.stats.activeConversations || 0,
-      maxLoad: member.preferences.maxActiveConversations || 10
+      maxLoad: member.permissions?.maxActiveConversations || 10
     };
     
     res.json(stats);
@@ -193,7 +193,7 @@ router.get('/:id/stats', auth, async (req, res) => {
 // Delete team member
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const member = await User.findById(req.params.id);
+    const member = await Team.findById(req.params.id);
     
     if (!member) {
       return res.status(404).json({ error: 'Team member not found' });
@@ -222,7 +222,7 @@ router.delete('/:id', auth, async (req, res) => {
       }
     );
     
-    await User.findByIdAndDelete(req.params.id);
+    await Team.findByIdAndDelete(req.params.id);
     
     res.json({ message: 'Team member deleted successfully' });
   } catch (error) {

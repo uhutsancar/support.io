@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Team = require('../models/Team');
 
 const auth = async (req, res, next) => {
   try {
@@ -10,13 +11,21 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ _id: decoded.userId, isActive: true });
+    
+    // Check userType to determine which model to use
+    let user;
+    if (decoded.userType === 'team') {
+      user = await Team.findOne({ _id: decoded.userId, isActive: true });
+    } else {
+      user = await User.findOne({ _id: decoded.userId, isActive: true });
+    }
 
     if (!user) {
       throw new Error('User not found');
     }
 
     req.user = user;
+    req.userType = decoded.userType || 'user';
     req.token = token;
     next();
   } catch (error) {
