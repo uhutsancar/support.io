@@ -4,17 +4,25 @@ import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { MessageSquare } from 'lucide-react';
 import logo from '../public/support.io.webp';
 
 const Register = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    login: `${langPrefix}/login`,
+    dashboard: `${langPrefix}/dashboard`
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +30,7 @@ const Register = () => {
 
     try {
       await register(name, email, password);
-      navigate('/dashboard');
+      navigate(routes.dashboard);
       toast.success('Başarıyla kayıt oldunuz!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Kayıt başarısız');
@@ -108,7 +116,7 @@ const Register = () => {
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {t('register.hasAccount')}{' '}
-            <Link to="/login" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">
+            <Link to={routes.login} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">
               {t('register.login')}
             </Link>
           </p>

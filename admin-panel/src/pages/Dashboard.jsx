@@ -2,15 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { MessageSquare, Globe, Users, TrendingUp, RefreshCw } from 'lucide-react';
 import { sitesAPI, conversationsAPI, faqsAPI, clearCache } from '../services/api';
 import { io } from 'socket.io-client';
 
 const Dashboard = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Dile göre URL prefix
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    sites: `${langPrefix}/dashboard/sites`,
+    conversations: `${langPrefix}/dashboard/conversations`,
+    faqs: `${langPrefix}/dashboard/faqs`
+  };
   const [stats, setStats] = useState({
     totalConversations: 0,
     activeSites: 0,
@@ -193,7 +203,7 @@ const Dashboard = () => {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button 
-            onClick={() => navigate('/dashboard/sites')}
+            onClick={() => navigate(routes.sites)}
             className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
           >
             <Globe className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
@@ -201,7 +211,7 @@ const Dashboard = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.newSiteDescription')}</p>
           </button>
           <button 
-            onClick={() => navigate('/dashboard/conversations')}
+            onClick={() => navigate(routes.conversations)}
             className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
           >
             <MessageSquare className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
@@ -209,7 +219,7 @@ const Dashboard = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.viewConversationsDescription')}</p>
           </button>
           <button 
-            onClick={() => navigate('/dashboard/faqs')}
+            onClick={() => navigate(routes.faqs)}
             className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
           >
             <TrendingUp className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
@@ -224,7 +234,7 @@ const Dashboard = () => {
         <h2 className="text-2xl font-bold mb-4">🚀 {t('dashboard.gettingStarted')}</h2>
         <div className="space-y-3">
           <button
-            onClick={() => navigate('/dashboard/sites')}
+            onClick={() => navigate(routes.sites)}
             className="w-full flex items-start space-x-3 p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition text-left"
           >
             <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -245,7 +255,7 @@ const Dashboard = () => {
             </div>
           </div>
           <button
-            onClick={() => navigate('/dashboard/conversations')}
+            onClick={() => navigate(routes.conversations)}
             className="w-full flex items-start space-x-3 p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition text-left"
           >
             <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">

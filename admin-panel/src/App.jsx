@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -35,6 +35,8 @@ const LoadingSpinner = () => (
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const langPrefix = location.pathname.startsWith('/en') ? '/en' : '';
 
   if (loading) {
     return (
@@ -44,12 +46,14 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? children : <Navigate to={`${langPrefix}/login`} />;
 };
 
 // Public Route Component
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const langPrefix = location.pathname.startsWith('/en') ? '/en' : '';
 
   if (loading) {
     return (
@@ -59,16 +63,23 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
+  return !isAuthenticated ? children : <Navigate to={`${langPrefix}/dashboard`} />;
+};
+
+// Default Redirect Component
+const DefaultRedirect = () => {
+  const location = useLocation();
+  const langPrefix = location.pathname.startsWith('/en') ? '/en' : '';
+  return <Navigate to={langPrefix || '/'} />;
 };
 
 function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <BrowserRouter>
+        <BrowserRouter>
+          <LanguageProvider>
+            <AuthProvider>
             <Toaster 
               position="top-right"
               toastOptions={{
@@ -95,7 +106,7 @@ function App() {
             />
           <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-          {/* Public routes */}
+          {/* Turkish routes (default) */}
           <Route path="/" element={<Home />} />
           <Route path="/ozellikler" element={<Features />} />
           <Route path="/fiyatlandirma" element={<Pricing />} />
@@ -119,7 +130,31 @@ function App() {
             }
           />
 
-          {/* Protected routes */}
+          {/* English routes (/en prefix) */}
+          <Route path="/en" element={<Home />} />
+          <Route path="/en/features" element={<Features />} />
+          <Route path="/en/pricing" element={<Pricing />} />
+          <Route path="/en/documentation" element={<Docs />} />
+          <Route path="/en/about" element={<About />} />
+          
+          <Route
+            path="/en/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/en/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+
+          {/* Protected routes (Turkish) */}
           <Route
             path="/dashboard"
             element={
@@ -137,13 +172,31 @@ function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
 
+          {/* Protected routes (English) */}
+          <Route
+            path="/en/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="sites" element={<Sites />} />
+            <Route path="conversations" element={<Conversations />} />
+            <Route path="faqs" element={<FAQs />} />
+            <Route path="team" element={<Team />} />
+            <Route path="departments" element={<Departments />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+
           {/* Default redirect */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<DefaultRedirect />} />
         </Routes>
         </Suspense>
-        </BrowserRouter>
       </AuthProvider>
       </LanguageProvider>
+        </BrowserRouter>
     </ThemeProvider>
     </HelmetProvider>
   );

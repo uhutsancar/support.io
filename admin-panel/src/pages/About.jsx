@@ -2,11 +2,19 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { MessageSquare, Target, Users, Heart, ArrowRight } from 'lucide-react';
 import Header from '../components/Header';
 
 const About = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    register: `${langPrefix}/register`,
+    home: langPrefix || '/'
+  };
   const values = [
     {
       icon: Target,
@@ -218,7 +226,7 @@ const About = () => {
               {t('home.cta.description')}
             </p>
             <Link
-              to="/register"
+              to={routes.register}
               className="inline-flex items-center bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 transition"
             >
               {t('home.cta.button')}
@@ -232,7 +240,7 @@ const About = () => {
       <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 dark:text-gray-300">
-            <Link to="/" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
+            <Link to={routes.home} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
               Ana Sayfaya Dön
             </Link>
           </div>

@@ -351,7 +351,6 @@ router.delete('/:siteId/:conversationId', auth, async (req, res) => {
         siteId,
         conversationId
       });
-      console.log('📊 Stats update broadcast sent - conversation deleted');
     }
 
     res.json({ message: 'Conversation deleted successfully' });

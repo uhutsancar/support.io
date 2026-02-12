@@ -2,11 +2,19 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Check, ArrowRight, Zap } from 'lucide-react';
 import Header from '../components/Header';
 
 const Pricing = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    register: `${langPrefix}/register`,
+    home: langPrefix || '/'
+  };
   const plans = t('pricingPage.plans', { returnObjects: true }) || [];
   const faqs = t('pricingPage.faqs', { returnObjects: true }) || [];
 
@@ -171,7 +179,7 @@ const Pricing = () => {
             {t('pricingPage.ctaDescription')}
           </p>
           <Link
-            to="/register"
+            to={routes.register}
             className="inline-flex items-center bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 transition"
           >
             {t('pricingPage.ctaButton')}
@@ -184,7 +192,7 @@ const Pricing = () => {
       <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 dark:text-gray-300">
-            <Link to="/" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            <Link to={routes.home} className="text-indigo-600 hover:text-indigo-700 font-medium">
               {t('pricingPage.backToHome')}
             </Link>
           </div>

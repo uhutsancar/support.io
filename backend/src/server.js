@@ -151,11 +151,8 @@ app.use(express.static('public', {
 // Demo page serve et
 app.use('/demo', express.static('../demo'));
 
-console.log('✅ Endpoint\'ler yapılandırıldı');
-
 // Initialize Socket.io handlers
 new SocketHandler(io);
-console.log('✅ WebSocket handler\'ları başlatıldı');
 
 // Connect to database and start server
 const PORT = process.env.PORT || 3000;
@@ -164,33 +161,30 @@ connectDB().then(async () => {
   // Migration: Update old 'open' status to 'unassigned'
   try {
     const Conversation = require('./models/Conversation');
-    const result = await Conversation.updateMany(
+    await Conversation.updateMany(
       { status: 'open' },
       { $set: { status: 'unassigned' } }
     );
-    if (result.modifiedCount > 0) {
-      console.log(`✅ Migrated ${result.modifiedCount} conversations from 'open' to 'unassigned'`);
-    }
   } catch (error) {
-    console.log('⚠️  Migration warning:', error.message);
+    console.error('Migration error:', error.message);
   }
 
   server.listen(PORT, () => {
-    console.log(`✅ Server started on port ${PORT}`);
+    console.log(`Server started on port ${PORT}`);
   });
 }).catch((error) => {
-  console.error('❌ Server failed to start:', error.message);
+  console.error('Server failed to start:', error.message);
   process.exit(1);
 });
 
 // Error handling
 process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled error:', err.message);
+  console.error('Unhandled error:', err.message);
   process.exit(1);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Server shutting down...');
+  console.log('Server shutting down...');
   server.close(() => {
     process.exit(0);
   });

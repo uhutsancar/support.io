@@ -2,6 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { 
   MessageSquare, 
   Zap, 
@@ -17,6 +18,22 @@ import logo from '../public/support.io_logo.webp';
 
 const Home = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  
+  // Dile göre URL prefix
+  const langPrefix = language === 'en' ? '/en' : '';
+  
+  // Dile göre route'lar
+  const routes = {
+    home: langPrefix || '/',
+    features: language === 'en' ? '/en/features' : '/ozellikler',
+    pricing: language === 'en' ? '/en/pricing' : '/fiyatlandirma',
+    docs: language === 'en' ? '/en/documentation' : '/dokumantasyon',
+    about: language === 'en' ? '/en/about' : '/hakkimizda',
+    login: `${langPrefix}/login`,
+    register: `${langPrefix}/register`,
+    dashboard: `${langPrefix}/dashboard`
+  };
   
   const features = [
     {
@@ -88,7 +105,7 @@ const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/register"
+                to={routes.register}
                 className="bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-gray-800 transition flex items-center justify-center"
                 aria-label="Ücretsiz hesap oluşturmak için kayıt olun"
               >
@@ -96,7 +113,7 @@ const Home = () => {
                 <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
               </Link>
               <Link
-                to="/ozellikler"
+                to={routes.features}
                 className="bg-indigo-600 bg-opacity-30 backdrop-blur-sm text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-opacity-40 dark:bg-purple-600 dark:bg-opacity-40 dark:hover:bg-opacity-50 transition border-2 border-white border-opacity-30 dark:border-opacity-40"
                 aria-label="Ürün özelliklerini keşfedin"
               >
@@ -189,7 +206,7 @@ const Home = () => {
                 </li>
               </ul>
               <Link
-                to="/register"
+                to={routes.register}
                 className="block w-full bg-white text-indigo-600 py-3 rounded-lg font-semibold text-center hover:bg-indigo-50 dark:bg-gray-900 dark:text-indigo-400 dark:hover:bg-gray-800 transition"
                 aria-label="Ücretsiz denemeye başlayın"
               >
@@ -210,7 +227,7 @@ const Home = () => {
             {t('home.cta.description')}
           </p>
           <Link
-            to="/register"
+            to={routes.register}
             className="inline-flex items-center bg-indigo-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition"
             aria-label="Ücretsiz hesap oluşturun"
           >
@@ -237,23 +254,23 @@ const Home = () => {
             <nav aria-label="Ürün menüsü">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">{t('home.footer.product')}</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/ozellikler" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.features')}</Link></li>
-                <li><Link to="/fiyatlandirma" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.pricing')}</Link></li>
+                <li><Link to={routes.features} className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.features')}</Link></li>
+                <li><Link to={routes.pricing} className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.pricing')}</Link></li>
               </ul>
             </nav>
             
             <nav aria-label="Şirket menüsü">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">{t('home.footer.company')}</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/hakkimizda" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.about')}</Link></li>
+                <li><Link to={routes.about} className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.about')}</Link></li>
               </ul>
             </nav>
             
             <nav aria-label="Destek menüsü">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4 text-base">{t('home.footer.support')}</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/login" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.login')}</Link></li>
-                <li><Link to="/register" className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.register')}</Link></li>
+                <li><Link to={routes.login} className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.login')}</Link></li>
+                <li><Link to={routes.register} className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">{t('header.register')}</Link></li>
               </ul>
             </nav>
           </div>

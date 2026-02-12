@@ -11,17 +11,12 @@ router.get('/site/:siteId', auth, async (req, res) => {
   try {
     const { siteId } = req.params;
     
-    console.log('🔍 Fetching departments for siteId:', siteId);
-    
     const departments = await Department.find({ 
       siteId: siteId,
       isActive: true 
     })
       .populate('members.userId', 'name email avatar status')
       .sort({ createdAt: -1 });
-    
-    console.log('✅ Found', departments.length, 'departments');
-    console.log('📁 Departments:', departments.map(d => ({ id: d._id, name: d.name, membersCount: d.members?.length || 0 })));
     
     res.json(departments);
   } catch (error) {
@@ -52,8 +47,6 @@ router.post('/', auth, async (req, res) => {
   try {
     const { name, description, siteId, color, icon, members, autoAssignRules, businessHours } = req.body;
     
-    console.log('📁 Creating new department:', { name, siteId, membersCount: members?.length || 0 });
-    
     const department = new Department({
       name,
       description,
@@ -66,7 +59,6 @@ router.post('/', auth, async (req, res) => {
     });
     
     await department.save();
-    console.log('💾 Department saved to database:', department._id);
     
     // Update user departments
     if (members && members.length > 0) {
@@ -87,7 +79,6 @@ router.post('/', auth, async (req, res) => {
     
     await department.populate('members.userId', 'name email avatar status');
     
-    console.log('✅ Department created successfully:', department._id);
     res.status(201).json(department);
   } catch (error) {
     console.error('❌ Error creating department:', error);
@@ -241,12 +232,9 @@ router.get('/:id/stats', auth, async (req, res) => {
 // Delete department
 router.delete('/:id', auth, async (req, res) => {
   try {
-    console.log('🗑️ Deleting department:', req.params.id);
-    
     const department = await Department.findById(req.params.id);
     
     if (!department) {
-      console.log('❌ Department not found:', req.params.id);
       return res.status(404).json({ error: 'Department not found' });
     }
     
@@ -275,7 +263,6 @@ router.delete('/:id', auth, async (req, res) => {
     
     await Department.findByIdAndDelete(req.params.id);
     
-    console.log('✅ Department deleted successfully:', req.params.id);
     res.json({ message: 'Department deleted successfully' });
   } catch (error) {
     console.error('Error deleting department:', error);

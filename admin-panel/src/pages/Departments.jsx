@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 import { departmentsAPI, teamAPI, sitesAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -12,7 +13,13 @@ import {
 
 const Departments = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
+  
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    sites: `${langPrefix}/dashboard/sites`
+  };
   const [departments, setDepartments] = useState([]);
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
@@ -178,7 +185,7 @@ const Departments = () => {
           <Globe className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 mb-4">{t('departments.noSites')}</p>
           <button
-            onClick={() => navigate('/dashboard/sites')}
+            onClick={() => navigate(routes.sites)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             {t('departments.addSiteFirst')}

@@ -78,7 +78,6 @@ class SocketHandler {
           this.adminNamespace.to(`site:${site._id}`).emit('conversation-update', {
             conversation
           });
-          console.log(`🔔 Conversation update sent to site: ${site._id}`);
 
         } catch (error) {
           console.error('Join conversation error:', error);
@@ -152,9 +151,6 @@ class SocketHandler {
             timestamp: new Date()
           });
 
-          console.log(`📨 Message sent to admins: conversation:${conversationId} & site:${conversation.siteId}`);
-          console.log(`🔔 Notification sent to all admins`);
-
           // Try to auto-respond with FAQ
           await this.tryAutoResponse(conversation, content);
 
@@ -189,7 +185,6 @@ class SocketHandler {
           socket.join(`site:${siteId}`);
           socket.siteId = siteId;
           socket.userId = userId;
-          console.log(`👤 Admin ${userId} joined site room: ${siteId}`);
         } catch (error) {
           console.error('Join site error:', error.message);
         }
@@ -200,7 +195,6 @@ class SocketHandler {
         try {
           const { conversationId } = data;
           socket.join(`conversation:${conversationId}`);
-          console.log(`💬 Admin joined conversation room: ${conversationId}`);
           
           // Mark messages as read
           await Message.updateMany(
@@ -273,8 +267,6 @@ class SocketHandler {
             conversation
           });
 
-          console.log(`📤 Agent message sent to: conversation:${conversationId} & site:${conversation.siteId}`);
-
         } catch (error) {
           console.error('Send message error:', error);
           socket.emit('error', { message: error.message });
@@ -333,8 +325,6 @@ class SocketHandler {
             agentId,
             assignedBy: socket.userId
           });
-          
-          console.log(`👤 Conversation ${conversationId} assigned to ${agentId}`);
         } catch (error) {
           console.error('Assign conversation error:', error);
           socket.emit('error', { message: error.message });
@@ -381,8 +371,6 @@ class SocketHandler {
             conversationId,
             agentId: socket.userId
           });
-          
-          console.log(`👋 Agent ${socket.userId} claimed conversation ${conversationId}`);
         } catch (error) {
           console.error('Claim conversation error:', error);
           socket.emit('error', { message: error.message });
@@ -416,8 +404,6 @@ class SocketHandler {
             conversationId,
             departmentId
           });
-          
-          console.log(`📁 Conversation ${conversationId} moved to department ${departmentId}`);
         } catch (error) {
           console.error('Set department error:', error);
           socket.emit('error', { message: error.message });
@@ -476,8 +462,6 @@ class SocketHandler {
           message: autoMessage,
           conversation
         });
-
-        console.log(`🤖 Bot message sent to: conversation:${conversation._id} & site:${conversation.siteId}`);
       }
     } catch (error) {
       console.error('Auto-response error:', error);

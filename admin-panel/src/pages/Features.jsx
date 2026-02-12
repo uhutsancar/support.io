@@ -2,6 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { 
   MessageSquare, 
   Zap, 
@@ -21,6 +22,13 @@ import Header from '../components/Header';
 
 const Features = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    register: `${langPrefix}/register`,
+    home: langPrefix || '/'
+  };
   const mainFeatures = (t('featuresPage.features', { returnObjects: true }) || []).map((feature, index) => {
     const icons = [MessageSquare, Users, Globe, Sparkles, BarChart, Bell, Smartphone, Settings, FileText, Shield, Zap, Clock];
     return {
@@ -132,7 +140,7 @@ const Features = () => {
             Ücretsiz hesap oluşturun ve tüm özellikleri keşfedin. Kredi kartı gerekmez.
           </p>
           <Link
-            to="/register"
+            to={routes.register}
             className="inline-flex items-center bg-white dark:bg-gray-100 text-indigo-600 dark:text-indigo-700 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-indigo-50 dark:hover:bg-gray-200 transition"
           >
             {t('featuresPage.cta')}
@@ -145,7 +153,7 @@ const Features = () => {
       <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 dark:text-gray-300">
-            <Link to="/" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
+            <Link to={routes.home} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium">
               {t('featuresPage.backToHome')}
             </Link>
           </div>

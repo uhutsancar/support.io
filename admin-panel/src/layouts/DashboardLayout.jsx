@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { 
   MessageSquare, 
   LayoutDashboard, 
@@ -23,11 +24,20 @@ import logo from '../public/support.io_logo.webp';
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const { t, i18n } = useTranslation();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  
+  // Dile göre URL prefix
+  const langPrefix = language === 'en' ? '/en' : '';
+  const routes = {
+    home: langPrefix || '/',
+    login: `${langPrefix}/login`,
+    dashboard: `${langPrefix}/dashboard`
+  };
 
   // Debug i18n
   useEffect(() => {
@@ -41,7 +51,7 @@ const DashboardLayout = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate(routes.login);
   };
 
   // Socket connection and notification setup
@@ -85,13 +95,13 @@ const DashboardLayout = () => {
   };
 
   const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: t('sidebar.dashboard') },
-    { path: '/dashboard/sites', icon: Globe, label: t('sidebar.sites') },
-    { path: '/dashboard/conversations', icon: MessageCircle, label: t('sidebar.conversations') },
-    { path: '/dashboard/departments', icon: Folder, label: t('sidebar.departments') },
-    { path: '/dashboard/team', icon: Users, label: t('sidebar.team') },
-    { path: '/dashboard/faqs', icon: HelpCircle, label: t('sidebar.faqs') },
-    { path: '/dashboard/settings', icon: Settings, label: t('sidebar.settings') },
+    { path: `${langPrefix}/dashboard`, icon: LayoutDashboard, label: t('sidebar.dashboard') },
+    { path: `${langPrefix}/dashboard/sites`, icon: Globe, label: t('sidebar.sites') },
+    { path: `${langPrefix}/dashboard/conversations`, icon: MessageCircle, label: t('sidebar.conversations') },
+    { path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') },
+    { path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') },
+    { path: `${langPrefix}/dashboard/faqs`, icon: HelpCircle, label: t('sidebar.faqs') },
+    { path: `${langPrefix}/dashboard/settings`, icon: Settings, label: t('sidebar.settings') },
   ];
 
   return (
@@ -101,7 +111,7 @@ const DashboardLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <Link to="/" className="flex items-center cursor-pointer">
+            <Link to={routes.home} className="flex items-center cursor-pointer">
               <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
             </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500 dark:text-gray-400">
@@ -115,7 +125,7 @@ const DashboardLayout = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === '/dashboard'}
+                end={item.path === `${langPrefix}/dashboard`}
                 className={({ isActive }) =>
                   `flex items-center justify-between px-4 py-3 rounded-lg transition ${
                     isActive

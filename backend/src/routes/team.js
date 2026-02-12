@@ -11,32 +11,16 @@ router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;
     
-    console.log('🔍 Fetching team members for siteId:', siteId);
-    console.log('🔍 siteId type:', typeof siteId);
-    
     let query = { isActive: true };
     
     if (siteId) {
-      // MongoDB automatically searches in arrays with single value
       query.assignedSites = siteId;
-      console.log('📝 Query:', JSON.stringify(query));
     }
     
     const members = await User.find(query)
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
-    
-    console.log('✅ Found', members.length, 'team members');
-    if (members.length > 0) {
-      console.log('👥 Members details:', members.map(m => ({
-        id: m._id,
-        name: m.name,
-        email: m.email,
-        assignedSites: m.assignedSites,
-        assignedSitesType: Array.isArray(m.assignedSites) ? 'array' : typeof m.assignedSites
-      })));
-    }
     
     res.json(members);
   } catch (error) {
@@ -69,12 +53,9 @@ router.post('/', auth, async (req, res) => {
   try {
     const { email, password, name, role, assignedSites, departments, permissions } = req.body;
     
-    console.log('👥 Creating new team member:', { email, name, role });
-    
     // Check if user already exists (only active users)
     const existingUser = await User.findOne({ email, isActive: true });
     if (existingUser) {
-      console.log('❌ User already exists:', email);
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
     }
     
@@ -90,16 +71,7 @@ router.post('/', auth, async (req, res) => {
       status: 'offline'
     });
     
-    console.log('📝 User object before save:', {
-      email: user.email,
-      name: user.name,
-      assignedSites: user.assignedSites,
-      role: user.role
-    });
-    
     await user.save();
-    console.log('💾 User saved to database:', user._id);
-    console.log('🔍 Saved assignedSites:', user.assignedSites);
     
     // Add user to departments
     if (departments && departments.length > 0) {
@@ -122,15 +94,6 @@ router.post('/', auth, async (req, res) => {
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .populate('assignedSites', 'name domain');
-    
-    console.log('✅ Team member created successfully:', memberData._id);
-    console.log('🔍 Response assignedSites:', memberData.assignedSites);
-    console.log('📦 Full response:', JSON.stringify({
-      _id: memberData._id,
-      name: memberData.name,
-      email: memberData.email,
-      assignedSites: memberData.assignedSites
-    }, null, 2));
     
     res.status(201).json(memberData);
   } catch (error) {
@@ -230,12 +193,9 @@ router.get('/:id/stats', auth, async (req, res) => {
 // Delete team member
 router.delete('/:id', auth, async (req, res) => {
   try {
-    console.log('🗑️ Deleting team member:', req.params.id);
-    
     const member = await User.findById(req.params.id);
     
     if (!member) {
-      console.log('❌ Team member not found:', req.params.id);
       return res.status(404).json({ error: 'Team member not found' });
     }
     
@@ -264,7 +224,6 @@ router.delete('/:id', auth, async (req, res) => {
     
     await User.findByIdAndDelete(req.params.id);
     
-    console.log('✅ Team member deleted successfully:', req.params.id);
     res.json({ message: 'Team member deleted successfully' });
   } catch (error) {
     console.error('Error deleting team member:', error);
