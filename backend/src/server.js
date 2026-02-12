@@ -139,9 +139,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// Admin panel - serve built files - USE ABSOLUTE PATH!
+// Admin panel - serve built files
 const adminPanelPath = path.join(__dirname, '../../admin-panel/dist');
-console.log('📁 Serving admin panel from:', adminPanelPath);
 app.use(express.static(adminPanelPath, {
   maxAge: '1h',
   etag: true,

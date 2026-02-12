@@ -37,7 +37,6 @@ const Departments = () => {
 
   useEffect(() => {
     if (selectedSite) {
-      console.log('🔄 selectedSite changed, fetching departments:', selectedSite);
       fetchDepartments();
       fetchTeamMembers();
     }
@@ -62,13 +61,8 @@ const Departments = () => {
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching departments for site:', selectedSite);
       const response = await departmentsAPI.getAll(selectedSite);
-      console.log('✅ Departments data received:', response.data);
-      console.log('📁 Number of departments:', response.data?.length || 0);
-      console.log('🔄 Updating departments state...');
       setDepartments(response.data || []);
-      console.log('✅ Departments state updated');
       
       // Fetch stats for each department
       const statsData = {};
@@ -91,13 +85,10 @@ const Departments = () => {
 
   const fetchTeamMembers = async () => {
     try {
-      console.log('🔄 Fetching team members for site:', selectedSite);
       const response = await teamAPI.getAll(selectedSite);
-      console.log('✅ Team members fetched:', response.data);
-      console.log('  📊 Count:', response.data?.length || 0);
       setTeamMembers(response.data || []);
     } catch (error) {
-      console.error('❌ Error fetching team members:', error);
+      console.error('Error fetching team members:', error);
     }
   };
 
@@ -105,13 +96,11 @@ const Departments = () => {
     const { departmentId } = confirmDialog;
     
     try {
-      const response = await departmentsAPI.delete(departmentId);
-      console.log('✅ Department deleted:', response.data);
-      // Remove from state and fetch fresh data
+      await departmentsAPI.delete(departmentId);
       await fetchDepartments();
       toast.success(t('departments.deleteSuccess'));
     } catch (error) {
-      console.error('❌ Error deleting department:', error);
+      console.error('Error deleting department:', error);
       toast.error(error.response?.data?.error || error.response?.data?.message || t('departments.deleteError'));
     }
   };
@@ -342,11 +331,7 @@ const Departments = () => {
             setSelectedDepartment(null);
           }}
           onSave={async (newDepartment) => {
-            console.log('💾 onSave called with:', newDepartment);
-            // Wait for data refresh to complete
             await fetchDepartments();
-            console.log('✅ fetchDepartments completed');
-            // Then close modal
             setShowAddModal(false);
             setSelectedDepartment(null);
           }}
@@ -374,23 +359,14 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
   
   const langPrefix = language === 'en' ? '/en' : '';
   
-  console.log('🎬 ===== MODAL MOUNT/RE-RENDER =====');
-  console.log('  📁 department:', department);
-  console.log('  👥 teamMembers count:', teamMembers?.length);
-  console.log('  🌍 siteId:', siteId);
-  
   const initialMembers = department?.members?.map(m => {
     const memberId = m.userId?._id || m.userId;
     const memberRole = m.role;
-    console.log(`    Member: ${memberId}, role: ${memberRole}`);
     return {
       userId: memberId,
       role: memberRole
     };
   }) || [];
-  
-  console.log('  📋 initialMembers:', initialMembers);
-  console.log('  📊 initialMembers count:', initialMembers.length);
   
   const [formData, setFormData] = useState({
     name: department?.name || '',
@@ -408,24 +384,12 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       timezone: 'Europe/Istanbul'
     }
   });
-  
-  console.log('  📦 Initial formData:', formData);
-  console.log('  👥 formData.members:', formData.members);
 
   const [selectedMember, setSelectedMember] = useState('');
   const [memberRole, setMemberRole] = useState('agent');
   const [saving, setSaving] = useState(false);
 
-  // Track formData.members changes
-  useEffect(() => {
-    console.log('🔄 formData.members CHANGED:', formData.members);
-    console.log('  📊 Count:', formData.members?.length);
-  }, [formData.members]);
-
   const handleAddMember = () => {
-    console.log('🔴🔴🔴 HANDLE ADD MEMBER ÇAĞRILDI! 🔴🔴🔴');
-    console.log('  🔵 selectedMember value:', selectedMember);
-    console.log('  🔵 memberRole value:', memberRole);
     
     if (!selectedMember) {
       console.log('⚠️ No member selected - RETURNING!');
@@ -445,33 +409,21 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       );
       
       if (exists) {
-        console.log('⚠️ Member already exists');
         toast.error(t('departments.modal.memberExists'));
-        return prevFormData; // Return unchanged state
+        return prevFormData;
       }
-      
-      const updatedMembers = [
-        ...prevFormData.members,
-        newMember
-      ];
-      
-      console.log('  📋 Updated members array:', updatedMembers);
-      console.log('  📊 Total members:', updatedMembers.length);
       
       return {
         ...prevFormData,
-        members: updatedMembers
+        members: [...prevFormData.members, newMember]
       };
     });
-    
-    console.log('✅ Member add triggered');
     
     setSelectedMember('');
     setMemberRole('agent');
   };
 
   const handleRemoveMember = (userId) => {
-    console.log('➖ Removing member:', userId);
     setFormData(prevFormData => ({
       ...prevFormData,
       members: prevFormData.members.filter(m => 
@@ -483,13 +435,6 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('🔴🔴🔴 ===== FORM SUBMIT BAŞLADI ===== 🔴🔴🔴');
-    console.log('  📦 formData:', formData);
-    console.log('  👥 formData.members:', formData.members);
-    console.log('  📊 Members count:', formData.members?.length);
-    
-    // Clean members data - ensure we only send userId and role
-    console.log('🔹 Step 1: Cleaning members data...');
     const cleanedData = {
       ...formData,
       members: (formData.members || []).map(m => ({
@@ -498,39 +443,21 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       }))
     };
     
-    console.log('🔹 Step 2: Cleaned data ready');
-    console.log('  🧹 cleanedData.members:', cleanedData.members);
-    console.log('  📊 Members count:', cleanedData.members.length);
-    
     setSaving(true);
 
     try {
-      console.log('🔹 Step 3: Entering try block');
       let response;
       if (department) {
-        console.log('🔹 Step 4: UPDATE mode - calling API...');
-        console.log('  🆔 Department ID:', department._id);
         response = await departmentsAPI.update(department._id, cleanedData);
-        console.log('✅ UPDATE response:', response.data);
       } else {
-        console.log('🔹 Step 4: CREATE mode - calling API...');
         response = await departmentsAPI.create(cleanedData);
-        console.log('✅ CREATE response:', response.data);
       }
       
-      console.log('🔹 Step 5: API call completed successfully');
-      console.log('💾 Calling onSave...');
-      // Let parent handle data refresh and modal closing
       await onSave(department ? null : response.data);
-      console.log('✅ onSave completed');
       toast.success(department ? t('departments.modal.updateSuccess') : t('departments.modal.createSuccess'));
       setSaving(false);
     } catch (error) {
-      console.error('🔴🔴🔴 ERROR IN CATCH BLOCK 🔴🔴🔴');
-      console.error('🔴 Error object:', error);
-      console.error('🔴 Error message:', error.message);
-      console.error('🔴 Error stack:', error.stack);
-      console.error('🔴 Error response:', error.response?.data);
+      console.error('Error saving department:', error);
       toast.error(error.response?.data?.error || error.message || t('departments.saveError'));
       setSaving(false);
     }

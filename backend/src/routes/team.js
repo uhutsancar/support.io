@@ -11,33 +11,20 @@ router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;
     
-    console.log('📥 GET /team request');
-    console.log('  🔍 siteId:', siteId);
-    
     let query = { isActive: true };
     
     if (siteId) {
       query.assignedSites = siteId;
     }
     
-    console.log('  🔎 Query:', JSON.stringify(query));
-    
     const members = await Team.find(query)
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
     
-    console.log('  ✅ Found', members.length, 'team members');
-    if (members.length > 0) {
-      console.log('  👥 Sample:', members.slice(0, 2).map(m => ({ name: m.name, email: m.email, assignedSites: m.assignedSites })));
-    } else {
-      console.log('  ⚠️ NO TEAM MEMBERS IN DATABASE!');
-      console.log('  💡 Create team member from Team page first!');
-    }
-    
     res.json(members);
   } catch (error) {
-    console.error('❌ Error fetching team members:', error);
+    console.error('Error fetching team members:', error);
     res.status(500).json({ error: 'Failed to fetch team members' });
   }
 });

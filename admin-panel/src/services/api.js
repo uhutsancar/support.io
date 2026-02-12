@@ -178,19 +178,13 @@ export const departmentsAPI = {
   getAll: (siteId) => api.get(`/departments/site/${siteId}`),
   getOne: (departmentId) => api.get(`/departments/${departmentId}`),
   create: async (data) => {
-    console.log('🌐 API: Creating department with data:', data);
-    console.log('  👥 Members being sent:', data.members);
     const response = await api.post('/departments', data);
-    console.log('✅ API: Department created:', response.data);
-    clearCache('/departments'); // Clear cache after create
+    clearCache('/departments');
     return response;
   },
   update: async (departmentId, data) => {
-    console.log('🌐 API: Updating department', departmentId, 'with data:', data);
-    console.log('  👥 Members being sent:', data.members);
     const response = await api.put(`/departments/${departmentId}`, data);
-    console.log('✅ API: Department updated:', response.data);
-    clearCache('/departments'); // Clear cache after update
+    clearCache('/departments');
     return response;
   },
   delete: async (departmentId) => {
