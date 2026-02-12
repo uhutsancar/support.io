@@ -71,11 +71,11 @@ router.post('/', auth, async (req, res) => {
     
     console.log('👥 Creating new team member:', { email, name, role });
     
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Check if user already exists (only active users)
+    const existingUser = await User.findOne({ email, isActive: true });
     if (existingUser) {
       console.log('❌ User already exists:', email);
-      return res.status(400).json({ error: 'User with this email already exists' });
+      return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
     }
     
     const user = new User({

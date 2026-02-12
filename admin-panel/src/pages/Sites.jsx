@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
 import { Plus, Globe, Copy, Check, Settings, Trash2 } from 'lucide-react';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Sites = () => {
   const { t } = useTranslation();
@@ -11,6 +13,7 @@ const Sites = () => {
   const [showModal, setShowModal] = useState(false);
   const [newSite, setNewSite] = useState({ name: '', domain: '' });
   const [copiedKey, setCopiedKey] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, siteId: null, siteName: '' });
 
   useEffect(() => {
     fetchSites();
@@ -37,16 +40,15 @@ const Sites = () => {
       setSites([...sites, response.data.site]);
       // Cache'i temizle
       clearCache('/sites');
+      toast.success('Site başarıyla oluşturuldu!');
     } catch (error) {
       console.error('Failed to create site:', error);
-      alert('Site oluşturulamadı: ' + (error.response?.data?.error || error.message));
+      toast.error('Site oluşturulamadı: ' + (error.response?.data?.error || error.message));
     }
   };
 
-  const handleDeleteSite = async (siteId, siteName) => {
-    if (!confirm(`"${siteName}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
-      return;
-    }
+  const handleDeleteSite = async () => {
+    const { siteId } = confirmDialog;
 
     try {
       await sitesAPI.delete(siteId);
@@ -54,15 +56,21 @@ const Sites = () => {
       setSites(sites.filter(site => site._id !== siteId));
       // Cache'i temizle
       clearCache('/sites');
+      toast.success('Site başarıyla silindi!');
     } catch (error) {
       console.error('Failed to delete site:', error);
-      alert('Site silinemedi: ' + (error.response?.data?.error || error.message));
+      toast.error('Site silinemedi: ' + (error.response?.data?.error || error.message));
     }
+  };
+
+  const openDeleteConfirm = (siteId, siteName) => {
+    setConfirmDialog({ isOpen: true, siteId, siteName });
   };
 
   const copyToClipboard = (text, siteId) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(siteId);
+    toast.success('Kopyalandı!');
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -178,7 +186,7 @@ const Sites = () => {
                     <span className="leading-tight text-center whitespace-normal">{t('sites.settings')}</span>
                   </button>
                   <button 
-                    onClick={() => handleDeleteSite(site._id, site.name)}
+                    onClick={() => openDeleteConfirm(site._id, site.name)}
                     className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition flex items-center justify-center"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -241,6 +249,17 @@ const Sites = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, siteId: null, siteName: '' })}
+        onConfirm={handleDeleteSite}
+        title="Site Sil"
+        message={`"${confirmDialog.siteName}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site'ye ait tüm konuşmalar silinecektir.`}
+        confirmText="Evet, Sil"
+        cancelText="İptal"
+        type="danger"
+      />
       </div>
     </>
   );

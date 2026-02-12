@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { departmentsAPI, teamAPI, sitesAPI } from '../services/api';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { 
   Folder, Plus, Edit, Trash2, Users, MessageSquare, 
   Settings, TrendingUp, Clock, Search, Globe 
@@ -20,6 +22,7 @@ const Departments = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, departmentId: null, departmentName: '' });
 
   useEffect(() => {
     fetchSites();
@@ -88,18 +91,23 @@ const Departments = () => {
     }
   };
 
-  const handleDeleteDepartment = async (departmentId) => {
-    if (!confirm(t('departments.confirmDelete'))) return;
+  const handleDeleteDepartment = async () => {
+    const { departmentId } = confirmDialog;
     
     try {
       const response = await departmentsAPI.delete(departmentId);
       console.log('✅ Department deleted:', response.data);
       // Remove from state and fetch fresh data
       await fetchDepartments();
+      toast.success('Departman başarıyla silindi!');
     } catch (error) {
       console.error('❌ Error deleting department:', error);
-      alert(error.response?.data?.error || error.response?.data?.message || 'Failed to delete department');
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Departman silinemedi!');
     }
+  };
+
+  const openDeleteConfirm = (departmentId, departmentName) => {
+    setConfirmDialog({ isOpen: true, departmentId, departmentName });
   };
 
   const filteredDepartments = departments.filter(dept =>
@@ -301,7 +309,7 @@ const Departments = () => {
                     {t('departments.edit')}
                   </button>
                   <button
-                    onClick={() => handleDeleteDepartment(dept._id)}
+                    onClick={() => openDeleteConfirm(dept._id, dept.name)}
                     className="px-3 py-2 border border-red-300 dark:border-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -334,6 +342,17 @@ const Departments = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, departmentId: null, departmentName: '' })}
+        onConfirm={handleDeleteDepartment}
+        title="Departmanı Sil"
+        message={`"${confirmDialog.departmentName}" departmanını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Evet, Sil"
+        cancelText="İptal"
+        type="danger"
+      />
     </div>
   );
 };
@@ -370,7 +389,7 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
     );
     
     if (exists) {
-      alert(t('departments.modal.memberExists'));
+      toast.error(t('departments.modal.memberExists'));
       return;
     }
     
@@ -415,11 +434,12 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       // Let parent handle data refresh and modal closing
       await onSave(department ? null : response.data);
       console.log('✅ onSave completed');
+      toast.success(department ? 'Departman başarıyla güncellendi!' : 'Departman başarıyla oluşturuldu!');
       setSaving(false);
     } catch (error) {
       console.error('❌ Error saving department:', error);
       console.error('Error details:', error.response?.data);
-      alert(error.response?.data?.error || error.message || 'Failed to save department');
+      toast.error(error.response?.data?.error || error.message || 'Departman kaydedilemedi!');
       setSaving(false);
     }
   };

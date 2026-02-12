@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { teamAPI, sitesAPI } from '../services/api';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { 
   Users, Plus, Edit, Trash2, UserCheck, UserX, 
   Shield, Activity, MessageSquare, Clock, Search, Filter, Globe 
@@ -20,6 +22,7 @@ const Team = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, userName: '' });
 
   useEffect(() => {
     fetchSites();
@@ -76,18 +79,23 @@ const Team = () => {
     }
   };
 
-  const handleDeleteMember = async (userId) => {
-    if (!confirm(t('team.confirmDelete'))) return;
+  const handleDeleteMember = async () => {
+    const { userId } = confirmDialog;
     
     try {
       const response = await teamAPI.delete(userId);
       console.log('✅ Team member deleted:', response.data);
       // Fetch fresh data
       await fetchTeam();
+      toast.success('Ekip üyesi başarıyla silindi!');
     } catch (error) {
       console.error('❌ Error deleting member:', error);
-      alert(error.response?.data?.error || 'Failed to delete member');
+      toast.error(error.response?.data?.error || 'Ekip üyesi silinemedi!');
     }
+  };
+
+  const openDeleteConfirm = (userId, userName) => {
+    setConfirmDialog({ isOpen: true, userId, userName });
   };
 
   const filteredTeam = team.filter(member => {
@@ -305,7 +313,7 @@ const Team = () => {
                   {t('team.edit')}
                 </button>
                 <button
-                  onClick={() => handleDeleteMember(member._id)}
+                  onClick={() => openDeleteConfirm(member._id, member.name)}
                   className="px-3 py-2 border border-red-300 dark:border-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900 text-red-600 dark:text-red-400"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -337,6 +345,17 @@ const Team = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, userId: null, userName: '' })}
+        onConfirm={handleDeleteMember}
+        title="Ekip Üyesini Sil"
+        message={`"${confirmDialog.userName}" adlı ekip üyesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Evet, Sil"
+        cancelText="İptal"
+        type="danger"
+      />
     </div>
   );
 };
@@ -385,11 +404,12 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
       // Let parent handle data refresh and modal closing
       await onSave(member ? null : response.data);
       console.log('✅ onSave completed');
+      toast.success(member ? 'Ekip üyesi başarıyla güncellendi!' : 'Ekip üyesi başarıyla eklendi!');
       setSaving(false);
     } catch (error) {
       console.error('❌ Error saving member:', error);
       console.error('Error details:', error.response?.data);
-      alert(error.response?.data?.error || error.message || 'Failed to save member');
+      toast.error(error.response?.data?.error || error.message || 'Ekip üyesi kaydedilemedi!');
       setSaving(false);
     }
   };

@@ -28,10 +28,10 @@ router.post('/register', validateRegistration, async (req, res) => {
 
     const { email, password, name } = req.body;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
+    // Check if user exists (only active users)
+    const existingUser = await User.findOne({ email, isActive: true });
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
+      return res.status(400).json({ error: 'Bu e-posta adresi zaten kayıtlı' });
     }
 
     // Create user

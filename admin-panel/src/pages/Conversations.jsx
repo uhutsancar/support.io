@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { sitesAPI, conversationsAPI, departmentsAPI, teamAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2, Paperclip, X, File, Image, FileText, UserPlus, Folder, Flag } from 'lucide-react';
 
 const Conversations = () => {
@@ -21,6 +23,7 @@ const Conversations = () => {
   const [teamMembers, setTeamMembers] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, conversationId: null });
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -171,10 +174,8 @@ const Conversations = () => {
     }
   };
 
-  const deleteConversation = async (conversationId) => {
-    if (!window.confirm('Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz?')) {
-      return;
-    }
+  const deleteConversation = async () => {
+    const { conversationId } = confirmDialog;
 
     try {
       await conversationsAPI.delete(selectedSite._id, conversationId);
@@ -189,10 +190,15 @@ const Conversations = () => {
       }
 
       console.log('✅ Conversation deleted successfully');
+      toast.success('Konuşma başarıyla silindi!');
     } catch (error) {
       console.error('❌ Failed to delete conversation:', error);
-      alert('Konuşma silinirken hata oluştu: ' + (error.response?.data?.error || error.message));
+      toast.error('Konuşma silinirken hata oluştu: ' + (error.response?.data?.error || error.message));
     }
+  };
+
+  const openDeleteConfirm = (conversationId) => {
+    setConfirmDialog({ isOpen: true, conversationId });
   };
 
   const handleSendMessage = async (e) => {
@@ -251,7 +257,7 @@ const Conversations = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
       console.error('File upload error:', error);
-      alert('Dosya yüklenemedi. Lütfen tekrar deneyin.');
+      toast.error('Dosya yüklenemedi. Lütfen tekrar deneyin.');
     }
   };
 
@@ -261,7 +267,7 @@ const Conversations = () => {
 
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.');
+      toast.error('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.');
       return;
     }
 
@@ -326,9 +332,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
+      toast.success('Konuşma size atandı!');
     } catch (error) {
       console.error('Failed to claim conversation:', error);
-      alert(error.response?.data?.error || 'Failed to claim conversation');
+      toast.error(error.response?.data?.error || 'Konuşma alınamadı!');
     }
   };
 
@@ -338,8 +345,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
+      toast.success('Konuşma başarıyla atandı!');
     } catch (error) {
       console.error('Failed to assign conversation:', error);
+      toast.error('Konuşma atanamadı!');
     }
   };
 
@@ -349,8 +358,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
+      toast.success('Departman başarıyla değiştirildi!');
     } catch (error) {
       console.error('Failed to set department:', error);
+      toast.error('Departman değiştirilemedi!');
     }
   };
 
@@ -360,8 +371,10 @@ const Conversations = () => {
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
+      toast.success('Öncelik başarıyla değiştirildi!');
     } catch (error) {
       console.error('Failed to set priority:', error);
+      toast.error('Öncelik değiştirilemedi!');
     }
   };
 
@@ -481,7 +494,7 @@ const Conversations = () => {
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
                 <button
-                  onClick={() => deleteConversation(selectedConversation._id)}
+                  onClick={() => openDeleteConfirm(selectedConversation._id)}
                   className="p-1.5 sm:p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
                   title="Konuşmayı Sil"
                 >
@@ -628,6 +641,17 @@ const Conversations = () => {
         )}
       </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, conversationId: null })}
+        onConfirm={deleteConversation}
+        title="Konuşmayı Sil"
+        message="Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        confirmText="Evet, Sil"
+        cancelText="İptal"
+        type="danger"
+      />
     </div>
     </>
   );

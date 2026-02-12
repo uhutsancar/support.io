@@ -722,8 +722,92 @@
             right: 16px;
           }
         }
+
+        /* Toast Notification */
+        .sc-toast {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #fff;
+          color: #333;
+          padding: 16px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 1000000;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 300px;
+          max-width: 400px;
+          animation: slideInRight 0.3s ease-out;
+        }
+        .sc-toast.error {
+          border-left: 4px solid #ef4444;
+        }
+        .sc-toast.success {
+          border-left: 4px solid #10b981;
+        }
+        .sc-toast-icon {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+        }
+        .sc-toast-icon.error {
+          color: #ef4444;
+        }
+        .sc-toast-icon.success {
+          color: #10b981;
+        }
+        .sc-toast-message {
+          flex: 1;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        @keyframes slideInRight {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        @keyframes slideOutRight {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+        }
       `;
       document.head.appendChild(style);
+    }
+
+    showNotification(message, type = 'error') {
+      const toast = document.createElement('div');
+      toast.className = `sc-toast ${type}`;
+      
+      const icon = type === 'error' 
+        ? '<svg class="sc-toast-icon error" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'
+        : '<svg class="sc-toast-icon success" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+      
+      toast.innerHTML = `
+        ${icon}
+        <div class="sc-toast-message">${message}</div>
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 4000);
     }
 
     createWidget() {
@@ -1270,7 +1354,7 @@
 
       } catch (error) {
         console.error('File upload error:', error);
-        alert('Dosya yüklenemedi. Lütfen tekrar deneyin.');
+        this.showNotification('Dosya yüklenemedi. Lütfen tekrar deneyin.', 'error');
       }
     }
 
@@ -1280,7 +1364,7 @@
       // Dosya boyutu kontrolü (10MB)
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.');
+        this.showNotification('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.', 'error');
         return;
       }
 
@@ -1297,7 +1381,7 @@
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        alert('Bu dosya türü desteklenmiyor. Lütfen resim, PDF, Office belgesi veya metin dosyası yükleyin.');
+        this.showNotification('Bu dosya türü desteklenmiyor. Lütfen resim, PDF, Office belgesi veya metin dosyası yükleyin.', 'error');
         return;
       }
 

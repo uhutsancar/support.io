@@ -19,3 +19,14 @@ code {
 * {
   box-sizing: border-box;
 }
+
+/* Toast dark mode support */
+:root {
+  --toast-bg: #ffffff;
+  --toast-color: #1f2937;
+}
+
+.dark {
+  --toast-bg: #1f2937;
+  --toast-color: #f9fafb;
+}

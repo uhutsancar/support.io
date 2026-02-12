@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import { sitesAPI, faqsAPI, clearCache } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const FAQs = () => {
   const { t } = useTranslation();
@@ -11,6 +13,7 @@ const FAQs = () => {
   const [faqs, setFaqs] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingFaq, setEditingFaq] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, faqId: null, faqQuestion: '' });
   const [formData, setFormData] = useState({
     question: '',
     answer: '',
@@ -73,9 +76,10 @@ const FAQs = () => {
       resetForm();
       // Cache'i temizle
       clearCache('/faqs');
+      toast.success(editingFaq ? 'FAQ başarıyla güncellendi!' : 'FAQ başarıyla oluşturuldu!');
     } catch (error) {
       console.error('Failed to save FAQ:', error);
-      alert('FAQ kaydedilemedi: ' + (error.response?.data?.error || error.message));
+      toast.error('FAQ kaydedilemedi: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -91,10 +95,8 @@ const FAQs = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (faqId, faqQuestion) => {
-    if (!confirm(`"${faqQuestion}" sorusunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
-      return;
-    }
+  const handleDelete = async () => {
+    const { faqId } = confirmDialog;
 
     try {
       await faqsAPI.delete(faqId);
@@ -102,10 +104,15 @@ const FAQs = () => {
       setFaqs(faqs.filter(faq => faq._id !== faqId));
       // Cache'i temizle
       clearCache('/faqs');
+      toast.success('FAQ başarıyla silindi!');
     } catch (error) {
       console.error('Failed to delete FAQ:', error);
-      alert('FAQ silinemedi: ' + (error.response?.data?.error || error.message));
+      toast.error('FAQ silinemedi: ' + (error.response?.data?.error || error.message));
     }
+  };
+
+  const openDeleteConfirm = (faqId, faqQuestion) => {
+    setConfirmDialog({ isOpen: true, faqId, faqQuestion });
   };
 
   const resetForm = () => {
@@ -228,7 +235,7 @@ const FAQs = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(faq._id, faq.question)}
+                          onClick={() => openDeleteConfirm(faq._id, faq.question)}
                           className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -384,6 +391,17 @@ const FAQs = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ isOpen: false, faqId: null, faqQuestion: '' })}
+        onConfirm={handleDelete}
+        title="FAQ Sil"
+        message={`"${confirmDialog.faqQuestion}" sorusunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Evet, Sil"
+        cancelText="İptal"
+        type="danger"
+      />
       </div>
     </>
   );

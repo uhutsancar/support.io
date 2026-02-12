@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { MessageSquare } from 'lucide-react';
@@ -11,21 +12,20 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       await register(name, email, password);
       navigate('/dashboard');
+      toast.success('Başarıyla kayıt oldunuz!');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      toast.error(err.response?.data?.error || 'Kayıt başarısız');
     } finally {
       setLoading(false);
     }
@@ -51,12 +51,6 @@ const Register = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('register.title')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">{t('register.subtitle')}</p>
         </div>
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
