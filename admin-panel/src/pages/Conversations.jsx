@@ -33,7 +33,9 @@ const Conversations = () => {
   useEffect(() => {
     fetchSites();
     
+    const token = localStorage.getItem('token');
     const newSocket = io('http://localhost:5000/admin', {
+      auth: { token },
       transports: ['websocket', 'polling']
     });
     

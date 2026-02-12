@@ -27,7 +27,7 @@ const departmentSchema = new mongoose.Schema({
   members: [{
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'Team'
     },
     role: {
       type: String,

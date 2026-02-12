@@ -11,20 +11,33 @@ router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;
     
+    console.log('📥 GET /team request');
+    console.log('  🔍 siteId:', siteId);
+    
     let query = { isActive: true };
     
     if (siteId) {
       query.assignedSites = siteId;
     }
     
+    console.log('  🔎 Query:', JSON.stringify(query));
+    
     const members = await Team.find(query)
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
     
+    console.log('  ✅ Found', members.length, 'team members');
+    if (members.length > 0) {
+      console.log('  👥 Sample:', members.slice(0, 2).map(m => ({ name: m.name, email: m.email, assignedSites: m.assignedSites })));
+    } else {
+      console.log('  ⚠️ NO TEAM MEMBERS IN DATABASE!');
+      console.log('  💡 Create team member from Team page first!');
+    }
+    
     res.json(members);
   } catch (error) {
-    console.error('Error fetching team members:', error);
+    console.error('❌ Error fetching team members:', error);
     res.status(500).json({ error: 'Failed to fetch team members' });
   }
 });
@@ -95,6 +108,12 @@ router.post('/', auth, async (req, res) => {
       .populate('departments.departmentId', 'name color')
       .populate('assignedSites', 'name domain');
     
+    // Socket.io ile broadcast
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('team-member-added', memberData);
+    }
+    
     res.status(201).json(memberData);
   } catch (error) {
     console.error('❌ Error creating team member:', error);
@@ -154,6 +173,15 @@ router.patch('/:id/status', auth, async (req, res) => {
     
     if (!member) {
       return res.status(404).json({ error: 'Team member not found' });
+    }
+    
+    // Socket.io ile broadcast - status değişikliği
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('agent-status-changed', {
+        userId: req.params.id,
+        status
+      });
     }
     
     res.json(member);
@@ -223,6 +251,12 @@ router.delete('/:id', auth, async (req, res) => {
     );
     
     await Team.findByIdAndDelete(req.params.id);
+    
+    // Socket.io ile broadcast - member silindi
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('team-member-deleted', { userId: req.params.id });
+    }
     
     res.json({ message: 'Team member deleted successfully' });
   } catch (error) {

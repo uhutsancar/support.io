@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 import { teamAPI, sitesAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
+import io from 'socket.io-client';
 import { 
   Users, Plus, Edit, Trash2, UserCheck, UserX, 
   Shield, Activity, MessageSquare, Clock, Search, Filter, Globe 
@@ -30,6 +31,61 @@ const Team = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, userName: '' });
+  const [socket, setSocket] = useState(null);
+
+  // Socket.io bağlantısı
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const newSocket = io('http://localhost:3000/admin', {
+      auth: { token }
+    });
+
+    newSocket.on('connect', () => {
+      console.log('✅ Socket connected for Team page');
+    });
+
+    // Team üyesi durum değişikliklerini dinle
+    newSocket.on('agent-status-changed', ({ userId, status }) => {
+      console.log('🔄 Agent status changed:', userId, status);
+      setTeam(prevTeam => 
+        prevTeam.map(member => 
+          member._id === userId ? { ...member, status } : member
+        )
+      );
+    });
+
+    // Team üyesi eklendi
+    newSocket.on('team-member-added', (newMember) => {
+      console.log('👤 New team member added:', newMember);
+      setTeam(prevTeam => [...prevTeam, newMember]);
+      toast.success('Yeni ekip üyesi eklendi');
+    });
+
+    // Team üyesi güncellendi
+    newSocket.on('team-member-updated', (updatedMember) => {
+      console.log('✏️ Team member updated:', updatedMember);
+      setTeam(prevTeam => 
+        prevTeam.map(member => 
+          member._id === updatedMember._id ? updatedMember : member
+        )
+      );
+    });
+
+    // Team üyesi silindi
+    newSocket.on('team-member-deleted', ({ userId }) => {
+      console.log('🗑️ Team member deleted:', userId);
+      setTeam(prevTeam => prevTeam.filter(member => member._id !== userId));
+      toast.success('Ekip üyesi silindi');
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     fetchSites();
@@ -116,8 +172,9 @@ const Team = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'online': return 'bg-green-500';
+      case 'offline': return 'bg-red-500';
       case 'busy': return 'bg-yellow-500';
-      case 'away': return 'bg-orange-500';
+      case 'away': return 'bg-gray-400';
       default: return 'bg-gray-400';
     }
   };

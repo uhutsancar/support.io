@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -138,6 +139,15 @@ app.get('/', (req, res) => {
   });
 });
 
+// Admin panel - serve built files - USE ABSOLUTE PATH!
+const adminPanelPath = path.join(__dirname, '../../admin-panel/dist');
+console.log('📁 Serving admin panel from:', adminPanelPath);
+app.use(express.static(adminPanelPath, {
+  maxAge: '1h',
+  etag: true,
+  lastModified: true
+}));
+
 // Widget static file - public folder serve et
 app.use(express.static('public', {
   setHeaders: (res, path) => {
@@ -150,6 +160,15 @@ app.use(express.static('public', {
 
 // Demo page serve et
 app.use('/demo', express.static('../demo'));
+
+// Admin panel SPA - catch all routes
+app.get('*', (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/widget.js') || req.path.startsWith('/demo')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, '../../admin-panel/dist/index.html'));
+});
 
 // Initialize Socket.io handlers
 new SocketHandler(io);

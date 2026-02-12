@@ -34,7 +34,9 @@ const Dashboard = () => {
     fetchDashboardData();
     
     // Socket.io bağlantısını kur
+    const token = localStorage.getItem('token');
     const newSocket = io('http://localhost:5000/admin', {
+      auth: { token },
       transports: ['websocket', 'polling']
     });
     
@@ -44,6 +46,41 @@ const Dashboard = () => {
 
     newSocket.on('disconnect', () => {
       console.log('❌ Dashboard socket disconnected');
+    });
+
+    // Yeni konuşma geldiğinde
+    newSocket.on('new-conversation', (conversation) => {
+      console.log('💬 New conversation received:', conversation);
+      setStats(prev => ({
+        ...prev,
+        totalConversations: prev.totalConversations + 1,
+        totalVisitors: prev.totalVisitors + 1
+      }));
+    });
+
+    // Konuşma durumu değiştiğinde
+    newSocket.on('conversation-status-changed', ({ conversationId, status }) => {
+      console.log('🔄 Conversation status changed:', conversationId, status);
+      // İstatistikleri yeniden yükle
+      fetchDashboardData(true);
+    });
+
+    // Konuşma atandığında
+    newSocket.on('conversation-assigned', ({ conversationId, agentId }) => {
+      console.log('👤 Conversation assigned:', conversationId, agentId);
+      fetchDashboardData(true);
+    });
+
+    // Yeni mesaj geldiğinde
+    newSocket.on('new-message', (message) => {
+      console.log('📨 New message received:', message);
+      // Görsel bildirim göster
+      if (Notification.permission === 'granted') {
+        new Notification('Yeni Mesaj', {
+          body: 'Yeni bir mesaj alındı',
+          icon: '/favicon.ico'
+        });
+      }
     });
 
     // İstatistik güncellemelerini dinle
@@ -68,6 +105,11 @@ const Dashboard = () => {
     };
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Bildirim izni iste
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
     
     return () => {
       clearInterval(interval);

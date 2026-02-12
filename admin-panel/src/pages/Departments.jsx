@@ -91,10 +91,13 @@ const Departments = () => {
 
   const fetchTeamMembers = async () => {
     try {
+      console.log('🔄 Fetching team members for site:', selectedSite);
       const response = await teamAPI.getAll(selectedSite);
+      console.log('✅ Team members fetched:', response.data);
+      console.log('  📊 Count:', response.data?.length || 0);
       setTeamMembers(response.data || []);
     } catch (error) {
-      console.error('Error fetching team members:', error);
+      console.error('❌ Error fetching team members:', error);
     }
   };
 
@@ -367,13 +370,35 @@ const Departments = () => {
 // Add/Edit Department Modal Component
 const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSave }) => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  
+  const langPrefix = language === 'en' ? '/en' : '';
+  
+  console.log('🎬 ===== MODAL MOUNT/RE-RENDER =====');
+  console.log('  📁 department:', department);
+  console.log('  👥 teamMembers count:', teamMembers?.length);
+  console.log('  🌍 siteId:', siteId);
+  
+  const initialMembers = department?.members?.map(m => {
+    const memberId = m.userId?._id || m.userId;
+    const memberRole = m.role;
+    console.log(`    Member: ${memberId}, role: ${memberRole}`);
+    return {
+      userId: memberId,
+      role: memberRole
+    };
+  }) || [];
+  
+  console.log('  📋 initialMembers:', initialMembers);
+  console.log('  📊 initialMembers count:', initialMembers.length);
+  
   const [formData, setFormData] = useState({
     name: department?.name || '',
     description: department?.description || '',
     siteId: siteId,
     color: department?.color || '#3B82F6',
     icon: department?.icon || '💬',
-    members: department?.members || [],
+    members: initialMembers,
     autoAssignRules: department?.autoAssignRules || {
       enabled: false,
       strategy: 'round-robin'
@@ -383,60 +408,117 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       timezone: 'Europe/Istanbul'
     }
   });
+  
+  console.log('  📦 Initial formData:', formData);
+  console.log('  👥 formData.members:', formData.members);
 
   const [selectedMember, setSelectedMember] = useState('');
   const [memberRole, setMemberRole] = useState('agent');
   const [saving, setSaving] = useState(false);
 
+  // Track formData.members changes
+  useEffect(() => {
+    console.log('🔄 formData.members CHANGED:', formData.members);
+    console.log('  📊 Count:', formData.members?.length);
+  }, [formData.members]);
+
   const handleAddMember = () => {
-    if (!selectedMember) return;
+    console.log('🔴🔴🔴 HANDLE ADD MEMBER ÇAĞRILDI! 🔴🔴🔴');
+    console.log('  🔵 selectedMember value:', selectedMember);
+    console.log('  🔵 memberRole value:', memberRole);
     
-    const exists = formData.members.find(m => 
-      (m.userId?._id || m.userId) === selectedMember
-    );
-    
-    if (exists) {
-      toast.error(t('departments.modal.memberExists'));
+    if (!selectedMember) {
+      console.log('⚠️ No member selected - RETURNING!');
+      toast.error('Lütfen bir ekip üyesi seçin!');
       return;
     }
     
-    setFormData({
-      ...formData,
-      members: [
-        ...formData.members,
-        { userId: selectedMember, role: memberRole }
-      ]
+    console.log('➕ Adding member:', selectedMember, 'with role:', memberRole);
+    
+    const newMember = { userId: selectedMember, role: memberRole };
+    console.log('  📝 New member object:', newMember);
+    
+    setFormData(prevFormData => {
+      // Check if member already exists
+      const exists = prevFormData.members.find(m => 
+        (m.userId?._id || m.userId) === selectedMember
+      );
+      
+      if (exists) {
+        console.log('⚠️ Member already exists');
+        toast.error(t('departments.modal.memberExists'));
+        return prevFormData; // Return unchanged state
+      }
+      
+      const updatedMembers = [
+        ...prevFormData.members,
+        newMember
+      ];
+      
+      console.log('  📋 Updated members array:', updatedMembers);
+      console.log('  📊 Total members:', updatedMembers.length);
+      
+      return {
+        ...prevFormData,
+        members: updatedMembers
+      };
     });
+    
+    console.log('✅ Member add triggered');
     
     setSelectedMember('');
     setMemberRole('agent');
   };
 
   const handleRemoveMember = (userId) => {
-    setFormData({
-      ...formData,
-      members: formData.members.filter(m => 
+    console.log('➖ Removing member:', userId);
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      members: prevFormData.members.filter(m => 
         (m.userId?._id || m.userId) !== userId
       )
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('📝 Submitting department data:', formData);
+    console.log('🔴🔴🔴 ===== FORM SUBMIT BAŞLADI ===== 🔴🔴🔴');
+    console.log('  📦 formData:', formData);
+    console.log('  👥 formData.members:', formData.members);
+    console.log('  📊 Members count:', formData.members?.length);
+    
+    // Clean members data - ensure we only send userId and role
+    console.log('🔹 Step 1: Cleaning members data...');
+    const cleanedData = {
+      ...formData,
+      members: (formData.members || []).map(m => ({
+        userId: m.userId?._id || m.userId,
+        role: m.role
+      }))
+    };
+    
+    console.log('🔹 Step 2: Cleaned data ready');
+    console.log('  🧹 cleanedData.members:', cleanedData.members);
+    console.log('  📊 Members count:', cleanedData.members.length);
+    
     setSaving(true);
 
     try {
+      console.log('🔹 Step 3: Entering try block');
       let response;
       if (department) {
-        response = await departmentsAPI.update(department._id, formData);
-        console.log('✅ Department updated:', response.data);
+        console.log('🔹 Step 4: UPDATE mode - calling API...');
+        console.log('  🆔 Department ID:', department._id);
+        response = await departmentsAPI.update(department._id, cleanedData);
+        console.log('✅ UPDATE response:', response.data);
       } else {
-        response = await departmentsAPI.create(formData);
-        console.log('✅ Department created:', response.data);
+        console.log('🔹 Step 4: CREATE mode - calling API...');
+        response = await departmentsAPI.create(cleanedData);
+        console.log('✅ CREATE response:', response.data);
       }
       
+      console.log('🔹 Step 5: API call completed successfully');
       console.log('💾 Calling onSave...');
       // Let parent handle data refresh and modal closing
       await onSave(department ? null : response.data);
@@ -444,8 +526,11 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       toast.success(department ? t('departments.modal.updateSuccess') : t('departments.modal.createSuccess'));
       setSaving(false);
     } catch (error) {
-      console.error('❌ Error saving department:', error);
-      console.error('Error details:', error.response?.data);
+      console.error('🔴🔴🔴 ERROR IN CATCH BLOCK 🔴🔴🔴');
+      console.error('🔴 Error object:', error);
+      console.error('🔴 Error message:', error.message);
+      console.error('🔴 Error stack:', error.stack);
+      console.error('🔴 Error response:', error.response?.data);
       toast.error(error.response?.data?.error || error.message || t('departments.saveError'));
       setSaving(false);
     }
@@ -472,7 +557,7 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder={t('departments.modal.namePlaceholder')}
                 />
@@ -484,7 +569,7 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows="2"
                   placeholder={t('departments.modal.descriptionPlaceholder')}
@@ -500,7 +585,7 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                     <button
                       key={emoji}
                       type="button"
-                      onClick={() => setFormData({ ...formData, icon: emoji })}
+                      onClick={() => setFormData(prev => ({ ...prev, icon: emoji }))}
                       className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl ${
                         formData.icon === emoji ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900' : 'bg-gray-100 dark:bg-gray-700'
                       }`}
@@ -520,7 +605,7 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                     <button
                       key={color}
                       type="button"
-                      onClick={() => setFormData({ ...formData, color })}
+                      onClick={() => setFormData(prev => ({ ...prev, color }))}
                       className={`w-10 h-10 rounded-lg ${
                         formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
                       }`}
@@ -539,10 +624,10 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                 <input
                   type="checkbox"
                   checked={formData.autoAssignRules.enabled}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    autoAssignRules: { ...formData.autoAssignRules, enabled: e.target.checked }
-                  })}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    autoAssignRules: { ...prev.autoAssignRules, enabled: e.target.checked }
+                  }))}
                   className="rounded border-gray-300 dark:border-gray-600"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{t('departments.modal.enableAutoAssign')}</span>
@@ -555,10 +640,10 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                   </label>
                   <select
                     value={formData.autoAssignRules.strategy}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      autoAssignRules: { ...formData.autoAssignRules, strategy: e.target.value }
-                    })}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      autoAssignRules: { ...prev.autoAssignRules, strategy: e.target.value }
+                    }))}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="round-robin">{t('departments.modal.roundRobin')}</option>
@@ -573,37 +658,64 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
             <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('departments.modal.teamMembers')}</h3>
               
-              <div className="flex gap-2 mb-3">
-                <select
-                  value={selectedMember}
-                  onChange={(e) => setSelectedMember(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">{t('departments.modal.selectMember')}</option>
-                  {teamMembers.map(member => (
-                    <option key={member._id} value={member._id}>
-                      {member.name} ({member.email})
-                    </option>
-                  ))}
-                </select>
-                
-                <select
-                  value={memberRole}
-                  onChange={(e) => setMemberRole(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="agent">{t('team.filters.agent')}</option>
-                  <option value="manager">{t('team.filters.manager')}</option>
-                </select>
-                
-                <button
-                  type="button"
-                  onClick={handleAddMember}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
+              {teamMembers.length === 0 ? (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-3">
+                  <div className="flex items-start gap-3">
+                    <div className="text-yellow-600 dark:text-yellow-400 mt-0.5">⚠️</div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
+                        No Team Members Available
+                      </h4>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-2">
+                        You need to add team members before you can assign them to departments.
+                      </p>
+                      <a
+                        href={`${langPrefix}/dashboard/team`}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-yellow-800 dark:text-yellow-300 hover:underline"
+                      >
+                        <Users className="w-4 h-4" />
+                        Go to Team Members Page →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2 mb-3">
+                  <select
+                    value={selectedMember}
+                    onChange={(e) => {
+                      console.log('🔵 Dropdown changed:', e.target.value);
+                      setSelectedMember(e.target.value);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="">{t('departments.modal.selectMember')}</option>
+                    {teamMembers.map(member => (
+                      <option key={member._id} value={member._id}>
+                        {member.name} ({member.email})
+                      </option>
+                    ))}
+                  </select>
+                  
+                  <select
+                    value={memberRole}
+                    onChange={(e) => setMemberRole(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="agent">{t('team.filters.agent')}</option>
+                    <option value="manager">{t('team.filters.manager')}</option>
+                  </select>
+                  
+                  <button
+                    type="button"
+                    onClick={handleAddMember}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>{t('departments.modal.addMember') || 'Ekle'}</span>
+                  </button>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {formData.members.map((member, idx) => {
