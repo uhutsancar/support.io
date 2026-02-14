@@ -33,28 +33,85 @@ class SocketHandler {
             return;
           }
 
-          // Find or create conversation (ticket)
+          // Store visitor info in socket
+          socket.siteId = site._id;
+          socket.visitorId = visitorId;
+          socket.visitorName = visitorName || 'Visitor';
+          socket.visitorEmail = visitorEmail;
+          socket.currentPage = currentPage;
+          socket.metadata = metadata;
+
+          // Find existing active conversation
           let conversation = await Conversation.findOne({
             siteId: site._id,
             visitorId,
             status: { $in: ['open', 'assigned', 'pending'] }
-          });
+          }).populate('department', 'name color icon');
 
-          if (!conversation) {
-            // Get default department or find best match
+          if (conversation) {
+            // Existing conversation found - join it
+            socket.join(`conversation:${conversation._id}`);
+            socket.conversationId = conversation._id;
+
+            // Update current page
+            conversation.currentPage = currentPage;
+            await conversation.save();
+
+            // Send conversation data with messages
+            const messages = await Message.find({ conversationId: conversation._id })
+              .sort({ createdAt: 1 });
+
+            // SLA'yı yeniden hesapla
+            conversation.calculateSLA();
+            await conversation.save();
+
+            socket.emit('conversation-joined', {
+              conversation,
+              messages
+            });
+          } else {
+            // No active conversation - send welcome message locally (not saved to DB)
+            socket.emit('conversation-joined', {
+              conversation: null,
+              messages: [],
+              welcomeMessage: site.widgetSettings.welcomeMessage || 'Hi! How can we help you today?'
+            });
+          }
+
+        } catch (error) {
+          console.error('Join conversation error:', error);
+          socket.emit('error', { message: error.message });
+        }
+      });
+
+      // Send message from visitor
+      socket.on('send-message', async (data) => {
+        try {
+          const { content, senderName, messageType, fileData } = data;
+          let conversationId = socket.conversationId;
+
+          // If no conversation exists, create one NOW
+          if (!conversationId) {
+            const site = await Site.findById(socket.siteId);
+            if (!site) {
+              socket.emit('error', { message: 'Site not found' });
+              return;
+            }
+
+            // Get default department
             let department = await Department.findOne({
-              siteId: site._id,
+              siteId: socket.siteId,
               isActive: true
             }).sort({ createdAt: 1 });
 
-            // Create new ticket
-            conversation = new Conversation({
-              siteId: site._id,
-              visitorId,
-              visitorName: visitorName || 'Visitor',
-              visitorEmail,
-              currentPage,
-              metadata,
+            // Create new ticket (conversation)
+            const conversation = new Conversation({
+              siteId: socket.siteId,
+              visitorId: socket.visitorId,
+              visitorName: socket.visitorName,
+              visitorEmail: socket.visitorEmail,
+              currentPage: socket.currentPage,
+              metadata: socket.metadata,
               department: department?._id,
               status: 'open',
               channel: 'web-chat',
@@ -81,64 +138,15 @@ class SocketHandler {
               await department.save();
             }
 
-            // Send welcome message
-            const welcomeMessage = new Message({
-              conversationId: conversation._id,
-              senderType: 'bot',
-              senderId: 'system',
-              senderName: 'Support',
-              content: site.widgetSettings.welcomeMessage || 'Merhaba! Size nasıl yardımcı olabiliriz?'
-            });
-            await welcomeMessage.save();
+            // Join conversation room
+            socket.join(`conversation:${conversation._id}`);
+            socket.conversationId = conversation._id;
+            conversationId = conversation._id;
 
             // Notify admins about new ticket
-            this.adminNamespace.to(`site:${site._id}`).emit('new-conversation', {
+            this.adminNamespace.to(`site:${socket.siteId}`).emit('new-conversation', {
               conversation: await conversation.populate('department', 'name color icon')
             });
-
-          } else {
-            // Update current page
-            conversation.currentPage = currentPage;
-            await conversation.save();
-          }
-
-          socket.join(`conversation:${conversation._id}`);
-          socket.conversationId = conversation._id;
-          socket.siteId = site._id;
-
-          // Send conversation data
-          const messages = await Message.find({ conversationId: conversation._id })
-            .sort({ createdAt: 1 });
-
-          // SLA'yı yeniden hesapla
-          conversation.calculateSLA();
-          await conversation.save();
-
-          socket.emit('conversation-joined', {
-            conversation,
-            messages
-          });
-
-          // Notify admins about new/active conversation
-          this.adminNamespace.to(`site:${site._id}`).emit('conversation-update', {
-            conversation
-          });
-
-        } catch (error) {
-          console.error('Join conversation error:', error);
-          socket.emit('error', { message: error.message });
-        }
-      });
-
-      // Send message from visitor
-      socket.on('send-message', async (data) => {
-        try {
-          const { content, senderName, messageType, fileData } = data;
-          const conversationId = socket.conversationId;
-
-          if (!conversationId) {
-            socket.emit('error', { message: 'Not in a conversation' });
-            return;
           }
 
           const conversation = await Conversation.findById(conversationId);

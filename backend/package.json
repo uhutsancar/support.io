@@ -4,8 +4,9 @@
   "description": "SaaS Customer Support Backend API",
   "main": "src/server.js",
   "scripts": {
-    "server": "nodemon src/server.js",
-    "dev": "nodemon src/server.js",
+    "kill-port": "powershell -Command \"$p = Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1; if($p) { taskkill /F /PID $p; Write-Host 'Port 5000 temizlendi' } else { Write-Host 'Port 5000 zaten bos' }\"",
+    "server": "npm run kill-port && nodemon src/server.js",
+    "dev": "npm run kill-port && nodemon src/server.js",
     "start": "node src/server.js"
   },
   "keywords": [

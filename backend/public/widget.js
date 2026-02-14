@@ -1246,9 +1246,27 @@
         });
 
         this.socket.on('conversation-joined', (data) => {
-          console.log('🎯 Conversation joined:', data.conversation._id);
-          this.conversationId = data.conversation._id;
-          this.renderMessages(data.messages);
+          if (data.conversation) {
+            // Existing conversation - show real messages
+            console.log('🎯 Conversation joined:', data.conversation._id);
+            this.conversationId = data.conversation._id;
+            this.renderMessages(data.messages);
+          } else {
+            // New visitor - show local welcome message
+            console.log('👋 New visitor - showing welcome message');
+            this.conversationId = null; // Will be created when visitor sends first message
+            
+            // Display welcome message locally (not saved to DB)
+            const welcomeMsg = {
+              _id: 'welcome-' + Date.now(),
+              senderType: 'bot',
+              senderName: 'Support',
+              content: data.welcomeMessage || 'Hi! How can we help you today?',
+              createdAt: new Date(),
+              isLocal: true // Mark as local message
+            };
+            this.renderMessages([welcomeMsg]);
+          }
         });
 
         this.socket.on('new-message', (data) => {

@@ -139,6 +139,20 @@ const Conversations = () => {
     }
   }, [selectedSite, socket, user]);
 
+  // Auto-select conversation from URL
+  useEffect(() => {
+    const conversationId = searchParams.get('id');
+    if (conversationId && conversations.length > 0) {
+      const conversation = conversations.find(conv => conv._id === conversationId);
+      if (conversation && conversation._id !== selectedConversation?._id) {
+        console.log('🔗 Auto-selecting conversation from URL:', conversationId);
+        setSelectedConversation(conversation);
+        // Clear URL parameter after selection
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, conversations]);
+
   // Join conversation room when conversation is selected
   useEffect(() => {
     if (selectedConversation && socket) {

@@ -493,7 +493,7 @@ const Dashboard = () => {
                     <tr 
                       key={ticket._id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition"
-                      onClick={() => navigate(`${routes.conversations}/${ticket._id}`)}
+                      onClick={() => navigate(`${routes.conversations}?id=${ticket._id}`)}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
