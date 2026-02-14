@@ -15,7 +15,8 @@ import {
   X,
   Bell,
   Users,
-  Folder
+  Folder,
+  BarChart3
 } from 'lucide-react';
 import { conversationsAPI } from '../services/api';
 import { io } from 'socket.io-client';
@@ -98,6 +99,7 @@ const DashboardLayout = () => {
     { path: `${langPrefix}/dashboard`, icon: LayoutDashboard, label: t('sidebar.dashboard') },
     { path: `${langPrefix}/dashboard/sites`, icon: Globe, label: t('sidebar.sites') },
     { path: `${langPrefix}/dashboard/conversations`, icon: MessageCircle, label: t('sidebar.conversations') },
+    { path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') },
     { path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') },
     { path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') },
     { path: `${langPrefix}/dashboard/faqs`, icon: HelpCircle, label: t('sidebar.faqs') },

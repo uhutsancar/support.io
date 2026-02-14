@@ -258,13 +258,35 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid priority' });
     }
     
-    const conversation = await Conversation.findByIdAndUpdate(
-      req.params.conversationId,
-      { priority },
-      { new: true }
-    )
-      .populate('assignedAgent', 'name avatar status')
-      .populate('department', 'name color icon');
+    const conversation = await Conversation.findById(req.params.conversationId)
+      .populate('department');
+    
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    conversation.priority = priority;
+    
+    // SLA hedeflerini yeni önceliğe göre güncelle
+    if (conversation.department && conversation.department.sla.enabled) {
+      conversation.sla.firstResponseTarget = conversation.department.sla.firstResponse[priority] || 30;
+      conversation.sla.resolutionTarget = conversation.department.sla.resolution[priority] || 480;
+      
+      // SLA'yı yeniden hesapla
+      conversation.calculateSLA();
+    }
+    
+    await conversation.save();
+    await conversation.populate('assignedAgent', 'name avatar status');
+
+    // Socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('conversation-update', {
+        conversationId: conversation._id,
+        conversation
+      });
+    }
 
     res.json({ conversation });
   } catch (error) {
@@ -303,18 +325,89 @@ router.put('/:conversationId/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
     
-    const updateData = { status };
-    if (status === 'closed') {
-      updateData.closedAt = new Date();
-    } else if (status === 'resolved') {
-      updateData.resolvedAt = new Date();
+    const conversation = await Conversation.findById(req.params.conversationId)
+      .populate('department');
+    
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
     }
+    
+    conversation.status = status;
+    
+    if (status === 'closed') {
+      conversation.closedAt = new Date();
+    } else if (status === 'resolved') {
+      conversation.resolvedAt = new Date();
+      
+      // SLA'yı son kez hesapla
+      conversation.calculateSLA();
+      
+      // Departman istatistiklerini güncelle
+      if (conversation.department) {
+        const dept = await require('../models/Department').findById(conversation.department._id);
+        if (dept) {
+          dept.stats.activeConversations = Math.max(0, dept.stats.activeConversations - 1);
+          
+          // SLA istatistiklerini güncelle
+          if (conversation.sla.firstResponseStatus === 'met') {
+            dept.stats.slaMetrics.firstResponseMet++;
+          } else if (conversation.sla.firstResponseStatus === 'breached') {
+            dept.stats.slaMetrics.firstResponseBreached++;
+          }
+          
+          if (conversation.sla.resolutionStatus === 'met') {
+            dept.stats.slaMetrics.resolutionMet++;
+          } else if (conversation.sla.resolutionStatus === 'breached') {
+            dept.stats.slaMetrics.resolutionBreached++;
+          }
+          
+          // Ortalama yanıt sürelerini güncelle
+          if (conversation.responseTime) {
+            const total = dept.stats.slaMetrics.firstResponseMet + dept.stats.slaMetrics.firstResponseBreached;
+            const currentAvg = dept.stats.slaMetrics.averageFirstResponseTime || 0;
+            dept.stats.slaMetrics.averageFirstResponseTime = ((currentAvg * (total - 1)) + conversation.responseTime) / total;
+          }
+          
+          if (conversation.resolutionTime) {
+            const total = dept.stats.slaMetrics.resolutionMet + dept.stats.slaMetrics.resolutionBreached;
+            const currentAvg = dept.stats.slaMetrics.averageResolutionTime || 0;
+            dept.stats.slaMetrics.averageResolutionTime = ((currentAvg * (total - 1)) + conversation.resolutionTime) / total;
+          }
+          
+          await dept.save();
+        }
+      }
+      
+      // Agent istatistiklerini güncelle
+      if (conversation.assignedAgent) {
+        await require('../models/User').findByIdAndUpdate(conversation.assignedAgent, {
+          $inc: { 
+            'stats.activeConversations': -1,
+            'stats.resolvedConversations': 1
+          }
+        });
+      }
+    }
+    
+    await conversation.save();
+    await conversation.populate('assignedAgent', 'name avatar status');
 
-    const conversation = await Conversation.findByIdAndUpdate(
-      req.params.conversationId,
-      updateData,
-      { new: true }
-    ).populate('assignedAgent', 'name avatar status');
+    // Socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.of('/admin').emit('conversation-update', {
+        conversationId: conversation._id,
+        conversation
+      });
+      
+      // Additional event for resolved status
+      if (status === 'resolved') {
+        io.of('/admin').emit('conversation-resolved', {
+          conversationId: conversation._id,
+          conversation
+        });
+      }
+    }
 
     res.json({ conversation });
   } catch (error) {

@@ -97,6 +97,34 @@ const departmentSchema = new mongoose.Schema({
       }
     }
   },
+  
+  // SLA (Service Level Agreement) Kuralları
+  sla: {
+    enabled: {
+      type: Boolean,
+      default: true
+    },
+    // İlk yanıt SLA hedefi (dakika cinsinden)
+    firstResponse: {
+      urgent: { type: Number, default: 5 },      // 5 dakika
+      high: { type: Number, default: 15 },       // 15 dakika
+      normal: { type: Number, default: 30 },     // 30 dakika
+      low: { type: Number, default: 60 }         // 1 saat
+    },
+    // Çözüm SLA hedefi (dakika cinsinden)
+    resolution: {
+      urgent: { type: Number, default: 120 },    // 2 saat
+      high: { type: Number, default: 240 },      // 4 saat
+      normal: { type: Number, default: 480 },    // 8 saat
+      low: { type: Number, default: 1440 }       // 24 saat
+    },
+    // Sadece çalışma saatleri içinde SLA sayılsın mı?
+    onlyBusinessHours: {
+      type: Boolean,
+      default: false
+    }
+  },
+  
   isActive: {
     type: Boolean,
     default: true
@@ -113,6 +141,15 @@ const departmentSchema = new mongoose.Schema({
     averageResponseTime: {
       type: Number,
       default: 0
+    },
+    // SLA istatistikleri
+    slaMetrics: {
+      firstResponseMet: { type: Number, default: 0 },
+      firstResponseBreached: { type: Number, default: 0 },
+      resolutionMet: { type: Number, default: 0 },
+      resolutionBreached: { type: Number, default: 0 },
+      averageFirstResponseTime: { type: Number, default: 0 }, // dakika
+      averageResolutionTime: { type: Number, default: 0 }     // dakika
     }
   }
 }, {

@@ -83,18 +83,46 @@ const Conversations = () => {
       );
     };
 
-    const handleConversationUpdate = (data) => {
-      console.log('🔄 Conversation update:', data);
-      if (selectedSite) {
-        fetchConversations(selectedSite._id);
+    const handleNewConversation = (data) => {
+      console.log('🆕 New conversation created:', data);
+      // Add new conversation to the list if it belongs to the selected site
+      if (selectedSite && data.conversation.siteId === selectedSite._id) {
+        setConversations(prev => {
+          // Check if conversation already exists
+          if (prev.some(conv => conv._id === data.conversation._id)) {
+            return prev;
+          }
+          // Add new conversation to the top
+          return [data.conversation, ...prev];
+        });
       }
     };
 
+    const handleConversationUpdate = (data) => {
+      console.log('🔄 Conversation update:', data);
+      
+      // Update selectedConversation if it matches
+      if (selectedConversation && selectedConversation._id === data.conversationId) {
+        setSelectedConversation(data.conversation);
+      }
+      
+      // Update conversation in list
+      setConversations(prev =>
+        prev.map(conv =>
+          conv._id === data.conversationId
+            ? { ...conv, ...data.conversation }
+            : conv
+        )
+      );
+    };
+
     socket.on('new-message', handleNewMessage);
+    socket.on('new-conversation', handleNewConversation);
     socket.on('conversation-update', handleConversationUpdate);
 
     return () => {
       socket.off('new-message', handleNewMessage);
+      socket.off('new-conversation', handleNewConversation);
       socket.off('conversation-update', handleConversationUpdate);
     };
   }, [socket, selectedConversation, selectedSite]);
@@ -162,6 +190,12 @@ const Conversations = () => {
       setConversations(response.data.conversations);
       fetchDepartments(siteId);
       fetchTeamMembers(siteId);
+      
+      // Join site room for real-time updates
+      if (socket) {
+        socket.emit('join-site', { siteId, userId: user?._id });
+        console.log('🏢 Joined site room:', siteId);
+      }
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
     }
@@ -299,22 +333,104 @@ const Conversations = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Türkiye 24 saat formatı
   const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
+    if (!date) return '-';
+    return new Date(date).toLocaleTimeString('tr-TR', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: false
     });
+  };
+
+  const formatDateTime = (date) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    return `${d.toLocaleDateString('tr-TR')} ${formatTime(date)}`;
+  };
+
+  // Dakikayı saat ve dakika formatına çevir
+  const formatMinutes = (minutes) => {
+    if (!minutes || minutes === 0) return '-';
+    if (minutes < 0) return 'İhlal edildi';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return `${hours}s ${mins}dk`;
+    }
+    return `${mins}dk`;
+  };
+
+  // SLA rengini belirle
+  const getSLAColor = (minutes) => {
+    if (!minutes || minutes < 0) return 'text-red-600 dark:text-red-400';
+    if (minutes < 5) return 'text-red-600 dark:text-red-400';
+    if (minutes < 10) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-green-600 dark:text-green-400';
+  };
+
+  // Handle status change
+  const handleStatusChange = async (newStatus) => {
+    if (!selectedConversation) return;
+    
+    try {
+      const response = await conversationsAPI.updateStatus(selectedConversation._id, newStatus);
+      
+      // Update selected conversation
+      setSelectedConversation(response.data.conversation);
+      
+      // Update conversation in list
+      setConversations(prev =>
+        prev.map(conv =>
+          conv._id === selectedConversation._id
+            ? { ...conv, status: newStatus }
+            : conv
+        )
+      );
+      
+      toast.success(t('conversations.statusChangeSuccess'));
+    } catch (error) {
+      console.error('❌ Failed to update status:', error);
+      toast.error(t('conversations.statusChangeError'));
+    }
+  };
+
+  // Handle priority change
+  const handlePriorityChange = async (newPriority) => {
+    if (!selectedConversation) return;
+    
+    try {
+      const response = await conversationsAPI.updatePriority(selectedConversation._id, newPriority);
+      
+      // Update selected conversation
+      setSelectedConversation(response.data.conversation);
+      
+      // Update conversation in list
+      setConversations(prev =>
+        prev.map(conv =>
+          conv._id === selectedConversation._id
+            ? { ...conv, priority: newPriority }
+            : conv
+        )
+      );
+      
+      toast.success(t('conversations.priorityChangeSuccess'));
+    } catch (error) {
+      console.error('❌ Failed to update priority:', error);
+      toast.error(t('conversations.priorityChangeError'));
+    }
   };
 
   const getStatusColor = (status) => {
     const colors = {
+      open: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
       unassigned: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
       assigned: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-      pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+      pending: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
       resolved: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
       closed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
     };
-    return colors[status] || colors.unassigned;
+    return colors[status] || colors.open;
   };
 
   const getPriorityColor = (priority) => {
@@ -452,19 +568,52 @@ const Conversations = () => {
                         <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-xs sm:text-sm lg:text-base text-gray-900 dark:text-white transition-colors duration-200 truncate">{conv.visitorName}</p>
-                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">{conv.currentPage}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-xs sm:text-sm lg:text-base text-gray-900 dark:text-white transition-colors duration-200 truncate">
+                            {conv.ticketId || `#${conv.ticketNumber}`}
+                          </p>
+                          <span className={`px-1.5 py-0.5 text-[9px] sm:text-[10px] rounded ${getPriorityColor(conv.priority)} flex-shrink-0`}>
+                            {conv.priority === 'urgent' ? 'Acil' : conv.priority === 'high' ? 'Yüksek' : conv.priority === 'normal' ? 'Normal' : 'Düşük'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 truncate">{conv.visitorName}</p>
+                        <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">{conv.currentPage}</p>
                       </div>
                     </div>
                     <span className={`px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full flex-shrink-0 whitespace-nowrap ${getStatusColor(conv.status)}`}>
-                      {conv.status}
+                      {conv.status === 'open' ? 'Açık' : conv.status === 'assigned' ? 'Atandı' : conv.status === 'pending' ? 'Bekliyor' : conv.status === 'resolved' ? 'Çözüldü' : 'Kapalı'}
                     </span>
                   </div>
+                  
+                  {/* SLA Göstergesi */}
+                  {conv.sla && (
+                    <div className="mb-1.5 flex items-center gap-2">
+                      {conv.sla.firstResponseStatus === 'breached' ? (
+                        <span className="text-[9px] sm:text-[10px] text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          SLA İhlali
+                        </span>
+                      ) : conv.sla.firstResponseTimeRemaining !== null && conv.sla.firstResponseTimeRemaining >= 0 ? (
+                        <span className={`text-[9px] sm:text-[10px] font-medium flex items-center gap-1 ${getSLAColor(conv.sla.firstResponseTimeRemaining)}`}>
+                          <Clock className="w-3 h-3" />
+                          {formatMinutes(conv.sla.firstResponseTimeRemaining)} kaldı
+                        </span>
+                      ) : (
+                        conv.sla.resolutionTimeRemaining !== null && conv.sla.resolutionTimeRemaining >= 0 && (
+                          <span className={`text-[9px] sm:text-[10px] font-medium flex items-center gap-1 ${getSLAColor(conv.sla.resolutionTimeRemaining)}`}>
+                            <Clock className="w-3 h-3" />
+                            Çözüm: {formatMinutes(conv.sla.resolutionTimeRemaining)}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  )}
+                  
                   {conv.lastMessage && (
                     <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 truncate transition-colors duration-200">{conv.lastMessage.content}</p>
                   )}
                   <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 sm:mt-1 transition-colors duration-200">
-                    {formatTime(conv.lastMessageAt)}
+                    {formatTime(conv.lastMessageAt || conv.createdAt)}
                   </p>
                 </div>
               ))
@@ -495,6 +644,31 @@ const Conversations = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
+                {/* Priority Dropdown */}
+                <select
+                  value={selectedConversation.priority}
+                  onChange={(e) => handlePriorityChange(e.target.value)}
+                  className={`px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium ${getPriorityColor(selectedConversation.priority)}`}
+                >
+                  <option value="low">Düşük</option>
+                  <option value="normal">Orta</option>
+                  <option value="high">Yüksek</option>
+                  <option value="urgent">Acil</option>
+                </select>
+
+                {/* Status Dropdown */}
+                <select
+                  value={selectedConversation.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className={`px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}
+                >
+                  <option value="open">Açık</option>
+                  <option value="assigned">Atandı</option>
+                  <option value="pending">Beklemede</option>
+                  <option value="resolved">Çözüldü</option>
+                  <option value="closed">Kapalı</option>
+                </select>
+
                 <button
                   onClick={() => openDeleteConfirm(selectedConversation._id)}
                   className="p-1.5 sm:p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
@@ -502,9 +676,6 @@ const Conversations = () => {
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
-                <span className={`px-1.5 sm:px-2 lg:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-full whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}>
-                  {selectedConversation.status}
-                </span>
               </div>
             </div>
 

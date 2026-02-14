@@ -21,6 +21,7 @@ const FAQs = lazy(() => import('./pages/FAQs'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Team = lazy(() => import('./pages/Team'));
 const Departments = lazy(() => import('./pages/Departments'));
+const Analytics = lazy(() => import('./pages/Analytics'));
 
 // Layouts - Lazy load
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -166,6 +167,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="sites" element={<Sites />} />
             <Route path="conversations" element={<Conversations />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="faqs" element={<FAQs />} />
             <Route path="team" element={<Team />} />
             <Route path="departments" element={<Departments />} />
@@ -184,6 +186,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="sites" element={<Sites />} />
             <Route path="conversations" element={<Conversations />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="faqs" element={<FAQs />} />
             <Route path="team" element={<Team />} />
             <Route path="departments" element={<Departments />} />

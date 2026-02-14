@@ -165,6 +165,11 @@ export const conversationsAPI = {
     clearCache('/conversations');
     return response;
   },
+  updatePriority: async (conversationId, priority) => {
+    const response = await api.put(`/conversations/${conversationId}/priority`, { priority });
+    clearCache('/conversations');
+    return response;
+  },
   delete: async (siteId, conversationId) => {
     const response = await api.delete(`/conversations/${siteId}/${conversationId}`);
     clearCache('/conversations');
