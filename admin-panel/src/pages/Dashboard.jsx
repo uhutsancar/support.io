@@ -71,6 +71,12 @@ const Dashboard = () => {
       console.log('💬 New ticket received:', data);
       fetchDashboardData(true);
     });
+    
+    // Konuşma güncellendiğinde
+    newSocket.on('conversation-update', (data) => {
+      console.log('🔄 Conversation updated:', data);
+      fetchDashboardData(true);
+    });
 
     // SLA ihlali olduğunda
     newSocket.on('sla-breach', (data) => {
@@ -88,6 +94,8 @@ const Dashboard = () => {
           tag: 'sla-breach'
         });
       }
+      
+      fetchDashboardData(true);
     });
 
     // Ticket çözüldüğünde

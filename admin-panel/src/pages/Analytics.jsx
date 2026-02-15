@@ -34,6 +34,7 @@ import {
   Filter
 } from 'lucide-react';
 import { sitesAPI, conversationsAPI, clearCache } from '../services/api';
+import { io } from 'socket.io-client';
 
 const Analytics = () => {
   const { t } = useTranslation();
@@ -41,6 +42,7 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7days'); // 7days, 30days, 90days
   const [selectedMetric, setSelectedMetric] = useState('all');
+  const [socket, setSocket] = useState(null);
 
   const [stats, setStats] = useState({
     openTickets: 0,
@@ -57,6 +59,56 @@ const Analytics = () => {
   const [agentPerformance, setAgentPerformance] = useState([]);
   const [channelDistribution, setChannelDistribution] = useState([]);
   const [slaCompliance, setSlaCompliance] = useState([]);
+  const [selectedAgent, setSelectedAgent] = useState('all'); // Agent filter
+
+  // Socket bağlantısı ve event listeners
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const newSocket = io('http://localhost:5000/admin', {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+    
+    newSocket.on('connect', () => {
+      console.log('✅ Analytics socket connected!');
+    });
+
+    // Yeni konuşma geldiğinde
+    newSocket.on('new-conversation', () => {
+      console.log('💬 New conversation - refreshing analytics');
+      fetchAnalytics();
+    });
+
+    // SLA ihlali olduğunda
+    newSocket.on('sla-breach', () => {
+      console.log('🚨 SLA breach - refreshing analytics');
+      fetchAnalytics();
+    });
+
+    // Konuşma çözüldüğünde
+    newSocket.on('conversation-resolved', () => {
+      console.log('✅ Conversation resolved - refreshing analytics');
+      fetchAnalytics();
+    });
+
+    // Konuşma güncellendiğinde
+    newSocket.on('conversation-update', () => {
+      console.log('🔄 Conversation updated - refreshing analytics');
+      fetchAnalytics();
+    });
+
+    // SLA ihlali olduğunda (HEMEN güncelle!)
+    newSocket.on('sla-breach', (data) => {
+      console.log('🚨 SLA BREACH detected - refreshing analytics', data);
+      fetchAnalytics();
+    });
+
+    setSocket(newSocket);
+    
+    return () => {
+      newSocket.close();
+    };
+  }, []);
 
   useEffect(() => {
     fetchAnalytics();
@@ -67,9 +119,13 @@ const Analytics = () => {
       setLoading(true);
       clearCache();
 
+      console.log('🔄 Fetching analytics data...');
+      
       // Sites verilerini çek
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
+      
+      console.log('🏢 Sites:', sites.length);
 
       // Tüm conversations'ları topla
       let allConversations = [];
@@ -79,11 +135,23 @@ const Analytics = () => {
           const conversations = conversationsResponse.data.conversations || [];
           allConversations = [...allConversations, ...conversations];
         } catch (error) {
-          console.error('Site conversations fetch failed:', error);
+          console.error('❌ Site conversations fetch failed:', error);
         }
       }
 
-      console.log('Total conversations:', allConversations.length);
+      console.log('📊 Total conversations:', allConversations.length);
+      
+      if (allConversations.length > 0) {
+        console.log('📄 Sample conversation:', {
+          id: allConversations[0]._id,
+          status: allConversations[0].status,
+          priority: allConversations[0].priority,
+          sla: allConversations[0].sla,
+          assignedAgent: allConversations[0].assignedAgent,
+          department: allConversations[0].department,
+          firstResponseAt: allConversations[0].firstResponseAt
+        });
+      }
 
       // İstatistikleri hesapla
       const openTickets = allConversations.filter(c =>
@@ -94,9 +162,17 @@ const Analytics = () => {
         c.status === 'open' && !c.assignedAgent
       ).length;
 
+      // SLA ihlalleri: status breached VEYA kalan süre negatif
       const slaBreaches = allConversations.filter(c =>
-        c.sla?.firstResponseStatus === 'breached' || c.sla?.resolutionStatus === 'breached'
+        c.sla?.firstResponseStatus === 'breached' ||
+        (c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0)
       ).length;
+
+      console.log('🚨 SLA Breaches:', {
+        total: slaBreaches,
+        statusBreached: allConversations.filter(c => c.sla?.firstResponseStatus === 'breached').length,
+        remainingNegative: allConversations.filter(c => c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0).length
+      });
 
       // Memnuniyet oranı
       const ratedConversations = allConversations.filter(c => c.rating?.score);
@@ -157,8 +233,11 @@ const Analytics = () => {
         }
       });
 
+      console.log('📊 Hourly Response Times (raw):', hourly);
+
       const hourlyData = [];
-      for (let h = 0; h < 24; h += 4) {
+      // TÜM saatleri kontrol et (0-23), veri olmayanları 0 yap
+      for (let h = 0; h < 24; h++) {
         const avg = hourly[h] 
           ? Math.round(hourly[h].times.reduce((a, b) => a + b, 0) / hourly[h].times.length)
           : 0;
@@ -168,6 +247,7 @@ const Analytics = () => {
           target: 15
         });
       }
+      console.log('📊 Response Time Data (chart):', hourlyData);
       setResponseTimeData(hourlyData);
 
       // 3. Kanal dağılımı
@@ -187,24 +267,37 @@ const Analytics = () => {
 
       setChannelDistribution(Object.values(channels).filter(c => c.value > 0));
 
-      // 4. SLA Uyum Analizi
-      const firstResponseMet = allConversations.filter(c => c.sla?.firstResponseStatus === 'met').length;
-      const firstResponseBreached = allConversations.filter(c => c.sla?.firstResponseStatus === 'breached').length;
-      const resolutionMet = allConversations.filter(c => c.sla?.resolutionStatus === 'met').length;
-      const resolutionBreached = allConversations.filter(c => c.sla?.resolutionStatus === 'breached').length;
+      // 4. SLA Uyum Analizi - SADECE İLK YANIT
+      const firstResponseMet = allConversations.filter(c => 
+        c.sla?.firstResponseStatus === 'met'
+      ).length;
+      
+      const firstResponseBreached = allConversations.filter(c => 
+        c.sla?.firstResponseStatus === 'breached' ||
+        (c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0)
+      ).length;
+      
+      const firstResponsePending = allConversations.filter(c => 
+        c.sla?.firstResponseStatus === 'pending' &&
+        (c.sla?.firstResponseTimeRemaining === null || c.sla?.firstResponseTimeRemaining >= 0)
+      ).length;
 
-      setSlaCompliance([
+      console.log('📊 SLA Analysis (First Response Only):', {
+        firstResponse: { met: firstResponseMet, breached: firstResponseBreached, pending: firstResponsePending },
+        total: firstResponseMet + firstResponseBreached + firstResponsePending
+      });
+
+      const slaData = [
         { 
-          category: language === 'tr' ? 'İlk Yanıt' : 'First Response', 
+          category: language === 'tr' ? 'İlk Yanıt SLA' : 'First Response SLA', 
           met: firstResponseMet, 
-          breached: firstResponseBreached 
-        },
-        { 
-          category: language === 'tr' ? 'Çözüm' : 'Resolution', 
-          met: resolutionMet, 
-          breached: resolutionBreached 
+          breached: firstResponseBreached,
+          pending: firstResponsePending
         }
-      ]);
+      ];
+      
+      console.log('📊 SLA Compliance Data for Chart:', slaData);
+      setSlaCompliance(slaData);
 
       // 5. Departman performansı (populate edilen departman bilgisiyle)
       const deptMap = {};
@@ -251,23 +344,41 @@ const Analytics = () => {
       allConversations.forEach(c => {
         if (c.assignedAgent) {
           const agentName = c.assignedAgent.name || 'Agent';
-          if (!agentMap[agentName]) {
-            agentMap[agentName] = {
+          const agentId = c.assignedAgent._id || c.assignedAgent;
+          
+          console.log('👤 Processing agent:', {
+            conversationId: c._id,
+            assignedAgent: c.assignedAgent,
+            agentName,
+            agentId,
+            status: c.status,
+            firstResponseAt: c.firstResponseAt
+          });
+          
+          if (!agentMap[agentId]) {
+            agentMap[agentId] = {
               name: agentName,
               resolved: 0,
+              active: 0,
               responseTimes: [],
               ratings: []
             };
           }
+          
+          // Aktif konuşmaları say
+          if (c.status === 'open' || c.status === 'assigned' || c.status === 'pending') {
+            agentMap[agentId].active++;
+          }
+          
           if (c.status === 'resolved' || c.status === 'closed') {
-            agentMap[agentName].resolved++;
+            agentMap[agentId].resolved++;
           }
           if (c.firstResponseAt && c.createdAt) {
             const responseTime = Math.floor((new Date(c.firstResponseAt) - new Date(c.createdAt)) / 1000 / 60);
-            agentMap[agentName].responseTimes.push(responseTime);
+            agentMap[agentId].responseTimes.push(responseTime);
           }
           if (c.rating?.score) {
-            agentMap[agentName].ratings.push(c.rating.score);
+            agentMap[agentId].ratings.push(c.rating.score);
           }
         }
       });
@@ -275,6 +386,7 @@ const Analytics = () => {
       const agentStats = Object.values(agentMap).map(agent => ({
         name: agent.name,
         resolved: agent.resolved,
+        active: agent.active,
         avgTime: agent.responseTimes.length > 0 
           ? Math.round(agent.responseTimes.reduce((a, b) => a + b, 0) / agent.responseTimes.length)
           : 0,
@@ -283,6 +395,19 @@ const Analytics = () => {
           : 0
       })).sort((a, b) => b.resolved - a.resolved);
 
+      console.log('� Data Summary:', {
+        conversations: allConversations.length,
+        conversationsWithAgent: allConversations.filter(c => c.assignedAgent).length,
+        uniqueAgents: Object.keys(agentMap).length,
+        withFirstResponse: allConversations.filter(c => c.firstResponseAt).length,
+        withDepartment: Object.keys(deptMap).length,
+        agentPerformance: agentStats.length,
+        departmentStats: deptStats.length,
+        responseTimeData: hourlyData.length,
+        slaCompliance: slaCompliance
+      });
+      
+      console.log('�👥 Agent Performance:', agentStats);
       setAgentPerformance(agentStats);
 
     } catch (error) {
@@ -535,17 +660,27 @@ const Analytics = () => {
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.slaCompliance')}
             </h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={slaCompliance} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                <XAxis type="number" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
-                <YAxis type="category" dataKey="category" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Bar dataKey="met" name={language === 'tr' ? 'SLA Karşılandı' : 'SLA Met'} fill="#10B981" stackId="a" />
-                <Bar dataKey="breached" name={language === 'tr' ? 'SLA İhlal Edildi' : 'SLA Breached'} fill="#EF4444" stackId="a" />
-              </BarChart>
-            </ResponsiveContainer>
+            {slaCompliance.length === 0 || slaCompliance.every(item => item.met === 0 && item.breached === 0 && item.pending === 0) ? (
+              <div className="h-[250px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <p className="text-lg mb-2">{language === 'tr' ? 'Henüz SLA verisi yok' : 'No SLA data yet'}</p>
+                  <p className="text-sm">{language === 'tr' ? 'Konuşmalar yanıtlandıkça veriler burada görünecek' : 'Data will appear as conversations are responded to'}</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={slaCompliance}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+                  <XAxis dataKey="category" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend />
+                  <Bar dataKey="met" name={language === 'tr' ? 'SLA Karşılandı' : 'SLA Met'} fill="#10B981" stackId="a" />
+                  <Bar dataKey="pending" name={language === 'tr' ? 'Beklemede' : 'Pending'} fill="#F59E0B" stackId="a" />
+                  <Bar dataKey="breached" name={language === 'tr' ? 'SLA İhlal Edildi' : 'SLA Breached'} fill="#EF4444" stackId="a" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -610,12 +745,61 @@ const Analytics = () => {
 
         {/* Temsilci Performansı */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-            {t('analytics.agentPerformance')}
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              {t('analytics.agentPerformance')}
+            </h3>
+            {agentPerformance.length > 0 && (
+              <select
+                value={selectedAgent}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+                className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white"
+              >
+                <option value="all">{language === 'tr' ? 'Tüm Temsilciler' : 'All Agents'}</option>
+                {agentPerformance.map((agent, idx) => (
+                  <option key={idx} value={agent.name}>{agent.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
           {agentPerformance.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
               {language === 'tr' ? 'Henüz veri yok' : 'No data yet'}
+            </div>
+          ) : selectedAgent !== 'all' ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {(() => {
+                const agent = agentPerformance.find(a => a.name === selectedAgent);
+                if (!agent) return null;
+                return (
+                  <>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{agent.resolved}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {language === 'tr' ? 'Çözülen Talepler' : 'Resolved Tickets'}
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{agent.active}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {language === 'tr' ? 'Aktif Konuşmalar' : 'Active Conversations'}
+                      </div>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{agent.satisfaction}%</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {language === 'tr' ? 'Memnuniyet' : 'Satisfaction'}
+                      </div>
+                    </div>
+                    <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatMinutes(agent.avgTime)}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {language === 'tr' ? 'Ort. Yanıt Süresi' : 'Avg Response Time'}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>

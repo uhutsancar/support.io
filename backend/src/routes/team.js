@@ -22,7 +22,31 @@ router.get('/', auth, async (req, res) => {
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
     
-    res.json(members);
+    // Her member için conversation istatistiklerini ekle
+    const membersWithStats = await Promise.all(
+      members.map(async (member) => {
+        const activeConversations = await Conversation.countDocuments({
+          assignedAgent: member._id,
+          status: { $in: ['open', 'assigned', 'pending'] }
+        });
+        
+        const resolvedConversations = await Conversation.countDocuments({
+          assignedAgent: member._id,
+          status: { $in: ['resolved', 'closed'] }
+        });
+        
+        return {
+          ...member.toObject(),
+          stats: {
+            ...member.stats,
+            activeConversations,
+            resolvedConversations
+          }
+        };
+      })
+    );
+    
+    res.json(membersWithStats);
   } catch (error) {
     console.error('Error fetching team members:', error);
     res.status(500).json({ error: 'Failed to fetch team members' });

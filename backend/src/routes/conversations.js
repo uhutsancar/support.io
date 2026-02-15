@@ -50,15 +50,20 @@ router.get('/:siteId', auth, async (req, res) => {
 
     const conversations = await Conversation.find(filter)
       .populate('assignedAgent', 'name avatar status')
+      .populate('department', 'name color icon')
       .sort({ lastMessageAt: -1 })
       .limit(50);
 
-    // Get last message for each conversation
+    // Get last message for each conversation and recalculate SLA
     const conversationsWithLastMessage = await Promise.all(
       conversations.map(async (conv) => {
         const lastMessage = await Message.findOne({ conversationId: conv._id })
           .sort({ createdAt: -1 })
           .limit(1);
+        
+        // SLA'yı yeniden hesapla
+        conv.calculateSLA();
+        await conv.save();
         
         return {
           ...conv.toObject(),
@@ -79,11 +84,17 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
     const conversation = await Conversation.findOne({
       _id: req.params.conversationId,
       siteId: req.params.siteId
-    }).populate('assignedAgent', 'name avatar status');
+    })
+      .populate('assignedAgent', 'name avatar status')
+      .populate('department', 'name color icon');
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
+
+    // SLA'yı yeniden hesapla
+    conversation.calculateSLA();
+    await conversation.save();
 
     const messages = await Message.find({ conversationId: conversation._id })
       .sort({ createdAt: 1 });
@@ -155,6 +166,11 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
         conversationId: conversation._id,
         agentId,
         assignedBy
+      });
+      // Also emit conversation-update for real-time UI updates
+      io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
+        conversationId: conversation._id,
+        conversation: conversation.toObject()
       });
     }
 
@@ -241,6 +257,11 @@ router.put('/:conversationId/department', auth, async (req, res) => {
         conversationId: conversation._id,
         departmentId
       });
+      // Also emit conversation-update for real-time UI updates
+      io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
+        conversationId: conversation._id,
+        conversation: conversation.toObject()
+      });
     }
 
     res.json({ conversation });
@@ -267,14 +288,25 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
     
     conversation.priority = priority;
     
-    // SLA hedeflerini yeni önceliğe göre güncelle
-    if (conversation.department && conversation.department.sla.enabled) {
-      conversation.sla.firstResponseTarget = conversation.department.sla.firstResponse[priority] || 30;
-      conversation.sla.resolutionTarget = conversation.department.sla.resolution[priority] || 480;
-      
-      // SLA'yı yeniden hesapla
-      conversation.calculateSLA();
+    // Priority bazl\u0131 default SLA targets
+    const slaTargets = {
+      urgent: { firstResponse: 5, resolution: 60 },
+      high: { firstResponse: 10, resolution: 120 },
+      normal: { firstResponse: 15, resolution: 240 },
+      low: { firstResponse: 30, resolution: 480 }
+    };
+    
+    // SLA hedeflerini yeni \u00f6nceli\u011fe g\u00f6re g\u00fcncelle
+    if (conversation.department && conversation.department.sla && conversation.department.sla.enabled) {
+      conversation.sla.firstResponseTarget = conversation.department.sla.firstResponse?.[priority] || slaTargets[priority].firstResponse;
+      conversation.sla.resolutionTarget = conversation.department.sla.resolution?.[priority] || slaTargets[priority].resolution;
+    } else {
+      conversation.sla.firstResponseTarget = slaTargets[priority].firstResponse;
+      conversation.sla.resolutionTarget = slaTargets[priority].resolution;
     }
+    
+    // SLA'y\u0131 yeniden hesapla
+    conversation.calculateSLA();
     
     await conversation.save();
     await conversation.populate('assignedAgent', 'name avatar status');

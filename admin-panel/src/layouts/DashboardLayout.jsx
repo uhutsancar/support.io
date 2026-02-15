@@ -113,7 +113,7 @@ const DashboardLayout = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <Link to={routes.home} className="flex items-center cursor-pointer">
+            <Link to={routes.dashboard} className="flex items-center cursor-pointer">
               <img src={logo} alt="Support.io" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
             </Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500 dark:text-gray-400">

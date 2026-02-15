@@ -118,11 +118,23 @@ class SocketHandler {
               priority: 'normal'
             });
 
-            // SLA hedeflerini departmandan al
-            if (department && department.sla.enabled) {
-              const priority = conversation.priority;
-              conversation.sla.firstResponseTarget = department.sla.firstResponse[priority] || 30;
-              conversation.sla.resolutionTarget = department.sla.resolution[priority] || 480;
+            // SLA hedeflerini priority'e göre ayarla
+            const slaTargets = {
+              urgent: { firstResponse: 5, resolution: 60 },
+              high: { firstResponse: 10, resolution: 120 },
+              normal: { firstResponse: 15, resolution: 240 },
+              low: { firstResponse: 30, resolution: 480 }
+            };
+            
+            const priority = conversation.priority;
+            
+            // Departman SLA ayarları varsa onları kullan, yoksa default'ları kullan
+            if (department && department.sla && department.sla.enabled) {
+              conversation.sla.firstResponseTarget = department.sla.firstResponse?.[priority] || slaTargets[priority].firstResponse;
+              conversation.sla.resolutionTarget = department.sla.resolution?.[priority] || slaTargets[priority].resolution;
+            } else {
+              conversation.sla.firstResponseTarget = slaTargets[priority].firstResponse;
+              conversation.sla.resolutionTarget = slaTargets[priority].resolution;
             }
 
             await conversation.save();
@@ -302,6 +314,12 @@ class SocketHandler {
                 await agent.save();
               }
             }
+            
+            // Emit conversation-update event for SLA update
+            this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-update', {
+              conversationId: conversation._id,
+              conversation: conversation.toObject()
+            });
           }
 
           await conversation.save();
@@ -630,15 +648,32 @@ class SocketHandler {
         // Açık ve atanmış tüm conversation'ları getir
         const activeConversations = await Conversation.find({
           status: { $in: ['open', 'assigned', 'pending'] }
-        }).populate('department');
+        })
+        .populate('department', 'name color icon')
+        .populate('assignedAgent', 'name email avatar');
 
         for (const conversation of activeConversations) {
           const previousFirstResponseStatus = conversation.sla.firstResponseStatus;
           const previousResolutionStatus = conversation.sla.resolutionStatus;
+          const previousFirstResponseRemaining = conversation.sla.firstResponseTimeRemaining;
+          const previousResolutionRemaining = conversation.sla.resolutionTimeRemaining;
           
           // SLA'yı yeniden hesapla
           conversation.calculateSLA();
           await conversation.save();
+          
+          // HER KONUŞMA İÇİN SLA GÜNCELLEMESİ GÖNDER (countdown için)
+          // Sadece kalan süre değiştiyse emit et (performans için)
+          if (previousFirstResponseRemaining !== conversation.sla.firstResponseTimeRemaining ||
+              previousResolutionRemaining !== conversation.sla.resolutionTimeRemaining ||
+              previousFirstResponseStatus !== conversation.sla.firstResponseStatus ||
+              previousResolutionStatus !== conversation.sla.resolutionStatus) {
+            
+            this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-update', {
+              conversationId: conversation._id,
+              conversation: conversation.toObject()
+            });
+          }
           
           // SLA ihlali oluştuysa bildirim gönder
           if (previousFirstResponseStatus !== 'breached' && conversation.sla.firstResponseStatus === 'breached') {
@@ -646,7 +681,14 @@ class SocketHandler {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
               type: 'first-response',
-              conversation
+              conversation: conversation.toObject()
+            });
+            // Tüm admin'lere de gönder
+            this.adminNamespace.emit('sla-breach', {
+              conversationId: conversation._id,
+              ticketNumber: conversation.ticketNumber,
+              type: 'first-response',
+              conversation: conversation.toObject()
             });
           }
           
@@ -655,23 +697,21 @@ class SocketHandler {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
               type: 'resolution',
-              conversation
+              conversation: conversation.toObject()
             });
-          }
-          
-          // Kalan süre azaldıysa güncelleme gönder (her 5 dakikada bir)
-          const remainingMinutes = conversation.sla.firstResponseTimeRemaining || conversation.sla.resolutionTimeRemaining;
-          if (remainingMinutes !== null && remainingMinutes % 5 === 0) {
-            this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-update', {
+            // Tüm admin'lere de gönder
+            this.adminNamespace.emit('sla-breach', {
               conversationId: conversation._id,
-              sla: conversation.sla
+              ticketNumber: conversation.ticketNumber,
+              type: 'resolution',
+              conversation: conversation.toObject()
             });
           }
         }
       } catch (error) {
-        console.error('SLA monitoring error:', error);
+        console.error('❌ SLA monitoring error:', error);
       }
-    }, 60000); // Her 1 dakika
+    }, 30000); // Her 30 saniye
   }
 
   async tryAutoResponse(conversation, userMessage) {

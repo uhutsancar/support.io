@@ -253,15 +253,29 @@ router.get('/:id/stats', auth, async (req, res) => {
       return res.status(404).json({ error: 'Department not found' });
     }
     
+    // Toplam conversation sayısı
+    const totalConversations = await Conversation.countDocuments({ department: department._id });
+    
+    // Atanmamış: department'a ait ama agent atanmamış
+    const unassigned = await Conversation.countDocuments({ 
+      department: department._id, 
+      status: 'open',
+      assignedAgent: null
+    });
+    
     const stats = {
-      totalConversations: await Conversation.countDocuments({ department: department._id }),
-      unassigned: await Conversation.countDocuments({ department: department._id, status: 'unassigned' }),
-      assigned: await Conversation.countDocuments({ department: department._id, status: 'assigned' }),
+      totalConversations,
+      unassigned,
+      assigned: await Conversation.countDocuments({ 
+        department: department._id, 
+        status: 'assigned',
+        assignedAgent: { $ne: null }
+      }),
       pending: await Conversation.countDocuments({ department: department._id, status: 'pending' }),
       resolved: await Conversation.countDocuments({ department: department._id, status: 'resolved' }),
       closed: await Conversation.countDocuments({ department: department._id, status: 'closed' }),
       activeMembers: department.members.length,
-      avgResponseTime: department.stats.averageResponseTime || 0
+      avgResponseTime: department.stats?.averageResponseTime || 0
     };
     
     res.json(stats);

@@ -73,15 +73,23 @@ const conversationSchema = new mongoose.Schema({
   
   // SLA (Service Level Agreement) Alanları
   sla: {
-    // İlk yanıt süresi hedefi (dakika cinsinden)
+    // İlk yanıt süresi hedefi (dakika cinsinden) - Priority'e göre değişir
     firstResponseTarget: {
       type: Number,
-      default: 15 // 15 dakika
+      default: function() {
+        // Priority bazlı default değerler
+        const targets = { urgent: 5, high: 10, normal: 15, low: 30 };
+        return targets[this.priority] || 15;
+      }
     },
-    // Çözüm süresi hedefi (dakika cinsinden)
+    // Çözüm süresi hedefi (dakika cinsinden) - Priority'e göre değişir  
     resolutionTarget: {
       type: Number,
-      default: 240 // 4 saat
+      default: function() {
+        // Priority bazlı default değerler
+        const targets = { urgent: 60, high: 120, normal: 240, low: 480 };
+        return targets[this.priority] || 240;
+      }
     },
     // İlk yanıt SLA durumu
     firstResponseStatus: {
@@ -249,7 +257,7 @@ conversationSchema.methods.calculateSLA = function() {
   } else {
     const responseMinutes = Math.floor((this.firstResponseAt - createdTime) / 1000 / 60);
     this.sla.firstResponseStatus = responseMinutes <= this.sla.firstResponseTarget ? 'met' : 'breached';
-    this.sla.firstResponseTimeRemaining = 0;
+    this.sla.firstResponseTimeRemaining = null; // İlk yanıt verildi, artık takip etme
     
     if (this.sla.firstResponseStatus === 'breached' && !this.sla.firstResponseBreachedAt) {
       this.sla.firstResponseBreachedAt = this.firstResponseAt;
@@ -272,7 +280,7 @@ conversationSchema.methods.calculateSLA = function() {
   } else if (this.resolvedAt) {
     const resolutionMinutes = Math.floor((this.resolvedAt - createdTime) / 1000 / 60);
     this.sla.resolutionStatus = resolutionMinutes <= this.sla.resolutionTarget ? 'met' : 'breached';
-    this.sla.resolutionTimeRemaining = 0;
+    this.sla.resolutionTimeRemaining = null; // Çözüldü, artık takip etme
     
     if (this.sla.resolutionStatus === 'breached' && !this.sla.resolutionBreachedAt) {
       this.sla.resolutionBreachedAt = this.resolvedAt;
