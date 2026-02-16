@@ -25,7 +25,7 @@ const faqSchema = new mongoose.Schema({
     lowercase: true
   }],
   pageSpecific: {
-    type: String, // e.g., "/pricing", "*" for all pages
+    type: String,
     default: '*'
   },
   isActive: {
@@ -36,7 +36,6 @@ const faqSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // Analytics
   viewCount: {
     type: Number,
     default: 0
@@ -49,7 +48,6 @@ const faqSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Text search index
 faqSchema.index({ question: 'text', answer: 'text', keywords: 'text' });
 
 module.exports = mongoose.model('FAQ', faqSchema);

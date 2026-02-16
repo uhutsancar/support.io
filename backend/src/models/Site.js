@@ -23,7 +23,6 @@ const siteSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  // Widget settings
   widgetSettings: {
     position: {
       type: String,
@@ -43,7 +42,7 @@ const siteSchema = new mongoose.Schema({
       default: 'Type your message...'
     },
     showOnPages: [{
-      type: String // e.g., "/pricing", "/contact", "*" for all
+      type: String
     }],
     autoOpen: {
       type: Boolean,
@@ -51,10 +50,9 @@ const siteSchema = new mongoose.Schema({
     },
     autoOpenDelay: {
       type: Number,
-      default: 5000 // ms
+      default: 5000
     }
   },
-  // AI/Bot settings
   aiSettings: {
     enabled: {
       type: Boolean,

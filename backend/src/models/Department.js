@@ -18,7 +18,7 @@ const departmentSchema = new mongoose.Schema({
   },
   color: {
     type: String,
-    default: '#3B82F6' // Default blue color
+    default: '#3B82F6'
   },
   icon: {
     type: String,
@@ -98,27 +98,23 @@ const departmentSchema = new mongoose.Schema({
     }
   },
   
-  // SLA (Service Level Agreement) Kuralları
   sla: {
     enabled: {
       type: Boolean,
       default: true
     },
-    // İlk yanıt SLA hedefi (dakika cinsinden)
     firstResponse: {
-      urgent: { type: Number, default: 5 },      // 5 dakika
-      high: { type: Number, default: 15 },       // 15 dakika
-      normal: { type: Number, default: 30 },     // 30 dakika
-      low: { type: Number, default: 60 }         // 1 saat
+      urgent: { type: Number, default: 5 },
+      high: { type: Number, default: 15 },
+      normal: { type: Number, default: 30 },
+      low: { type: Number, default: 60 }
     },
-    // Çözüm SLA hedefi (dakika cinsinden)
     resolution: {
-      urgent: { type: Number, default: 120 },    // 2 saat
-      high: { type: Number, default: 240 },      // 4 saat
-      normal: { type: Number, default: 480 },    // 8 saat
-      low: { type: Number, default: 1440 }       // 24 saat
+      urgent: { type: Number, default: 120 },
+      high: { type: Number, default: 240 },
+      normal: { type: Number, default: 480 },
+      low: { type: Number, default: 1440 }
     },
-    // Sadece çalışma saatleri içinde SLA sayılsın mı?
     onlyBusinessHours: {
       type: Boolean,
       default: false
@@ -142,21 +138,19 @@ const departmentSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    // SLA istatistikleri
     slaMetrics: {
       firstResponseMet: { type: Number, default: 0 },
       firstResponseBreached: { type: Number, default: 0 },
       resolutionMet: { type: Number, default: 0 },
       resolutionBreached: { type: Number, default: 0 },
-      averageFirstResponseTime: { type: Number, default: 0 }, // dakika
-      averageResolutionTime: { type: Number, default: 0 }     // dakika
+      averageFirstResponseTime: { type: Number, default: 0 },
+      averageResolutionTime: { type: Number, default: 0 }
     }
   }
 }, {
   timestamps: true
 });
 
-// Index for faster queries
 departmentSchema.index({ siteId: 1, isActive: 1 });
 departmentSchema.index({ 'members.userId': 1 });
 

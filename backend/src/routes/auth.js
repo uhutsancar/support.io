@@ -6,7 +6,6 @@ const User = require('../models/User');
 const Team = require('../models/Team');
 const { auth } = require('../middleware/auth');
 
-// Validation middleware
 const validateRegistration = [
   body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
@@ -18,10 +17,8 @@ const validateLogin = [
   body('password').notEmpty()
 ];
 
-// Register new user
 router.post('/register', validateRegistration, async (req, res) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ error: errors.array()[0].msg });
@@ -29,23 +26,20 @@ router.post('/register', validateRegistration, async (req, res) => {
 
     const { email, password, name } = req.body;
 
-    // Check if user exists (only active users)
     const existingUser = await User.findOne({ email, isActive: true });
     if (existingUser) {
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kayıtlı' });
     }
 
-    // Create user
     const user = new User({
       email,
       password,
       name,
-      role: 'admin' // First user is admin
+      role: 'admin'
     });
 
     await user.save();
 
-    // Generate token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
@@ -64,10 +58,8 @@ router.post('/register', validateRegistration, async (req, res) => {
   }
 });
 
-// Login
 router.post('/login', validateLogin, async (req, res) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ error: 'Invalid input' });
@@ -75,11 +67,9 @@ router.post('/login', validateLogin, async (req, res) => {
 
     const { email, password } = req.body;
 
-    // First try to find in Users (admin/owner)
     let user = await User.findOne({ email, isActive: true });
     let userType = 'user';
     
-    // If not found in Users, try Team (agent/manager)
     if (!user) {
       user = await Team.findOne({ email, isActive: true });
       userType = 'team';
@@ -99,7 +89,6 @@ router.post('/login', validateLogin, async (req, res) => {
       process.env.JWT_SECRET, 
       { expiresIn: '7d' }
     );
-
     // Update status to online
     user.status = 'online';
     await user.save();
@@ -111,7 +100,7 @@ router.post('/login', validateLogin, async (req, res) => {
         name: user.name,
         role: user.role,
         avatar: user.avatar,
-        userType // 'user' or 'team'
+        userType
       },
       token
     });
@@ -120,7 +109,6 @@ router.post('/login', validateLogin, async (req, res) => {
   }
 });
 
-// Get current user
 router.get('/me', auth, async (req, res) => {
   res.json({
     user: {
@@ -134,7 +122,6 @@ router.get('/me', auth, async (req, res) => {
   });
 });
 
-// Logout
 router.post('/logout', auth, async (req, res) => {
   try {
     req.user.status = 'offline';

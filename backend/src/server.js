@@ -12,7 +12,6 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/database');
 const SocketHandler = require('./socket/socketHandler');
 
-// Import routes
 const authRoutes = require('./routes/auth');
 const siteRoutes = require('./routes/sites');
 const faqRoutes = require('./routes/faqs');
@@ -28,7 +27,7 @@ const server = http.createServer(app);
 // Socket.io setup with CORS for widget
 const io = new Server(server, {
   cors: {
-    origin: '*', // Widget her yerden bağlanabilir (demo için)
+    origin: '*',
     methods: ['GET', 'POST'],
     credentials: false
   }
@@ -36,11 +35,10 @@ const io = new Server(server, {
 
 // Security middleware - with exceptions for widget
 app.use(helmet({
-  contentSecurityPolicy: false, // Widget için CSP devre dışı
-  crossOriginResourcePolicy: false // Widget dosyası için
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: false
 }));
 
-// Compression middleware - gzip compression for responses
 app.use(compression({
   filter: (req, res) => {
     if (req.headers['x-no-compression']) {
@@ -48,16 +46,13 @@ app.use(compression({
     }
     return compression.filter(req, res);
   },
-  level: 6, // Compression level (0-9)
+  level: 6,
 }));
 
-// Cache control middleware
 app.use((req, res, next) => {
-  // Static files için cache
   if (req.url.includes('/widget.js')) {
-    res.set('Cache-Control', 'public, max-age=3600'); // 1 saat
+    res.set('Cache-Control', 'public, max-age=3600');
   } else if (req.url.startsWith('/api')) {
-    // API responses için no-cache (her zaman fresh data)
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
@@ -65,31 +60,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// Data sanitization against NoSQL injection
 app.use(mongoSanitize());
 
-// Set socket.io instance for use in routes
 app.set('io', io);
 
-// Rate limiting - prevent brute force attacks
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 requests per windowMs (development için daha esnek)
+  windowMs: 15 * 60 * 1000,
+  max: 20,
   message: 'Too many login attempts, please try again later.'
 });
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500 // Development için daha yüksek limit
+  max: 500
 });
 
-// CORS - development için herkese açık
 app.use('/api', cors({
   origin: '*',
   credentials: true
 }));
 
-// Widget files için herkese açık CORS
 app.use('/widget.js', cors({
   origin: '*',
   credentials: false
@@ -98,12 +88,10 @@ app.use('/widget.js', cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Apply rate limiting
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api', apiLimiter);
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/faqs', faqRoutes);
@@ -113,7 +101,6 @@ app.use('/api/files', filesRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/team', teamRoutes);
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -123,7 +110,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.json({
     name: 'DestekChat API',
@@ -139,7 +125,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// Admin panel - serve built files
 const adminPanelPath = path.join(__dirname, '../../admin-panel/dist');
 app.use(express.static(adminPanelPath, {
   maxAge: '1h',
@@ -147,7 +132,6 @@ app.use(express.static(adminPanelPath, {
   lastModified: true
 }));
 
-// Widget static file - public folder serve et
 app.use(express.static('public', {
   setHeaders: (res, path) => {
     if (path.endsWith('.js')) {
@@ -157,26 +141,20 @@ app.use(express.static('public', {
   }
 }));
 
-// Demo page serve et
 app.use('/demo', express.static('../demo'));
 
-// Admin panel SPA - catch all routes
 app.get('*', (req, res, next) => {
-  // Skip API routes
   if (req.path.startsWith('/api/') || req.path.startsWith('/widget.js') || req.path.startsWith('/demo')) {
     return next();
   }
   res.sendFile(path.join(__dirname, '../../admin-panel/dist/index.html'));
 });
 
-// Initialize Socket.io handlers
 new SocketHandler(io);
 
-// Connect to database and start server
 const PORT = process.env.PORT || 3000;
 
 connectDB().then(async () => {
-  // Migration: Update old 'open' status to 'unassigned'
   try {
     const Conversation = require('./models/Conversation');
     await Conversation.updateMany(
@@ -195,7 +173,6 @@ connectDB().then(async () => {
   process.exit(1);
 });
 
-// Error handling
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled error:', err.message);
   process.exit(1);

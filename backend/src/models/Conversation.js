@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Counter for ticket numbers
 const counterSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   seq: { type: Number, default: 0 }
@@ -8,7 +7,6 @@ const counterSchema = new mongoose.Schema({
 const Counter = mongoose.model('Counter', counterSchema);
 
 const conversationSchema = new mongoose.Schema({
-  // Ticket sistemi için temel alanlar
   ticketNumber: {
     type: Number,
     unique: true,
@@ -71,49 +69,39 @@ const conversationSchema = new mongoose.Schema({
     default: 'normal'
   },
   
-  // SLA (Service Level Agreement) Alanları
   sla: {
-    // İlk yanıt süresi hedefi (dakika cinsinden) - Priority'e göre değişir
     firstResponseTarget: {
       type: Number,
       default: function() {
-        // Priority bazlı default değerler
         const targets = { urgent: 5, high: 10, normal: 15, low: 30 };
         return targets[this.priority] || 15;
       }
     },
-    // Çözüm süresi hedefi (dakika cinsinden) - Priority'e göre değişir  
     resolutionTarget: {
       type: Number,
       default: function() {
-        // Priority bazlı default değerler
         const targets = { urgent: 60, high: 120, normal: 240, low: 480 };
         return targets[this.priority] || 240;
       }
     },
-    // İlk yanıt SLA durumu
     firstResponseStatus: {
       type: String,
       enum: ['met', 'breached', 'pending'],
       default: 'pending'
     },
-    // Çözüm SLA durumu
     resolutionStatus: {
       type: String,
       enum: ['met', 'breached', 'pending'],
       default: 'pending'
     },
-    // İlk yanıt için kalan süre (dakika)
     firstResponseTimeRemaining: {
       type: Number,
       default: null
     },
-    // Çözüm için kalan süre (dakika)
     resolutionTimeRemaining: {
       type: Number,
       default: null
     },
-    // SLA ihlal zamanları
     firstResponseBreachedAt: {
       type: Date,
       default: null
@@ -124,7 +112,6 @@ const conversationSchema = new mongoose.Schema({
     }
   },
   
-  // Kanal bilgisi
   channel: {
     type: String,
     enum: ['web-chat', 'email', 'whatsapp', 'phone'],
@@ -192,7 +179,6 @@ const conversationSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Ticket numarası otomatik oluşturma
 conversationSchema.pre('save', async function(next) {
   if (!this.ticketNumber) {
     try {
@@ -210,16 +196,13 @@ conversationSchema.pre('save', async function(next) {
   next();
 });
 
-// Index for querying
 conversationSchema.index({ siteId: 1, status: 1, lastMessageAt: -1 });
 conversationSchema.index({ siteId: 1, department: 1, status: 1 });
 conversationSchema.index({ assignedAgent: 1, status: 1 });
 conversationSchema.index({ department: 1, status: 1, lastMessageAt: -1 });
-// ticketNumber ve ticketId için index zaten schema'da "index: true" ile tanımlı
 conversationSchema.index({ 'sla.firstResponseStatus': 1 });
 conversationSchema.index({ 'sla.resolutionStatus': 1 });
 
-// Virtual for response time (dakika cinsinden)
 conversationSchema.virtual('responseTime').get(function() {
   if (this.firstResponseAt && this.createdAt) {
     return Math.floor((this.firstResponseAt - this.createdAt) / 1000 / 60);
@@ -227,7 +210,6 @@ conversationSchema.virtual('responseTime').get(function() {
   return null;
 });
 
-// Virtual for resolution time (dakika cinsinden)
 conversationSchema.virtual('resolutionTime').get(function() {
   if (this.resolvedAt && this.createdAt) {
     return Math.floor((this.resolvedAt - this.createdAt) / 1000 / 60);
@@ -235,19 +217,16 @@ conversationSchema.virtual('resolutionTime').get(function() {
   return null;
 });
 
-// SLA durumunu hesaplayan method
 conversationSchema.methods.calculateSLA = function() {
   const now = new Date();
   const createdTime = this.createdAt.getTime();
   const elapsedMinutes = Math.floor((now - createdTime) / 1000 / 60);
   
-  // İlk yanıt SLA kontrolü
   if (!this.firstResponseAt) {
     const remaining = this.sla.firstResponseTarget - elapsedMinutes;
     this.sla.firstResponseTimeRemaining = remaining;
     
     if (remaining < 0) {
-      this.sla.firstResponseStatus = 'breached';
       if (!this.sla.firstResponseBreachedAt) {
         this.sla.firstResponseBreachedAt = new Date(createdTime + this.sla.firstResponseTarget * 60 * 1000);
       }
@@ -257,14 +236,13 @@ conversationSchema.methods.calculateSLA = function() {
   } else {
     const responseMinutes = Math.floor((this.firstResponseAt - createdTime) / 1000 / 60);
     this.sla.firstResponseStatus = responseMinutes <= this.sla.firstResponseTarget ? 'met' : 'breached';
-    this.sla.firstResponseTimeRemaining = null; // İlk yanıt verildi, artık takip etme
+    this.sla.firstResponseTimeRemaining = null;
     
     if (this.sla.firstResponseStatus === 'breached' && !this.sla.firstResponseBreachedAt) {
       this.sla.firstResponseBreachedAt = this.firstResponseAt;
     }
   }
   
-  // Çözüm SLA kontrolü
   if (this.status !== 'resolved' && this.status !== 'closed') {
     const remaining = this.sla.resolutionTarget - elapsedMinutes;
     this.sla.resolutionTimeRemaining = remaining;
@@ -280,7 +258,7 @@ conversationSchema.methods.calculateSLA = function() {
   } else if (this.resolvedAt) {
     const resolutionMinutes = Math.floor((this.resolvedAt - createdTime) / 1000 / 60);
     this.sla.resolutionStatus = resolutionMinutes <= this.sla.resolutionTarget ? 'met' : 'breached';
-    this.sla.resolutionTimeRemaining = null; // Çözüldü, artık takip etme
+    this.sla.resolutionTimeRemaining = null;
     
     if (this.sla.resolutionStatus === 'breached' && !this.sla.resolutionBreachedAt) {
       this.sla.resolutionBreachedAt = this.resolvedAt;
@@ -290,7 +268,7 @@ conversationSchema.methods.calculateSLA = function() {
   return this;
 };
 
-// Virtuals'ları JSON'a dahil et
+
 conversationSchema.set('toJSON', { virtuals: true });
 conversationSchema.set('toObject', { virtuals: true });
 

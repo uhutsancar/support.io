@@ -13,7 +13,7 @@ const messageSchema = new mongoose.Schema({
     required: true
   },
   senderId: {
-    type: String, // visitorId or userId
+    type: String,
     required: true
   },
   senderName: {
@@ -29,13 +29,12 @@ const messageSchema = new mongoose.Schema({
     enum: ['text', 'image', 'file', 'system'],
     default: 'text'
   },
-  // Dosya bilgileri (messageType 'file' veya 'image' ise)
   fileData: {
-    filename: String,        // Sunucudaki dosya adı
-    originalName: String,    // Orijinal dosya adı
-    mimeType: String,        // MIME type
-    size: Number,            // Dosya boyutu (byte)
-    url: String              // Dosya URL'i
+    filename: String,
+    originalName: String,
+    mimeType: String,
+    size: Number,
+    url: String
   },
   isRead: {
     type: Boolean,
@@ -49,7 +48,6 @@ const messageSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for fast retrieval
 messageSchema.index({ conversationId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);

@@ -4,10 +4,8 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { auth } = require('../middleware/auth');
 
-// Get unread message count for admin
 router.get('/unread-count', auth, async (req, res) => {
   try {
-    // Get all user's sites
     const conversations = await Conversation.find({});
     
     let totalUnreadCount = 0;
@@ -16,7 +14,7 @@ router.get('/unread-count', auth, async (req, res) => {
     for (const conversation of conversations) {
       const unreadCount = await Message.countDocuments({
         conversationId: conversation._id,
-        senderType: 'visitor', // Only visitor messages count as unread for admin
+        senderType: 'visitor',
         isRead: false
       });
       
@@ -38,7 +36,6 @@ router.get('/unread-count', auth, async (req, res) => {
   }
 });
 
-// Get all conversations for a site
 router.get('/:siteId', auth, async (req, res) => {
   try {
     const { status } = req.query;
@@ -78,7 +75,6 @@ router.get('/:siteId', auth, async (req, res) => {
   }
 });
 
-// Get single conversation with messages
 router.get('/:siteId/:conversationId', auth, async (req, res) => {
   try {
     const conversation = await Conversation.findOne({
@@ -99,7 +95,6 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
     const messages = await Message.find({ conversationId: conversation._id })
       .sort({ createdAt: 1 });
 
-    // Mark visitor messages as read when admin opens conversation
     await Message.updateMany(
       { 
         conversationId: conversation._id, 
@@ -112,7 +107,6 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
       }
     );
 
-    // Notify about read status change
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('messages-read', {
@@ -127,7 +121,6 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
   }
 });
 
-// Assign conversation to agent
 router.put('/:conversationId/assign', auth, async (req, res) => {
   try {
     const { agentId, assignedBy } = req.body;
@@ -151,7 +144,6 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
     )
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
-
     // Update agent stats
     if (agentId) {
       await require('../models/User').findByIdAndUpdate(agentId, {
@@ -159,7 +151,6 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
       });
     }
     
-    // Emit socket event
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('conversation-assigned', {
@@ -180,7 +171,6 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
   }
 });
 
-// Claim conversation (agent self-assigns)
 router.put('/:conversationId/claim', auth, async (req, res) => {
   try {
     const agentId = req.user.id;
@@ -190,11 +180,9 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-    
     if (conversation.assignedAgent) {
       return res.status(400).json({ error: 'Conversation is already assigned' });
     }
-    
     // Check agent's current load
     const agent = await require('../models/User').findById(agentId);
     if (agent.stats.activeConversations >= agent.preferences.maxActiveConversations) {
@@ -230,7 +218,6 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
   }
 });
 
-// Set conversation department
 router.put('/:conversationId/department', auth, async (req, res) => {
   try {
     const { departmentId } = req.body;
@@ -242,8 +229,7 @@ router.put('/:conversationId/department', auth, async (req, res) => {
     )
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
-    
-    // Update department stats
+        // Update department stats
     if (departmentId) {
       await require('../models/Department').findByIdAndUpdate(departmentId, {
         $inc: { 'stats.totalConversations': 1, 'stats.activeConversations': 1 }
@@ -270,7 +256,6 @@ router.put('/:conversationId/department', auth, async (req, res) => {
   }
 });
 
-// Set conversation priority
 router.put('/:conversationId/priority', auth, async (req, res) => {
   try {
     const { priority } = req.body;
@@ -288,7 +273,7 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
     
     conversation.priority = priority;
     
-    // Priority bazl\u0131 default SLA targets
+
     const slaTargets = {
       urgent: { firstResponse: 5, resolution: 60 },
       high: { firstResponse: 10, resolution: 120 },

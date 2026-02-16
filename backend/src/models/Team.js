@@ -31,12 +31,10 @@ const teamSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  // Assigned sites
   assignedSites: [{
     type: String,
     ref: 'Site'
   }],
-  // Department assignments
   departments: [{
     departmentId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -48,13 +46,11 @@ const teamSchema = new mongoose.Schema({
       default: 'agent'
     }
   }],
-  // Status
   status: {
     type: String,
     enum: ['online', 'offline', 'away', 'busy'],
     default: 'offline'
   },
-  // Permissions
   permissions: {
     canManageConversations: {
       type: Boolean,
@@ -81,7 +77,6 @@ const teamSchema = new mongoose.Schema({
       default: false
     }
   },
-  // Stats
   stats: {
     totalConversations: {
       type: Number,
@@ -104,17 +99,14 @@ const teamSchema = new mongoose.Schema({
       default: 0
     }
   },
-  // Last activity
   lastActive: {
     type: Date,
     default: Date.now
   },
-  // Phone (optional)
   phone: {
     type: String,
     default: null
   },
-  // Bio (optional)
   bio: {
     type: String,
     default: null
@@ -123,7 +115,6 @@ const teamSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
 teamSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     return next();
@@ -138,12 +129,10 @@ teamSchema.pre('save', async function(next) {
   }
 });
 
-// Method to compare password
 teamSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Hide password in JSON
 teamSchema.methods.toJSON = function() {
   const obj = this.toObject();
   delete obj.password;
