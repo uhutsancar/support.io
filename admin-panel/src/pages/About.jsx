@@ -62,7 +62,6 @@ const About = () => {
       <div className="min-h-screen bg-white dark:bg-gray-900">
         <Header />
       
-      {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -74,7 +73,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Story Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -96,7 +94,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Values Section */}
       <section className="bg-gray-50 dark:bg-gray-800 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -129,7 +126,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -153,7 +149,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Team Section */}
       <section className="bg-gray-50 dark:bg-gray-800 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -189,7 +184,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Technology Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -214,7 +208,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="bg-indigo-600 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-12">
@@ -236,7 +229,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 dark:text-gray-300">

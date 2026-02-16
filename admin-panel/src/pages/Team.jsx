@@ -33,7 +33,6 @@ const Team = () => {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, userName: '' });
   const [socket, setSocket] = useState(null);
 
-  // Socket.io bağlantısı
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -46,7 +45,6 @@ const Team = () => {
       console.log('✅ Socket connected for Team page');
     });
 
-    // Team üyesi durum değişikliklerini dinle
     newSocket.on('agent-status-changed', ({ userId, status }) => {
       console.log('🔄 Agent status changed:', userId, status);
       setTeam(prevTeam => 
@@ -56,14 +54,12 @@ const Team = () => {
       );
     });
 
-    // Team üyesi eklendi
     newSocket.on('team-member-added', (newMember) => {
       console.log('👤 New team member added:', newMember);
       setTeam(prevTeam => [...prevTeam, newMember]);
       toast.success('Yeni ekip üyesi eklendi');
     });
 
-    // Team üyesi güncellendi
     newSocket.on('team-member-updated', (updatedMember) => {
       console.log('✏️ Team member updated:', updatedMember);
       setTeam(prevTeam => 
@@ -73,7 +69,6 @@ const Team = () => {
       );
     });
 
-    // Team üyesi silindi
     newSocket.on('team-member-deleted', ({ userId }) => {
       console.log('🗑️ Team member deleted:', userId);
       setTeam(prevTeam => prevTeam.filter(member => member._id !== userId));
@@ -148,7 +143,6 @@ const Team = () => {
     try {
       const response = await teamAPI.delete(userId);
       console.log('✅ Team member deleted:', response.data);
-      // Fetch fresh data
       await fetchTeam();
       toast.success(t('team.deleteSuccess'));
     } catch (error) {
@@ -195,7 +189,6 @@ const Team = () => {
         <title>{t('team.title')} - DestekChat</title>
       </Helmet>
 
-      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
@@ -216,7 +209,6 @@ const Team = () => {
           </button>
         </div>
 
-        {/* Site Selector */}
         <div className="mt-4">
           <select
             value={selectedSite || ''}
@@ -231,7 +223,6 @@ const Team = () => {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
@@ -271,7 +262,6 @@ const Team = () => {
         </select>
       </div>
 
-      {/* Team Grid */}
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -388,7 +378,6 @@ const Team = () => {
         </div>
       )}
 
-      {/* Add/Edit Member Modal */}
       {(showAddModal || selectedMember) && (
         <AddEditMemberModal
           member={selectedMember}
@@ -400,10 +389,8 @@ const Team = () => {
           }}
           onSave={async (newMember) => {
             console.log('💾 onSave called with:', newMember);
-            // Wait for data refresh to complete
             await fetchTeam();
             console.log('✅ fetchTeam completed');
-            // Then close modal
             setShowAddModal(false);
             setSelectedMember(null);
           }}
@@ -424,7 +411,6 @@ const Team = () => {
   );
 };
 
-// Add/Edit Member Modal Component
 const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({

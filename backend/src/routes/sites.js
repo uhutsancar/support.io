@@ -4,7 +4,6 @@ const { v4: uuidv4 } = require('uuid');
 const Site = require('../models/Site');
 const { auth, isAdmin } = require('../middleware/auth');
 
-// Get all sites for current user
 router.get('/', auth, async (req, res) => {
   try {
     const sites = await Site.find({ userId: req.user._id }).sort({ createdAt: -1 });
@@ -14,7 +13,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Create new site
 router.post('/', auth, async (req, res) => {
   try {
     const { name, domain } = req.body;
@@ -33,7 +31,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Get single site
 router.get('/:siteId', auth, async (req, res) => {
   try {
     const site = await Site.findOne({
@@ -51,7 +48,6 @@ router.get('/:siteId', auth, async (req, res) => {
   }
 });
 
-// Update site settings
 router.put('/:siteId', auth, async (req, res) => {
   try {
     const updates = req.body;
@@ -87,7 +83,6 @@ router.put('/:siteId', auth, async (req, res) => {
   }
 });
 
-// Delete site
 router.delete('/:siteId', auth, async (req, res) => {
   try {
     const site = await Site.findOneAndDelete({
@@ -105,7 +100,6 @@ router.delete('/:siteId', auth, async (req, res) => {
   }
 });
 
-// Regenerate site key
 router.post('/:siteId/regenerate-key', auth, async (req, res) => {
   try {
     const site = await Site.findOne({

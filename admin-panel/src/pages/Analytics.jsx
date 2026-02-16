@@ -59,9 +59,8 @@ const Analytics = () => {
   const [agentPerformance, setAgentPerformance] = useState([]);
   const [channelDistribution, setChannelDistribution] = useState([]);
   const [slaCompliance, setSlaCompliance] = useState([]);
-  const [selectedAgent, setSelectedAgent] = useState('all'); // Agent filter
+  const [selectedAgent, setSelectedAgent] = useState('all');
 
-  // Socket bağlantısı ve event listeners
   useEffect(() => {
     const token = localStorage.getItem('token');
     const newSocket = io('http://localhost:5000/admin', {
@@ -73,25 +72,21 @@ const Analytics = () => {
       console.log('✅ Analytics socket connected!');
     });
 
-    // Yeni konuşma geldiğinde
     newSocket.on('new-conversation', () => {
       console.log('💬 New conversation - refreshing analytics');
       fetchAnalytics();
     });
 
-    // SLA ihlali olduğunda
     newSocket.on('sla-breach', () => {
       console.log('🚨 SLA breach - refreshing analytics');
       fetchAnalytics();
     });
 
-    // Konuşma çözüldüğünde
     newSocket.on('conversation-resolved', () => {
       console.log('✅ Conversation resolved - refreshing analytics');
       fetchAnalytics();
     });
 
-    // Konuşma güncellendiğinde
     newSocket.on('conversation-update', () => {
       console.log('🔄 Conversation updated - refreshing analytics');
       fetchAnalytics();
@@ -121,13 +116,11 @@ const Analytics = () => {
 
       console.log('🔄 Fetching analytics data...');
       
-      // Sites verilerini çek
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
       
       console.log('🏢 Sites:', sites.length);
 
-      // Tüm conversations'ları topla
       let allConversations = [];
       for (const site of sites) {
         try {
@@ -153,7 +146,6 @@ const Analytics = () => {
         });
       }
 
-      // İstatistikleri hesapla
       const openTickets = allConversations.filter(c =>
         c.status === 'open' || c.status === 'assigned' || c.status === 'pending'
       ).length;
@@ -174,7 +166,6 @@ const Analytics = () => {
         remainingNegative: allConversations.filter(c => c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0).length
       });
 
-      // Memnuniyet oranı
       const ratedConversations = allConversations.filter(c => c.rating?.score);
       const avgSatisfaction = ratedConversations.length > 0
         ? Math.round((ratedConversations.reduce((sum, c) => sum + c.rating.score, 0) / ratedConversations.length) * 20)
@@ -189,7 +180,6 @@ const Analytics = () => {
         totalAgents: 5
       });
 
-      // 1. Günlük trend hesapla (son 7 gün)
       const last7Days = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
@@ -218,7 +208,6 @@ const Analytics = () => {
       }
       setDailyTickets(last7Days);
 
-      // 2. Saatlik yanıt süresi analizi
       const hourly = {};
       allConversations.forEach(c => {
         if (c.firstResponseAt && c.createdAt) {
@@ -250,7 +239,6 @@ const Analytics = () => {
       console.log('📊 Response Time Data (chart):', hourlyData);
       setResponseTimeData(hourlyData);
 
-      // 3. Kanal dağılımı
       const channels = {
         'web-chat': { name: 'Web Chat', value: 0, color: '#8B5CF6' },
         'email': { name: 'Email', value: 0, color: '#3B82F6' },
@@ -365,7 +353,6 @@ const Analytics = () => {
             };
           }
           
-          // Aktif konuşmaları say
           if (c.status === 'open' || c.status === 'assigned' || c.status === 'pending') {
             agentMap[agentId].active++;
           }
@@ -435,7 +422,6 @@ const Analytics = () => {
     );
   }
 
-  // Custom tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -461,7 +447,6 @@ const Analytics = () => {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -484,7 +469,6 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Metrik Kartları */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -540,9 +524,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Grafikler - İlk Satır */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Günlük Talep Trendi */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.dailyTrend')}
@@ -588,7 +570,6 @@ const Analytics = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Yanıt Süresi Analizi */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.responseTime')}
@@ -627,9 +608,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Grafikler - İkinci Satır */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Kanal Dağılımı */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.channelDistribution')}
@@ -655,7 +634,6 @@ const Analytics = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* SLA Uyum Oranları */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 lg:col-span-2">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.slaCompliance')}
@@ -684,7 +662,6 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Departman Performansı Tablosu */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -743,7 +720,6 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Temsilci Performansı */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">

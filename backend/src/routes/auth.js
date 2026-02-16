@@ -89,7 +89,6 @@ router.post('/login', validateLogin, async (req, res) => {
       process.env.JWT_SECRET, 
       { expiresIn: '7d' }
     );
-    // Update status to online
     user.status = 'online';
     await user.save();
 

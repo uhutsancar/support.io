@@ -177,7 +177,6 @@
           background: rgba(255,255,255,0.3);
         }
 
-        /* Views Container */
         .sc-content {
           flex: 1;
           overflow: hidden;
@@ -204,7 +203,6 @@
           }
         }
 
-        /* Home View */
         .sc-home-content {
           flex: 1;
           overflow-y: auto;
@@ -298,7 +296,6 @@
           color: #999;
         }
 
-        /* Help/FAQ View */
         .sc-help-content {
           flex: 1;
           overflow-y: auto;
@@ -375,7 +372,6 @@
           color: #999;
         }
 
-        /* Messages View */
         .sc-messages {
           flex: 1;
           overflow-y: auto;
@@ -539,7 +535,6 @@
           fill: white;
         }
 
-        /* File Upload Styles */
         .sc-file-preview {
           display: none;
           padding: 8px 16px;
@@ -592,7 +587,6 @@
           color: #ef4444;
         }
 
-        /* File Message Styles */
         .sc-file-attachment {
           background: rgba(255,255,255,0.2);
           border-radius: 8px;
@@ -663,7 +657,6 @@
           font-size: 14px;
         }
 
-        /* Bottom Navigation */
         .sc-bottom-nav {
           display: flex;
           background: white;
@@ -705,7 +698,6 @@
           font-weight: 500;
         }
 
-        /* Mobile responsive */
         @media (max-width: 480px) {
           .sc-chat-window {
             width: 100vw;
@@ -723,7 +715,6 @@
           }
         }
 
-        /* Toast Notification */
         .sc-toast {
           position: fixed;
           top: 20px;
@@ -983,11 +974,9 @@
     }
 
     setupEventListeners() {
-      // Open/close chat
       this.elements.bubble.addEventListener('click', () => this.toggleChat());
       this.elements.close.addEventListener('click', () => this.toggleChat());
 
-      // Bottom navigation
       const navItems = document.querySelectorAll('.sc-nav-item');
       navItems.forEach(item => {
         item.addEventListener('click', (e) => {
@@ -998,7 +987,6 @@
         });
       });
 
-      // Quick links
       const quickLinks = document.querySelectorAll('.sc-quick-link');
       quickLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -1007,7 +995,6 @@
         });
       });
 
-      // Send message
       this.elements.send.addEventListener('click', () => this.sendMessage());
       this.elements.input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -1016,7 +1003,6 @@
         }
       });
 
-      // Typing indicator
       let typingTimeout;
       this.elements.input.addEventListener('input', () => {
         if (this.socket && this.conversationId) {
@@ -1026,13 +1012,11 @@
         }
       });
 
-      // Auto-resize textarea
       this.elements.input.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
       });
 
-      // File upload handlers
       this.elements.fileBtn.addEventListener('click', () => {
         this.elements.fileInput.click();
       });
@@ -1045,7 +1029,6 @@
         this.clearFileSelection();
       });
 
-      // FAQ search
       if (this.elements.searchFaq) {
         this.elements.searchFaq.addEventListener('input', (e) => {
           this.filterFAQs(e.target.value);
@@ -1060,12 +1043,10 @@
         this.elements.window.classList.add('open');
         this.elements.bubble.style.display = 'none';
         
-        // Notify parent window that widget is opened
         window.parent.postMessage({
           type: 'widget-opened'
         }, '*');
         
-        // Update status time
         const now = new Date();
         const timeString = now.toLocaleString('en-US', { 
           month: 'short', 
@@ -1078,7 +1059,6 @@
           statusTime.textContent = `Updated ${timeString}`;
         }
 
-        // Join conversation on first open if messages are enabled
         if (!this.conversationId && this.messagesEnabled) {
           this.joinConversation();
         }
@@ -1089,13 +1069,11 @@
     }
 
     switchView(viewName) {
-      // Check if messages view is disabled
       if (viewName === 'messages' && !this.messagesEnabled) {
         this.showDisabledMessage();
         return;
       }
 
-      // Update active view
       const views = document.querySelectorAll('.sc-view');
       views.forEach(view => view.classList.remove('active'));
       
@@ -1104,7 +1082,6 @@
         targetView.classList.add('active');
       }
 
-      // Update active nav item
       const navItems = document.querySelectorAll('.sc-nav-item');
       navItems.forEach(item => item.classList.remove('active'));
       
@@ -1115,7 +1092,6 @@
 
       this.currentView = viewName;
 
-      // Focus input if switching to messages
       if (viewName === 'messages' && this.messagesEnabled) {
         setTimeout(() => this.elements.input.focus(), 100);
       }
@@ -1129,7 +1105,6 @@
           this.siteSettings = data.site;
           this.messagesEnabled = data.site.isActive || false;
           
-          // Update messages nav based on availability
           if (!this.messagesEnabled) {
             this.elements.navMessages.classList.add('disabled');
           }
@@ -1175,17 +1150,14 @@
         </div>
       `).join('');
 
-      // Add click handlers
       const faqItems = this.elements.faqList.querySelectorAll('.sc-faq-item');
       faqItems.forEach(item => {
         const question = item.querySelector('.sc-faq-question');
         question.addEventListener('click', () => {
           const isOpen = item.classList.contains('open');
           
-          // Close all other items
           faqItems.forEach(i => i.classList.remove('open'));
           
-          // Toggle current item
           if (!isOpen) {
             item.classList.add('open');
           }
@@ -1210,7 +1182,6 @@
     }
 
     showDisabledMessage() {
-      // Show disabled message in messages view
       this.elements.messages.innerHTML = `
         <div class="sc-disabled-message">
           <h3>Messages Not Available</h3>
@@ -1218,7 +1189,6 @@
         </div>
       `;
       
-      // Switch to messages view to show the message
       const views = document.querySelectorAll('.sc-view');
       views.forEach(view => view.classList.remove('active'));
       this.elements.viewMessages.classList.add('active');
@@ -1229,7 +1199,6 @@
     }
 
     connectSocket() {
-      // Load Socket.io client
       const script = document.createElement('script');
       script.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
       script.onload = () => {
@@ -1247,16 +1216,13 @@
 
         this.socket.on('conversation-joined', (data) => {
           if (data.conversation) {
-            // Existing conversation - show real messages
             console.log('🎯 Conversation joined:', data.conversation._id);
             this.conversationId = data.conversation._id;
             this.renderMessages(data.messages);
           } else {
-            // New visitor - show local welcome message
             console.log('👋 New visitor - showing welcome message');
             this.conversationId = null; // Will be created when visitor sends first message
             
-            // Display welcome message locally (not saved to DB)
             const welcomeMsg = {
               _id: 'welcome-' + Date.now(),
               senderType: 'bot',
@@ -1274,7 +1240,6 @@
           this.addMessage(data.message);
           this.scrollToBottom();
           
-          // Send notification to parent window if widget is closed
           if (!this.isOpen) {
             console.log('🔔 Sending notification to parent window');
             window.parent.postMessage({
@@ -1324,11 +1289,9 @@
       const content = this.elements.input.value.trim();
       if ((!content && !this.selectedFile) || !this.socket) return;
 
-      // Dosya varsa yükle
       if (this.selectedFile) {
         await this.uploadAndSendFile(content || 'File attachment');
       } else {
-        // Sadece metin mesajı gönder
         this.socket.emit('send-message', {
           content,
           senderName: localStorage.getItem('sc_visitor_name') || 'You'
@@ -1345,7 +1308,6 @@
         const formData = new FormData();
         formData.append('file', this.selectedFile);
 
-        // Site authentication için site key ekle
         const response = await fetch(`${API_URL}/api/files/upload`, {
           method: 'POST',
           headers: {
@@ -1360,7 +1322,6 @@
 
         const data = await response.json();
         
-        // Dosya bilgisi ile mesaj gönder
         const messageType = this.selectedFile.type.startsWith('image/') ? 'image' : 'file';
         
         this.socket.emit('send-message', {
@@ -1379,14 +1340,12 @@
     handleFileSelect(file) {
       if (!file) return;
 
-      // Dosya boyutu kontrolü (10MB)
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         this.showNotification('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.', 'error');
         return;
       }
 
-      // İzin verilen dosya türleri
       const allowedTypes = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf',
@@ -1530,7 +1489,6 @@
       return div.innerHTML;
     }
 
-    // Public method to open widget
     openWidget() {
       if (!this.isOpen) {
         this.toggleChat();
@@ -1538,13 +1496,11 @@
     }
   }
 
-  // Initialize widget
   function initSupportIO() {
     if (window.SupportIOConfig) {
       const widget = new SupportIOWidget(window.SupportIOConfig);
       window.SupportIO = widget;
       
-      // Global access for demo integration
       window.SupportIOWidget = {
         openWidget: function() {
           widget.openWidget();
@@ -1555,7 +1511,6 @@
     }
   }
 
-  // Auto-initialize
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSupportIO);
   } else {

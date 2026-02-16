@@ -35,7 +35,6 @@ const Docs = () => {
         <Header />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          {/* Hero Section */}
           <div className="text-center mb-6 sm:mb-8 lg:mb-12">
             <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl mb-3 sm:mb-4 lg:mb-6">
               <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-indigo-600 dark:text-indigo-400" />
@@ -48,7 +47,6 @@ const Docs = () => {
             </p>
           </div>
 
-          {/* Mobile Navigation Button */}
           <div className="lg:hidden mb-4 sm:mb-6">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -80,9 +78,7 @@ const Docs = () => {
             )}
           </div>
 
-          {/* Main Content */}
           <div className="lg:grid lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 overflow-hidden">
-            {/* Sidebar Navigation - Desktop only */}
             <div className="hidden lg:block">
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 sticky top-24">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -108,9 +104,7 @@ const Docs = () => {
               </div>
             </div>
 
-            {/* Documentation Content */}
             <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8 min-w-0">
-              {/* Getting Started */}
               <section id="getting-started" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 lg:p-6 xl:p-8 scroll-mt-24 overflow-hidden">
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
                   {t('docs.gettingStarted.title')}
@@ -130,7 +124,6 @@ const Docs = () => {
                 </div>
               </section>
 
-              {/* Installation */}
               <section id="installation" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 lg:p-6 xl:p-8 scroll-mt-24 overflow-hidden">
                 <div className="flex items-center mb-4 sm:mb-6">
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-indigo-600 dark:text-indigo-400 mr-2 sm:mr-3" />
@@ -143,7 +136,6 @@ const Docs = () => {
                   {t('docs.installation.description')}
                 </p>
 
-                {/* Steps */}
                 <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-8">
                   <div className="flex gap-2 sm:gap-3 lg:gap-4">
                     <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
@@ -185,7 +177,6 @@ const Docs = () => {
                         {t('docs.installation.step3.description')}
                       </p>
                       
-                      {/* Code Block */}
                       <div className="relative -mx-1 sm:mx-0">
                         <div className="bg-gray-900 dark:bg-gray-950 rounded-lg overflow-hidden">
                           <div className="flex items-center justify-between px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 bg-gray-800 dark:bg-gray-900 border-b border-gray-700">
@@ -231,7 +222,6 @@ const Docs = () => {
                 </div>
               </section>
 
-              {/* Configuration */}
               <section id="configuration" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 lg:p-6 xl:p-8 scroll-mt-24 overflow-hidden">
                 <div className="flex items-center mb-4 sm:mb-6">
                   <Settings className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-indigo-600 dark:text-indigo-400 mr-2 sm:mr-3" />
@@ -277,7 +267,6 @@ const Docs = () => {
                 </div>
               </section>
 
-              {/* Features */}
               <section id="features" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 lg:p-6 xl:p-8 scroll-mt-24 overflow-hidden">
                 <div className="flex items-center mb-4 sm:mb-6">
                   <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-indigo-600 dark:text-indigo-400 mr-2 sm:mr-3" />
@@ -325,7 +314,6 @@ const Docs = () => {
                 </div>
               </section>
 
-              {/* Benefits */}
               <section id="benefits" className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 text-white scroll-mt-24">
                 <h2 className="text-2xl sm:text-3xl font-bold mb-6">
                   {t('docs.benefits.title')}
@@ -374,7 +362,6 @@ const Docs = () => {
                 </div>
               </section>
 
-              {/* CTA Section */}
               <section className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 lg:p-8 text-center scroll-mt-24">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   {t('docs.cta.title')}

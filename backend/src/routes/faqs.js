@@ -4,7 +4,6 @@ const FAQ = require('../models/FAQ');
 const { auth } = require('../middleware/auth');
 const { verifySiteKey } = require('../middleware/siteAuth');
 
-// Admin: Get all FAQs for a site
 router.get('/admin/:siteId', auth, async (req, res) => {
   try {
     const faqs = await FAQ.find({ siteId: req.params.siteId }).sort({ order: 1, createdAt: -1 });
@@ -14,7 +13,6 @@ router.get('/admin/:siteId', auth, async (req, res) => {
   }
 });
 
-// Admin: Create FAQ
 router.post('/admin', auth, async (req, res) => {
   try {
     const { siteId, question, answer, category, keywords, pageSpecific, order } = req.body;
@@ -36,7 +34,6 @@ router.post('/admin', auth, async (req, res) => {
   }
 });
 
-// Admin: Update FAQ
 router.put('/admin/:faqId', auth, async (req, res) => {
   try {
     const updates = req.body;
@@ -52,7 +49,6 @@ router.put('/admin/:faqId', auth, async (req, res) => {
   }
 });
 
-// Admin: Delete FAQ
 router.delete('/admin/:faqId', auth, async (req, res) => {
   try {
     const faq = await FAQ.findByIdAndDelete(req.params.faqId);
@@ -67,7 +63,6 @@ router.delete('/admin/:faqId', auth, async (req, res) => {
   }
 });
 
-// Public: Search FAQs (for widget)
 router.get('/search', verifySiteKey, async (req, res) => {
   try {
     const { query, page } = req.query;
@@ -77,7 +72,6 @@ router.get('/search', verifySiteKey, async (req, res) => {
       isActive: true
     };
 
-    // Page-specific or all pages
     if (page) {
       filter.$or = [
         { pageSpecific: page },
@@ -90,7 +84,6 @@ router.get('/search', verifySiteKey, async (req, res) => {
     let faqs;
     
     if (query && query.trim()) {
-      // Text search
       faqs = await FAQ.find({
         ...filter,
         $text: { $search: query }
@@ -98,7 +91,6 @@ router.get('/search', verifySiteKey, async (req, res) => {
         score: { $meta: 'textScore' }
       }).sort({ score: { $meta: 'textScore' } }).limit(5);
     } else {
-      // Just return top FAQs
       faqs = await FAQ.find(filter).sort({ order: 1 }).limit(5);
     }
 

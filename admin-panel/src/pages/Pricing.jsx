@@ -32,7 +32,6 @@ const Pricing = () => {
       <div className="min-h-screen bg-white dark:bg-gray-900">
         <Header />
       
-      {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -44,7 +43,6 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Pricing Cards */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -111,7 +109,6 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Feature Comparison */}
       <section className="bg-gray-50 dark:bg-gray-800 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -142,7 +139,6 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -169,7 +165,6 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="bg-indigo-600 text-white py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
@@ -188,7 +183,6 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-600 dark:text-gray-300">

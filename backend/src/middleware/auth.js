@@ -12,7 +12,6 @@ const auth = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Check userType to determine which model to use
     let user;
     if (decoded.userType === 'team') {
       user = await Team.findOne({ _id: decoded.userId, isActive: true });

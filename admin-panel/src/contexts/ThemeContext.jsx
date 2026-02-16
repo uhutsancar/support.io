@@ -12,13 +12,11 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    // LocalStorage'dan tema tercihini al, yoksa 'light' kullan
     const savedTheme = localStorage.getItem('theme');
     return savedTheme || 'light';
   });
 
   useEffect(() => {
-    // DOM'a tema class'ını ekle/çıkar
     const root = window.document.documentElement;
     
     if (theme === 'dark') {
@@ -27,7 +25,6 @@ export const ThemeProvider = ({ children }) => {
       root.classList.remove('dark');
     }
     
-    // LocalStorage'a kaydet
     localStorage.setItem('theme', theme);
   }, [theme]);
 

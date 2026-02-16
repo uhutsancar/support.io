@@ -6,7 +6,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 
-// Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
 const Pricing = lazy(() => import('./pages/Pricing'));
@@ -23,17 +22,14 @@ const Team = lazy(() => import('./pages/Team'));
 const Departments = lazy(() => import('./pages/Departments'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 
-// Layouts - Lazy load
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 
-// Loading component
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
   </div>
 );
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
@@ -50,7 +46,6 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to={`${langPrefix}/login`} />;
 };
 
-// Public Route Component
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
@@ -67,7 +62,6 @@ const PublicRoute = ({ children }) => {
   return !isAuthenticated ? children : <Navigate to={`${langPrefix}/dashboard`} />;
 };
 
-// Default Redirect Component
 const DefaultRedirect = () => {
   const location = useLocation();
   const langPrefix = location.pathname.startsWith('/en') ? '/en' : '';
@@ -107,7 +101,6 @@ function App() {
             />
           <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-          {/* Turkish routes (default) */}
           <Route path="/" element={<Home />} />
           <Route path="/ozellikler" element={<Features />} />
           <Route path="/fiyatlandirma" element={<Pricing />} />
@@ -131,7 +124,6 @@ function App() {
             }
           />
 
-          {/* English routes (/en prefix) */}
           <Route path="/en" element={<Home />} />
           <Route path="/en/features" element={<Features />} />
           <Route path="/en/pricing" element={<Pricing />} />
@@ -155,7 +147,6 @@ function App() {
             }
           />
 
-          {/* Protected routes (Turkish) */}
           <Route
             path="/dashboard"
             element={
@@ -174,7 +165,6 @@ function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
 
-          {/* Protected routes (English) */}
           <Route
             path="/en/dashboard"
             element={
@@ -193,7 +183,6 @@ function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
 
-          {/* Default redirect */}
           <Route path="*" element={<DefaultRedirect />} />
         </Routes>
         </Suspense>

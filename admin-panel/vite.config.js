@@ -9,53 +9,40 @@ export default defineConfig({
     port: 3002,
   },
   build: {
-    // Chunk size optimization
     rollupOptions: {
       output: {
         manualChunks: {
-          // React vendor chunk
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // UI libraries
           'ui-vendor': ['lucide-react', '@headlessui/react'],
-          // Socket and HTTP
           'network-vendor': ['socket.io-client', 'axios'],
-          // SEO
           'seo-vendor': ['react-helmet-async']
         },
-        // Chunk dosya isimleri optimize edilmiş
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
       }
     },
-    // Minification ve compression
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Console.log'ları kaldır
+        drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info'], // Belirli fonksiyonları kaldır
-        passes: 2, // İki geçişli optimizasyon
+        pure_funcs: ['console.log', 'console.info'],
+        passes: 2,
       },
       mangle: {
-        safari10: true, // Safari uyumluluğu
+        safari10: true,
       },
       format: {
-        comments: false, // Yorumları kaldır
+        comments: false,
       },
     },
-    // Source maps devre dışı (production)
     sourcemap: false,
-    // Chunk boyutu
     chunkSizeWarningLimit: 1000,
-    // CSS code splitting
     cssCodeSplit: true,
-    // Asset inlining threshold (4kb altı inline et)
     assetsInlineLimit: 4096,
-    // Bundle analiz için
-    reportCompressedSize: false, // Build hızını artırır
+    reportCompressedSize: false,
   },
-  // Performance optimizations
   optimizeDeps: {
     include: [
       'react', 
@@ -64,14 +51,13 @@ export default defineConfig({
       'axios',
       'socket.io-client'
     ],
-    exclude: [], // Gereksiz dependency'leri hariç tut
+    exclude: [],
     esbuildOptions: {
-      target: 'es2020', // Modern tarayıcılar için
+      target: 'es2020',
     },
   },
-  // Esbuild target
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
-    legalComments: 'none', // Legal comment'leri kaldır
+    legalComments: 'none',
   },
 })

@@ -20,10 +20,8 @@ const Home = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   
-  // Dile göre URL prefix
   const langPrefix = language === 'en' ? '/en' : '';
   
-  // Dile göre route'lar
   const routes = {
     home: langPrefix || '/',
     features: language === 'en' ? '/en/features' : '/ozellikler',
@@ -93,7 +91,6 @@ const Home = () => {
         <Header />
       
       <main role="main">
-      {/* Hero Section */}
       <section className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 dark:from-indigo-600 dark:via-purple-700 dark:to-pink-600 text-white" aria-label="Hero section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="text-center max-w-4xl mx-auto">
@@ -124,7 +121,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-20 bg-gray-50 dark:bg-gray-800" aria-label="Özellikler">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -157,7 +153,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className="py-20 bg-white dark:bg-gray-900" aria-label="Faydalar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -217,7 +212,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="bg-gray-900 dark:bg-gray-950 text-white py-20" aria-label="Harekete geçirici mesaj">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
@@ -238,7 +232,6 @@ const Home = () => {
       </section>
       </main>
 
-      {/* Footer */}
       <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-12" role="contentinfo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

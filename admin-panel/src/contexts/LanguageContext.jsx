@@ -17,7 +17,6 @@ export const LanguageProvider = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // URL'den dili belirle
   const getLanguageFromPath = () => {
     return location.pathname.startsWith('/en') ? 'en' : 'tr';
   };
@@ -25,7 +24,6 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(getLanguageFromPath);
 
   useEffect(() => {
-    // URL değiştiğinde dili güncelle
     const newLang = getLanguageFromPath();
     if (newLang !== language) {
       setLanguage(newLang);
@@ -35,7 +33,6 @@ export const LanguageProvider = ({ children }) => {
   }, [location.pathname]);
 
   useEffect(() => {
-    // Dil değiştiğinde i18next'i güncelle
     i18n.changeLanguage(language);
     localStorage.setItem('language', language);
   }, [language, i18n]);
@@ -45,12 +42,10 @@ export const LanguageProvider = ({ children }) => {
     const currentPath = location.pathname;
     
     if (newLang === 'en') {
-      // TR'den EN'e geçiş: /en prefix ekle
       if (!currentPath.startsWith('/en')) {
         navigate('/en' + currentPath);
       }
     } else {
-      // EN'den TR'ye geçiş: /en prefix kaldır
       if (currentPath.startsWith('/en')) {
         navigate(currentPath.replace('/en', '') || '/');
       }

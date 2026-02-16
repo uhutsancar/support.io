@@ -14,26 +14,22 @@ class SocketHandler {
     this.setupWidgetHandlers();
     this.setupAdminHandlers();
     
-    // SLA takip için periyodik kontrol
     this.startSLAMonitoring();
   }
 
   setupWidgetHandlers() {
     this.widgetNamespace.on('connection', async (socket) => {
 
-      // Join conversation room
       socket.on('join-conversation', async (data) => {
         try {
           const { siteKey, visitorId, visitorName, visitorEmail, currentPage, metadata } = data;
 
-          // Verify site
           const site = await Site.findOne({ siteKey, isActive: true });
           if (!site) {
             socket.emit('error', { message: 'Invalid site key' });
             return;
           }
 
-          // Store visitor info in socket
           socket.siteId = site._id;
           socket.visitorId = visitorId;
           socket.visitorName = visitorName || 'Visitor';
@@ -41,7 +37,6 @@ class SocketHandler {
           socket.currentPage = currentPage;
           socket.metadata = metadata;
 
-          // Find existing active conversation
           let conversation = await Conversation.findOne({
             siteId: site._id,
             visitorId,
@@ -49,19 +44,15 @@ class SocketHandler {
           }).populate('department', 'name color icon');
 
           if (conversation) {
-            // Existing conversation found - join it
             socket.join(`conversation:${conversation._id}`);
             socket.conversationId = conversation._id;
 
-            // Update current page
             conversation.currentPage = currentPage;
             await conversation.save();
 
-            // Send conversation data with messages
             const messages = await Message.find({ conversationId: conversation._id })
               .sort({ createdAt: 1 });
 
-            // SLA'yı yeniden hesapla
             conversation.calculateSLA();
             await conversation.save();
 
@@ -70,7 +61,6 @@ class SocketHandler {
               messages
             });
           } else {
-            // No active conversation - send welcome message locally (not saved to DB)
             socket.emit('conversation-joined', {
               conversation: null,
               messages: [],
@@ -84,13 +74,11 @@ class SocketHandler {
         }
       });
 
-      // Send message from visitor
       socket.on('send-message', async (data) => {
         try {
           const { content, senderName, messageType, fileData } = data;
           let conversationId = socket.conversationId;
 
-          // If no conversation exists, create one NOW
           if (!conversationId) {
             const site = await Site.findById(socket.siteId);
             if (!site) {
@@ -98,13 +86,11 @@ class SocketHandler {
               return;
             }
 
-            // Get default department
             let department = await Department.findOne({
               siteId: socket.siteId,
               isActive: true
             }).sort({ createdAt: 1 });
 
-            // Create new ticket (conversation)
             const conversation = new Conversation({
               siteId: socket.siteId,
               visitorId: socket.visitorId,
@@ -118,7 +104,6 @@ class SocketHandler {
               priority: 'normal'
             });
 
-            // SLA hedeflerini priority'e göre ayarla
             const slaTargets = {
               urgent: { firstResponse: 5, resolution: 60 },
               high: { firstResponse: 10, resolution: 120 },
@@ -128,7 +113,6 @@ class SocketHandler {
             
             const priority = conversation.priority;
             
-            // Departman SLA ayarları varsa onları kullan, yoksa default'ları kullan
             if (department && department.sla && department.sla.enabled) {
               conversation.sla.firstResponseTarget = department.sla.firstResponse?.[priority] || slaTargets[priority].firstResponse;
               conversation.sla.resolutionTarget = department.sla.resolution?.[priority] || slaTargets[priority].resolution;
@@ -139,23 +123,19 @@ class SocketHandler {
 
             await conversation.save();
 
-            // İlk SLA hesaplaması
             conversation.calculateSLA();
             await conversation.save();
 
-            // Departman istatistiklerini güncelle
             if (department) {
               department.stats.totalConversations++;
               department.stats.activeConversations++;
               await department.save();
             }
 
-            // Join conversation room
             socket.join(`conversation:${conversation._id}`);
             socket.conversationId = conversation._id;
             conversationId = conversation._id;
 
-            // Notify admins about new ticket
             this.adminNamespace.to(`site:${socket.siteId}`).emit('new-conversation', {
               conversation: await conversation.populate('department', 'name color icon')
             });
@@ -167,7 +147,6 @@ class SocketHandler {
             return;
           }
 
-          // Create message (visitor messages default to unread)
           const messageData = {
             conversationId,
             senderType: 'visitor',
@@ -175,10 +154,9 @@ class SocketHandler {
             senderName: senderName || conversation.visitorName,
             content,
             messageType: messageType || 'text',
-            isRead: false // Visitor messages start as unread for admin
+            isRead: false
           };
 
-          // Dosya varsa ekle
           if (fileData && (messageType === 'file' || messageType === 'image')) {
             messageData.fileData = fileData;
           }
@@ -186,28 +164,23 @@ class SocketHandler {
           const message = new Message(messageData);
           await message.save();
 
-          // Update conversation
           conversation.lastMessageAt = new Date();
           await conversation.save();
 
-          // Send to visitor
           this.widgetNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message
           });
 
-          // Send to admins in conversation room
           this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message,
             conversation
           });
 
-          // Also send to all admins watching this site (for real-time updates)
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
             message,
             conversation
           });
 
-          // Send notification to all connected admins
           this.adminNamespace.emit('notification', {
             type: 'new-message',
             message: `New message from ${conversation.visitorName}`,
@@ -216,7 +189,6 @@ class SocketHandler {
             timestamp: new Date()
           });
 
-          // Try to auto-respond with FAQ
           await this.tryAutoResponse(conversation, content);
 
         } catch (error) {
@@ -225,7 +197,6 @@ class SocketHandler {
         }
       });
 
-      // Typing indicator
       socket.on('typing', () => {
         if (socket.conversationId) {
           this.adminNamespace.to(`conversation:${socket.conversationId}`).emit('visitor-typing', {
@@ -235,7 +206,6 @@ class SocketHandler {
       });
 
       socket.on('disconnect', () => {
-        // Widget disconnected
       });
     });
   }
@@ -243,7 +213,6 @@ class SocketHandler {
   setupAdminHandlers() {
     this.adminNamespace.on('connection', async (socket) => {
 
-      // Join site rooms
       socket.on('join-site', async (data) => {
         try {
           const { siteId, userId } = data;
@@ -255,13 +224,11 @@ class SocketHandler {
         }
       });
 
-      // Join specific conversation
       socket.on('join-conversation', async (data) => {
         try {
           const { conversationId } = data;
           socket.join(`conversation:${conversationId}`);
           
-          // Mark messages as read
           await Message.updateMany(
             { conversationId, isRead: false, senderType: 'visitor' },
             { isRead: true, readAt: new Date() }
@@ -272,12 +239,10 @@ class SocketHandler {
         }
       });
 
-      // Send message from agent
       socket.on('send-message', async (data) => {
         try {
           const { conversationId, content, senderName, senderId, messageType, fileData } = data;
           
-          // Use provided senderId, fallback to socket.userId, or 'support'
           const actualSenderId = senderId || socket.userId || 'support';
           const actualSenderName = senderName || 'Support';
 
@@ -288,21 +253,17 @@ class SocketHandler {
             return;
           }
 
-          // Auto-assign if not assigned
           if (!conversation.assignedAgent && socket.userId) {
             conversation.assignedAgent = socket.userId;
             conversation.assignedAt = new Date();
             conversation.status = 'assigned';
           }
 
-          // İlk agent yanıtı ise kaydet ve SLA'yı güncelle
           if (!conversation.firstResponseAt) {
             conversation.firstResponseAt = new Date();
             
-            // SLA'yı yeniden hesapla
             conversation.calculateSLA();
             
-            // Agent istatistiklerini güncelle
             if (socket.userId) {
               const agent = await Team.findById(socket.userId);
               if (agent) {
@@ -315,7 +276,6 @@ class SocketHandler {
               }
             }
             
-            // Emit conversation-update event for SLA update
             this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-update', {
               conversationId: conversation._id,
               conversation: conversation.toObject()
@@ -334,7 +294,6 @@ class SocketHandler {
             isRead: true
           };
 
-          // Dosya varsa ekle
           if (fileData && (messageType === 'file' || messageType === 'image')) {
             messageData.fileData = fileData;
           }
@@ -345,18 +304,15 @@ class SocketHandler {
           conversation.lastMessageAt = new Date();
           await conversation.save();
 
-          // Send to visitor
           this.widgetNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message
           });
 
-          // Send to admins in conversation room with updated SLA
           this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message,
             conversation
           });
 
-          // Also send to all admins watching this site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
             message,
             conversation
@@ -368,19 +324,16 @@ class SocketHandler {
         }
       });
 
-      // Typing indicator
       socket.on('typing', (data) => {
         const { conversationId } = data;
         this.widgetNamespace.to(`conversation:${conversationId}`).emit('agent-typing');
       });
 
-      // Agent status update
       socket.on('update-status', async (data) => {
         try {
           const { status } = data;
           await Team.findByIdAndUpdate(socket.userId, { status });
           
-          // Broadcast to all admins
           this.adminNamespace.emit('agent-status-changed', {
             userId: socket.userId,
             status
@@ -390,7 +343,6 @@ class SocketHandler {
         }
       });
 
-      // Assign conversation
       socket.on('assign-conversation', async (data) => {
         try {
           const { conversationId, agentId } = data;
@@ -407,12 +359,10 @@ class SocketHandler {
           conversation.status = 'assigned';
           await conversation.save();
           
-          // Update agent stats
           await Team.findByIdAndUpdate(agentId, {
             $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
           });
           
-          // Broadcast to all admins in site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-assigned', {
             conversationId,
             agentId,
@@ -424,7 +374,6 @@ class SocketHandler {
         }
       });
 
-      // Claim conversation (self-assign)
       socket.on('claim-conversation', async (data) => {
         try {
           const { conversationId } = data;
@@ -440,7 +389,6 @@ class SocketHandler {
             return;
           }
           
-          // Check agent's load
           const agent = await Team.findById(socket.userId);
           const maxConversations = agent.permissions?.maxActiveConversations || 10;
           if (agent.stats.activeConversations >= maxConversations) {
@@ -454,12 +402,10 @@ class SocketHandler {
           conversation.status = 'assigned';
           await conversation.save();
           
-          // Update agent stats
           await Team.findByIdAndUpdate(socket.userId, {
             $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
           });
           
-          // Broadcast to all admins in site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-claimed', {
             conversationId,
             agentId: socket.userId
@@ -470,7 +416,6 @@ class SocketHandler {
         }
       });
 
-      // Update conversation department
       socket.on('set-department', async (data) => {
         try {
           const { conversationId, departmentId } = data;
@@ -484,7 +429,6 @@ class SocketHandler {
           const oldDepartmentId = conversation.department;
           conversation.department = departmentId;
           
-          // Yeni departmanın SLA kurallarını uygula
           if (departmentId) {
             const newDepartment = await Department.findById(departmentId);
             if (newDepartment && newDepartment.sla.enabled) {
@@ -492,11 +436,9 @@ class SocketHandler {
               conversation.sla.firstResponseTarget = newDepartment.sla.firstResponse[priority] || 30;
               conversation.sla.resolutionTarget = newDepartment.sla.resolution[priority] || 480;
               
-              // SLA'yı yeniden hesapla
               conversation.calculateSLA();
             }
             
-            // Yeni departman istatistiklerini güncelle
             await Department.findByIdAndUpdate(departmentId, {
               $inc: { 'stats.activeConversations': 1 }
             });
@@ -504,14 +446,12 @@ class SocketHandler {
           
           await conversation.save();
           
-          // Eski departman istatistiklerini güncelle
           if (oldDepartmentId) {
             await Department.findByIdAndUpdate(oldDepartmentId, {
               $inc: { 'stats.activeConversations': -1 }
             });
           }
           
-          // Broadcast to all admins in site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-department-changed', {
             conversationId,
             departmentId,
@@ -523,7 +463,6 @@ class SocketHandler {
         }
       });
 
-      // Update conversation priority
       socket.on('set-priority', async (data) => {
         try {
           const { conversationId, priority } = data;
@@ -537,18 +476,15 @@ class SocketHandler {
           
           conversation.priority = priority;
           
-          // SLA hedeflerini önceliğe göre güncelle
           if (conversation.department && conversation.department.sla.enabled) {
             conversation.sla.firstResponseTarget = conversation.department.sla.firstResponse[priority] || 30;
             conversation.sla.resolutionTarget = conversation.department.sla.resolution[priority] || 480;
             
-            // SLA'yı yeniden hesapla
             conversation.calculateSLA();
           }
           
           await conversation.save();
           
-          // Broadcast to all admins in site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-priority-changed', {
             conversationId,
             priority,
@@ -560,7 +496,6 @@ class SocketHandler {
         }
       });
 
-      // Resolve conversation
       socket.on('resolve-conversation', async (data) => {
         try {
           const { conversationId } = data;
@@ -575,17 +510,14 @@ class SocketHandler {
           conversation.status = 'resolved';
           conversation.resolvedAt = new Date();
           
-          // SLA'yı son kez hesapla
           conversation.calculateSLA();
           
           await conversation.save();
           
-          // Departman istatistiklerini güncelle
           if (conversation.department) {
             const dept = await Department.findById(conversation.department._id);
             dept.stats.activeConversations = Math.max(0, dept.stats.activeConversations - 1);
             
-            // SLA istatistiklerini güncelle
             if (conversation.sla.firstResponseStatus === 'met') {
               dept.stats.slaMetrics.firstResponseMet++;
             } else if (conversation.sla.firstResponseStatus === 'breached') {
@@ -598,7 +530,6 @@ class SocketHandler {
               dept.stats.slaMetrics.resolutionBreached++;
             }
             
-            // Ortalama yanıt sürelerinigüncelle
             if (conversation.responseTime) {
               const total = dept.stats.slaMetrics.firstResponseMet + dept.stats.slaMetrics.firstResponseBreached;
               const currentAvg = dept.stats.slaMetrics.averageFirstResponseTime || 0;
@@ -614,7 +545,6 @@ class SocketHandler {
             await dept.save();
           }
           
-          // Agent istatistiklerini güncelle
           if (conversation.assignedAgent) {
             await Team.findByIdAndUpdate(conversation.assignedAgent, {
               $inc: { 
@@ -624,7 +554,6 @@ class SocketHandler {
             });
           }
           
-          // Broadcast to all admins in site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-resolved', {
             conversationId,
             conversation
@@ -636,16 +565,13 @@ class SocketHandler {
       });
 
       socket.on('disconnect', () => {
-        // Admin disconnected
       });
     });
   }
 
-  // SLA takip sistemi - Her 1 dakikada bir tüm aktif ticketları kontrol eder
   startSLAMonitoring() {
     setInterval(async () => {
       try {
-        // Açık ve atanmış tüm conversation'ları getir
         const activeConversations = await Conversation.find({
           status: { $in: ['open', 'assigned', 'pending'] }
         })
@@ -658,12 +584,9 @@ class SocketHandler {
           const previousFirstResponseRemaining = conversation.sla.firstResponseTimeRemaining;
           const previousResolutionRemaining = conversation.sla.resolutionTimeRemaining;
           
-          // SLA'yı yeniden hesapla
           conversation.calculateSLA();
           await conversation.save();
           
-          // HER KONUŞMA İÇİN SLA GÜNCELLEMESİ GÖNDER (countdown için)
-          // Sadece kalan süre değiştiyse emit et (performans için)
           if (previousFirstResponseRemaining !== conversation.sla.firstResponseTimeRemaining ||
               previousResolutionRemaining !== conversation.sla.resolutionTimeRemaining ||
               previousFirstResponseStatus !== conversation.sla.firstResponseStatus ||
@@ -675,7 +598,6 @@ class SocketHandler {
             });
           }
           
-          // SLA ihlali oluştuysa bildirim gönder
           if (previousFirstResponseStatus !== 'breached' && conversation.sla.firstResponseStatus === 'breached') {
             this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
               conversationId: conversation._id,
@@ -683,7 +605,6 @@ class SocketHandler {
               type: 'first-response',
               conversation: conversation.toObject()
             });
-            // Tüm admin'lere de gönder
             this.adminNamespace.emit('sla-breach', {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
@@ -699,7 +620,6 @@ class SocketHandler {
               type: 'resolution',
               conversation: conversation.toObject()
             });
-            // Tüm admin'lere de gönder
             this.adminNamespace.emit('sla-breach', {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
@@ -711,14 +631,13 @@ class SocketHandler {
       } catch (error) {
         console.error('❌ SLA monitoring error:', error);
       }
-    }, 30000); // Her 30 saniye
+    }, 30000);
   }
 
   async tryAutoResponse(conversation, userMessage) {
     try {
       const site = await Site.findById(conversation.siteId);
       
-      // Search for relevant FAQ
       const faqs = await FAQ.find({
         siteId: conversation.siteId,
         isActive: true,
@@ -730,7 +649,6 @@ class SocketHandler {
       if (faqs.length > 0 && faqs[0].score > 0.5) {
         const faq = faqs[0];
         
-        // Send auto-response
         const autoMessage = new Message({
           conversationId: conversation._id,
           senderType: 'bot',
@@ -740,22 +658,18 @@ class SocketHandler {
         });
         await autoMessage.save();
 
-        // Update FAQ stats
         faq.viewCount++;
         await faq.save();
 
-        // Send to widget
         this.widgetNamespace.to(`conversation:${conversation._id}`).emit('new-message', {
           message: autoMessage
         });
 
-        // Send to admins in conversation room
         this.adminNamespace.to(`conversation:${conversation._id}`).emit('new-message', {
           message: autoMessage,
           conversation
         });
 
-        // Also send to all admins watching this site
         this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
           message: autoMessage,
           conversation

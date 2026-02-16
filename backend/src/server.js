@@ -24,7 +24,6 @@ const teamRoutes = require('./routes/team');
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io setup with CORS for widget
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -33,7 +32,6 @@ const io = new Server(server, {
   }
 });
 
-// Security middleware - with exceptions for widget
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false

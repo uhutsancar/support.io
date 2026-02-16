@@ -2,26 +2,23 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Simple cache için
 const cache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
+const CACHE_DURATION = 5 * 60 * 1000;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 saniye timeout
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - Auth token ekle
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  // GET isteklerinde cache kontrol et
   if (config.method === 'get' && config.cache !== false) {
     const cacheKey = config.url + JSON.stringify(config.params || {});
     const cached = cache.get(cacheKey);
@@ -40,10 +37,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor - Cache kaydet
 api.interceptors.response.use(
   (response) => {
-    // GET isteklerini cache'le
     if (response.config.method === 'get' && response.config.cache !== false) {
       const cacheKey = response.config.url + JSON.stringify(response.config.params || {});
       cache.set(cacheKey, {
@@ -54,7 +49,6 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 401 hatası - Token geçersiz
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -64,7 +58,6 @@ api.interceptors.response.use(
   }
 );
 
-// Cache temizleme fonksiyonu
 export const clearCache = (pattern) => {
   if (pattern) {
     for (const key of cache.keys()) {
@@ -77,7 +70,6 @@ export const clearCache = (pattern) => {
   }
 };
 
-// Auth API
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
@@ -85,7 +77,6 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
 };
 
-// Sites API
 export const sitesAPI = {
   getAll: () => api.get('/sites'),
   getOne: (siteId) => api.get(`/sites/${siteId}`),
@@ -111,7 +102,6 @@ export const sitesAPI = {
   },
 };
 
-// FAQs API
 export const faqsAPI = {
   getAll: (siteId) => api.get(`/faqs/admin/${siteId}`),
   create: async (data) => {
@@ -131,7 +121,6 @@ export const faqsAPI = {
   },
 };
 
-// Conversations API
 export const conversationsAPI = {
   getAll: (siteId, status) => api.get(`/conversations/${siteId}`, { params: { status } }),
   getOne: (siteId, conversationId) => api.get(`/conversations/${siteId}/${conversationId}`),
@@ -178,7 +167,6 @@ export const conversationsAPI = {
   getUnreadCount: () => api.get('/conversations/unread-count'),
 };
 
-// Departments API
 export const departmentsAPI = {
   getAll: (siteId) => api.get(`/departments/site/${siteId}`),
   getOne: (departmentId) => api.get(`/departments/${departmentId}`),
@@ -194,44 +182,43 @@ export const departmentsAPI = {
   },
   delete: async (departmentId) => {
     const response = await api.delete(`/departments/${departmentId}`);
-    clearCache('/departments'); // Clear cache after delete
+    clearCache('/departments');
     return response;
   },
   addMember: async (departmentId, userId, role) => {
     const response = await api.post(`/departments/${departmentId}/members`, { userId, role });
-    clearCache('/departments'); // Clear cache after adding member
+    clearCache('/departments');
     return response;
   },
   removeMember: async (departmentId, userId) => {
     const response = await api.delete(`/departments/${departmentId}/members/${userId}`);
-    clearCache('/departments'); // Clear cache after removing member
+    clearCache('/departments');
     return response;
   },
   getStats: (departmentId) => api.get(`/departments/${departmentId}/stats`),
 };
 
-// Team API
 export const teamAPI = {
   getAll: (siteId) => api.get('/team', { params: { siteId } }),
   getOne: (userId) => api.get(`/team/${userId}`),
   create: async (data) => {
     const response = await api.post('/team', data);
-    clearCache('/team'); // Clear cache after create
+    clearCache('/team');
     return response;
   },
   update: async (userId, data) => {
     const response = await api.put(`/team/${userId}`, data);
-    clearCache('/team'); // Clear cache after update
+    clearCache('/team');
     return response;
   },
   updateStatus: async (userId, status) => {
     const response = await api.patch(`/team/${userId}/status`, { status });
-    clearCache('/team'); // Clear cache after status update
+    clearCache('/team');
     return response;
   },
   delete: async (userId) => {
     const response = await api.delete(`/team/${userId}`);
-    clearCache('/team'); // Clear cache after delete
+    clearCache('/team');
     return response;
   },
   getStats: (userId) => api.get(`/team/${userId}/stats`),

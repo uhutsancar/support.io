@@ -128,7 +128,6 @@
             font-family: monospace;
         }
 
-        /* Mobile Bottom Navigation */
         .mobile-nav {
             position: fixed;
             bottom: 0;
@@ -193,7 +192,6 @@
             100% { transform: scale(1); }
         }
 
-        /* Hide mobile nav on desktop */
         @media (min-width: 768px) {
             .mobile-nav { display: none; }
         }
@@ -259,7 +257,6 @@
         <p>&copy; 2026 Support.io. Built with ❤️ for amazing customer experiences.</p>
     </footer>
 
-    <!-- Mobile Bottom Navigation -->
     <div class="mobile-nav">
         <a href="#" class="nav-item active">
             <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -282,9 +279,7 @@
         </a>
     </div>
 
-    <!-- Support.io Widget Integration -->
     <script>
-        // Widget Configuration
         window.SupportIOConfig = {
             siteKey: 'b937d367-cd2a-424e-9605-09eb554e8ed1',
             position: 'bottom-right',
@@ -292,15 +287,12 @@
             brandName: 'Support.io'
         };
 
-        // Mobile Navigation with Notifications
         let unreadMessageCount = 0;
         
-        // Listen for widget events
         document.addEventListener('DOMContentLoaded', function() {
             const messageNotification = document.getElementById('message-notification');
             const messagesNav = document.getElementById('messages-nav');
             
-            // Listen for new messages from widget
             window.addEventListener('message', function(event) {
                 console.log('📩 Demo received message:', event.data);
                 if (event.data && event.data.type === 'new-message') {
@@ -328,10 +320,8 @@
                 }
             }
             
-            // Messages nav click handler
             messagesNav.addEventListener('click', function(e) {
                 e.preventDefault();
-                // Trigger widget open
                 if (window.SupportIOWidget && window.SupportIOWidget.openWidget) {
                     window.SupportIOWidget.openWidget();
                     unreadMessageCount = 0;

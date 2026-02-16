@@ -1,5 +1,4 @@
 export default {
-  // Common
   common: {
     ok: 'Tamam',
     cancel: 'İptal',
@@ -10,8 +9,6 @@ export default {
     save: 'Kaydet',
     close: 'Kapat',
   },
-  
-  // Header
   header: {
     features: 'Özellikler',
     pricing: 'Fiyatlandırma',
@@ -33,8 +30,6 @@ export default {
     mobileMenu: 'Mobil menü',
     switchToEnglish: 'Switch to English',
   },
-  
-  // Sidebar
   sidebar: {
     dashboard: 'Gösterge Paneli',
     sites: 'Siteler',
@@ -46,8 +41,6 @@ export default {
     settings: 'Ayarlar',
     logout: 'Çıkış Yap',
   },
-  
-  // Analytics
   analytics: {
     title: 'Analizler',
     subtitle: 'Performans metrikleri ve detaylı raporlar',
@@ -65,8 +58,6 @@ export default {
     last30days: 'Son 30 Gün',
     last90days: 'Son 90 Gün',
   },
-  
-  // Home Page
   home: {
     hero: {
       title: 'Müşteri Hizmetlerinizi',
@@ -136,8 +127,6 @@ export default {
       copyright: '© 2026 Support.io. Tüm hakları saklıdır.',
     },
   },
-  
-  // Features Page
   features: {
     title: 'Özellikler',
     subtitle: 'İşinizi büyütmek için ihtiyacınız olan her şey',
@@ -174,8 +163,6 @@ export default {
       description: 'Responsive tasarım ile tüm cihazlarda mükemmel çalışan destek sistemi.',
     },
   },
-  
-  // Pricing Page
   pricing: {
     title: 'Fiyatlandırma',
     subtitle: 'İşletmenize uygun planı seçin',
@@ -231,8 +218,6 @@ export default {
       cta: 'İletişime Geç',
     },
   },
-  
-  // About Page
   about: {
     title: 'Hakkımızda',
     subtitle: 'Müşteri deneyimini yeniden tasarlıyoruz',
@@ -264,8 +249,6 @@ export default {
       description: 'Deneyimli ve tutkulu profesyonellerden oluşan ekibimiz, sizin için çalışıyor.',
     },
   },
-  
-  // Login Page
   login: {
     title: 'Giriş Yap',
     subtitle: 'Hesabınıza giriş yapın',
@@ -287,8 +270,6 @@ export default {
     metaTitle: 'Giriş Yap - Support.io Admin Paneli',
     metaDescription: 'Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, raporları görüntüleyin ve destek ekibinizi yönetin.',
   },
-  
-  // Register Page
   register: {
     title: 'Kayıt Ol',
     subtitle: 'Yeni hesap oluşturun',
@@ -319,8 +300,6 @@ export default {
     metaOgTitle: 'Hesap Oluştur - Support.io | Ücretsiz Başlayın',
     metaOgDescription: 'Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.',
   },
-  
-  // Dashboard
   dashboard: {
     title: 'Gösterge Paneli',
     subtitle: 'Support.io yönetim panelinize hoş geldiniz',
@@ -380,8 +359,6 @@ export default {
     waiting: 'Bekliyor',
     none: 'Yok',
   },
-  
-  // Conversations
   conversations: {
     title: 'Konuşmalar',
     subtitle: 'Müşterilerinizle gerçek zamanlı sohbet edin',
@@ -414,8 +391,6 @@ export default {
     noEmail: 'E-posta yok',
     deleteConversationTooltip: 'Konuşmayı Sil',
   },
-  
-  // Sites
   sites: {
     title: 'Siteler',
     subtitle: 'Web sitelerinizi ve sohbet widget\'larınızı yönetin',
@@ -453,8 +428,6 @@ export default {
     deleteMessage: '"{{name}}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site\'ye ait tüm konuşmalar silinecektir.',
     deleteConfirm: 'Evet, Sil',
   },
-  
-  // Settings
   settings: {
     title: 'Ayarlar',
     profile: 'Uygulama tercihlerinizi yönetin',
@@ -478,8 +451,6 @@ export default {
     savedDescription: 'Seçtiğiniz tema otomatik olarak kaydedilir ve bir sonraki ziyaretinizde hatırlanır.',
     comingSoon: 'Yakında eklenecek...',
   },
-  
-  // FAQs
   faqs: {
     title: 'SSS',
     subtitle: 'Otomatik yanıtları ve yardım makalelerini yönetin',
@@ -519,8 +490,6 @@ export default {
     updateSuccess: 'FAQ başarıyla güncellendi!',
     allPages: 'Tüm sayfalar',
   },
-  
-  // Features Page - Detailed
   featuresPage: {
     title: 'Özellikler',
     subtitle: 'İhtiyacınız Olan Her Özellik',
@@ -653,8 +622,6 @@ export default {
       }
     ],
   },
-  
-  // Pricing Page - Detailed
   pricingPage: {
     title: 'Basit ve Şeffaf Fiyatlandırma',
     subtitle: 'İşletmenizin büyüklüğüne uygun planı seçin. Gizli ücret yok, dilediğiniz zaman iptal edebilirsiniz.',
@@ -754,8 +721,6 @@ export default {
       }
     ],
   },
-  
-  // About Page - Detailed
   aboutPage: {
     title: 'Müşteri İletişimini Yeniden Tanımlıyoruz',
     subtitle: 'Support.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan modern ve kullanıcı dostu bir platform sunuyoruz.',
@@ -799,8 +764,6 @@ export default {
       description: 'Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve güvenilirlik sunar. React, Node.js, Socket.IO ve MongoDB gibi güçlü teknolojiler üzerine kurulu.',
     },
   },
-  
-  // Common
   common: {
     loading: 'Yükleniyor...',
     save: 'Kaydet',
@@ -826,8 +789,6 @@ export default {
     warning: 'Uyarı!',
     info: 'Bilgi',
   },
-
-  // Documentation Page
   docs: {
     meta: {
       title: 'Dokümantasyon',
@@ -927,8 +888,6 @@ export default {
       button: 'Ücretsiz Başlayın',
     },
   },
-
-  // Team Page
   team: {
     title: 'Ekip Yönetimi',
     subtitle: 'Destek ekip üyelerinizi ve yetkilerini yönetin',
@@ -988,8 +947,6 @@ export default {
     createSuccess: 'Ekip üyesi başarıyla eklendi!',
     updateSuccess: 'Ekip üyesi başarıyla güncellendi!',
   },
-
-  // Departments Page
   departments: {
     title: 'Departmanlar',
     subtitle: 'Destek ekibinizi departmanlara ayırın',

@@ -29,7 +29,6 @@ const Conversations = () => {
   const fileInputRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Setup socket connection
   useEffect(() => {
     fetchSites();
     
@@ -55,17 +54,14 @@ const Conversations = () => {
     };
   }, []);
 
-  // Listen to socket events
   useEffect(() => {
     if (!socket) return;
 
     const handleNewMessage = (data) => {
       console.log('📨 New message received:', data);
       
-      // Add message to current conversation if it's the selected one
       if (selectedConversation && data.message.conversationId === selectedConversation._id) {
         setMessages(prev => {
-          // Prevent duplicates
           if (prev.some(msg => msg._id === data.message._id)) {
             return prev;
           }
@@ -73,7 +69,6 @@ const Conversations = () => {
         });
       }
 
-      // Update conversation in list
       setConversations(prev => 
         prev.map(conv => 
           conv._id === data.message.conversationId 
@@ -85,14 +80,11 @@ const Conversations = () => {
 
     const handleNewConversation = (data) => {
       console.log('🆕 New conversation created:', data);
-      // Add new conversation to the list if it belongs to the selected site
       if (selectedSite && data.conversation.siteId === selectedSite._id) {
         setConversations(prev => {
-          // Check if conversation already exists
           if (prev.some(conv => conv._id === data.conversation._id)) {
             return prev;
           }
-          // Add new conversation to the top
           return [data.conversation, ...prev];
         });
       }
@@ -101,7 +93,6 @@ const Conversations = () => {
     const handleConversationUpdate = (data) => {
       console.log('🔄 Conversation update:', data);
       
-      // Update selectedConversation if it matches
       if (selectedConversation && selectedConversation._id === data.conversationId) {
         console.log('✅ Updating selected conversation');
         // Merge the update with existing data to preserve populated fields
@@ -114,7 +105,6 @@ const Conversations = () => {
         }));
       }
       
-      // Update conversation in list
       setConversations(prev =>
         prev.map(conv =>
           conv._id === data.conversationId
@@ -127,7 +117,6 @@ const Conversations = () => {
     const handleSLABreach = (data) => {
       console.log('🚨 SLA Breach detected:', data);
       
-      // Update selectedConversation if it matches
       if (selectedConversation && selectedConversation._id === data.conversationId) {
         setSelectedConversation(prev => ({
           ...prev,
@@ -135,7 +124,6 @@ const Conversations = () => {
         }));
       }
       
-      // Update conversation in list
       setConversations(prev =>
         prev.map(conv =>
           conv._id === data.conversationId
@@ -148,7 +136,6 @@ const Conversations = () => {
     const handleConversationResolved = (data) => {
       console.log('✅ Conversation resolved:', data);
       
-      // Update selectedConversation if it matches
       if (selectedConversation && selectedConversation._id === data.conversationId) {
         setSelectedConversation(prev => ({
           ...prev,
@@ -157,7 +144,6 @@ const Conversations = () => {
         }));
       }
       
-      // Update conversation in list
       setConversations(prev =>
         prev.map(conv =>
           conv._id === data.conversationId
@@ -182,7 +168,6 @@ const Conversations = () => {
     };
   }, [socket, selectedConversation, selectedSite]);
 
-  // Join site room when site is selected
   useEffect(() => {
     if (selectedSite && socket && user) {
       console.log('🏢 Joining site room:', selectedSite._id);
@@ -194,7 +179,6 @@ const Conversations = () => {
     }
   }, [selectedSite, socket, user]);
 
-  // Auto-select conversation from URL
   useEffect(() => {
     const conversationId = searchParams.get('id');
     if (conversationId && conversations.length > 0) {
@@ -202,13 +186,11 @@ const Conversations = () => {
       if (conversation && conversation._id !== selectedConversation?._id) {
         console.log('🔗 Auto-selecting conversation from URL:', conversationId);
         setSelectedConversation(conversation);
-        // Clear URL parameter after selection
         setSearchParams({});
       }
     }
   }, [searchParams, conversations]);
 
-  // Join conversation room when conversation is selected
   useEffect(() => {
     if (selectedConversation && socket) {
       console.log('💬 Joining conversation room:', selectedConversation._id);
@@ -260,7 +242,6 @@ const Conversations = () => {
       fetchDepartments(siteId);
       fetchTeamMembers(siteId);
       
-      // Join site room for real-time updates
       if (socket) {
         socket.emit('join-site', { siteId, userId: user?._id });
         console.log('🏢 Joined site room:', siteId);
@@ -288,10 +269,8 @@ const Conversations = () => {
     try {
       await conversationsAPI.delete(selectedSite._id, conversationId);
       
-      // Silinenen conversation'ı listeden kaldır
       setConversations(prev => prev.filter(conv => conv._id !== conversationId));
       
-      // Eğer silinen conversation seçili ise, seçimi kaldır
       if (selectedConversation?._id === conversationId) {
         setSelectedConversation(null);
         setMessages([]);
@@ -373,7 +352,7 @@ const Conversations = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error(t('conversations.fileTooLarge'));
       return;
@@ -421,7 +400,6 @@ const Conversations = () => {
     return `${d.toLocaleDateString('tr-TR')} ${formatTime(date)}`;
   };
 
-  // Dakikayı saat ve dakika formatına çevir
   const formatMinutes = (minutes) => {
     if (minutes === null || minutes === undefined) return '-';
     if (minutes < 0) return 'Süre doldu';
@@ -434,7 +412,6 @@ const Conversations = () => {
     return `${mins}dk`;
   };
 
-  // SLA rengini belirle
   const getSLAColor = (minutes) => {
     if (!minutes || minutes < 0) return 'text-red-600 dark:text-red-400';
     if (minutes < 5) return 'text-red-600 dark:text-red-400';
@@ -442,17 +419,14 @@ const Conversations = () => {
     return 'text-green-600 dark:text-green-400';
   };
 
-  // Handle status change
   const handleStatusChange = async (newStatus) => {
     if (!selectedConversation) return;
     
     try {
       const response = await conversationsAPI.updateStatus(selectedConversation._id, newStatus);
       
-      // Update selected conversation
       setSelectedConversation(response.data.conversation);
       
-      // Update conversation in list
       setConversations(prev =>
         prev.map(conv =>
           conv._id === selectedConversation._id
@@ -468,17 +442,14 @@ const Conversations = () => {
     }
   };
 
-  // Handle priority change
   const handlePriorityChange = async (newPriority) => {
     if (!selectedConversation) return;
     
     try {
       const response = await conversationsAPI.updatePriority(selectedConversation._id, newPriority);
       
-      // Update selected conversation
       setSelectedConversation(response.data.conversation);
       
-      // Update conversation in list
       setConversations(prev =>
         prev.map(conv =>
           conv._id === selectedConversation._id
@@ -519,7 +490,6 @@ const Conversations = () => {
   const handleClaimConversation = async (conversationId) => {
     try {
       await conversationsAPI.claim(conversationId);
-      // Refresh conversation
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
@@ -535,12 +505,10 @@ const Conversations = () => {
       console.log('🔄 Assigning conversation:', conversationId, 'to agent:', agentId);
       const response = await conversationsAPI.assign(conversationId, agentId || null, user?._id || user?.id);
       
-      // Update selected conversation
       if (selectedConversation && selectedConversation._id === conversationId) {
         setSelectedConversation(response.data.conversation);
       }
       
-      // Refresh conversations list
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
@@ -557,12 +525,10 @@ const Conversations = () => {
       console.log('🔄 Setting department:', conversationId, 'to:', departmentId);
       const response = await conversationsAPI.setDepartment(conversationId, departmentId || null);
       
-      // Update selected conversation
       if (selectedConversation && selectedConversation._id === conversationId) {
         setSelectedConversation(response.data.conversation);
       }
       
-      // Refresh conversations list
       if (selectedSite) {
         fetchConversations(selectedSite._id);
       }
@@ -608,7 +574,6 @@ const Conversations = () => {
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 transition-colors duration-200 truncate">{t('conversations.subtitle')}</p>
           </div>
         
-          {/* Site selector */}
           <select
             value={selectedSite?._id || ''}
             onChange={(e) => {
@@ -625,7 +590,6 @@ const Conversations = () => {
         </div>
 
       <div className="w-full max-w-full bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col lg:flex-row transition-colors duration-200 min-h-0">
-        {/* Conversations List */}
         <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 xl:w-96 lg:max-w-md border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 flex-col transition-colors duration-200 overflow-hidden`}>
           <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 flex-shrink-0">
             <div className="relative w-full">
@@ -676,7 +640,6 @@ const Conversations = () => {
                     </span>
                   </div>
                   
-                  {/* Atanan Ekip Üyesi */}
                   {conv.assignedAgent && (
                     <div className="mb-1.5 flex items-center gap-1.5">
                       <UserCheck className="w-3 h-3 text-blue-600 dark:text-blue-400" />
@@ -686,7 +649,6 @@ const Conversations = () => {
                     </div>
                   )}
                   
-                  {/* SLA Göstergesi */}
                   {conv.sla && (
                     <div className="mb-1.5 flex items-center gap-2">
                       {(conv.sla.firstResponseStatus === 'breached' || 
@@ -721,10 +683,8 @@ const Conversations = () => {
           </div>
         </div>
 
-        {/* Chat Area */}
         {selectedConversation ? (
           <div className="flex flex-1 flex-col w-full min-w-0 overflow-hidden min-h-0">
-            {/* Chat Header */}
             <div className="p-2 sm:p-2.5 lg:p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-colors duration-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 overflow-hidden">
@@ -745,7 +705,6 @@ const Conversations = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
-                  {/* Priority Dropdown */}
                   <select
                     value={selectedConversation.priority}
                     onChange={(e) => handlePriorityChange(e.target.value)}
@@ -757,7 +716,6 @@ const Conversations = () => {
                     <option value="urgent">Acil</option>
                   </select>
 
-                  {/* Status Dropdown */}
                   <select
                     value={selectedConversation.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
@@ -780,9 +738,7 @@ const Conversations = () => {
                 </div>
               </div>
               
-              {/* Assignment and Department Info */}
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Department Dropdown */}
                 <div className="flex items-center gap-1">
                   <Folder className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                   <select
@@ -799,7 +755,6 @@ const Conversations = () => {
                   </select>
                 </div>
                 
-                {/* Assign Dropdown */}
                 <div className="flex items-center gap-1">
                   <UserCheck className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                   <select
@@ -818,7 +773,6 @@ const Conversations = () => {
               </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-2.5 lg:p-3 xl:p-4 space-y-2 sm:space-y-2.5 lg:space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0">
               {messages.map((message) => (
                 <div
@@ -840,7 +794,6 @@ const Conversations = () => {
                     >
                       <p className="text-xs sm:text-sm">{message.content}</p>
                       
-                      {/* File Attachment Display */}
                       {message.fileData && (message.messageType === 'file' || message.messageType === 'image') && (
                         <div className="mt-2">
                           {message.messageType === 'image' ? (
@@ -887,9 +840,7 @@ const Conversations = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input */}
             <form onSubmit={handleSendMessage} className="p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0">
-              {/* File Preview */}
               {selectedFile && (
                 <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center gap-2">
                   <div className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded">

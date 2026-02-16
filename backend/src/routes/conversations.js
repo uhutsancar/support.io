@@ -51,14 +51,12 @@ router.get('/:siteId', auth, async (req, res) => {
       .sort({ lastMessageAt: -1 })
       .limit(50);
 
-    // Get last message for each conversation and recalculate SLA
     const conversationsWithLastMessage = await Promise.all(
       conversations.map(async (conv) => {
         const lastMessage = await Message.findOne({ conversationId: conv._id })
           .sort({ createdAt: -1 })
           .limit(1);
         
-        // SLA'yı yeniden hesapla
         conv.calculateSLA();
         await conv.save();
         
@@ -88,7 +86,6 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    // SLA'yı yeniden hesapla
     conversation.calculateSLA();
     await conversation.save();
 
@@ -144,7 +141,6 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
     )
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
-    // Update agent stats
     if (agentId) {
       await require('../models/User').findByIdAndUpdate(agentId, {
         $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
@@ -158,7 +154,6 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
         agentId,
         assignedBy
       });
-      // Also emit conversation-update for real-time UI updates
       io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
         conversationId: conversation._id,
         conversation: conversation.toObject()
@@ -175,7 +170,6 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
   try {
     const agentId = req.user.id;
     
-    // Check if conversation is unassigned
     const conversation = await Conversation.findById(req.params.conversationId);
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -183,7 +177,6 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
     if (conversation.assignedAgent) {
       return res.status(400).json({ error: 'Conversation is already assigned' });
     }
-    // Check agent's current load
     const agent = await require('../models/User').findById(agentId);
     if (agent.stats.activeConversations >= agent.preferences.maxActiveConversations) {
       return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
@@ -198,12 +191,10 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
     await conversation.populate('assignedAgent', 'name avatar status');
     await conversation.populate('department', 'name color icon');
     
-    // Update agent stats
     await require('../models/User').findByIdAndUpdate(agentId, {
       $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
     });
     
-    // Emit socket event
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('conversation-claimed', {
@@ -229,21 +220,18 @@ router.put('/:conversationId/department', auth, async (req, res) => {
     )
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
-        // Update department stats
     if (departmentId) {
       await require('../models/Department').findByIdAndUpdate(departmentId, {
         $inc: { 'stats.totalConversations': 1, 'stats.activeConversations': 1 }
       });
     }
     
-    // Emit socket event
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('conversation-department-changed', {
         conversationId: conversation._id,
         departmentId
       });
-      // Also emit conversation-update for real-time UI updates
       io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
         conversationId: conversation._id,
         conversation: conversation.toObject()
@@ -281,7 +269,6 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
       low: { firstResponse: 30, resolution: 480 }
     };
     
-    // SLA hedeflerini yeni \u00f6nceli\u011fe g\u00f6re g\u00fcncelle
     if (conversation.department && conversation.department.sla && conversation.department.sla.enabled) {
       conversation.sla.firstResponseTarget = conversation.department.sla.firstResponse?.[priority] || slaTargets[priority].firstResponse;
       conversation.sla.resolutionTarget = conversation.department.sla.resolution?.[priority] || slaTargets[priority].resolution;
@@ -290,13 +277,12 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
       conversation.sla.resolutionTarget = slaTargets[priority].resolution;
     }
     
-    // SLA'y\u0131 yeniden hesapla
+
     conversation.calculateSLA();
     
     await conversation.save();
     await conversation.populate('assignedAgent', 'name avatar status');
 
-    // Socket event
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('conversation-update', {
@@ -311,7 +297,6 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
   }
 });
 
-// Add internal note to conversation
 router.post('/:conversationId/notes', auth, async (req, res) => {
   try {
     const { note } = req.body;
@@ -337,7 +322,6 @@ router.post('/:conversationId/notes', auth, async (req, res) => {
   }
 });
 
-// Update conversation status
 router.put('/:conversationId/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
@@ -356,16 +340,13 @@ router.put('/:conversationId/status', auth, async (req, res) => {
     } else if (status === 'resolved') {
       conversation.resolvedAt = new Date();
       
-      // SLA'yı son kez hesapla
       conversation.calculateSLA();
       
-      // Departman istatistiklerini güncelle
       if (conversation.department) {
         const dept = await require('../models/Department').findById(conversation.department._id);
         if (dept) {
           dept.stats.activeConversations = Math.max(0, dept.stats.activeConversations - 1);
           
-          // SLA istatistiklerini güncelle
           if (conversation.sla.firstResponseStatus === 'met') {
             dept.stats.slaMetrics.firstResponseMet++;
           } else if (conversation.sla.firstResponseStatus === 'breached') {
@@ -378,7 +359,6 @@ router.put('/:conversationId/status', auth, async (req, res) => {
             dept.stats.slaMetrics.resolutionBreached++;
           }
           
-          // Ortalama yanıt sürelerini güncelle
           if (conversation.responseTime) {
             const total = dept.stats.slaMetrics.firstResponseMet + dept.stats.slaMetrics.firstResponseBreached;
             const currentAvg = dept.stats.slaMetrics.averageFirstResponseTime || 0;
@@ -395,7 +375,6 @@ router.put('/:conversationId/status', auth, async (req, res) => {
         }
       }
       
-      // Agent istatistiklerini güncelle
       if (conversation.assignedAgent) {
         await require('../models/User').findByIdAndUpdate(conversation.assignedAgent, {
           $inc: { 
@@ -409,7 +388,6 @@ router.put('/:conversationId/status', auth, async (req, res) => {
     await conversation.save();
     await conversation.populate('assignedAgent', 'name avatar status');
 
-    // Socket event
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('conversation-update', {
@@ -417,7 +395,6 @@ router.put('/:conversationId/status', auth, async (req, res) => {
         conversation
       });
       
-      // Additional event for resolved status
       if (status === 'resolved') {
         io.of('/admin').emit('conversation-resolved', {
           conversationId: conversation._id,
@@ -432,12 +409,10 @@ router.put('/:conversationId/status', auth, async (req, res) => {
   }
 });
 
-// Delete conversation and all its messages
 router.delete('/:siteId/:conversationId', auth, async (req, res) => {
   try {
     const { siteId, conversationId } = req.params;
 
-    // Verify conversation belongs to the site
     const conversation = await Conversation.findOne({
       _id: conversationId,
       siteId: siteId
@@ -447,13 +422,10 @@ router.delete('/:siteId/:conversationId', auth, async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    // Delete all messages in the conversation
     await Message.deleteMany({ conversationId: conversationId });
     
-    // Delete the conversation
     await Conversation.findByIdAndDelete(conversationId);
 
-    // Notify admin dashboard via socket
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('stats-update', {

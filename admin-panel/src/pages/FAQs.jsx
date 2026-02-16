@@ -64,17 +64,14 @@ const FAQs = () => {
 
       if (editingFaq) {
         const response = await faqsAPI.update(editingFaq._id, data);
-        // Güncellenmiş FAQ'ı listede değiştir
         setFaqs(faqs.map(faq => faq._id === editingFaq._id ? response.data.faq : faq));
       } else {
         const response = await faqsAPI.create(data);
-        // Yeni FAQ'ı direkt listeye ekle
         setFaqs([...faqs, response.data.faq]);
       }
 
       setShowModal(false);
       resetForm();
-      // Cache'i temizle
       clearCache('/faqs');
       toast.success(editingFaq ? t('faqs.updateSuccess') : t('faqs.createSuccess'));
     } catch (error) {
@@ -100,9 +97,7 @@ const FAQs = () => {
 
     try {
       await faqsAPI.delete(faqId);
-      // FAQ'ı listeden direkt kaldır
       setFaqs(faqs.filter(faq => faq._id !== faqId));
-      // Cache'i temizle
       clearCache('/faqs');
       toast.success(t('faqs.deleteSuccess'));
     } catch (error) {
@@ -292,7 +287,6 @@ const FAQs = () => {
         </>
       )}
 
-      {/* FAQ Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">

@@ -6,7 +6,6 @@ const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
 const { auth } = require('../middleware/auth');
 
-// Get all departments for a site
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
     const { siteId } = req.params;
@@ -25,7 +24,6 @@ router.get('/site/:siteId', auth, async (req, res) => {
   }
 });
 
-// Get single department
 router.get('/:id', auth, async (req, res) => {
   try {
     const department = await Department.findById(req.params.id)
@@ -42,7 +40,6 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Create new department
 router.post('/', auth, async (req, res) => {
   try {
     const { name, description, siteId, color, icon, members, autoAssignRules, businessHours } = req.body;
@@ -59,8 +56,6 @@ router.post('/', auth, async (req, res) => {
     });
     
     await department.save();
-    
-    // Update team member departments
     if (members && members.length > 0) {
       for (const member of members) {
         await Team.findByIdAndUpdate(
@@ -86,7 +81,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update department
 router.put('/:id', auth, async (req, res) => {
   try {
     const { name, description, color, icon, members, autoAssignRules, businessHours, isActive } = req.body;
@@ -97,15 +91,12 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'Department not found' });
     }
     
-    // Get old members to update Team collection
     const oldMembers = department.members.map(m => m.userId.toString());
     const newMembers = members?.map(m => m.userId) || [];
     
-    // Find removed and added members
     const removedMembers = oldMembers.filter(id => !newMembers.includes(id));
     const addedMembers = newMembers.filter(id => !oldMembers.includes(id));
     
-    // Update department
     department.name = name;
     department.description = description;
     department.color = color;
@@ -117,7 +108,6 @@ router.put('/:id', auth, async (req, res) => {
     
     await department.save();
     
-    // Remove department from removed members
     if (removedMembers.length > 0) {
       for (const memberId of removedMembers) {
         await Team.findByIdAndUpdate(
@@ -131,7 +121,6 @@ router.put('/:id', auth, async (req, res) => {
       }
     }
     
-    // Add department to new members
     if (addedMembers.length > 0) {
       for (const memberId of addedMembers) {
         const memberData = members.find(m => m.userId === memberId);
@@ -158,7 +147,6 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// Add member to department
 router.post('/:id/members', auth, async (req, res) => {
   try {
     const { userId, role } = req.body;
@@ -169,7 +157,6 @@ router.post('/:id/members', auth, async (req, res) => {
       return res.status(404).json({ error: 'Department not found' });
     }
     
-    // Check if user is already a member
     const existingMember = department.members.find(
       m => m.userId.toString() === userId
     );
@@ -186,7 +173,6 @@ router.post('/:id/members', auth, async (req, res) => {
     
     await department.save();
     
-    // Update team member's departments
     await Team.findByIdAndUpdate(
       userId,
       {
@@ -208,7 +194,6 @@ router.post('/:id/members', auth, async (req, res) => {
   }
 });
 
-// Remove member from department
 router.delete('/:id/members/:userId', auth, async (req, res) => {
   try {
     const { id, userId } = req.params;
@@ -225,7 +210,6 @@ router.delete('/:id/members/:userId', auth, async (req, res) => {
     
     await department.save();
     
-    // Update team member's departments
     await Team.findByIdAndUpdate(
       userId,
       {
@@ -244,7 +228,6 @@ router.delete('/:id/members/:userId', auth, async (req, res) => {
   }
 });
 
-// Get department statistics
 router.get('/:id/stats', auth, async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
@@ -253,10 +236,8 @@ router.get('/:id/stats', auth, async (req, res) => {
       return res.status(404).json({ error: 'Department not found' });
     }
     
-    // Toplam conversation sayısı
     const totalConversations = await Conversation.countDocuments({ department: department._id });
     
-    // Atanmamış: department'a ait ama agent atanmamış
     const unassigned = await Conversation.countDocuments({ 
       department: department._id, 
       status: 'open',
@@ -285,7 +266,6 @@ router.get('/:id/stats', auth, async (req, res) => {
   }
 });
 
-// Delete department
 router.delete('/:id', auth, async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
@@ -294,7 +274,6 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'Department not found' });
     }
     
-    // Check if department has active conversations
     const activeConversations = await Conversation.countDocuments({
       department: department._id,
       status: { $in: ['unassigned', 'assigned', 'pending'] }
@@ -307,7 +286,6 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
     
-    // Remove department from all team members
     await Team.updateMany(
       { 'departments.departmentId': department._id },
       {

@@ -49,7 +49,6 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   const mimeType = file.mimetype.toLowerCase();
   const ext = path.extname(file.originalname).toLowerCase();
-  // Mimetype kontrolü
   if (!ALLOWED_FILE_TYPES[mimeType]) {
     return cb(new Error(`Dosya türü desteklenmiyor: ${file.originalname}. İzin verilen türler: resim, PDF, Office belgeleri, metin dosyaları.`), false);
   }
@@ -94,12 +93,10 @@ const validateFileContent = async (req, res, next) => {
       const declaredMime = req.file.mimetype.toLowerCase();
       const actualMime = type.mime.toLowerCase();
       
-      // Bazı mime type'lar farklı olabilir, genel kontrol yap
       const mimeCategory = declaredMime.split('/')[0];
       const actualCategory = actualMime.split('/')[0];
       
       if (mimeCategory !== actualCategory) {
-        // Dosyayı sil
         fs.unlinkSync(req.file.path);
         return res.status(400).json({ 
           error: 'Dosya içeriği uzantısı ile uyuşmuyor. Güvenlik riski tespit edildi.' 

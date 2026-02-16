@@ -26,7 +26,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
-  // Dile göre URL prefix
   const langPrefix = language === 'en' ? '/en' : '';
   const routes = {
     sites: `${langPrefix}/dashboard/sites`,
@@ -55,7 +54,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
     
-    // Socket.io bağlantısını kur
     const token = localStorage.getItem('token');
     const newSocket = io('http://localhost:5000/admin', {
       auth: { token },
@@ -66,19 +64,16 @@ const Dashboard = () => {
       console.log('✅ Dashboard socket connected!');
     });
 
-    // Yeni ticket geldiğinde
     newSocket.on('new-conversation', (data) =>  {
       console.log('💬 New ticket received:', data);
       fetchDashboardData(true);
     });
     
-    // Konuşma güncellendiğinde
     newSocket.on('conversation-update', (data) => {
       console.log('🔄 Conversation updated:', data);
       fetchDashboardData(true);
     });
 
-    // SLA ihlali olduğunda
     newSocket.on('sla-breach', (data) => {
       console.log('🚨 SLA breach:', data);
       setStats(prev => ({
@@ -86,7 +81,6 @@ const Dashboard = () => {
         slaBreaches: prev.slaBreaches + 1
       }));
       
-      // Bildirim göster
       if (Notification.permission === 'granted') {
         new Notification('SLA İhlali!', {
           body: `Talep #${data.ticketNumber} - ${data.type === 'first-response' ? 'İlk yanıt' : 'Çözüm'} süresi aşıldı`,
@@ -98,7 +92,6 @@ const Dashboard = () => {
       fetchDashboardData(true);
     });
 
-    // Ticket çözüldüğünde
     newSocket.on('conversation-resolved', () => {
       fetchDashboardData(true);
     });
@@ -119,7 +112,6 @@ const Dashboard = () => {
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Bildirim izni iste
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
@@ -141,12 +133,10 @@ const Dashboard = () => {
       
       clearCache();
       
-      // Sites verilerini çek
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
       const activeSites = sites.filter(site => site.isActive).length;
       
-      // Tüm conversations'ları topla
       let allConversations = [];
       
       for (const site of sites) {
@@ -159,7 +149,6 @@ const Dashboard = () => {
         }
       }
       
-      // İstatistikleri hesapla
       const openTickets = allConversations.filter(c => 
         c.status === 'open' || c.status === 'assigned' || c.status === 'pending'
       ).length;
@@ -172,7 +161,6 @@ const Dashboard = () => {
         c.sla?.firstResponseStatus === 'breached' || c.sla?.resolutionStatus === 'breached'
       ).length;
       
-      // Bugün çözülen ticketlar
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const resolvedToday = allConversations.filter(c => {
@@ -183,7 +171,6 @@ const Dashboard = () => {
         return false;
       }).length;
       
-      // Ortalama yanıt süreleri (dakika)
       const conversationsWithResponse = allConversations.filter(c => c.responseTime);
       const avgFirstResponseTime = conversationsWithResponse.length > 0
         ? Math.round(conversationsWithResponse.reduce((sum, c) => sum + (c.responseTime || 0), 0) / conversationsWithResponse.length)
@@ -194,7 +181,6 @@ const Dashboard = () => {
         ? Math.round(conversationsWithResolution.reduce((sum, c) => sum + (c.resolutionTime || 0), 0) / conversationsWithResolution.length)
         : 0;
       
-      // SLA uyum oranı
       const conversationsWithSLA = allConversations.filter(c => c.sla);
       const slaMet = conversationsWithSLA.filter(c => 
         c.sla.firstResponseStatus === 'met' || c.sla.resolutionStatus === 'met'
@@ -217,13 +203,11 @@ const Dashboard = () => {
         console.error('Team data fetch failed:', error);
       }
       
-      // Müşteri memnuniyeti hesapla
       const ratedConversations = allConversations.filter(c => c.rating?.score);
       const avgSatisfaction = ratedConversations.length > 0
         ? Math.round((ratedConversations.reduce((sum, c) => sum + c.rating.score, 0) / ratedConversations.length) * 20)
         : 0;
       
-      // Son ticketlar (en yeni 5)
       const recent = allConversations
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);
@@ -274,7 +258,6 @@ const Dashboard = () => {
     });
   };
 
-  // Dakikayı saat ve dakika formatına çevir
   const formatMinutes = (minutes) => {
     if (!minutes || minutes === 0) return '-';
     const hours = Math.floor(minutes / 60);
@@ -314,7 +297,6 @@ const Dashboard = () => {
     );
   }
 
-  // Ana metrik kartları
   const mainStats = [
     {
       icon: MessageSquare,
@@ -350,7 +332,6 @@ const Dashboard = () => {
     }
   ];
 
-  // İkincil metrikler
   const secondaryStats = [
     {
       icon: UserCheck,
@@ -391,7 +372,6 @@ const Dashboard = () => {
       </Helmet>
       
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -411,7 +391,6 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Ana Metrikler */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {mainStats.map((stat, index) => (
             <div 
@@ -442,7 +421,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* İkincil Metrikler */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {secondaryStats.map((stat, index) => (
             <div 
@@ -460,7 +438,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Son Talepler Tablosu */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('dashboard.recentTickets')}</h2>
@@ -550,7 +527,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

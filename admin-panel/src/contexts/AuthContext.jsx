@@ -24,13 +24,11 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const cachedUser = localStorage.getItem('user');
     
-    // İlk yüklemede cache'den kullanıcıyı al, loading'i hızlı bitir
     if (cachedUser && token) {
       try {
         setUser(JSON.parse(cachedUser));
         setLoading(false);
         
-        // Arka planda token'ı doğrula (blocking olmadan)
         if (!authChecked) {
           authAPI.me()
             .then(response => {
@@ -51,7 +49,6 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     } else if (token) {
-      // Cache yoksa normal API çağrısı yap
       try {
         const response = await authAPI.me();
         setUser(response.data.user);

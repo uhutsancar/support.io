@@ -18,10 +18,8 @@ const Header = () => {
     navigate(routes.home);
   };
 
-  // Dile göre URL prefix
   const langPrefix = language === 'en' ? '/en' : '';
   
-  // Dile göre route'lar
   const routes = {
     home: langPrefix || '/',
     features: language === 'en' ? '/en/features' : '/ozellikler',
@@ -37,12 +35,10 @@ const Header = () => {
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-200" role="banner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link to={routes.home} className="flex items-center" aria-label={t('header.goToHome')}>
             <img src={logo} alt="Support.io Logo" style={{ height: '9rem', width: 'auto', maxWidth: '100%' }} />
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8" aria-label={t('header.mainNavigation')}>
             <Link to={routes.features} className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200">
               {t('header.features')}
@@ -57,7 +53,6 @@ const Header = () => {
               {t('header.about')}
             </Link>
             
-            {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
               className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium transition-colors duration-200"
@@ -104,7 +99,6 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
@@ -120,7 +114,6 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div id="mobile-menu" className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
             <nav className="flex flex-col space-y-4" aria-label={t('header.mobileMenu')}>
@@ -153,7 +146,6 @@ const Header = () => {
                 {t('header.about')}
               </Link>
               
-              {/* Language Toggle Mobile */}
               <button
                 onClick={() => {
                   toggleLanguage();

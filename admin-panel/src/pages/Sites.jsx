@@ -36,9 +36,7 @@ const Sites = () => {
       const response = await sitesAPI.create(newSite);
       setShowModal(false);
       setNewSite({ name: '', domain: '' });
-      // Yeni site'ı direkt listeye ekle
       setSites([...sites, response.data.site]);
-      // Cache'i temizle
       clearCache('/sites');
       toast.success(t('sites.createSuccess'));
     } catch (error) {
@@ -52,9 +50,7 @@ const Sites = () => {
 
     try {
       await sitesAPI.delete(siteId);
-      // Site'ı listeden direkt kaldır
       setSites(sites.filter(site => site._id !== siteId));
-      // Cache'i temizle
       clearCache('/sites');
       toast.success(t('sites.deleteSuccess'));
     } catch (error) {
@@ -198,7 +194,6 @@ const Sites = () => {
         </div>
       )}
 
-      {/* Create Site Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">

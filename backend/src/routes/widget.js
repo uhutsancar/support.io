@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Site = require('../models/Site');
 
-// Get widget settings by siteKey
 router.get('/settings', async (req, res) => {
   try {
     const { siteKey } = req.query;

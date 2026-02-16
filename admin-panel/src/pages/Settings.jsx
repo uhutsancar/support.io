@@ -24,7 +24,6 @@ const Settings = () => {
           </p>
         </div>
 
-        {/* Tema Ayarları */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -47,7 +46,6 @@ const Settings = () => {
               </div>
 
               <div className="flex gap-3">
-                {/* Light Mode */}
                 <button
                   onClick={setLightTheme}
                   className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
@@ -60,7 +58,6 @@ const Settings = () => {
                   <span className="font-medium">{t('settings.light')}</span>
                 </button>
 
-                {/* Dark Mode */}
                 <button
                   onClick={setDarkTheme}
                   className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
@@ -75,7 +72,6 @@ const Settings = () => {
               </div>
             </div>
 
-            {/* Önizleme */}
             <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
                 {t('settings.preview')}
@@ -95,7 +91,6 @@ const Settings = () => {
               </div>
             </div>
 
-            {/* Bilgilendirme */}
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors duration-200">
               <div className="flex gap-3">
                 <Monitor className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />

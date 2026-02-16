@@ -1,5 +1,4 @@
 export default {
-  // Common
   common: {
     ok: 'OK',
     cancel: 'Cancel',
@@ -10,8 +9,6 @@ export default {
     save: 'Save',
     close: 'Close',
   },
-  
-  // Header
   header: {
     features: 'Features',
     pricing: 'Pricing',
@@ -33,8 +30,6 @@ export default {
     mobileMenu: 'Mobile menu',
     switchToTurkish: 'Türkçe\'ye Geç',
   },
-  
-  // Sidebar
   sidebar: {
     dashboard: 'Dashboard',
     sites: 'Sites',
@@ -46,8 +41,6 @@ export default {
     settings: 'Settings',
     logout: 'Log Out',
   },
-  
-  // Analytics
   analytics: {
     title: 'Analytics',
     subtitle: 'Performance metrics and detailed reports',
@@ -65,8 +58,6 @@ export default {
     last30days: 'Last 30 Days',
     last90days: 'Last 90 Days',
   },
-  
-  // Home Page
   home: {
     hero: {
       title: 'Take Your Customer Service',
@@ -136,8 +127,6 @@ export default {
       copyright: '© 2026 Support.io. All rights reserved.',
     },
   },
-  
-  // Features Page
   features: {
     title: 'Features',
     subtitle: 'Everything you need to grow your business',
@@ -174,8 +163,6 @@ export default {
       description: 'Support system that works perfectly on all devices with responsive design.',
     },
   },
-  
-  // Pricing Page
   pricing: {
     title: 'Pricing',
     subtitle: 'Choose the plan that fits your business',
@@ -231,8 +218,6 @@ export default {
       cta: 'Contact Us',
     },
   },
-  
-  // About Page
   about: {
     title: 'About Us',
     subtitle: 'Redesigning the customer experience',
@@ -264,8 +249,6 @@ export default {
       description: 'Our team of experienced and passionate professionals is working for you.',
     },
   },
-  
-  // Login Page
   login: {
     title: 'Login',
     subtitle: 'Sign in to your account',
@@ -287,8 +270,6 @@ export default {
     metaTitle: 'Login - Support.io Admin Panel',
     metaDescription: 'Sign in to your Support.io management panel. Manage customer conversations, view reports, and manage your support team.',
   },
-  
-  // Register Page
   register: {
     title: 'Sign Up',
     subtitle: 'Create a new account',
@@ -319,8 +300,6 @@ export default {
     metaOgTitle: 'Create Account - Support.io | Get Started Free',
     metaOgDescription: 'Start with our free plan, no credit card required.',
   },
-  
-  // Dashboard
   dashboard: {
     title: 'Dashboard',
     subtitle: 'Welcome to your Support.io management panel',
@@ -378,8 +357,6 @@ export default {
     waiting: 'Waiting',
     none: 'None',
   },
-  
-  // Conversations
   conversations: {
     title: 'Conversations',
     subtitle: 'Chat with your customers in real-time',
@@ -412,8 +389,6 @@ export default {
     noEmail: 'No email',
     deleteConversationTooltip: 'Delete conversation',
   },
-  
-  // Sites
   sites: {
     title: 'Sites',
     subtitle: 'Manage your websites and chat widgets',
@@ -451,8 +426,6 @@ export default {
     deleteMessage: 'Are you sure you want to delete "{{name}}" site? This action cannot be undone and all conversations for this site will be deleted.',
     deleteConfirm: 'Yes, Delete',
   },
-  
-  // Settings
   settings: {
     title: 'Settings',
     profile: 'Manage your application preferences',
@@ -476,8 +449,6 @@ export default {
     savedDescription: 'Your selected theme is automatically saved and will be remembered on your next visit.',
     comingSoon: 'Coming soon...',
   },
-  
-  // FAQs
   faqs: {
     title: 'FAQs',
     subtitle: 'Manage automated responses and help articles',
@@ -517,8 +488,6 @@ export default {
     updateSuccess: 'FAQ updated successfully!',
     allPages: 'All pages',
   },
-  
-  // Features Page - Detailed
   featuresPage: {
     title: 'Features',
     subtitle: 'Everything You Need',
@@ -651,8 +620,6 @@ export default {
       }
     ],
   },
-  
-  // Pricing Page - Detailed
   pricingPage: {
     title: 'Simple and Transparent Pricing',
     subtitle: 'Choose the plan that fits your business size. No hidden fees, cancel anytime.',
@@ -752,8 +719,6 @@ export default {
       }
     ],
   },
-  
-  // About Page - Detailed
   aboutPage: {
     title: 'Redefining Customer Communication',
     subtitle: 'At Support.io, we provide a modern and user-friendly platform that helps businesses communicate better with their customers.',
@@ -797,8 +762,6 @@ export default {
       description: 'Support.io, developed with modern web technologies, offers high performance and reliability. Built on powerful technologies like React, Node.js, Socket.IO and MongoDB.',
     },
   },
-  
-  // Common
   common: {
     loading: 'Loading...',
     save: 'Save',
@@ -824,8 +787,6 @@ export default {
     warning: 'Warning!',
     info: 'Info',
   },
-
-  // Documentation Page
   docs: {
     meta: {
       title: 'Documentation',
@@ -925,8 +886,6 @@ export default {
       button: 'Get Started Free',
     },
   },
-
-  // Team Page
   team: {
     title: 'Team Management',
     subtitle: 'Manage your support team members and their permissions',
@@ -986,8 +945,6 @@ export default {
     createSuccess: 'Team member added successfully!',
     updateSuccess: 'Team member updated successfully!',
   },
-
-  // Departments Page
   departments: {
     title: 'Departments',
     subtitle: 'Organize your support team into departments',

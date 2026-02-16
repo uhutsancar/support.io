@@ -6,7 +6,6 @@ const Conversation = require('../models/Conversation');
 const Department = require('../models/Department');
 const { auth } = require('../middleware/auth');
 
-// Get all team members
 router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;
@@ -22,7 +21,6 @@ router.get('/', auth, async (req, res) => {
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
     
-    // Her member için conversation istatistiklerini ekle
     const membersWithStats = await Promise.all(
       members.map(async (member) => {
         const activeConversations = await Conversation.countDocuments({
@@ -53,7 +51,6 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Get single team member
 router.get('/:id', auth, async (req, res) => {
   try {
     const member = await Team.findById(req.params.id)
@@ -72,12 +69,10 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Create new team member
 router.post('/', auth, async (req, res) => {
   try {
     const { email, password, name, role, assignedSites, departments, permissions } = req.body;
     
-    // Check if team member already exists (only active members)
     const existingTeamMember = await Team.findOne({ email, isActive: true });
     if (existingTeamMember) {
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
@@ -97,7 +92,6 @@ router.post('/', auth, async (req, res) => {
     
     await teamMember.save();
     
-    // Add team member to departments
     if (departments && departments.length > 0) {
       for (const dept of departments) {
         await Department.findByIdAndUpdate(
@@ -119,7 +113,6 @@ router.post('/', auth, async (req, res) => {
       .populate('departments.departmentId', 'name color')
       .populate('assignedSites', 'name domain');
     
-    // Socket.io ile broadcast
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('team-member-added', memberData);
@@ -132,7 +125,6 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update team member
 router.put('/:id', auth, async (req, res) => {
   try {
     const { name, role, assignedSites, status, permissions, preferences, isActive } = req.body;
@@ -167,7 +159,6 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// Update team member status (online/offline/busy/away)
 router.patch('/:id/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
@@ -186,7 +177,6 @@ router.patch('/:id/status', auth, async (req, res) => {
       return res.status(404).json({ error: 'Team member not found' });
     }
     
-    // Socket.io ile broadcast - status değişikliği
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('agent-status-changed', {
@@ -202,7 +192,6 @@ router.patch('/:id/status', auth, async (req, res) => {
   }
 });
 
-// Get team member statistics
 router.get('/:id/stats', auth, async (req, res) => {
   try {
     const member = await Team.findById(req.params.id);
@@ -229,7 +218,6 @@ router.get('/:id/stats', auth, async (req, res) => {
   }
 });
 
-// Delete team member
 router.delete('/:id', auth, async (req, res) => {
   try {
     const member = await Team.findById(req.params.id);
@@ -238,7 +226,6 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'Team member not found' });
     }
     
-    // Check if member has active conversations
     const activeConversations = await Conversation.countDocuments({
       assignedAgent: member._id,
       status: { $in: ['assigned', 'pending'] }
@@ -251,7 +238,6 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
     
-    // Remove member from all departments
     await Department.updateMany(
       { 'members.userId': member._id },
       {
@@ -263,7 +249,6 @@ router.delete('/:id', auth, async (req, res) => {
     
     await Team.findByIdAndDelete(req.params.id);
     
-    // Socket.io ile broadcast - member silindi
     const io = req.app.get('io');
     if (io) {
       io.of('/admin').emit('team-member-deleted', { userId: req.params.id });
