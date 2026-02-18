@@ -30,3 +30,24 @@ code {
   --toast-bg: #1f2937;
   --toast-color: #f9fafb;
 }
+
+/* Custom dark modal scrollbar for better contrast */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.modal-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.08);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.modal-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.16);
+}

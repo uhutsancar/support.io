@@ -26,14 +26,17 @@ export const AuthProvider = ({ children }) => {
     
     if (cachedUser && token) {
       try {
-        setUser(JSON.parse(cachedUser));
+        let parsedUser = JSON.parse(cachedUser);
+        if (parsedUser.id && !parsedUser._id) parsedUser._id = parsedUser.id;
+        setUser(parsedUser);
         setLoading(false);
-        
         if (!authChecked) {
           authAPI.me()
             .then(response => {
-              setUser(response.data.user);
-              localStorage.setItem('user', JSON.stringify(response.data.user));
+              let u = response.data.user;
+              if (u.id && !u._id) u._id = u.id;
+              setUser(u);
+              localStorage.setItem('user', JSON.stringify(u));
               setAuthChecked(true);
             })
             .catch(error => {
@@ -51,8 +54,10 @@ export const AuthProvider = ({ children }) => {
     } else if (token) {
       try {
         const response = await authAPI.me();
-        setUser(response.data.user);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        let u = response.data.user;
+        if (u.id && !u._id) u._id = u.id;
+        setUser(u);
+        localStorage.setItem('user', JSON.stringify(u));
       } catch (error) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -65,18 +70,22 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authAPI.login({ email, password });
+    let u = response.data.user;
+    if (u.id && !u._id) u._id = u.id;
     localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
-    setUser(response.data.user);
+    localStorage.setItem('user', JSON.stringify(u));
+    setUser(u);
     setAuthChecked(true);
     return response.data;
   };
 
   const register = async (name, email, password) => {
     const response = await authAPI.register({ name, email, password });
+    let u = response.data.user;
+    if (u.id && !u._id) u._id = u.id;
     localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
-    setUser(response.data.user);
+    localStorage.setItem('user', JSON.stringify(u));
+    setUser(u);
     setAuthChecked(true);
     return response.data;
   };

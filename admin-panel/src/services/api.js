@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL + '/api';
 
 const cache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -222,6 +222,16 @@ export const teamAPI = {
     return response;
   },
   getStats: (userId) => api.get(`/team/${userId}/stats`),
+};
+
+export const teamChatAPI = {
+  getChats: () => api.get('/team-chat/chats', { cache: false }),
+  createDirect: (targetUserId) => api.post('/team-chat/chats/direct', { targetUserId }),
+  createGroup: (name, participantIds) => api.post('/team-chat/chats/group', { name, participantIds }),
+  getMessages: (chatId, limit) => api.get(`/team-chat/chats/${chatId}/messages`, { params: { limit }, cache: false }),
+  getMembers: () => api.get('/team-chat/members', { cache: false }),
+  getUnread: () => api.get('/team-chat/unread', { cache: false }),
+  deleteMessage: (messageId) => api.delete(`/team-chat/messages/${messageId}`),
 };
 
 export default api;

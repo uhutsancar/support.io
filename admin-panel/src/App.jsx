@@ -21,6 +21,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Team = lazy(() => import('./pages/Team'));
 const Departments = lazy(() => import('./pages/Departments'));
 const Analytics = lazy(() => import('./pages/Analytics'));
+const TeamChat = lazy(() => import('./pages/TeamChat'));
 
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 
@@ -161,6 +162,7 @@ function App() {
             <Route path="analytics" element={<Analytics />} />
             <Route path="faqs" element={<FAQs />} />
             <Route path="team" element={<Team />} />
+            <Route path="team-chat" element={<TeamChat />} />
             <Route path="departments" element={<Departments />} />
             <Route path="settings" element={<Settings />} />
           </Route>
@@ -179,6 +181,7 @@ function App() {
             <Route path="analytics" element={<Analytics />} />
             <Route path="faqs" element={<FAQs />} />
             <Route path="team" element={<Team />} />
+            <Route path="team-chat" element={<TeamChat />} />
             <Route path="departments" element={<Departments />} />
             <Route path="settings" element={<Settings />} />
           </Route>

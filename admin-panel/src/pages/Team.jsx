@@ -37,7 +37,8 @@ const Team = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    const newSocket = io('http://localhost:3000/admin', {
+    const socketUrl = import.meta.env.VITE_API_URL + '/admin';
+    const newSocket = io(socketUrl, {
       auth: { token }
     });
 

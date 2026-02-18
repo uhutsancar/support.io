@@ -33,7 +33,8 @@ const Conversations = () => {
     fetchSites();
     
     const token = localStorage.getItem('token');
-    const newSocket = io('http://localhost:5000/admin', {
+    const socketUrl = import.meta.env.VITE_API_URL + '/admin';
+    const newSocket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling']
     });
@@ -602,7 +603,7 @@ const Conversations = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 modal-scrollbar pr-2">
             {filteredConversations.length === 0 ? (
               <div className="p-4 sm:p-6 text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
                 <MessageCircle className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 text-gray-400 dark:text-gray-500 transition-colors duration-200" />
@@ -773,7 +774,7 @@ const Conversations = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-2.5 lg:p-3 xl:p-4 space-y-2 sm:space-y-2.5 lg:space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-2.5 lg:p-3 xl:p-4 space-y-2 sm:space-y-2.5 lg:space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0 modal-scrollbar pr-2">
               {messages.map((message) => (
                 <div
                   key={message._id}

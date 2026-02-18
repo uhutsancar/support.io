@@ -20,6 +20,7 @@ const widgetRoutes = require('./routes/widget');
 const filesRoutes = require('./routes/files');
 const departmentRoutes = require('./routes/departments');
 const teamRoutes = require('./routes/team');
+const teamChatRoutes = require('./routes/teamChat');
 
 const app = express();
 const server = http.createServer(app);
@@ -98,6 +99,7 @@ app.use('/api/widget', widgetRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/team-chat', teamChatRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ 

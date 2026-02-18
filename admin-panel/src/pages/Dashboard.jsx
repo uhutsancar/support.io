@@ -55,7 +55,8 @@ const Dashboard = () => {
     fetchDashboardData();
     
     const token = localStorage.getItem('token');
-    const newSocket = io('http://localhost:5000/admin', {
+    const socketUrl = import.meta.env.VITE_API_URL + '/admin';
+    const newSocket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling']
     });

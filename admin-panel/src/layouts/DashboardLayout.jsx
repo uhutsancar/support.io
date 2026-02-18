@@ -16,7 +16,8 @@ import {
   Bell,
   Users,
   Folder,
-  BarChart3
+  BarChart3,
+  MessagesSquare
 } from 'lucide-react';
 import { conversationsAPI } from '../services/api';
 import { io } from 'socket.io-client';
@@ -56,7 +57,8 @@ const DashboardLayout = () => {
   useEffect(() => {
     fetchUnreadCount();
 
-    const newSocket = io('http://localhost:5000/admin', {
+    const socketUrl = import.meta.env.VITE_API_URL + '/admin';
+    const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 
@@ -97,6 +99,7 @@ const DashboardLayout = () => {
     { path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') },
     { path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') },
     { path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') },
+    { path: `${langPrefix}/dashboard/team-chat`, icon: MessagesSquare, label: t('sidebar.teamChat') },
     { path: `${langPrefix}/dashboard/faqs`, icon: HelpCircle, label: t('sidebar.faqs') },
     { path: `${langPrefix}/dashboard/settings`, icon: Settings, label: t('sidebar.settings') },
   ];

@@ -4,6 +4,8 @@ const Site = require('../models/Site');
 const FAQ = require('../models/FAQ');
 const Team = require('../models/Team');
 const Department = require('../models/Department');
+const TeamMessage = require('../models/TeamMessage');
+const TeamChat = require('../models/TeamChat');
 
 class SocketHandler {
   constructor(io) {
@@ -211,14 +213,32 @@ class SocketHandler {
   }
 
   setupAdminHandlers() {
+
     this.adminNamespace.on('connection', async (socket) => {
+      console.log('[SOCKET] Yeni admin bağlantısı:', socket.id);
+      console.log('[SOCKET] handshake.auth:', socket.handshake.auth);
+      // Bağlantı anında userId'yi auth token'dan veya handshake'den al
+      if (socket.handshake.auth && socket.handshake.auth.token) {
+        try {
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.verify(socket.handshake.auth.token.replace('Bearer ', ''), process.env.JWT_SECRET);
+          if (decoded && decoded.userId) {
+            socket.userId = decoded.userId;
+            console.log('[SOCKET] Token ile userId bulundu:', socket.userId);
+          }
+        } catch (err) {
+          console.error('Socket auth token decode error:', err.message);
+        }
+      }
 
       socket.on('join-site', async (data) => {
         try {
           const { siteId, userId } = data;
+          console.log('[SOCKET] join-site çağrıldı:', { siteId, userId });
           socket.join(`site:${siteId}`);
+          if (userId) socket.userId = userId;
+          console.log('[SOCKET] join-site sonrası socket.userId:', socket.userId);
           socket.siteId = siteId;
-          socket.userId = userId;
         } catch (error) {
           console.error('Join site error:', error.message);
         }
@@ -418,6 +438,7 @@ class SocketHandler {
 
       socket.on('set-department', async (data) => {
         try {
+          console.log('[SOCKET] team-chat-send çağrıldı:', data);
           const { conversationId, departmentId } = data;
           
           const conversation = await Conversation.findById(conversationId);
@@ -429,12 +450,14 @@ class SocketHandler {
           const oldDepartmentId = conversation.department;
           conversation.department = departmentId;
           
+          console.log('[SOCKET] team-chat-send sender userId:', userId);
           if (departmentId) {
             const newDepartment = await Department.findById(departmentId);
             if (newDepartment && newDepartment.sla.enabled) {
               const priority = conversation.priority;
               conversation.sla.firstResponseTarget = newDepartment.sla.firstResponse[priority] || 30;
               conversation.sla.resolutionTarget = newDepartment.sla.resolution[priority] || 480;
+          console.log('[SOCKET] team-chat-send sender bulundu:', sender);
               
               conversation.calculateSLA();
             }
@@ -495,6 +518,100 @@ class SocketHandler {
           socket.emit('error', { message: error.message });
         }
       });
+
+      // ===== TEAM CHAT SOCKET EVENTS =====
+
+      socket.on('team-chat-join', (data) => {
+        const { chatId } = data;
+        if (!socket.userId) {
+          socket.emit('error', { message: 'Kimlik doğrulama hatası: userId yok.' });
+          return;
+        }
+        socket.join(`team-chat:${chatId}`);
+      });
+
+      socket.on('team-chat-leave', (data) => {
+        const { chatId } = data;
+        socket.leave(`team-chat:${chatId}`);
+      });
+
+      socket.on('team-chat-send', async (data) => {
+        try {
+          if (!socket.userId) {
+            console.error('team-chat-send: userId yok!');
+            socket.emit('error', { message: 'Kimlik doğrulama hatası: userId yok.' });
+            return;
+          }
+          const { chatId, content, chatType } = data;
+          const mongoose = require('mongoose');
+          let userId = socket.userId;
+          if (typeof userId === 'string' && userId.length === 24 && userId.match(/^[a-fA-F0-9]+$/)) {
+            userId = new mongoose.Types.ObjectId(userId);
+          }
+          let sender = await Team.findById(userId).select('name');
+          if (!sender) {
+            // Eğer Team'de yoksa User'da ara
+            const User = require('../models/User');
+            sender = await User.findById(userId).select('name');
+          }
+          if (!sender) {
+            console.error('team-chat-send: sender bulunamadı! userId:', userId);
+            socket.emit('error', { message: 'Kullanıcı bulunamadı.' });
+            return;
+          }
+
+          const message = new TeamMessage({
+            chatId,
+            chatType: chatType || 'direct',
+            senderId: sender._id,
+            senderName: sender.name,
+            content,
+            readBy: [sender._id]
+          });
+          await message.save();
+
+          await TeamChat.findOneAndUpdate(
+            { chatId },
+            {
+              lastMessage: {
+                content,
+                senderId: sender._id,
+                senderName: sender.name,
+                createdAt: new Date()
+              }
+            }
+          );
+
+          this.adminNamespace.to(`team-chat:${chatId}`).emit('team-chat-message', {
+            message
+          });
+
+          const chat = await TeamChat.findOne({ chatId });
+          if (chat) {
+            chat.participants.forEach(pId => {
+              if (pId.toString() !== sender._id.toString()) {
+                this.adminNamespace.emit('team-chat-notification', {
+                  chatId,
+                  message,
+                  chatType: chat.chatType,
+                  groupName: chat.groupName
+                });
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Team chat send error:', error);
+        }
+      });
+
+      socket.on('team-chat-typing', (data) => {
+        const { chatId, userName } = data;
+        socket.to(`team-chat:${chatId}`).emit('team-chat-user-typing', {
+          chatId,
+          userName
+        });
+      });
+      // ===== END TEAM CHAT =====
 
       socket.on('resolve-conversation', async (data) => {
         try {
