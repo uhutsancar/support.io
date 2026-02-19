@@ -392,6 +392,9 @@ export default {
     waiting: 'Bekliyor',
     none: 'Yok',
   },
+  assigned: {
+    title: 'Atanan Talepler',
+  },
   conversations: {
     title: 'Konuşmalar',
     subtitle: 'Müşterilerinizle gerçek zamanlı sohbet edin',

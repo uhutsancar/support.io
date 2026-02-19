@@ -146,20 +146,30 @@ const Dashboard = () => {
       }
       
       clearCache();
-      
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
       const activeSites = sites.filter(site => site.isActive).length;
-      
+
       let allConversations = [];
-      
-      for (const site of sites) {
+
+      // If the current user is an agent, only fetch assigned conversations
+      if (user?.role === 'agent') {
         try {
-          const conversationsResponse = await conversationsAPI.getAll(site._id);
-          const conversations = conversationsResponse.data.conversations || [];
-          allConversations = [...allConversations, ...conversations];
+          const assignedResp = await conversationsAPI.getAssigned();
+          // the API returns either { conversations: [...] } or an array
+          allConversations = assignedResp.data.conversations || assignedResp.data || [];
         } catch (error) {
-          console.error('Site conversations fetch failed:', error);
+          console.error('Assigned conversations fetch failed:', error);
+        }
+      } else {
+        for (const site of sites) {
+          try {
+            const conversationsResponse = await conversationsAPI.getAll(site._id);
+            const conversations = conversationsResponse.data.conversations || [];
+            allConversations = [...allConversations, ...conversations];
+          } catch (error) {
+            console.error('Site conversations fetch failed:', error);
+          }
         }
       }
       

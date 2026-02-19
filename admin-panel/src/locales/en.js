@@ -390,6 +390,9 @@ export default {
     waiting: 'Waiting',
     none: 'None',
   },
+  assigned: {
+    title: 'Assigned Tickets',
+  },
   conversations: {
     title: 'Conversations',
     subtitle: 'Chat with your customers in real-time',
