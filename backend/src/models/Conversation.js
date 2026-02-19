@@ -45,7 +45,7 @@ const conversationSchema = new mongoose.Schema({
   },
   assignedAgent: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Team',
     default: null
   },
   assignedAt: {
@@ -54,7 +54,7 @@ const conversationSchema = new mongoose.Schema({
   },
   assignedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Team',
     default: null
   },
   status: {

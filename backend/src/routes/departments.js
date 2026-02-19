@@ -4,7 +4,9 @@ const mongoose = require('mongoose');
 const Department = require('../models/Department');
 const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
+const Site = require('../models/Site');
 const { auth } = require('../middleware/auth');
+const { checkPermission } = require('../middleware/rbac');
 
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
@@ -26,11 +28,19 @@ router.get('/site/:siteId', auth, async (req, res) => {
 
 router.get('/:id', auth, async (req, res) => {
   try {
+    const orgId = req.organization?._id || req.user.organizationId;
     const department = await Department.findById(req.params.id)
       .populate('members.userId', 'name email avatar status stats');
     
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
+    }
+    // Organization isolation: ensure department's site belongs to user's org
+    if (orgId) {
+      const site = await Site.findById(department.siteId);
+      if (!site || site.organizationId.toString() !== orgId.toString()) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
     }
     
     res.json(department);
@@ -40,9 +50,13 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, checkPermission('manage_team'), async (req, res) => {
   try {
     const { name, description, siteId, color, icon, members, autoAssignRules, businessHours } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    // ensure site belongs to organization
+    const site = await Site.findOne({ _id: siteId, ...(orgId ? { organizationId: orgId } : {}) });
+    if (!site) return res.status(404).json({ error: 'Site not found' });
     
     const department = new Department({
       name,
@@ -81,14 +95,20 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, checkPermission('manage_team'), async (req, res) => {
   try {
     const { name, description, color, icon, members, autoAssignRules, businessHours, isActive } = req.body;
-    
+    const orgId = req.organization?._id || req.user.organizationId;
     const department = await Department.findById(req.params.id);
     
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
+    }
+    if (orgId) {
+      const site = await Site.findById(department.siteId);
+      if (!site || site.organizationId.toString() !== orgId.toString()) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
     }
     
     const oldMembers = department.members.map(m => m.userId.toString());
@@ -147,14 +167,20 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/:id/members', auth, async (req, res) => {
+router.post('/:id/members', auth, checkPermission('manage_team'), async (req, res) => {
   try {
     const { userId, role } = req.body;
-    
+    const orgId = req.organization?._id || req.user.organizationId;
     const department = await Department.findById(req.params.id);
     
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
+    }
+    if (orgId) {
+      const site = await Site.findById(department.siteId);
+      if (!site || site.organizationId.toString() !== orgId.toString()) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
     }
     
     const existingMember = department.members.find(
@@ -194,14 +220,20 @@ router.post('/:id/members', auth, async (req, res) => {
   }
 });
 
-router.delete('/:id/members/:userId', auth, async (req, res) => {
+router.delete('/:id/members/:userId', auth, checkPermission('manage_team'), async (req, res) => {
   try {
     const { id, userId } = req.params;
-    
+    const orgId = req.organization?._id || req.user.organizationId;
     const department = await Department.findById(id);
     
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
+    }
+    if (orgId) {
+      const site = await Site.findById(department.siteId);
+      if (!site || site.organizationId.toString() !== orgId.toString()) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
     }
     
     department.members = department.members.filter(
@@ -266,12 +298,19 @@ router.get('/:id/stats', auth, async (req, res) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, checkPermission('manage_team'), async (req, res) => {
   try {
     const department = await Department.findById(req.params.id);
     
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
+    }
+    const orgId = req.organization?._id || req.user.organizationId;
+    if (orgId) {
+      const site = await Site.findById(department.siteId);
+      if (!site || site.organizationId.toString() !== orgId.toString()) {
+        return res.status(404).json({ error: 'Department not found' });
+      }
     }
     
     const activeConversations = await Conversation.countDocuments({

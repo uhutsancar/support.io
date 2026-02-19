@@ -73,6 +73,36 @@ router.get('/:siteId', auth, async (req, res) => {
   }
 });
 
+// Return conversations assigned to the current authenticated user/team across sites
+router.get('/assigned/me', auth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const conversations = await Conversation.find({ assignedAgent: userId })
+      .populate('assignedAgent', 'name avatar status')
+      .populate('department', 'name color icon')
+      .sort({ lastMessageAt: -1 })
+      .limit(100);
+
+    const conversationsWithLastMessage = await Promise.all(
+      conversations.map(async (conv) => {
+        const lastMessage = await Message.findOne({ conversationId: conv._id })
+          .sort({ createdAt: -1 })
+          .limit(1);
+        conv.calculateSLA();
+        await conv.save();
+        return {
+          ...conv.toObject(),
+          lastMessage
+        };
+      })
+    );
+
+    res.json({ conversations: conversationsWithLastMessage });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/:siteId/:conversationId', auth, async (req, res) => {
   try {
     const conversation = await Conversation.findOne({
@@ -106,7 +136,7 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('messages-read', {
+      io.of('/admin').to(`site:${req.params.siteId}`).emit('messages-read', {
         conversationId: conversation._id,
         siteId: req.params.siteId
       });
@@ -142,22 +172,85 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
     if (agentId) {
-      await require('../models/User').findByIdAndUpdate(agentId, {
-        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-      });
+      // Determine whether agentId references a Team (team member) or a User
+      const Team = require('../models/Team');
+      const User = require('../models/User');
+      try {
+        const team = await Team.findById(agentId).select('_id');
+        if (team) {
+          await Team.findByIdAndUpdate(agentId, {
+            $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+          }).catch(() => {});
+        } else {
+          const userDoc = await User.findById(agentId).select('_id');
+          if (userDoc) {
+            await User.findByIdAndUpdate(agentId, {
+              $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+            }).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.error('Assign stats update error:', e.message);
+      }
     }
     
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('conversation-assigned', {
-        conversationId: conversation._id,
-        agentId,
-        assignedBy
-      });
+      // Notify the assigned agent directly and admins in the site room
+      if (agentId) {
+        // Emit to the assigned party's personal room. If agentId maps to a team member, emit to that team id.
+        // If agentId maps to a User document, emit to that user's personal room as well.
+        const Team = require('../models/Team');
+        const User = require('../models/User');
+        try {
+          const team = await Team.findById(agentId).select('_id');
+          if (team) {
+            io.of('/admin').to(`user:${agentId}`).emit('conversation-assigned', {
+              conversationId: conversation._id,
+              agentId,
+              assignedBy,
+              siteId: conversation.siteId
+            });
+            console.log(`[EMIT] conversation-assigned -> user:${agentId} (team)`);
+          } else {
+            const userDoc = await User.findById(agentId).select('_id');
+            if (userDoc) {
+              io.of('/admin').to(`user:${agentId}`).emit('conversation-assigned', {
+                conversationId: conversation._id,
+                agentId,
+                assignedBy,
+                siteId: conversation.siteId
+              });
+              console.log(`[EMIT] conversation-assigned -> user:${agentId} (user)`);
+            } else {
+              // Fallback: still emit to user:<agentId> to avoid silent failures
+              io.of('/admin').to(`user:${agentId}`).emit('conversation-assigned', {
+                conversationId: conversation._id,
+                agentId,
+                assignedBy,
+                siteId: conversation.siteId
+              });
+              console.log(`[EMIT] conversation-assigned -> user:${agentId} (fallback)`);
+            }
+          }
+        } catch (e) {
+          console.error('Emit conversation-assigned error:', e.message);
+          io.of('/admin').to(`user:${agentId}`).emit('conversation-assigned', {
+            conversationId: conversation._id,
+            agentId,
+            assignedBy,
+            siteId: conversation.siteId
+          });
+        }
+      }
       io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
         conversationId: conversation._id,
         conversation: conversation.toObject()
       });
+      try {
+        console.log(`[EMIT] conversation-assigned -> user:${agentId}`);
+        console.log(`[EMIT] conversation-update -> site:${conversation.siteId}`);
+      } catch (e) {}
     }
 
     res.json({ conversation });
@@ -168,8 +261,8 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
 
 router.put('/:conversationId/claim', auth, async (req, res) => {
   try {
-    const agentId = req.user.id;
-    
+    const agentId = req.userId || req.user._id;
+
     const conversation = await Conversation.findById(req.params.conversationId);
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -177,30 +270,63 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
     if (conversation.assignedAgent) {
       return res.status(400).json({ error: 'Conversation is already assigned' });
     }
-    const agent = await require('../models/User').findById(agentId);
-    if (agent.stats.activeConversations >= agent.preferences.maxActiveConversations) {
-      return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
+
+    // Determine whether the requester is a Team member or a User
+    const isTeam = req.userType === 'team' || (req.user && req.user.email && req.user.role && req.user.name && req.user.permissions);
+
+    // Check active conversation limits. For Team members we use team.stats, for Users we fall back to user.preferences if available
+    if (isTeam) {
+      const Team = require('../models/Team');
+      const agent = await Team.findById(agentId);
+      const maxActive = process.env.MAX_ACTIVE_CONVERSATIONS ? parseInt(process.env.MAX_ACTIVE_CONVERSATIONS, 10) : 50;
+      if (agent && agent.stats && agent.stats.activeConversations >= maxActive) {
+        return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
+      }
+    } else {
+      const User = require('../models/User');
+      const agent = await User.findById(agentId);
+      const maxActive = agent?.preferences?.maxActiveConversations || parseInt(process.env.MAX_ACTIVE_CONVERSATIONS || '50', 10);
+      if (agent && agent.stats && agent.stats.activeConversations >= maxActive) {
+        return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
+      }
     }
-    
+
     conversation.assignedAgent = agentId;
     conversation.assignedBy = agentId;
     conversation.assignedAt = new Date();
     conversation.status = 'assigned';
-    
+
     await conversation.save();
     await conversation.populate('assignedAgent', 'name avatar status');
     await conversation.populate('department', 'name color icon');
-    
-    await require('../models/User').findByIdAndUpdate(agentId, {
-      $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-    });
-    
+
+    // Increment stats on the proper model
+    if (isTeam) {
+      await require('../models/Team').findByIdAndUpdate(agentId, {
+        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+      }).catch(() => {});
+    } else {
+      await require('../models/User').findByIdAndUpdate(agentId, {
+        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+      }).catch(() => {});
+    }
+
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('conversation-claimed', {
+      // Emit to the user's personal room and to the site room so admins see the update
+      io.of('/admin').to(`user:${agentId}`).emit('conversation-claimed', {
         conversationId: conversation._id,
         agentId
       });
+      io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
+        conversationId: conversation._id,
+        conversation: conversation.toObject()
+      });
+      // helpful server-side logging for debugging
+      try {
+        console.log(`[EMIT] conversation-claimed -> user:${agentId}`);
+        console.log(`[EMIT] conversation-update -> site:${conversation.siteId}`);
+      } catch (e) {}
     }
 
     res.json({ conversation });
@@ -228,7 +354,7 @@ router.put('/:conversationId/department', auth, async (req, res) => {
     
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('conversation-department-changed', {
+      io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-department-changed', {
         conversationId: conversation._id,
         departmentId
       });
@@ -285,7 +411,7 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('conversation-update', {
+      io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
         conversationId: conversation._id,
         conversation
       });
@@ -376,7 +502,7 @@ router.put('/:conversationId/status', auth, async (req, res) => {
       }
       
       if (conversation.assignedAgent) {
-        await require('../models/User').findByIdAndUpdate(conversation.assignedAgent, {
+        await require('../models/Team').findByIdAndUpdate(conversation.assignedAgent, {
           $inc: { 
             'stats.activeConversations': -1,
             'stats.resolvedConversations': 1
@@ -390,13 +516,13 @@ router.put('/:conversationId/status', auth, async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('conversation-update', {
+      io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
         conversationId: conversation._id,
         conversation
       });
       
       if (status === 'resolved') {
-        io.of('/admin').emit('conversation-resolved', {
+        io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-resolved', {
           conversationId: conversation._id,
           conversation
         });
@@ -428,7 +554,7 @@ router.delete('/:siteId/:conversationId', auth, async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('stats-update', {
+      io.of('/admin').to(`site:${siteId}`).emit('stats-update', {
         type: 'conversation-deleted',
         siteId,
         conversationId

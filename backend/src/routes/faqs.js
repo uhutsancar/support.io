@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const FAQ = require('../models/FAQ');
 const { auth } = require('../middleware/auth');
+const { checkPermission } = require('../middleware/rbac');
+const Site = require('../models/Site');
 const { verifySiteKey } = require('../middleware/siteAuth');
 
 router.get('/admin/:siteId', auth, async (req, res) => {
@@ -13,9 +15,12 @@ router.get('/admin/:siteId', auth, async (req, res) => {
   }
 });
 
-router.post('/admin', auth, async (req, res) => {
+router.post('/admin', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { siteId, question, answer, category, keywords, pageSpecific, order } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const site = await Site.findOne({ _id: siteId, ...(orgId ? { organizationId: orgId } : {}) });
+    if (!site) return res.status(404).json({ error: 'Site not found' });
 
     const faq = new FAQ({
       siteId,
@@ -34,10 +39,16 @@ router.post('/admin', auth, async (req, res) => {
   }
 });
 
-router.put('/admin/:faqId', auth, async (req, res) => {
+router.put('/admin/:faqId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const updates = req.body;
-    const faq = await FAQ.findByIdAndUpdate(req.params.faqId, updates, { new: true });
+    const faq = await FAQ.findById(req.params.faqId);
+    if (!faq) return res.status(404).json({ error: 'FAQ not found' });
+    const orgId = req.organization?._id || req.user.organizationId;
+    const site = await Site.findOne({ _id: faq.siteId, ...(orgId ? { organizationId: orgId } : {}) });
+    if (!site) return res.status(404).json({ error: 'FAQ not found' });
+    Object.assign(faq, updates);
+    await faq.save();
     
     if (!faq) {
       return res.status(404).json({ error: 'FAQ not found' });
@@ -49,13 +60,14 @@ router.put('/admin/:faqId', auth, async (req, res) => {
   }
 });
 
-router.delete('/admin/:faqId', auth, async (req, res) => {
+router.delete('/admin/:faqId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
-    const faq = await FAQ.findByIdAndDelete(req.params.faqId);
-    
-    if (!faq) {
-      return res.status(404).json({ error: 'FAQ not found' });
-    }
+    const faq = await FAQ.findById(req.params.faqId);
+    if (!faq) return res.status(404).json({ error: 'FAQ not found' });
+    const orgId = req.organization?._id || req.user.organizationId;
+    const site = await Site.findOne({ _id: faq.siteId, ...(orgId ? { organizationId: orgId } : {}) });
+    if (!site) return res.status(404).json({ error: 'FAQ not found' });
+    await FAQ.findByIdAndDelete(req.params.faqId);
 
     res.json({ message: 'FAQ deleted successfully' });
   } catch (error) {

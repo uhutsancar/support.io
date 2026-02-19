@@ -5,13 +5,16 @@ const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
 const Department = require('../models/Department');
 const { auth } = require('../middleware/auth');
+const { checkPermission } = require('../middleware/rbac');
 
 router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;
     
+    const orgId = req.organization?._id || req.user.organizationId;
     let query = { isActive: true };
-    
+
+    if (orgId) query.organizationId = orgId;
     if (siteId) {
       query.assignedSites = siteId;
     }
@@ -53,6 +56,7 @@ router.get('/', auth, async (req, res) => {
 
 router.get('/:id', auth, async (req, res) => {
   try {
+    const orgId = req.organization?._id || req.user.organizationId;
     const member = await Team.findById(req.params.id)
       .select('-password')
       .populate('departments.departmentId', 'name color icon')
@@ -60,6 +64,9 @@ router.get('/:id', auth, async (req, res) => {
     
     if (!member) {
       return res.status(404).json({ error: 'Team member not found' });
+    }
+    if (orgId && member.organizationId && member.organizationId.toString() !== orgId.toString()) {
+      return res.status(404).json({ error: 'Team member not found in your organization' });
     }
     
     res.json(member);
@@ -69,7 +76,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, checkPermission('manage_users'), async (req, res) => {
   try {
     const { email, password, name, role, assignedSites, departments, permissions } = req.body;
     
@@ -78,6 +85,8 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
     }
     
+    const orgId = req.organization?._id || req.user.organizationId;
+
     const teamMember = new Team({
       email,
       password,
@@ -86,6 +95,7 @@ router.post('/', auth, async (req, res) => {
       assignedSites: assignedSites || [],
       departments: departments || [],
       permissions: permissions || {},
+      organizationId: orgId,
       isActive: true,
       status: 'offline'
     });
@@ -115,7 +125,15 @@ router.post('/', auth, async (req, res) => {
     
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('team-member-added', memberData);
+      // Notify the created user directly
+      io.of('/admin').to(`user:${memberData._id}`).emit('team-member-added', memberData);
+      // Notify admins of assigned sites (if any)
+      if (memberData.assignedSites && memberData.assignedSites.length > 0) {
+        memberData.assignedSites.forEach(s => {
+          const siteId = s._id ? s._id.toString() : s.toString();
+          io.of('/admin').to(`site:${siteId}`).emit('team-member-added', memberData);
+        });
+      }
     }
     
     res.status(201).json(memberData);
@@ -125,7 +143,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, checkPermission('manage_users'), async (req, res) => {
   try {
     const { name, role, assignedSites, status, permissions, preferences, isActive } = req.body;
     
@@ -139,8 +157,9 @@ router.put('/:id', auth, async (req, res) => {
       isActive
     };
     
-    const member = await Team.findByIdAndUpdate(
-      req.params.id,
+    const orgId = req.organization?._id || req.user.organizationId;
+    const member = await Team.findOneAndUpdate(
+      { _id: req.params.id, ...(orgId ? { organizationId: orgId } : {}) },
       updateData,
       { new: true }
     )
@@ -179,7 +198,18 @@ router.patch('/:id/status', auth, async (req, res) => {
     
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('agent-status-changed', {
+      // Notify admins for sites this member is assigned to
+      if (member.assignedSites && member.assignedSites.length > 0) {
+        member.assignedSites.forEach(s => {
+          const siteId = s._id ? s._id.toString() : s.toString();
+          io.of('/admin').to(`site:${siteId}`).emit('agent-status-changed', {
+            userId: req.params.id,
+            status
+          });
+        });
+      }
+      // Notify the user's personal room
+      io.of('/admin').to(`user:${req.params.id}`).emit('agent-status-changed', {
         userId: req.params.id,
         status
       });
@@ -218,9 +248,10 @@ router.get('/:id/stats', auth, async (req, res) => {
   }
 });
 
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, checkPermission('manage_users'), async (req, res) => {
   try {
-    const member = await Team.findById(req.params.id);
+    const orgId = req.organization?._id || req.user.organizationId;
+    const member = await Team.findOne({ _id: req.params.id, ...(orgId ? { organizationId: orgId } : {}) });
     
     if (!member) {
       return res.status(404).json({ error: 'Team member not found' });
@@ -251,7 +282,15 @@ router.delete('/:id', auth, async (req, res) => {
     
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').emit('team-member-deleted', { userId: req.params.id });
+      // Notify admins of sites the member belonged to
+      if (member.assignedSites && member.assignedSites.length > 0) {
+        member.assignedSites.forEach(s => {
+          const siteId = s._id ? s._id.toString() : s.toString();
+          io.of('/admin').to(`site:${siteId}`).emit('team-member-deleted', { userId: req.params.id });
+        });
+      }
+      // Notify the user's personal room
+      io.of('/admin').to(`user:${req.params.id}`).emit('team-member-deleted', { userId: req.params.id });
     }
     
     res.json({ message: 'Team member deleted successfully' });

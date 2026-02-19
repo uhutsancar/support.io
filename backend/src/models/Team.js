@@ -27,6 +27,12 @@ const teamSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    index: true,
+    default: null
+  },
   isActive: {
     type: Boolean,
     default: true

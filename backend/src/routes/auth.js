@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Team = require('../models/Team');
+const Organization = require('../models/Organization');
 const { auth } = require('../middleware/auth');
 
 const validateRegistration = [
@@ -31,16 +32,27 @@ router.post('/register', validateRegistration, async (req, res) => {
       return res.status(400).json({ error: 'Bu e-posta adresi zaten kayıtlı' });
     }
 
+    // Create organization for the registering user (single-tenant onboarding)
+    const organization = new Organization({
+      name: `${name}'s Organization`,
+      planType: 'FREE'
+    });
+    await organization.save();
+
     const user = new User({
       email,
       password,
       name,
-      role: 'admin'
+      role: 'owner',
+      organizationId: organization._id
     });
 
     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    organization.ownerUserId = user._id;
+    await organization.save();
+
+    const token = jwt.sign({ userId: user._id, organizationId: organization._id, role: user.role, userType: 'user' }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
 
@@ -49,7 +61,8 @@ router.post('/register', validateRegistration, async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        organizationId: user.organizationId
       },
       token
     });
@@ -84,11 +97,10 @@ router.post('/login', validateLogin, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { userId: user._id, userType }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '7d' }
-    );
+    const tokenPayload = { userId: user._id, userType, role: user.role };
+    if (user.organizationId) tokenPayload.organizationId = user.organizationId;
+
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: '7d' });
     user.status = 'online';
     await user.save();
 
@@ -116,7 +128,12 @@ router.get('/me', auth, async (req, res) => {
       name: req.user.name,
       role: req.user.role,
       avatar: req.user.avatar,
-      status: req.user.status
+      status: req.user.status,
+      organization: req.organization ? {
+        id: req.organization._id,
+        name: req.organization.name,
+        planType: req.organization.planType
+      } : null
     }
   });
 });

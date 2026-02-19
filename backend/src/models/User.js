@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['owner', 'admin', 'manager', 'agent'],
+    enum: ['owner', 'admin', 'manager', 'agent','viewer'],
     default: 'agent'
   },
   avatar: {
@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     ref: 'Site'
   }],
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    index: true,
+    default: null
+  },
   departments: [{
     departmentId: {
       type: mongoose.Schema.Types.ObjectId,

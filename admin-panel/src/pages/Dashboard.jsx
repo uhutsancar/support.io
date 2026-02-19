@@ -17,6 +17,7 @@ import {
   Activity
 } from 'lucide-react';
 import { sitesAPI, conversationsAPI, teamAPI, clearCache } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
 
 const Dashboard = () => {
@@ -50,6 +51,7 @@ const Dashboard = () => {
   
   const [recentTickets, setRecentTickets] = useState([]);
   const [socket, setSocket] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchDashboardData();
@@ -67,6 +69,17 @@ const Dashboard = () => {
 
     newSocket.on('new-conversation', (data) =>  {
       console.log('💬 New ticket received:', data);
+      fetchDashboardData(true);
+    });
+    newSocket.on('conversation-assigned', (data) => {
+      console.log('📌 Conversation assigned:', data);
+      // assigned could affect open/unassigned counts for dashboard
+      fetchDashboardData(true);
+    });
+
+    newSocket.on('new-message', (data) => {
+      console.log('✉️ New message event (dashboard):', data);
+      // new messages can change last message ordering and unread counts
       fetchDashboardData(true);
     });
     
@@ -376,7 +389,7 @@ const Dashboard = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {t('dashboard.welcome')}, Uhut
+              {t('dashboard.welcome')}, {user?.name || ''}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               {formatDate(new Date())} - {t('dashboard.last7Days')}
@@ -479,7 +492,15 @@ const Dashboard = () => {
                     <tr 
                       key={ticket._id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition"
-                      onClick={() => navigate(`${routes.conversations}?id=${ticket._id}`)}
+                      onClick={() => {
+                        // Open conversations page and request it to open this conversation via event
+                        navigate(routes.conversations);
+                        try {
+                          window.dispatchEvent(new CustomEvent('navigate:open-conversation', { detail: { conversationId: ticket._id, siteId: ticket.siteId || ticket.site?._id } }));
+                        } catch (e) {
+                          // fallback: nothing
+                        }
+                      }}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">

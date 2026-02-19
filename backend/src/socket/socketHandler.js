@@ -169,21 +169,24 @@ class SocketHandler {
           conversation.lastMessageAt = new Date();
           await conversation.save();
 
-          this.widgetNamespace.to(`conversation:${conversationId}`).emit('new-message', {
-            message
-          });
+          this.widgetNamespace.to(`conversation:${conversationId}`).emit('new-message', { message });
 
-          this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
-            message,
-            conversation
-          });
-
+          // Admin interfaces (owners/admins) receive all messages for the site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
             message,
             conversation
           });
 
-          this.adminNamespace.emit('notification', {
+          // If conversation is assigned to an agent, notify that agent specifically
+          if (conversation.assignedAgent) {
+            this.adminNamespace.to(`user:${conversation.assignedAgent}`).emit('new-message', {
+              message,
+              conversation
+            });
+          }
+
+          // Notify admin dashboards scoped to the site room
+          this.adminNamespace.to(`site:${conversation.siteId}`).emit('notification', {
             type: 'new-message',
             message: `New message from ${conversation.visitorName}`,
             siteId: conversation.siteId,
@@ -224,21 +227,47 @@ class SocketHandler {
           const decoded = jwt.verify(socket.handshake.auth.token.replace('Bearer ', ''), process.env.JWT_SECRET);
           if (decoded && decoded.userId) {
             socket.userId = decoded.userId;
-            console.log('[SOCKET] Token ile userId bulundu:', socket.userId);
+            socket.organizationId = decoded.organizationId || null;
+            socket.role = decoded.role || null; // owner, admin, agent, etc.
+            console.log('[SOCKET] Token ile userId bulundu:', socket.userId, 'org:', socket.organizationId, 'role:', socket.role);
           }
         } catch (err) {
           console.error('Socket auth token decode error:', err.message);
         }
+      // Ensure personal room is joined so agents always receive personal emits
+      try {
+        if (socket.userId) {
+          socket.join(`user:${socket.userId}`);
+          console.log('[SOCKET] auto-joined personal room:', `user:${socket.userId}`);
+        }
+      } catch (e) {
+        console.error('Failed to auto-join personal room:', e.message);
+      }
       }
 
       socket.on('join-site', async (data) => {
         try {
           const { siteId, userId } = data;
-          console.log('[SOCKET] join-site çağrıldı:', { siteId, userId });
-          socket.join(`site:${siteId}`);
           if (userId) socket.userId = userId;
-          console.log('[SOCKET] join-site sonrası socket.userId:', socket.userId);
           socket.siteId = siteId;
+          console.log('[SOCKET] join-site çağrıldı:', { siteId, userId, role: socket.role });
+
+          // Admin/Owner should join the site room to receive all site messages
+          if (socket.role === 'owner' || socket.role === 'admin') {
+            if (siteId) {
+              socket.join(`site:${siteId}`);
+              console.log('[SOCKET] admin/owner joined site room:', siteId);
+            } else {
+              console.log('[SOCKET] join-site called for admin without siteId; skipping site room join');
+            }
+          } else if (socket.role === 'agent' || socket.role === 'manager') {
+            // Agents/managers should not auto-join the global site room.
+            // They should join their personal room to receive assignment notifications.
+            if (socket.userId) {
+              socket.join(`user:${socket.userId}`);
+              console.log('[SOCKET] agent/manager joined user room:', socket.userId);
+            }
+          }
         } catch (error) {
           console.error('Join site error:', error.message);
         }
@@ -353,8 +382,19 @@ class SocketHandler {
         try {
           const { status } = data;
           await Team.findByIdAndUpdate(socket.userId, { status });
-          
-          this.adminNamespace.emit('agent-status-changed', {
+          // Notify admins for the site (if joined) and also notify user room
+          if (socket.siteId) {
+            this.adminNamespace.to(`site:${socket.siteId}`).emit('agent-status-changed', {
+              userId: socket.userId,
+              status
+            });
+          } else {
+            this.adminNamespace.emit('agent-status-changed', {
+              userId: socket.userId,
+              status
+            });
+          }
+          this.adminNamespace.to(`user:${socket.userId}`).emit('agent-status-changed', {
             userId: socket.userId,
             status
           });
@@ -373,21 +413,87 @@ class SocketHandler {
             return;
           }
           
+          // Only admin/owner can assign conversations
+          if (!(socket.role === 'owner' || socket.role === 'admin')) {
+            socket.emit('error', { message: 'Yetersiz yetki: atama işlemi için admin gerekli.' });
+            return;
+          }
+
           conversation.assignedAgent = agentId;
           conversation.assignedBy = socket.userId;
           conversation.assignedAt = new Date();
           conversation.status = 'assigned';
           await conversation.save();
           
-          await Team.findByIdAndUpdate(agentId, {
-            $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-          });
+          // Increment stats on the Team or User depending which exists
+          try {
+            const Team = require('../models/Team');
+            const User = require('../models/User');
+            const team = await Team.findById(agentId).select('_id');
+            if (team) {
+              await Team.findByIdAndUpdate(agentId, {
+                $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+              }).catch(() => {});
+            } else {
+              const userDoc = await User.findById(agentId).select('_id');
+              if (userDoc) {
+                await User.findByIdAndUpdate(agentId, {
+                  $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+                }).catch(() => {});
+              }
+            }
+          } catch (e) {
+            console.error('Assign stats update error:', e.message);
+          }
           
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-assigned', {
             conversationId,
             agentId,
             assignedBy: socket.userId
           });
+
+          // Notify the assigned agent in their personal room (team member or user)
+          try {
+            const Team = require('../models/Team');
+            const User = require('../models/User');
+            const team = await Team.findById(agentId).select('_id');
+            if (team) {
+              this.adminNamespace.to(`user:${agentId}`).emit('conversation-assigned', {
+                conversationId,
+                agentId,
+                assignedBy: socket.userId,
+                siteId: conversation.siteId
+              });
+              console.log('[EMIT] conversation-assigned -> user:' + agentId + ' (team via socket)');
+            } else {
+              const userDoc = await User.findById(agentId).select('_id');
+              if (userDoc) {
+                this.adminNamespace.to(`user:${agentId}`).emit('conversation-assigned', {
+                  conversationId,
+                  agentId,
+                  assignedBy: socket.userId,
+                  siteId: conversation.siteId
+                });
+                console.log('[EMIT] conversation-assigned -> user:' + agentId + ' (user via socket)');
+              } else {
+                this.adminNamespace.to(`user:${agentId}`).emit('conversation-assigned', {
+                  conversationId,
+                  agentId,
+                  assignedBy: socket.userId,
+                  siteId: conversation.siteId
+                });
+                console.log('[EMIT] conversation-assigned -> user:' + agentId + ' (fallback via socket)');
+              }
+            }
+          } catch (e) {
+            console.error('Emit conversation-assigned (socket) error:', e.message);
+            this.adminNamespace.to(`user:${agentId}`).emit('conversation-assigned', {
+              conversationId,
+              agentId,
+              assignedBy: socket.userId,
+              siteId: conversation.siteId
+            });
+          }
         } catch (error) {
           console.error('Assign conversation error:', error);
           socket.emit('error', { message: error.message });
@@ -430,6 +536,12 @@ class SocketHandler {
             conversationId,
             agentId: socket.userId
           });
+
+          // Notify the claiming agent (they are the claimer) in their personal room
+          this.adminNamespace.to(`user:${socket.userId}`).emit('conversation-claimed', {
+            conversationId,
+            agentId: socket.userId
+          });
         } catch (error) {
           console.error('Claim conversation error:', error);
           socket.emit('error', { message: error.message });
@@ -447,10 +559,16 @@ class SocketHandler {
             return;
           }
           
+          // Only admin/owner may change department
+          if (!(socket.role === 'owner' || socket.role === 'admin')) {
+            socket.emit('error', { message: 'Yetersiz yetki: departman ataması için admin gerekli.' });
+            return;
+          }
+
           const oldDepartmentId = conversation.department;
           conversation.department = departmentId;
-          
-          console.log('[SOCKET] team-chat-send sender userId:', userId);
+
+          console.log('[SOCKET] team-chat-send sender userId:', socket.userId);
           if (departmentId) {
             const newDepartment = await Department.findById(departmentId);
             if (newDepartment && newDepartment.sla.enabled) {
@@ -590,7 +708,8 @@ class SocketHandler {
           if (chat) {
             chat.participants.forEach(pId => {
               if (pId.toString() !== sender._id.toString()) {
-                this.adminNamespace.emit('team-chat-notification', {
+                // Notify participant's personal room instead of global emit
+                this.adminNamespace.to(`user:${pId}`).emit('team-chat-notification', {
                   chatId,
                   message,
                   chatType: chat.chatType,
@@ -722,7 +841,8 @@ class SocketHandler {
               type: 'first-response',
               conversation: conversation.toObject()
             });
-            this.adminNamespace.emit('sla-breach', {
+            // also notify globally within the site rooms only (avoid broadcasting to agents globally)
+            this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
               type: 'first-response',
@@ -737,7 +857,7 @@ class SocketHandler {
               type: 'resolution',
               conversation: conversation.toObject()
             });
-            this.adminNamespace.emit('sla-breach', {
+            this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
               type: 'resolution',

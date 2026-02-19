@@ -16,6 +16,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Sites = lazy(() => import('./pages/Sites'));
 const Conversations = lazy(() => import('./pages/Conversations'));
+const Assigned = lazy(() => import('./pages/Assigned'));
 const FAQs = lazy(() => import('./pages/FAQs'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Team = lazy(() => import('./pages/Team'));
@@ -45,6 +46,24 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return isAuthenticated ? children : <Navigate to={`${langPrefix}/login`} />;
+};
+
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
+  const langPrefix = location.pathname.startsWith('/en') ? '/en' : '';
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to={`${langPrefix}/login`} />;
+  if (!user || !['owner', 'admin'].includes(user.role)) return <Navigate to={`${langPrefix}/dashboard`} />;
+  return children;
 };
 
 const PublicRoute = ({ children }) => {
@@ -159,7 +178,8 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="sites" element={<Sites />} />
             <Route path="conversations" element={<Conversations />} />
-            <Route path="analytics" element={<Analytics />} />
+            <Route path="assigned" element={<Assigned />} />
+            <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
             <Route path="faqs" element={<FAQs />} />
             <Route path="team" element={<Team />} />
             <Route path="team-chat" element={<TeamChat />} />
@@ -178,7 +198,8 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="sites" element={<Sites />} />
             <Route path="conversations" element={<Conversations />} />
-            <Route path="analytics" element={<Analytics />} />
+            <Route path="assigned" element={<Assigned />} />
+            <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
             <Route path="faqs" element={<FAQs />} />
             <Route path="team" element={<Team />} />
             <Route path="team-chat" element={<TeamChat />} />

@@ -124,6 +124,7 @@ export const faqsAPI = {
 export const conversationsAPI = {
   getAll: (siteId, status) => api.get(`/conversations/${siteId}`, { params: { status } }),
   getOne: (siteId, conversationId) => api.get(`/conversations/${siteId}/${conversationId}`),
+  getAssigned: () => api.get('/conversations/assigned/me'),
   assign: async (conversationId, agentId, assignedBy) => {
     const response = await api.put(`/conversations/${conversationId}/assign`, { agentId, assignedBy });
     clearCache('/conversations');

@@ -13,6 +13,7 @@ const Conversations = () => {
   const { t } = useTranslation();
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
+  const [activeTab, setActiveTab] = useState('inbox'); // 'inbox' | 'assigned'
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -61,18 +62,44 @@ const Conversations = () => {
     const handleNewMessage = (data) => {
       console.log('📨 New message received:', data);
       
-      if (selectedConversation && data.message.conversationId === selectedConversation._id) {
+      const incomingConvId = String(data.message.conversationId);
+
+      if (selectedConversation && incomingConvId === String(selectedConversation._id)) {
         setMessages(prev => {
-          if (prev.some(msg => msg._id === data.message._id)) {
-            return prev;
-          }
+          if (prev.some(msg => msg._id === data.message._id)) return prev;
           return [...prev, data.message];
+        });
+      } else {
+        // If this message belongs to a conversation in the list, update its lastMessage
+        setConversations(prev => {
+          let found = false;
+          const next = prev.map(conv => {
+            if (String(conv._id) === incomingConvId) {
+              found = true;
+              return { ...conv, lastMessage: data.message, lastMessageAt: new Date() };
+            }
+            return conv;
+          }).sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+
+          // If agent and the conversation is assigned to current user, open it automatically
+          if (!selectedConversation && user && user.role === 'agent' && found) {
+            const conv = next.find(c => String(c._id) === incomingConvId);
+            const assignedId = conv?.assignedAgent?._id || conv?.assignedAgent;
+            if (assignedId && String(assignedId) === String(user._id)) {
+              // set selected and fetch messages
+              setSelectedConversation(conv);
+              const derivedSiteId = (selectedSite && (selectedSite._id || selectedSite)) || (conv.siteId || conv.site?._id);
+              fetchConversationMessages(derivedSiteId, conv._id);
+            }
+          }
+
+          return next;
         });
       }
 
       setConversations(prev => 
         prev.map(conv => 
-          conv._id === data.message.conversationId 
+          String(conv._id) === String(data.message.conversationId) 
             ? { ...conv, lastMessage: data.message, lastMessageAt: new Date() }
             : conv
         ).sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))
@@ -81,7 +108,7 @@ const Conversations = () => {
 
     const handleNewConversation = (data) => {
       console.log('🆕 New conversation created:', data);
-      if (selectedSite && data.conversation.siteId === selectedSite._id) {
+      if (selectedSite && String(data.conversation.siteId) === String(selectedSite._id)) {
         setConversations(prev => {
           if (prev.some(conv => conv._id === data.conversation._id)) {
             return prev;
@@ -94,7 +121,7 @@ const Conversations = () => {
     const handleConversationUpdate = (data) => {
       console.log('🔄 Conversation update:', data);
       
-      if (selectedConversation && selectedConversation._id === data.conversationId) {
+      if (selectedConversation && String(selectedConversation._id) === String(data.conversationId)) {
         console.log('✅ Updating selected conversation');
         // Merge the update with existing data to preserve populated fields
         setSelectedConversation(prev => ({
@@ -154,11 +181,154 @@ const Conversations = () => {
       );
     };
 
+    const handleConversationAssigned = async (data) => {
+      console.log('📌 conversation-assigned:', data);
+      try {
+        // If this user is the assignee, refresh the conversation list and fetch details
+        if (String(data.agentId) === String(user?._id) || String(data.agentId) === String(user?.id)) {
+          try {
+            const siteId = data.siteId || (selectedSite && (selectedSite._id || selectedSite));
+                if (siteId) {
+                  // Ensure selectedSite is set so the conversation pane is visible for agents
+                  const existingSite = sites.find(s => String(s._id) === String(siteId));
+                  if (existingSite) {
+                    setSelectedSite(existingSite);
+                  } else {
+                    try {
+                      const siteResp = await sitesAPI.getOne(siteId);
+                      if (siteResp?.data?.site) {
+                        setSites(prev => {
+                          if (prev.some(s => String(s._id) === String(siteId))) return prev;
+                          return [siteResp.data.site, ...prev];
+                        });
+                        setSelectedSite(siteResp.data.site);
+                      }
+                    } catch (se) {
+                      console.error('Failed to fetch site for assigned conversation:', se);
+                    }
+                  }
+
+                  await fetchConversations(siteId);
+                  // fetch and open the assigned conversation directly
+                  try {
+                    const resp = await conversationsAPI.getOne(siteId, data.conversationId);
+                    if (resp?.data?.conversation) {
+                      setSelectedConversation(resp.data.conversation);
+                      // if there are no messages returned, fall back to lastMessage so UI shows the initial message
+                      const msgs = Array.isArray(resp.data.messages) && resp.data.messages.length > 0
+                        ? resp.data.messages
+                        : (resp.data.conversation.lastMessage ? [resp.data.conversation.lastMessage] : []);
+                      setMessages(msgs);
+                      toast.success(t('conversations.assignedNotification') || 'Conversation assigned to you');
+                    }
+                  } catch (e) {
+                    console.error('Failed to fetch assigned conversation details:', e);
+                  }
+            } else {
+              // fallback: refresh current selectedSite list
+              if (selectedSite) {
+                await fetchConversations(selectedSite._id || selectedSite);
+                toast.success(t('conversations.assignedNotification') || 'Conversation assigned to you');
+              }
+            }
+          } catch (innerErr) {
+            console.error('Error opening assigned conversation:', innerErr);
+          }
+        } else {
+          // For other users, update conversation list entry if present
+          setConversations(prev => prev.map(conv => conv._id === data.conversationId ? { ...conv, assignedAgent: data.agentId, status: 'assigned' } : conv));
+        }
+      } catch (err) {
+        console.error('Error handling conversation-assigned:', err);
+      }
+    };
+
+    const handleConversationClaimed = async (data) => {
+      console.log('📌 conversation-claimed:', data);
+      try {
+        if (String(data.agentId) === String(user?._id) || String(data.agentId) === String(user?.id)) {
+          if (selectedSite) {
+            await fetchConversations(selectedSite._id);
+            toast.success(t('conversations.claimedNotification') || 'Conversation claimed');
+          }
+        } else {
+          setConversations(prev => prev.map(conv => conv._id === data.conversationId ? { ...conv, assignedAgent: data.agentId, status: 'assigned' } : conv));
+        }
+      } catch (err) {
+        console.error('Error handling conversation-claimed:', err);
+      }
+    };
+
     socket.on('new-message', handleNewMessage);
     socket.on('new-conversation', handleNewConversation);
     socket.on('conversation-update', handleConversationUpdate);
     socket.on('sla-breach', handleSLABreach);
     socket.on('conversation-resolved', handleConversationResolved);
+    socket.on('conversation-assigned', handleConversationAssigned);
+    socket.on('conversation-claimed', handleConversationClaimed);
+
+    // Also listen to global events dispatched by layout or other pages (fallback when different socket instance receives event)
+    const onGlobalAssigned = (e) => handleConversationAssigned(e.detail);
+    const onGlobalClaimed = (e) => handleConversationClaimed(e.detail);
+    const onGlobalNewMessage = (e) => handleNewMessage(e.detail);
+    const onNavigateOpenConversation = async (e) => {
+      try {
+        const { conversationId, siteId } = e.detail || {};
+        if (!conversationId) return;
+        // If siteId provided, ensure selectedSite is set and fetch
+        if (siteId) {
+          const existingSite = sites.find(s => String(s._id) === String(siteId));
+          if (existingSite) setSelectedSite(existingSite);
+          else {
+            try {
+              const siteResp = await sitesAPI.getOne(siteId);
+              if (siteResp?.data?.site) {
+                setSites(prev => prev.some(s => String(s._id) === String(siteId)) ? prev : [siteResp.data.site, ...prev]);
+                setSelectedSite(siteResp.data.site);
+              }
+            } catch (se) {
+              console.error('Failed to fetch site for navigate:open-conversation:', se);
+            }
+          }
+        }
+
+        // Try to fetch conversation details (if selectedSite set we will fetch in fetchConversationMessages)
+        if (selectedSite) {
+          await fetchConversationMessages(conversationId);
+        } else {
+          // If no selectedSite, attempt to fetch assigned conversations and find it
+          await fetchAssignedConversations();
+          const conv = conversations.find(c => String(c._id) === String(conversationId));
+          if (conv) {
+            setSelectedConversation(conv);
+            // if conv has lastMessage fallback
+            if (!messages || messages.length === 0) {
+              setMessages(conv.lastMessage ? [conv.lastMessage] : []);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('navigate:open-conversation handler error:', err);
+      }
+    };
+
+    const onNavigateSetTab = (e) => {
+      try {
+        const { tab } = e.detail || {};
+        if (tab === 'assigned') {
+          setActiveTab('assigned');
+          fetchAssignedConversations();
+        }
+      } catch (err) {
+        console.error('navigate:set-tab handler error:', err);
+      }
+    };
+
+    window.addEventListener('socket:conversation-assigned', onGlobalAssigned);
+    window.addEventListener('socket:conversation-claimed', onGlobalClaimed);
+    window.addEventListener('socket:new-message', onGlobalNewMessage);
+    window.addEventListener('navigate:open-conversation', onNavigateOpenConversation);
+    window.addEventListener('navigate:set-tab', onNavigateSetTab);
 
     return () => {
       socket.off('new-message', handleNewMessage);
@@ -166,22 +336,48 @@ const Conversations = () => {
       socket.off('conversation-update', handleConversationUpdate);
       socket.off('sla-breach', handleSLABreach);
       socket.off('conversation-resolved', handleConversationResolved);
+      socket.off('conversation-assigned', handleConversationAssigned);
+      socket.off('conversation-claimed', handleConversationClaimed);
+      window.removeEventListener('socket:conversation-assigned', onGlobalAssigned);
+      window.removeEventListener('socket:conversation-claimed', onGlobalClaimed);
+      window.removeEventListener('socket:new-message', onGlobalNewMessage);
+      window.removeEventListener('navigate:open-conversation', onNavigateOpenConversation);
+      window.removeEventListener('navigate:set-tab', onNavigateSetTab);
     };
   }, [socket, selectedConversation, selectedSite]);
 
   useEffect(() => {
     if (selectedSite && socket && user) {
-      console.log('🏢 Joining site room:', selectedSite._id);
-      socket.emit('join-site', {
-        siteId: selectedSite._id,
-        userId: user._id
-      });
-      fetchConversations(selectedSite._id);
+      const siteId = selectedSite && (selectedSite._id || selectedSite);
+      console.log('🏢 Joining site room:', siteId);
+      try {
+        socket.emit('join-site', {
+          siteId,
+          userId: user._id
+        });
+      } catch (e) {
+        console.warn('join-site emit failed:', e);
+      }
+      fetchConversations(siteId);
+    }
+    // If user is an agent, also fetch assigned conversations across sites
+    if (user && user.role === 'agent') {
+      fetchAssignedConversations();
     }
   }, [selectedSite, socket, user]);
 
   useEffect(() => {
     const conversationId = searchParams.get('id');
+    const tab = searchParams.get('tab');
+    if (tab === 'assigned') {
+      setActiveTab('assigned');
+      // ensure assigned conversations are loaded when user clicked Assigned menu
+      fetchAssignedConversations();
+      // keep selectedConversation if it's still relevant (do not force null)
+      setSearchParams({});
+      return;
+    }
+
     if (conversationId && conversations.length > 0) {
       const conversation = conversations.find(conv => conv._id === conversationId);
       if (conversation && conversation._id !== selectedConversation?._id) {
@@ -198,12 +394,15 @@ const Conversations = () => {
       socket.emit('join-conversation', {
         conversationId: selectedConversation._id
       });
-      fetchConversationMessages(selectedConversation._id);
+      const derivedSiteId = (selectedSite && (selectedSite._id || selectedSite)) || (selectedConversation.siteId || selectedConversation.site?._id);
+      fetchConversationMessages(derivedSiteId, selectedConversation._id);
     }
   }, [selectedConversation, socket]);
 
   useEffect(() => {
-    scrollToBottom();
+    // wait a tick to ensure DOM updated, then scroll
+    const id = setTimeout(() => scrollToBottom(), 50);
+    return () => clearTimeout(id);
   }, [messages]);
 
   const fetchSites = async () => {
@@ -252,13 +451,44 @@ const Conversations = () => {
     }
   };
 
-  const fetchConversationMessages = async (conversationId) => {
+  const fetchAssignedConversations = async () => {
     try {
-      const response = await conversationsAPI.getOne(selectedSite._id, conversationId);
+      const resp = await conversationsAPI.getAssigned();
+      if (resp && resp.data && Array.isArray(resp.data.conversations)) {
+        // Merge assigned conversations into the list, de-duplicating by _id
+        setConversations(prev => {
+          const map = new Map();
+          resp.data.conversations.forEach(c => map.set(String(c._id), c));
+          prev.forEach(c => {
+            if (!map.has(String(c._id))) map.set(String(c._id), c);
+          });
+          return Array.from(map.values()).sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch assigned conversations:', err);
+    }
+  };
+
+  const fetchConversationMessages = async (siteId, conversationId) => {
+    try {
+      const useSiteId = siteId || (selectedSite && (selectedSite._id || selectedSite)) || (selectedConversation && (selectedConversation.siteId || selectedConversation.site?._id));
+      if (!useSiteId) {
+        console.warn('No siteId available to fetch conversation messages for', conversationId);
+        return;
+      }
+      const response = await conversationsAPI.getOne(useSiteId, conversationId);
       console.log('📝 Fetched conversation with full data:', response.data.conversation);
       // Update selected conversation with full populate data
       setSelectedConversation(response.data.conversation);
-      setMessages(response.data.messages);
+      // If the API returns no messages (initial visitor message might be stored as lastMessage),
+      // fall back to showing the conversation.lastMessage so the chat pane is not empty.
+      const fetched = Array.isArray(response.data.messages) ? response.data.messages : [];
+      if (fetched.length === 0 && response.data.conversation && response.data.conversation.lastMessage) {
+        setMessages([response.data.conversation.lastMessage]);
+      } else {
+        setMessages(fetched);
+      }
     } catch (error) {
       console.error('❌ Failed to fetch messages:', error);
     }

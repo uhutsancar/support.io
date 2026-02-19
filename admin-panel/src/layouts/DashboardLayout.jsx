@@ -58,12 +58,17 @@ const DashboardLayout = () => {
     fetchUnreadCount();
 
     const socketUrl = import.meta.env.VITE_API_URL + '/admin';
+    const token = localStorage.getItem('token');
     const newSocket = io(socketUrl, {
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      auth: {
+        token: token || undefined
+      }
     });
 
     newSocket.on('connect', () => {
       console.log('✅ Dashboard layout socket connected!');
+      // NOTE: Do not emit `join-site` from layout. Pages (e.g. Conversations) emit join-site with a specific siteId.
     });
 
     newSocket.on('notification', (notification) => {
@@ -76,12 +81,44 @@ const DashboardLayout = () => {
       fetchUnreadCount();
     });
 
+    // conversation assignment events
+    newSocket.on('conversation-assigned', (payload) => {
+      console.log('📥 conversation-assigned event:', payload);
+      try {
+        window.dispatchEvent(new CustomEvent('socket:conversation-assigned', { detail: payload }));
+      } catch (e) {
+        setNotifications(prev => [{ type: 'assigned', ...payload }, ...prev.slice(0, 9)]);
+      }
+      fetchUnreadCount();
+    });
+
+    newSocket.on('conversation-claimed', (payload) => {
+      console.log('📥 conversation-claimed event:', payload);
+      try {
+        window.dispatchEvent(new CustomEvent('socket:conversation-claimed', { detail: payload }));
+      } catch (e) {
+        setNotifications(prev => [{ type: 'claimed', ...payload }, ...prev.slice(0, 9)]);
+      }
+      fetchUnreadCount();
+    });
+
+    newSocket.on('new-message', (payload) => {
+      try {
+        window.dispatchEvent(new CustomEvent('socket:new-message', { detail: payload }));
+      } catch (e) {
+        // ignore
+      }
+      fetchUnreadCount();
+    });
+
     setSocket(newSocket);
 
     return () => {
       newSocket.close();
     };
   }, []);
+
+  // Pages must call `socket.emit('join-site', { siteId, userId })` when they know the siteId.
 
   const fetchUnreadCount = async () => {
     try {
@@ -92,17 +129,50 @@ const DashboardLayout = () => {
     }
   };
 
-  const navItems = [
-    { path: `${langPrefix}/dashboard`, icon: LayoutDashboard, label: t('sidebar.dashboard') },
-    { path: `${langPrefix}/dashboard/sites`, icon: Globe, label: t('sidebar.sites') },
-    { path: `${langPrefix}/dashboard/conversations`, icon: MessageCircle, label: t('sidebar.conversations') },
-    { path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') },
-    { path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') },
-    { path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') },
-    { path: `${langPrefix}/dashboard/team-chat`, icon: MessagesSquare, label: t('sidebar.teamChat') },
-    { path: `${langPrefix}/dashboard/faqs`, icon: HelpCircle, label: t('sidebar.faqs') },
-    { path: `${langPrefix}/dashboard/settings`, icon: Settings, label: t('sidebar.settings') },
-  ];
+  // Build navigation dynamically based on role and plan
+  const buildNav = () => {
+    const role = user?.role || 'agent';
+    const plan = user?.organization?.planType || 'FREE';
+    const items = [];
+
+    const add = (p) => items.push(p);
+
+    // Owner and Admin see dashboard
+    if (['owner', 'admin'].includes(role)) {
+      add({ path: `${langPrefix}/dashboard`, icon: LayoutDashboard, label: t('sidebar.dashboard') });
+      add({ path: `${langPrefix}/dashboard/sites`, icon: Globe, label: t('sidebar.sites') });
+      add({ path: `${langPrefix}/dashboard/conversations`, icon: MessageCircle, label: t('sidebar.conversations') });
+    // Analytics should be visible to owner/admin regardless of plan
+    add({ path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') });
+      add({ path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') });
+      add({ path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') });
+      add({ path: `${langPrefix}/dashboard/team-chat`, icon: MessagesSquare, label: t('sidebar.teamChat') });
+      add({ path: `${langPrefix}/dashboard/faqs`, icon: HelpCircle, label: t('sidebar.faqs') });
+      add({ path: `${langPrefix}/dashboard/settings`, icon: Settings, label: t('sidebar.settings') });
+      // integrations and automation may be separate routes; show them in settings or add if route exists
+      if (plan === 'ENTERPRISE') {
+        add({ path: `${langPrefix}/dashboard/integrations`, icon: Settings, label: t('sidebar.integrations') });
+      }
+    } else if (role === 'agent') {
+      // Agents have a minimal menu
+      add({ path: `${langPrefix}/dashboard/conversations`, icon: MessageCircle, label: t('sidebar.inbox') });
+      // dedicated assigned page
+      add({ path: `${langPrefix}/dashboard/assigned`, icon: MessagesSquare, label: t('sidebar.assignedTickets') });
+      add({ path: `${langPrefix}/dashboard/team-chat`, icon: MessagesSquare, label: t('sidebar.teamChat') });
+      add({ path: `${langPrefix}/dashboard/my-performance`, icon: BarChart3, label: t('sidebar.myPerformance') });
+    } else if (role === 'viewer') {
+      add({ path: `${langPrefix}/dashboard`, icon: LayoutDashboard, label: t('sidebar.dashboard') });
+      add({ path: `${langPrefix}/dashboard/conversations`, icon: MessageCircle, label: t('sidebar.conversations') });
+      add({ path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') });
+    } else {
+      // fallback
+      add({ path: `${langPrefix}/dashboard`, icon: LayoutDashboard, label: t('sidebar.dashboard') });
+    }
+
+    return items;
+  };
+
+  const navItems = buildNav();
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -118,31 +188,56 @@ const DashboardLayout = () => {
           </div>
 
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === `${langPrefix}/dashboard`}
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-4 py-3 rounded-lg transition ${
-                    isActive
-                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                  }`
-                }
-                onClick={() => setSidebarOpen(false)}
-              >
-                <div className="flex items-center space-x-3">
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                {item.path === '/dashboard/conversations' && unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center animate-pulse">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </NavLink>
-            ))}
+            {navItems.map((item) => {
+              const isAssignedLink = item.path && item.path.includes('tab=assigned');
+              if (isAssignedLink) {
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => {
+                      // Open Conversations page and set assigned tab without changing URL
+                      navigate(`${langPrefix}/dashboard/conversations`);
+                      try {
+                        window.dispatchEvent(new CustomEvent('navigate:set-tab', { detail: { tab: 'assigned' } }));
+                      } catch (e) {}
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full text-left flex items-center justify-between px-4 py-3 rounded-lg transition text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <item.icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label}</span>
+                    </div>
+                  </button>
+                );
+              }
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === `${langPrefix}/dashboard`}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between px-4 py-3 rounded-lg transition ${
+                      isActive
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    }`
+                  }
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  {item.path === '/dashboard/conversations' && unreadCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center animate-pulse">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
           </nav>
 
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">

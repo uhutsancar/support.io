@@ -2,26 +2,32 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const Site = require('../models/Site');
-const { auth, isAdmin } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
+const { checkPermission } = require('../middleware/rbac');
 
 router.get('/', auth, async (req, res) => {
   try {
-    const sites = await Site.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    // Organization isolation: only return sites belonging to user's organization
+    const orgId = req.organization?._id || req.user.organizationId;
+    const query = orgId ? { organizationId: orgId } : { userId: req.user._id };
+    const sites = await Site.find(query).sort({ createdAt: -1 });
     res.json({ sites });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { name, domain } = req.body;
 
+    const orgId = req.organization?._id || req.user.organizationId;
     const site = new Site({
       name,
       domain,
       siteKey: uuidv4(),
-      userId: req.user._id
+      userId: req.user._id,
+      organizationId: orgId
     });
 
     await site.save();
@@ -33,9 +39,10 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/:siteId', auth, async (req, res) => {
   try {
+    const orgId = req.organization?._id || req.user.organizationId;
     const site = await Site.findOne({
       _id: req.params.siteId,
-      userId: req.user._id
+      organizationId: orgId
     });
 
     if (!site) {
@@ -48,7 +55,7 @@ router.get('/:siteId', auth, async (req, res) => {
   }
 });
 
-router.put('/:siteId', auth, async (req, res) => {
+router.put('/:siteId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const updates = req.body;
     const allowedUpdates = ['name', 'domain', 'widgetSettings', 'aiSettings', 'isActive'];
@@ -59,9 +66,10 @@ router.put('/:siteId', auth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid updates' });
     }
 
+    const orgId = req.organization?._id || req.user.organizationId;
     const site = await Site.findOne({
       _id: req.params.siteId,
-      userId: req.user._id
+      organizationId: orgId
     });
 
     if (!site) {
@@ -83,11 +91,12 @@ router.put('/:siteId', auth, async (req, res) => {
   }
 });
 
-router.delete('/:siteId', auth, async (req, res) => {
+router.delete('/:siteId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
+    const orgId = req.organization?._id || req.user.organizationId;
     const site = await Site.findOneAndDelete({
       _id: req.params.siteId,
-      userId: req.user._id
+      organizationId: orgId
     });
 
     if (!site) {
@@ -100,11 +109,12 @@ router.delete('/:siteId', auth, async (req, res) => {
   }
 });
 
-router.post('/:siteId/regenerate-key', auth, async (req, res) => {
+router.post('/:siteId/regenerate-key', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
+    const orgId = req.organization?._id || req.user.organizationId;
     const site = await Site.findOne({
       _id: req.params.siteId,
-      userId: req.user._id
+      organizationId: orgId
     });
 
     if (!site) {
