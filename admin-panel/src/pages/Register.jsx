@@ -42,7 +42,7 @@ const Register = () => {
   return (
     <>
       <Helmet>
-        <title>{t('register.metaTitle')}</title>
+        <title>{`${t('register.metaTitle') || ''}`}</title>
         <meta name="description" content={t('register.metaDescription')} />
         <meta name="keywords" content={t('register.metaKeywords')} />
         <link rel="canonical" href="https://support.io/register" />

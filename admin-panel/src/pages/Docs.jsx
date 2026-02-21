@@ -27,7 +27,7 @@ const Docs = () => {
   return (
     <>
       <Helmet>
-        <title>{t('docs.meta.title')} - Support.io</title>
+        <title>{`${t('docs.meta.title') || ''} - Support.io`}</title>
         <meta name="description" content={t('docs.meta.description')} />
       </Helmet>
 

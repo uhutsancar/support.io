@@ -10,6 +10,11 @@ const departmentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  requiredSkills: [{
+    type: String,
+    lowercase: true,
+    trim: true
+  }],
   siteId: {
     type: String,
     ref: 'Site',

@@ -55,7 +55,23 @@ const teamSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['online', 'offline', 'away', 'busy'],
-    default: 'offline'
+    default: 'offline',
+    index: true
+  },
+  skills: [{
+    type: String,
+    lowercase: true,
+    trim: true
+  }],
+  maxCapacity: {
+    type: Number,
+    default: 10,
+    min: 1
+  },
+  currentLoad: {
+    type: Number,
+    default: 0,
+    min: 0
   },
   permissions: {
     canManageConversations: {

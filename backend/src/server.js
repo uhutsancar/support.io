@@ -100,6 +100,7 @@ app.use('/api/files', filesRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/team-chat', teamChatRoutes);
+app.use('/api/widget-config', require('./routes/widgetConfig'));
 
 app.get('/health', (req, res) => {
   res.json({ 
@@ -141,7 +142,14 @@ app.use(express.static('public', {
   }
 }));
 
+// Serve logo uploads
+app.use('/uploads/logos', express.static(path.join(__dirname, '../uploads/logos')));
+app.use('/api/widget-config/logo', express.static(path.join(__dirname, '../uploads/logos')));
+
 app.use('/demo', express.static('../demo'));
+
+// debug: log every API request with user/org info
+
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/widget.js') || req.path.startsWith('/demo')) {
@@ -157,10 +165,186 @@ const PORT = process.env.PORT || 3000;
 connectDB().then(async () => {
   try {
     const Conversation = require('./models/Conversation');
+    const Site = require('./models/Site');
+
+    // existing migration: mark open -> unassigned
     await Conversation.updateMany(
       { status: 'open' },
       { $set: { status: 'unassigned' } }
     );
+
+    const missingSiteOrgs = await Site.find({ organizationId: { $exists: false } });
+    if (missingSiteOrgs.length) {
+      console.warn(`[Migration] found ${missingSiteOrgs.length} sites without organizationId - assigning default organizations`);
+      for (const site of missingSiteOrgs) {
+        try {
+          let orgId = null;
+          if (site.userId) {
+            const User = require('./models/User');
+            const user = await User.findById(site.userId).select('organizationId');
+            if (user && user.organizationId) {
+              orgId = user.organizationId;
+            }
+          }
+          if (!orgId) {
+            const Organization = require('./models/Organization');
+            const newOrg = new Organization({
+              name: `${site.name} Org`,
+              planType: 'FREE'
+            });
+            await newOrg.save();
+            orgId = newOrg._id;
+            console.log(`[Migration] created new organization ${orgId} for site ${site._id}`);
+          }
+          site.organizationId = orgId;
+          await site.save();
+        } catch (e) {
+          console.error('Migration error assigning org to site', site._id, e.message);
+        }
+      }
+    }
+
+    // new migration: backfill missing organizationId using site reference
+    const missingOrgs = await Conversation.find({ organizationId: { $exists: false } }).limit(1000);
+    if (missingOrgs.length) {
+      console.log(`[Migration] fixing ${missingOrgs.length} conversations without organizationId`);
+      for (const conv of missingOrgs) {
+        try {
+          if (conv.siteId) {
+            const site = await Site.findById(conv.siteId).select('organizationId');
+            if (site && site.organizationId) {
+              conv.organizationId = site.organizationId;
+              await conv.save();
+            } else {
+              console.warn('Conversation has siteId but site missing orgId, skipping:', conv._id);
+            }
+          } else {
+            console.warn('Conversation missing siteId, cannot populate orgId:', conv._id);
+          }
+        } catch (e) {
+          console.error('Migration conversation fix error', conv._id, e.message);
+        }
+      }
+    }
+
+    // migration: ensure all conversations have a valid createdAt timestamp
+    const missingCreatedAt = await Conversation.find({
+      $or: [
+        { createdAt: { $exists: false } },
+        { createdAt: null },
+        { createdAt: { $type: 2 } } // string values
+      ]
+    }).limit(1000);
+    if (missingCreatedAt.length) {
+      console.log(`[Migration] fixing ${missingCreatedAt.length} conversations without valid createdAt`);
+      for (const conv of missingCreatedAt) {
+        try {
+          // if the field exists but is a string/invalid, coerce or overwrite
+          let dt = conv.createdAt;
+          if (!dt || isNaN(new Date(dt).getTime())) {
+            dt = new Date();
+          } else {
+            dt = new Date(dt);
+          }
+          conv.createdAt = dt;
+          await conv.save();
+        } catch (e) {
+          console.error('Migration createdAt fix error', conv._id, e.message);
+        }
+      }
+    }
+
+    // migration: backfill organizationId for any users or teams missing it
+    try {
+      const User = require('./models/User');
+      const Team = require('./models/Team');
+      const Organization = require('./models/Organization');
+      const Site = require('./models/Site');
+
+      const usersNoOrg = await User.find({ organizationId: { $in: [null, undefined] } });
+      if (usersNoOrg.length) {
+        console.log(`[Migration] fixing ${usersNoOrg.length} users without organizationId`);
+        for (const user of usersNoOrg) {
+          try {
+            let orgId = null;
+            // first try owner relationship (site.userId)
+            const owned = await Site.findOne({ userId: user._id }).select('organizationId');
+            if (owned && owned.organizationId) {
+              orgId = owned.organizationId;
+            }
+            // fallback to assignedSites array
+            if (!orgId && user.assignedSites && user.assignedSites.length) {
+              const sites = await Site.find({ _id: { $in: user.assignedSites } }).select('organizationId');
+              for (const s of sites) {
+                if (s.organizationId) {
+                  orgId = s.organizationId;
+                  break;
+                }
+              }
+            }
+            if (!orgId) {
+              const newOrg = new Organization({ name: `${user.name}'s Organization`, planType: 'FREE' });
+              await newOrg.save();
+              orgId = newOrg._id;
+            }
+            user.organizationId = orgId;
+            await user.save();
+          } catch (e) {
+            console.error('Migration user org fix error', user._id, e.message);
+          }
+        }
+      }
+
+      const teamsNoOrg = await Team.find({ organizationId: { $in: [null, undefined] } });
+      if (teamsNoOrg.length) {
+        console.log(`[Migration] fixing ${teamsNoOrg.length} teams without organizationId`);
+        for (const team of teamsNoOrg) {
+          try {
+            let orgId = null;
+            if (team.assignedSites && team.assignedSites.length) {
+              const sites = await Site.find({ _id: { $in: team.assignedSites } }).select('organizationId');
+              for (const s of sites) {
+                if (s.organizationId) {
+                  orgId = s.organizationId;
+                  break;
+                }
+              }
+            }
+            if (!orgId) {
+              const newOrg = new Organization({ name: `${team.name}'s Organization`, planType: 'FREE' });
+              await newOrg.save();
+              orgId = newOrg._id;
+            }
+            team.organizationId = orgId;
+            await team.save();
+          } catch (e) {
+            console.error('Migration team org fix error', team._id, e.message);
+          }
+        }
+      }
+
+      // additionally sync existing sites with their owner users/orgs
+      const allSites = await Site.find().limit(1000);
+      for (const site of allSites) {
+        if (site.userId) {
+          const owner = await User.findById(site.userId).select('organizationId');
+          if (owner && owner.organizationId) {
+            if (!site.organizationId.equals(owner.organizationId)) {
+              site.organizationId = owner.organizationId;
+              await site.save();
+              console.log('[Migration] updated site org to match owner', site._id);
+            }
+          } else if (owner && !owner.organizationId) {
+            owner.organizationId = site.organizationId;
+            await owner.save();
+            console.log('[Migration] updated owner org to match site', owner._id);
+          }
+        }
+      }
+    } catch (migrationErr) {
+      console.error('Migration user/team org error:', migrationErr.message);
+    }
+
   } catch (error) {
     console.error('Migration error:', error.message);
   }

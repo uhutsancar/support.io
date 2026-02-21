@@ -40,7 +40,7 @@ const Features = () => {
   return (
     <>
       <Helmet>
-        <title>{t('features.title')} - Support.io | {t('features.subtitle')}</title>
+        <title>{`${t('features.title') || ''} - Support.io | ${t('features.subtitle') || ''}`}</title>
         <meta name="description" content={t('features.chat.description')} />
         <meta name="keywords" content="canlı sohbet özellikleri, müşteri destek araçları, chat widget, operatör paneli, rapor ve analiz" />
         <link rel="canonical" href="https://support.io/ozellikler" />

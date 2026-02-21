@@ -280,11 +280,12 @@
     </div>
 
     <script>
+        // Widget will fetch config from backend automatically using siteKey
         window.SupportIOConfig = {
-            siteKey: 'b937d367-cd2a-424e-9605-09eb554e8ed1',
-            position: 'bottom-right',
-            primaryColor: '#667eea',
-            brandName: 'Support.io'
+            siteKey: '33f76515-888b-4c2e-b0ca-72aa020e9973',
+            apiUrl: 'http://localhost:5000',
+            socketUrl: 'http://localhost:5000'
+            // position, primaryColor, brandName etc. will be loaded from backend widget config
         };
 
         let unreadMessageCount = 0;
@@ -294,29 +295,28 @@
             const messagesNav = document.getElementById('messages-nav');
             
             window.addEventListener('message', function(event) {
-                console.log('📩 Demo received message:', event.data);
                 if (event.data && event.data.type === 'new-message') {
-                    console.log('🔔 New message notification in demo!');
                     unreadMessageCount++;
                     updateNotificationBadge();
                 }
                 
                 if (event.data && event.data.type === 'widget-opened') {
-                    console.log('📱 Widget opened, clearing notifications');
                     unreadMessageCount = 0;
                     updateNotificationBadge();
+                }
+
+                if (event.data && event.data.type === 'widget-error') {
+                    console.warn('⚠️ Widget reported an error:', event.data.message);
+                    alert('Widget error: ' + event.data.message);
                 }
             });
             
             function updateNotificationBadge() {
-                console.log('🏷️ Updating badge, count:', unreadMessageCount);
                 if (unreadMessageCount > 0) {
                     messageNotification.textContent = unreadMessageCount > 99 ? '99+' : unreadMessageCount;
                     messageNotification.style.display = 'flex';
-                    console.log('✅ Badge shown with count:', unreadMessageCount);
                 } else {
                     messageNotification.style.display = 'none';
-                    console.log('❌ Badge hidden');
                 }
             }
             

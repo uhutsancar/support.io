@@ -21,7 +21,21 @@ router.post('/', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { name, domain } = req.body;
 
-    const orgId = req.organization?._id || req.user.organizationId;
+    // ensure organization exists for this user
+    let orgId = req.organization?._id || req.user.organizationId;
+    if (!orgId) {
+      // create a new org and attach to user
+      const Organization = require('../models/Organization');
+      const newOrg = new Organization({
+        name: `${req.user.name}'s Organization`,
+        planType: 'FREE'
+      });
+      await newOrg.save();
+      orgId = newOrg._id;
+      req.user.organizationId = orgId;
+      await req.user.save();
+    }
+
     const site = new Site({
       name,
       domain,

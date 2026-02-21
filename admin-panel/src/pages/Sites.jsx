@@ -3,11 +3,13 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
-import { Plus, Globe, Copy, Check, Settings, Trash2 } from 'lucide-react';
+import { Plus, Globe, Copy, Check, Settings, Trash2, Palette } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const Sites = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -86,7 +88,7 @@ const Sites = () => {
   return (
     <>
       <Helmet>
-        <title>{t('sites.title')} - Support.io Admin</title>
+        <title>{`${t('sites.title') || ''} - Support.io Admin`}</title>
         <meta name="description" content={t('sites.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -177,6 +179,13 @@ const Sites = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                  <button 
+                    onClick={() => navigate(`/dashboard/widget-customization/${site._id}`)}
+                    className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg transition text-xs sm:text-sm"
+                  >
+                    <Palette className="w-4 h-4" />
+                    <span className="leading-tight text-center whitespace-normal">Customize Widget</span>
+                  </button>
                   <button className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-lg transition text-xs sm:text-sm">
                     <Settings className="w-4 h-4" />
                     <span className="leading-tight text-center whitespace-normal">{t('sites.settings')}</span>

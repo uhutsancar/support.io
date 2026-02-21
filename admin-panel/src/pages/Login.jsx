@@ -41,7 +41,7 @@ const Login = () => {
   return (
     <>
       <Helmet>
-        <title>{t('login.metaTitle')}</title>
+        <title>{`${t('login.metaTitle') || ''}`}</title>
         <meta name="description" content={t('login.metaDescription')} />
         <meta name="robots" content="noindex, nofollow" />
         <link rel="canonical" href="https://support.io/login" />

@@ -24,6 +24,34 @@ const auth = async (req, res, next) => {
       throw new Error('User not found');
     }
 
+    // if user lacks an organization, try to backfill from assignedSites or create one
+    if (!user.organizationId) {
+      try {
+        const Site = require('../models/Site');
+        let orgId = null;
+        if (user.assignedSites && user.assignedSites.length) {
+          // pick first site that has an org
+          const sites = await Site.find({ _id: { $in: user.assignedSites } }).select('organizationId');
+          for (const s of sites) {
+            if (s.organizationId) {
+              orgId = s.organizationId;
+              break;
+            }
+          }
+        }
+        if (!orgId) {
+          const Organization = require('../models/Organization');
+          const newOrg = new Organization({ name: `${user.name}'s Organization`, planType: 'FREE' });
+          await newOrg.save();
+          orgId = newOrg._id;
+            }
+        user.organizationId = orgId;
+        await user.save();
+      } catch (e) {
+        console.error('Auth middleware org migration failed for user', user._id, e.message);
+      }
+    }
+
     // Organization isolation: load organization and attach to request
     let organization = null;
     const orgId = decoded.organizationId || user.organizationId;

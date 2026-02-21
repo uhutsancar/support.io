@@ -64,32 +64,26 @@ const Dashboard = () => {
     });
     
     newSocket.on('connect', () => {
-      console.log('✅ Dashboard socket connected!');
     });
 
     newSocket.on('new-conversation', (data) =>  {
-      console.log('💬 New ticket received:', data);
       fetchDashboardData(true);
     });
     newSocket.on('conversation-assigned', (data) => {
-      console.log('📌 Conversation assigned:', data);
       // assigned could affect open/unassigned counts for dashboard
       fetchDashboardData(true);
     });
 
     newSocket.on('new-message', (data) => {
-      console.log('✉️ New message event (dashboard):', data);
       // new messages can change last message ordering and unread counts
       fetchDashboardData(true);
     });
     
     newSocket.on('conversation-update', (data) => {
-      console.log('🔄 Conversation updated:', data);
       fetchDashboardData(true);
     });
 
     newSocket.on('sla-breach', (data) => {
-      console.log('🚨 SLA breach:', data);
       setStats(prev => ({
         ...prev,
         slaBreaches: prev.slaBreaches + 1

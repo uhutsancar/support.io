@@ -6,6 +6,9 @@ const Team = require('../models/Team');
 const Department = require('../models/Department');
 const TeamMessage = require('../models/TeamMessage');
 const TeamChat = require('../models/TeamChat');
+const { autoAssignConversation, checkAndReassign } = require('../services/autoAssignment');
+const { isWithinBusinessHours, getBusinessHoursMessage, shouldCalculateSLA } = require('../services/businessHours');
+const { sendSLAWarning, handleSLABreach } = require('../services/escalation');
 
 class SocketHandler {
   constructor(io) {
@@ -55,7 +58,11 @@ class SocketHandler {
             const messages = await Message.find({ conversationId: conversation._id })
               .sort({ createdAt: 1 });
 
-            conversation.calculateSLA();
+            try {
+              conversation.calculateSLA();
+            } catch (slaErr) {
+              console.warn('SLA calc failed during join-conversation:', slaErr.message);
+            }
             await conversation.save();
 
             socket.emit('conversation-joined', {
@@ -87,14 +94,26 @@ class SocketHandler {
               socket.emit('error', { message: 'Site not found' });
               return;
             }
+            
+            if (!site.organizationId) {
+              socket.emit('error', { message: 'Site organization not found' });
+              return;
+            }
 
             let department = await Department.findOne({
               siteId: socket.siteId,
               isActive: true
             }).sort({ createdAt: 1 });
 
+            // Check business hours
+            let businessHoursMessage = null;
+            if (department && !isWithinBusinessHours(department)) {
+              businessHoursMessage = getBusinessHoursMessage(department);
+            }
+
             const conversation = new Conversation({
               siteId: socket.siteId,
+              organizationId: site.organizationId, // Tenant isolation
               visitorId: socket.visitorId,
               visitorName: socket.visitorName,
               visitorEmail: socket.visitorEmail,
@@ -103,7 +122,8 @@ class SocketHandler {
               department: department?._id,
               status: 'open',
               channel: 'web-chat',
-              priority: 'normal'
+              priority: 'normal',
+              requiredSkills: department?.requiredSkills || [] // Extract skills from department
             });
 
             const slaTargets = {
@@ -123,9 +143,25 @@ class SocketHandler {
               conversation.sla.resolutionTarget = slaTargets[priority].resolution;
             }
 
-            await conversation.save();
+            // Calculate SLA only if within business hours (if configured)
+            if (shouldCalculateSLA(department)) {
+              // createdAt is only populated after save; ensure we have a value so calculation doesn't crash
+              if (!conversation.createdAt) {
+                conversation.createdAt = new Date();
+              }
+              try {
+                conversation.calculateSLA();
+              } catch (slaErr) {
+                console.warn('SLA calc failed during new conversation:', slaErr.message);
+              }
+            } else {
+              // Outside business hours: set next check to start of next business day
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              tomorrow.setHours(9, 0, 0, 0);
+              conversation.nextSlaCheckAt = tomorrow;
+            }
 
-            conversation.calculateSLA();
             await conversation.save();
 
             if (department) {
@@ -137,6 +173,30 @@ class SocketHandler {
             socket.join(`conversation:${conversation._id}`);
             socket.conversationId = conversation._id;
             conversationId = conversation._id;
+
+            // Auto-assign conversation
+            const assignResult = await autoAssignConversation(conversation._id, site.organizationId);
+            if (assignResult.success) {
+              // Reload conversation with assigned agent
+              await conversation.populate('assignedAgent', 'name avatar status');
+            }
+
+            // Send business hours message if outside hours
+            if (businessHoursMessage) {
+              const botMessage = new Message({
+                conversationId: conversation._id,
+                senderType: 'bot',
+                senderId: 'business-hours-bot',
+                senderName: 'Support Bot',
+                content: businessHoursMessage,
+                isRead: true
+              });
+              await botMessage.save();
+              
+              this.widgetNamespace.to(`conversation:${conversation._id}`).emit('new-message', {
+                message: botMessage
+              });
+            }
 
             this.adminNamespace.to(`site:${socket.siteId}`).emit('new-conversation', {
               conversation: await conversation.populate('department', 'name color icon')
@@ -166,8 +226,23 @@ class SocketHandler {
           const message = new Message(messageData);
           await message.save();
 
+          // Increment unread count for visitor messages
+          conversation.unreadCount = (conversation.unreadCount || 0) + 1;
           conversation.lastMessageAt = new Date();
           await conversation.save();
+          
+          // Check if assigned agent went offline, trigger auto-reassign
+          if (conversation.assignedAgent) {
+            const agent = await Team.findById(conversation.assignedAgent);
+            if (agent && (agent.status === 'offline' || agent.status === 'away')) {
+              const site = await Site.findById(conversation.siteId);
+              if (site && site.organizationId) {
+                await checkAndReassign(conversation._id, site.organizationId);
+                // Reload conversation after reassign
+                await conversation.populate('assignedAgent', 'name avatar status');
+              }
+            }
+          }
 
           this.widgetNamespace.to(`conversation:${conversationId}`).emit('new-message', { message });
 
@@ -229,6 +304,24 @@ class SocketHandler {
             socket.userId = decoded.userId;
             socket.organizationId = decoded.organizationId || null;
             socket.role = decoded.role || null; // owner, admin, agent, etc.
+            // if token did not include org, attempt to load from DB
+            if (!socket.organizationId) {
+              try {
+                const User = require('../models/User');
+                const Team = require('../models/Team');
+                let userObj = null;
+                if (decoded.userType === 'team') {
+                  userObj = await Team.findById(socket.userId).select('organizationId');
+                } else {
+                  userObj = await User.findById(socket.userId).select('organizationId');
+                }
+                if (userObj && userObj.organizationId) {
+                  socket.organizationId = userObj.organizationId;
+                      }
+              } catch (dbErr) {
+                console.error('Error fetching user org for socket auth:', dbErr.message);
+              }
+            }
             console.log('[SOCKET] Token ile userId bulundu:', socket.userId, 'org:', socket.organizationId, 'role:', socket.role);
           }
         } catch (err) {
@@ -311,7 +404,11 @@ class SocketHandler {
           if (!conversation.firstResponseAt) {
             conversation.firstResponseAt = new Date();
             
-            conversation.calculateSLA();
+            try {
+              conversation.calculateSLA();
+            } catch (slaErr) {
+              console.warn('SLA calc failed on agent reply:', slaErr.message);
+            }
             
             if (socket.userId) {
               const agent = await Team.findById(socket.userId);
@@ -350,6 +447,11 @@ class SocketHandler {
           const message = new Message(messageData);
           await message.save();
 
+          // Reset unread count when agent responds
+          if (message.senderType === 'agent') {
+            conversation.unreadCount = 0;
+          }
+          
           conversation.lastMessageAt = new Date();
           await conversation.save();
 
@@ -357,6 +459,7 @@ class SocketHandler {
             message
           });
 
+          console.log('[SOCKET] admin sent message – emitting to conversation room', conversationId, 'and site', conversation.siteId);
           this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message,
             conversation
@@ -381,7 +484,23 @@ class SocketHandler {
       socket.on('update-status', async (data) => {
         try {
           const { status } = data;
-          await Team.findByIdAndUpdate(socket.userId, { status });
+          const agent = await Team.findByIdAndUpdate(socket.userId, { status }, { new: true });
+          
+          // If agent went offline/away, check and reassign their conversations
+          if (status === 'offline' || status === 'away') {
+            const Site = require('../models/Site');
+            const assignedConversations = await Conversation.find({
+              assignedAgent: socket.userId,
+              status: { $in: ['assigned', 'pending'] }
+            }).populate('siteId', 'organizationId');
+            
+            for (const conv of assignedConversations) {
+              if (conv.siteId && conv.siteId.organizationId) {
+                await checkAndReassign(conv._id, conv.siteId.organizationId);
+              }
+            }
+          }
+          
           // Notify admins for the site (if joined) and also notify user room
           if (socket.siteId) {
             this.adminNamespace.to(`site:${socket.siteId}`).emit('agent-status-changed', {
@@ -577,7 +696,11 @@ class SocketHandler {
               conversation.sla.resolutionTarget = newDepartment.sla.resolution[priority] || 480;
           console.log('[SOCKET] team-chat-send sender bulundu:', sender);
               
-              conversation.calculateSLA();
+              try {
+                conversation.calculateSLA();
+              } catch (slaErr) {
+                console.warn('SLA calc failed during department change:', slaErr.message);
+              }
             }
             
             await Department.findByIdAndUpdate(departmentId, {
@@ -621,7 +744,11 @@ class SocketHandler {
             conversation.sla.firstResponseTarget = conversation.department.sla.firstResponse[priority] || 30;
             conversation.sla.resolutionTarget = conversation.department.sla.resolution[priority] || 480;
             
-            conversation.calculateSLA();
+            try {
+              conversation.calculateSLA();
+            } catch (slaErr) {
+              console.warn('SLA calc failed during priority change:', slaErr.message);
+            }
           }
           
           await conversation.save();
@@ -808,13 +935,34 @@ class SocketHandler {
   startSLAMonitoring() {
     setInterval(async () => {
       try {
-        const activeConversations = await Conversation.find({
-          status: { $in: ['open', 'assigned', 'pending'] }
+        const now = new Date();
+        
+        // Optimized: Only check conversations where nextSlaCheckAt <= now
+        // Using index: { status: 1, nextSlaCheckAt: 1 }
+        const conversationsToCheck = await Conversation.find({
+          status: { $in: ['open', 'assigned', 'pending'] },
+          $or: [
+            { nextSlaCheckAt: { $lte: now } },
+            { nextSlaCheckAt: null } // Include conversations without nextSlaCheckAt set
+          ]
         })
-        .populate('department', 'name color icon')
-        .populate('assignedAgent', 'name email avatar');
-
-        for (const conversation of activeConversations) {
+        .populate('department', 'name color icon businessHours sla')
+        .populate('assignedAgent', 'name email avatar status')
+        .populate('siteId', 'organizationId')
+        .limit(100); // Process in batches
+        
+        for (const conversation of conversationsToCheck) {
+          // Skip if outside business hours and SLA only runs during business hours
+          if (conversation.department && !shouldCalculateSLA(conversation.department)) {
+            // Set next check to start of next business day
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(9, 0, 0, 0);
+            conversation.nextSlaCheckAt = tomorrow;
+            await conversation.save();
+            continue;
+          }
+          
           const previousFirstResponseStatus = conversation.sla.firstResponseStatus;
           const previousResolutionStatus = conversation.sla.resolutionStatus;
           const previousFirstResponseRemaining = conversation.sla.firstResponseTimeRemaining;
@@ -822,6 +970,9 @@ class SocketHandler {
           
           conversation.calculateSLA();
           await conversation.save();
+          
+          // Check for SLA warning (%80 threshold)
+          const warning = await sendSLAWarning(conversation, this.io);
           
           if (previousFirstResponseRemaining !== conversation.sla.firstResponseTimeRemaining ||
               previousResolutionRemaining !== conversation.sla.resolutionTimeRemaining ||
@@ -834,29 +985,35 @@ class SocketHandler {
             });
           }
           
+          // Handle breach
           if (previousFirstResponseStatus !== 'breached' && conversation.sla.firstResponseStatus === 'breached') {
+            const site = await Site.findById(conversation.siteId);
+            if (site && site.organizationId) {
+              await handleSLABreach(conversation, site.organizationId, this.io);
+            }
+            
             this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
               type: 'first-response',
               conversation: conversation.toObject()
             });
-            // also notify globally within the site rooms only (avoid broadcasting to agents globally)
-            this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
-              conversationId: conversation._id,
-              ticketNumber: conversation.ticketNumber,
-              type: 'first-response',
-              conversation: conversation.toObject()
-            });
+            
+            // Auto-reassign if breached and no response
+            if (!conversation.firstResponseAt) {
+              const site = await Site.findById(conversation.siteId);
+              if (site && site.organizationId) {
+                await checkAndReassign(conversation._id, site.organizationId);
+              }
+            }
           }
           
           if (previousResolutionStatus !== 'breached' && conversation.sla.resolutionStatus === 'breached') {
-            this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
-              conversationId: conversation._id,
-              ticketNumber: conversation.ticketNumber,
-              type: 'resolution',
-              conversation: conversation.toObject()
-            });
+            const site = await Site.findById(conversation.siteId);
+            if (site && site.organizationId) {
+              await handleSLABreach(conversation, site.organizationId, this.io);
+            }
+            
             this.adminNamespace.to(`site:${conversation.siteId}`).emit('sla-breach', {
               conversationId: conversation._id,
               ticketNumber: conversation.ticketNumber,
@@ -868,7 +1025,7 @@ class SocketHandler {
       } catch (error) {
         console.error('❌ SLA monitoring error:', error);
       }
-    }, 30000);
+    }, 30000); // Check every 30 seconds
   }
 
   async tryAutoResponse(conversation, userMessage) {

@@ -268,7 +268,7 @@ const TeamChatPage = () => {
   // ===== RENDER =====
   return (
     <div className="h-[calc(100vh-3rem)] flex flex-col">
-      <Helmet><title>{t('teamChat.title')} - DestekChat</title></Helmet>
+      <Helmet><title>{`${t('teamChat.title') || ''} - DestekChat`}</title></Helmet>
 
       {/* Header */}
       <div className="mb-4">

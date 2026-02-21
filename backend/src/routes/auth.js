@@ -97,6 +97,17 @@ router.post('/login', validateLogin, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // ensure organization exists for user
+    if (!user.organizationId) {
+      const Organization = require('../models/Organization');
+      const newOrg = new Organization({
+        name: `${user.name}'s Organization`,
+        planType: 'FREE'
+      });
+      await newOrg.save();
+      user.organizationId = newOrg._id;
+    }
+
     const tokenPayload = { userId: user._id, userType, role: user.role };
     if (user.organizationId) tokenPayload.organizationId = user.organizationId;
 

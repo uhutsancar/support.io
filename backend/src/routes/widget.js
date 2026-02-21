@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Site = require('../models/Site');
+const WidgetConfig = require('../models/WidgetConfig');
 
 router.get('/settings', async (req, res) => {
   try {
@@ -17,12 +18,19 @@ router.get('/settings', async (req, res) => {
       return res.status(404).json({ error: 'Site not found or inactive' });
     }
 
+    // Get widget config
+    const widgetConfig = await WidgetConfig.findOne({ 
+      siteId: site._id, 
+      isActive: true 
+    });
+
     res.json({ 
       site: {
         name: site.name,
         isActive: site.isActive,
         widgetSettings: site.widgetSettings
-      }
+      },
+      config: widgetConfig ? widgetConfig.toObject() : null
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

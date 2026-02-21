@@ -43,11 +43,9 @@ const Team = () => {
     });
 
     newSocket.on('connect', () => {
-      console.log('✅ Socket connected for Team page');
     });
 
     newSocket.on('agent-status-changed', ({ userId, status }) => {
-      console.log('🔄 Agent status changed:', userId, status);
       setTeam(prevTeam => 
         prevTeam.map(member => 
           member._id === userId ? { ...member, status } : member
@@ -56,13 +54,11 @@ const Team = () => {
     });
 
     newSocket.on('team-member-added', (newMember) => {
-      console.log('👤 New team member added:', newMember);
       setTeam(prevTeam => [...prevTeam, newMember]);
       toast.success('Yeni ekip üyesi eklendi');
     });
 
     newSocket.on('team-member-updated', (updatedMember) => {
-      console.log('✏️ Team member updated:', updatedMember);
       setTeam(prevTeam => 
         prevTeam.map(member => 
           member._id === updatedMember._id ? updatedMember : member
@@ -71,7 +67,6 @@ const Team = () => {
     });
 
     newSocket.on('team-member-deleted', ({ userId }) => {
-      console.log('🗑️ Team member deleted:', userId);
       setTeam(prevTeam => prevTeam.filter(member => member._id !== userId));
       toast.success('Ekip üyesi silindi');
     });
@@ -89,7 +84,6 @@ const Team = () => {
 
   useEffect(() => {
     if (selectedSite) {
-      console.log('🔄 selectedSite changed, fetching team:', selectedSite);
       fetchTeam();
     }
   }, [selectedSite]);
@@ -113,14 +107,8 @@ const Team = () => {
   const fetchTeam = async () => {
     try {
       setLoading(true);
-      console.log('🔄 fetchTeam called - Fetching team for site:', selectedSite);
-      console.log('🔍 Current team state before fetch:', team.length, 'members');
       const response = await teamAPI.getAll(selectedSite);
-      console.log('✅ Team data received:', response.data);
-      console.log('👥 Number of members:', response.data?.length || 0);
-      console.log('⚠️ Updating team state...');
       setTeam(response.data || []);
-      console.log('✅ Team state updated');
     } catch (error) {
       console.error('❌ Error fetching team:', error);
       setTeam([]);
@@ -143,7 +131,6 @@ const Team = () => {
     
     try {
       const response = await teamAPI.delete(userId);
-      console.log('✅ Team member deleted:', response.data);
       await fetchTeam();
       toast.success(t('team.deleteSuccess'));
     } catch (error) {
@@ -187,7 +174,7 @@ const Team = () => {
   return (
     <div className="p-6">
       <Helmet>
-        <title>{t('team.title')} - DestekChat</title>
+        <title>{`${t('team.title') || ''} - DestekChat`}</title>
       </Helmet>
 
       <div className="mb-6">
@@ -389,7 +376,6 @@ const Team = () => {
             setSelectedMember(null);
           }}
           onSave={async (newMember) => {
-            console.log('💾 onSave called with:', newMember);
             await fetchTeam();
             console.log('✅ fetchTeam completed');
             setShowAddModal(false);

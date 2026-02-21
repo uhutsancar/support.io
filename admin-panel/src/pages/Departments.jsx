@@ -116,7 +116,7 @@ const Departments = () => {
   return (
     <div className="p-6">
       <Helmet>
-        <title>{t('departments.title')} - DestekChat</title>
+        <title>{`${t('departments.title') || ''} - DestekChat`}</title>
       </Helmet>
 
       <div className="mb-6">

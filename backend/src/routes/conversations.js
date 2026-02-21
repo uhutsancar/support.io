@@ -1,29 +1,39 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { auth } = require('../middleware/auth');
 
+// helper to avoid unhandled CastErrors
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
 router.get('/unread-count', auth, async (req, res) => {
   try {
-    const conversations = await Conversation.find({});
+    // Tenant isolation: only count conversations in user's organization
+    const orgId = req.organization?._id || req.user.organizationId;
+    if (!orgId) {
+      return res.json({ totalUnreadCount: 0, unreadBySite: {} });
+    }
+    
+    // Optimized: Use incremental unreadCount field instead of aggregate
+    const conversations = await Conversation.find({
+      organizationId: orgId,
+      unreadCount: { $gt: 0 }
+    }).select('siteId unreadCount');
     
     let totalUnreadCount = 0;
     const unreadBySite = {};
 
     for (const conversation of conversations) {
-      const unreadCount = await Message.countDocuments({
-        conversationId: conversation._id,
-        senderType: 'visitor',
-        isRead: false
-      });
-      
+      const unreadCount = conversation.unreadCount || 0;
       if (unreadCount > 0) {
         totalUnreadCount += unreadCount;
-        if (!unreadBySite[conversation.siteId]) {
-          unreadBySite[conversation.siteId] = 0;
+        const siteIdStr = conversation.siteId.toString();
+        if (!unreadBySite[siteIdStr]) {
+          unreadBySite[siteIdStr] = 0;
         }
-        unreadBySite[conversation.siteId] += unreadCount;
+        unreadBySite[siteIdStr] += unreadCount;
       }
     }
 
@@ -32,6 +42,7 @@ router.get('/unread-count', auth, async (req, res) => {
       unreadBySite
     });
   } catch (error) {
+    console.error('Unread count error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -39,8 +50,28 @@ router.get('/unread-count', auth, async (req, res) => {
 router.get('/:siteId', auth, async (req, res) => {
   try {
     const { status } = req.query;
+    const { siteId } = req.params;
+
+    if (!isValidObjectId(siteId)) {
+      return res.status(400).json({ error: 'Invalid site id' });
+    }
+
+    // Tenant isolation: verify site belongs to user's organization
+    const orgId = req.organization?._id || req.user.organizationId;
+    const Site = require('../models/Site');
+    const site = await Site.findOne({
+      _id: siteId,
+      ...(orgId ? { organizationId: orgId } : {})
+    });
     
-    let filter = { siteId: req.params.siteId };
+    if (!site) {
+      return res.status(404).json({ error: 'Site not found' });
+    }
+    
+    let filter = { 
+      siteId,
+      organizationId: orgId // Tenant isolation
+    };
     if (status) {
       filter.status = status;
     }
@@ -53,22 +84,42 @@ router.get('/:siteId', auth, async (req, res) => {
 
     const conversationsWithLastMessage = await Promise.all(
       conversations.map(async (conv) => {
-        const lastMessage = await Message.findOne({ conversationId: conv._id })
-          .sort({ createdAt: -1 })
-          .limit(1);
-        
-        conv.calculateSLA();
-        await conv.save();
-        
-        return {
-          ...conv.toObject(),
-          lastMessage
-        };
+        try {
+          const lastMessage = await Message.findOne({ conversationId: conv._id })
+            .sort({ createdAt: -1 })
+            .limit(1);
+          
+          // guard SLA calculation
+          if (typeof conv.calculateSLA === 'function') {
+            try {
+              conv.calculateSLA();
+            } catch (slaErr) {
+              console.warn('SLA calc failed while listing conversations:', conv._id, slaErr.message);
+            }
+          }
+          // only attempt to save if required fields exist
+          if (conv.organizationId) {
+            await conv.save().catch(saveErr => {
+              console.warn('Skipping save for conversation', conv._id, saveErr.message);
+            });
+          } else {
+            console.warn('Conversation missing organizationId, not saving', conv._id);
+          }
+          
+          return {
+            ...conv.toObject(),
+            lastMessage
+          };
+        } catch (innerErr) {
+          console.error('Error processing conversation', conv._id, innerErr);
+          return { ...conv.toObject(), lastMessage: null };
+        }
       })
     );
 
     res.json({ conversations: conversationsWithLastMessage });
   } catch (error) {
+    console.error('Get conversations error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -77,7 +128,13 @@ router.get('/:siteId', auth, async (req, res) => {
 router.get('/assigned/me', auth, async (req, res) => {
   try {
     const userId = req.userId;
-    const conversations = await Conversation.find({ assignedAgent: userId })
+    const orgId = req.organization?._id || req.user.organizationId;
+    
+    // Tenant isolation: only return conversations in user's organization
+    const conversations = await Conversation.find({ 
+      assignedAgent: userId,
+      organizationId: orgId
+    })
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon')
       .sort({ lastMessageAt: -1 })
@@ -88,8 +145,16 @@ router.get('/assigned/me', auth, async (req, res) => {
         const lastMessage = await Message.findOne({ conversationId: conv._id })
           .sort({ createdAt: -1 })
           .limit(1);
-        conv.calculateSLA();
-        await conv.save();
+        try {
+          conv.calculateSLA();
+        } catch (slaErr) {
+          console.warn('SLA calc failed while listing assigned conversations:', conv._id, slaErr.message);
+        }
+        if (conv.organizationId) {
+          await conv.save().catch(e => console.warn('skip save org missing', conv._id, e.message));
+        } else {
+          console.warn('Conversation missing organizationId, not saving', conv._id);
+        }
         return {
           ...conv.toObject(),
           lastMessage
@@ -105,9 +170,30 @@ router.get('/assigned/me', auth, async (req, res) => {
 
 router.get('/:siteId/:conversationId', auth, async (req, res) => {
   try {
+    const { siteId, conversationId } = req.params;
+
+
+    if (!isValidObjectId(siteId) || !isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid id parameter' });
+    }
+
+    // Tenant isolation
+    const orgId = req.organization?._id || req.user.organizationId;
+    const Site = require('../models/Site');
+    const site = await Site.findOne({
+      _id: siteId,
+      ...(orgId ? { organizationId: orgId } : {})
+    });
+    
+    if (!site) {
+      // site not found
+      return res.status(404).json({ error: 'Site not found' });
+    }
+    
     const conversation = await Conversation.findOne({
-      _id: req.params.conversationId,
-      siteId: req.params.siteId
+      _id: conversationId,
+      siteId,
+      organizationId: orgId // Tenant isolation
     })
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
@@ -116,12 +202,19 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    conversation.calculateSLA();
-    await conversation.save();
+    try {
+      if (typeof conversation.calculateSLA === 'function') {
+        conversation.calculateSLA();
+      }
+      await conversation.save();
+    } catch (e) {
+      console.error('SLA calculation error for conversation', conversationId, e);
+    }
 
     const messages = await Message.find({ conversationId: conversation._id })
       .sort({ createdAt: 1 });
 
+    // Mark messages as read and reset unread count
     await Message.updateMany(
       { 
         conversationId: conversation._id, 
@@ -133,17 +226,22 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
         readAt: new Date() 
       }
     );
+    
+    // Reset unread count when conversation is opened
+    conversation.unreadCount = 0;
+    await conversation.save();
 
     const io = req.app.get('io');
     if (io) {
-      io.of('/admin').to(`site:${req.params.siteId}`).emit('messages-read', {
+      io.of('/admin').to(`site:${siteId}`).emit('messages-read', {
         conversationId: conversation._id,
-        siteId: req.params.siteId
+        siteId
       });
     }
 
     res.json({ conversation, messages });
   } catch (error) {
+    console.error('Error fetching conversation details:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -151,6 +249,24 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
 router.put('/:conversationId/assign', auth, async (req, res) => {
   try {
     const { agentId, assignedBy } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const { conversationId } = req.params;
+
+    if (!isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation id' });
+    }
+    
+    // Tenant isolation: verify conversation belongs to user's organization
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    if (conversation.organizationId && conversation.organizationId.toString() !== orgId.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const oldAgentId = conversation.assignedAgent;
     
     const updateData = {
       assignedAgent: agentId || null,
@@ -164,34 +280,35 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
       updateData.assignedAt = null;
     }
     
-    const conversation = await Conversation.findByIdAndUpdate(
+    const updatedConversation = await Conversation.findByIdAndUpdate(
       req.params.conversationId,
       updateData,
       { new: true }
     )
       .populate('assignedAgent', 'name avatar status')
       .populate('department', 'name color icon');
+      
+    // Update agent load
     if (agentId) {
-      // Determine whether agentId references a Team (team member) or a User
       const Team = require('../models/Team');
-      const User = require('../models/User');
-      try {
-        const team = await Team.findById(agentId).select('_id');
-        if (team) {
-          await Team.findByIdAndUpdate(agentId, {
-            $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-          }).catch(() => {});
-        } else {
-          const userDoc = await User.findById(agentId).select('_id');
-          if (userDoc) {
-            await User.findByIdAndUpdate(agentId, {
-              $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-            }).catch(() => {});
-          }
-        }
-      } catch (e) {
-        console.error('Assign stats update error:', e.message);
+      const { updateAgentLoad } = require('../services/autoAssignment');
+      
+      // Decrease old agent load if exists
+      if (oldAgentId) {
+        await updateAgentLoad(oldAgentId, -1);
       }
+      
+      // Increase new agent load
+      await updateAgentLoad(agentId, 1);
+      
+      // Also update stats
+      await Team.findByIdAndUpdate(agentId, {
+        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+      }).catch(() => {});
+    } else if (oldAgentId) {
+      // Unassigning: decrease old agent load
+      const { updateAgentLoad } = require('../services/autoAssignment');
+      await updateAgentLoad(oldAgentId, -1);
     }
     
     const io = req.app.get('io');
@@ -262,8 +379,17 @@ router.put('/:conversationId/assign', auth, async (req, res) => {
 router.put('/:conversationId/claim', auth, async (req, res) => {
   try {
     const agentId = req.userId || req.user._id;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const { conversationId } = req.params;
+    if (!isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation id' });
+    }
 
-    const conversation = await Conversation.findById(req.params.conversationId);
+    // Tenant isolation
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      organizationId: orgId
+    });
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
@@ -271,24 +397,23 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
       return res.status(400).json({ error: 'Conversation is already assigned' });
     }
 
-    // Determine whether the requester is a Team member or a User
-    const isTeam = req.userType === 'team' || (req.user && req.user.email && req.user.role && req.user.name && req.user.permissions);
-
-    // Check active conversation limits. For Team members we use team.stats, for Users we fall back to user.preferences if available
-    if (isTeam) {
-      const Team = require('../models/Team');
-      const agent = await Team.findById(agentId);
-      const maxActive = process.env.MAX_ACTIVE_CONVERSATIONS ? parseInt(process.env.MAX_ACTIVE_CONVERSATIONS, 10) : 50;
-      if (agent && agent.stats && agent.stats.activeConversations >= maxActive) {
-        return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
-      }
-    } else {
-      const User = require('../models/User');
-      const agent = await User.findById(agentId);
-      const maxActive = agent?.preferences?.maxActiveConversations || parseInt(process.env.MAX_ACTIVE_CONVERSATIONS || '50', 10);
-      if (agent && agent.stats && agent.stats.activeConversations >= maxActive) {
-        return res.status(400).json({ error: 'Agent has reached maximum active conversations' });
-      }
+    // Check agent capacity using currentLoad and maxCapacity
+    const Team = require('../models/Team');
+    const agent = await Team.findById(agentId);
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+    
+    // Check if agent is online
+    if (agent.status !== 'online') {
+      return res.status(400).json({ error: 'Agent must be online to claim conversations' });
+    }
+    
+    // Check capacity
+    const currentLoad = agent.currentLoad || 0;
+    const maxCapacity = agent.maxCapacity || 10;
+    if (currentLoad >= maxCapacity) {
+      return res.status(400).json({ error: 'Agent has reached maximum capacity' });
     }
 
     conversation.assignedAgent = agentId;
@@ -300,16 +425,12 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
     await conversation.populate('assignedAgent', 'name avatar status');
     await conversation.populate('department', 'name color icon');
 
-    // Increment stats on the proper model
-    if (isTeam) {
-      await require('../models/Team').findByIdAndUpdate(agentId, {
-        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-      }).catch(() => {});
-    } else {
-      await require('../models/User').findByIdAndUpdate(agentId, {
-        $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
-      }).catch(() => {});
-    }
+    // Update agent load and stats
+    const { updateAgentLoad } = require('../services/autoAssignment');
+    await updateAgentLoad(agentId, 1);
+    await Team.findByIdAndUpdate(agentId, {
+      $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 }
+    }).catch(() => {});
 
     const io = req.app.get('io');
     if (io) {
@@ -338,8 +459,22 @@ router.put('/:conversationId/claim', auth, async (req, res) => {
 router.put('/:conversationId/department', auth, async (req, res) => {
   try {
     const { departmentId } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const { conversationId } = req.params;
+    if (!isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation id' });
+    }
     
-    const conversation = await Conversation.findByIdAndUpdate(
+    // Tenant isolation
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      organizationId: orgId
+    });
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    const updatedConversation = await Conversation.findByIdAndUpdate(
       req.params.conversationId,
       { department: departmentId || null },
       { new: true }
@@ -373,12 +508,21 @@ router.put('/:conversationId/department', auth, async (req, res) => {
 router.put('/:conversationId/priority', auth, async (req, res) => {
   try {
     const { priority } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const { conversationId } = req.params;
+    if (!isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation id' });
+    }
     
     if (!['low', 'normal', 'high', 'urgent'].includes(priority)) {
       return res.status(400).json({ error: 'Invalid priority' });
     }
     
-    const conversation = await Conversation.findById(req.params.conversationId)
+    // Tenant isolation
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      organizationId: orgId
+    })
       .populate('department');
     
     if (!conversation) {
@@ -404,7 +548,11 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
     }
     
 
-    conversation.calculateSLA();
+    try {
+      conversation.calculateSLA();
+    } catch (slaErr) {
+      console.warn('SLA calc failed during priority update:', slaErr.message);
+    }
     
     await conversation.save();
     await conversation.populate('assignedAgent', 'name avatar status');
@@ -426,8 +574,17 @@ router.put('/:conversationId/priority', auth, async (req, res) => {
 router.post('/:conversationId/notes', auth, async (req, res) => {
   try {
     const { note } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const { conversationId } = req.params;
+    if (!isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation id' });
+    }
     
-    const conversation = await Conversation.findById(req.params.conversationId);
+    // Tenant isolation
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      organizationId: orgId
+    });
     
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -451,12 +608,27 @@ router.post('/:conversationId/notes', auth, async (req, res) => {
 router.put('/:conversationId/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
+    const orgId = req.organization?._id || req.user.organizationId;
+    const { conversationId } = req.params;
+    if (!isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation id' });
+    }
     
-    const conversation = await Conversation.findById(req.params.conversationId)
+    // Tenant isolation
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      organizationId: orgId
+    })
       .populate('department');
     
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    // Update agent load when resolving/closing
+    if ((status === 'resolved' || status === 'closed') && conversation.assignedAgent) {
+      const { updateAgentLoad } = require('../services/autoAssignment');
+      await updateAgentLoad(conversation.assignedAgent, -1);
     }
     
     conversation.status = status;
@@ -466,7 +638,11 @@ router.put('/:conversationId/status', auth, async (req, res) => {
     } else if (status === 'resolved') {
       conversation.resolvedAt = new Date();
       
-      conversation.calculateSLA();
+      try {
+        conversation.calculateSLA();
+      } catch (slaErr) {
+        console.warn('SLA calc failed during status change to resolved:', slaErr.message);
+      }
       
       if (conversation.department) {
         const dept = await require('../models/Department').findById(conversation.department._id);
@@ -538,14 +714,26 @@ router.put('/:conversationId/status', auth, async (req, res) => {
 router.delete('/:siteId/:conversationId', auth, async (req, res) => {
   try {
     const { siteId, conversationId } = req.params;
+    const orgId = req.organization?._id || req.user.organizationId;
+    if (!isValidObjectId(siteId) || !isValidObjectId(conversationId)) {
+      return res.status(400).json({ error: 'Invalid id parameter' });
+    }
 
+    // Tenant isolation
     const conversation = await Conversation.findOne({
       _id: conversationId,
-      siteId: siteId
+      siteId: siteId,
+      organizationId: orgId
     });
 
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    // Update agent load if assigned
+    if (conversation.assignedAgent) {
+      const { updateAgentLoad } = require('../services/autoAssignment');
+      await updateAgentLoad(conversation.assignedAgent, -1);
     }
 
     await Message.deleteMany({ conversationId: conversationId });

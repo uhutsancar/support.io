@@ -88,7 +88,8 @@ const Conversations = () => {
             if (assignedId && String(assignedId) === String(user._id)) {
               // set selected and fetch messages
               setSelectedConversation(conv);
-              const derivedSiteId = (selectedSite && (selectedSite._id || selectedSite)) || (conv.siteId || conv.site?._id);
+              // if conversation belongs to a different site than currently selected, use its own siteId
+              const derivedSiteId = (conv.siteId || conv.site?._id) || (selectedSite && (selectedSite._id || selectedSite));
               fetchConversationMessages(derivedSiteId, conv._id);
             }
           }
@@ -108,7 +109,21 @@ const Conversations = () => {
 
     const handleNewConversation = (data) => {
       console.log('🆕 New conversation created:', data);
-      if (selectedSite && String(data.conversation.siteId) === String(selectedSite._id)) {
+      const convSiteId = data.conversation.siteId || data.conversation.site?._id;
+      // if the new conversation comes from a site different than what we have selected,
+      // automatically switch to that site so the agent can see it.
+      if (convSiteId && (!selectedSite || String(convSiteId) !== String(selectedSite._id || selectedSite))) {
+        const newSite = sites.find(s => String(s._id) === String(convSiteId));
+        if (newSite) {
+          console.log('🔁 Auto-switching selectedSite to', newSite.name, newSite._id);
+          setSelectedSite(newSite);
+        } else {
+          // site not in list, refetch sites and wait; it'll be set by fetchSites if one matches
+          fetchSites();
+        }
+      }
+
+      if (selectedSite && String(convSiteId) === String(selectedSite._id || selectedSite)) {
         setConversations(prev => {
           if (prev.some(conv => conv._id === data.conversation._id)) {
             return prev;
@@ -394,7 +409,7 @@ const Conversations = () => {
       socket.emit('join-conversation', {
         conversationId: selectedConversation._id
       });
-      const derivedSiteId = (selectedSite && (selectedSite._id || selectedSite)) || (selectedConversation.siteId || selectedConversation.site?._id);
+      const derivedSiteId = (selectedConversation.siteId || selectedConversation.site?._id) || (selectedSite && (selectedSite._id || selectedSite));
       fetchConversationMessages(derivedSiteId, selectedConversation._id);
     }
   }, [selectedConversation, socket]);
@@ -408,9 +423,17 @@ const Conversations = () => {
   const fetchSites = async () => {
     try {
       const response = await sitesAPI.getAll();
-      setSites(response.data.sites);
-      if (response.data.sites.length > 0 && !selectedSite) {
-        setSelectedSite(response.data.sites[0]);
+      const siteList = response.data.sites || [];
+      setSites(siteList);
+      if (siteList.length > 0) {
+        if (!selectedSite || !siteList.some(s => String(s._id) === String(selectedSite._id || selectedSite))) {
+          setSelectedSite(siteList[0]);
+        }
+      } else {
+        // no sites available: clear selection and conversation list
+        setSelectedSite(null);
+        setConversations([]);
+        setSelectedConversation(null);
       }
     } catch (error) {
       console.error('Failed to fetch sites:', error);
@@ -448,6 +471,7 @@ const Conversations = () => {
       }
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
+      toast.error(t('dashboard.fetchError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -491,6 +515,7 @@ const Conversations = () => {
       }
     } catch (error) {
       console.error('❌ Failed to fetch messages:', error);
+      toast.error(t('dashboard.fetchMessagesError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -793,12 +818,17 @@ const Conversations = () => {
   return (
     <>
       <Helmet>
-        <title>{t('conversations.title')} - Support.io Admin</title>
+        <title>{`${t('conversations.title') || ''} - Support.io Admin`}</title>
         <meta name="description" content={t('conversations.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="w-full h-full max-w-full overflow-hidden">
         <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 h-screen max-h-screen overflow-hidden flex flex-col py-2 sm:py-4">
+        {sites.length === 0 && (
+          <div className="p-4 mb-4 border border-yellow-400 bg-yellow-50 text-yellow-600 rounded">
+            {t('conversations.noSitesNotice') || 'You don\'t have any sites yet. Please add a site to start receiving conversations.'}
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 lg:mb-4 flex-shrink-0">
           <div className="min-w-0 flex-shrink-1">
             <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white transition-colors duration-200 truncate">{t('conversations.title')}</h1>

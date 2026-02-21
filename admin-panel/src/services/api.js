@@ -122,8 +122,19 @@ export const faqsAPI = {
 };
 
 export const conversationsAPI = {
-  getAll: (siteId, status) => api.get(`/conversations/${siteId}`, { params: { status } }),
-  getOne: (siteId, conversationId) => api.get(`/conversations/${siteId}/${conversationId}`),
+  getAll: (siteId, status) => {
+    if (!siteId) {
+      // avoid invalid requests; return empty list
+      return Promise.resolve({ data: { conversations: [] } });
+    }
+    return api.get(`/conversations/${siteId}`, { params: { status } });
+  },
+  getOne: (siteId, conversationId) => {
+    if (!siteId || !conversationId) {
+      return Promise.reject(new Error('Missing siteId or conversationId'));
+    }
+    return api.get(`/conversations/${siteId}/${conversationId}`);
+  },
   getAssigned: () => api.get('/conversations/assigned/me'),
   assign: async (conversationId, agentId, assignedBy) => {
     const response = await api.put(`/conversations/${conversationId}/assign`, { agentId, assignedBy });
@@ -233,6 +244,30 @@ export const teamChatAPI = {
   getMembers: () => api.get('/team-chat/members', { cache: false }),
   getUnread: () => api.get('/team-chat/unread', { cache: false }),
   deleteMessage: (messageId) => api.delete(`/team-chat/messages/${messageId}`),
+};
+
+export const widgetConfigAPI = {
+  getConfig: (siteId) => api.get(`/widget-config/site/${siteId}`, { cache: false }),
+  updateConfig: async (siteId, data) => {
+    const response = await api.put(`/widget-config/site/${siteId}`, data);
+    clearCache('/widget-config');
+    return response;
+  },
+  uploadLogo: async (siteId, file) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await api.post(`/widget-config/site/${siteId}/logo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    clearCache('/widget-config');
+    return response;
+  },
+  deleteLogo: async (siteId) => {
+    const response = await api.delete(`/widget-config/site/${siteId}/logo`);
+    clearCache('/widget-config');
+    return response;
+  },
+  getPublicConfig: (siteKey) => api.get(`/widget-config/public/${siteKey}`, { cache: false }),
 };
 
 export default api;

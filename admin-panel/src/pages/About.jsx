@@ -51,7 +51,7 @@ const About = () => {
   return (
     <>
       <Helmet>
-        <title>{t('about.title')} - Support.io | {t('about.subtitle')}</title>
+        <title>{`${t('about.title') || ''} - Support.io | ${t('about.subtitle') || ''}`}</title>
         <meta name="description" content={t('about.mission.description')} />
         <meta name="keywords" content="support.io hakkında, şirket bilgileri, misyon, vizyon, müşteri odaklılık" />
         <link rel="canonical" href="https://support.io/hakkimizda" />

@@ -8,11 +8,18 @@
 (function() {
   'use strict';
 
-  const API_URL = 'http://localhost:5000';
-  const SOCKET_URL = 'http://localhost:5000';
+  const API_URL = window.SupportIOConfig?.apiUrl || 'http://localhost:5000';
+  const SOCKET_URL = window.SupportIOConfig?.socketUrl || 'http://localhost:5000';
 
   class SupportIOWidget {
     constructor(config) {
+      this.siteKey = config.siteKey;
+      if (!this.siteKey) {
+        console.error('SupportIOWidget initialized without a siteKey');
+      }
+      this.widgetConfig = null; // Will be loaded from backend
+      
+      // Default config (will be overridden by backend config)
       this.config = {
         siteKey: config.siteKey,
         position: config.position || 'bottom-right',
@@ -34,13 +41,45 @@
       this.init();
     }
 
-    init() {
+    async init() {
+      // Load widget config from backend first
+      await this.loadWidgetConfig();
       this.injectStyles();
       this.createWidget();
       this.loadSiteSettings();
       this.loadFAQs();
       this.connectSocket();
       this.setupEventListeners();
+    }
+
+    async loadWidgetConfig() {
+      try {
+        const response = await fetch(`${API_URL}/api/widget-config/public/${this.siteKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.config) {
+            this.widgetConfig = data.config;
+            // Merge config with widget config
+            this.config = {
+              ...this.config,
+              position: this.widgetConfig.button?.position || this.config.position,
+              primaryColor: this.widgetConfig.colors?.primary || this.config.primaryColor,
+              brandName: this.widgetConfig.branding?.brandName || this.config.brandName,
+              colors: this.widgetConfig.colors,
+              branding: this.widgetConfig.branding,
+              button: this.widgetConfig.button,
+              window: this.widgetConfig.window,
+              messages: this.widgetConfig.messages,
+              behavior: this.widgetConfig.behavior,
+              typography: this.widgetConfig.typography,
+              advanced: this.widgetConfig.advanced
+            };
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load widget config:', error);
+        // Continue with default config
+      }
     }
 
     getOrCreateVisitorId() {
@@ -57,12 +96,42 @@
     }
 
     injectStyles() {
+      const colors = this.config.colors || {};
+      const button = this.config.button || {};
+      const window = this.config.window || {};
+      const typography = this.config.typography || {};
+      const advanced = this.config.advanced || {};
+      const branding = this.config.branding || {};
+      const messagesConfig = this.config.messages || {};
+      
+      const primaryColor = colors.primary || this.config.primaryColor || '#4F46E5';
+      const headerColor = colors.header || primaryColor;
+      const backgroundColor = colors.background || '#FFFFFF';
+      const textColor = colors.text || '#1F2937';
+      const textSecondaryColor = colors.textSecondary || '#6B7280';
+      const borderColor = colors.border || '#E5E7EB';
+      const visitorMsgBg = colors.visitorMessageBg || primaryColor;
+      const agentMsgBg = colors.agentMessageBg || '#F3F4F6';
+      
+      const buttonSize = button.size === 'small' ? '50px' : button.size === 'large' ? '70px' : '60px';
+      const buttonRadius = button.borderRadius === 50 ? '50%' : `${button.borderRadius || 50}%`;
+      const buttonShadow = button.shadow !== false ? `0 4px 12px ${button.shadowColor || 'rgba(0,0,0,0.15)'}` : 'none';
+      
+      const windowWidth = window.width || 400;
+      const windowHeight = window.height || 650;
+      const windowRadius = window.borderRadius || 16;
+      const headerHeight = window.headerHeight || 60;
+      
+      const fontFamily = typography.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+      const zIndex = advanced.zIndex || 999999;
+      const messageBubbleRadius = messagesConfig.messageBubbleRadius || 12;
+      
       const style = document.createElement('style');
       style.textContent = `
         .sc-widget-container {
           position: fixed;
-          z-index: 999999;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          z-index: ${zIndex};
+          font-family: ${fontFamily};
         }
         .sc-widget-container.bottom-right {
           bottom: 20px;
@@ -82,20 +151,20 @@
         }
 
         .sc-chat-bubble {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          background: ${this.config.primaryColor};
+          width: ${buttonSize};
+          height: ${buttonSize};
+          border-radius: ${buttonRadius};
+          background: ${primaryColor};
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          box-shadow: ${buttonShadow};
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .sc-chat-bubble:hover {
           transform: scale(1.05);
-          box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+          box-shadow: ${button.shadow !== false ? `0 6px 16px ${button.shadowColor || 'rgba(0,0,0,0.2)'}` : 'none'};
         }
         .sc-chat-bubble svg {
           width: 28px;
@@ -104,10 +173,10 @@
         }
 
         .sc-chat-window {
-          width: 400px;
-          height: 650px;
-          background: #f8f9fa;
-          border-radius: 16px;
+          width: ${windowWidth}px;
+          height: ${windowHeight}px;
+          background: ${backgroundColor};
+          border-radius: ${windowRadius}px;
           box-shadow: 0 10px 40px rgba(0,0,0,0.2);
           display: none;
           flex-direction: column;
@@ -130,10 +199,11 @@
         }
 
         .sc-header {
-          background: linear-gradient(135deg, ${this.config.primaryColor} 0%, ${this.adjustColor(this.config.primaryColor, -20)} 100%);
+          background: ${headerColor};
+          height: ${headerHeight}px;
           color: white;
           padding: 20px;
-          display: flex;
+          display: ${(this.config.window || {}).showHeader !== false ? 'flex' : 'none'};
           justify-content: space-between;
           align-items: center;
         }
@@ -143,8 +213,8 @@
           gap: 12px;
         }
         .sc-header-logo {
-          width: 40px;
-          height: 40px;
+          width: ${(this.config.branding || {}).logoWidth || 40}px;
+          height: ${(this.config.branding || {}).logoHeight || 40}px;
           object-fit: contain;
         }
         .sc-header-text {
@@ -167,7 +237,7 @@
           height: 32px;
           border-radius: 50%;
           cursor: pointer;
-          display: flex;
+          display: ${(this.config.window || {}).showCloseButton !== false ? 'flex' : 'none'};
           align-items: center;
           justify-content: center;
           transition: background 0.2s;
@@ -181,7 +251,7 @@
           flex: 1;
           overflow: hidden;
           position: relative;
-          background: #f8f9fa;
+          background: ${backgroundColor};
         }
 
         .sc-view {
@@ -376,7 +446,7 @@
           flex: 1;
           overflow-y: auto;
           padding: 20px;
-          background: #f8f9fa;
+          background: ${backgroundColor};
         }
         .sc-message {
           margin-bottom: 16px;
@@ -395,20 +465,20 @@
         .sc-message-content {
           max-width: 75%;
           padding: 12px 16px;
-          border-radius: 12px;
+          border-radius: ${messageBubbleRadius}px;
           word-wrap: break-word;
           line-height: 1.4;
         }
         .sc-message.visitor .sc-message-content {
-          background: ${this.config.primaryColor};
+          background: ${visitorMsgBg};
           color: white;
           margin-left: auto;
           border-bottom-right-radius: 4px;
         }
         .sc-message.agent .sc-message-content,
         .sc-message.bot .sc-message-content {
-          background: white;
-          color: #333;
+          background: ${agentMsgBg};
+          color: ${textColor};
           border-bottom-left-radius: 4px;
         }
         .sc-message-sender {
@@ -496,20 +566,25 @@
         }
         .sc-input {
           flex: 1;
-          border: 1px solid #e5e5e5;
+          border: 1px solid ${borderColor};
           border-radius: 20px;
           padding: 10px 16px;
           font-size: 14px;
           outline: none;
           resize: none;
           max-height: 100px;
-          font-family: inherit;
+          font-family: ${fontFamily};
+          color: ${textColor};
+          background: ${backgroundColor};
         }
         .sc-input:focus {
-          border-color: ${this.config.primaryColor};
+          border-color: ${primaryColor};
+        }
+        .sc-input::placeholder {
+          color: ${textSecondaryColor};
         }
         .sc-send-btn {
-          background: ${this.config.primaryColor};
+          background: ${primaryColor};
           color: white;
           border: none;
           width: 40px;
@@ -774,6 +849,8 @@
             opacity: 0;
           }
         }
+        
+        ${advanced.customCSS || ''}
       `;
       document.head.appendChild(style);
     }
@@ -803,9 +880,21 @@
 
     createWidget() {
       const container = document.createElement('div');
-      container.className = `sc-widget-container ${this.config.position}`;
+      const position = this.config.button?.position || this.config.position || 'bottom-right';
+      container.className = `sc-widget-container ${position}`;
       
-      const brandInitials = this.config.brandName.substring(0, 2).toUpperCase();
+      const branding = this.config.branding || {};
+      const brandName = branding.brandName || this.config.brandName || 'Support';
+      const logoUrl = branding.logo 
+        ? (branding.logo.startsWith('http') ? branding.logo : `${API_URL}${branding.logo}`)
+        : null;
+      const showBrandName = branding.showBrandName !== false;
+      const logoWidth = branding.logoWidth || 40;
+      const logoHeight = branding.logoHeight || 40;
+      
+      const messagesConfig = this.config.messages || {};
+      const welcomeMessage = messagesConfig.welcomeMessage || 'Hi! How can we help you today?';
+      const placeholderText = messagesConfig.placeholderText || 'Type your message...';
       
       container.innerHTML = `
         <div class="sc-chat-bubble" id="sc-bubble">
@@ -815,20 +904,26 @@
         </div>
 
         <div class="sc-chat-window" id="sc-chat-window">
+          ${this.config.window?.showHeader !== false ? `
           <div class="sc-header">
             <div class="sc-header-info">
-              <img src="http://localhost:5000/support.io_logo.webp" class="sc-header-logo" alt="${this.config.brandName}" />
+              ${logoUrl ? `<img src="${logoUrl}" class="sc-header-logo" alt="${brandName}" style="width: ${logoWidth}px; height: ${logoHeight}px;" />` : ''}
+              ${showBrandName ? `
               <div class="sc-header-text">
-                <div class="sc-header-title">${this.config.brandName}</div>
+                <div class="sc-header-title">${brandName}</div>
                 <div class="sc-header-subtitle">We're here to help!</div>
               </div>
+              ` : ''}
             </div>
+            ${this.config.window?.showCloseButton !== false ? `
             <button class="sc-close-btn" id="sc-close">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
                 <path d="M15 1L1 15M1 1l14 14" stroke="currentColor" stroke-width="2"/>
               </svg>
             </button>
+            ` : ''}
           </div>
+          ` : ''}
 
           <div class="sc-content">
             <!-- Home View -->
@@ -893,7 +988,7 @@
                   <textarea 
                     class="sc-input" 
                     id="sc-input" 
-                    placeholder="Type your message..."
+                    placeholder="${placeholderText}"
                     rows="1"
                   ></textarea>
                   <button class="sc-send-btn" id="sc-send">
@@ -1105,6 +1200,23 @@
           this.siteSettings = data.site;
           this.messagesEnabled = data.site.isActive || false;
           
+          // Merge widget config if available
+          if (data.config) {
+            this.widgetConfig = data.config;
+            // Update config with widget config values
+            if (data.config.colors) {
+              this.config.colors = { ...this.config.colors, ...data.config.colors };
+            }
+            if (data.config.branding) {
+              this.config.branding = { ...this.config.branding, ...data.config.branding };
+            }
+            if (data.config.messages) {
+              this.config.messages = { ...this.config.messages, ...data.config.messages };
+            }
+            // Re-inject styles with updated config
+            this.injectStyles();
+          }
+          
           if (!this.messagesEnabled) {
             this.elements.navMessages.classList.add('disabled');
           }
@@ -1214,6 +1326,9 @@
           console.log('❌ Widget socket disconnected');
         });
 
+        // keep track of fatal configuration errors to stop further interaction
+        this.hasFatalError = false;
+
         this.socket.on('conversation-joined', (data) => {
           if (data.conversation) {
             console.log('🎯 Conversation joined:', data.conversation._id);
@@ -1227,7 +1342,7 @@
               _id: 'welcome-' + Date.now(),
               senderType: 'bot',
               senderName: 'Support',
-              content: data.welcomeMessage || 'Hi! How can we help you today?',
+              content: data.welcomeMessage || this.config.messages?.welcomeMessage || 'Hi! How can we help you today?',
               createdAt: new Date(),
               isLocal: true // Mark as local message
             };
@@ -1258,6 +1373,16 @@
 
         this.socket.on('error', (data) => {
           console.error('Support.io error:', data.message);
+          // show feedback in widget in case of connectivity or configuration issues
+          this.addSystemMessage(data.message || 'An error occurred');
+          if (data.message && data.message.toLowerCase().includes('site organization')) {
+            this.hasFatalError = true;
+          }
+          try {
+            window.postMessage({ type: 'widget-error', message: data.message }, '*');
+          } catch (e) {
+            // ignore if posting not allowed
+          }
         });
       };
       document.head.appendChild(script);
@@ -1265,6 +1390,11 @@
 
     joinConversation() {
       if (!this.socket) return;
+      if (!this.config.siteKey) {
+        console.error('Cannot join conversation: missing siteKey');
+        this.addSystemMessage('Widget configuration error: missing site key');
+        return;
+      }
 
       console.log('🏠 Joining conversation...', {
         siteKey: this.config.siteKey,
@@ -1286,6 +1416,10 @@
     }
 
     async sendMessage() {
+      if (this.hasFatalError) {
+        this.addSystemMessage('Unable to send message: configuration error');
+        return;
+      }
       const content = this.elements.input.value.trim();
       if ((!content && !this.selectedFile) || !this.socket) return;
 
@@ -1390,6 +1524,18 @@
     renderMessages(messages) {
       this.elements.messages.innerHTML = '';
       messages.forEach(msg => this.addMessage(msg));
+      this.scrollToBottom();
+    }
+
+    addSystemMessage(text) {
+      const sysMsg = {
+        _id: 'sys-' + Date.now(),
+        senderType: 'bot',
+        senderName: 'System',
+        content: text,
+        createdAt: new Date()
+      };
+      this.addMessage(sysMsg);
       this.scrollToBottom();
     }
 
