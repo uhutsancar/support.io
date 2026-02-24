@@ -4,6 +4,7 @@ const router = express.Router();
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { auth } = require('../middleware/auth');
+const events = require('../events');
 
 // helper to avoid unhandled CastErrors
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -630,11 +631,22 @@ router.put('/:conversationId/status', auth, async (req, res) => {
       const { updateAgentLoad } = require('../services/autoAssignment');
       await updateAgentLoad(conversation.assignedAgent, -1);
     }
-    
+    const previousStatus = conversation.status;
     conversation.status = status;
     
     if (status === 'closed') {
       conversation.closedAt = new Date();
+      // emit ticket closed event
+      try {
+        events.emit('ticket.closed', {
+          organizationId: orgId,
+          userId: req.user ? req.user._id : null,
+          entityId: conversation._id,
+          metadata: { previousStatus },
+          ip: req.ip,
+          ua: req.get('user-agent')
+        });
+      } catch (e) { console.warn('emit ticket.closed failed', e.message); }
     } else if (status === 'resolved') {
       conversation.resolvedAt = new Date();
       
@@ -702,6 +714,19 @@ router.put('/:conversationId/status', auth, async (req, res) => {
           conversationId: conversation._id,
           conversation
         });
+      }
+      // emit reopen event when changing from closed -> open/assigned/etc.
+      if (previousStatus === 'closed' && status !== 'closed') {
+        try {
+          events.emit('ticket.reopened', {
+            organizationId: orgId,
+            userId: req.user ? req.user._id : null,
+            entityId: conversation._id,
+            metadata: { previousStatus },
+            ip: req.ip,
+            ua: req.get('user-agent')
+          });
+        } catch (e) { console.warn('emit ticket.reopened failed', e.message); }
       }
     }
 

@@ -21,6 +21,7 @@ const filesRoutes = require('./routes/files');
 const departmentRoutes = require('./routes/departments');
 const teamRoutes = require('./routes/team');
 const teamChatRoutes = require('./routes/teamChat');
+const auditRoutes = require('./routes/audit');
 
 const app = express();
 const server = http.createServer(app);
@@ -101,6 +102,9 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/team', teamRoutes);
 app.use('/api/team-chat', teamChatRoutes);
 app.use('/api/widget-config', require('./routes/widgetConfig'));
+// initialize audit service (event listeners)
+require('./services/auditService');
+app.use('/api/audit', auditRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ 

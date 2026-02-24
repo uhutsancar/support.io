@@ -1,0 +1,14 @@
+:80
+
+handle_path /api/* {
+    reverse_proxy backend:3000
+}
+
+handle {
+    reverse_proxy admin:5173
+}
+
+# Basic security headers
+header {
+    Strict-Transport-Security "max-age=31536000;"
+}

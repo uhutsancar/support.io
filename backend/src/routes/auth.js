@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Team = require('../models/Team');
 const Organization = require('../models/Organization');
 const { auth } = require('../middleware/auth');
+const events = require('../events');
 
 const validateRegistration = [
   body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
@@ -89,11 +90,24 @@ router.post('/login', validateLogin, async (req, res) => {
     }
     
     if (!user) {
+      // Emit login failure (unknown user) - attempt to resolve org from host
+      const host = req.get('host');
+      let orgId = null;
+      try {
+        const Site = require('../models/Site');
+        const site = await Site.findOne({ domain: host }).select('organizationId');
+        if (site && site.organizationId) orgId = site.organizationId;
+      } catch (e) {
+        // ignore
+      }
+      events.emit('auth.login.failure', { organizationId: orgId, userId: null, metadata: { email }, ip: req.ip, ua: req.get('user-agent') });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      // login failure for known user
+      events.emit('auth.login.failure', { organizationId: user.organizationId, userId: user._id, metadata: { reason: 'invalid_password' }, ip: req.ip, ua: req.get('user-agent') });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -114,6 +128,9 @@ router.post('/login', validateLogin, async (req, res) => {
     const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: '7d' });
     user.status = 'online';
     await user.save();
+
+    // Emit login success
+    events.emit('auth.login.success', { organizationId: user.organizationId, userId: user._id, metadata: { userType }, ip: req.ip, ua: req.get('user-agent') });
 
     res.json({
       user: {

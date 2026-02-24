@@ -7,6 +7,7 @@ const Conversation = require('../models/Conversation');
 const Site = require('../models/Site');
 const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
+const events = require('../events');
 
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
@@ -112,6 +113,8 @@ router.put('/:id', auth, checkPermission('manage_team'), async (req, res) => {
     }
     
     const oldMembers = department.members.map(m => m.userId.toString());
+    const oldSla = JSON.stringify(department.sla || {});
+    const oldBusinessHours = JSON.stringify(department.businessHours || {});
     const newMembers = members?.map(m => m.userId) || [];
     
     const removedMembers = oldMembers.filter(id => !newMembers.includes(id));
@@ -127,6 +130,24 @@ router.put('/:id', auth, checkPermission('manage_team'), async (req, res) => {
     if (isActive !== undefined) department.isActive = isActive;
     
     await department.save();
+
+    // Emit SLA update audit event when SLA or business hours changed
+    try {
+      const newSla = JSON.stringify(department.sla || {});
+      const newBusinessHours = JSON.stringify(department.businessHours || {});
+      if (oldSla !== newSla || oldBusinessHours !== newBusinessHours) {
+        events.emit('sla.updated', {
+          organizationId: req.organization?._id || req.user.organizationId,
+          userId: req.user ? req.user._id : null,
+          entityId: department._id,
+          metadata: { previous: JSON.parse(oldSla), current: JSON.parse(newSla), previousBusinessHours: JSON.parse(oldBusinessHours), currentBusinessHours: JSON.parse(newBusinessHours) },
+          ip: req.ip,
+          ua: req.get('user-agent')
+        });
+      }
+    } catch (e) {
+      console.warn('emit sla.updated failed', e.message);
+    }
     
     if (removedMembers.length > 0) {
       for (const memberId of removedMembers) {
