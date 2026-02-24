@@ -270,4 +270,9 @@ export const widgetConfigAPI = {
   getPublicConfig: (siteKey) => api.get(`/widget-config/public/${siteKey}`, { cache: false }),
 };
 
+export const auditAPI = {
+  // params: { action, start, end, page, limit }
+  getAll: (params) => api.get('/audit', { params })
+};
+
 export default api;

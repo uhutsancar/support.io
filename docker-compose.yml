@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # wait for mongo to be reachable before starting nodemon directly
+    command: sh -c "until nc -z mongo 27017; do echo waiting for mongo; sleep 1; done; ./node_modules/.bin/nodemon src/server.js"
+    working_dir: /usr/src/backend
+    volumes:
+      - ./backend:/usr/src/backend
+      - backend_node_modules:/usr/src/backend/node_modules
+      - ./uploads:/usr/src/backend/uploads
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo:27017/supportchat
+    ports:
+      - "5000:3000"
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin-panel
+      dockerfile: Dockerfile
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    working_dir: /usr/src/admin-panel
+    volumes:
+      - ./admin-panel:/usr/src/admin-panel
+      - admin_node_modules:/usr/src/admin-panel/node_modules
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: "http://localhost:5000"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - admin
+      - backend
+
+volumes:
+  mongo_data:
+  backend_node_modules:
+  admin_node_modules:

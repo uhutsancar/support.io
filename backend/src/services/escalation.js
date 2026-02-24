@@ -1,6 +1,7 @@
 const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
 const { autoAssignConversation } = require('./autoAssignment');
+const events = require('../events');
 
 /**
  * Escalation Service
@@ -112,6 +113,20 @@ async function handleSLABreach(conversation, organizationId, io) {
     }
     
     console.log(`🚨 SLA Breach: Ticket ${conversation.ticketId} breached, team leads notified`);
+
+    // Emit audit event for SLA breach
+    try {
+      events.emit('sla.breach', {
+        organizationId,
+        userId: conversation.assignedAgent || null,
+        entityId: conversation._id,
+        metadata: breachData,
+        ip: null,
+        ua: null
+      });
+    } catch (e) {
+      console.warn('Failed to emit sla.breach event:', e.message);
+    }
     
     return breachData;
   } catch (error) {

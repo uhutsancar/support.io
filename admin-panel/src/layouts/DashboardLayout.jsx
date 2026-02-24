@@ -146,6 +146,7 @@ const DashboardLayout = () => {
     add({ path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') });
       add({ path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') });
       add({ path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') });
+      add({ path: `${langPrefix}/dashboard/audit-logs`, icon: Bell, label: t('sidebar.auditLogs') });
       add({ path: `${langPrefix}/dashboard/team-chat`, icon: MessagesSquare, label: t('sidebar.teamChat') });
       add({ path: `${langPrefix}/dashboard/faqs`, icon: HelpCircle, label: t('sidebar.faqs') });
       add({ path: `${langPrefix}/dashboard/settings`, icon: Settings, label: t('sidebar.settings') });

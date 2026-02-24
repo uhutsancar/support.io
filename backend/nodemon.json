@@ -1,0 +1,10 @@
+{
+  "watch": ["src"],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules/**",
+    "../admin-panel/**",
+    "../uploads/**",
+    "**/*.log"
+  ]
+}

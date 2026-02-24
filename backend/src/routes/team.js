@@ -6,6 +6,7 @@ const Conversation = require('../models/Conversation');
 const Department = require('../models/Department');
 const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
+const events = require('../events');
 
 router.get('/', auth, async (req, res) => {
   try {
@@ -137,6 +138,15 @@ router.post('/', auth, checkPermission('manage_users'), async (req, res) => {
     }
     
     res.status(201).json(memberData);
+    // emit domain event for audit service
+    events.emit('agent.created', {
+      organizationId: orgId,
+      userId: req.user ? req.user._id : null,
+      entityId: memberData._id,
+      metadata: { name: memberData.name, email: memberData.email },
+      ip: req.ip,
+      ua: req.get('user-agent')
+    });
   } catch (error) {
     console.error('❌ Error creating team member:', error);
     res.status(500).json({ error: 'Failed to create team member' });
@@ -146,18 +156,11 @@ router.post('/', auth, checkPermission('manage_users'), async (req, res) => {
 router.put('/:id', auth, checkPermission('manage_users'), async (req, res) => {
   try {
     const { name, role, assignedSites, status, permissions, preferences, isActive } = req.body;
-    
-    const updateData = {
-      name,
-      role,
-      assignedSites,
-      status,
-      permissions,
-      preferences,
-      isActive
-    };
-    
+    const updateData = { name, role, assignedSites, status, permissions, preferences, isActive };
     const orgId = req.organization?._id || req.user.organizationId;
+    const existing = await Team.findOne({ _id: req.params.id, ...(orgId ? { organizationId: orgId } : {}) });
+    if (!existing) return res.status(404).json({ error: 'Team member not found' });
+    const previousRole = existing.role;
     const member = await Team.findOneAndUpdate(
       { _id: req.params.id, ...(orgId ? { organizationId: orgId } : {}) },
       updateData,
@@ -166,11 +169,18 @@ router.put('/:id', auth, checkPermission('manage_users'), async (req, res) => {
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .populate('assignedSites', 'name domain');
-    
-    if (!member) {
-      return res.status(404).json({ error: 'Team member not found' });
+    // if role changed, emit role update event
+    if (previousRole && role && previousRole !== role) {
+      events.emit('agent.role.updated', {
+        organizationId: orgId,
+        userId: req.user ? req.user._id : null,
+        entityId: member._id,
+        metadata: { previousRole, newRole: role },
+        ip: req.ip,
+        ua: req.get('user-agent')
+      });
     }
-    
+
     res.json(member);
   } catch (error) {
     console.error('Error updating team member:', error);
@@ -292,6 +302,15 @@ router.delete('/:id', auth, checkPermission('manage_users'), async (req, res) =>
       // Notify the user's personal room
       io.of('/admin').to(`user:${req.params.id}`).emit('team-member-deleted', { userId: req.params.id });
     }
+    // emit agent deleted event for audit
+    events.emit('agent.deleted', {
+      organizationId: orgId,
+      userId: req.user ? req.user._id : null,
+      entityId: req.params.id,
+      metadata: { email: member.email, name: member.name },
+      ip: req.ip,
+      ua: req.get('user-agent')
+    });
     
     res.json({ message: 'Team member deleted successfully' });
   } catch (error) {
