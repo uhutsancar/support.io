@@ -33,6 +33,7 @@ export default {
   sidebar: {
     dashboard: 'Dashboard',
     sites: 'Sites',
+    auditLogs: 'Audit Logs',
     conversations: 'Conversations',
     inbox: 'Inbox',
     assignedTickets: 'Assigned Tickets',
@@ -45,6 +46,19 @@ export default {
     faqs: 'FAQs',
     settings: 'Settings',
     logout: 'Log Out',
+  },
+  audit: {
+    time: 'Time',
+    action: 'Action',
+    entity: 'Entity',
+    entityId: 'Entity ID',
+    user: 'User',
+    ip: 'IP',
+    metadata: 'Metadata',
+    expand: 'Expand',
+    collapse: 'Collapse',
+    copy: 'Copy',
+    noRecords: 'No records',
   },
   teamChat: {
     title: 'Team Chat',

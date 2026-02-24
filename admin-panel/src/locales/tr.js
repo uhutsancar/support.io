@@ -33,6 +33,7 @@ export default {
   sidebar: {
     dashboard: 'Gösterge Paneli',
     sites: 'Siteler',
+    auditLogs: 'Denetim Kayıtları',
     conversations: 'Konuşmalar',
     inbox: 'Gelen Kutusu',
     assignedTickets: 'Atanan Talepler',
@@ -45,6 +46,19 @@ export default {
     faqs: 'SSS',
     settings: 'Ayarlar',
     logout: 'Çıkış Yap',
+  },
+  audit: {
+    time: 'Zaman',
+    action: 'Aksiyon',
+    entity: 'Varlık',
+    entityId: 'Varlık ID',
+    user: 'Kullanıcı',
+    ip: 'IP',
+    metadata: 'Metadata',
+    expand: 'Genişlet',
+    collapse: 'Daralt',
+    copy: 'Kopyala',
+    noRecords: 'Kayıt yok',
   },
   teamChat: {
     title: 'Ekip İçi Sohbet',
