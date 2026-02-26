@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const teamChatSchema = new mongoose.Schema({
   chatId: {
     type: String,
@@ -33,5 +32,4 @@ const teamChatSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 module.exports = mongoose.model('TeamChat', teamChatSchema);

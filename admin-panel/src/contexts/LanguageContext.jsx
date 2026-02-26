@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-
 const LanguageContext = createContext();
-
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (!context) {
@@ -11,18 +9,14 @@ export const useLanguage = () => {
   }
   return context;
 };
-
 export const LanguageProvider = ({ children }) => {
   const { i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  
   const getLanguageFromPath = () => {
     return location.pathname.startsWith('/en') ? 'en' : 'tr';
   };
-
   const [language, setLanguage] = useState(getLanguageFromPath);
-
   useEffect(() => {
     const newLang = getLanguageFromPath();
     if (newLang !== language) {
@@ -31,16 +25,13 @@ export const LanguageProvider = ({ children }) => {
       localStorage.setItem('language', newLang);
     }
   }, [location.pathname]);
-
   useEffect(() => {
     i18n.changeLanguage(language);
     localStorage.setItem('language', language);
   }, [language, i18n]);
-
   const toggleLanguage = () => {
     const newLang = language === 'tr' ? 'en' : 'tr';
     const currentPath = location.pathname;
-    
     if (newLang === 'en') {
       if (!currentPath.startsWith('/en')) {
         navigate('/en' + currentPath);
@@ -51,7 +42,6 @@ export const LanguageProvider = ({ children }) => {
       }
     }
   };
-
   const setTurkish = () => {
     if (language !== 'tr') {
       const currentPath = location.pathname;
@@ -60,7 +50,6 @@ export const LanguageProvider = ({ children }) => {
       }
     }
   };
-
   const setEnglish = () => {
     if (language !== 'en') {
       const currentPath = location.pathname;
@@ -69,7 +58,6 @@ export const LanguageProvider = ({ children }) => {
       }
     }
   };
-
   return (
     <LanguageContext.Provider value={{ 
       language, 

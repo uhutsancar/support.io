@@ -1,10 +1,5 @@
 const events = require('../events');
 const AuditLog = require('../models/AuditLog');
-
-/**
- * Centralized audit service. Listens to domain events and writes immutable audit records.
- * Use: events.emit('agent.created', { organizationId, userId, entityId, metadata, ip, ua })
- */
 const ACTIONS = {
   AUTH_SUCCESS: 'LOGIN_SUCCESS',
   AUTH_FAILED: 'LOGIN_FAILED',
@@ -17,11 +12,8 @@ const ACTIONS = {
   TICKET_REOPENED: 'TICKET_REOPENED',
   SLA_BREACH: 'SLA_BREACH'
 };
-
 async function logAction({ organizationId, userId = null, action, entityType = null, entityId = null, metadata = {}, ipAddress = null, userAgent = null }) {
   if (!action) throw new Error('action is required for audit log');
-
-  // organizationId is strongly recommended; allow null for unknown-org login attempts
   const doc = new AuditLog({
     organizationId: organizationId || null,
     userId: userId || null,
@@ -32,13 +24,9 @@ async function logAction({ organizationId, userId = null, action, entityType = n
     ipAddress: ipAddress || null,
     userAgent: userAgent || null
   });
-
-  // write-only: do not return sensitive data
   await doc.save();
   return true;
 }
-
-// Event bindings
 events.on('auth.login.success', async (payload) => {
   try {
     await logAction({
@@ -52,10 +40,8 @@ events.on('auth.login.success', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for auth.login.success:', e.message);
   }
 });
-
 events.on('auth.login.failure', async (payload) => {
   try {
     await logAction({
@@ -69,10 +55,8 @@ events.on('auth.login.failure', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for auth.login.failure:', e.message);
   }
 });
-
 events.on('agent.created', async (payload) => {
   try {
     await logAction({
@@ -86,10 +70,8 @@ events.on('agent.created', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for agent.created:', e.message);
   }
 });
-
 events.on('agent.deleted', async (payload) => {
   try {
     await logAction({
@@ -103,10 +85,8 @@ events.on('agent.deleted', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for agent.deleted:', e.message);
   }
 });
-
 events.on('agent.role.updated', async (payload) => {
   try {
     await logAction({
@@ -120,10 +100,8 @@ events.on('agent.role.updated', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for agent.role.updated:', e.message);
   }
 });
-
 events.on('plan.changed', async (payload) => {
   try {
     await logAction({
@@ -137,10 +115,8 @@ events.on('plan.changed', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for plan.changed:', e.message);
   }
 });
-
 events.on('sla.updated', async (payload) => {
   try {
     await logAction({
@@ -154,10 +130,8 @@ events.on('sla.updated', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for sla.updated:', e.message);
   }
 });
-
 events.on('ticket.closed', async (payload) => {
   try {
     await logAction({
@@ -171,10 +145,8 @@ events.on('ticket.closed', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for ticket.closed:', e.message);
   }
 });
-
 events.on('ticket.reopened', async (payload) => {
   try {
     await logAction({
@@ -188,10 +160,8 @@ events.on('ticket.reopened', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for ticket.reopened:', e.message);
   }
 });
-
 events.on('sla.breach', async (payload) => {
   try {
     await logAction({
@@ -205,10 +175,8 @@ events.on('sla.breach', async (payload) => {
       userAgent: payload.ua
     });
   } catch (e) {
-    console.warn('Audit log failed for sla.breach:', e.message);
   }
 });
-
 module.exports = {
   logAction
 };

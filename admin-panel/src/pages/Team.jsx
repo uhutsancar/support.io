@@ -7,16 +7,14 @@ import toast from 'react-hot-toast';
 import { teamAPI, sitesAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import io from 'socket.io-client';
-import { 
-  Users, Plus, Edit, Trash2, UserCheck, UserX, 
-  Shield, Activity, MessageSquare, Clock, Search, Filter, Globe 
+import {
+  Users, Plus, Edit, Trash2, UserCheck, UserX,
+  Shield, Activity, MessageSquare, Clock, Search, Filter, Globe
 } from 'lucide-react';
-
 const Team = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  
   const langPrefix = language === 'en' ? '/en' : '';
   const routes = {
     sites: `${langPrefix}/dashboard/sites`
@@ -32,62 +30,50 @@ const Team = () => {
   const [loading, setLoading] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, userId: null, userName: '' });
   const [socket, setSocket] = useState(null);
-
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-
     const socketUrl = import.meta.env.VITE_API_URL + '/admin';
     const newSocket = io(socketUrl, {
       auth: { token }
     });
-
     newSocket.on('connect', () => {
     });
-
     newSocket.on('agent-status-changed', ({ userId, status }) => {
-      setTeam(prevTeam => 
-        prevTeam.map(member => 
+      setTeam(prevTeam =>
+        prevTeam.map(member =>
           member._id === userId ? { ...member, status } : member
         )
       );
     });
-
     newSocket.on('team-member-added', (newMember) => {
       setTeam(prevTeam => [...prevTeam, newMember]);
-      toast.success('Yeni ekip üyesi eklendi');
+      toast.success(t('team.createSuccess', 'Yeni ekip üyesi eklendi'));
     });
-
     newSocket.on('team-member-updated', (updatedMember) => {
-      setTeam(prevTeam => 
-        prevTeam.map(member => 
+      setTeam(prevTeam =>
+        prevTeam.map(member =>
           member._id === updatedMember._id ? updatedMember : member
         )
       );
     });
-
     newSocket.on('team-member-deleted', ({ userId }) => {
       setTeam(prevTeam => prevTeam.filter(member => member._id !== userId));
-      toast.success('Ekip üyesi silindi');
+      toast.success(t('team.deleteSuccess', 'Ekip üyesi silindi'));
     });
-
     setSocket(newSocket);
-
     return () => {
       newSocket.disconnect();
     };
   }, []);
-
   useEffect(() => {
     fetchSites();
   }, []);
-
   useEffect(() => {
     if (selectedSite) {
       fetchTeam();
     }
   }, [selectedSite]);
-
   const fetchSites = async () => {
     try {
       setLoading(true);
@@ -99,58 +85,47 @@ const Team = () => {
         setLoading(false);
       }
     } catch (error) {
-      console.error('Error fetching sites:', error);
       setLoading(false);
     }
   };
-
   const fetchTeam = async () => {
     try {
       setLoading(true);
       const response = await teamAPI.getAll(selectedSite);
       setTeam(response.data || []);
     } catch (error) {
-      console.error('❌ Error fetching team:', error);
       setTeam([]);
     } finally {
       setLoading(false);
     }
   };
-
   const handleStatusChange = async (userId, status) => {
     try {
       await teamAPI.updateStatus(userId, status);
       await fetchTeam();
     } catch (error) {
-      console.error('Error updating status:', error);
     }
   };
-
   const handleDeleteMember = async () => {
     const { userId } = confirmDialog;
-    
     try {
       const response = await teamAPI.delete(userId);
       await fetchTeam();
       toast.success(t('team.deleteSuccess'));
     } catch (error) {
-      console.error('❌ Error deleting member:', error);
       toast.error(error.response?.data?.error || t('team.deleteError'));
     }
   };
-
   const openDeleteConfirm = (userId, userName) => {
     setConfirmDialog({ isOpen: true, userId, userName });
   };
-
   const filteredTeam = team.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchTerm.toLowerCase());
+      member.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
     return matchesSearch && matchesStatus && matchesRole;
   });
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'online': return 'bg-green-500';
@@ -160,7 +135,6 @@ const Team = () => {
       default: return 'bg-gray-400';
     }
   };
-
   const getRoleBadge = (role) => {
     const colors = {
       owner: 'bg-purple-100 text-purple-800',
@@ -170,13 +144,11 @@ const Team = () => {
     };
     return colors[role] || colors.agent;
   };
-
   return (
     <div className="p-6">
       <Helmet>
         <title>{`${t('team.title') || ''} - DestekChat`}</title>
       </Helmet>
-
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
@@ -196,7 +168,6 @@ const Team = () => {
             {t('team.addMember')}
           </button>
         </div>
-
         <div className="mt-4">
           <select
             value={selectedSite || ''}
@@ -210,7 +181,6 @@ const Team = () => {
           </select>
         </div>
       </div>
-
       <div className="mb-6 flex flex-wrap gap-4">
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
@@ -224,7 +194,6 @@ const Team = () => {
             />
           </div>
         </div>
-        
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -236,7 +205,6 @@ const Team = () => {
           <option value="busy">{t('team.filters.busy')}</option>
           <option value="away">{t('team.filters.away')}</option>
         </select>
-
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
@@ -249,7 +217,6 @@ const Team = () => {
           <option value="agent">{t('team.filters.agent')}</option>
         </select>
       </div>
-
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -289,7 +256,6 @@ const Team = () => {
                   </div>
                 </div>
               </div>
-
               <div className="space-y-2 mb-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">{t('team.modal.role')}</span>
@@ -297,9 +263,8 @@ const Team = () => {
                     {t(`team.filters.${member.role}`)}
                   </span>
                 </div>
-                
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('team.status', 'Durum')}</span>
                   <select
                     value={member.status}
                     onChange={(e) => handleStatusChange(member._id, e.target.value)}
@@ -311,7 +276,6 @@ const Team = () => {
                     <option value="away">{t('team.filters.away')}</option>
                   </select>
                 </div>
-
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     <MessageSquare className="w-4 h-4 inline mr-1" />
@@ -321,7 +285,6 @@ const Team = () => {
                     {member.stats?.activeConversations || 0}
                   </span>
                 </div>
-
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600 dark:text-gray-400">
                     <Activity className="w-4 h-4 inline mr-1" />
@@ -331,7 +294,6 @@ const Team = () => {
                     {member.stats?.resolvedConversations || 0}
                   </span>
                 </div>
-
                 {member.departments && member.departments.length > 0 && (
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                     <span className="text-xs text-gray-500 dark:text-gray-400">{t('team.departments')}:</span>
@@ -345,7 +307,6 @@ const Team = () => {
                   </div>
                 )}
               </div>
-
               <div className="flex gap-2">
                 <button
                   onClick={() => setSelectedMember(member)}
@@ -365,7 +326,6 @@ const Team = () => {
           ))}
         </div>
       )}
-
       {(showAddModal || selectedMember) && (
         <AddEditMemberModal
           member={selectedMember}
@@ -377,27 +337,24 @@ const Team = () => {
           }}
           onSave={async (newMember) => {
             await fetchTeam();
-            console.log('✅ fetchTeam completed');
             setShowAddModal(false);
             setSelectedMember(null);
           }}
         />
       )}
-
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, userId: null, userName: '' })}
         onConfirm={handleDeleteMember}
-        title="Ekip Üyesini Sil"
-        message={`"${confirmDialog.userName}" adlı ekip üyesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Evet, Sil"
-        cancelText="İptal"
+        title={t('team.deleteMember', 'Ekip Üyesini Sil')}
+        message={t('team.deleteMessage', '"{name}" adlı ekip üyesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.', { name: confirmDialog.userName })}
+        confirmText={t('team.deleteYes', 'Evet, Sil')}
+        cancelText={t('team.modal.cancel', 'İptal')}
         type="danger"
       />
     </div>
   );
 };
-
 const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
@@ -414,43 +371,25 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
       canDeleteConversations: false
     }
   });
-
   const [saving, setSaving] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    console.log('📝 Submitting team member data:', formData);
-    console.log('🎯 assignedSites:', formData.assignedSites);
     setSaving(true);
-
     try {
       let response;
       if (member) {
         response = await teamAPI.update(member._id, formData);
-        console.log('✅ Team member updated:', response.data);
       } else {
         response = await teamAPI.create(formData);
-        console.log('✅ Team member created:', response.data);
-        console.log('🔍 Created user assignedSites:', response.data.assignedSites);
-        console.log('📦 Full response.data:', JSON.stringify(response.data, null, 2));
       }
-      
-      console.log('💾 Calling onSave...');
-      // CRITICAL: Wait for data refresh to complete
-      // Let parent handle data refresh and modal closing
       await onSave(member ? null : response.data);
-      console.log('✅ onSave completed');
       toast.success(member ? t('team.updateSuccess') : t('team.createSuccess'));
       setSaving(false);
     } catch (error) {
-      console.error('❌ Error saving member:', error);
-      console.error('Error details:', error.response?.data);
       toast.error(error.response?.data?.error || error.message || t('team.saveError'));
       setSaving(false);
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -458,7 +397,6 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
           <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
             {member ? t('team.modal.editTitle') : t('team.modal.addTitle')}
           </h2>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -472,7 +410,6 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('team.modal.email')} *
@@ -485,7 +422,6 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
-
             {!member && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -500,7 +436,6 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
                 />
               </div>
             )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('team.modal.role')}
@@ -515,7 +450,6 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
                 <option value="admin">{t('team.filters.admin')}</option>
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('team.modal.permissions')}
@@ -537,7 +471,6 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
                 ))}
               </div>
             </div>
-
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
@@ -560,5 +493,4 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }) =>
     </div>
   );
 };
-
 export default Team;

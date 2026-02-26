@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const faqSchema = new mongoose.Schema({
   siteId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -47,7 +46,5 @@ const faqSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 faqSchema.index({ question: 'text', answer: 'text', keywords: 'text' });
-
 module.exports = mongoose.model('FAQ', faqSchema);

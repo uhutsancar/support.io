@@ -5,17 +5,13 @@ import { useLanguage } from '../contexts/LanguageContext';
 import Header from '../components/Header';
 import featImg from '../public/images/features-1.jpg';
 import { ArrowRight } from 'lucide-react';
-
 const slugify = (s) => s.toString().toLowerCase().replace(/[^a-z0-9ğüşıöçàáâãäåæèéêëìíîïòóôõöùúûüýÿß -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
-
 const FeatureDetail = () => {
   const { slug } = useParams();
   const { t } = useTranslation();
   const { language } = useLanguage();
   const features = t('featuresPage.features', { returnObjects: true }) || [];
-
   const feature = features.find(f => slugify(f.title) === slug);
-
   if (!feature) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -27,9 +23,7 @@ const FeatureDetail = () => {
       </div>
     );
   }
-
   const routesBase = language === 'en' ? '/en/features' : '/ozellikler';
-
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <Header />
@@ -38,11 +32,9 @@ const FeatureDetail = () => {
           <div className="lg:col-span-2">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{feature.title}</h1>
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">{feature.description}</p>
-
             <div className="rounded-2xl overflow-hidden shadow-lg mb-6">
               <img src={featImg} alt={feature.title} className="w-full h-auto object-cover block" />
             </div>
-
             {feature.details ? (
               <div className="prose prose-lg dark:prose-invert text-gray-700 dark:text-gray-300">
                 <div dangerouslySetInnerHTML={{ __html: feature.details }} />
@@ -56,7 +48,6 @@ const FeatureDetail = () => {
               </div>
             )}
           </div>
-
           <aside className="p-6 rounded-xl bg-gray-50 dark:bg-gray-800">
             <h4 className="font-semibold mb-4">Hızlı Bilgiler</h4>
             <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300 mb-6">
@@ -73,5 +64,4 @@ const FeatureDetail = () => {
     </div>
   );
 }
-
 export default FeatureDetail;

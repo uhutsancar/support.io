@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const teamMessageSchema = new mongoose.Schema({
   chatId: {
     type: String,
@@ -33,7 +32,6 @@ const teamMessageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team'
   }],
-  // Group chat metadata (only for group type)
   groupName: String,
   participants: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -42,12 +40,8 @@ const teamMessageSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 teamMessageSchema.index({ chatId: 1, createdAt: 1 });
-
-// Helper to generate consistent direct chat IDs
 teamMessageSchema.statics.getDirectChatId = function(userId1, userId2) {
   return [userId1, userId2].sort().join('_');
 };
-
 module.exports = mongoose.model('TeamMessage', teamMessageSchema);

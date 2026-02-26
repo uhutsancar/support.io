@@ -3,37 +3,35 @@ import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
-import { 
-  MessageSquare, 
-  Globe, 
-  Users, 
-  TrendingUp, 
-  RefreshCw, 
-  AlertCircle, 
+import {
+  MessageSquare,
+  Globe,
+  Users,
+  TrendingUp,
+  RefreshCw,
+  AlertCircle,
   CheckCircle2,
   Clock,
   UserCheck,
   TrendingDown,
-  Activity
+  Activity,
+  Lock
 } from 'lucide-react';
 import { sitesAPI, conversationsAPI, teamAPI, clearCache } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
-
 const Dashboard = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
   const langPrefix = language === 'en' ? '/en' : '';
   const routes = {
     sites: `${langPrefix}/dashboard/sites`,
     conversations: `${langPrefix}/dashboard/conversations`,
     team: `${langPrefix}/dashboard/team`
   };
-  
   const [stats, setStats] = useState({
     openTickets: 0,
     slaBreaches: 0,
@@ -48,47 +46,37 @@ const Dashboard = () => {
     resolvedToday: 0,
     slaComplianceRate: 0
   });
-  
   const [recentTickets, setRecentTickets] = useState([]);
   const [socket, setSocket] = useState(null);
   const { user } = useAuth();
-
+  const plan = user?.organization?.planType || 'FREE';
   useEffect(() => {
     fetchDashboardData();
-    
     const token = localStorage.getItem('token');
     const socketUrl = import.meta.env.VITE_API_URL + '/admin';
     const newSocket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling']
     });
-    
     newSocket.on('connect', () => {
     });
-
-    newSocket.on('new-conversation', (data) =>  {
+    newSocket.on('new-conversation', (data) => {
       fetchDashboardData(true);
     });
     newSocket.on('conversation-assigned', (data) => {
-      // assigned could affect open/unassigned counts for dashboard
       fetchDashboardData(true);
     });
-
     newSocket.on('new-message', (data) => {
-      // new messages can change last message ordering and unread counts
       fetchDashboardData(true);
     });
-    
     newSocket.on('conversation-update', (data) => {
       fetchDashboardData(true);
     });
-
     newSocket.on('sla-breach', (data) => {
       setStats(prev => ({
         ...prev,
         slaBreaches: prev.slaBreaches + 1
       }));
-      
       if (Notification.permission === 'granted') {
         new Notification('SLA İhlali!', {
           body: `Talep #${data.ticketNumber} - ${data.type === 'first-response' ? 'İlk yanıt' : 'Çözüm'} süresi aşıldı`,
@@ -96,41 +84,30 @@ const Dashboard = () => {
           tag: 'sla-breach'
         });
       }
-      
       fetchDashboardData(true);
     });
-
     newSocket.on('conversation-resolved', () => {
       fetchDashboardData(true);
     });
-
     setSocket(newSocket);
-    
-    // Her 1 dakikada bir otomatik güncelle
     const interval = setInterval(() => {
       fetchDashboardData(true);
     }, 60000);
-    
-    // Sayfa görünür hale geldiğinde güncelle
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         fetchDashboardData(true);
       }
     };
-    
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
     if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
       Notification.requestPermission();
     }
-    
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       newSocket.close();
     };
   }, []);
-
   const fetchDashboardData = async (silent = false) => {
     try {
       if (!silent) {
@@ -138,22 +115,16 @@ const Dashboard = () => {
       } else {
         setRefreshing(true);
       }
-      
       clearCache();
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
       const activeSites = sites.filter(site => site.isActive).length;
-
       let allConversations = [];
-
-      // If the current user is an agent, only fetch assigned conversations
       if (user?.role === 'agent') {
         try {
           const assignedResp = await conversationsAPI.getAssigned();
-          // the API returns either { conversations: [...] } or an array
           allConversations = assignedResp.data.conversations || assignedResp.data || [];
         } catch (error) {
-          console.error('Assigned conversations fetch failed:', error);
         }
       } else {
         for (const site of sites) {
@@ -162,23 +133,18 @@ const Dashboard = () => {
             const conversations = conversationsResponse.data.conversations || [];
             allConversations = [...allConversations, ...conversations];
           } catch (error) {
-            console.error('Site conversations fetch failed:', error);
           }
         }
       }
-      
-      const openTickets = allConversations.filter(c => 
+      const openTickets = allConversations.filter(c =>
         c.status === 'open' || c.status === 'assigned' || c.status === 'pending'
       ).length;
-      
-      const unassignedTickets = allConversations.filter(c => 
+      const unassignedTickets = allConversations.filter(c =>
         c.status === 'open' && !c.assignedAgent
       ).length;
-      
-      const slaBreaches = allConversations.filter(c => 
+      const slaBreaches = allConversations.filter(c =>
         c.sla?.firstResponseStatus === 'breached' || c.sla?.resolutionStatus === 'breached'
       ).length;
-      
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const resolvedToday = allConversations.filter(c => {
@@ -188,26 +154,21 @@ const Dashboard = () => {
         }
         return false;
       }).length;
-      
       const conversationsWithResponse = allConversations.filter(c => c.responseTime);
       const avgFirstResponseTime = conversationsWithResponse.length > 0
         ? Math.round(conversationsWithResponse.reduce((sum, c) => sum + (c.responseTime || 0), 0) / conversationsWithResponse.length)
         : 0;
-      
       const conversationsWithResolution = allConversations.filter(c => c.resolutionTime);
       const avgResolutionTime = conversationsWithResolution.length > 0
         ? Math.round(conversationsWithResolution.reduce((sum, c) => sum + (c.resolutionTime || 0), 0) / conversationsWithResolution.length)
         : 0;
-      
       const conversationsWithSLA = allConversations.filter(c => c.sla);
-      const slaMet = conversationsWithSLA.filter(c => 
+      const slaMet = conversationsWithSLA.filter(c =>
         c.sla.firstResponseStatus === 'met' || c.sla.resolutionStatus === 'met'
       ).length;
       const slaComplianceRate = conversationsWithSLA.length > 0
         ? Math.round((slaMet / conversationsWithSLA.length) * 100)
         : 0;
-      
-      // Team verilerini çek (aktif agent sayısı için)
       let activeAgents = 0;
       let totalAgents = 0;
       try {
@@ -218,18 +179,14 @@ const Dashboard = () => {
           activeAgents += teamMembers.filter(member => member.status === 'online' || member.status === 'available').length;
         }
       } catch (error) {
-        console.error('Team data fetch failed:', error);
       }
-      
       const ratedConversations = allConversations.filter(c => c.rating?.score);
       const avgSatisfaction = ratedConversations.length > 0
         ? Math.round((ratedConversations.reduce((sum, c) => sum + c.rating.score, 0) / ratedConversations.length) * 20)
         : 0;
-      
       const recent = allConversations
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 5);
-      
       setStats({
         openTickets,
         slaBreaches,
@@ -244,28 +201,22 @@ const Dashboard = () => {
         resolvedToday,
         slaComplianceRate
       });
-      
       setRecentTickets(recent);
-      
     } catch (error) {
-      console.error('Dashboard data fetch error:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
-
-  // Zaman formatı - Türkiye 24 saat formatı  
   const formatTime = (date) => {
     if (!date) return '-';
     const d = new Date(date);
-    return d.toLocaleTimeString('tr-TR', { 
-      hour: '2-digit', 
+    return d.toLocaleTimeString('tr-TR', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     });
   };
-
   const formatDate = (date) => {
     if (!date) return '-';
     const d = new Date(date);
@@ -275,7 +226,6 @@ const Dashboard = () => {
       year: 'numeric'
     });
   };
-
   const formatMinutes = (minutes) => {
     if (!minutes || minutes === 0) return '-';
     const hours = Math.floor(minutes / 60);
@@ -285,7 +235,6 @@ const Dashboard = () => {
     }
     return `${mins}dk`;
   };
-
   const getPriorityBadge = (priority) => {
     const badges = {
       urgent: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
@@ -295,7 +244,6 @@ const Dashboard = () => {
     };
     return badges[priority] || badges.normal;
   };
-
   const getStatusBadge = (status) => {
     const badges = {
       open: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -306,7 +254,6 @@ const Dashboard = () => {
     };
     return badges[status] || badges.open;
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -314,7 +261,6 @@ const Dashboard = () => {
       </div>
     );
   }
-
   const mainStats = [
     {
       icon: MessageSquare,
@@ -349,7 +295,6 @@ const Dashboard = () => {
       trend: 'up'
     }
   ];
-
   const secondaryStats = [
     {
       icon: UserCheck,
@@ -380,15 +325,13 @@ const Dashboard = () => {
       bgColor: 'bg-green-50 dark:bg-green-900/20'
     }
   ];
-
   return (
     <>
       <Helmet>
-        <title>Hoş geldiniz - Support.io Admin</title>
-        <meta name="description" content="Destek Talebi Yönetim Sistemi" />
+        <title>{t('dashboard.welcomeTitle', 'Hoş geldiniz - Support.io Admin')}</title>
+        <meta name="description" content={t('dashboard.ticketsDesc', 'Destek Talebi Yönetim Sistemi')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -408,11 +351,10 @@ const Dashboard = () => {
             <span>{refreshing ? t('dashboard.refreshing') : t('dashboard.refresh')}</span>
           </button>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {mainStats.map((stat, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200"
             >
               <div className="flex items-center justify-between mb-4">
@@ -438,10 +380,28 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {plan === 'FREE' && (
+          <div className="bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center shrink-0">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('dashboard.advancedReportsLocked', 'Gelişmiş Raporlar Kilitli')}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{t('dashboard.advancedReportsDesc', 'Puanlama, ortalama yanıt süreleri ve ziyaretçi trafiğini görebilmek için organizasyonunuzu yükseltin.')}</p>
+              </div>
+            </div>
+            <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap shrink-0">
+              {t('dashboard.upgradeNow', 'Şimdi Yükselt')}
+            </button>
+          </div>
+        )}
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 relative ${plan === 'FREE' ? 'group' : ''}`}>
+          {plan === 'FREE' && (
+            <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[2px] rounded-xl cursor-not-allowed"></div>
+          )}
           {secondaryStats.map((stat, index) => (
-            <div 
+            <div
               key={index}
               className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-center space-x-4"
             >
@@ -455,7 +415,6 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
-
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('dashboard.recentTickets')}</h2>
@@ -493,31 +452,29 @@ const Dashboard = () => {
                   </tr>
                 ) : (
                   recentTickets.map((ticket) => (
-                    <tr 
+                    <tr
                       key={ticket._id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition"
                       onClick={() => {
-                        // Open conversations page and request it to open this conversation via event
                         navigate(routes.conversations);
                         try {
                           window.dispatchEvent(new CustomEvent('navigate:open-conversation', { detail: { conversationId: ticket._id, siteId: ticket.siteId || ticket.site?._id } }));
                         } catch (e) {
-                          // fallback: nothing
                         }
                       }}
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
+                      <td className="px-6 py-4 max-w-[150px] sm:max-w-xs xl:max-w-md">
+                        <div className="flex items-center space-x-3 min-w-0">
                           <div className="flex-shrink-0 w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                             <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                               {(ticket.visitorName || 'V').charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                               {ticket.ticketId || `#${ticket.ticketNumber}`}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {ticket.visitorName || t('dashboard.visitor')}
                             </div>
                           </div>
@@ -525,10 +482,10 @@ const Dashboard = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${getPriorityBadge(ticket.priority)}`}>
-                          {ticket.priority === 'urgent' ? t('dashboard.urgent') 
-                            : ticket.priority === 'high' ? t('dashboard.high') 
-                            : ticket.priority === 'normal' ? t('dashboard.medium') 
-                            : t('dashboard.low')
+                          {ticket.priority === 'urgent' ? t('dashboard.urgent')
+                            : ticket.priority === 'high' ? t('dashboard.high')
+                              : ticket.priority === 'normal' ? t('dashboard.medium')
+                                : t('dashboard.low')
                           }
                         </span>
                       </td>
@@ -536,9 +493,9 @@ const Dashboard = () => {
                         <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${getStatusBadge(ticket.status)}`}>
                           {ticket.status === 'open' ? t('dashboard.open')
                             : ticket.status === 'assigned' ? t('dashboard.assigned')
-                            : ticket.status === 'pending' ? t('dashboard.pending')
-                            : ticket.status === 'resolved' ? t('dashboard.resolved')
-                            : t('dashboard.closed')
+                              : ticket.status === 'pending' ? t('dashboard.pending')
+                                : ticket.status === 'resolved' ? t('dashboard.resolved')
+                                  : t('dashboard.closed')
                           }
                         </span>
                       </td>
@@ -552,11 +509,10 @@ const Dashboard = () => {
             </table>
           </div>
         </div>
-
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button 
+            <button
               onClick={() => navigate(routes.conversations)}
               className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
             >
@@ -564,7 +520,7 @@ const Dashboard = () => {
               <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.tickets')}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.ticketsDesc')}</p>
             </button>
-            <button 
+            <button
               onClick={() => navigate(routes.team)}
               className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
             >
@@ -572,7 +528,7 @@ const Dashboard = () => {
               <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.team')}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.teamDesc')}</p>
             </button>
-            <button 
+            <button
               onClick={() => navigate(routes.sites)}
               className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
             >
@@ -586,5 +542,4 @@ const Dashboard = () => {
     </>
   );
 };
-
 export default Dashboard;

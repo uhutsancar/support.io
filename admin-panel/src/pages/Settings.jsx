@@ -3,11 +3,9 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-
 const Settings = () => {
   const { t } = useTranslation();
   const { theme, setLightTheme, setDarkTheme, isDark } = useTheme();
-
   return (
     <>
       <Helmet>
@@ -23,7 +21,6 @@ const Settings = () => {
             {t('settings.profile')}
           </p>
         </div>
-
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -33,7 +30,6 @@ const Settings = () => {
               {t('settings.appearanceDescription')}
             </p>
           </div>
-
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div className="mb-4 sm:mb-0">
@@ -44,7 +40,6 @@ const Settings = () => {
                   {t('settings.themeModeDescription')}
                 </p>
               </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={setLightTheme}
@@ -57,7 +52,6 @@ const Settings = () => {
                   <Sun className="w-5 h-5" />
                   <span className="font-medium">{t('settings.light')}</span>
                 </button>
-
                 <button
                   onClick={setDarkTheme}
                   className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
@@ -71,7 +65,6 @@ const Settings = () => {
                 </button>
               </div>
             </div>
-
             <div className="mt-8 p-6 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200">
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
                 {t('settings.preview')}
@@ -90,7 +83,6 @@ const Settings = () => {
                 </div>
               </div>
             </div>
-
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors duration-200">
               <div className="flex gap-3">
                 <Monitor className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
@@ -106,8 +98,7 @@ const Settings = () => {
             </div>
           </div>
         </div>
-
-        {/* Diğer Ayarlar (Gelecek özellikler için) */}
+        {}
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             {t('settings.notifications')}
@@ -124,5 +115,4 @@ const Settings = () => {
     </>
   );
 };
-
 export default Settings;

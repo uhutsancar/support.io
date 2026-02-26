@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const siteSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -80,5 +79,4 @@ const siteSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 module.exports = mongoose.model('Site', siteSchema);

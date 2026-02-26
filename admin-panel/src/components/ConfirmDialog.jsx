@@ -1,20 +1,16 @@
 import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-
 const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Tamam', cancelText = 'İptal', type = 'danger' }) => {
   if (!isOpen) return null;
-
   const handleConfirm = () => {
     onConfirm();
     onClose();
   };
-
   const typeColors = {
     danger: 'bg-red-600 hover:bg-red-700',
     warning: 'bg-yellow-600 hover:bg-yellow-700',
     info: 'bg-blue-600 hover:bg-blue-700'
   };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
@@ -34,13 +30,11 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message, confirmText
             <X className="w-5 h-5" />
           </button>
         </div>
-
         <div className="p-6">
           <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
             {message}
           </p>
         </div>
-
         <div className="flex items-center justify-end gap-3 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl">
           <button
             onClick={onClose}
@@ -59,5 +53,4 @@ const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message, confirmText
     </div>
   );
 };
-
 export default ConfirmDialog;

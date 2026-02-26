@@ -208,7 +208,7 @@ const conversationSchema = new mongoose.Schema({
 });
 
 conversationSchema.pre('save', async function(next) {
-  // auto-fill organizationId from site if missing
+
   if (!this.organizationId && this.siteId) {
     try {
       const Site = require('./Site');
@@ -217,7 +217,7 @@ conversationSchema.pre('save', async function(next) {
         this.organizationId = site.organizationId;
       }
     } catch (e) {
-      console.warn('Failed to populate organizationId for conversation', this._id, e.message);
+
     }
   }
 
@@ -237,7 +237,6 @@ conversationSchema.pre('save', async function(next) {
   next();
 });
 
-// Performance indexes
 conversationSchema.index({ siteId: 1, status: 1, createdAt: -1 });
 conversationSchema.index({ organizationId: 1, status: 1, createdAt: -1 });
 conversationSchema.index({ siteId: 1, department: 1, status: 1 });
@@ -245,7 +244,7 @@ conversationSchema.index({ assignedAgent: 1, status: 1 });
 conversationSchema.index({ department: 1, status: 1, lastMessageAt: -1 });
 conversationSchema.index({ 'sla.firstResponseStatus': 1 });
 conversationSchema.index({ 'sla.resolutionStatus': 1 });
-// SLA monitoring optimized index
+
 conversationSchema.index({ status: 1, nextSlaCheckAt: 1 });
 conversationSchema.index({ organizationId: 1, status: 1, nextSlaCheckAt: 1 });
 
@@ -265,27 +264,25 @@ conversationSchema.virtual('resolutionTime').get(function() {
 
 conversationSchema.methods.calculateSLA = function() {
   const now = new Date();
-  // make sure we have a usable creation time; some old docs may lack it or have invalid values
+
   if (!this.createdAt || !(this.createdAt instanceof Date) || isNaN(new Date(this.createdAt).getTime())) {
-    // if the value is a string or bad, convert or replace
+
     this.createdAt = now;
   } else {
-    // ensure we have a Date instance (in case mongoose returned a string)
+
     this.createdAt = new Date(this.createdAt);
   }
   const createdTime = this.createdAt.getTime();
   const elapsedMinutes = Math.floor((now - createdTime) / 1000 / 60);
-  
-  // Calculate next SLA check time (check every 5 minutes or when approaching threshold)
+
   let nextCheckMinutes = 5;
   
   if (!this.firstResponseAt) {
     const remaining = this.sla.firstResponseTarget - elapsedMinutes;
     this.sla.firstResponseTimeRemaining = remaining;
-    
-    // Set next check time: 5 min before breach, or every 5 min if far away
+
     if (remaining > 0 && remaining <= 10) {
-      nextCheckMinutes = Math.max(1, Math.floor(remaining / 2)); // Check more frequently near breach
+      nextCheckMinutes = Math.max(1, Math.floor(remaining / 2));
     }
     
     if (remaining < 0) {
@@ -293,7 +290,7 @@ conversationSchema.methods.calculateSLA = function() {
       if (!this.sla.firstResponseBreachedAt) {
         this.sla.firstResponseBreachedAt = new Date(createdTime + this.sla.firstResponseTarget * 60 * 1000);
       }
-      nextCheckMinutes = 1; // Check immediately if breached
+      nextCheckMinutes = 1;
     } else {
       this.sla.firstResponseStatus = 'pending';
     }
@@ -310,8 +307,7 @@ conversationSchema.methods.calculateSLA = function() {
   if (this.status !== 'resolved' && this.status !== 'closed') {
     const remaining = this.sla.resolutionTarget - elapsedMinutes;
     this.sla.resolutionTimeRemaining = remaining;
-    
-    // Adjust next check based on resolution SLA too
+
     if (remaining > 0 && remaining <= 30) {
       nextCheckMinutes = Math.min(nextCheckMinutes, Math.max(1, Math.floor(remaining / 3)));
     }
@@ -333,17 +329,15 @@ conversationSchema.methods.calculateSLA = function() {
     if (this.sla.resolutionStatus === 'breached' && !this.sla.resolutionBreachedAt) {
       this.sla.resolutionBreachedAt = this.resolvedAt;
     }
-    // If resolved, no need to check SLA anymore
+
     this.nextSlaCheckAt = null;
     return this;
   }
-  
-  // Set next SLA check time
+
   this.nextSlaCheckAt = new Date(now.getTime() + nextCheckMinutes * 60 * 1000);
   
   return this;
 };
-
 
 conversationSchema.set('toJSON', { virtuals: true });
 conversationSchema.set('toObject', { virtuals: true });

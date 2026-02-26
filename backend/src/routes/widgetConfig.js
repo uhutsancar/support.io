@@ -8,8 +8,6 @@ const { checkPermission } = require('../middleware/rbac');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
-// Configure multer for logo upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '../../uploads/logos');
@@ -23,10 +21,9 @@ const storage = multer.diskStorage({
     cb(null, `logo-${uniqueSuffix}${path.extname(file.originalname)}`);
   }
 });
-
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp|svg/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -38,30 +35,21 @@ const upload = multer({
     }
   }
 });
-
-// Get widget config for a site
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
     const { siteId } = req.params;
     const orgId = req.organization?._id || req.user.organizationId;
-
     if (!mongoose.Types.ObjectId.isValid(siteId)) {
       return res.status(400).json({ error: 'Invalid site id' });
     }
-    
-    // Verify site belongs to organization
     const site = await Site.findOne({
       _id: siteId,
       ...(orgId ? { organizationId: orgId } : {})
     });
-    
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
-    
     let config = await WidgetConfig.findOne({ siteId });
-    
-    // If no config exists, create default
     if (!config) {
       config = new WidgetConfig({
         siteId,
@@ -69,27 +57,19 @@ router.get('/site/:siteId', auth, async (req, res) => {
       });
       await config.save();
     }
-    
     res.json({ config });
   } catch (error) {
-    console.error('Widget config fetch error:', error);
     res.status(500).json({ error: error.message });
   }
 });
-
-// Get widget config by siteKey (public endpoint for widget)
 router.get('/public/:siteKey', async (req, res) => {
   try {
     const { siteKey } = req.params;
-    
     const site = await Site.findOne({ siteKey, isActive: true });
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
-    
     let config = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
-    
-    // If no config, return default config
     if (!config) {
       config = {
         colors: {
@@ -120,36 +100,27 @@ router.get('/public/:siteKey', async (req, res) => {
         }
       };
     }
-    
     res.json({ config: config.toObject ? config.toObject() : config });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-// Update widget config
 router.put('/site/:siteId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { siteId } = req.params;
     const orgId = req.organization?._id || req.user.organizationId;
     const updates = req.body;
-
     if (!mongoose.Types.ObjectId.isValid(siteId)) {
       return res.status(400).json({ error: 'Invalid site id' });
     }
-    
-    // Verify site belongs to organization
     const site = await Site.findOne({
       _id: siteId,
       ...(orgId ? { organizationId: orgId } : {})
     });
-    
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
-    
     let config = await WidgetConfig.findOne({ siteId });
-    
     if (!config) {
       config = new WidgetConfig({
         siteId,
@@ -157,7 +128,6 @@ router.put('/site/:siteId', auth, checkPermission('manage_sites'), async (req, r
         ...updates
       });
     } else {
-      // Deep merge updates (only update provided fields)
       if (updates.colors && typeof updates.colors === 'object') {
         config.colors = { ...config.colors, ...updates.colors };
       }
@@ -186,55 +156,41 @@ router.put('/site/:siteId', auth, checkPermission('manage_sites'), async (req, r
         config.isActive = updates.isActive;
       }
     }
-    
     await config.save();
-    
     res.json({ config });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
-
-// Upload logo
 router.post('/site/:siteId/logo', auth, checkPermission('manage_sites'), upload.single('logo'), async (req, res) => {
   try {
     const { siteId } = req.params;
     const orgId = req.organization?._id || req.user.organizationId;
-    
-    // Verify site belongs to organization
     const site = await Site.findOne({
       _id: siteId,
       ...(orgId ? { organizationId: orgId } : {})
     });
-    
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
-    
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    
     let config = await WidgetConfig.findOne({ siteId });
-    
     if (!config) {
       config = new WidgetConfig({
         siteId,
         organizationId: orgId || site.organizationId
       });
     }
-    
-    // Delete old logo if exists
     if (config.branding.logo && config.branding.logo.startsWith('/uploads/logos/')) {
       const oldLogoPath = path.join(__dirname, '../../', config.branding.logo);
       if (fs.existsSync(oldLogoPath)) {
         fs.unlinkSync(oldLogoPath);
       }
     }
-    
     config.branding.logo = `/uploads/logos/${req.file.filename}`;
     await config.save();
-    
     res.json({ 
       config,
       logoUrl: `/api/widget-config/logo/${req.file.filename}`
@@ -243,57 +199,44 @@ router.post('/site/:siteId/logo', auth, checkPermission('manage_sites'), upload.
     res.status(400).json({ error: error.message });
   }
 });
-
-// Get logo
 router.get('/logo/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, '../../uploads/logos', filename);
-    
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Logo not found' });
     }
-    
     res.sendFile(filePath);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-// Delete logo
 router.delete('/site/:siteId/logo', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { siteId } = req.params;
     const orgId = req.organization?._id || req.user.organizationId;
-    
     const site = await Site.findOne({
       _id: siteId,
       ...(orgId ? { organizationId: orgId } : {})
     });
-    
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
-    
     const config = await WidgetConfig.findOne({ siteId });
     if (!config) {
       return res.status(404).json({ error: 'Config not found' });
     }
-    
     if (config.branding.logo && config.branding.logo.startsWith('/uploads/logos/')) {
       const logoPath = path.join(__dirname, '../../', config.branding.logo);
       if (fs.existsSync(logoPath)) {
         fs.unlinkSync(logoPath);
       }
     }
-    
     config.branding.logo = null;
     await config.save();
-    
     res.json({ config });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
 module.exports = router;

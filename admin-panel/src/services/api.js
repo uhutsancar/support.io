@@ -1,10 +1,7 @@
 import axios from 'axios';
-
 const API_BASE_URL = import.meta.env.VITE_API_URL + '/api';
-
 const cache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000;
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -12,17 +9,14 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
   if (config.method === 'get' && config.cache !== false) {
     const cacheKey = config.url + JSON.stringify(config.params || {});
     const cached = cache.get(cacheKey);
-    
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       config.adapter = () => Promise.resolve({
         data: cached.data,
@@ -33,10 +27,8 @@ api.interceptors.request.use((config) => {
       });
     }
   }
-  
   return config;
 });
-
 api.interceptors.response.use(
   (response) => {
     if (response.config.method === 'get' && response.config.cache !== false) {
@@ -57,7 +49,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 export const clearCache = (pattern) => {
   if (pattern) {
     for (const key of cache.keys()) {
@@ -69,14 +60,14 @@ export const clearCache = (pattern) => {
     cache.clear();
   }
 };
-
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
+  updateStatus: (data) => api.put('/auth/status', data),
+  deleteAccount: () => api.delete('/auth/account')
 };
-
 export const sitesAPI = {
   getAll: () => api.get('/sites'),
   getOne: (siteId) => api.get(`/sites/${siteId}`),
@@ -101,7 +92,15 @@ export const sitesAPI = {
     return response;
   },
 };
-
+export const visitorsAPI = {
+  getAll: (siteId, active = true) => api.get(`/visitors/site/${siteId}`, { params: { active }, cache: false })
+};
+export const dealsAPI = {
+  getAll: () => api.get('/deals', { cache: false }),
+  create: (data) => api.post('/deals', data),
+  updateStage: (dealId, stage, order) => api.put(`/deals/${dealId}/stage`, { stage, order }),
+  delete: (dealId) => api.delete(`/deals/${dealId}`)
+};
 export const faqsAPI = {
   getAll: (siteId) => api.get(`/faqs/admin/${siteId}`),
   create: async (data) => {
@@ -120,11 +119,9 @@ export const faqsAPI = {
     return response;
   },
 };
-
 export const conversationsAPI = {
   getAll: (siteId, status) => {
     if (!siteId) {
-      // avoid invalid requests; return empty list
       return Promise.resolve({ data: { conversations: [] } });
     }
     return api.get(`/conversations/${siteId}`, { params: { status } });
@@ -178,7 +175,6 @@ export const conversationsAPI = {
   },
   getUnreadCount: () => api.get('/conversations/unread-count'),
 };
-
 export const departmentsAPI = {
   getAll: (siteId) => api.get(`/departments/site/${siteId}`),
   getOne: (departmentId) => api.get(`/departments/${departmentId}`),
@@ -209,7 +205,6 @@ export const departmentsAPI = {
   },
   getStats: (departmentId) => api.get(`/departments/${departmentId}/stats`),
 };
-
 export const teamAPI = {
   getAll: (siteId) => api.get('/team', { params: { siteId } }),
   getOne: (userId) => api.get(`/team/${userId}`),
@@ -235,7 +230,6 @@ export const teamAPI = {
   },
   getStats: (userId) => api.get(`/team/${userId}/stats`),
 };
-
 export const teamChatAPI = {
   getChats: () => api.get('/team-chat/chats', { cache: false }),
   createDirect: (targetUserId) => api.post('/team-chat/chats/direct', { targetUserId }),
@@ -245,7 +239,6 @@ export const teamChatAPI = {
   getUnread: () => api.get('/team-chat/unread', { cache: false }),
   deleteMessage: (messageId) => api.delete(`/team-chat/messages/${messageId}`),
 };
-
 export const widgetConfigAPI = {
   getConfig: (siteId) => api.get(`/widget-config/site/${siteId}`, { cache: false }),
   updateConfig: async (siteId, data) => {
@@ -269,10 +262,7 @@ export const widgetConfigAPI = {
   },
   getPublicConfig: (siteKey) => api.get(`/widget-config/public/${siteKey}`, { cache: false }),
 };
-
 export const auditAPI = {
-  // params: { action, start, end, page, limit }
   getAll: (params) => api.get('/audit', { params })
 };
-
 export default api;

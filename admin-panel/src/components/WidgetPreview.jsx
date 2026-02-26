@@ -1,27 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Paperclip, Image as ImageIcon } from 'lucide-react';
-
-/**
- * Widget Preview Component
- * Mimics the actual widget behavior for live preview
- * Uses the same styling logic as the production widget
- */
 const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
   useEffect(() => {
     if (isOpen && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen]);
-
   const handleSend = () => {
     if (!inputValue.trim()) return;
-    
     const newMessage = {
       id: Date.now(),
       content: inputValue,
@@ -29,11 +20,8 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
       senderName: 'You',
       createdAt: new Date()
     };
-    
     setMessages([...messages, newMessage]);
     setInputValue('');
-    
-    // Simulate agent response
     setTimeout(() => {
       setIsTyping(true);
       setTimeout(() => {
@@ -49,21 +37,18 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
       }, 1500);
     }, 500);
   };
-
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
-
   const getStyles = () => {
     const colors = config?.colors || {};
     const button = config?.button || {};
     const window = config?.window || {};
     const typography = config?.typography || {};
     const branding = config?.branding || {};
-    
     const primaryColor = colors.primary || '#4F46E5';
     const headerColor = colors.header || primaryColor;
     const backgroundColor = colors.background || '#FFFFFF';
@@ -72,7 +57,6 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
     const borderColor = colors.border || '#E5E7EB';
     const visitorMsgBg = colors.visitorMessageBg || primaryColor;
     const agentMsgBg = colors.agentMessageBg || '#F3F4F6';
-    
     return {
       button: {
         backgroundColor: primaryColor,
@@ -113,13 +97,11 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
       },
     };
   };
-
   const styles = getStyles();
   const colors = config?.colors || {};
   const branding = config?.branding || {};
   const button = config?.button || {};
   const messagesConfig = config?.messages || {};
-
   if (!isOpen) {
     return (
       <div 
@@ -139,7 +121,6 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
       </div>
     );
   }
-
   return (
     <div 
       className="fixed z-50 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
@@ -149,7 +130,7 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
         [button.position?.includes('bottom') ? 'bottom' : 'top']: '20px',
       }}
     >
-      {/* Header */}
+      {}
       {config?.window?.showHeader !== false && (
         <div 
           className="flex items-center justify-between px-4 py-3"
@@ -186,15 +167,13 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
           )}
         </div>
       )}
-
-      {/* Welcome Message */}
+      {}
       {messages.length === 0 && config?.messages?.welcomeMessage && (
         <div className="px-4 py-6 text-center" style={{ color: colors.textSecondary || '#6B7280' }}>
           <p className="text-sm">{config.messages.welcomeMessage}</p>
         </div>
       )}
-
-      {/* Messages */}
+      {}
       <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundColor: colors.background || '#FFFFFF' }}>
         {messages.map((msg) => (
           <div
@@ -220,7 +199,6 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
             </div>
           </div>
         ))}
-        
         {isTyping && (
           <div className="flex justify-start">
             <div className="px-4 py-2 rounded-lg bg-gray-100">
@@ -232,11 +210,9 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
             </div>
           </div>
         )}
-        
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Input */}
+      {}
       <div className="border-t p-3" style={{ borderColor: colors.border || '#E5E7EB' }}>
         <div className="flex items-end gap-2">
           <button className="p-2 hover:bg-gray-100 rounded-lg transition">
@@ -267,5 +243,4 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
     </div>
   );
 };
-
 export default WidgetPreview;

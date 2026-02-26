@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const auditSchema = new mongoose.Schema({
   organizationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', index: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
@@ -21,11 +20,7 @@ const auditSchema = new mongoose.Schema({
   userAgent: { type: String },
   createdAt: { type: Date, default: Date.now, immutable: true }
 }, { collection: 'audit_logs' });
-
-// Compound index for queries and archiving
 auditSchema.index({ organizationId: 1, createdAt: -1 });
-
-// Prevent updates by throwing on save if _id exists and modified paths beyond createdAt
 auditSchema.pre('save', function (next) {
   if (!this.isNew) {
     const err = new Error('Audit records are immutable and cannot be modified');
@@ -33,5 +28,4 @@ auditSchema.pre('save', function (next) {
   }
   next();
 });
-
 module.exports = mongoose.model('AuditLog', auditSchema);

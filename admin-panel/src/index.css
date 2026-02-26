@@ -1,6 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-md border border-white/10;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500;
+  }
+
+  .text-gradient-light {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300;
+  }
+}
 
 body {
   margin: 0;
@@ -12,7 +32,9 @@ body {
 }
 
 /* Ensure app fills viewport so tailwind h-screen and flex layouts work correctly */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
@@ -39,20 +61,25 @@ code {
 /* Custom dark modal scrollbar for better contrast */
 .modal-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.12) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
+
 .modal-scrollbar::-webkit-scrollbar {
   width: 10px;
+  height: 8px;
 }
+
 .modal-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .modal-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255,255,255,0.08);
+  background-color: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
 .modal-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(255,255,255,0.16);
+  background-color: rgba(255, 255, 255, 0.16);
 }

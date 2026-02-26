@@ -5,11 +5,10 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, widgetConfigAPI } from '../services/api';
 import WidgetPreview from '../components/WidgetPreview';
-import { 
-  Palette, Upload, Save, ArrowLeft, Image as ImageIcon, 
+import {
+  Palette, Upload, Save, ArrowLeft, Image as ImageIcon,
   MessageSquare, Settings, Type, Zap, Eye
 } from 'lucide-react';
-
 const WidgetCustomization = () => {
   const { t } = useTranslation();
   const { siteId } = useParams();
@@ -20,11 +19,9 @@ const WidgetCustomization = () => {
   const [saving, setSaving] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('colors');
-
   useEffect(() => {
     fetchData();
   }, [siteId]);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -35,16 +32,13 @@ const WidgetCustomization = () => {
       setSite(siteRes.data.site);
       setConfig(configRes.data.config);
     } catch (error) {
-      console.error('Failed to fetch data:', error);
-      toast.error('Failed to load widget configuration');
+      toast.error(t('widget.configLoadError', 'Failed to load widget configuration'));
     } finally {
       setLoading(false);
     }
   };
-
   const updateConfig = useCallback(async (updates) => {
     if (!config) return;
-    
     const newConfig = {
       ...config,
       colors: { ...config.colors, ...(updates.colors || {}) },
@@ -57,57 +51,46 @@ const WidgetCustomization = () => {
       advanced: { ...config.advanced, ...(updates.advanced || {}) },
       ...(updates.isActive !== undefined ? { isActive: updates.isActive } : {}),
     };
-    
     setConfig(newConfig);
-    
-    // Auto-save with debounce
     clearTimeout(window.widgetConfigSaveTimeout);
     window.widgetConfigSaveTimeout = setTimeout(async () => {
       try {
         await widgetConfigAPI.updateConfig(siteId, updates);
       } catch (error) {
-        console.error('Auto-save failed:', error);
-        toast.error('Failed to save changes');
+        toast.error(t('widget.configSaveError', 'Failed to save changes'));
       }
     }, 500);
   }, [config, siteId]);
-
   const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Logo size must be less than 5MB');
+      toast.error(t('widget.logoSizeError', 'Logo size must be less than 5MB'));
       return;
     }
-    
     try {
       setSaving(true);
       const response = await widgetConfigAPI.uploadLogo(siteId, file);
       setConfig(response.data.config);
-      toast.success('Logo uploaded successfully');
+      toast.success(t('widget.logoUploadSuccess', 'Logo uploaded successfully'));
     } catch (error) {
-      console.error('Logo upload failed:', error);
-      toast.error('Failed to upload logo');
+      toast.error(t('widget.logoUploadError', 'Failed to upload logo'));
     } finally {
       setSaving(false);
     }
   };
-
   const handleDeleteLogo = async () => {
     try {
       setSaving(true);
       const response = await widgetConfigAPI.deleteLogo(siteId);
       setConfig(response.data.config);
-      toast.success('Logo deleted');
+      toast.success(t('widget.logoDeleteSuccess', 'Logo deleted'));
     } catch (error) {
-      console.error('Logo delete failed:', error);
-      toast.error('Failed to delete logo');
+      toast.error(t('widget.logoDeleteError', 'Failed to delete logo'));
     } finally {
       setSaving(false);
     }
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -115,24 +98,21 @@ const WidgetCustomization = () => {
       </div>
     );
   }
-
   const tabs = [
-    { id: 'colors', label: 'Colors', icon: Palette },
-    { id: 'branding', label: 'Branding', icon: ImageIcon },
-    { id: 'button', label: 'Button', icon: MessageSquare },
-    { id: 'messages', label: 'Messages', icon: Type },
-    { id: 'behavior', label: 'Behavior', icon: Zap },
-    { id: 'advanced', label: 'Advanced', icon: Settings },
+    { id: 'colors', label: t('widget.tabs.colors', 'Colors'), icon: Palette },
+    { id: 'branding', label: t('widget.tabs.branding', 'Branding'), icon: ImageIcon },
+    { id: 'button', label: t('widget.tabs.button', 'Button'), icon: MessageSquare },
+    { id: 'messages', label: t('widget.tabs.messages', 'Messages'), icon: Type },
+    { id: 'behavior', label: t('widget.tabs.behavior', 'Behavior'), icon: Zap },
+    { id: 'advanced', label: t('widget.tabs.advanced', 'Advanced'), icon: Settings },
   ];
-
   return (
     <>
       <Helmet>
         <title>{`Widget Customization - ${site?.name || ''} - Support.io`}</title>
       </Helmet>
-
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        { }
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -143,10 +123,10 @@ const WidgetCustomization = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Widget Customization
+                {t('widget.title', 'Widget Customization')}
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                {site?.name} - Customize your chat widget appearance
+                {site?.name} - {t('widget.subtitle', 'Customize your chat widget appearance')}
               </p>
             </div>
           </div>
@@ -156,15 +136,14 @@ const WidgetCustomization = () => {
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
             >
               <Eye className="w-4 h-4" />
-              {previewOpen ? 'Hide' : 'Show'} Preview
+              {previewOpen ? t('widget.hidePreview', 'Hide Preview') : t('widget.showPreview', 'Show Preview')}
             </button>
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Settings Panel */}
+          { }
           <div className="lg:col-span-2 space-y-6">
-            {/* Tabs */}
+            { }
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
                 {tabs.map((tab) => {
@@ -173,11 +152,10 @@ const WidgetCustomization = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-6 py-4 font-medium transition ${
-                        activeTab === tab.id
-                          ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`flex items-center gap-2 px-6 py-4 font-medium transition ${activeTab === tab.id
+                        ? 'border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       <Icon className="w-4 h-4" />
                       <span>{tab.label}</span>
@@ -185,21 +163,20 @@ const WidgetCustomization = () => {
                   );
                 })}
               </div>
-
               <div className="p-6">
-                {/* Colors Tab */}
+                { }
                 {activeTab === 'colors' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Color Palette</h3>
+                    <h3 className="text-lg font-semibold mb-4">{t('widget.colorPalette', 'Color Palette')}</h3>
                     {[
-                      { key: 'primary', label: 'Primary Color' },
-                      { key: 'header', label: 'Header Background' },
-                      { key: 'background', label: 'Window Background' },
-                      { key: 'text', label: 'Text Color' },
-                      { key: 'textSecondary', label: 'Secondary Text' },
-                      { key: 'border', label: 'Border Color' },
-                      { key: 'visitorMessageBg', label: 'Visitor Message' },
-                      { key: 'agentMessageBg', label: 'Agent Message' },
+                      { key: 'primary', label: t('widget.colors.primary', 'Primary Color') },
+                      { key: 'header', label: t('widget.colors.header', 'Header Background') },
+                      { key: 'background', label: t('widget.colors.background', 'Window Background') },
+                      { key: 'text', label: t('widget.colors.text', 'Text Color') },
+                      { key: 'textSecondary', label: t('widget.colors.textSecondary', 'Secondary Text') },
+                      { key: 'border', label: t('widget.colors.border', 'Border Color') },
+                      { key: 'visitorMessageBg', label: t('widget.colors.visitorMsg', 'Visitor Message') },
+                      { key: 'agentMessageBg', label: t('widget.colors.agentMsg', 'Agent Message') },
                     ].map((color) => (
                       <div key={color.key} className="flex items-center justify-between">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -227,28 +204,26 @@ const WidgetCustomization = () => {
                     ))}
                   </div>
                 )}
-
-                {/* Branding Tab */}
+                { }
                 {activeTab === 'branding' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Branding</h3>
-                    
+                    <h3 className="text-lg font-semibold mb-4">{t('widget.branding', 'Branding')}</h3>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Logo
+                        {t('widget.logo', 'Logo')}
                       </label>
                       {config?.branding?.logo ? (
                         <div className="flex items-center gap-4">
                           <img
-                            src={config.branding.logo.startsWith('http') 
-                              ? config.branding.logo 
+                            src={config.branding.logo.startsWith('http')
+                              ? config.branding.logo
                               : `${import.meta.env.VITE_API_URL}${config.branding.logo}`}
                             alt="Logo"
                             className="w-20 h-20 object-contain border border-gray-300 rounded"
                           />
                           <div className="flex flex-col gap-2">
                             <label className="px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700 transition text-sm text-center">
-                              Change Logo
+                              {t('widget.changeLogo', 'Change Logo')}
                               <input
                                 type="file"
                                 accept="image/*"
@@ -260,7 +235,7 @@ const WidgetCustomization = () => {
                               onClick={handleDeleteLogo}
                               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
                             >
-                              Delete Logo
+                              {t('widget.deleteLogo', 'Delete Logo')}
                             </button>
                           </div>
                         </div>
@@ -268,7 +243,7 @@ const WidgetCustomization = () => {
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                           <Upload className="w-8 h-8 text-gray-400 mb-2" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Click to upload logo
+                            {t('widget.uploadLogo', 'Click to upload logo')}
                           </span>
                           <input
                             type="file"
@@ -279,10 +254,9 @@ const WidgetCustomization = () => {
                         </label>
                       )}
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Brand Name
+                        {t('widget.brandName', 'Brand Name')}
                       </label>
                       <input
                         type="text"
@@ -293,10 +267,9 @@ const WidgetCustomization = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                       />
                     </div>
-
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Show Brand Name
+                        {t('widget.showBrandName', 'Show Brand Name')}
                       </label>
                       <input
                         type="checkbox"
@@ -307,11 +280,10 @@ const WidgetCustomization = () => {
                         className="w-5 h-5 text-indigo-600 rounded"
                       />
                     </div>
-
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Logo Width (px)
+                          {t('widget.logoWidth', 'Logo Width (px)')}
                         </label>
                         <input
                           type="number"
@@ -324,7 +296,7 @@ const WidgetCustomization = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Logo Height (px)
+                          {t('widget.logoHeight', 'Logo Height (px)')}
                         </label>
                         <input
                           type="number"
@@ -338,15 +310,13 @@ const WidgetCustomization = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Button Tab */}
+                { }
                 {activeTab === 'button' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Button Style</h3>
-                    
+                    <h3 className="text-lg font-semibold mb-4">{t('widget.buttonStyle', 'Button Style')}</h3>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Position
+                        {t('widget.position', 'Position')}
                       </label>
                       <select
                         value={config?.button?.position || 'bottom-right'}
@@ -355,16 +325,15 @@ const WidgetCustomization = () => {
                         })}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                       >
-                        <option value="bottom-right">Bottom Right</option>
-                        <option value="bottom-left">Bottom Left</option>
-                        <option value="top-right">Top Right</option>
-                        <option value="top-left">Top Left</option>
+                        <option value="bottom-right">{t('widget.positions.br', 'Bottom Right')}</option>
+                        <option value="bottom-left">{t('widget.positions.bl', 'Bottom Left')}</option>
+                        <option value="top-right">{t('widget.positions.tr', 'Top Right')}</option>
+                        <option value="top-left">{t('widget.positions.tl', 'Top Left')}</option>
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Size
+                        {t('widget.size', 'Size')}
                       </label>
                       <select
                         value={config?.button?.size || 'medium'}
@@ -373,15 +342,14 @@ const WidgetCustomization = () => {
                         })}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                       >
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
+                        <option value="small">{t('widget.sizes.small', 'Small')}</option>
+                        <option value="medium">{t('widget.sizes.medium', 'Medium')}</option>
+                        <option value="large">{t('widget.sizes.large', 'Large')}</option>
                       </select>
                     </div>
-
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Show Shadow
+                        {t('widget.showShadow', 'Show Shadow')}
                       </label>
                       <input
                         type="checkbox"
@@ -392,10 +360,9 @@ const WidgetCustomization = () => {
                         className="w-5 h-5 text-indigo-600 rounded"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Border Radius (%)
+                        {t('widget.borderRadiusBtn', 'Border Radius (%)')}
                       </label>
                       <input
                         type="number"
@@ -410,15 +377,13 @@ const WidgetCustomization = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Messages Tab */}
+                { }
                 {activeTab === 'messages' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Messages</h3>
-                    
+                    <h3 className="text-lg font-semibold mb-4">{t('widget.messagesTitle', 'Messages')}</h3>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Welcome Message
+                        {t('widget.welcomeMessage', 'Welcome Message')}
                       </label>
                       <textarea
                         value={config?.messages?.welcomeMessage || ''}
@@ -429,10 +394,9 @@ const WidgetCustomization = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Placeholder Text
+                        {t('widget.placeholderText', 'Placeholder Text')}
                       </label>
                       <input
                         type="text"
@@ -443,10 +407,9 @@ const WidgetCustomization = () => {
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                       />
                     </div>
-
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Show Timestamps
+                        {t('widget.showTimestamps', 'Show Timestamps')}
                       </label>
                       <input
                         type="checkbox"
@@ -457,10 +420,9 @@ const WidgetCustomization = () => {
                         className="w-5 h-5 text-indigo-600 rounded"
                       />
                     </div>
-
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Show Avatars
+                        {t('widget.showAvatars', 'Show Avatars')}
                       </label>
                       <input
                         type="checkbox"
@@ -471,10 +433,9 @@ const WidgetCustomization = () => {
                         className="w-5 h-5 text-indigo-600 rounded"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Message Bubble Radius (px)
+                        {t('widget.msgBubbleRadius', 'Message Bubble Radius (px)')}
                       </label>
                       <input
                         type="number"
@@ -489,15 +450,13 @@ const WidgetCustomization = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Behavior Tab */}
+                { }
                 {activeTab === 'behavior' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Behavior</h3>
-                    
+                    <h3 className="text-lg font-semibold mb-4">{t('widget.behaviorTitle', 'Behavior')}</h3>
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Auto Open
+                        {t('widget.autoOpen', 'Auto Open')}
                       </label>
                       <input
                         type="checkbox"
@@ -508,11 +467,10 @@ const WidgetCustomization = () => {
                         className="w-5 h-5 text-indigo-600 rounded"
                       />
                     </div>
-
                     {config?.behavior?.autoOpen && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Auto Open Delay (ms)
+                          {t('widget.autoOpenDelay', 'Auto Open Delay (ms)')}
                         </label>
                         <input
                           type="number"
@@ -525,10 +483,9 @@ const WidgetCustomization = () => {
                         />
                       </div>
                     )}
-
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Show Unread Badge
+                        {t('widget.showUnreadBadge', 'Show Unread Badge')}
                       </label>
                       <input
                         type="checkbox"
@@ -539,10 +496,9 @@ const WidgetCustomization = () => {
                         className="w-5 h-5 text-indigo-600 rounded"
                       />
                     </div>
-
                     <div className="flex items-center justify-between">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Enable Sound
+                        {t('widget.enableSound', 'Enable Sound')}
                       </label>
                       <input
                         type="checkbox"
@@ -555,16 +511,14 @@ const WidgetCustomization = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Advanced Tab */}
+                { }
                 {activeTab === 'advanced' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Advanced</h3>
-                    
+                    <h3 className="text-lg font-semibold mb-4">{t('widget.advancedTitle', 'Advanced')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Window Width (px)
+                          {t('widget.windowWidth', 'Window Width (px)')}
                         </label>
                         <input
                           type="number"
@@ -579,7 +533,7 @@ const WidgetCustomization = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Window Height (px)
+                          {t('widget.windowHeight', 'Window Height (px)')}
                         </label>
                         <input
                           type="number"
@@ -593,10 +547,9 @@ const WidgetCustomization = () => {
                         />
                       </div>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Custom CSS
+                        {t('widget.customCSS', 'Custom CSS')}
                       </label>
                       <textarea
                         value={config?.advanced?.customCSS || ''}
@@ -613,13 +566,12 @@ const WidgetCustomization = () => {
               </div>
             </div>
           </div>
-
-          {/* Preview Panel */}
+          { }
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sticky top-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Eye className="w-5 h-5" />
-                Live Preview
+                {t('widget.livePreview', 'Live Preview')}
               </h3>
               <div className="relative" style={{ height: '700px', overflow: 'hidden' }}>
                 {config && (
@@ -637,5 +589,4 @@ const WidgetCustomization = () => {
     </>
   );
 };
-
 export default WidgetCustomization;

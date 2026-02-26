@@ -35,15 +35,13 @@ import {
 } from 'lucide-react';
 import { sitesAPI, conversationsAPI, clearCache } from '../services/api';
 import { io } from 'socket.io-client';
-
 const Analytics = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('7days'); // 7days, 30days, 90days
+  const [timeRange, setTimeRange] = useState('7days');
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [socket, setSocket] = useState(null);
-
   const [stats, setStats] = useState({
     openTickets: 0,
     slaBreaches: 0,
@@ -52,7 +50,6 @@ const Analytics = () => {
     activeAgents: 0,
     totalAgents: 0
   });
-
   const [dailyTickets, setDailyTickets] = useState([]);
   const [responseTimeData, setResponseTimeData] = useState([]);
   const [departmentStats, setDepartmentStats] = useState([]);
@@ -60,7 +57,6 @@ const Analytics = () => {
   const [channelDistribution, setChannelDistribution] = useState([]);
   const [slaCompliance, setSlaCompliance] = useState([]);
   const [selectedAgent, setSelectedAgent] = useState('all');
-
   useEffect(() => {
     const token = localStorage.getItem('token');
     const socketUrl = import.meta.env.VITE_API_URL + '/admin';
@@ -68,60 +64,37 @@ const Analytics = () => {
       auth: { token },
       transports: ['websocket', 'polling']
     });
-    
     newSocket.on('connect', () => {
-      console.log('✅ Analytics socket connected!');
     });
-
     newSocket.on('new-conversation', () => {
-      console.log('💬 New conversation - refreshing analytics');
       fetchAnalytics();
     });
-
     newSocket.on('sla-breach', () => {
-      console.log('🚨 SLA breach - refreshing analytics');
       fetchAnalytics();
     });
-
     newSocket.on('conversation-resolved', () => {
-      console.log('✅ Conversation resolved - refreshing analytics');
       fetchAnalytics();
     });
-
     newSocket.on('conversation-update', () => {
-      console.log('🔄 Conversation updated - refreshing analytics');
       fetchAnalytics();
     });
-
-    // SLA ihlali olduğunda (HEMEN güncelle!)
     newSocket.on('sla-breach', (data) => {
-      console.log('🚨 SLA BREACH detected - refreshing analytics', data);
       fetchAnalytics();
     });
-
     setSocket(newSocket);
-    
     return () => {
       newSocket.close();
     };
   }, []);
-
   useEffect(() => {
     fetchAnalytics();
   }, [timeRange]);
-
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       clearCache();
-
-      console.log('🔄 Fetching analytics data...');
-      
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
-      
-      console.log('🏢 Sites:', sites.length);
-
       let allConversations = [];
       for (const site of sites) {
         try {
@@ -129,49 +102,24 @@ const Analytics = () => {
           const conversations = conversationsResponse.data.conversations || [];
           allConversations = [...allConversations, ...conversations];
         } catch (error) {
-          console.error('❌ Site conversations fetch failed:', error);
         }
       }
-
-      console.log('📊 Total conversations:', allConversations.length);
-      
       if (allConversations.length > 0) {
-        console.log('📄 Sample conversation:', {
-          id: allConversations[0]._id,
-          status: allConversations[0].status,
-          priority: allConversations[0].priority,
-          sla: allConversations[0].sla,
-          assignedAgent: allConversations[0].assignedAgent,
-          department: allConversations[0].department,
-          firstResponseAt: allConversations[0].firstResponseAt
-        });
       }
-
       const openTickets = allConversations.filter(c =>
         c.status === 'open' || c.status === 'assigned' || c.status === 'pending'
       ).length;
-
       const unassigned = allConversations.filter(c =>
         c.status === 'open' && !c.assignedAgent
       ).length;
-
-      // SLA ihlalleri: status breached VEYA kalan süre negatif
       const slaBreaches = allConversations.filter(c =>
         c.sla?.firstResponseStatus === 'breached' ||
         (c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0)
       ).length;
-
-      console.log('🚨 SLA Breaches:', {
-        total: slaBreaches,
-        statusBreached: allConversations.filter(c => c.sla?.firstResponseStatus === 'breached').length,
-        remainingNegative: allConversations.filter(c => c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0).length
-      });
-
       const ratedConversations = allConversations.filter(c => c.rating?.score);
       const avgSatisfaction = ratedConversations.length > 0
         ? Math.round((ratedConversations.reduce((sum, c) => sum + c.rating.score, 0) / ratedConversations.length) * 20)
         : 0;
-
       setStats({
         openTickets,
         slaBreaches,
@@ -180,26 +128,21 @@ const Analytics = () => {
         activeAgents: 4,
         totalAgents: 5
       });
-
       const last7Days = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         date.setHours(0, 0, 0, 0);
-
         const nextDate = new Date(date);
         nextDate.setDate(nextDate.getDate() + 1);
-
         const dayTickets = allConversations.filter(c => {
           const createdAt = new Date(c.createdAt);
           return createdAt >= date && createdAt < nextDate;
         });
-
         const resolved = dayTickets.filter(c => c.status === 'resolved' || c.status === 'closed').length;
         const slaMet = dayTickets.filter(c =>
           c.sla?.firstResponseStatus === 'met' || c.sla?.resolutionStatus === 'met'
         ).length;
-
         last7Days.push({
           date: date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: 'short' }),
           tickets: dayTickets.length,
@@ -208,13 +151,11 @@ const Analytics = () => {
         });
       }
       setDailyTickets(last7Days);
-
       const hourly = {};
       allConversations.forEach(c => {
         if (c.firstResponseAt && c.createdAt) {
           const hour = new Date(c.createdAt).getHours();
           const responseTime = Math.floor((new Date(c.firstResponseAt) - new Date(c.createdAt)) / 1000 / 60);
-          
           if (!hourly[hour]) {
             hourly[hour] = { times: [], count: 0 };
           }
@@ -222,11 +163,7 @@ const Analytics = () => {
           hourly[hour].count++;
         }
       });
-
-      console.log('📊 Hourly Response Times (raw):', hourly);
-
       const hourlyData = [];
-      // TÜM saatleri kontrol et (0-23), veri olmayanları 0 yap
       for (let h = 0; h < 24; h++) {
         const avg = hourly[h] 
           ? Math.round(hourly[h].times.reduce((a, b) => a + b, 0) / hourly[h].times.length)
@@ -237,45 +174,31 @@ const Analytics = () => {
           target: 15
         });
       }
-      console.log('📊 Response Time Data (chart):', hourlyData);
       setResponseTimeData(hourlyData);
-
       const channels = {
         'web-chat': { name: 'Web Chat', value: 0, color: '#8B5CF6' },
         'email': { name: 'Email', value: 0, color: '#3B82F6' },
         'whatsapp': { name: 'WhatsApp', value: 0, color: '#10B981' },
         'phone': { name: 'Telefon', value: 0, color: '#F59E0B' }
       };
-      
       allConversations.forEach(c => {
         const channel = c.channel || 'web-chat';
         if (channels[channel]) {
           channels[channel].value++;
         }
       });
-
       setChannelDistribution(Object.values(channels).filter(c => c.value > 0));
-
-      // 4. SLA Uyum Analizi - SADECE İLK YANIT
       const firstResponseMet = allConversations.filter(c => 
         c.sla?.firstResponseStatus === 'met'
       ).length;
-      
       const firstResponseBreached = allConversations.filter(c => 
         c.sla?.firstResponseStatus === 'breached' ||
         (c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0)
       ).length;
-      
       const firstResponsePending = allConversations.filter(c => 
         c.sla?.firstResponseStatus === 'pending' &&
         (c.sla?.firstResponseTimeRemaining === null || c.sla?.firstResponseTimeRemaining >= 0)
       ).length;
-
-      console.log('📊 SLA Analysis (First Response Only):', {
-        firstResponse: { met: firstResponseMet, breached: firstResponseBreached, pending: firstResponsePending },
-        total: firstResponseMet + firstResponseBreached + firstResponsePending
-      });
-
       const slaData = [
         { 
           category: language === 'tr' ? 'İlk Yanıt SLA' : 'First Response SLA', 
@@ -284,11 +207,7 @@ const Analytics = () => {
           pending: firstResponsePending
         }
       ];
-      
-      console.log('📊 SLA Compliance Data for Chart:', slaData);
       setSlaCompliance(slaData);
-
-      // 5. Departman performansı (populate edilen departman bilgisiyle)
       const deptMap = {};
       allConversations.forEach(c => {
         if (c.department) {
@@ -315,7 +234,6 @@ const Analytics = () => {
           }
         }
       });
-
       const deptStats = Object.values(deptMap).map(dept => ({
         name: dept.name,
         tickets: dept.tickets,
@@ -325,25 +243,12 @@ const Analytics = () => {
           ? Math.round(dept.responseTimes.reduce((a, b) => a + b, 0) / dept.responseTimes.length)
           : 0
       })).sort((a, b) => b.tickets - a.tickets);
-
       setDepartmentStats(deptStats);
-
-      // 6. Temsilci performansı (populate edilen agent bilgisiyle)
       const agentMap = {};
       allConversations.forEach(c => {
         if (c.assignedAgent) {
           const agentName = c.assignedAgent.name || 'Agent';
           const agentId = c.assignedAgent._id || c.assignedAgent;
-          
-          console.log('👤 Processing agent:', {
-            conversationId: c._id,
-            assignedAgent: c.assignedAgent,
-            agentName,
-            agentId,
-            status: c.status,
-            firstResponseAt: c.firstResponseAt
-          });
-          
           if (!agentMap[agentId]) {
             agentMap[agentId] = {
               name: agentName,
@@ -353,11 +258,9 @@ const Analytics = () => {
               ratings: []
             };
           }
-          
           if (c.status === 'open' || c.status === 'assigned' || c.status === 'pending') {
             agentMap[agentId].active++;
           }
-          
           if (c.status === 'resolved' || c.status === 'closed') {
             agentMap[agentId].resolved++;
           }
@@ -370,7 +273,6 @@ const Analytics = () => {
           }
         }
       });
-
       const agentStats = Object.values(agentMap).map(agent => ({
         name: agent.name,
         resolved: agent.resolved,
@@ -382,29 +284,12 @@ const Analytics = () => {
           ? Math.round((agent.ratings.reduce((a, b) => a + b, 0) / agent.ratings.length) * 20)
           : 0
       })).sort((a, b) => b.resolved - a.resolved);
-
-      console.log('� Data Summary:', {
-        conversations: allConversations.length,
-        conversationsWithAgent: allConversations.filter(c => c.assignedAgent).length,
-        uniqueAgents: Object.keys(agentMap).length,
-        withFirstResponse: allConversations.filter(c => c.firstResponseAt).length,
-        withDepartment: Object.keys(deptMap).length,
-        agentPerformance: agentStats.length,
-        departmentStats: deptStats.length,
-        responseTimeData: hourlyData.length,
-        slaCompliance: slaCompliance
-      });
-      
-      console.log('�👥 Agent Performance:', agentStats);
       setAgentPerformance(agentStats);
-
     } catch (error) {
-      console.error('Analytics fetch error:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const formatMinutes = (minutes) => {
     if (!minutes) return '0dk';
     const hours = Math.floor(minutes / 60);
@@ -414,7 +299,6 @@ const Analytics = () => {
     }
     return `${mins}dk`;
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -422,7 +306,6 @@ const Analytics = () => {
       </div>
     );
   }
-
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -438,7 +321,6 @@ const Analytics = () => {
     }
     return null;
   };
-
   return (
     <>
       <Helmet>
@@ -446,7 +328,6 @@ const Analytics = () => {
         <meta name="description" content={t('analytics.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -469,7 +350,6 @@ const Analytics = () => {
             </select>
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -484,7 +364,6 @@ const Analytics = () => {
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.openTickets}</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.openTickets')}</p>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
@@ -499,7 +378,6 @@ const Analytics = () => {
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.slaBreaches}</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.slaBreaches')}</p>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center">
@@ -509,7 +387,6 @@ const Analytics = () => {
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.unassigned}</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.unassignedTickets')}</p>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
@@ -524,7 +401,6 @@ const Analytics = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.satisfaction')}</p>
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
@@ -570,7 +446,6 @@ const Analytics = () => {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.responseTime')}
@@ -608,7 +483,6 @@ const Analytics = () => {
             </ResponsiveContainer>
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
@@ -634,7 +508,6 @@ const Analytics = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 lg:col-span-2">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.slaCompliance')}
@@ -662,7 +535,6 @@ const Analytics = () => {
             )}
           </div>
         </div>
-
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -720,7 +592,6 @@ const Analytics = () => {
             )}
           </div>
         </div>
-
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -803,5 +674,4 @@ const Analytics = () => {
     </>
   );
 };
-
 export default Analytics;

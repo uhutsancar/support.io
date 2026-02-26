@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { sitesAPI, faqsAPI, clearCache } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
-
 const FAQs = () => {
   const { t } = useTranslation();
   const [sites, setSites] = useState([]);
@@ -21,17 +20,14 @@ const FAQs = () => {
     keywords: '',
     pageSpecific: '*'
   });
-
   useEffect(() => {
     fetchSites();
   }, []);
-
   useEffect(() => {
     if (selectedSite) {
       fetchFAQs(selectedSite._id);
     }
   }, [selectedSite]);
-
   const fetchSites = async () => {
     try {
       const response = await sitesAPI.getAll();
@@ -40,19 +36,15 @@ const FAQs = () => {
         setSelectedSite(response.data.sites[0]);
       }
     } catch (error) {
-      console.error('Failed to fetch sites:', error);
     }
   };
-
   const fetchFAQs = async (siteId) => {
     try {
       const response = await faqsAPI.getAll(siteId);
       setFaqs(response.data.faqs);
     } catch (error) {
-      console.error('Failed to fetch FAQs:', error);
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -61,7 +53,6 @@ const FAQs = () => {
         siteId: selectedSite._id,
         keywords: formData.keywords.split(',').map(k => k.trim()).filter(Boolean)
       };
-
       if (editingFaq) {
         const response = await faqsAPI.update(editingFaq._id, data);
         setFaqs(faqs.map(faq => faq._id === editingFaq._id ? response.data.faq : faq));
@@ -69,17 +60,14 @@ const FAQs = () => {
         const response = await faqsAPI.create(data);
         setFaqs([...faqs, response.data.faq]);
       }
-
       setShowModal(false);
       resetForm();
       clearCache('/faqs');
       toast.success(editingFaq ? t('faqs.updateSuccess') : t('faqs.createSuccess'));
     } catch (error) {
-      console.error('Failed to save FAQ:', error);
       toast.error('FAQ kaydedilemedi: ' + (error.response?.data?.error || error.message));
     }
   };
-
   const handleEdit = (faq) => {
     setEditingFaq(faq);
     setFormData({
@@ -91,25 +79,20 @@ const FAQs = () => {
     });
     setShowModal(true);
   };
-
   const handleDelete = async () => {
     const { faqId } = confirmDialog;
-
     try {
       await faqsAPI.delete(faqId);
       setFaqs(faqs.filter(faq => faq._id !== faqId));
       clearCache('/faqs');
       toast.success(t('faqs.deleteSuccess'));
     } catch (error) {
-      console.error('Failed to delete FAQ:', error);
       toast.error(t('faqs.deleteError') + ': ' + (error.response?.data?.error || error.message));
     }
   };
-
   const openDeleteConfirm = (faqId, faqQuestion) => {
     setConfirmDialog({ isOpen: true, faqId, faqQuestion });
   };
-
   const resetForm = () => {
     setFormData({
       question: '',
@@ -120,7 +103,6 @@ const FAQs = () => {
     });
     setEditingFaq(null);
   };
-
   return (
     <>
       <Helmet>
@@ -159,7 +141,6 @@ const FAQs = () => {
           </button>
         </div>
       </div>
-
       {faqs.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
           <HelpCircle className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
@@ -175,7 +156,7 @@ const FAQs = () => {
         </div>
       ) : (
         <>
-          {/* Desktop Table View - hidden on mobile */}
+          {}
           <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -242,8 +223,7 @@ const FAQs = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Mobile Card View - visible only on mobile */}
+          {}
           <div className="lg:hidden space-y-4">
             {faqs.map((faq) => (
               <div key={faq._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
@@ -267,7 +247,6 @@ const FAQs = () => {
                     </button>
                   </div>
                 </div>
-                
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-full">
                     {faq.category}
@@ -286,7 +265,6 @@ const FAQs = () => {
           </div>
         </>
       )}
-
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
@@ -307,7 +285,6 @@ const FAQs = () => {
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('faqs.answerLabel')}
@@ -321,7 +298,6 @@ const FAQs = () => {
                   required
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -335,7 +311,6 @@ const FAQs = () => {
                     placeholder={t('faqs.categoryPlaceholder')}
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     {t('faqs.pageLabel')}
@@ -349,7 +324,6 @@ const FAQs = () => {
                   />
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {t('faqs.keywordsLabel')}
@@ -362,7 +336,6 @@ const FAQs = () => {
                   placeholder={t('faqs.keywordsPlaceholder')}
                 />
               </div>
-
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
@@ -385,7 +358,6 @@ const FAQs = () => {
           </div>
         </div>
       )}
-
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, faqId: null, faqQuestion: '' })}
@@ -400,5 +372,4 @@ const FAQs = () => {
     </>
   );
 };
-
 export default FAQs;

@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
-
 const AuthContext = createContext();
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -10,20 +8,16 @@ export const useAuth = () => {
   }
   return context;
 };
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-
   useEffect(() => {
     checkAuth();
   }, []);
-
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
     const cachedUser = localStorage.getItem('user');
-    
     if (cachedUser && token) {
       try {
         let parsedUser = JSON.parse(cachedUser);
@@ -40,7 +34,6 @@ export const AuthProvider = ({ children }) => {
               setAuthChecked(true);
             })
             .catch(error => {
-              console.error('Auth validation error:', error);
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               setUser(null);
@@ -67,7 +60,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
   const login = async (email, password) => {
     const response = await authAPI.login({ email, password });
     let u = response.data.user;
@@ -78,7 +70,6 @@ export const AuthProvider = ({ children }) => {
     setAuthChecked(true);
     return response.data;
   };
-
   const register = async (name, email, password) => {
     const response = await authAPI.register({ name, email, password });
     let u = response.data.user;
@@ -89,19 +80,16 @@ export const AuthProvider = ({ children }) => {
     setAuthChecked(true);
     return response.data;
   };
-
   const logout = async () => {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error);
     }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
     setAuthChecked(false);
   };
-
   const value = {
     user,
     loading,
@@ -110,6 +98,5 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAuthenticated: !!user,
   };
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

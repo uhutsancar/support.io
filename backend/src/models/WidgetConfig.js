@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const widgetConfigSchema = new mongoose.Schema({
   siteId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -13,8 +12,6 @@ const widgetConfigSchema = new mongoose.Schema({
     ref: 'Organization',
     required: true
   },
-  
-  // Color Palette
   colors: {
     primary: {
       type: String,
@@ -49,11 +46,9 @@ const widgetConfigSchema = new mongoose.Schema({
       default: '#F3F4F6'
     }
   },
-  
-  // Logo & Branding
   branding: {
     logo: {
-      type: String, // URL or base64
+      type: String,
       default: null
     },
     logoWidth: {
@@ -73,8 +68,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: true
     }
   },
-  
-  // Button Style
   button: {
     position: {
       type: String,
@@ -88,7 +81,7 @@ const widgetConfigSchema = new mongoose.Schema({
     },
     icon: {
       type: String,
-      default: 'message-circle' // message-circle, headphones, chat, etc.
+      default: 'message-circle'
     },
     showLabel: {
       type: Boolean,
@@ -100,7 +93,7 @@ const widgetConfigSchema = new mongoose.Schema({
     },
     borderRadius: {
       type: Number,
-      default: 50 // percentage for circular
+      default: 50
     },
     shadow: {
       type: Boolean,
@@ -111,8 +104,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: 'rgba(0,0,0,0.15)'
     }
   },
-  
-  // Window Style
   window: {
     width: {
       type: Number,
@@ -139,8 +130,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: true
     }
   },
-  
-  // Messages
   messages: {
     welcomeMessage: {
       type: String,
@@ -163,8 +152,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: 12
     }
   },
-  
-  // Behavior
   behavior: {
     autoOpen: {
       type: Boolean,
@@ -193,8 +180,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: true
     }
   },
-  
-  // Typography
   typography: {
     fontFamily: {
       type: String,
@@ -211,8 +196,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: 'normal'
     }
   },
-  
-  // Advanced
   advanced: {
     customCSS: {
       type: String,
@@ -228,7 +211,6 @@ const widgetConfigSchema = new mongoose.Schema({
       default: 'normal'
     }
   },
-  
   isActive: {
     type: Boolean,
     default: true
@@ -236,8 +218,6 @@ const widgetConfigSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 widgetConfigSchema.index({ siteId: 1, isActive: 1 });
 widgetConfigSchema.index({ organizationId: 1 });
-
 module.exports = mongoose.model('WidgetConfig', widgetConfigSchema);

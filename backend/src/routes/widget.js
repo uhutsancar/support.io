@@ -18,7 +18,6 @@ router.get('/settings', async (req, res) => {
       return res.status(404).json({ error: 'Site not found or inactive' });
     }
 
-    // Get widget config
     const widgetConfig = await WidgetConfig.findOne({ 
       siteId: site._id, 
       isActive: true 

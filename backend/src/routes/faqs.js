@@ -5,7 +5,6 @@ const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
 const Site = require('../models/Site');
 const { verifySiteKey } = require('../middleware/siteAuth');
-
 router.get('/admin/:siteId', auth, async (req, res) => {
   try {
     const faqs = await FAQ.find({ siteId: req.params.siteId }).sort({ order: 1, createdAt: -1 });
@@ -14,14 +13,12 @@ router.get('/admin/:siteId', auth, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 router.post('/admin', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { siteId, question, answer, category, keywords, pageSpecific, order } = req.body;
     const orgId = req.organization?._id || req.user.organizationId;
     const site = await Site.findOne({ _id: siteId, ...(orgId ? { organizationId: orgId } : {}) });
     if (!site) return res.status(404).json({ error: 'Site not found' });
-
     const faq = new FAQ({
       siteId,
       question,
@@ -31,14 +28,12 @@ router.post('/admin', auth, checkPermission('manage_sites'), async (req, res) =>
       pageSpecific,
       order
     });
-
     await faq.save();
     res.status(201).json({ faq });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
-
 router.put('/admin/:faqId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const updates = req.body;
@@ -49,17 +44,14 @@ router.put('/admin/:faqId', auth, checkPermission('manage_sites'), async (req, r
     if (!site) return res.status(404).json({ error: 'FAQ not found' });
     Object.assign(faq, updates);
     await faq.save();
-    
     if (!faq) {
       return res.status(404).json({ error: 'FAQ not found' });
     }
-
     res.json({ faq });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
-
 router.delete('/admin/:faqId', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const faq = await FAQ.findById(req.params.faqId);
@@ -68,22 +60,18 @@ router.delete('/admin/:faqId', auth, checkPermission('manage_sites'), async (req
     const site = await Site.findOne({ _id: faq.siteId, ...(orgId ? { organizationId: orgId } : {}) });
     if (!site) return res.status(404).json({ error: 'FAQ not found' });
     await FAQ.findByIdAndDelete(req.params.faqId);
-
     res.json({ message: 'FAQ deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
 router.get('/search', verifySiteKey, async (req, res) => {
   try {
     const { query, page } = req.query;
-    
     let filter = {
       siteId: req.site._id,
       isActive: true
     };
-
     if (page) {
       filter.$or = [
         { pageSpecific: page },
@@ -92,9 +80,7 @@ router.get('/search', verifySiteKey, async (req, res) => {
     } else {
       filter.pageSpecific = '*';
     }
-
     let faqs;
-    
     if (query && query.trim()) {
       faqs = await FAQ.find({
         ...filter,
@@ -105,11 +91,9 @@ router.get('/search', verifySiteKey, async (req, res) => {
     } else {
       faqs = await FAQ.find(filter).sort({ order: 1 }).limit(5);
     }
-
     res.json({ faqs });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
 module.exports = router;

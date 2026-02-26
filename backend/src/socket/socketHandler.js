@@ -2,6 +2,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const Site = require('../models/Site');
 const FAQ = require('../models/FAQ');
+const Visitor = require('../models/Visitor');
 const Team = require('../models/Team');
 const Department = require('../models/Department');
 const TeamMessage = require('../models/TeamMessage');
@@ -61,7 +62,7 @@ class SocketHandler {
             try {
               conversation.calculateSLA();
             } catch (slaErr) {
-              console.warn('SLA calc failed during join-conversation:', slaErr.message);
+
             }
             await conversation.save();
 
@@ -77,9 +78,47 @@ class SocketHandler {
             });
           }
 
+          const visitorDoc = await Visitor.findOneAndUpdate(
+            { visitorId, siteId: site._id },
+            {
+              organizationId: site.organizationId,
+              ip: metadata?.ip || null,
+              country: metadata?.country || null,
+              browser: metadata?.browser || null,
+              os: metadata?.os || null,
+              currentPage: currentPage || '/',
+              referrer: metadata?.referrer || null,
+              isActive: true,
+              lastActiveAt: new Date()
+            },
+            { new: true, upsert: true }
+          );
+
+          this.adminNamespace.to(`site:${site._id}`).emit('visitor-updated', visitorDoc);
+
         } catch (error) {
-          console.error('Join conversation error:', error);
+
           socket.emit('error', { message: error.message });
+        }
+      });
+
+      socket.on('visitor-page-view', async (data) => {
+        try {
+          if (!socket.visitorId || !socket.siteId) return;
+          const { currentPage } = data;
+          socket.currentPage = currentPage;
+
+          const visitorDoc = await Visitor.findOneAndUpdate(
+            { visitorId: socket.visitorId, siteId: socket.siteId },
+            { currentPage: currentPage || '/', lastActiveAt: new Date(), isActive: true },
+            { new: true }
+          );
+
+          if (visitorDoc) {
+             this.adminNamespace.to(`site:${socket.siteId}`).emit('visitor-updated', visitorDoc);
+          }
+        } catch (error) {
+
         }
       });
 
@@ -105,15 +144,29 @@ class SocketHandler {
               isActive: true
             }).sort({ createdAt: 1 });
 
-            // Check business hours
             let businessHoursMessage = null;
             if (department && !isWithinBusinessHours(department)) {
               businessHoursMessage = getBusinessHoursMessage(department);
             }
 
+            let matchedDepartment = null;
+            const msgLower = content ? content.toLowerCase() : '';
+            
+            if (msgLower.includes('satış') || msgLower.includes('fiyat') || msgLower.includes('satın') || msgLower.includes('kampanya') || msgLower.includes('ödeme')) {
+
+              matchedDepartment = await Department.findOne({ siteId: socket.siteId, isActive: true, name: { $regex: /satış|sales/i } });
+            } else if (msgLower.includes('destek') || msgLower.includes('sorun') || msgLower.includes('hata') || msgLower.includes('çalışmıyor')) {
+
+              matchedDepartment = await Department.findOne({ siteId: socket.siteId, isActive: true, name: { $regex: /destek|support/i } });
+            }
+            
+            if (matchedDepartment) {
+              department = matchedDepartment;
+            }
+
             const conversation = new Conversation({
               siteId: socket.siteId,
-              organizationId: site.organizationId, // Tenant isolation
+              organizationId: site.organizationId,
               visitorId: socket.visitorId,
               visitorName: socket.visitorName,
               visitorEmail: socket.visitorEmail,
@@ -123,7 +176,7 @@ class SocketHandler {
               status: 'open',
               channel: 'web-chat',
               priority: 'normal',
-              requiredSkills: department?.requiredSkills || [] // Extract skills from department
+              requiredSkills: department?.requiredSkills || []
             });
 
             const slaTargets = {
@@ -143,19 +196,18 @@ class SocketHandler {
               conversation.sla.resolutionTarget = slaTargets[priority].resolution;
             }
 
-            // Calculate SLA only if within business hours (if configured)
             if (shouldCalculateSLA(department)) {
-              // createdAt is only populated after save; ensure we have a value so calculation doesn't crash
+
               if (!conversation.createdAt) {
                 conversation.createdAt = new Date();
               }
               try {
                 conversation.calculateSLA();
               } catch (slaErr) {
-                console.warn('SLA calc failed during new conversation:', slaErr.message);
+
               }
             } else {
-              // Outside business hours: set next check to start of next business day
+
               const tomorrow = new Date();
               tomorrow.setDate(tomorrow.getDate() + 1);
               tomorrow.setHours(9, 0, 0, 0);
@@ -174,14 +226,12 @@ class SocketHandler {
             socket.conversationId = conversation._id;
             conversationId = conversation._id;
 
-            // Auto-assign conversation
             const assignResult = await autoAssignConversation(conversation._id, site.organizationId);
             if (assignResult.success) {
-              // Reload conversation with assigned agent
+
               await conversation.populate('assignedAgent', 'name avatar status');
             }
 
-            // Send business hours message if outside hours
             if (businessHoursMessage) {
               const botMessage = new Message({
                 conversationId: conversation._id,
@@ -226,19 +276,17 @@ class SocketHandler {
           const message = new Message(messageData);
           await message.save();
 
-          // Increment unread count for visitor messages
           conversation.unreadCount = (conversation.unreadCount || 0) + 1;
           conversation.lastMessageAt = new Date();
           await conversation.save();
-          
-          // Check if assigned agent went offline, trigger auto-reassign
+
           if (conversation.assignedAgent) {
             const agent = await Team.findById(conversation.assignedAgent);
             if (agent && (agent.status === 'offline' || agent.status === 'away')) {
               const site = await Site.findById(conversation.siteId);
               if (site && site.organizationId) {
                 await checkAndReassign(conversation._id, site.organizationId);
-                // Reload conversation after reassign
+
                 await conversation.populate('assignedAgent', 'name avatar status');
               }
             }
@@ -246,13 +294,11 @@ class SocketHandler {
 
           this.widgetNamespace.to(`conversation:${conversationId}`).emit('new-message', { message });
 
-          // Admin interfaces (owners/admins) receive all messages for the site
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('new-message', {
             message,
             conversation
           });
 
-          // If conversation is assigned to an agent, notify that agent specifically
           if (conversation.assignedAgent) {
             this.adminNamespace.to(`user:${conversation.assignedAgent}`).emit('new-message', {
               message,
@@ -260,7 +306,6 @@ class SocketHandler {
             });
           }
 
-          // Notify admin dashboards scoped to the site room
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('notification', {
             type: 'new-message',
             message: `New message from ${conversation.visitorName}`,
@@ -272,7 +317,7 @@ class SocketHandler {
           await this.tryAutoResponse(conversation, content);
 
         } catch (error) {
-          console.error('Send message error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
@@ -285,7 +330,21 @@ class SocketHandler {
         }
       });
 
-      socket.on('disconnect', () => {
+      socket.on('disconnect', async () => {
+        try {
+          if (socket.visitorId && socket.siteId) {
+             const visitorDoc = await Visitor.findOneAndUpdate(
+               { visitorId: socket.visitorId, siteId: socket.siteId },
+               { isActive: false, lastActiveAt: new Date() },
+               { new: true }
+             );
+             if (visitorDoc) {
+                this.adminNamespace.to(`site:${socket.siteId}`).emit('visitor-updated', visitorDoc);
+             }
+          }
+        } catch (error) {
+
+        }
       });
     });
   }
@@ -293,9 +352,7 @@ class SocketHandler {
   setupAdminHandlers() {
 
     this.adminNamespace.on('connection', async (socket) => {
-      console.log('[SOCKET] Yeni admin bağlantısı:', socket.id);
-      console.log('[SOCKET] handshake.auth:', socket.handshake.auth);
-      // Bağlantı anında userId'yi auth token'dan veya handshake'den al
+
       if (socket.handshake.auth && socket.handshake.auth.token) {
         try {
           const jwt = require('jsonwebtoken');
@@ -303,8 +360,8 @@ class SocketHandler {
           if (decoded && decoded.userId) {
             socket.userId = decoded.userId;
             socket.organizationId = decoded.organizationId || null;
-            socket.role = decoded.role || null; // owner, admin, agent, etc.
-            // if token did not include org, attempt to load from DB
+            socket.role = decoded.role || null;
+
             if (!socket.organizationId) {
               try {
                 const User = require('../models/User');
@@ -319,22 +376,22 @@ class SocketHandler {
                   socket.organizationId = userObj.organizationId;
                       }
               } catch (dbErr) {
-                console.error('Error fetching user org for socket auth:', dbErr.message);
+
               }
             }
-            console.log('[SOCKET] Token ile userId bulundu:', socket.userId, 'org:', socket.organizationId, 'role:', socket.role);
+
           }
         } catch (err) {
-          console.error('Socket auth token decode error:', err.message);
+
         }
-      // Ensure personal room is joined so agents always receive personal emits
+
       try {
         if (socket.userId) {
           socket.join(`user:${socket.userId}`);
-          console.log('[SOCKET] auto-joined personal room:', `user:${socket.userId}`);
+
         }
       } catch (e) {
-        console.error('Failed to auto-join personal room:', e.message);
+
       }
       }
 
@@ -343,26 +400,21 @@ class SocketHandler {
           const { siteId, userId } = data;
           if (userId) socket.userId = userId;
           socket.siteId = siteId;
-          console.log('[SOCKET] join-site çağrıldı:', { siteId, userId, role: socket.role });
 
-          // Admin/Owner should join the site room to receive all site messages
           if (socket.role === 'owner' || socket.role === 'admin') {
             if (siteId) {
               socket.join(`site:${siteId}`);
-              console.log('[SOCKET] admin/owner joined site room:', siteId);
-            } else {
-              console.log('[SOCKET] join-site called for admin without siteId; skipping site room join');
             }
           } else if (socket.role === 'agent' || socket.role === 'manager') {
-            // Agents/managers should not auto-join the global site room.
-            // They should join their personal room to receive assignment notifications.
+            if (siteId) {
+              socket.join(`site:${siteId}`);
+            }
             if (socket.userId) {
               socket.join(`user:${socket.userId}`);
-              console.log('[SOCKET] agent/manager joined user room:', socket.userId);
             }
           }
         } catch (error) {
-          console.error('Join site error:', error.message);
+
         }
       });
 
@@ -377,7 +429,7 @@ class SocketHandler {
           );
 
         } catch (error) {
-          console.error('Join conversation error:', error);
+
         }
       });
 
@@ -407,7 +459,7 @@ class SocketHandler {
             try {
               conversation.calculateSLA();
             } catch (slaErr) {
-              console.warn('SLA calc failed on agent reply:', slaErr.message);
+
             }
             
             if (socket.userId) {
@@ -447,7 +499,6 @@ class SocketHandler {
           const message = new Message(messageData);
           await message.save();
 
-          // Reset unread count when agent responds
           if (message.senderType === 'agent') {
             conversation.unreadCount = 0;
           }
@@ -459,7 +510,6 @@ class SocketHandler {
             message
           });
 
-          console.log('[SOCKET] admin sent message – emitting to conversation room', conversationId, 'and site', conversation.siteId);
           this.adminNamespace.to(`conversation:${conversationId}`).emit('new-message', {
             message,
             conversation
@@ -471,7 +521,7 @@ class SocketHandler {
           });
 
         } catch (error) {
-          console.error('Send message error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
@@ -485,8 +535,7 @@ class SocketHandler {
         try {
           const { status } = data;
           const agent = await Team.findByIdAndUpdate(socket.userId, { status }, { new: true });
-          
-          // If agent went offline/away, check and reassign their conversations
+
           if (status === 'offline' || status === 'away') {
             const Site = require('../models/Site');
             const assignedConversations = await Conversation.find({
@@ -500,8 +549,7 @@ class SocketHandler {
               }
             }
           }
-          
-          // Notify admins for the site (if joined) and also notify user room
+
           if (socket.siteId) {
             this.adminNamespace.to(`site:${socket.siteId}`).emit('agent-status-changed', {
               userId: socket.userId,
@@ -518,7 +566,7 @@ class SocketHandler {
             status
           });
         } catch (error) {
-          console.error('Update status error:', error);
+
         }
       });
 
@@ -531,8 +579,7 @@ class SocketHandler {
             socket.emit('error', { message: 'Conversation not found' });
             return;
           }
-          
-          // Only admin/owner can assign conversations
+
           if (!(socket.role === 'owner' || socket.role === 'admin')) {
             socket.emit('error', { message: 'Yetersiz yetki: atama işlemi için admin gerekli.' });
             return;
@@ -543,8 +590,7 @@ class SocketHandler {
           conversation.assignedAt = new Date();
           conversation.status = 'assigned';
           await conversation.save();
-          
-          // Increment stats on the Team or User depending which exists
+
           try {
             const Team = require('../models/Team');
             const User = require('../models/User');
@@ -562,7 +608,7 @@ class SocketHandler {
               }
             }
           } catch (e) {
-            console.error('Assign stats update error:', e.message);
+
           }
           
           this.adminNamespace.to(`site:${conversation.siteId}`).emit('conversation-assigned', {
@@ -571,7 +617,6 @@ class SocketHandler {
             assignedBy: socket.userId
           });
 
-          // Notify the assigned agent in their personal room (team member or user)
           try {
             const Team = require('../models/Team');
             const User = require('../models/User');
@@ -583,7 +628,7 @@ class SocketHandler {
                 assignedBy: socket.userId,
                 siteId: conversation.siteId
               });
-              console.log('[EMIT] conversation-assigned -> user:' + agentId + ' (team via socket)');
+
             } else {
               const userDoc = await User.findById(agentId).select('_id');
               if (userDoc) {
@@ -593,7 +638,7 @@ class SocketHandler {
                   assignedBy: socket.userId,
                   siteId: conversation.siteId
                 });
-                console.log('[EMIT] conversation-assigned -> user:' + agentId + ' (user via socket)');
+
               } else {
                 this.adminNamespace.to(`user:${agentId}`).emit('conversation-assigned', {
                   conversationId,
@@ -601,11 +646,11 @@ class SocketHandler {
                   assignedBy: socket.userId,
                   siteId: conversation.siteId
                 });
-                console.log('[EMIT] conversation-assigned -> user:' + agentId + ' (fallback via socket)');
+
               }
             }
           } catch (e) {
-            console.error('Emit conversation-assigned (socket) error:', e.message);
+
             this.adminNamespace.to(`user:${agentId}`).emit('conversation-assigned', {
               conversationId,
               agentId,
@@ -614,7 +659,7 @@ class SocketHandler {
             });
           }
         } catch (error) {
-          console.error('Assign conversation error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
@@ -656,20 +701,19 @@ class SocketHandler {
             agentId: socket.userId
           });
 
-          // Notify the claiming agent (they are the claimer) in their personal room
           this.adminNamespace.to(`user:${socket.userId}`).emit('conversation-claimed', {
             conversationId,
             agentId: socket.userId
           });
         } catch (error) {
-          console.error('Claim conversation error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
 
       socket.on('set-department', async (data) => {
         try {
-          console.log('[SOCKET] team-chat-send çağrıldı:', data);
+
           const { conversationId, departmentId } = data;
           
           const conversation = await Conversation.findById(conversationId);
@@ -677,8 +721,7 @@ class SocketHandler {
             socket.emit('error', { message: 'Conversation not found' });
             return;
           }
-          
-          // Only admin/owner may change department
+
           if (!(socket.role === 'owner' || socket.role === 'admin')) {
             socket.emit('error', { message: 'Yetersiz yetki: departman ataması için admin gerekli.' });
             return;
@@ -687,19 +730,18 @@ class SocketHandler {
           const oldDepartmentId = conversation.department;
           conversation.department = departmentId;
 
-          console.log('[SOCKET] team-chat-send sender userId:', socket.userId);
           if (departmentId) {
             const newDepartment = await Department.findById(departmentId);
             if (newDepartment && newDepartment.sla.enabled) {
               const priority = conversation.priority;
               conversation.sla.firstResponseTarget = newDepartment.sla.firstResponse[priority] || 30;
               conversation.sla.resolutionTarget = newDepartment.sla.resolution[priority] || 480;
-          console.log('[SOCKET] team-chat-send sender bulundu:', sender);
+
               
               try {
                 conversation.calculateSLA();
               } catch (slaErr) {
-                console.warn('SLA calc failed during department change:', slaErr.message);
+
               }
             }
             
@@ -722,7 +764,7 @@ class SocketHandler {
             conversation
           });
         } catch (error) {
-          console.error('Set department error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
@@ -747,7 +789,7 @@ class SocketHandler {
             try {
               conversation.calculateSLA();
             } catch (slaErr) {
-              console.warn('SLA calc failed during priority change:', slaErr.message);
+
             }
           }
           
@@ -759,12 +801,10 @@ class SocketHandler {
             conversation
           });
         } catch (error) {
-          console.error('Set priority error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
-
-      // ===== TEAM CHAT SOCKET EVENTS =====
 
       socket.on('team-chat-join', (data) => {
         const { chatId } = data;
@@ -783,7 +823,7 @@ class SocketHandler {
       socket.on('team-chat-send', async (data) => {
         try {
           if (!socket.userId) {
-            console.error('team-chat-send: userId yok!');
+
             socket.emit('error', { message: 'Kimlik doğrulama hatası: userId yok.' });
             return;
           }
@@ -795,12 +835,12 @@ class SocketHandler {
           }
           let sender = await Team.findById(userId).select('name');
           if (!sender) {
-            // Eğer Team'de yoksa User'da ara
+
             const User = require('../models/User');
             sender = await User.findById(userId).select('name');
           }
           if (!sender) {
-            console.error('team-chat-send: sender bulunamadı! userId:', userId);
+
             socket.emit('error', { message: 'Kullanıcı bulunamadı.' });
             return;
           }
@@ -835,7 +875,12 @@ class SocketHandler {
           if (chat) {
             chat.participants.forEach(pId => {
               if (pId.toString() !== sender._id.toString()) {
-                // Notify participant's personal room instead of global emit
+                // emit the same event to update chat list and message window globally
+                this.adminNamespace.to(`user:${pId}`).emit('team-chat-message', {
+                  message
+                });
+                
+                // Keep notification for other UI systems
                 this.adminNamespace.to(`user:${pId}`).emit('team-chat-notification', {
                   chatId,
                   message,
@@ -846,7 +891,7 @@ class SocketHandler {
             });
           }
         } catch (error) {
-          console.error('Team chat send error:', error);
+
         }
       });
 
@@ -857,7 +902,6 @@ class SocketHandler {
           userName
         });
       });
-      // ===== END TEAM CHAT =====
 
       socket.on('resolve-conversation', async (data) => {
         try {
@@ -922,7 +966,7 @@ class SocketHandler {
             conversation
           });
         } catch (error) {
-          console.error('Resolve conversation error:', error);
+
           socket.emit('error', { message: error.message });
         }
       });
@@ -936,25 +980,23 @@ class SocketHandler {
     setInterval(async () => {
       try {
         const now = new Date();
-        
-        // Optimized: Only check conversations where nextSlaCheckAt <= now
-        // Using index: { status: 1, nextSlaCheckAt: 1 }
+
         const conversationsToCheck = await Conversation.find({
           status: { $in: ['open', 'assigned', 'pending'] },
           $or: [
             { nextSlaCheckAt: { $lte: now } },
-            { nextSlaCheckAt: null } // Include conversations without nextSlaCheckAt set
+            { nextSlaCheckAt: null }
           ]
         })
         .populate('department', 'name color icon businessHours sla')
         .populate('assignedAgent', 'name email avatar status')
         .populate('siteId', 'organizationId')
-        .limit(100); // Process in batches
+        .limit(100);
         
         for (const conversation of conversationsToCheck) {
-          // Skip if outside business hours and SLA only runs during business hours
+
           if (conversation.department && !shouldCalculateSLA(conversation.department)) {
-            // Set next check to start of next business day
+
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             tomorrow.setHours(9, 0, 0, 0);
@@ -970,8 +1012,7 @@ class SocketHandler {
           
           conversation.calculateSLA();
           await conversation.save();
-          
-          // Check for SLA warning (%80 threshold)
+
           const warning = await sendSLAWarning(conversation, this.io);
           
           if (previousFirstResponseRemaining !== conversation.sla.firstResponseTimeRemaining ||
@@ -984,8 +1025,7 @@ class SocketHandler {
               conversation: conversation.toObject()
             });
           }
-          
-          // Handle breach
+
           if (previousFirstResponseStatus !== 'breached' && conversation.sla.firstResponseStatus === 'breached') {
             const site = await Site.findById(conversation.siteId);
             if (site && site.organizationId) {
@@ -998,8 +1038,7 @@ class SocketHandler {
               type: 'first-response',
               conversation: conversation.toObject()
             });
-            
-            // Auto-reassign if breached and no response
+
             if (!conversation.firstResponseAt) {
               const site = await Site.findById(conversation.siteId);
               if (site && site.organizationId) {
@@ -1023,9 +1062,9 @@ class SocketHandler {
           }
         }
       } catch (error) {
-        console.error('❌ SLA monitoring error:', error);
+
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
   }
 
   async tryAutoResponse(conversation, userMessage) {
@@ -1070,7 +1109,7 @@ class SocketHandler {
         });
       }
     } catch (error) {
-      console.error('Auto-response error:', error);
+
     }
   }
 }
