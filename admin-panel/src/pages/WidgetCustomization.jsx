@@ -383,7 +383,7 @@ const WidgetCustomization = () => {
                     <h3 className="text-lg font-semibold mb-4">{t('widget.messagesTitle', 'Messages')}</h3>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t('widget.welcomeMessage', 'Welcome Message')}
+                        {t('widget.messages.welcomeMsg', 'Welcome Message')}
                       </label>
                       <textarea
                         value={config?.messages?.welcomeMessage || ''}
@@ -391,12 +391,13 @@ const WidgetCustomization = () => {
                           messages: { welcomeMessage: e.target.value }
                         })}
                         rows={3}
+                        placeholder={t('widget.messages.welcomeMessagePlaceholder', 'Leave empty for no initial message')}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t('widget.placeholderText', 'Placeholder Text')}
+                        {t('widget.messages.placeholder', 'Placeholder Text')}
                       </label>
                       <input
                         type="text"

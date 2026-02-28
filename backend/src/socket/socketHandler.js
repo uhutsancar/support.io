@@ -10,6 +10,7 @@ const TeamChat = require('../models/TeamChat');
 const { autoAssignConversation, checkAndReassign } = require('../services/autoAssignment');
 const { isWithinBusinessHours, getBusinessHoursMessage, shouldCalculateSLA } = require('../services/businessHours');
 const { sendSLAWarning, handleSLABreach } = require('../services/escalation');
+const { getEngine: getAutomationEngine } = require('../services/automationEngine');
 
 class SocketHandler {
   constructor(io) {
@@ -38,10 +39,17 @@ class SocketHandler {
 
           socket.siteId = site._id;
           socket.visitorId = visitorId;
+          socket.sessionId = data.sessionId;
           socket.visitorName = visitorName || 'Visitor';
           socket.visitorEmail = visitorEmail;
           socket.currentPage = currentPage;
           socket.metadata = metadata;
+
+          // Join visitor specific rooms for proactive messaging
+          socket.join(`site:${site._id}:visitor:${visitorId}`);
+          if (data.sessionId) {
+            socket.join(`session:${data.sessionId}`);
+          }
 
           let conversation = await Conversation.findOne({
             siteId: site._id,
@@ -74,7 +82,7 @@ class SocketHandler {
             socket.emit('conversation-joined', {
               conversation: null,
               messages: [],
-              welcomeMessage: site.widgetSettings.welcomeMessage || 'Hi! How can we help you today?'
+              welcomeMessage: site.widgetSettings.welcomeMessage || ''
             });
           }
 
@@ -251,6 +259,18 @@ class SocketHandler {
             this.adminNamespace.to(`site:${socket.siteId}`).emit('new-conversation', {
               conversation: await conversation.populate('department', 'name color icon')
             });
+
+            const automationEngine = getAutomationEngine();
+            if (automationEngine) {
+               automationEngine.evaluateEvent({
+                  siteId: conversation.siteId,
+                  triggerType: 'conversation_created',
+                  targetId: conversation._id,
+                  payload: {
+                     visitor: { id: conversation.visitorId, name: conversation.visitorName, email: conversation.visitorEmail, currentPage: conversation.currentPage }
+                  }
+               });
+            }
           }
 
           const conversation = await Conversation.findById(conversationId);
@@ -313,6 +333,19 @@ class SocketHandler {
             conversationId: conversation._id,
             timestamp: new Date()
           });
+
+          const automationEngine = getAutomationEngine();
+          if (automationEngine) {
+             automationEngine.evaluateEvent({
+                siteId: conversation.siteId,
+                triggerType: 'message_received',
+                targetId: conversation._id,
+                payload: {
+                   message: { content, type: messageType },
+                   visitor: { id: conversation.visitorId, name: conversation.visitorName, email: conversation.visitorEmail }
+                }
+             });
+          }
 
           await this.tryAutoResponse(conversation, content);
 

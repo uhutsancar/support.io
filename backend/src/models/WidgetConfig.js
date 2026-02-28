@@ -133,7 +133,7 @@ const widgetConfigSchema = new mongoose.Schema({
   messages: {
     welcomeMessage: {
       type: String,
-      default: 'Hi! How can we help you today?'
+      default: ''
     },
     placeholderText: {
       type: String,

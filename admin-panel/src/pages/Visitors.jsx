@@ -142,7 +142,7 @@ const Visitors = () => {
                     </div>
                 </div>
                 { }
-                <div className="flex-1 overflow-x-auto relative">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 modal-scrollbar pr-2 relative">
                     {loading ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-10">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>

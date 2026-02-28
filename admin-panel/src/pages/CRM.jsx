@@ -155,7 +155,7 @@ const CRM = () => {
                     </button>
                 </div>
                 { }
-                <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 custom-scrollbar">
+                <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 modal-scrollbar pb-2">
                     <div className="flex gap-6 h-full items-start min-w-max pb-4">
                         {STAGES.map((stage) => (
                             <div
@@ -185,7 +185,7 @@ const CRM = () => {
                                     </button>
                                 </div>
                                 { }
-                                <div className="p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+                                <div className="p-3 flex-1 overflow-y-auto overflow-x-hidden min-h-0 space-y-3 modal-scrollbar">
                                     {loading ? (
                                         <div className="flex items-center justify-center p-4">
                                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>

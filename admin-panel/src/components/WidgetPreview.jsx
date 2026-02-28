@@ -104,7 +104,7 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
   const messagesConfig = config?.messages || {};
   if (!isOpen) {
     return (
-      <div 
+      <div
         className="fixed z-50 transition-all duration-300"
         style={{
           [button.position?.includes('right') ? 'right' : 'left']: '20px',
@@ -122,7 +122,7 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
     );
   }
   return (
-    <div 
+    <div
       className="fixed z-50 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
       style={{
         ...styles.window,
@@ -130,17 +130,17 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
         [button.position?.includes('bottom') ? 'bottom' : 'top']: '20px',
       }}
     >
-      {}
+      { }
       {config?.window?.showHeader !== false && (
-        <div 
+        <div
           className="flex items-center justify-between px-4 py-3"
           style={styles.header}
         >
           <div className="flex items-center gap-3">
             {config?.branding?.logo && (
-              <img 
-                src={config.branding.logo.startsWith('http') 
-                  ? config.branding.logo 
+              <img
+                src={config.branding.logo.startsWith('http')
+                  ? config.branding.logo
                   : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${config.branding.logo}`}
                 alt="Logo"
                 className="object-contain"
@@ -167,13 +167,13 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
           )}
         </div>
       )}
-      {}
+      { }
       {messages.length === 0 && config?.messages?.welcomeMessage && (
         <div className="px-4 py-6 text-center" style={{ color: colors.textSecondary || '#6B7280' }}>
           <p className="text-sm">{config.messages.welcomeMessage}</p>
         </div>
       )}
-      {}
+      { }
       <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ backgroundColor: colors.background || '#FFFFFF' }}>
         {messages.map((msg) => (
           <div
@@ -189,7 +189,7 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
               )}
               <div>{msg.content}</div>
               {config?.messages?.showTimestamps !== false && (
-                <div 
+                <div
                   className="text-xs mt-1 opacity-60"
                   style={{ fontSize: '10px' }}
                 >
@@ -212,7 +212,7 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
         )}
         <div ref={messagesEndRef} />
       </div>
-      {}
+      { }
       <div className="border-t p-3" style={{ borderColor: colors.border || '#E5E7EB' }}>
         <div className="flex items-end gap-2">
           <button className="p-2 hover:bg-gray-100 rounded-lg transition">
