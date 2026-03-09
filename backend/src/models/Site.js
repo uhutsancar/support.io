@@ -40,7 +40,7 @@ const siteSchema = new mongoose.Schema({
     },
     welcomeMessage: {
       type: String,
-      default: ''
+      default: 'Hi! How can we help you today?'
     },
     placeholderText: {
       type: String,

@@ -25,13 +25,6 @@ const onboardingRoutes = require('./routes/onboarding');
 const widgetConfigRoutes = require('./routes/widgetConfig');
 const visitorsRoutes = require('./routes/visitors');
 const dealsRoutes = require('./routes/deals');
-const eventsRoutes = require('./routes/events');
-const proactiveRulesRoutes = require('./routes/proactiveRules');
-const automationRulesRoutes = require('./routes/automationRules');
-
-const { initialize: initProactiveEngine } = require('./services/proactiveEngine');
-const { initialize: initAutomationEngine } = require('./services/automationEngine');
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -101,10 +94,6 @@ app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/widget-config', widgetConfigRoutes);
 app.use('/api/visitors', visitorsRoutes);
 app.use('/api/deals', dealsRoutes);
-app.use('/api/events', eventsRoutes);
-app.use('/api/proactive-rules', proactiveRulesRoutes);
-app.use('/api/automation-rules', automationRulesRoutes);
-
 require('./services/auditService');
 app.use('/api/audit', auditRoutes);
 app.get('/health', (req, res) => {
@@ -152,11 +141,7 @@ app.get('*', (req, res, next) => {
   }
   res.sendFile(path.join(__dirname, '../../admin-panel/dist/index.html'));
 });
-
 new SocketHandler(io);
-initProactiveEngine(io);
-initAutomationEngine(io);
-
 const PORT = process.env.PORT || 3000;
 connectDB().then(async () => {
   try {

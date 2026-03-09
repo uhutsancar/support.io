@@ -11,212 +11,6 @@
   const API_URL = window.SupportIOConfig?.apiUrl || 'http://localhost:5000';
   const SOCKET_URL = window.SupportIOConfig?.socketUrl || 'http://localhost:5000';
 
-  class EventTracker {
-    constructor(siteKey, visitorId) {
-      this.siteKey = siteKey;
-      this.visitorId = visitorId;
-      this.sessionId = this.getOrCreateSessionId();
-      this.queue = [];
-      this.isSending = false;
-      this.MAX_QUEUE_SIZE = 15;
-      this.BATCH_INTERVAL = 3000; // 3 seconds
-      this._throttleMap = new Map(); // local cache to prevent frontend duplicate burst events
-      this.context = {
-        userAgent: navigator.userAgent,
-        referrer: document.referrer,
-        language: navigator.language,
-        screenSize: `${window.screen.width}x${window.screen.height}`
-      };
-      this.pageViewStart = Date.now();
-      
-      this.MAX_QUEUE_SIZE = 50;
-    }
-
-    getOrCreateSessionId() {
-      let sessionId = sessionStorage.getItem('sc_session_id');
-      if (!sessionId) {
-        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        sessionStorage.setItem('sc_session_id', sessionId);
-      }
-      return sessionId;
-    }
-
-    init() {
-      this.setupAutoTrackers();
-      this.startBatchSender();
-      
-      // Track initial page view
-      this.track('page_view', { url: window.location.href });
-    }
-
-    setupAutoTrackers() {
-      // 1. SPA Navigation Tracking
-      let lastUrl = window.location.href;
-      const observer = new MutationObserver(() => {
-        if (lastUrl !== window.location.href) {
-          lastUrl = window.location.href;
-          this.track('page_view', { url: window.location.href });
-        }
-      });
-      observer.observe(document, { subtree: true, childList: true });
-
-      // Override pushState and replaceState for SPA tracking
-      const wrapHistory = (type) => {
-        const orig = history[type];
-        return function() {
-          const rv = orig.apply(this, arguments);
-          const e = new Event(type);
-          e.arguments = arguments;
-          window.dispatchEvent(e);
-          return rv;
-        };
-      };
-      history.pushState = wrapHistory('pushState');
-      history.replaceState = wrapHistory('replaceState');
-      
-      const handlePopState = () => {
-        if (lastUrl !== window.location.href) {
-          lastUrl = window.location.href;
-          this.track('page_view', { url: window.location.href });
-        }
-      };
-      
-      window.addEventListener('popstate', handlePopState);
-      window.addEventListener('pushState', handlePopState);
-      window.addEventListener('replaceState', handlePopState);
-
-      // 2. Time on Page
-      setInterval(() => {
-        const timeOnPage = Math.floor((Date.now() - this.pageViewStart) / 1000);
-        this.track('time_on_page', { timeOnPage });
-      }, 5000); // Send every 5 seconds
-
-      // 3. Scroll Depth
-      let lastTrackedScroll = 0;
-      window.addEventListener('scroll', () => {
-        const scrollPercent = Math.round((window.scrollY + window.innerHeight) / document.documentElement.scrollHeight * 100);
-        
-        // Track every 5% increment to ensure Proactive rules catch granular values
-        if (scrollPercent >= lastTrackedScroll + 5) {
-          lastTrackedScroll = Math.floor(scrollPercent / 5) * 5;
-          this.track('scroll_depth', { scrollDepth: lastTrackedScroll });
-          this.flushQueue();
-        }
-      }, { passive: true });
-
-      // 4. Exit Intent
-      document.addEventListener('mouseleave', (e) => {
-        if (e.clientY <= 0) {
-          this.track('exit_intent');
-          this.flushQueue();
-        }
-      });
-
-      // 5. Inactivity
-      let timeout;
-      const resetIdle = () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          this.track('inactivity', { timeOnPage: Math.floor((Date.now() - this.pageViewStart) / 1000) });
-          this.flushQueue();
-        }, 30000); // 30 seconds of inactivity
-      };
-      ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => 
-        document.addEventListener(evt, resetIdle, { passive: true })
-      );
-      resetIdle();
-
-      // Send beacon on unload
-      window.addEventListener('beforeunload', () => {
-         this.flushQueue(true); // Sync send
-      });
-    }
-
-    track(eventType, rawData = {}) {
-      const timeOnPage = typeof rawData.timeOnPage !== 'undefined' ? rawData.timeOnPage : Math.floor((Date.now() - this.pageViewStart) / 1000);
-      const url = rawData.url || window.location.href;
-      const scrollDepth = typeof rawData.scrollDepth !== 'undefined' ? rawData.scrollDepth : 0;
-      
-      const payload = { ...rawData };
-      delete payload.url;
-      delete payload.timeOnPage;
-      delete payload.scrollDepth;
-
-      // Throttle exact duplicate events within 500ms bursts only (same type + same values)
-      // Include timeOnPage so time_on_page events at 5s, 10s, 15s etc. ALL can pass through
-      const throttleKey = `${eventType}-${scrollDepth}-${timeOnPage}-${payload.eventName || ''}`;
-      if (this._throttleMap.has(throttleKey)) return;
-      
-      this._throttleMap.set(throttleKey, true);
-      setTimeout(() => this._throttleMap.delete(throttleKey), 500);
-
-      const event = {
-        type: eventType,
-        url,
-        timeOnPage,
-        scrollDepth,
-        customEventName: eventType === 'custom_event' ? payload.eventName : undefined,
-        payload,
-        timestamp: Date.now()
-      };
-
-      this.queue.push(event);
-
-      if (this.queue.length >= this.MAX_QUEUE_SIZE) {
-        this.flushQueue();
-      }
-    }
-
-    identify(userId, traits = {}) {
-      // Could send an identify event
-      this.track('identify', { userId, ...traits });
-    }
-
-    startBatchSender() {
-      setInterval(() => {
-        this.flushQueue();
-      }, this.BATCH_INTERVAL);
-    }
-
-    async flushQueue(isUnload = false) {
-      if (this.queue.length === 0 || this.isSending) return;
-      
-      const eventsToSend = [...this.queue];
-      this.queue = [];
-      this.isSending = true;
-
-      const payload = {
-        siteKey: this.siteKey,
-        visitorId: this.visitorId,
-        sessionId: this.sessionId,
-        events: eventsToSend,
-        context: this.context
-      };
-
-      try {
-        if (isUnload && navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-          navigator.sendBeacon(`${API_URL}/api/events/track`, blob);
-        } else {
-          const res = await fetch(`${API_URL}/api/events/track`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (!res.ok) throw new Error('Failed to send events');
-        }
-      } catch (err) {
-        console.error('Event tracking error:', err);
-        // Put back in queue if not unload
-        if (!isUnload) {
-           this.queue = [...eventsToSend, ...this.queue].slice(0, this.MAX_QUEUE_SIZE * 2); 
-        }
-      } finally {
-        this.isSending = false;
-      }
-    }
-  }
-
   class SupportIOWidget {
     constructor(config) {
       this.siteKey = config.siteKey;
@@ -243,10 +37,6 @@
       this.faqs = [];
       this.siteSettings = null;
       this.messagesEnabled = false;
-      this.renderedRuleIds = new Set(); // Track which rules have already been displayed in this UI session
-      this.localMessages = []; // Internal buffer for session-only messages (welcome/proactive)
-
-      this.tracker = new EventTracker(this.siteKey, this.visitorId);
 
       this.init();
     }
@@ -260,7 +50,6 @@
       this.loadFAQs();
       this.connectSocket();
       this.setupEventListeners();
-      this.tracker.init();
     }
 
     async loadWidgetConfig() {
@@ -1432,14 +1221,6 @@
             this.elements.navMessages.classList.add('disabled');
           }
         }
-        
-        // If there is any active local proactive message queued up, force "messages" tab
-        if (this.localMessages && this.localMessages.length > 0) {
-            this.switchView('messages');
-        } else {
-            this.switchView('home');
-        }
-
       } catch (error) {
         console.error('Failed to load site settings:', error);
         this.messagesEnabled = false;
@@ -1547,40 +1328,25 @@
 
         // keep track of fatal configuration errors to stop further interaction
         this.hasFatalError = false;
-        this.localMessages = []; // Buffer for proactive/welcome messages
 
         this.socket.on('conversation-joined', (data) => {
           if (data.conversation) {
             console.log('🎯 Conversation joined:', data.conversation._id);
             this.conversationId = data.conversation._id;
-            // Append local messages to fetched messages
-            this.renderMessages([...data.messages, ...this.localMessages]);
-            this.localMessages = []; // Clear local messages after rendering
+            this.renderMessages(data.messages);
           } else {
-            console.log('👋 New visitor - initializing conversation');
+            console.log('👋 New visitor - showing welcome message');
             this.conversationId = null; // Will be created when visitor sends first message
             
-            const messagesToRender = [];
-            const configuredWelcomeMsg = data.welcomeMessage || this.config.messages?.welcomeMessage;
-            
-            // Only add a welcome message if it's explicitly configured and NOT the hardcoded legacy English string
-            if (configuredWelcomeMsg && 
-                configuredWelcomeMsg !== 'Hi! How can we help you today?' && 
-                configuredWelcomeMsg.trim() !== '') {
-                messagesToRender.push({
-                  _id: 'welcome-' + Date.now(),
-                  senderType: 'bot',
-                  senderName: 'Support',
-                  content: configuredWelcomeMsg,
-                  // Ensure welcome message is consistently stamped slightly earlier to stay at the top
-                  createdAt: new Date(Date.now() - 1000), 
-                  isLocal: true
-                });
-            }
-            
-            // Render the optional welcome message followed by any queued proactive local messages
-            this.renderMessages([...messagesToRender, ...this.localMessages]);
-            this.localMessages = []; // Clear local messages after rendering
+            const welcomeMsg = {
+              _id: 'welcome-' + Date.now(),
+              senderType: 'bot',
+              senderName: 'Support',
+              content: data.welcomeMessage || this.config.messages?.welcomeMessage || 'Hi! How can we help you today?',
+              createdAt: new Date(),
+              isLocal: true // Mark as local message
+            };
+            this.renderMessages([welcomeMsg]);
           }
         });
 
@@ -1618,49 +1384,6 @@
             // ignore if posting not allowed
           }
         });
-
-        this.socket.on('proactive-trigger', (data) => {
-          console.log('⚡ Proactive trigger received:', data);
-          // Block duplicate triggers for the same rule in this session using persistent storage
-          const sessionRulesKey = `sc_rendered_rules_${this.sessionId}`;
-          let renderedRules = [];
-          try {
-             renderedRules = JSON.parse(sessionStorage.getItem(sessionRulesKey) || '[]');
-          } catch(e) {}
-          
-          if (data.ruleId && renderedRules.includes(data.ruleId)) {
-              console.log('🛑 Blocking duplicate proactive rule trigger:', data.ruleId);
-              return;
-          }
-          if (data.ruleId) {
-              renderedRules.push(data.ruleId);
-              sessionStorage.setItem(sessionRulesKey, JSON.stringify(renderedRules));
-          }
-
-          if (data.actionType === 'send_message' || data.actionType === 'open_popup') {
-             this.openWidget();
-             
-             if (data.actionType === 'send_message') {
-                 setTimeout(() => this.switchView('messages'), 50);
-             }
-             
-             if (data.messageContent) {
-                const proactiveMsg = {
-                  _id: 'proact-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
-                  senderType: 'bot',
-                  senderName: 'Support',
-                  content: data.messageContent,
-                  createdAt: new Date(),
-                  isLocal: true,
-                  ruleId: data.ruleId
-                };
-                
-                // Use addMessage immediately
-                this.addMessage(proactiveMsg);
-                this.scrollToBottom();
-             }
-          }
-        });
       };
       document.head.appendChild(script);
     }
@@ -1681,7 +1404,6 @@
       this.socket.emit('join-conversation', {
         siteKey: this.config.siteKey,
         visitorId: this.visitorId,
-        sessionId: this.sessionId,
         visitorName: localStorage.getItem('sc_visitor_name') || 'Visitor',
         visitorEmail: localStorage.getItem('sc_visitor_email') || null,
         currentPage: window.location.pathname,
@@ -1801,20 +1523,7 @@
 
     renderMessages(messages) {
       this.elements.messages.innerHTML = '';
-      
-      // messages already includes this.localMessages if passed from conversation-joined,
-      // so we use a Set to deduplicate by _id to be absolutely safe
-      const seenIds = new Set();
-      const allMessages = [...messages, ...this.localMessages].filter(msg => {
-          if (seenIds.has(msg._id)) return false;
-          seenIds.add(msg._id);
-          return true;
-      });
-      
-      // Sort messages by createdAt
-      allMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      
-      allMessages.forEach(msg => this.addMessage(msg, true));
+      messages.forEach(msg => this.addMessage(msg));
       this.scrollToBottom();
     }
 
@@ -1830,33 +1539,7 @@
       this.scrollToBottom();
     }
 
-    addMessage(message, fromRender = false) {
-      // 🛑 FINAL NUCLEAR OPTION: Block the hardcoded legacy English greeting globally
-      const legacyGreeting = 'Hi! How can we help you today?';
-      if (message.content && (
-          message.content.trim() === legacyGreeting || 
-          message.content.toLowerCase().includes('how can we help you today')
-      )) {
-          return;
-      }
-
-      // 🛑 ULTIMATE DOM GUARD: Physically check if the EXACT same text is already the VERY LAST message in the DOM
-      if (message.content && this.elements.messages.lastElementChild) {
-          const lastContentNode = this.elements.messages.lastElementChild.querySelector('.sc-message-content');
-          if (lastContentNode && lastContentNode.textContent.trim() === message.content.trim()) {
-              console.log('🛑 Blocked DOM sequential duplicate:', message.content);
-              return;
-          }
-      }
-
-      // If it's a local message and not coming from the render loop, store it
-      if (message.isLocal && !fromRender) {
-        // Prevent duplicate local messages in the buffer
-        if (!this.localMessages.find(m => m._id === message._id)) {
-            this.localMessages.push(message);
-        }
-      }
-      
+    addMessage(message) {
       const messageEl = document.createElement('div');
       messageEl.className = `sc-message ${message.senderType}`;
       
@@ -1961,21 +1644,12 @@
 
   function initSupportIO() {
     if (window.SupportIOConfig) {
-      // Prevent multiple widget instances in SPAs or accidental double-includes
-      if (window.SupportIO) return;
-
       const widget = new SupportIOWidget(window.SupportIOConfig);
       window.SupportIO = widget;
       
       window.SupportIOWidget = {
         openWidget: function() {
           widget.openWidget();
-        },
-        identify: function(userId, traits) {
-          widget.tracker.identify(userId, traits);
-        },
-        track: function(eventName, payload) {
-          widget.tracker.track('custom_event', { eventName, ...payload });
         }
       };
     } else {

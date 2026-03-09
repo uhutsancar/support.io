@@ -91,7 +91,7 @@ router.get('/public/:siteKey', async (req, res) => {
           size: 'medium'
         },
         messages: {
-          welcomeMessage: '',
+          welcomeMessage: 'Hi! How can we help you today?',
           placeholderText: 'Type your message...'
         },
         behavior: {

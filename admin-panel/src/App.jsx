@@ -27,8 +27,6 @@ const WidgetCustomization = lazy(() => import('./pages/WidgetCustomization'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Visitors = lazy(() => import('./pages/Visitors'));
 const CRM = lazy(() => import('./pages/CRM'));
-const AutomationRules = lazy(() => import('./pages/AutomationRules'));
-const ProactiveRules = lazy(() => import('./pages/ProactiveRules'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const AgentPerformance = lazy(() => import('./pages/AgentPerformance'));
 const LoadingSpinner = () => (
@@ -204,8 +202,6 @@ function App() {
                     <Route path="settings" element={<Settings />} />
                     <Route path="visitors" element={<AdminRoute><Visitors /></AdminRoute>} />
                     <Route path="crm" element={<AdminRoute><CRM /></AdminRoute>} />
-                    <Route path="automation-rules" element={<AdminRoute><AutomationRules /></AdminRoute>} />
-                    <Route path="proactive-rules" element={<AdminRoute><ProactiveRules /></AdminRoute>} />
                     <Route path="my-performance" element={<ProtectedRoute><AgentPerformance /></ProtectedRoute>} />
                   </Route>
                   <Route
@@ -230,8 +226,6 @@ function App() {
                     <Route path="settings" element={<Settings />} />
                     <Route path="visitors" element={<AdminRoute><Visitors /></AdminRoute>} />
                     <Route path="crm" element={<AdminRoute><CRM /></AdminRoute>} />
-                    <Route path="automation-rules" element={<AdminRoute><AutomationRules /></AdminRoute>} />
-                    <Route path="proactive-rules" element={<AdminRoute><ProactiveRules /></AdminRoute>} />
                     <Route path="my-performance" element={<ProtectedRoute><AgentPerformance /></ProtectedRoute>} />
                   </Route>
                   <Route path="*" element={<DefaultRedirect />} />

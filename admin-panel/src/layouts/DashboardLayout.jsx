@@ -22,9 +22,7 @@ import {
   CircleDot,
   Eye,
   Briefcase,
-  Shield,
-  Zap,
-  Bot
+  Shield
 } from 'lucide-react';
 import { conversationsAPI, authAPI } from '../services/api';
 import { io } from 'socket.io-client';
@@ -146,11 +144,9 @@ const DashboardLayout = () => {
       add({ path: `${langPrefix}/dashboard/analytics`, icon: BarChart3, label: t('sidebar.analytics') });
       add({ path: `${langPrefix}/dashboard/team`, icon: Users, label: t('sidebar.team') });
       add({ path: `${langPrefix}/dashboard/departments`, icon: Folder, label: t('sidebar.departments') });
-      add({ path: `${langPrefix}/dashboard/proactive-rules`, icon: Zap, label: t('sidebar.proactiveRules', 'Proactive Rules') });
-      add({ path: `${langPrefix}/dashboard/automation-rules`, icon: Bot, label: t('sidebar.automationRules', 'Automation Rules') });
       if (plan === 'PRO' || plan === 'ENTERPRISE') {
-        add({ path: `${langPrefix}/dashboard/visitors`, icon: Eye, label: t('sidebar.visitors', 'Visitors') });
-        add({ path: `${langPrefix}/dashboard/crm`, icon: Briefcase, label: t('sidebar.crm', 'CRM') });
+        add({ path: `${langPrefix}/dashboard/visitors`, icon: Eye, label: 'Ziyaretçiler' });
+        add({ path: `${langPrefix}/dashboard/crm`, icon: Briefcase, label: 'CRM' });
       }
       if (plan === 'ENTERPRISE') {
         add({ path: `${langPrefix}/dashboard/audit-logs`, icon: Shield, label: t('sidebar.auditLogs') });
@@ -260,7 +256,7 @@ const DashboardLayout = () => {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
               >
-                <CircleDot className="w-3 h-3" /> {t('common.online', 'Çevrimiçi')}
+                <CircleDot className="w-3 h-3" /> Online
               </button>
               <button
                 onClick={() => handleStatusChange('offline')}
@@ -269,7 +265,7 @@ const DashboardLayout = () => {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
               >
-                <CircleDot className="w-3 h-3" /> {t('common.offline', 'Çevrimdışı')}
+                <CircleDot className="w-3 h-3" /> Offline
               </button>
             </div>
             <div className="space-y-1">
@@ -285,7 +281,7 @@ const DashboardLayout = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
               >
                 <UserX className="w-4 h-4" />
-                <span>{t('common.deleteAccount', 'Hesabı Sil')}</span>
+                <span>Hesabı Sil</span>
               </button>
             </div>
           </div>
