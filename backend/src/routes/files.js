@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
-const { upload, validateFileContent, getFileInfo, ALLOWED_FILE_TYPES, MAX_FILE_SIZE } = require('../middleware/fileUpload');
+const { uploadFile } = require('../middleware/s3Upload');
 const { verifySiteKey } = require('../middleware/siteAuth');
 const rateLimit = require('express-rate-limit');
 const uploadLimiter = rateLimit({
@@ -10,60 +8,27 @@ const uploadLimiter = rateLimit({
   max: 20,
   message: 'Çok fazla dosya yükleme isteği. Lütfen daha sonra tekrar deneyin.'
 });
-router.post('/upload', uploadLimiter, verifySiteKey, upload.single('file'), validateFileContent, async (req, res) => {
+router.post('/upload', uploadLimiter, verifySiteKey, uploadFile.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Dosya yüklenemedi' });
     }
-    const fileInfo = getFileInfo(req.file);
+    
+    // S3'ten gelen yanıt - Location zaten S3 URL'si
     res.json({
       success: true,
-      file: fileInfo,
+      file: {
+        filename: req.file.key,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        url: req.file.location // S3 public URL
+      },
       message: 'Dosya başarıyla yüklendi'
     });
   } catch (error) {
     res.status(500).json({ error: 'Dosya yükleme hatası' });
   }
 });
-router.get('/:filename', (req, res) => {
-  try {
-    const filename = req.params.filename;
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return res.status(400).json({ error: 'Geçersiz dosya adı' });
-    }
-    const filePath = path.join(__dirname, '../../uploads/files', filename);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Dosya bulunamadı' });
-    }
-    const stat = fs.statSync(filePath);
-    const ext = path.extname(filename).toLowerCase();
-    let mimeType = 'application/octet-stream';
-    for (const [mime, exts] of Object.entries(ALLOWED_FILE_TYPES)) {
-      if (exts.includes(ext)) {
-        mimeType = mime;
-        break;
-      }
-    }
-    res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Security-Policy', "default-src 'none'");
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
-  } catch (error) {
-    res.status(500).json({ error: 'Dosya indirme hatası' });
-  }
-});
-router.get('/info/allowed-types', (req, res) => {
-  const types = Object.entries(ALLOWED_FILE_TYPES).map(([mime, exts]) => ({
-    mimeType: mime,
-    extensions: exts
-  }));
-  res.json({
-    allowedTypes: types,
-    maxFileSize: MAX_FILE_SIZE,
-    maxFileSizeMB: MAX_FILE_SIZE / (1024 * 1024)
-  });
-});
+
 module.exports = router;

@@ -132,8 +132,6 @@ app.use(express.static('public', {
     }
   }
 }));
-app.use('/uploads/logos', express.static(path.join(__dirname, '../uploads/logos')));
-app.use('/api/widget-config/logo', express.static(path.join(__dirname, '../uploads/logos')));
 app.use('/demo', express.static('../demo'));
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/widget.js') || req.path.startsWith('/demo')) {
