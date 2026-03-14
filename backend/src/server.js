@@ -340,6 +340,7 @@ const visitorsRoutes = require('./routes/visitors');
 const dealsRoutes = require('./routes/deals');
 
 const app = express();
+app.set('trust proxy', 1); // Cloudflare üzerinden gelen gerçek IP'leri tanıması için ŞART
 const server = http.createServer(app);
 
 // --- 🛡️ 1. CORS VE GÜVENLİK AYARLARI ---
