@@ -1,223 +1,87 @@
-const mongoose = require('mongoose');
-const widgetConfigSchema = new mongoose.Schema({
-  siteId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Site',
-    required: true,
-    unique: true,
-    index: true
-  },
-  organizationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization',
-    required: true
-  },
-  colors: {
-    primary: {
-      type: String,
-      default: '#4F46E5'
+const { defineModel } = require('../db/model');
+
+module.exports = defineModel({
+  name: 'WidgetConfig',
+  table: 'widget_configs',
+  fields: {
+    siteId: { column: 'site_id', type: 'id', ref: 'Site', required: true },
+    organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', required: true },
+    colors: {
+      column: 'colors',
+      type: 'json',
+      default: () => ({
+        primary: '#4F46E5',
+        header: '#4F46E5',
+        background: '#FFFFFF',
+        text: '#1F2937',
+        textSecondary: '#6B7280',
+        border: '#E5E7EB',
+        visitorMessageBg: '#4F46E5',
+        agentMessageBg: '#F3F4F6'
+      })
     },
-    header: {
-      type: String,
-      default: '#4F46E5'
+    branding: {
+      column: 'branding',
+      type: 'json',
+      default: () => ({ logo: null, logoWidth: 40, logoHeight: 40, brandName: 'Support', showBrandName: true })
     },
-    background: {
-      type: String,
-      default: '#FFFFFF'
+    button: {
+      column: 'button',
+      type: 'json',
+      default: () => ({
+        position: 'bottom-right',
+        size: 'medium',
+        icon: 'message-circle',
+        showLabel: false,
+        labelText: 'Chat with us',
+        borderRadius: 50,
+        shadow: true,
+        shadowColor: 'rgba(0,0,0,0.15)'
+      })
     },
-    text: {
-      type: String,
-      default: '#1F2937'
+    window: {
+      column: 'window',
+      type: 'json',
+      default: () => ({ width: 400, height: 650, borderRadius: 16, headerHeight: 60, showHeader: true, showCloseButton: true })
     },
-    textSecondary: {
-      type: String,
-      default: '#6B7280'
+    messages: {
+      column: 'messages',
+      type: 'json',
+      default: () => ({
+        welcomeMessage: '',
+        placeholderText: 'Type your message...',
+        showTimestamps: true,
+        showAvatars: true,
+        messageBubbleRadius: 12
+      })
     },
-    border: {
-      type: String,
-      default: '#E5E7EB'
+    behavior: {
+      column: 'behavior',
+      type: 'json',
+      default: () => ({
+        autoOpen: false,
+        autoOpenDelay: 5000,
+        showOnPages: [],
+        hideOnPages: [],
+        showUnreadBadge: true,
+        enableSound: true,
+        enableNotifications: true
+      })
     },
-    visitorMessageBg: {
-      type: String,
-      default: '#4F46E5'
+    typography: {
+      column: 'typography',
+      type: 'json',
+      default: () => ({
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        fontSize: 'medium',
+        fontWeight: 'normal'
+      })
     },
-    agentMessageBg: {
-      type: String,
-      default: '#F3F4F6'
-    }
-  },
-  branding: {
-    logo: {
-      type: String,
-      default: null
+    advanced: {
+      column: 'advanced',
+      type: 'json',
+      default: () => ({ customCSS: null, zIndex: 999999, animationSpeed: 'normal' })
     },
-    logoWidth: {
-      type: Number,
-      default: 40
-    },
-    logoHeight: {
-      type: Number,
-      default: 40
-    },
-    brandName: {
-      type: String,
-      default: 'Support'
-    },
-    showBrandName: {
-      type: Boolean,
-      default: true
-    }
-  },
-  button: {
-    position: {
-      type: String,
-      enum: ['bottom-right', 'bottom-left', 'top-right', 'top-left'],
-      default: 'bottom-right'
-    },
-    size: {
-      type: String,
-      enum: ['small', 'medium', 'large'],
-      default: 'medium'
-    },
-    icon: {
-      type: String,
-      default: 'message-circle'
-    },
-    showLabel: {
-      type: Boolean,
-      default: false
-    },
-    labelText: {
-      type: String,
-      default: 'Chat with us'
-    },
-    borderRadius: {
-      type: Number,
-      default: 50
-    },
-    shadow: {
-      type: Boolean,
-      default: true
-    },
-    shadowColor: {
-      type: String,
-      default: 'rgba(0,0,0,0.15)'
-    }
-  },
-  window: {
-    width: {
-      type: Number,
-      default: 400
-    },
-    height: {
-      type: Number,
-      default: 650
-    },
-    borderRadius: {
-      type: Number,
-      default: 16
-    },
-    headerHeight: {
-      type: Number,
-      default: 60
-    },
-    showHeader: {
-      type: Boolean,
-      default: true
-    },
-    showCloseButton: {
-      type: Boolean,
-      default: true
-    }
-  },
-  messages: {
-    welcomeMessage: {
-      type: String,
-      default: ''
-    },
-    placeholderText: {
-      type: String,
-      default: 'Type your message...'
-    },
-    showTimestamps: {
-      type: Boolean,
-      default: true
-    },
-    showAvatars: {
-      type: Boolean,
-      default: true
-    },
-    messageBubbleRadius: {
-      type: Number,
-      default: 12
-    }
-  },
-  behavior: {
-    autoOpen: {
-      type: Boolean,
-      default: false
-    },
-    autoOpenDelay: {
-      type: Number,
-      default: 5000
-    },
-    showOnPages: [{
-      type: String
-    }],
-    hideOnPages: [{
-      type: String
-    }],
-    showUnreadBadge: {
-      type: Boolean,
-      default: true
-    },
-    enableSound: {
-      type: Boolean,
-      default: true
-    },
-    enableNotifications: {
-      type: Boolean,
-      default: true
-    }
-  },
-  typography: {
-    fontFamily: {
-      type: String,
-      default: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-    },
-    fontSize: {
-      type: String,
-      enum: ['small', 'medium', 'large'],
-      default: 'medium'
-    },
-    fontWeight: {
-      type: String,
-      enum: ['normal', 'medium', 'semibold', 'bold'],
-      default: 'normal'
-    }
-  },
-  advanced: {
-    customCSS: {
-      type: String,
-      default: null
-    },
-    zIndex: {
-      type: Number,
-      default: 999999
-    },
-    animationSpeed: {
-      type: String,
-      enum: ['slow', 'normal', 'fast'],
-      default: 'normal'
-    }
-  },
-  isActive: {
-    type: Boolean,
-    default: true
+    isActive: { column: 'is_active', type: 'boolean', default: true }
   }
-}, {
-  timestamps: true
 });
-widgetConfigSchema.index({ siteId: 1, isActive: 1 });
-widgetConfigSchema.index({ organizationId: 1 });
-module.exports = mongoose.model('WidgetConfig', widgetConfigSchema);

@@ -1,128 +1,67 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  role: {
-    type: String,
-    enum: ['owner', 'admin', 'manager', 'agent','viewer'],
-    default: 'agent'
-  },
-  avatar: {
-    type: String,
-    default: null
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  isOnboarded: {
-    type: Boolean,
-    default: false
-  },
-  assignedSites: [{
-    type: String,
-    ref: 'Site'
-  }],
-  organizationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization',
-    index: true,
-    default: null
-  },
-  departments: [{
-    departmentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Department'
+const { defineModel } = require('../db/model');
+
+module.exports = defineModel({
+  name: 'User',
+  table: 'users',
+  fields: {
+    email: { column: 'email', type: 'string', required: true, lowercase: true, trim: true },
+    password: { column: 'password', type: 'string', required: true },
+    name: { column: 'name', type: 'string', required: true, trim: true },
+    role: { column: 'role', type: 'string', enum: ['owner', 'admin', 'manager', 'agent', 'viewer'], default: 'agent' },
+    avatar: { column: 'avatar', type: 'string', default: null },
+    isActive: { column: 'is_active', type: 'boolean', default: true },
+    isOnboarded: { column: 'is_onboarded', type: 'boolean', default: false },
+    organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },
+    status: { column: 'status', type: 'string', enum: ['online', 'offline', 'busy', 'away'], default: 'offline' },
+    permissions: {
+      column: 'permissions',
+      type: 'json',
+      default: () => ({
+        canManageTeam: false,
+        canManageDepartments: false,
+        canViewAllConversations: false,
+        canAssignConversations: true,
+        canDeleteConversations: false
+      })
     },
-    role: {
-      type: String,
-      enum: ['manager', 'agent'],
-      default: 'agent'
-    }
-  }],
-  status: {
-    type: String,
-    enum: ['online', 'offline', 'busy', 'away'],
-    default: 'offline'
-  },
-  permissions: {
-    canManageTeam: {
-      type: Boolean,
-      default: false
+    preferences: {
+      column: 'preferences',
+      type: 'json',
+      default: () => ({ autoAcceptAssignments: true, maxActiveConversations: 10, notificationSound: true })
     },
-    canManageDepartments: {
-      type: Boolean,
-      default: false
-    },
-    canViewAllConversations: {
-      type: Boolean,
-      default: false
-    },
-    canAssignConversations: {
-      type: Boolean,
-      default: true
-    },
-    canDeleteConversations: {
-      type: Boolean,
-      default: false
+    stats: {
+      column: 'stats',
+      type: 'json',
+      default: () => ({ totalConversations: 0, activeConversations: 0, resolvedConversations: 0, averageResponseTime: 0 })
     }
   },
-  preferences: {
-    autoAcceptAssignments: {
-      type: Boolean,
-      default: true
+  children: {
+    assignedSites: {
+      table: 'user_assigned_sites',
+      parentKey: 'user_id',
+      valueColumn: 'site_id',
+      scalar: true,
+      ref: 'Site'
     },
-    maxActiveConversations: {
-      type: Number,
-      default: 10
-    },
-    notificationSound: {
-      type: Boolean,
-      default: true
+    departments: {
+      table: 'user_departments',
+      parentKey: 'user_id',
+      fields: {
+        departmentId: { column: 'department_id', type: 'id', ref: 'Department' },
+        role: { column: 'role', type: 'string', default: 'agent' }
+      }
     }
   },
-  stats: {
-    totalConversations: {
-      type: Number,
-      default: 0
-    },
-    activeConversations: {
-      type: Number,
-      default: 0
-    },
-    resolvedConversations: {
-      type: Number,
-      default: 0
-    },
-    averageResponseTime: {
-      type: Number,
-      default: 0
+  hooks: {
+    async preSave() {
+      if (!this.isModified('password')) return;
+      this.password = await bcrypt.hash(this.password, 10);
+    }
+  },
+  methods: {
+    async comparePassword(candidatePassword) {
+      return bcrypt.compare(candidatePassword, this.password);
     }
   }
-}, {
-  timestamps: true
 });
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-module.exports = mongoose.model('User', userSchema);

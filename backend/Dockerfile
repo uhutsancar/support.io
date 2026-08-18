@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-# Install bash and netcat so the container can wait for Mongo during startup
+# Install bash and netcat so the container can wait for PostgreSQL during startup
 RUN apk add --no-cache bash netcat-openbsd
 
 WORKDIR /usr/src/backend

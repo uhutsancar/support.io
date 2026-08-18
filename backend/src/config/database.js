@@ -1,50 +1,51 @@
-const mongoose = require('mongoose');
+const { pool, query } = require('../db/pool');
+const { applySchema } = require('../db/migrate');
+const { startRetentionSweeps } = require('../db/retention');
 
+// Opens the PostgreSQL connection, makes sure the relational schema is present
+// and starts the log retention sweeps. Connection details are read from the
+// environment only.
 const connectDB = async () => {
   try {
-    if (!process.env.MONGODB_URI) {
-
+    if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
+      console.error('PostgreSQL configuration missing: set DATABASE_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD');
       process.exit(1);
     }
 
-    const options = {
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,
-      maxPoolSize: 10,
-      retryWrites: true,
-      w: 'majority'
-    };
+    await query('SELECT 1');
+    await applySchema();
+    startRetentionSweeps();
 
-    await mongoose.connect(process.env.MONGODB_URI, options);
-
-    
-    mongoose.connection.on('error', (err) => {
-
+    pool.on('error', (err) => {
+      console.error('PostgreSQL pool error:', err.message);
     });
-
-    mongoose.connection.on('disconnected', () => {
-
-    });
-
-    mongoose.connection.on('reconnected', () => {
-
-    });
-
   } catch (error) {
+    console.error('PostgreSQL connection failed:', error.message);
 
-    
-    if (error.message.includes('IP')) {
-
-    } else if (error.message.includes('authentication')) {
-
-    } else if (error.message.includes('ENOTFOUND') || error.message.includes('getaddrinfo')) {
-
+    if (error.code === 'ECONNREFUSED') {
+      console.error('The database refused the connection. Check DB_HOST and DB_PORT.');
+    } else if (error.code === '28P01' || /password authentication/i.test(error.message)) {
+      console.error('Authentication failed. Check DB_USER and DB_PASSWORD.');
+    } else if (error.code === '3D000') {
+      console.error('The database named in DB_NAME does not exist.');
+    } else if (error.code === 'ENOTFOUND') {
+      console.error('The database host could not be resolved.');
     }
 
-    
     process.exit(1);
   }
 };
 
+// Mirrors the readiness check the health endpoint used to perform.
+const isConnected = async () => {
+  try {
+    await query('SELECT 1');
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
 module.exports = connectDB;
+module.exports.connectDB = connectDB;
+module.exports.isConnected = isConnected;

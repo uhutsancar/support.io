@@ -1131,7 +1131,7 @@ export default {
     },
     technology: {
       title: 'Our Technology',
-      description: 'Support.io, developed with modern web technologies, offers high performance and reliability. Built on powerful technologies like React, Node.js, Socket.IO and MongoDB.',
+      description: 'Support.io, developed with modern web technologies, offers high performance and reliability. Built on powerful technologies like React, Node.js, Socket.IO and PostgreSQL.',
     },
   },
   common: {

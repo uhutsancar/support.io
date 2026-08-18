@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Department = require('../models/Department');
 const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
@@ -8,12 +7,13 @@ const Site = require('../models/Site');
 const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
 const events = require('../events');
+const { departmentConversationStats } = require('../db/queries');
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
     const { siteId } = req.params;
-    const departments = await Department.find({ 
+    const departments = await Department.find({
       siteId: siteId,
-      isActive: true 
+      isActive: true
     })
       .populate('members.userId', 'name email avatar status')
       .sort({ createdAt: -1 });
@@ -238,23 +238,15 @@ router.get('/:id/stats', auth, async (req, res) => {
     if (!department) {
       return res.status(404).json({ error: 'Department not found' });
     }
-    const totalConversations = await Conversation.countDocuments({ department: department._id });
-    const unassigned = await Conversation.countDocuments({ 
-      department: department._id, 
-      status: 'open',
-      assignedAgent: null
-    });
+    // A single grouped scan replaces the six separate counts.
+    const counted = await departmentConversationStats(department._id);
     const stats = {
-      totalConversations,
-      unassigned,
-      assigned: await Conversation.countDocuments({ 
-        department: department._id, 
-        status: 'assigned',
-        assignedAgent: { $ne: null }
-      }),
-      pending: await Conversation.countDocuments({ department: department._id, status: 'pending' }),
-      resolved: await Conversation.countDocuments({ department: department._id, status: 'resolved' }),
-      closed: await Conversation.countDocuments({ department: department._id, status: 'closed' }),
+      totalConversations: counted.total,
+      unassigned: counted.unassigned,
+      assigned: counted.assigned,
+      pending: counted.pending,
+      resolved: counted.resolved,
+      closed: counted.closed,
       activeMembers: department.members.length,
       avgResponseTime: department.stats?.averageResponseTime || 0
     };
@@ -276,12 +268,9 @@ router.delete('/:id', auth, checkPermission('manage_team'), async (req, res) => 
         return res.status(404).json({ error: 'Department not found' });
       }
     }
-    const activeConversations = await Conversation.countDocuments({
-      department: department._id,
-      status: { $in: ['unassigned', 'assigned', 'pending'] }
-    });
+    const { active: activeConversations } = await departmentConversationStats(department._id);
     if (activeConversations > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Cannot delete department with active conversations',
         activeConversations
       });

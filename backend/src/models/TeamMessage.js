@@ -1,47 +1,36 @@
-const mongoose = require('mongoose');
-const teamMessageSchema = new mongoose.Schema({
-  chatId: {
-    type: String,
-    required: true,
-    index: true
+const { defineModel } = require('../db/model');
+
+const TeamMessage = defineModel({
+  name: 'TeamMessage',
+  table: 'team_messages',
+  fields: {
+    chatId: { column: 'chat_id', type: 'string', required: true },
+    chatType: { column: 'chat_type', type: 'string', enum: ['direct', 'group'], required: true },
+    senderId: { column: 'sender_id', type: 'id', required: true },
+    senderName: { column: 'sender_name', type: 'string', required: true },
+    content: { column: 'content', type: 'string', required: true },
+    messageType: { column: 'message_type', type: 'string', enum: ['text', 'system'], default: 'text' },
+    groupName: { column: 'group_name', type: 'string', default: null }
   },
-  chatType: {
-    type: String,
-    enum: ['direct', 'group'],
-    required: true
+  children: {
+    readBy: {
+      table: 'team_message_read_by',
+      parentKey: 'team_message_id',
+      valueColumn: 'reader_id',
+      scalar: true
+    },
+    participants: {
+      table: 'team_message_participants',
+      parentKey: 'team_message_id',
+      valueColumn: 'participant_id',
+      scalar: true
+    }
   },
-  senderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team',
-    required: true
-  },
-  senderName: {
-    type: String,
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  messageType: {
-    type: String,
-    enum: ['text', 'system'],
-    default: 'text'
-  },
-  readBy: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team'
-  }],
-  groupName: String,
-  participants: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team'
-  }]
-}, {
-  timestamps: true
+  statics: {
+    getDirectChatId(userId1, userId2) {
+      return [userId1, userId2].sort().join('_');
+    }
+  }
 });
-teamMessageSchema.index({ chatId: 1, createdAt: 1 });
-teamMessageSchema.statics.getDirectChatId = function(userId1, userId2) {
-  return [userId1, userId2].sort().join('_');
-};
-module.exports = mongoose.model('TeamMessage', teamMessageSchema);
+
+module.exports = TeamMessage;

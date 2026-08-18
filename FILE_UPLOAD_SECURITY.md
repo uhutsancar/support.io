@@ -157,9 +157,9 @@ fileData: {
 ### 7. SQL/NoSQL Injection
 **Saldırı**: Dosya metadata'sında injection
 **Korunma**:
-- `express-mongo-sanitize` middleware kullanılır
+- Tüm sorgular parametreli çalışır, SQL enjeksiyonuna kapalıdır
 - Tüm input'lar sanitize edilir
-- Mongoose schema validation
+- Model şeması ve veritabanı kısıtları ile doğrulama
 
 ## 📋 Kullanım Kılavuzu
 

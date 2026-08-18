@@ -16,12 +16,12 @@
 │            Backend Server (Express.js)               │
 │                                                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │
-│  │   REST API   │  │   Socket.IO  │  │  MongoDB  │ │
+│  │   REST API   │  │   Socket.IO  │  │ PostgreSQL│ │
 │  │              │  │              │  │           │ │
-│  │ - Auth       │  │ - Widget NS  │  │ - Sites   │ │
-│  │ - Sites      │  │ - Admin NS   │  │ - Users   │ │
-│  │ - FAQs       │  │              │  │ - Convos  │ │
-│  │ - Convos     │  │              │  │ - Messages│ │
+│  │ - Auth       │  │ - Widget NS  │  │ - sites   │ │
+│  │ - Sites      │  │ - Admin NS   │  │ - users   │ │
+│  │ - FAQs       │  │              │  │ - convos  │ │
+│  │ - Convos     │  │              │  │ - messages│ │
 │  └──────────────┘  └──────────────┘  └───────────┘ │
 │                                                      │
 └───────────────────────┬──────────────────────────────┘
@@ -70,7 +70,7 @@ Widget emits via WebSocket
     ↓
 Backend receives message
     ↓
-Save to MongoDB
+Save to PostgreSQL
     ↓
 Search for FAQ match
     ↓
@@ -87,7 +87,7 @@ Send via WebSocket
     ↓
 Backend receives
     ↓
-Save to MongoDB
+Save to PostgreSQL
     ↓
 Emit to visitor + other agents
     ↓
@@ -98,87 +98,64 @@ Visitor receives in widget
 
 ## 📦 Database Schema
 
-### Site Collection
-```javascript
-{
-  _id: ObjectId,
-  name: String,
-  domain: String,
-  siteKey: String (unique),
-  userId: ObjectId (ref: User),
-  widgetSettings: {
-    position: String,
-    primaryColor: String,
-    welcomeMessage: String,
-    ...
-  },
-  aiSettings: {
-    enabled: Boolean,
-    fallbackToHuman: Boolean
-  },
-  isActive: Boolean,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+PostgreSQL. The full DDL lives in `backend/src/db/schema.sql`; each table is
+declared to the model runtime under `backend/src/models/`.
 
-### Conversation Collection
-```javascript
-{
-  _id: ObjectId,
-  siteId: ObjectId (ref: Site),
-  visitorId: String,
-  visitorName: String,
-  visitorEmail: String,
-  assignedAgent: ObjectId (ref: User),
-  status: 'open' | 'assigned' | 'resolved' | 'closed',
-  currentPage: String,
-  metadata: {
-    userAgent: String,
-    ip: String,
-    referrer: String
-  },
-  lastMessageAt: Date,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+Primary keys are 24-character hexadecimal strings, carried over unchanged from
+the identifiers the previous document store used, so existing tokens and links
+keep working.
 
-### Message Collection
-```javascript
-{
-  _id: ObjectId,
-  conversationId: ObjectId (ref: Conversation),
-  senderType: 'visitor' | 'agent' | 'bot',
-  senderId: String,
-  senderName: String,
-  content: String,
-  messageType: 'text' | 'image' | 'file',
-  isRead: Boolean,
-  readAt: Date,
-  createdAt: Date
-}
-```
+### Core tables
 
-### FAQ Collection
-```javascript
-{
-  _id: ObjectId,
-  siteId: ObjectId (ref: Site),
-  question: String,
-  answer: String,
-  category: String,
-  keywords: [String],
-  pageSpecific: String,
-  isActive: Boolean,
-  viewCount: Number,
-  helpfulCount: Number,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
+| Table | Purpose | Notable columns |
+| --- | --- | --- |
+| `organizations` | Tenant, plan and owner | `plan_type`, `owner_user_id` |
+| `users` | Accounts created by sign-up | `email` (unique), `role`, `organization_id` |
+| `teams` | Agents created from the admin panel | `email` (unique), `skills`, `current_load`, `max_capacity` |
+| `sites` | Installed widgets | `site_key` (unique), `widget_settings`, `ai_settings` |
+| `departments` | Routing groups per site | `business_hours`, `sla`, `stats` |
+| `conversations` | Tickets | `ticket_number` (unique), `status`, `priority`, `sla`, `tags` |
+| `messages` | Chat transcript | `sender_type`, `file_data`, `is_read` |
+| `faqs` | Auto-answer knowledge base | `search_vector` (generated tsvector) |
+| `visitors` | Live visitor presence | `visitor_id`, `last_active_at` |
+| `widget_configs` | Appearance per site | one row per site |
+| `deals` | CRM pipeline | `stage`, `value` |
+| `audit_logs` | Append-only trail | updates blocked by a trigger |
+| `team_chats`, `team_messages` | Internal chat | `chat_id` (unique on chats) |
+| `automation_rules`, `automation_logs` | Rule engine | rule bodies stored as JSONB |
+| `proactive_rules`, `proactive_trigger_logs`, `event_logs` | Proactive engagement | 30 day retention sweep |
+| `counters` | Sequential ticket numbers | atomic upsert |
 
----
+### Arrays that became their own tables
+
+Embedded arrays that carry relationships are stored relationally:
+
+| Previous embedded array | Table |
+| --- | --- |
+| `user.assignedSites`, `team.assignedSites` | `user_assigned_sites`, `team_assigned_sites` |
+| `user.departments`, `team.departments` | `user_departments`, `team_departments` |
+| `department.members` | `department_members` |
+| `conversation.internalNotes` | `conversation_internal_notes` |
+| `teamChat.participants` | `team_chat_participants` |
+| `teamMessage.readBy`, `teamMessage.participants` | `team_message_read_by`, `team_message_participants` |
+
+Configuration objects with no independent identity — widget colours, SLA targets,
+permissions, statistics, business hours, rule bodies — stay in `jsonb` columns and
+are read and written as a whole. Plain value lists such as `tags`, `skills` and
+`keywords` use native `text[]` columns.
+
+### Referential rules
+
+- Deleting a site cascades to its departments, conversations, FAQs, visitors,
+  widget config and rules. Deleting a conversation cascades to its messages and
+  internal notes.
+- `conversations.department_id` is set to NULL when the department goes away, so
+  the ticket survives.
+- Agent references (`assigned_agent_id`, `assigned_by_id`,
+  `department_members.user_id`, team chat participants) may point at either
+  `users` or `teams`. They are indexed but deliberately carry no foreign key,
+  because the application treats both tables as agents.
+
 
 ## 🔌 WebSocket Events
 
@@ -271,7 +248,7 @@ io.to(`conversation:${conversationId}`).emit('new-message', data);
 
 ## ⚡ Performance Optimizations
 
-1. **MongoDB Indexes**
+1. **PostgreSQL Indexes**
    - `siteKey` (unique)
    - `conversationId + createdAt` for messages
    - Text index on FAQ questions/answers
@@ -319,20 +296,20 @@ io.to(`conversation:${conversationId}`).emit('new-message', data);
 
 ### Current (MVP)
 - Single server
-- MongoDB on same machine
+- PostgreSQL on same machine
 - Handles ~100 concurrent connections
 
 ### Production
 - Load balancer
 - Multiple backend instances
-- MongoDB replica set
+- PostgreSQL streaming replication
 - Redis for session/socket state
 - CDN for widget.js
 - Handles ~10,000+ concurrent connections
 
 ### Scaling Path
 ```
-Step 1: Separate MongoDB → Cloud MongoDB Atlas
+Step 1: Separate PostgreSQL → managed PostgreSQL service
 Step 2: Add Redis → Socket.io adapter
 Step 3: Multiple servers → Load balancer
 Step 4: CDN → Serve widget globally

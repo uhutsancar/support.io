@@ -1,35 +1,20 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const router = express.Router();
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { auth } = require('../middleware/auth');
 const events = require('../events');
-const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+const { isValidObjectId } = require('../db/objectId');
+const { latestMessagesByConversation, unreadCountsByOrganization } = require('../db/queries');
 router.get('/unread-count', auth, async (req, res) => {
   try {
     const orgId = req.organization?._id || req.user.organizationId;
     if (!orgId) {
       return res.json({ totalUnreadCount: 0, unreadBySite: {} });
     }
-    const conversations = await Conversation.find({
-      organizationId: orgId,
-      unreadCount: { $gt: 0 }
-    }).select('siteId unreadCount');
-    let totalUnreadCount = 0;
-    const unreadBySite = {};
-    for (const conversation of conversations) {
-      const unreadCount = conversation.unreadCount || 0;
-      if (unreadCount > 0) {
-        totalUnreadCount += unreadCount;
-        const siteIdStr = conversation.siteId.toString();
-        if (!unreadBySite[siteIdStr]) {
-          unreadBySite[siteIdStr] = 0;
-        }
-        unreadBySite[siteIdStr] += unreadCount;
-      }
-    }
-    res.json({ 
+    // Summed by the database rather than by loading every conversation.
+    const { totalUnreadCount, unreadBySite } = await unreadCountsByOrganization(orgId);
+    res.json({
       totalUnreadCount,
       unreadBySite
     });
@@ -53,7 +38,7 @@ router.get('/:siteId', auth, async (req, res) => {
     if (!site) {
       return res.status(404).json({ error: 'Site not found' });
     }
-    let filter = { 
+    let filter = {
       siteId,
       organizationId: orgId
     };
@@ -65,12 +50,12 @@ router.get('/:siteId', auth, async (req, res) => {
       .populate('department', 'name color icon')
       .sort({ lastMessageAt: -1 })
       .limit(50);
+    // One query resolves the newest message of every conversation on the page.
+    const lastMessages = await latestMessagesByConversation(conversations.map((c) => c._id));
     const conversationsWithLastMessage = await Promise.all(
       conversations.map(async (conv) => {
         try {
-          const lastMessage = await Message.findOne({ conversationId: conv._id })
-            .sort({ createdAt: -1 })
-            .limit(1);
+          const lastMessage = lastMessages.get(conv._id) || null;
           if (typeof conv.calculateSLA === 'function') {
             try {
               conv.calculateSLA();
@@ -100,7 +85,7 @@ router.get('/assigned/me', auth, async (req, res) => {
   try {
     const userId = req.userId;
     const orgId = req.organization?._id || req.user.organizationId;
-    const conversations = await Conversation.find({ 
+    const conversations = await Conversation.find({
       assignedAgent: userId,
       organizationId: orgId
     })
@@ -108,11 +93,10 @@ router.get('/assigned/me', auth, async (req, res) => {
       .populate('department', 'name color icon')
       .sort({ lastMessageAt: -1 })
       .limit(100);
+    const lastMessages = await latestMessagesByConversation(conversations.map((c) => c._id));
     const conversationsWithLastMessage = await Promise.all(
       conversations.map(async (conv) => {
-        const lastMessage = await Message.findOne({ conversationId: conv._id })
-          .sort({ createdAt: -1 })
-          .limit(1);
+        const lastMessage = lastMessages.get(conv._id) || null;
         try {
           conv.calculateSLA();
         } catch (slaErr) {
@@ -167,14 +151,14 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
     const messages = await Message.find({ conversationId: conversation._id })
       .sort({ createdAt: 1 });
     await Message.updateMany(
-      { 
-        conversationId: conversation._id, 
+      {
+        conversationId: conversation._id,
         senderType: 'visitor',
-        isRead: false 
+        isRead: false
       },
-      { 
-        isRead: true, 
-        readAt: new Date() 
+      {
+        isRead: true,
+        readAt: new Date()
       }
     );
     conversation.unreadCount = 0;
@@ -542,7 +526,7 @@ router.put('/:conversationId/status', auth, async (req, res) => {
       }
       if (conversation.assignedAgent) {
         await require('../models/Team').findByIdAndUpdate(conversation.assignedAgent, {
-          $inc: { 
+          $inc: {
             'stats.activeConversations': -1,
             'stats.resolvedConversations': 1
           }

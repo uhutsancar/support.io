@@ -53,8 +53,8 @@ support_chat_app/
 │
 ├── 📂 backend/              Express.js + Socket.io API
 │   ├── src/
-│   │   ├── models/         5 MongoDB models
-│   │   ├── routes/         4 API route groups
+│   │   ├── models/         19 relational models
+│   │   ├── db/             PostgreSQL schema, model runtime, migrations
 │   │   ├── socket/         WebSocket handlers
 │   │   └── server.js       Main server
 │   └── public/
@@ -84,7 +84,7 @@ support_chat_app/
 
 ### Prerequisites
 - Node.js v16 or higher
-- MongoDB (local or cloud)
+- PostgreSQL 13 or higher (local or cloud)
 - npm or yarn
 
 ### Option 1: Automated Setup (Recommended)
@@ -131,12 +131,96 @@ npm run dev
 
 ---
 
+## 🗄️ Database
+
+The backend reads its connection details from `backend/.env` only. Provide either
+a single URL or the discrete variables:
+
+```
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+# or
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=supportchat
+DB_USER=support_user
+DB_PASSWORD=...
+# optional, defaults to off for a local server
+DB_SSL=false
+```
+
+The schema is created automatically on boot. To apply it without starting the
+server:
+
+```bash
+cd backend
+npm run db:migrate
+```
+
+`backend/src/db/schema.sql` holds the full DDL. Every statement in it is
+idempotent, so running it again never destroys or duplicates data.
+
+---
+
+## 📦 File Storage (AWS S3)
+
+Uploaded site logos and chat attachments go straight to S3; nothing is written to
+local disk. The credentials are read from `backend/.env`:
+
+```
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=eu-north-1
+S3_BUCKET=support-io-bucket
+# AWS_BUCKET_NAME is still honoured as a fallback for older deployments
+```
+
+Two prefixes are used, both written by `backend/src/middleware/s3Upload.js`:
+
+| Prefix    | Written by                        | Limit |
+| --------- | --------------------------------- | ----- |
+| `logos/`  | admin panel, site logo upload     | 5 MB  |
+| `files/`  | widget, chat file attachments     | 10 MB |
+
+### Bucket setup
+
+The bucket keeps **Object Ownership: bucket owner enforced**, so ACLs are
+disabled and the uploader never sends one — sending `acl: 'public-read'` against
+such a bucket fails with `AccessControlListNotSupported`. Public read is granted
+by a bucket policy scoped to the two upload prefixes, so the rest of the bucket
+stays private:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "PublicReadUploadedAssets",
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": "s3:GetObject",
+    "Resource": [
+      "arn:aws:s3:::support-io-bucket/logos/*",
+      "arn:aws:s3:::support-io-bucket/files/*"
+    ]
+  }]
+}
+```
+
+Block Public Access stays on for ACLs (`BlockPublicAcls`, `IgnorePublicAcls`)
+and is off for policies (`BlockPublicPolicy`, `RestrictPublicBuckets`), which is
+what lets the policy above take effect.
+
+Set `S3_ACL` only if you move to a bucket that has ACLs enabled; when it is
+unset no ACL is sent at all.
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Backend
 - **Express.js** - Web framework
 - **Socket.io** - Real-time WebSocket
-- **MongoDB + Mongoose** - Database
+- **PostgreSQL** - Database (via node-postgres)
+- **AWS S3** - File storage (logos, chat attachments)
 - **JWT** - Authentication
 - **bcryptjs** - Password security
 

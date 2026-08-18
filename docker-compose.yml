@@ -1,15 +1,19 @@
 version: '3.8'
 
 services:
-  mongo:
-    image: mongo:6
+  postgres:
+    image: postgres:16
     restart: unless-stopped
     volumes:
-      - mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_NAME:-supportchat}
+      POSTGRES_USER: ${DB_USER:-support_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-supportchat}
     ports:
-      - "27017:27017"
+      - "5432:5432"
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-support_user} -d ${DB_NAME:-supportchat}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,8 +22,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    # wait for mongo to be reachable before starting nodemon directly
-    command: sh -c "until nc -z mongo 27017; do echo waiting for mongo; sleep 1; done; ./node_modules/.bin/nodemon src/server.js"
+    # wait for postgres to accept connections before starting nodemon
+    command: sh -c "until nc -z postgres 5432; do echo waiting for postgres; sleep 1; done; ./node_modules/.bin/nodemon src/server.js"
     working_dir: /usr/src/backend
     volumes:
       - ./backend:/usr/src/backend
@@ -28,11 +32,27 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=development
-      - MONGODB_URI=mongodb://mongo:27017/supportchat
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-supportchat}
+      - DB_USER=${DB_USER:-support_user}
+      - DB_PASSWORD=${DB_PASSWORD:-supportchat}
+      - DB_SSL=false
+      # backend/.env icindeki DATABASE_URL localhost'u gosterir; konteyner
+      # icinde bu yanlis olur. Bos birakilinca yukaridaki DB_* degerleri
+      # kullanilir, host'ta tanimliysa o kazanir.
+      - DATABASE_URL=${DATABASE_URL:-}
+      # S3 ayarlari: host ortaminda tanimliysa aktarilir, tanimli degilse
+      # volume ile baglanan backend/.env dosyasindan dotenv okur.
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
+      - S3_BUCKET
     ports:
       - "5000:3000"
     depends_on:
-      - mongo
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   admin:
@@ -66,6 +86,6 @@ services:
       - backend
 
 volumes:
-  mongo_data:
+  postgres_data:
   backend_node_modules:
   admin_node_modules:

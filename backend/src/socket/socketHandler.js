@@ -828,11 +828,7 @@ class SocketHandler {
             return;
           }
           const { chatId, content, chatType } = data;
-          const mongoose = require('mongoose');
-          let userId = socket.userId;
-          if (typeof userId === 'string' && userId.length === 24 && userId.match(/^[a-fA-F0-9]+$/)) {
-            userId = new mongoose.Types.ObjectId(userId);
-          }
+          const userId = socket.userId;
           let sender = await Team.findById(userId).select('name');
           if (!sender) {
 

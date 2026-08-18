@@ -1,82 +1,32 @@
-const mongoose = require('mongoose');
-const siteSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  domain: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  siteKey: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: false,
-    index: true
-  },
-  organizationId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Organization',
-    required: true,
-    index: true
-  },
-  widgetSettings: {
-    position: {
-      type: String,
-      enum: ['bottom-right', 'bottom-left', 'top-right', 'top-left'],
-      default: 'bottom-right'
+const { defineModel } = require('../db/model');
+
+module.exports = defineModel({
+  name: 'Site',
+  table: 'sites',
+  fields: {
+    name: { column: 'name', type: 'string', required: true, trim: true },
+    domain: { column: 'domain', type: 'string', required: true, trim: true },
+    siteKey: { column: 'site_key', type: 'string', required: true },
+    userId: { column: 'user_id', type: 'id', ref: 'User' },
+    organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', required: true },
+    widgetSettings: {
+      column: 'widget_settings',
+      type: 'json',
+      default: () => ({
+        position: 'bottom-right',
+        primaryColor: '#4F46E5',
+        welcomeMessage: 'Hi! How can we help you today?',
+        placeholderText: 'Type your message...',
+        showOnPages: [],
+        autoOpen: false,
+        autoOpenDelay: 5000
+      })
     },
-    primaryColor: {
-      type: String,
-      default: '#4F46E5'
+    aiSettings: {
+      column: 'ai_settings',
+      type: 'json',
+      default: () => ({ enabled: false, fallbackToHuman: true, aiModel: 'faq-based' })
     },
-    welcomeMessage: {
-      type: String,
-      default: 'Hi! How can we help you today?'
-    },
-    placeholderText: {
-      type: String,
-      default: 'Type your message...'
-    },
-    showOnPages: [{
-      type: String
-    }],
-    autoOpen: {
-      type: Boolean,
-      default: false
-    },
-    autoOpenDelay: {
-      type: Number,
-      default: 5000
-    }
-  },
-  aiSettings: {
-    enabled: {
-      type: Boolean,
-      default: false
-    },
-    fallbackToHuman: {
-      type: Boolean,
-      default: true
-    },
-    aiModel: {
-      type: String,
-      default: 'faq-based'
-    }
-  },
-  isActive: {
-    type: Boolean,
-    default: true
+    isActive: { column: 'is_active', type: 'boolean', default: true }
   }
-}, {
-  timestamps: true
 });
-module.exports = mongoose.model('Site', siteSchema);

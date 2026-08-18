@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Team = require('../models/Team');
 const Conversation = require('../models/Conversation');
 const Department = require('../models/Department');
 const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
 const events = require('../events');
+const { conversationCountsByAgent, agentConversationStats } = require('../db/queries');
 router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;
@@ -20,26 +20,19 @@ router.get('/', auth, async (req, res) => {
       .select('-password')
       .populate('departments.departmentId', 'name color')
       .sort({ createdAt: -1 });
-    const membersWithStats = await Promise.all(
-      members.map(async (member) => {
-        const activeConversations = await Conversation.countDocuments({
-          assignedAgent: member._id,
-          status: { $in: ['open', 'assigned', 'pending'] }
-        });
-        const resolvedConversations = await Conversation.countDocuments({
-          assignedAgent: member._id,
-          status: { $in: ['resolved', 'closed'] }
-        });
-        return {
-          ...member.toObject(),
-          stats: {
-            ...member.stats,
-            activeConversations,
-            resolvedConversations
-          }
-        };
-      })
-    );
+    // Counted for every member in a single grouped query.
+    const counts = await conversationCountsByAgent(members.map((m) => m._id));
+    const membersWithStats = members.map((member) => {
+      const counted = counts.get(member._id) || { activeConversations: 0, resolvedConversations: 0 };
+      return {
+        ...member.toObject(),
+        stats: {
+          ...member.stats,
+          activeConversations: counted.activeConversations,
+          resolvedConversations: counted.resolvedConversations
+        }
+      };
+    });
     res.json(membersWithStats);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch team members' });
@@ -198,12 +191,13 @@ router.get('/:id/stats', auth, async (req, res) => {
     if (!member) {
       return res.status(404).json({ error: 'Team member not found' });
     }
+    const counted = await agentConversationStats(member._id);
     const stats = {
-      total: await Conversation.countDocuments({ assignedAgent: member._id }),
-      assigned: await Conversation.countDocuments({ assignedAgent: member._id, status: 'assigned' }),
-      pending: await Conversation.countDocuments({ assignedAgent: member._id, status: 'pending' }),
-      resolved: await Conversation.countDocuments({ assignedAgent: member._id, status: 'resolved' }),
-      closed: await Conversation.countDocuments({ assignedAgent: member._id, status: 'closed' }),
+      total: counted.total,
+      assigned: counted.assigned,
+      pending: counted.pending,
+      resolved: counted.resolved,
+      closed: counted.closed,
       avgResponseTime: member.stats.averageResponseTime || 0,
       currentLoad: member.stats.activeConversations || 0,
       maxLoad: member.permissions?.maxActiveConversations || 10
@@ -225,7 +219,7 @@ router.delete('/:id', auth, checkPermission('manage_users'), async (req, res) =>
       status: { $in: ['assigned', 'pending'] }
     });
     if (activeConversations > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Cannot delete team member with active conversations',
         activeConversations
       });

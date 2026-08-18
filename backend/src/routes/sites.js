@@ -76,7 +76,7 @@ router.put('/:siteId', auth, checkPermission('manage_sites'), async (req, res) =
     }
     updateKeys.forEach(key => {
       if (key === 'widgetSettings' || key === 'aiSettings') {
-        site[key] = { ...site[key].toObject(), ...updates[key] };
+        site[key] = { ...site[key], ...updates[key] };
       } else {
         site[key] = updates[key];
       }

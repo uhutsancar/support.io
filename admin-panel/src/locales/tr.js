@@ -1133,7 +1133,7 @@ export default {
     },
     technology: {
       title: 'Teknolojimiz',
-      description: 'Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve güvenilirlik sunar. React, Node.js, Socket.IO ve MongoDB gibi güçlü teknolojiler üzerine kurulu.',
+      description: 'Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve güvenilirlik sunar. React, Node.js, Socket.IO ve PostgreSQL gibi güçlü teknolojiler üzerine kurulu.',
     },
   },
   common: {

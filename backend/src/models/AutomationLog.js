@@ -1,41 +1,17 @@
-const mongoose = require('mongoose');
+const { defineModel } = require('../db/model');
 
-const AutomationLogSchema = new mongoose.Schema({
-  ruleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'AutomationRule',
-    required: true,
-    index: true
-  },
-  siteId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Site',
-    required: true,
-    index: true
-  },
-  triggerType: {
-    type: String,
-    required: true
-  },
-  targetId: {
-    type: mongoose.Schema.Types.ObjectId // Can be Conversation ID, Message ID, etc.
-  },
-  status: {
-    type: String,
-    enum: ['success', 'failed'],
-    required: true
-  },
-  errorDetails: {
-    type: String
-  },
-  executionTimeMs: {
-    type: Number
-  },
-  executedAt: {
-    type: Date,
-    default: Date.now,
-    expires: 60 * 60 * 24 * 30 // TTL index: Keep logs for 30 days
+module.exports = defineModel({
+  name: 'AutomationLog',
+  table: 'automation_logs',
+  fields: {
+    ruleId: { column: 'rule_id', type: 'id', ref: 'AutomationRule', required: true },
+    siteId: { column: 'site_id', type: 'id', ref: 'Site', required: true },
+    triggerType: { column: 'trigger_type', type: 'string', required: true },
+    targetId: { column: 'target_id', type: 'id' },
+    status: { column: 'status', type: 'string', enum: ['success', 'failed'], required: true },
+    errorDetails: { column: 'error_details', type: 'string' },
+    executionTimeMs: { column: 'execution_time_ms', type: 'number' },
+    // Pruned after 30 days by the retention sweep in src/db/retention.js.
+    executedAt: { column: 'executed_at', type: 'date', default: () => new Date() }
   }
-}, { timestamps: true });
-
-module.exports = mongoose.model('AutomationLog', AutomationLogSchema);
+});

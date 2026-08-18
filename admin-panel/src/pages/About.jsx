@@ -185,7 +185,7 @@ const About = () => {
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-5xl mx-auto">
-                {['React', 'Node.js', 'Socket.IO', 'MongoDB', 'Express', 'JWT', 'SSL/TLS', 'WebSocket'].map((tech, index) => (
+                {['React', 'Node.js', 'Socket.IO', 'PostgreSQL', 'Express', 'JWT', 'SSL/TLS', 'WebSocket'].map((tech, index) => (
                   <div
                     key={index}
                     className="bg-white dark:bg-brand-card rounded-xl p-4 md:p-6 text-center text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm border border-gray-100 dark:border-gray-800 hover:-translate-y-1 transition-transform"

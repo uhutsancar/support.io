@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const router = express.Router();
 const WidgetConfig = require('../models/WidgetConfig');
 const Site = require('../models/Site');
@@ -7,13 +6,14 @@ const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
 // S3 yükleyiciyi buradan çağırıyoruz
 const { uploadLogo } = require('../middleware/s3Upload');
+const { isValidObjectId } = require('../db/objectId');
 
 // Siteye özel config getirme
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
     const { siteId } = req.params;
     const orgId = req.organization?._id || req.user.organizationId;
-    if (!mongoose.Types.ObjectId.isValid(siteId)) {
+    if (!isValidObjectId(siteId)) {
       return res.status(400).json({ error: 'Invalid site id' });
     }
     const site = await Site.findOne({

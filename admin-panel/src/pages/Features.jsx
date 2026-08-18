@@ -274,7 +274,7 @@ const Features = () => {
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                {['React', 'Node.js', 'Socket.IO', 'MongoDB', 'Express', 'JWT', 'SSL/TLS', 'WebSocket'].map((tech, i) => (
+                {['React', 'Node.js', 'Socket.IO', 'PostgreSQL', 'Express', 'JWT', 'SSL/TLS', 'WebSocket'].map((tech, i) => (
                   <div key={i} className="bg-white dark:bg-brand-card border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-gray-600 dark:text-gray-300 font-medium hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:text-indigo-600 dark:hover:text-white transition-colors shadow-sm dark:shadow-none">
                     {tech}
                   </div>

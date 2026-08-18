@@ -1,162 +1,77 @@
-const mongoose = require('mongoose');
+const { defineModel } = require('../db/model');
 
-const departmentSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    default: ''
-  },
-  requiredSkills: [{
-    type: String,
-    lowercase: true,
-    trim: true
-  }],
-  siteId: {
-    type: String,
-    ref: 'Site',
-    required: true,
-    index: true
-  },
-  color: {
-    type: String,
-    default: '#3B82F6'
-  },
-  icon: {
-    type: String,
-    default: '💬'
-  },
-  members: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Team'
+module.exports = defineModel({
+  name: 'Department',
+  table: 'departments',
+  fields: {
+    name: { column: 'name', type: 'string', required: true, trim: true },
+    description: { column: 'description', type: 'string', default: '' },
+    requiredSkills: { column: 'required_skills', type: 'stringArray', lowercase: true, trim: true, default: () => [] },
+    siteId: { column: 'site_id', type: 'id', ref: 'Site', required: true },
+    color: { column: 'color', type: 'string', default: '#3B82F6' },
+    icon: { column: 'icon', type: 'string', default: '💬' },
+    autoAssignRules: {
+      column: 'auto_assign_rules',
+      type: 'json',
+      default: () => ({ enabled: false, strategy: 'round-robin' })
     },
-    role: {
-      type: String,
-      enum: ['manager', 'agent'],
-      default: 'agent'
+    businessHours: {
+      column: 'business_hours',
+      type: 'json',
+      default: () => ({
+        enabled: false,
+        timezone: 'Europe/Istanbul',
+        schedule: {
+          monday: { start: '09:00', end: '18:00', enabled: true },
+          tuesday: { start: '09:00', end: '18:00', enabled: true },
+          wednesday: { start: '09:00', end: '18:00', enabled: true },
+          thursday: { start: '09:00', end: '18:00', enabled: true },
+          friday: { start: '09:00', end: '18:00', enabled: true },
+          saturday: { start: '09:00', end: '18:00', enabled: false },
+          sunday: { start: '09:00', end: '18:00', enabled: false }
+        }
+      })
     },
-    addedAt: {
-      type: Date,
-      default: Date.now
+    sla: {
+      column: 'sla',
+      type: 'json',
+      default: () => ({
+        enabled: true,
+        firstResponse: { urgent: 5, high: 15, normal: 30, low: 60 },
+        resolution: { urgent: 120, high: 240, normal: 480, low: 1440 },
+        onlyBusinessHours: false
+      })
+    },
+    isActive: { column: 'is_active', type: 'boolean', default: true },
+    stats: {
+      column: 'stats',
+      type: 'json',
+      default: () => ({
+        totalConversations: 0,
+        activeConversations: 0,
+        averageResponseTime: 0,
+        slaMetrics: {
+          firstResponseMet: 0,
+          firstResponseBreached: 0,
+          resolutionMet: 0,
+          resolutionBreached: 0,
+          averageFirstResponseTime: 0,
+          averageResolutionTime: 0
+        }
+      })
     }
-  }],
-  autoAssignRules: {
-    enabled: {
-      type: Boolean,
-      default: false
-    },
-    strategy: {
-      type: String,
-      enum: ['round-robin', 'least-active', 'manual'],
-      default: 'round-robin'
-    }
   },
-  businessHours: {
-    enabled: {
-      type: Boolean,
-      default: false
-    },
-    timezone: {
-      type: String,
-      default: 'Europe/Istanbul'
-    },
-    schedule: {
-      monday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: true } 
-      },
-      tuesday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: true } 
-      },
-      wednesday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: true } 
-      },
-      thursday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: true } 
-      },
-      friday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: true } 
-      },
-      saturday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: false } 
-      },
-      sunday: { 
-        start: { type: String, default: '09:00' }, 
-        end: { type: String, default: '18:00' }, 
-        enabled: { type: Boolean, default: false } 
+  children: {
+    members: {
+      table: 'department_members',
+      parentKey: 'department_id',
+      orderBy: 'added_at ASC',
+      fields: {
+        // Membership can reference a Team agent or a User account.
+        userId: { column: 'user_id', type: 'id', refAny: ['Team', 'User'] },
+        role: { column: 'role', type: 'string', default: 'agent' },
+        addedAt: { column: 'added_at', type: 'date', default: () => new Date() }
       }
     }
-  },
-  
-  sla: {
-    enabled: {
-      type: Boolean,
-      default: true
-    },
-    firstResponse: {
-      urgent: { type: Number, default: 5 },
-      high: { type: Number, default: 15 },
-      normal: { type: Number, default: 30 },
-      low: { type: Number, default: 60 }
-    },
-    resolution: {
-      urgent: { type: Number, default: 120 },
-      high: { type: Number, default: 240 },
-      normal: { type: Number, default: 480 },
-      low: { type: Number, default: 1440 }
-    },
-    onlyBusinessHours: {
-      type: Boolean,
-      default: false
-    }
-  },
-  
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  stats: {
-    totalConversations: {
-      type: Number,
-      default: 0
-    },
-    activeConversations: {
-      type: Number,
-      default: 0
-    },
-    averageResponseTime: {
-      type: Number,
-      default: 0
-    },
-    slaMetrics: {
-      firstResponseMet: { type: Number, default: 0 },
-      firstResponseBreached: { type: Number, default: 0 },
-      resolutionMet: { type: Number, default: 0 },
-      resolutionBreached: { type: Number, default: 0 },
-      averageFirstResponseTime: { type: Number, default: 0 },
-      averageResolutionTime: { type: Number, default: 0 }
-    }
   }
-}, {
-  timestamps: true
 });
-
-departmentSchema.index({ siteId: 1, isActive: 1 });
-departmentSchema.index({ 'members.userId': 1 });
-
-module.exports = mongoose.model('Department', departmentSchema);

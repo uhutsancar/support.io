@@ -5,19 +5,19 @@ const TeamMessage = require('../models/TeamMessage');
 const TeamChat = require('../models/TeamChat');
 const Team = require('../models/Team');
 const User = require('../models/User');
+const { resolveChatParticipants, unreadTeamChatCount } = require('../db/queries');
 router.get('/chats', auth, async (req, res) => {
   try {
     const chats = await TeamChat.find({ participants: req.user._id }).lean();
-    
-    // Manually populate participants from both User and Team models
+
+    // Both participant tables are read once for the whole list.
+    const people = await resolveChatParticipants(chats.flatMap((chat) => chat.participants));
     for (const chat of chats) {
-      chat.participants = await Promise.all(chat.participants.map(async pId => {
-        let p = await Team.findById(pId).select('name email avatar status role').lean();
-        if (!p) p = await User.findById(pId).select('name email avatar status role').lean();
-        return p || { _id: pId, name: 'Unknown', role: 'unknown' };
-      }));
+      chat.participants = chat.participants.map(
+        (pId) => people.get(pId) || { _id: pId, name: 'Unknown', role: 'unknown' }
+      );
     }
-    
+
     chats.sort((a, b) => new Date(b.lastMessage?.createdAt || b.updatedAt) - new Date(a.lastMessage?.createdAt || a.updatedAt));
     res.json(chats);
   } catch (error) {
@@ -39,13 +39,11 @@ router.post('/chats/direct', auth, async (req, res) => {
       await newChat.save();
       chat = newChat.toObject();
     }
-    
-    // Manually populate
-    chat.participants = await Promise.all(chat.participants.map(async pId => {
-      let p = await Team.findById(pId).select('name email avatar status role').lean();
-      if (!p) p = await User.findById(pId).select('name email avatar status role').lean();
-      return p || { _id: pId, name: 'Unknown', role: 'unknown' };
-    }));
+
+    const people = await resolveChatParticipants(chat.participants);
+    chat.participants = chat.participants.map(
+      (pId) => people.get(pId) || { _id: pId, name: 'Unknown', role: 'unknown' }
+    );
     res.json(chat);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -63,13 +61,12 @@ router.post('/chats/group', auth, async (req, res) => {
       createdBy: req.user._id
     });
     await chat.save();
-    
+
     const populated = chat.toObject();
-    populated.participants = await Promise.all(populated.participants.map(async pId => {
-      let p = await Team.findById(pId).select('name email avatar status role').lean();
-      if (!p) p = await User.findById(pId).select('name email avatar status role').lean();
-      return p || { _id: pId, name: 'Unknown', role: 'unknown' };
-    }));
+    const people = await resolveChatParticipants(populated.participants);
+    populated.participants = populated.participants.map(
+      (pId) => people.get(pId) || { _id: pId, name: 'Unknown', role: 'unknown' }
+    );
     res.json(populated);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -101,11 +98,11 @@ router.get('/members', auth, async (req, res) => {
     const teamMembers = await Team.find({ isActive: true })
       .select('name email avatar status role')
       .sort({ name: 1 }).lean();
-      
+
     const users = await User.find({})
       .select('name email avatar status role')
       .sort({ name: 1 }).lean();
-      
+
     // Combine and send back
     const members = [...users, ...teamMembers];
     res.json(members);
@@ -115,16 +112,8 @@ router.get('/members', auth, async (req, res) => {
 });
 router.get('/unread', auth, async (req, res) => {
   try {
-    const chats = await TeamChat.find({ participants: req.user._id });
-    let total = 0;
-    for (const chat of chats) {
-      const count = await TeamMessage.countDocuments({
-        chatId: chat.chatId,
-        senderId: { $ne: req.user._id },
-        readBy: { $ne: req.user._id }
-      });
-      total += count;
-    }
+    // Counted across every chat the user belongs to in one query.
+    const total = await unreadTeamChatCount(req.user._id);
     res.json({ unreadCount: total });
   } catch (error) {
     res.status(500).json({ error: error.message });

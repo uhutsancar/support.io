@@ -1,50 +1,27 @@
-const mongoose = require('mongoose');
+const { defineModel } = require('../db/model');
 
-const AutomationRuleSchema = new mongoose.Schema({
-  siteId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Site',
-    required: true,
-    index: true
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  priority: {
-    type: Number,
-    default: 0 // Higher number = higher priority
-  },
-  triggerType: {
-    type: String,
-    enum: ['message_received', 'conversation_created', 'visitor_event', 'schedule'],
-    required: true
-  },
-  conditions: [{
-    field: { type: String, required: true }, // e.g., 'message.text', 'visitor.country', 'time.outside_business_hours', 'event.type'
-    operator: { type: String, required: true }, // e.g., 'contains', 'equals', 'not_equals', 'exists'
-    value: { type: mongoose.Schema.Types.Mixed }
-  }],
-  conditionOperator: {
-    type: String, // 'AND' or 'OR'
-    default: 'AND'
-  },
-  actions: [{
-    type: { type: String, required: true }, // 'send_message', 'assign_team', 'assign_agent', 'add_tag', 'change_status', 'escalate_sla', 'webhook', 'internal_note'
-    payload: { type: mongoose.Schema.Types.Mixed } // Data required for the action (e.g., text for message, teamId for assign)
-  }],
-  metrics: {
-    executionsCount: { type: Number, default: 0 },
-    successCount: { type: Number, default: 0 },
-    failureCount: { type: Number, default: 0 }
+module.exports = defineModel({
+  name: 'AutomationRule',
+  table: 'automation_rules',
+  fields: {
+    siteId: { column: 'site_id', type: 'id', ref: 'Site', required: true },
+    name: { column: 'name', type: 'string', required: true },
+    isActive: { column: 'is_active', type: 'boolean', default: true },
+    priority: { column: 'priority', type: 'number', default: 0 },
+    triggerType: {
+      column: 'trigger_type',
+      type: 'string',
+      enum: ['message_received', 'conversation_created', 'visitor_event', 'schedule'],
+      required: true
+    },
+    // Rule bodies are always read and written as a whole.
+    conditions: { column: 'conditions', type: 'json', default: () => [] },
+    conditionOperator: { column: 'condition_operator', type: 'string', default: 'AND' },
+    actions: { column: 'actions', type: 'json', default: () => [] },
+    metrics: {
+      column: 'metrics',
+      type: 'json',
+      default: () => ({ executionsCount: 0, successCount: 0, failureCount: 0 })
+    }
   }
-}, { timestamps: true });
-
-// Index for evaluating rules per site and trigger type
-AutomationRuleSchema.index({ siteId: 1, triggerType: 1, isActive: 1, priority: -1 });
-
-module.exports = mongoose.model('AutomationRule', AutomationRuleSchema);
+});

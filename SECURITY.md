@@ -14,7 +14,7 @@ This document outlines the security measures implemented in the Support.io appli
 
 ### 2. Attack Protection
 - **Brute Force Protection**: Rate limiting (5 attempts per 15 minutes on login/register)
-- **NoSQL Injection**: express-mongo-sanitize prevents malicious queries
+- **SQL Injection**: every query is parameterised and table/column names come only from the model definitions, never from request data
 - **XSS Prevention**: Input validation and sanitization
 - **CSRF Protection**: CORS configured for specific origins only
 
@@ -36,7 +36,7 @@ This document outlines the security measures implemented in the Support.io appli
 
 ### 5. Data Protection
 - **Environment Variables**: Sensitive data in .env (gitignored)
-- **MongoDB Atlas**: Network access restrictions
+- **PostgreSQL**: Network access restrictions
 - **Secrets Management**: No hardcoded secrets in codebase
 
 ## 🔐 Password Requirements
@@ -56,10 +56,10 @@ Example valid passwords:
 ### Essential for Production:
 1. **HTTPS**: Use SSL/TLS certificates (Let's Encrypt recommended)
 2. **Environment Variables**: Set on hosting platform (Vercel, Heroku, etc.)
-3. **MongoDB Security**:
+3. **PostgreSQL Security**:
    - Update IP whitelist to production IPs only
    - Use strong database passwords
-   - Enable MongoDB audit logs
+   - Enable PostgreSQL audit logging
 
 ### Optional Enhancements:
 4. **Logging**: Add Winston or Morgan for security event logging
@@ -91,7 +91,7 @@ Example valid passwords:
 ### Quarterly:
 - Review and update password policies
 - Audit API endpoint permissions
-- Review MongoDB access logs
+- Review PostgreSQL access logs
 
 ### Annually:
 - Rotate JWT secret
