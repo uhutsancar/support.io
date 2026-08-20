@@ -7,9 +7,32 @@ import { sitesAPI, conversationsAPI, departmentsAPI, teamAPI } from '../services
 import { useAuth } from '../contexts/AuthContext';
 import { io } from 'socket.io-client';
 import ConfirmDialog from '../components/ConfirmDialog';
+import AIAssistant from '../components/AIAssistant';
+
+// Dosya yukleme ve ek gorselleri ayni backend'den gelir. Sabit yazilirsa
+// dagitilan panel kullanicinin kendi makinesine istek atmaya calisir.
+const API_BASE = import.meta.env.VITE_API_URL;
+
+// Temsilci cevrimici degilken autoAssignment konusmayi 'unassigned' yapar.
+// Bu deger etiket zincirinde yoktu ve son else'e dusup "Kapali" goruntuluyordu.
+const STATUS_LABELS = {
+  open: ['conversations.statuses.open', 'Açık'],
+  unassigned: ['conversations.unassigned', 'Atanmamış'],
+  assigned: ['conversations.statuses.assigned', 'Atandı'],
+  pending: ['conversations.statuses.pending', 'Bekliyor'],
+  resolved: ['conversations.statuses.resolved', 'Çözüldü'],
+  closed: ['conversations.statuses.closed', 'Kapalı']
+};
+
+// Henuz kimseye atanmamis konusma: hem 'open' hem 'unassigned' bu anlama gelir.
+const isUnclaimed = (c) => !c?.assignedAgent && (c?.status === 'open' || c?.status === 'unassigned');
 import { Send, Search, MessageCircle, User, Clock, CheckCheck, Trash2, Paperclip, X, File, Image, FileText, UserPlus, Folder, Flag, UserCheck } from 'lucide-react';
 const Conversations = () => {
   const { t } = useTranslation();
+  const statusLabel = (status) => {
+    const entry = STATUS_LABELS[status] || STATUS_LABELS.closed;
+    return t(entry[0], entry[1]);
+  };
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState(null);
   const [activeTab, setActiveTab] = useState('inbox');
@@ -446,7 +469,7 @@ const Conversations = () => {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      const response = await fetch('http://localhost:5000/api/files/upload', {
+      const response = await fetch(`${API_BASE}/api/files/upload`, {
         method: 'POST',
         headers: {
           'X-Site-Key': selectedSite.siteKey,
@@ -720,7 +743,7 @@ const Conversations = () => {
                           </div>
                         </div>
                         <span className={`px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full flex-shrink-0 whitespace-nowrap ${getStatusColor(conv.status)}`}>
-                          {conv.status === 'open' ? t('conversations.statuses.open', 'Açık') : conv.status === 'assigned' ? t('conversations.statuses.assigned', 'Atandı') : conv.status === 'pending' ? t('conversations.statuses.pending', 'Bekliyor') : conv.status === 'resolved' ? t('conversations.statuses.resolved', 'Çözüldü') : t('conversations.statuses.closed', 'Kapalı')}
+                          {statusLabel(conv.status)}
                         </span>
                       </div>
                       {conv.assignedAgent && (
@@ -849,7 +872,7 @@ const Conversations = () => {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-2.5 lg:p-3 xl:p-4 space-y-2 sm:space-y-2.5 lg:space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0 modal-scrollbar pr-2 relative">
-                  {selectedConversation.status === 'open' && !selectedConversation.assignedAgent && (
+                  {isUnclaimed(selectedConversation) && (
                     <div className="absolute inset-0 z-20 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6">
                       <div className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-8 max-w-sm text-center transform transition-all hover:scale-[1.02]">
                         <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -899,10 +922,10 @@ const Conversations = () => {
                             <div className="mt-2">
                               {message.messageType === 'image' ? (
                                 <img
-                                  src={`http://localhost:5000${message.fileData.url}`}
+                                  src={`${API_BASE}${message.fileData.url}`}
                                   alt={message.fileData.originalName}
                                   className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                  onClick={() => window.open(`http://localhost:5000${message.fileData.url}`, '_blank')}
+                                  onClick={() => window.open(`${API_BASE}${message.fileData.url}`, '_blank')}
                                 />
                               ) : (
                                 <div
@@ -910,7 +933,7 @@ const Conversations = () => {
                                     ? 'bg-gray-100 dark:bg-gray-700'
                                     : 'bg-white/20'
                                     }`}
-                                  onClick={() => window.open(`http://localhost:5000${message.fileData.url}`, '_blank')}
+                                  onClick={() => window.open(`${API_BASE}${message.fileData.url}`, '_blank')}
                                 >
                                   <div className={`p-2 rounded ${message.senderType === 'visitor'
                                     ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400'
@@ -938,7 +961,12 @@ const Conversations = () => {
                   ))}
                   <div ref={messagesEndRef} />
                 </div>
-                <form onSubmit={handleSendMessage} className={`p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0 ${selectedConversation.status === 'open' && !selectedConversation.assignedAgent ? 'opacity-50 pointer-events-none' : ''}`}>
+                <AIAssistant
+                  conversation={selectedConversation}
+                  disabled={isUnclaimed(selectedConversation)}
+                  onAccept={(text) => setNewMessage(text)}
+                />
+                <form onSubmit={handleSendMessage} className={`p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0 ${isUnclaimed(selectedConversation) ? 'opacity-50 pointer-events-none' : ''}`}>
                   {selectedFile && (
                     <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center gap-2">
                       <div className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded">

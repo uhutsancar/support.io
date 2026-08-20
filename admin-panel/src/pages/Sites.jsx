@@ -78,7 +78,7 @@ const Sites = () => {
     siteKey: '${siteKey}'
   };
 </script>
-<script src="http://localhost:3000/widget.js"></script>`;
+<script src="${import.meta.env.VITE_API_URL}/widget.js"></script>`;
   };
 
   if (loading) {

@@ -1,5 +1,13 @@
-version: '3.8'
-
+# Development stack.
+#
+# Production is deliberately not described here: the admin service runs the Vite
+# dev server with the source bind-mounted, which is a development-only setup.
+#
+# Host ports are all overridable, because a workstation that already runs
+# PostgreSQL on 5432 or an API on 5000 cannot start this stack otherwise:
+#
+#   POSTGRES_PORT=5433 BACKEND_PORT=5001 docker compose up
+#
 services:
   postgres:
     image: postgres:16
@@ -11,18 +19,44 @@ services:
       POSTGRES_USER: ${DB_USER:-support_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-supportchat}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-support_user} -d ${DB_NAME:-supportchat}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Bu projeye ait, digerlerinden bagimsiz Redis.
+  #
+  # Makinede baska redis'ler var (local-redis 6379, motionmeet-redis 6380), bu
+  # yuzden hem konteyner adi hem host portu ayri tutulur. Yalnizca 127.0.0.1'e
+  # baglanir: redis kimlik dogrulamasi olmadan calisir ve tum arayuzlere acilmasi
+  # ag uzerinden acik bir kapi birakir.
+  redis:
+    image: redis:7-alpine
+    container_name: support.io_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory ${REDIS_MAXMEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6381}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    # wait for postgres to accept connections before starting nodemon
+    # postgres is already gated by a healthcheck below, so the wait loop only
+    # covers the gap between "accepting connections" and "ready".
     command: sh -c "until nc -z postgres 5432; do echo waiting for postgres; sleep 1; done; ./node_modules/.bin/nodemon src/server.js"
     working_dir: /usr/src/backend
     volumes:
@@ -42,17 +76,40 @@ services:
       # icinde bu yanlis olur. Bos birakilinca yukaridaki DB_* degerleri
       # kullanilir, host'ta tanimliysa o kazanir.
       - DATABASE_URL=${DATABASE_URL:-}
+      # Bare passthrough, not JWT_SECRET=${JWT_SECRET:-}: the ":-" form sets the
+      # variable to an empty string when the host has none, and dotenv will not
+      # overwrite an already-set variable, so the value in backend/.env would be
+      # ignored and every token signature would fail.
+      - JWT_SECRET
       # S3 ayarlari: host ortaminda tanimliysa aktarilir, tanimli degilse
       # volume ile baglanan backend/.env dosyasindan dotenv okur.
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_REGION
       - S3_BUCKET
+      # AI asistan. Anahtar yoksa ozellik kapali gorunur, sahte cevap uretilmez.
+      # Redis: tanimliysa Socket.IO adapter'i devreye girer ve backend birden
+      # fazla surec olarak calistirilabilir. Tanimsizken tek surec modunda calisir.
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - ANTHROPIC_API_KEY
+      - AI_PROVIDER
+      - AI_ENABLED
+      - AI_MODEL
     ports:
-      - "5000:3000"
+      - "${BACKEND_PORT:-5000}:3000"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # The endpoint also reports database connectivity, so a backend that is
+      # listening but cannot reach postgres is correctly reported unhealthy.
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   admin:
@@ -66,10 +123,12 @@ services:
       - admin_node_modules:/usr/src/admin-panel/node_modules
     environment:
       NODE_ENV: development
-      VITE_API_URL: "http://localhost:5000"
+      # Browser-side value, so it must point at the host port the backend is
+      # published on, not at the compose service name.
+      VITE_API_URL: "http://localhost:${BACKEND_PORT:-5000}"
       CHOKIDAR_USEPOLLING: "true"
     ports:
-      - "5173:5173"
+      - "${ADMIN_PORT:-5173}:5173"
     depends_on:
       - backend
     restart: unless-stopped
@@ -78,7 +137,7 @@ services:
     image: caddy:2
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${PROXY_PORT:-80}:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
@@ -87,5 +146,6 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   backend_node_modules:
   admin_node_modules:

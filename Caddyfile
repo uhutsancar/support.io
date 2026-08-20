@@ -1,6 +1,24 @@
 :80
 
-handle_path /api/* {
+# The backend mounts its routes under /api itself (app.use('/api/auth', ...)),
+# so the prefix must be forwarded intact. `handle_path` would strip it and turn
+# /api/auth/me into /auth/me, which the backend answers 404 for.
+handle /api/* {
+    reverse_proxy backend:3000
+}
+
+# Socket.IO negotiates over /socket.io before upgrading; without this the widget
+# and admin realtime connections fall through to the SPA handler below.
+handle /socket.io/* {
+    reverse_proxy backend:3000
+}
+
+# The embeddable widget and the backend's own static assets.
+handle /widget.js {
+    reverse_proxy backend:3000
+}
+
+handle /health {
     reverse_proxy backend:3000
 }
 

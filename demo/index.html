@@ -198,6 +198,30 @@
     </style>
 </head>
 <body>
+    <!-- Demo kontrol cubugu: hangi siteye baglanildigi her zaman gorunur olsun.
+         Yanlis anahtarla test etmek "mesaj panele dusmuyor" gibi gorunur, oysa
+         mesaj baska bir organizasyona gitmistir. -->
+    <div id="demo-bar" style="position:fixed;top:0;left:0;right:0;z-index:2147483000;
+         background:#111827;color:#e5e7eb;font:13px/1.4 system-ui,sans-serif;
+         padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+         box-shadow:0 1px 4px rgba(0,0,0,.4)">
+      <strong style="color:#a5b4fc">Demo</strong>
+      <span style="opacity:.7">Backend:</span>
+      <code id="demo-backend" style="color:#93c5fd"></code>
+      <span style="opacity:.7;margin-left:8px">Site anahtarı:</span>
+      <input id="demo-key" spellcheck="false"
+             style="flex:1;min-width:280px;padding:4px 8px;border-radius:4px;
+                    border:1px solid #374151;background:#1f2937;color:#e5e7eb;
+                    font-family:ui-monospace,monospace;font-size:12px">
+      <button id="demo-apply"
+              style="padding:4px 12px;border:0;border-radius:4px;background:#4f46e5;
+                     color:#fff;cursor:pointer;font-weight:600">Uygula</button>
+      <button id="demo-reset"
+              style="padding:4px 12px;border:1px solid #374151;border-radius:4px;
+                     background:transparent;color:#9ca3af;cursor:pointer">Demo anahtarı</button>
+      <span id="demo-hint" style="width:100%;opacity:.6;font-size:12px"></span>
+    </div>
+    <div style="height:46px"></div>
     <div class="hero">
         <h1>🚀 Support.io Demo</h1>
         <p>Experience real-time customer support with our embeddable chat widget</p>
@@ -206,7 +230,7 @@
     <div class="container">
         <div class="notice">
             <h3>📝 How to use this demo:</h3>
-            <p><strong>Step 1:</strong> Make sure your backend server is running on <code>http://localhost:3000</code></p>
+            <p><strong>Step 1:</strong> Make sure your backend server is running on <code id="backend-url-hint">http://localhost:5000</code></p>
             <p><strong>Step 2:</strong> Create a site in the admin panel and copy your site key</p>
             <p><strong>Step 3:</strong> Replace <code>YOUR-SITE-KEY-HERE</code> in this HTML file with your actual site key</p>
             <p><strong>Step 4:</strong> Click the chat bubble in the bottom-right corner to start chatting!</p>
@@ -280,13 +304,69 @@
     </div>
 
     <script>
+        // Bu sayfa iki farkli sekilde acilabilir ve backend adresi ikisinde ayni degil:
+        //   1) backend'in kendisi sunar   -> http://localhost:5000/demo/  (origin dogru)
+        //   2) ayri statik sunucu sunar   -> http://localhost:3001/       (origin yanlis)
+        // Bu yuzden adres sabit yazilmaz; sirasiyla ?api= parametresi, sonra
+        // sayfanin kendi origin'i (yalnizca /demo altindan sunuluyorsa), sonra
+        // yerel varsayilan denenir.
+        // Hangi sitenin widget'i test edilecek?
+        //
+        // Bu deger onemlidir: mesaj, site anahtarinin ait oldugu ORGANIZASYONA
+        // dusar. Seed demo anahtariyla gonderilen mesaj demo organizasyonunda
+        // gorunur, sizin panelinizde degil. Kendi sitenizi test etmek icin
+        // Siteler sayfasindaki anahtarinizi asagidaki kutuya yapistirin.
+        const DEFAULT_SITE_KEY = 'demo-site-key-0000-1111-2222';
+        const ACTIVE_SITE_KEY =
+            new URLSearchParams(location.search).get('siteKey') ||
+            localStorage.getItem('demo_site_key') ||
+            DEFAULT_SITE_KEY;
+
+        const BACKEND_URL = (function () {
+            const override = new URLSearchParams(location.search).get('api');
+            if (override) return override.replace(/\/$/, '');
+            if (location.pathname.startsWith('/demo')) return location.origin;
+            return 'http://localhost:5000';
+        })();
+
         // Widget will fetch config from backend automatically using siteKey
         window.SupportIOConfig = {
-            siteKey: '33f76515-888b-4c2e-b0ca-72aa020e9973',
-            apiUrl: 'http://localhost:5000',
-            socketUrl: 'http://localhost:5000'
+            siteKey: ACTIVE_SITE_KEY,
+            apiUrl: BACKEND_URL,
+            socketUrl: BACKEND_URL
             // position, primaryColor, brandName etc. will be loaded from backend widget config
         };
+
+        // Sayfada gosterilen kurulum adimi da ayni degeri kullansin.
+        document.addEventListener('DOMContentLoaded', function () {
+            const el = document.getElementById('backend-url-hint');
+            if (el) el.textContent = BACKEND_URL;
+
+            document.getElementById('demo-backend').textContent = BACKEND_URL;
+
+            const input = document.getElementById('demo-key');
+            const hint = document.getElementById('demo-hint');
+            input.value = ACTIVE_SITE_KEY;
+
+            hint.textContent = ACTIVE_SITE_KEY === DEFAULT_SITE_KEY
+                ? 'Şu an seed demo sitesi kullanılıyor — mesajlar "Acme Yazılım (Demo)" organizasyonuna düşer. Kendi panelinizde görmek için Siteler sayfasındaki anahtarınızı yapıştırın.'
+                : 'Kendi site anahtarınız kullanılıyor; mesajlar kendi panelinizde görünecek.';
+
+            // Anahtar degisince widget'in yeniden baslamasi gerekir, bu yuzden
+            // sayfa yenilenir.
+            document.getElementById('demo-apply').addEventListener('click', function () {
+                const v = input.value.trim();
+                if (!v) return;
+                localStorage.setItem('demo_site_key', v);
+                localStorage.removeItem('sc_visitor_id'); // yeni site = yeni ziyaretci
+                location.href = location.pathname;
+            });
+            document.getElementById('demo-reset').addEventListener('click', function () {
+                localStorage.removeItem('demo_site_key');
+                localStorage.removeItem('sc_visitor_id');
+                location.href = location.pathname;
+            });
+        });
 
         let unreadMessageCount = 0;
         
@@ -330,6 +410,14 @@
             });
         });
     </script>
-    <script src="http://localhost:5000/widget.js?v=20260210"></script>
+    <script>
+        // widget.js sabit bir adresten degil, yukarida cozulen backend'den yuklenir.
+        (function () {
+            const s = document.createElement('script');
+            s.src = BACKEND_URL + '/widget.js?v=20260210';
+            s.async = true;
+            document.body.appendChild(s);
+        })();
+    </script>
 </body>
 </html>

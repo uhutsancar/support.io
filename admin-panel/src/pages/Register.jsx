@@ -19,14 +19,19 @@ const Register = () => {
   const langPrefix = language === 'en' ? '/en' : '';
   const routes = {
     login: `${langPrefix}/login`,
-    dashboard: `${langPrefix}/dashboard`
+    dashboard: `${langPrefix}/dashboard`,
+    onboarding: `${langPrefix}/onboarding`
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await register(name, email, password);
-      navigate(routes.dashboard);
+      const data = await register(name, email, password);
+      // Yeni hesap sahibi once kuruluma gider. Panele yonlendirip guard'in geri
+      // atmasini beklemek, kullaniciya bir an gosterge panelini gosterip disari
+      // atiyordu.
+      const needsOnboarding = data?.user?.role === 'owner' && data?.user?.isOnboarded === false;
+      navigate(needsOnboarding ? routes.onboarding : routes.dashboard);
       toast.success(t('register.success'));
     } catch (err) {
       toast.error(err.response?.data?.error || t('register.error'));

@@ -471,8 +471,22 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     'LOGIN_SUCCESS', 'LOGIN_FAILED',
     'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
     'PLAN_CHANGED', 'UPDATE_SLA',
-    'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH'))
+    'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+    'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+    'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED'))
 );
+
+-- The allowed action list grows as new audited operations are added. Widening a
+-- CHECK constraint needs an explicit drop first, so this pair runs on every boot
+-- and leaves an already-current database unchanged.
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED'));
 CREATE INDEX IF NOT EXISTS idx_audit_logs_organization_id ON audit_logs (organization_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_org_created ON audit_logs (organization_id, created_at DESC);

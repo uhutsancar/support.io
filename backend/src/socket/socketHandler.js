@@ -10,6 +10,7 @@ const TeamChat = require('../models/TeamChat');
 const { autoAssignConversation, checkAndReassign } = require('../services/autoAssignment');
 const { isWithinBusinessHours, getBusinessHoursMessage, shouldCalculateSLA } = require('../services/businessHours');
 const { sendSLAWarning, handleSLABreach } = require('../services/escalation');
+const { getEngine: getAutomationEngine } = require('../services/automationEngine');
 
 class SocketHandler {
   constructor(io) {
@@ -56,8 +57,13 @@ class SocketHandler {
             conversation.currentPage = currentPage;
             await conversation.save();
 
-            const messages = await Message.find({ conversationId: conversation._id })
-              .sort({ createdAt: 1 });
+            // Ziyaretciye tum gecmis degil son 100 mesaj gonderilir; uzun
+            // konusmalarda join yaniti aksi halde megabaytlara ciker ve
+            // baglanti kurulmasi gecikir.
+            const recent = await Message.find({ conversationId: conversation._id })
+              .sort({ createdAt: -1 })
+              .limit(100);
+            const messages = recent.reverse();
 
             try {
               conversation.calculateSLA();
@@ -251,6 +257,8 @@ class SocketHandler {
             this.adminNamespace.to(`site:${socket.siteId}`).emit('new-conversation', {
               conversation: await conversation.populate('department', 'name color icon')
             });
+
+            this.runAutomation('conversation_created', conversation, { content });
           }
 
           const conversation = await Conversation.findById(conversationId);
@@ -313,6 +321,8 @@ class SocketHandler {
             conversationId: conversation._id,
             timestamp: new Date()
           });
+
+          this.runAutomation('message_received', conversation, { content, message });
 
           await this.tryAutoResponse(conversation, content);
 
@@ -1061,6 +1071,47 @@ class SocketHandler {
 
       }
     }, 30000);
+  }
+
+  // Hands a conversation event to the automation rule engine. Deliberately not
+  // awaited by callers: a rule must never delay delivery of the visitor's
+  // message, and a broken rule must not break the chat. The engine is null
+  // until server.js initialises it, so an unconfigured deployment is a no-op.
+  runAutomation(triggerType, conversation, { content = '', message = null } = {}) {
+    const engine = getAutomationEngine();
+    if (!engine) return;
+
+    // Field names here are the ones offered by the rule editor's condition
+    // builder (message.content, visitor.country); changing them silently breaks
+    // every saved rule.
+    const payload = {
+      message: message
+        ? { content, senderType: message.senderType, senderName: message.senderName, messageType: message.messageType }
+        : { content },
+      visitor: {
+        id: conversation.visitorId,
+        name: conversation.visitorName,
+        email: conversation.visitorEmail,
+        country: conversation.metadata?.country || null,
+        currentPage: conversation.currentPage
+      },
+      conversation: {
+        status: conversation.status,
+        priority: conversation.priority,
+        channel: conversation.channel,
+        tags: conversation.tags || []
+      }
+    };
+
+    engine.evaluateEvent({
+      siteId: conversation.siteId,
+      organizationId: conversation.organizationId,
+      triggerType,
+      targetId: conversation._id,
+      payload
+    }).catch(() => {
+      // evaluateEvent already logs; swallowing keeps the chat path alive.
+    });
   }
 
   async tryAutoResponse(conversation, userMessage) {

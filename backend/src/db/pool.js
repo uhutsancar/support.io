@@ -5,10 +5,20 @@ const { Pool } = require('pg');
 // Connection details come exclusively from the environment. DATABASE_URL wins
 // when present, otherwise the discrete DB_* variables are used.
 function buildConfig() {
+  // Havuz boyutu yük altında en kritik ayardır: eşzamanlı istek sayısı havuzu
+  // aştığında istekler kuyrukta bekler ve gecikme doğrusal değil üstel büyür.
+  // Kaba kural: (çekirdek sayısı × 2) + disk sayısı, ancak PostgreSQL'in
+  // max_connections değerini süreç sayısıyla çarpıp aşmamak şartıyla.
   const base = {
-    max: parseInt(process.env.DB_POOL_MAX, 10) || 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 30000,
+    max: parseInt(process.env.DB_POOL_MAX, 10) || 20,
+    min: parseInt(process.env.DB_POOL_MIN, 10) || 0,
+    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS, 10) || 30000,
+    // Havuz doluyken yeni istek bu süre boyunca bekler. Eskiden 30sn idi:
+    // yığılma anında istekler yarım dakika asılı kalıp istemci tarafında
+    // zaman aşımına uğruyordu. Hızlı başarısızlık daha okunur bir davranış.
+    connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS, 10) || 10000,
+    // Tek bir kaçak sorgu havuzu süresiz tutmasın.
+    statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT_MS, 10) || 15000,
     application_name: 'supportchat-backend'
   };
 

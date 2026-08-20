@@ -6,7 +6,33 @@ const Department = require('../models/Department');
 const { auth } = require('../middleware/auth');
 const { checkPermission } = require('../middleware/rbac');
 const events = require('../events');
-const { conversationCountsByAgent, agentConversationStats } = require('../db/queries');
+const { conversationCountsByAgent, agentConversationStats, agentPerformance } = require('../db/queries');
+// Performance figures for the signed-in agent. Declared before the "/:id"
+// routes below so "me" is not captured as an agent id.
+//
+// The window is chosen from a fixed set rather than parsed from the query
+// string, so no caller-supplied value ever reaches the interval expression.
+const PERFORMANCE_RANGES = { '7d': 7, '30d': 30, '90d': 90 };
+
+router.get('/me/performance', auth, async (req, res) => {
+  try {
+    const range = String(req.query.range || '7d');
+    const days = PERFORMANCE_RANGES[range];
+    if (!days) {
+      return res.status(400).json({
+        error: `range must be one of: ${Object.keys(PERFORMANCE_RANGES).join(', ')}`
+      });
+    }
+
+    // Scoped to the caller's own id, so an agent can only ever read their own
+    // numbers regardless of what they send.
+    const performance = await agentPerformance(req.userId, days);
+    res.json({ range, days, performance });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/', auth, async (req, res) => {
   try {
     const { siteId } = req.query;

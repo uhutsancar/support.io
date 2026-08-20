@@ -1,5 +1,6 @@
 const AutomationRule = require('../models/AutomationRule');
 const AutomationLog = require('../models/AutomationLog');
+const events = require('../events');
 
 class AutomationEngine {
   constructor(io) {
@@ -57,7 +58,10 @@ class AutomationEngine {
     const { field, operator, value } = condition;
     
     // Resolve field from payload (e.g. 'message.content' -> payload.message?.content)
-    const rawData = field.split('.').reduce((obj, key) => (obj && obj[key] !== 'undefined') ? obj[key] : undefined, payload);
+    const rawData = field.split('.').reduce(
+      (obj, key) => (obj === null || obj === undefined ? undefined : obj[key]),
+      payload
+    );
     const dataVal = typeof rawData === 'string' ? rawData.toLowerCase() : rawData;
     const condVal = typeof value === 'string' ? value.toLowerCase() : value;
 
@@ -71,14 +75,16 @@ class AutomationEngine {
       case 'not_equals': return dataVal !== condVal;
       case 'contains': return typeof dataVal === 'string' && dataVal.includes(condVal);
       case 'not_contains': return typeof dataVal === 'string' && !dataVal.includes(condVal);
-      case 'greater_than': return dataVal > condVal;
-      case 'less_than': return dataVal < condVal;
+      // Both sides are coerced so "10" > "9" does not answer false the way a
+      // lexicographic string comparison would.
+      case 'greater_than': return Number(dataVal) > Number(condVal);
+      case 'less_than': return Number(dataVal) < Number(condVal);
       default: return false;
     }
   }
 
   async executeActions(rule, eventData) {
-    const { targetId, siteId, payload } = eventData;
+    const { targetId, siteId, organizationId } = eventData;
     const startMs = Date.now();
     let isSuccess = true;
     let errorDetails = '';
@@ -111,6 +117,27 @@ class AutomationEngine {
                 [`metrics.${isSuccess ? 'successCount' : 'failureCount'}`]: 1
             }
         });
+
+        // Surfaces the run in the admin audit trail ("Automation added VIP tag").
+        // Emitting is best effort: a failed audit write must not turn a rule that
+        // already ran into a reported failure.
+        if (organizationId) {
+          try {
+            events.emit('automation.executed', {
+              organizationId,
+              entityId: targetId,
+              metadata: {
+                ruleId: rule._id,
+                ruleName: rule.name,
+                triggerType: eventData.triggerType,
+                status: isSuccess ? 'success' : 'failed',
+                actions: (rule.actions || []).map((a) => a.type),
+                errorDetails: errorDetails || undefined
+              }
+            });
+          } catch (e) {
+          }
+        }
     }
   }
 
@@ -179,18 +206,21 @@ class AutomationEngine {
              break;
 
           case 'internal_note':
-              const noteMessage = new Message({
-                conversationId: targetId,
-                senderType: 'system',
-                senderId: 'automation-system',
-                senderName: 'System Note',
-                content: actionPayload.note,
-                messageType: 'internal_note',
-                isRead: true
+              // Internal notes belong to conversation_internal_notes, not to the
+              // message transcript: a note must never reach the visitor, and the
+              // messages table rejects the sender/message types a note would need.
+              conversation.internalNotes.push({
+                userId: null,
+                note: actionPayload.note,
+                createdAt: new Date()
               });
-              await noteMessage.save();
+              await conversation.save();
               if (this.io) {
-                 this.io.of('/admin').to(`site:${conversation.siteId}`).emit('new-message', { message: noteMessage, conversation });
+                 this.io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-note-added', {
+                    conversationId: targetId,
+                    note: actionPayload.note,
+                    author: 'automation'
+                 });
               }
               break;
 

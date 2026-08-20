@@ -18,14 +18,18 @@ const Login = () => {
   const langPrefix = language === 'en' ? '/en' : '';
   const routes = {
     register: `${langPrefix}/register`,
-    dashboard: `${langPrefix}/dashboard`
+    dashboard: `${langPrefix}/dashboard`,
+    onboarding: `${langPrefix}/onboarding`
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
-      navigate(routes.dashboard);
+      const data = await login(email, password);
+      // Kurulumu yarim kalmis sahip dogrudan kuruluma gider; panele girip geri
+      // atilmasi gereksiz bir sicrama yaratiyordu.
+      const needsOnboarding = data?.user?.role === 'owner' && data?.user?.isOnboarded === false;
+      navigate(needsOnboarding ? routes.onboarding : routes.dashboard);
       toast.success(t('login.success'));
     } catch (err) {
       toast.error(err.response?.data?.error || t('login.error'));

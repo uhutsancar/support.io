@@ -26,37 +26,91 @@ const onboardingRoutes = require('./routes/onboarding');
 const widgetConfigRoutes = require('./routes/widgetConfig');
 const visitorsRoutes = require('./routes/visitors');
 const dealsRoutes = require('./routes/deals');
+const automationRulesRoutes = require('./routes/automationRules');
+const proactiveRulesRoutes = require('./routes/proactiveRules');
+const eventsRoutes = require('./routes/events');
+const analyticsRoutes = require('./routes/analytics');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 app.set('trust proxy', 1); // Cloudflare üzerinden gelen gerçek IP'leri tanıması için ŞART
 const server = http.createServer(app);
 
 // --- 🛡️ 1. CORS VE GÜVENLİK AYARLARI ---
-const allowedOrigins = [
-  'https://main.d3gdzskzc1itkc.amplifyapp.com', // Senin Amplify Frontend'in
+//
+// İzinli origin listesi ortamdan gelir; dağıtım adresi kaynak kodda gömülü
+// durmaz. CORS_ORIGINS virgülle ayrılmış tam origin listesidir, örneğin:
+//   CORS_ORIGINS=https://panel.ornek.com,https://www.ornek.com
+//
+// Tanımlı değilse bugünkü davranış korunur: mevcut dağıtım adresi listede
+// kalır, böylece bu değişiklik çalışan bir kurulumu bozmaz.
+const FALLBACK_PRODUCTION_ORIGINS = ['https://main.d3gdzskzc1itkc.amplifyapp.com'];
+
+// Geliştirme portları yalnızca production dışında açılır. Üretimde localhost'a
+// izin vermek, geliştiricinin makinesindeki bir sayfanın canlı API'ye
+// istek atabilmesi demektir.
+const DEVELOPMENT_ORIGINS = [
   'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:3004'
+  'http://localhost:3001',  // demo sayfası (npx serve)
+  'http://localhost:3002',  // admin panel (vite dev)
+  'http://localhost:3004',
+  'http://localhost:5173'   // docker compose'daki admin servisi
 ];
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const configuredOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const allowedOrigins = [
+  ...(configuredOrigins.length ? configuredOrigins : FALLBACK_PRODUCTION_ORIGINS),
+  ...(isProduction ? [] : DEVELOPMENT_ORIGINS)
+];
+
+// Geliştirmede portlar sürekli değişir (vite 3002, demo 3001, docker 5173,
+// `serve` rastgele port seçebilir) ve 127.0.0.1 ile localhost ayrı origin
+// sayılır. Her birini listeye elle eklemek yerine, production DIŞINDA tüm
+// yerel adresler kabul edilir. Üretimde bu kapı tamamen kapalıdır.
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+
+// Gerçek telefondan test ederken sayfa makinenin LAN adresinden açılır
+// (ör. http://192.168.1.20:3001). Yalnızca özel ağ aralıkları, yalnızca
+// geliştirmede.
+const PRIVATE_LAN_ORIGIN =
+  /^https?:\/\/(10\.\d{1,3}|172\.(1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}(:\d+)?$/;
+
+function isOriginAllowed(origin) {
+  // Tarayıcı dışı istemciler (curl, mobil, sunucu-sunucu) origin göndermez.
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.includes('trycloudflare.com')) return true;
+  if (!isProduction && (LOCAL_ORIGIN.test(origin) || PRIVATE_LAN_ORIGIN.test(origin))) return true;
+  return false;
+}
 
 // Socket.io CORS ayarı
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    // HTTP ile aynı kural: widget farklı bir portta çalıştığında socket
+    // bağlantısı da engellenmemeli.
+    origin: (origin, callback) => callback(null, isOriginAllowed(origin)),
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// Express CORS ayarı (CORS Hatasını çözen kısım)
+// Express CORS ayarı
 app.use(cors({
   origin: function (origin, callback) {
-    // origin yoksa (mobil/curl) veya listedeyse veya trycloudflare tüneliyse izin ver
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.includes('trycloudflare.com')) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS Policy: Bu adresten erişim izni yok!'));
+      // Reddedilen origin'i yaz: eski mesaj hangi adresin engellendiğini
+      // söylemediği için hata ayıklanamıyordu.
+      console.warn(`[CORS] Reddedildi: ${origin} — izinli liste: ${allowedOrigins.join(', ')}`);
+      callback(new Error(`CORS Policy: ${origin} adresine izin yok`));
     }
   },
   credentials: true,
@@ -93,15 +147,23 @@ app.use((req, res, next) => {
 
 app.set('io', io);
 
-// Limitler
+// Limitler.
+//
+// Sayaç süreç belleğindedir: backend birden fazla sürece çıkarıldığında her
+// sürecin kendi sayacı olur ve efektif limit sürec sayısıyla çarpılır. Tek
+// paylaşımlı limit gerekiyorsa rate-limit-redis store'u eklenmelidir; bugünkü
+// tek süreç kurulumunda gerek yok.
+//
+// Yoğun bir destek ekibi 15 dakikada 1000 istegi kolayca aşar (gelen kutusu
+// yenileme + realtime tetiklenen çağrılar), bu yüzden ortamdan ayarlanabilir.
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100, // Kayıt için biraz esnettik kanka
+  windowMs: Number(process.env.AUTH_RATE_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.AUTH_RATE_MAX) || 100,
   message: 'Too many login attempts, please try again later.'
 });
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000
+  windowMs: Number(process.env.API_RATE_WINDOW_MS) || 15 * 60 * 1000,
+  max: Number(process.env.API_RATE_MAX) || 1000
 });
 
 app.use(express.json({ limit: '10mb' }));
@@ -125,6 +187,13 @@ app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/widget-config', widgetConfigRoutes);
 app.use('/api/visitors', visitorsRoutes);
 app.use('/api/deals', dealsRoutes);
+app.use('/api/automation-rules', automationRulesRoutes);
+app.use('/api/proactive-rules', proactiveRulesRoutes);
+// Visitor behaviour ingestion from the widget's tracking SDK. Authenticated by
+// site key inside the route rather than by a bearer token.
+app.use('/api/events', eventsRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ai', aiRoutes);
 
 require('./services/auditService');
 app.use('/api/audit', auditRoutes);
@@ -178,19 +247,35 @@ app.get('*', (req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 connectDB().then(async () => {
+  // Yatay ölçekleme: REDIS_URL varsa olaylar süreçler arasında yayılır.
+  // Socket.io başlatılmadan önce bağlanmalı.
+  const { attachRedisAdapter } = require('./socket/adapter');
+  const adapterState = await attachRedisAdapter(io);
+
   // Socket.io başlat
   new SocketHandler(io);
 
-  // Açık konuşmaları unassigned yap
-  try {
-    const Conversation = require('./models/Conversation');
-    await Conversation.updateMany({ status: 'open' }, { $set: { status: 'unassigned' } });
-  } catch (err) {
-    console.error('Başlangıç düzeltmesi hatası:', err.message);
+  // Kural motorları io'ya ihtiyaç duyar, bu yüzden soketten sonra kurulur.
+  // Bu çağrı yapılmazsa getEngine() sürekli null döner ve kurallar hiç çalışmaz.
+  require('./services/automationEngine').initialize(io);
+  require('./services/proactiveEngine').initialize(io);
+
+  // SLA sayaçları artık istek yolunda değil burada işlenir; okuma istekleri
+  // veritabanına yazmaz.
+  //
+  // Çok süreçli kurulumda her sürecin süpürmesi gereksiz tekrar üretir.
+  // SLA_SWEEPER=off ile kapatılıp yalnızca bir süreçte açık bırakılabilir.
+  if (process.env.SLA_SWEEPER !== 'off') {
+    require('./services/slaSweeper').startSlaSweeper(io);
   }
 
   server.listen(PORT, () => {
     console.log(`🚀 Sunucu ${PORT} portunda ve bulutlarda uçuyor!`);
+    console.log(
+      adapterState.enabled
+        ? `   Socket.IO Redis adapter aktif (${adapterState.url}) — çok süreç desteklenir`
+        : `   Socket.IO tek süreç modu — ${adapterState.reason}`
+    );
   });
 }).catch((error) => {
   console.error('Bağlantı hatası:', error);

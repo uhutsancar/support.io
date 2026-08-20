@@ -13,6 +13,7 @@ import {
     Zap,
     Calendar
 } from 'lucide-react';
+import { teamAPI } from '../services/api';
 import {
     LineChart,
     Line,
@@ -25,17 +26,27 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
+// 2026-08-19 -> 19 Ağu
+const formatDay = (iso) => {
+    const d = new Date(`${iso}T00:00:00`);
+    return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+};
+
 const AgentPerformance = () => {
     const { t } = useTranslation();
     const { language } = useLanguage();
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    // Must stay in step with the ranges the API accepts; anything else is a 400.
     const [timeRange, setTimeRange] = useState('7d');
+    // Bumped by the retry button so the effect runs again on the same range.
+    const [reloadToken, setReloadToken] = useState(0);
     const [stats, setStats] = useState({
         totalResolved: 0,
-        avgResponseTime: 0,
-        csatScore: 0,
-        slaCompliance: 0,
+        avgResponseTime: null,
+        csatScore: null,
+        slaCompliance: null,
         activeChats: 0
     });
 
@@ -43,43 +54,44 @@ const AgentPerformance = () => {
     const [responseTrend, setResponseTrend] = useState([]);
 
     useEffect(() => {
-        fetchPerformanceData();
-    }, [timeRange]);
+        let cancelled = false;
 
-    const fetchPerformanceData = async () => {
-        try {
-            setLoading(true);
-            setTimeout(() => {
+        const fetchPerformanceData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const { data } = await teamAPI.getMyPerformance(timeRange);
+                if (cancelled) return;
+
+                const p = data.performance;
                 setStats({
-                    totalResolved: Math.floor(Math.random() * 200) + 50,
-                    avgResponseTime: (Math.random() * 5 + 1).toFixed(1),
-                    csatScore: (Math.random() * 1 + 4).toFixed(1),
-                    slaCompliance: Math.floor(Math.random() * 10 + 90),
-                    activeChats: Math.floor(Math.random() * 5)
+                    totalResolved: p.totalResolved,
+                    avgResponseTime: p.avgResponseTime,
+                    csatScore: p.csatScore,
+                    slaCompliance: p.slaCompliance,
+                    activeChats: p.activeChats
                 });
+                setDailyActivity(p.dailyActivity.map((d) => ({ ...d, label: formatDay(d.day) })));
+                setResponseTrend(p.responseTrend.map((d) => ({ ...d, label: formatDay(d.day) })));
+            } catch (err) {
+                if (cancelled) return;
+                setError(err.response?.data?.error || 'Performans verileri yüklenemedi.');
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
 
-                const days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-                const activityData = days.map(day => ({
-                    name: day,
-                    resolved: Math.floor(Math.random() * 30 + 5),
-                    assigned: Math.floor(Math.random() * 40 + 10)
-                }));
-                setDailyActivity(activityData);
+        fetchPerformanceData();
+        // A range change while a request is in flight must not let the older
+        // response overwrite the newer one.
+        return () => { cancelled = true; };
+    }, [timeRange, reloadToken]);
 
-                const trendData = days.map(day => ({
-                    name: day,
-                    time: (Math.random() * 8 + 2).toFixed(1)
-                }));
-                setResponseTrend(trendData);
-
-                setLoading(false);
-            }, 800);
-
-        } catch (error) {
-            console.error('Error fetching performance data:', error);
-            setLoading(false);
-        }
-    };
+    // A metric is null when nothing in the window could produce it (no rated
+    // conversation, no reply yet). Showing a dash is honest; showing 0 is not.
+    const show = (value, suffix = '') => (value === null || value === undefined ? '—' : `${value}${suffix}`);
+    const hasActivity = dailyActivity.some((d) => d.assigned > 0 || d.resolved > 0);
 
     const StatCard = ({ title, value, subValue, icon: Icon, color, trend }) => (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
@@ -117,7 +129,7 @@ const AgentPerformance = () => {
                         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Kendi destek metriklerinizi ve başarı oranlarınızı inceleyin.</p>
                     </div>
                     <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 shadow-sm">
-                        {['24h', '7d', '30d'].map((range) => (
+                        {['7d', '30d', '90d'].map((range) => (
                             <button
                                 key={range}
                                 onClick={() => setTimeRange(range)}
@@ -136,14 +148,36 @@ const AgentPerformance = () => {
                     <div className="flex items-center justify-center h-64">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                     </div>
+                ) : error ? (
+                    <div className="flex flex-col items-center justify-center h-64 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-6 text-center">
+                        <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
+                        <p className="text-gray-900 dark:text-white font-medium">{error}</p>
+                        <button
+                            onClick={() => setReloadToken((n) => n + 1)}
+                            className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                        >
+                            Tekrar dene
+                        </button>
+                    </div>
                 ) : (
                     <div className="space-y-6 animate-fade-in">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <StatCard title="Çözülen Talepler" value={stats.totalResolved} icon={CheckCircle2} color="green" trend={12} />
-                            <StatCard title="SLA Uyumluluğu" value={`${stats.slaCompliance}%`} icon={Award} color="indigo" trend={2} />
-                            <StatCard title="Ort. Yanıt Süresi" value={stats.avgResponseTime} subValue="dk" icon={Zap} color="purple" trend={-15} />
-                            <StatCard title="Müşteri Memnuniyeti (CSAT)" value={stats.csatScore} subValue="/ 5.0" icon={MessageSquare} color="yellow" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                            <StatCard title="Çözülen Talepler" value={stats.totalResolved} icon={CheckCircle2} color="green" />
+                            <StatCard title="SLA Uyumluluğu" value={show(stats.slaCompliance, '%')} icon={Award} color="indigo" />
+                            <StatCard title="Ort. Yanıt Süresi" value={show(stats.avgResponseTime)} subValue="dk" icon={Zap} color="purple" />
+                            <StatCard title="Müşteri Memnuniyeti (CSAT)" value={show(stats.csatScore)} subValue="/ 5.0" icon={MessageSquare} color="yellow" />
+                            <StatCard title="Açık Sohbetler" value={stats.activeChats} icon={MessageSquare} color="blue" />
                         </div>
+
+                        {!hasActivity && (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
+                                <MessageSquare className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                                <h3 className="text-gray-900 dark:text-white font-medium">Bu dönemde size atanmış talep yok</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Size talep atandıkça performans metrikleriniz burada görünecek.
+                                </p>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
@@ -160,7 +194,7 @@ const AgentPerformance = () => {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={dailyActivity} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-700/50" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                                            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
                                             <Tooltip
                                                 contentStyle={{ backgroundColor: '#1F2937', color: '#fff', border: 'none', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
@@ -187,7 +221,7 @@ const AgentPerformance = () => {
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={responseTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" className="dark:stroke-gray-700/50" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                                            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
                                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
                                             <Tooltip
                                                 contentStyle={{ backgroundColor: '#1F2937', color: '#fff', border: 'none', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
@@ -195,7 +229,7 @@ const AgentPerformance = () => {
                                             />
                                             <Line
                                                 type="monotone"
-                                                dataKey="time"
+                                                dataKey="avgMinutes"
                                                 name="Ortalama Yanıt"
                                                 stroke="#A78BFA"
                                                 strokeWidth={4}

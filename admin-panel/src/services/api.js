@@ -229,6 +229,9 @@ export const teamAPI = {
     return response;
   },
   getStats: (userId) => api.get(`/team/${userId}/stats`),
+  // Real aggregates for the signed-in agent; the server scopes them to the
+  // caller, so no id is sent.
+  getMyPerformance: (range) => api.get('/team/me/performance', { params: { range }, cache: false }),
 };
 export const teamChatAPI = {
   getChats: () => api.get('/team-chat/chats', { cache: false }),
@@ -261,6 +264,27 @@ export const widgetConfigAPI = {
     return response;
   },
   getPublicConfig: (siteKey) => api.get(`/widget-config/public/${siteKey}`, { cache: false }),
+};
+export const aiAPI = {
+  // The provider and its key live only on the server; the browser never sees
+  // either. `status` lets the UI hide the controls when AI is not configured.
+  status: () => api.get('/ai/status', { cache: false }),
+  summarize: (conversationId) => api.post(`/ai/conversations/${conversationId}/summary`),
+  suggestReply: (conversationId, instruction) =>
+    api.post(`/ai/conversations/${conversationId}/suggest-reply`, { instruction }),
+  rewrite: (conversationId, draft, tone) =>
+    api.post(`/ai/conversations/${conversationId}/rewrite`, { draft, tone }),
+  translate: (conversationId, text, targetLanguage) =>
+    api.post(`/ai/conversations/${conversationId}/translate`, { text, targetLanguage }),
+  analyze: (conversationId) => api.post(`/ai/conversations/${conversationId}/analyze`),
+  knowledgeAnswer: (conversationId, question) =>
+    api.post(`/ai/conversations/${conversationId}/knowledge-answer`, { question })
+};
+export const analyticsAPI = {
+  // Server-side aggregation over the whole window; never cached, because the
+  // page also refreshes it from realtime socket events.
+  getOverview: (range, siteId) =>
+    api.get('/analytics/overview', { params: { range, siteId }, cache: false })
 };
 export const auditAPI = {
   getAll: (params) => api.get('/audit', { params })

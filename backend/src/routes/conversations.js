@@ -52,30 +52,21 @@ router.get('/:siteId', auth, async (req, res) => {
       .limit(50);
     // One query resolves the newest message of every conversation on the page.
     const lastMessages = await latestMessagesByConversation(conversations.map((c) => c._id));
-    const conversationsWithLastMessage = await Promise.all(
-      conversations.map(async (conv) => {
-        try {
-          const lastMessage = lastMessages.get(conv._id) || null;
-          if (typeof conv.calculateSLA === 'function') {
-            try {
-              conv.calculateSLA();
-            } catch (slaErr) {
-            }
-          }
-          if (conv.organizationId) {
-            await conv.save().catch(saveErr => {
-            });
-          } else {
-          }
-          return {
-            ...conv.toObject(),
-            lastMessage
-          };
-        } catch (innerErr) {
-          return { ...conv.toObject(), lastMessage: null };
-        }
-      })
-    );
+    // SLA yalnizca gosterim icin, bellekte hesaplanir. Kalici hale getirme
+    // slaSweeper'in isidir; burada save() cagirmak okuma istegini yazma
+    // istegine cevirip her gelen kutusu acilisinda 50'ye kadar UPDATE
+    // uretiyordu.
+    const conversationsWithLastMessage = conversations.map((conv) => {
+      try {
+        if (typeof conv.calculateSLA === 'function') conv.calculateSLA();
+      } catch (slaErr) {
+        // Bozuk SLA verisi listeyi engellememeli.
+      }
+      return {
+        ...conv.toObject(),
+        lastMessage: lastMessages.get(conv._id) || null
+      };
+    });
     res.json({ conversations: conversationsWithLastMessage });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -94,23 +85,17 @@ router.get('/assigned/me', auth, async (req, res) => {
       .sort({ lastMessageAt: -1 })
       .limit(100);
     const lastMessages = await latestMessagesByConversation(conversations.map((c) => c._id));
-    const conversationsWithLastMessage = await Promise.all(
-      conversations.map(async (conv) => {
-        const lastMessage = lastMessages.get(conv._id) || null;
-        try {
-          conv.calculateSLA();
-        } catch (slaErr) {
-        }
-        if (conv.organizationId) {
-          await conv.save().catch(() => {});
-        } else {
-        }
-        return {
-          ...conv.toObject(),
-          lastMessage
-        };
-      })
-    );
+    // Burada da yazma yok; bkz. yukaridaki aciklama.
+    const conversationsWithLastMessage = conversations.map((conv) => {
+      try {
+        conv.calculateSLA();
+      } catch (slaErr) {
+      }
+      return {
+        ...conv.toObject(),
+        lastMessage: lastMessages.get(conv._id) || null
+      };
+    });
     res.json({ conversations: conversationsWithLastMessage });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -148,8 +133,16 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
       await conversation.save();
     } catch (e) {
     }
-    const messages = await Message.find({ conversationId: conversation._id })
-      .sort({ createdAt: 1 });
+    // Mesaj gecmisi sinirlandirilir: uzun suren bir destek konusmasi binlerce
+    // mesaja ulasabilir ve hepsini her acilista cekmek hem sunucuyu hem
+    // tarayiciyi kilitler. En yeniler alinip kronolojik siraya cevrilir.
+    const limit = Math.min(parseInt(req.query.limit, 10) || 100, 200);
+    const newestFirst = await Message.find({ conversationId: conversation._id })
+      .sort({ createdAt: -1 })
+      .limit(limit + 1);
+
+    const hasMore = newestFirst.length > limit;
+    const messages = newestFirst.slice(0, limit).reverse();
     await Message.updateMany(
       {
         conversationId: conversation._id,
@@ -170,7 +163,8 @@ router.get('/:siteId/:conversationId', auth, async (req, res) => {
         siteId
       });
     }
-    res.json({ conversation, messages });
+    // hasMore: istemci daha eski mesajlari isteyebilsin diye bildirilir.
+    res.json({ conversation, messages, hasMore });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

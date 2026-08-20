@@ -137,10 +137,10 @@ const Dashboard = () => {
         }
       }
       const openTickets = allConversations.filter(c =>
-        c.status === 'open' || c.status === 'assigned' || c.status === 'pending'
+        c.status === 'open' || c.status === 'unassigned' || c.status === 'assigned' || c.status === 'pending'
       ).length;
       const unassignedTickets = allConversations.filter(c =>
-        c.status === 'open' && !c.assignedAgent
+        (c.status === 'open' || c.status === 'unassigned') && !c.assignedAgent
       ).length;
       const slaBreaches = allConversations.filter(c =>
         c.sla?.firstResponseStatus === 'breached' || c.sla?.resolutionStatus === 'breached'

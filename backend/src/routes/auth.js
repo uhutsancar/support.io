@@ -45,13 +45,19 @@ router.post('/register', validateRegistration, async (req, res) => {
     const token = jwt.sign({ userId: user._id, organizationId: organization._id, role: user.role, userType: 'user' }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
+    // isOnboarded burada da donmeli: panel bu alana bakip kullaniciyi kuruluma
+    // yonlendiriyor. Eksik oldugunda deger `undefined` kalir, kontrol calismaz
+    // ve yeni kullanici once panele girip sonra kuruluma atilir.
     res.status(201).json({
       user: {
         id: user._id,
+        _id: user._id,
         email: user.email,
         name: user.name,
         role: user.role,
-        organizationId: user.organizationId
+        organizationId: user.organizationId,
+        isOnboarded: user.isOnboarded,
+        userType: 'user'
       },
       token
     });
@@ -107,10 +113,14 @@ router.post('/login', validateLogin, async (req, res) => {
     res.json({
       user: {
         id: user._id,
+        _id: user._id,
         email: user.email,
         name: user.name,
         role: user.role,
         avatar: user.avatar,
+        organizationId: user.organizationId,
+        // Temsilci hesaplarinda kurulum akisi yok; onlar icin daima tamamlanmis sayilir.
+        isOnboarded: userType === 'team' ? true : user.isOnboarded,
         userType
       },
       token

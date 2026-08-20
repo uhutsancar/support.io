@@ -22,7 +22,9 @@ import {
   CircleDot,
   Eye,
   Briefcase,
-  Shield
+  Shield,
+  Zap,
+  Send
 } from 'lucide-react';
 import { conversationsAPI, authAPI } from '../services/api';
 import { io } from 'socket.io-client';
@@ -148,6 +150,10 @@ const DashboardLayout = () => {
         add({ path: `${langPrefix}/dashboard/visitors`, icon: Eye, label: 'Ziyaretçiler' });
         add({ path: `${langPrefix}/dashboard/crm`, icon: Briefcase, label: 'CRM' });
       }
+      // Rule engines are site configuration, so they sit with the other
+      // site-level tools and follow the same permission as managing sites.
+      add({ path: `${langPrefix}/dashboard/automation-rules`, icon: Zap, label: t('sidebar.automationRules', 'Otomasyon') });
+      add({ path: `${langPrefix}/dashboard/proactive-rules`, icon: Send, label: t('sidebar.proactiveRules', 'Proaktif Mesajlar') });
       if (plan === 'ENTERPRISE') {
         add({ path: `${langPrefix}/dashboard/audit-logs`, icon: Shield, label: t('sidebar.auditLogs') });
       }

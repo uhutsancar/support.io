@@ -33,12 +33,13 @@ import {
   Calendar,
   Filter
 } from 'lucide-react';
-import { sitesAPI, conversationsAPI, clearCache } from '../services/api';
+import { analyticsAPI } from '../services/api';
 import { io } from 'socket.io-client';
 const Analytics = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('7days');
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [socket, setSocket] = useState(null);
@@ -89,208 +90,65 @@ const Analytics = () => {
   useEffect(() => {
     fetchAnalytics();
   }, [timeRange]);
+  // One request returns the whole dashboard, aggregated by PostgreSQL over the
+  // full window. This page used to fetch conversations per site and reduce them
+  // in the browser, which silently described only the newest 50 conversations
+  // per site because that endpoint is capped.
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      clearCache();
-      const sitesResponse = await sitesAPI.getAll();
-      const sites = sitesResponse.data.sites || [];
-      let allConversations = [];
-      for (const site of sites) {
-        try {
-          const conversationsResponse = await conversationsAPI.getAll(site._id);
-          const conversations = conversationsResponse.data.conversations || [];
-          allConversations = [...allConversations, ...conversations];
-        } catch (error) {
-        }
-      }
-      if (allConversations.length > 0) {
-      }
-      const openTickets = allConversations.filter(c =>
-        c.status === 'open' || c.status === 'assigned' || c.status === 'pending'
-      ).length;
-      const unassigned = allConversations.filter(c =>
-        c.status === 'open' && !c.assignedAgent
-      ).length;
-      const slaBreaches = allConversations.filter(c =>
-        c.sla?.firstResponseStatus === 'breached' ||
-        (c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0)
-      ).length;
-      const ratedConversations = allConversations.filter(c => c.rating?.score);
-      const avgSatisfaction = ratedConversations.length > 0
-        ? Math.round((ratedConversations.reduce((sum, c) => sum + c.rating.score, 0) / ratedConversations.length) * 20)
-        : 0;
+      setError(null);
+
+      const { data } = await analyticsAPI.getOverview(timeRange);
+
       setStats({
-        openTickets,
-        slaBreaches,
-        unassigned,
-        satisfaction: avgSatisfaction,
-        activeAgents: 4,
-        totalAgents: 5
+        openTickets: data.stats.openTickets,
+        slaBreaches: data.stats.slaBreaches,
+        unassigned: data.stats.unassigned,
+        satisfaction: data.stats.satisfaction,
+        activeAgents: data.stats.activeAgents,
+        totalAgents: data.stats.totalAgents,
+        totalConversations: data.stats.totalConversations,
+        resolvedConversations: data.stats.resolvedConversations,
+        avgFirstResponseMinutes: data.stats.avgFirstResponseMinutes,
+        avgResolutionMinutes: data.stats.avgResolutionMinutes
       });
-      const last7Days = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-        const nextDate = new Date(date);
-        nextDate.setDate(nextDate.getDate() + 1);
-        const dayTickets = allConversations.filter(c => {
-          const createdAt = new Date(c.createdAt);
-          return createdAt >= date && createdAt < nextDate;
-        });
-        const resolved = dayTickets.filter(c => c.status === 'resolved' || c.status === 'closed').length;
-        const slaMet = dayTickets.filter(c =>
-          c.sla?.firstResponseStatus === 'met' || c.sla?.resolutionStatus === 'met'
-        ).length;
-        last7Days.push({
-          date: date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: 'short' }),
-          tickets: dayTickets.length,
-          resolved,
-          sla: slaMet
-        });
-      }
-      setDailyTickets(last7Days);
-      const hourly = {};
-      allConversations.forEach(c => {
-        if (c.firstResponseAt && c.createdAt) {
-          const hour = new Date(c.createdAt).getHours();
-          const responseTime = Math.floor((new Date(c.firstResponseAt) - new Date(c.createdAt)) / 1000 / 60);
-          if (!hourly[hour]) {
-            hourly[hour] = { times: [], count: 0 };
-          }
-          hourly[hour].times.push(responseTime);
-          hourly[hour].count++;
-        }
-      });
-      const hourlyData = [];
-      for (let h = 0; h < 24; h++) {
-        const avg = hourly[h] 
-          ? Math.round(hourly[h].times.reduce((a, b) => a + b, 0) / hourly[h].times.length)
-          : 0;
-        hourlyData.push({
-          hour: `${h.toString().padStart(2, '0')}:00`,
-          avgTime: avg,
-          target: 15
-        });
-      }
-      setResponseTimeData(hourlyData);
-      const channels = {
-        'web-chat': { name: 'Web Chat', value: 0, color: '#8B5CF6' },
-        'email': { name: 'Email', value: 0, color: '#3B82F6' },
-        'whatsapp': { name: 'WhatsApp', value: 0, color: '#10B981' },
-        'phone': { name: 'Telefon', value: 0, color: '#F59E0B' }
-      };
-      allConversations.forEach(c => {
-        const channel = c.channel || 'web-chat';
-        if (channels[channel]) {
-          channels[channel].value++;
-        }
-      });
-      setChannelDistribution(Object.values(channels).filter(c => c.value > 0));
-      const firstResponseMet = allConversations.filter(c => 
-        c.sla?.firstResponseStatus === 'met'
-      ).length;
-      const firstResponseBreached = allConversations.filter(c => 
-        c.sla?.firstResponseStatus === 'breached' ||
-        (c.sla?.firstResponseTimeRemaining !== null && c.sla?.firstResponseTimeRemaining < 0)
-      ).length;
-      const firstResponsePending = allConversations.filter(c => 
-        c.sla?.firstResponseStatus === 'pending' &&
-        (c.sla?.firstResponseTimeRemaining === null || c.sla?.firstResponseTimeRemaining >= 0)
-      ).length;
-      const slaData = [
-        { 
-          category: language === 'tr' ? 'İlk Yanıt SLA' : 'First Response SLA', 
-          met: firstResponseMet, 
-          breached: firstResponseBreached,
-          pending: firstResponsePending
-        }
-      ];
-      setSlaCompliance(slaData);
-      const deptMap = {};
-      allConversations.forEach(c => {
-        if (c.department) {
-          const deptName = c.department.name || 'Genel';
-          if (!deptMap[deptName]) {
-            deptMap[deptName] = {
-              name: deptName,
-              tickets: 0,
-              resolved: 0,
-              slaMet: 0,
-              responseTimes: []
-            };
-          }
-          deptMap[deptName].tickets++;
-          if (c.status === 'resolved' || c.status === 'closed') {
-            deptMap[deptName].resolved++;
-          }
-          if (c.sla?.firstResponseStatus === 'met') {
-            deptMap[deptName].slaMet++;
-          }
-          if (c.firstResponseAt && c.createdAt) {
-            const responseTime = Math.floor((new Date(c.firstResponseAt) - new Date(c.createdAt)) / 1000 / 60);
-            deptMap[deptName].responseTimes.push(responseTime);
-          }
-        }
-      });
-      const deptStats = Object.values(deptMap).map(dept => ({
-        name: dept.name,
-        tickets: dept.tickets,
-        resolved: dept.resolved,
-        sla: dept.tickets > 0 ? ((dept.slaMet / dept.tickets) * 100).toFixed(1) : 0,
-        avgTime: dept.responseTimes.length > 0 
-          ? Math.round(dept.responseTimes.reduce((a, b) => a + b, 0) / dept.responseTimes.length)
-          : 0
-      })).sort((a, b) => b.tickets - a.tickets);
-      setDepartmentStats(deptStats);
-      const agentMap = {};
-      allConversations.forEach(c => {
-        if (c.assignedAgent) {
-          const agentName = c.assignedAgent.name || 'Agent';
-          const agentId = c.assignedAgent._id || c.assignedAgent;
-          if (!agentMap[agentId]) {
-            agentMap[agentId] = {
-              name: agentName,
-              resolved: 0,
-              active: 0,
-              responseTimes: [],
-              ratings: []
-            };
-          }
-          if (c.status === 'open' || c.status === 'assigned' || c.status === 'pending') {
-            agentMap[agentId].active++;
-          }
-          if (c.status === 'resolved' || c.status === 'closed') {
-            agentMap[agentId].resolved++;
-          }
-          if (c.firstResponseAt && c.createdAt) {
-            const responseTime = Math.floor((new Date(c.firstResponseAt) - new Date(c.createdAt)) / 1000 / 60);
-            agentMap[agentId].responseTimes.push(responseTime);
-          }
-          if (c.rating?.score) {
-            agentMap[agentId].ratings.push(c.rating.score);
-          }
-        }
-      });
-      const agentStats = Object.values(agentMap).map(agent => ({
-        name: agent.name,
-        resolved: agent.resolved,
-        active: agent.active,
-        avgTime: agent.responseTimes.length > 0 
-          ? Math.round(agent.responseTimes.reduce((a, b) => a + b, 0) / agent.responseTimes.length)
-          : 0,
-        satisfaction: agent.ratings.length > 0
-          ? Math.round((agent.ratings.reduce((a, b) => a + b, 0) / agent.ratings.length) * 20)
-          : 0
-      })).sort((a, b) => b.resolved - a.resolved);
-      setAgentPerformance(agentStats);
-    } catch (error) {
+
+      const locale = language === 'tr' ? 'tr-TR' : 'en-US';
+      setDailyTickets(
+        data.dailyTickets.map((d) => ({
+          ...d,
+          date: new Date(`${d.date}T00:00:00`).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
+        }))
+      );
+
+      // `target` is the normal-priority first response goal the SLA defaults
+      // use, drawn as the reference line on the hourly chart.
+      setResponseTimeData(data.responseTimeByHour.map((h) => ({ ...h, target: 15 })));
+
+      setChannelDistribution(data.channelDistribution);
+      setSlaCompliance(data.slaCompliance);
+      setDepartmentStats(data.departmentStats);
+
+      // The chart plots satisfaction on a 0-100 axis while the API reports the
+      // raw 1-5 average, so it is converted here rather than server side.
+      setAgentPerformance(
+        data.agentPerformance.map((a) => ({
+          ...a,
+          satisfaction: a.rating === null ? 0 : Math.round(a.rating * 20)
+        }))
+      );
+    } catch (err) {
+      setError(err.response?.data?.error || 'Analitik verileri yüklenemedi.');
     } finally {
       setLoading(false);
     }
   };
+
   const formatMinutes = (minutes) => {
+    // Null means nothing in the window could be measured; a zero here would
+    // read as an instant reply.
+    if (minutes === null || minutes === undefined) return '—';
     if (!minutes) return '0dk';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -303,6 +161,22 @@ const Analytics = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+  // The page previously swallowed every failure and rendered empty charts, so a
+  // broken request was indistinguishable from a quiet week.
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{error}</h2>
+        <button
+          onClick={fetchAnalytics}
+          className="mt-5 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+        >
+          {language === 'tr' ? 'Tekrar dene' : 'Retry'}
+        </button>
       </div>
     );
   }
@@ -577,11 +451,12 @@ const Analytics = () => {
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{dept.resolved}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          dept.sla === null ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' :
                           dept.sla >= 95 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                           dept.sla >= 90 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
                           'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
-                          {dept.sla}%
+                          {dept.sla === null ? '—' : `${dept.sla}%`}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{formatMinutes(dept.avgTime)}</td>

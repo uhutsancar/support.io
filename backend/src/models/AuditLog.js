@@ -16,7 +16,9 @@ module.exports = defineModel({
         'LOGIN_SUCCESS', 'LOGIN_FAILED',
         'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
         'PLAN_CHANGED', 'UPDATE_SLA',
-        'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH'
+        'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+        'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+        'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED'
       ]
     },
     entityType: { column: 'entity_type', type: 'string' },

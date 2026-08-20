@@ -10,7 +10,11 @@ const ACTIONS = {
   UPDATE_SLA: 'UPDATE_SLA',
   TICKET_CLOSED: 'TICKET_CLOSED',
   TICKET_REOPENED: 'TICKET_REOPENED',
-  SLA_BREACH: 'SLA_BREACH'
+  SLA_BREACH: 'SLA_BREACH',
+  AUTOMATION_RULE_CREATED: 'AUTOMATION_RULE_CREATED',
+  AUTOMATION_RULE_UPDATED: 'AUTOMATION_RULE_UPDATED',
+  AUTOMATION_RULE_DELETED: 'AUTOMATION_RULE_DELETED',
+  AUTOMATION_EXECUTED: 'AUTOMATION_EXECUTED'
 };
 async function logAction({ organizationId, userId = null, action, entityType = null, entityId = null, metadata = {}, ipAddress = null, userAgent = null }) {
   if (!action) throw new Error('action is required for audit log');
@@ -177,6 +181,50 @@ events.on('sla.breach', async (payload) => {
   } catch (e) {
   }
 });
+// Automation rule lifecycle. The three rule events share a shape, so they are
+// registered from a table rather than repeating the same handler three times.
+const RULE_EVENTS = {
+  'automation.rule.created': ACTIONS.AUTOMATION_RULE_CREATED,
+  'automation.rule.updated': ACTIONS.AUTOMATION_RULE_UPDATED,
+  'automation.rule.deleted': ACTIONS.AUTOMATION_RULE_DELETED
+};
+for (const [eventName, action] of Object.entries(RULE_EVENTS)) {
+  events.on(eventName, async (payload) => {
+    try {
+      await logAction({
+        organizationId: payload.organizationId,
+        userId: payload.userId || null,
+        action,
+        entityType: 'automation_rule',
+        entityId: payload.entityId,
+        metadata: payload.metadata || {},
+        ipAddress: payload.ip,
+        userAgent: payload.ua
+      });
+    } catch (e) {
+    }
+  });
+}
+
+// A rule firing against a conversation. The actor is the rule itself, so userId
+// stays null and the rule is identified in the metadata.
+events.on('automation.executed', async (payload) => {
+  try {
+    await logAction({
+      organizationId: payload.organizationId,
+      userId: null,
+      action: ACTIONS.AUTOMATION_EXECUTED,
+      entityType: 'ticket',
+      entityId: payload.entityId,
+      metadata: payload.metadata || {},
+      ipAddress: null,
+      userAgent: null
+    });
+  } catch (e) {
+  }
+});
+
 module.exports = {
   logAction
 };
+

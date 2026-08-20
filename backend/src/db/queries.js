@@ -135,12 +135,100 @@ async function unreadTeamChatCount(userId) {
   return rows[0].c;
 }
 
+// Performance figures for one agent over a window, aggregated by the database.
+//
+// The admin panel previously invented these numbers client side with
+// Math.random(). Everything below is derived from conversations actually
+// assigned to the agent:
+//
+//   resolved         conversations they closed or resolved inside the window
+//   firstResponse    minutes between a conversation opening and its first reply
+//   csat             average of the visitor rating stored on the conversation
+//   slaCompliance    share of conversations whose first-response SLA was met
+//
+// `days` is validated by the caller and interpolated as an interval, never
+// taken from user input directly.
+async function agentPerformance(agentId, days) {
+  const since = `${parseInt(days, 10)} days`;
+
+  const [totals, daily, trend, active] = await Promise.all([
+    query(
+      `SELECT
+         count(*) FILTER (WHERE status IN ('resolved', 'closed'))::int AS resolved,
+         avg(EXTRACT(EPOCH FROM (first_response_at - created_at)) / 60)
+           FILTER (WHERE first_response_at IS NOT NULL) AS avg_first_response_minutes,
+         avg(NULLIF((rating ->> 'score'), '')::numeric)
+           FILTER (WHERE rating ->> 'score' IS NOT NULL) AS csat,
+         count(*) FILTER (WHERE sla ->> 'firstResponseStatus' = 'met')::int AS sla_met,
+         count(*) FILTER (WHERE sla ->> 'firstResponseStatus' IN ('met', 'breached'))::int AS sla_decided
+       FROM conversations
+      WHERE assigned_agent_id = $1
+        AND created_at >= now() - $2::interval`,
+      [agentId, since]
+    ),
+    query(
+      `SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
+              count(c.id) FILTER (WHERE c.status IN ('resolved', 'closed'))::int AS resolved,
+              count(c.id)::int AS assigned
+         FROM generate_series(
+                date_trunc('day', now() - $2::interval),
+                date_trunc('day', now()),
+                interval '1 day') AS d(day)
+         LEFT JOIN conversations c
+                ON c.assigned_agent_id = $1
+               AND date_trunc('day', c.created_at) = d.day
+        GROUP BY d.day
+        ORDER BY d.day`,
+      [agentId, since]
+    ),
+    query(
+      `SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
+              avg(EXTRACT(EPOCH FROM (c.first_response_at - c.created_at)) / 60) AS avg_minutes
+         FROM generate_series(
+                date_trunc('day', now() - $2::interval),
+                date_trunc('day', now()),
+                interval '1 day') AS d(day)
+         LEFT JOIN conversations c
+                ON c.assigned_agent_id = $1
+               AND c.first_response_at IS NOT NULL
+               AND date_trunc('day', c.created_at) = d.day
+        GROUP BY d.day
+        ORDER BY d.day`,
+      [agentId, since]
+    ),
+    // Current workload is a live figure, so it deliberately ignores the window.
+    query(
+      `SELECT count(*)::int AS c
+         FROM conversations
+        WHERE assigned_agent_id = $1
+          AND status IN ('open', 'assigned', 'pending')`,
+      [agentId]
+    )
+  ]);
+
+  const t = totals.rows[0];
+  const round = (value, digits = 1) =>
+    value === null || value === undefined ? null : Number(Number(value).toFixed(digits));
+
+  return {
+    totalResolved: t.resolved,
+    avgResponseTime: round(t.avg_first_response_minutes),
+    csatScore: round(t.csat),
+    slaCompliance: t.sla_decided > 0 ? Math.round((t.sla_met / t.sla_decided) * 100) : null,
+    activeChats: active.rows[0].c,
+    dailyActivity: daily.rows.map((r) => ({ day: r.day, resolved: r.resolved, assigned: r.assigned })),
+    responseTrend: trend.rows.map((r) => ({ day: r.day, avgMinutes: round(r.avg_minutes) }))
+  };
+}
+
 module.exports = {
+
   latestMessagesByConversation,
   unreadCountsByOrganization,
   conversationCountsByAgent,
   agentConversationStats,
   departmentConversationStats,
   resolveChatParticipants,
-  unreadTeamChatCount
+  unreadTeamChatCount,
+  agentPerformance
 };

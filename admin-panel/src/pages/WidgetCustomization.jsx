@@ -569,19 +569,60 @@ const WidgetCustomization = () => {
           { }
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Eye className="w-5 h-5" />
-                {t('widget.livePreview', 'Live Preview')}
-              </h3>
-              <div className="relative" style={{ height: '700px', overflow: 'hidden' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                  <Eye className="w-5 h-5" />
+                  {t('widget.livePreview', 'Live Preview')}
+                </h3>
+                {/* Acik/kapali durumu onizlemede de denenebilmeli: launcher
+                    gorunumu ayri bir tasarim karari. */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(!previewOpen)}
+                  className="text-xs px-2.5 py-1 rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {previewOpen
+                    ? t('widget.previewClosed', 'Kapalı hâli')
+                    : t('widget.previewOpen', 'Açık hâli')}
+                </button>
+              </div>
+
+              {/*
+                Onizleme bir "sahte site" penceresi icinde durur. Onemli olan
+                `relative`: WidgetPreview contained modunda kendini bu kutuya
+                gore konumlandirir. Daha once fixed oldugu icin karttan kacip
+                tarayici kosesine yapisiyordu ve kart bombos gorunuyordu.
+              */}
+              <div
+                className="relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden
+                           bg-[linear-gradient(45deg,#f8fafc_25%,transparent_25%,transparent_75%,#f8fafc_75%),linear-gradient(45deg,#f8fafc_25%,#eef2f7_25%,#eef2f7_75%,#f8fafc_75%)]
+                           dark:bg-[linear-gradient(45deg,#111827_25%,transparent_25%,transparent_75%,#111827_75%),linear-gradient(45deg,#111827_25%,#0b1220_25%,#0b1220_75%,#111827_75%)]
+                           [background-size:16px_16px] [background-position:0_0,8px_8px]"
+                style={{ aspectRatio: '9 / 16', maxHeight: '640px' }}
+              >
+                {/* sahte tarayici cubugu: onizlemenin bir site icinde oldugunu belli eder */}
+                <div className="absolute top-0 inset-x-0 h-7 bg-gray-200/80 dark:bg-gray-700/70 flex items-center gap-1.5 px-2.5 z-10">
+                  <span className="w-2 h-2 rounded-full bg-red-400" />
+                  <span className="w-2 h-2 rounded-full bg-yellow-400" />
+                  <span className="w-2 h-2 rounded-full bg-green-400" />
+                  <span className="ml-2 text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                    {site?.domain || 'siteniz.com'}
+                  </span>
+                </div>
+
                 {config && (
                   <WidgetPreview
                     config={config}
                     isOpen={previewOpen}
                     onToggle={() => setPreviewOpen(!previewOpen)}
+                    contained
                   />
                 )}
               </div>
+
+              <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                {t('widget.previewNote', 'Önizleme gerçek widget bileşenini kullanır; ölçek kutuya sığacak şekilde küçültülür.')}
+              </p>
             </div>
           </div>
         </div>

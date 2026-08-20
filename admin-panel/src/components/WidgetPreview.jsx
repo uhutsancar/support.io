@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Paperclip, Image as ImageIcon } from 'lucide-react';
-const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
+// `contained` ayarlar sayfasi icindir: onizleme, tarayici penceresine degil
+// kendi kartinin icine yerlesir. Varsayilan (false) davranis, widget'in gercek
+// sitede oldugu gibi ekrana sabitlenmesidir.
+const WidgetPreview = ({ config, isOpen = true, onToggle, contained = false }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -105,7 +108,7 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
   if (!isOpen) {
     return (
       <div
-        className="fixed z-50 transition-all duration-300"
+        className={`${contained ? 'absolute' : 'fixed'} z-50 transition-all duration-300`}
         style={{
           [button.position?.includes('right') ? 'right' : 'left']: '20px',
           [button.position?.includes('bottom') ? 'bottom' : 'top']: '20px',
@@ -123,11 +126,14 @@ const WidgetPreview = ({ config, isOpen = true, onToggle }) => {
   }
   return (
     <div
-      className="fixed z-50 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
+      className={`${contained ? 'absolute' : 'fixed'} z-50 flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-300`}
       style={{
         ...styles.window,
         [button.position?.includes('right') ? 'right' : 'left']: '20px',
         [button.position?.includes('bottom') ? 'bottom' : 'top']: '20px',
+        // Kart icinde tasmasin: yapilandirilan boyut kabin disina cikarsa
+        // kirpilmak yerine kucultulur.
+        ...(contained ? { maxWidth: 'calc(100% - 40px)', maxHeight: 'calc(100% - 40px)' } : {})
       }}
     >
       { }
