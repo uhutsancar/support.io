@@ -4,6 +4,7 @@ const Site = require('../models/Site');
 const FAQ = require('../models/FAQ');
 const Visitor = require('../models/Visitor');
 const Team = require('../models/Team');
+const User = require('../models/User');
 const Department = require('../models/Department');
 const TeamMessage = require('../models/TeamMessage');
 const TeamChat = require('../models/TeamChat');
@@ -398,7 +399,11 @@ class SocketHandler {
       try {
         if (socket.userId) {
           socket.join(`user:${socket.userId}`);
-
+        }
+        // Organizasyon odasi: site secilmemisken yapilan yayinlarin kiraci
+        // sinirini gecmemesi icin.
+        if (socket.organizationId) {
+          socket.join(`org:${socket.organizationId}`);
         }
       } catch (e) {
 
@@ -544,7 +549,21 @@ class SocketHandler {
       socket.on('update-status', async (data) => {
         try {
           const { status } = data;
-          const agent = await Team.findByIdAndUpdate(socket.userId, { status }, { new: true });
+
+          // Gecerli durumlar disinda bir deger veritabanina yazilmamali;
+          // gelen veri istemciden gelir.
+          if (!['online', 'away', 'busy', 'offline'].includes(status)) return;
+          if (!socket.userId) return;
+
+          // Hesap iki tablodan birinde olabilir: organizasyon sahibi ve
+          // davet edilmeyen kullanicilar `users`, ekip uyeleri `teams`
+          // tablosundadir. Eski kod YALNIZCA Team'e yaziyordu, yani sahip
+          // hesabinin durum degisikligi sessizce kayboluyordu ve ziyaretcinin
+          // gordugu "cevrimici" bilgisi guncellenmiyordu.
+          const updated =
+            (await Team.findByIdAndUpdate(socket.userId, { status }, { new: true })) ||
+            (await User.findByIdAndUpdate(socket.userId, { status }, { new: true }));
+          if (!updated) return;
 
           if (status === 'offline' || status === 'away') {
             const Site = require('../models/Site');
@@ -565,8 +584,12 @@ class SocketHandler {
               userId: socket.userId,
               status
             });
-          } else {
-            this.adminNamespace.emit('agent-status-changed', {
+          } else if (socket.organizationId) {
+            // Eski kod burada `this.adminNamespace.emit(...)` cagiriyordu:
+            // yayin TUM organizasyonlarin panellerine gidiyordu. Bir sitede
+            // olmayan bir temsilcinin durumu, baska sirketlerin ekranlarina
+            // dusuyordu. Yayin artik organizasyon odasiyla sinirli.
+            this.adminNamespace.to(`org:${socket.organizationId}`).emit('agent-status-changed', {
               userId: socket.userId,
               status
             });

@@ -27,6 +27,10 @@ module.exports = defineModel({
       type: 'json',
       default: () => ({ enabled: false, fallbackToHuman: true, aiModel: 'faq-based' })
     },
+    // Widget'ın müşteri sitesinde gerçekten çalıştığına dair kanıt. Panelde
+    // "Kurulum bekleniyor" / "Kurulu" rozetini besler.
+    //   { verifiedAt, lastSeenAt, url, origin, sdkVersion, userAgent }
+    installation: { column: 'installation', type: 'json', default: () => ({}) },
     isActive: { column: 'is_active', type: 'boolean', default: true }
   }
 });

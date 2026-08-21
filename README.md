@@ -33,13 +33,42 @@
 ## 🎬 Quick Demo
 
 ### For Visitors (Widget)
+
+One script tag. The same code works in plain HTML, React, Next.js, Vue, Nuxt,
+Angular, Svelte, Astro, WordPress, Laravel, PHP and Shopify — there is no
+framework-specific embed.
+
 ```html
-<!-- Add to your website -->
-<script>
-  window.SupportIOConfig = { siteKey: 'your-key' };
-</script>
-<script src="http://localhost:3000/widget.js"></script>
+<script
+  src="http://localhost:5000/widget.js"
+  data-site-key="YOUR_SITE_KEY"
+  async></script>
 ```
+
+The runtime reads its configuration from its own `data-*` attributes and derives
+the API origin from its own `src`, so no inline `<script>` block and no global
+variable are needed — it works under a strict Content-Security-Policy.
+
+To pin a version so a future deployment cannot change a live installation, use
+the major-version path instead: `/widget/v3/widget.js` (served `immutable`).
+
+Public JavaScript API on `window.SupportChat`:
+
+```js
+SupportChat.open() / close() / toggle() / show() / hide()
+SupportChat.identify({ userId, name, email })   // after sign-in
+SupportChat.logout()                            // after sign-out — mints a new visitor id
+SupportChat.setAttributes({ plan: 'pro' })
+SupportChat.setLocale('tr' | 'en')
+SupportChat.setTheme('light' | 'dark' | 'auto')
+SupportChat.on(event, handler)                  // returns an unsubscribe fn
+SupportChat.destroy()
+SupportChat.debug()                             // diagnostics
+```
+
+Full reference, framework guides and troubleshooting: **/dokumantasyon**
+(`/en/documentation`). A live integration test page — including deliberately
+hostile host CSS — is served at **/demo**.
 
 ### For Admins (Dashboard)
 Access at: `http://localhost:3002`

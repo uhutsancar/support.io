@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MessageSquare, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import api from '../services/api';
-import logo from '../public/support.io.webp';
+import Logo from '../components/Logo';
 const Onboarding = () => {
     const { t } = useTranslation();
     const { language } = useLanguage();
@@ -341,7 +341,7 @@ const Onboarding = () => {
                     { }
                     <div className="p-8 md:p-12 flex-1">
                         <div className="mb-8">
-                            <img src={logo} alt="Support.io" className="h-10 w-auto" />
+                            <Logo size={28} />
                         </div>
                         {renderStepContent()}
                     </div>

@@ -22,22 +22,40 @@ async function attachRedisAdapter(io) {
     return { enabled: false, reason: 'REDIS_URL tanımlı değil (tek süreç modu)' };
   }
 
+  // REDIS_URL yanlış yazılmışsa (ör. ulaşılamayan bir host) reconnectStrategy
+  // sonsuza kadar dener ve connect() hiç çözülmez — sunucu açılışta asılı
+  // kalırdı. Açılış bir zaman aşımıyla yarıştırılır: Redis belirtilen süre
+  // içinde cevap vermezse tek süreç moduna düşülür, süreç yine de dinlemeye
+  // başlar.
+  const connectTimeoutMs = Number(process.env.REDIS_CONNECT_TIMEOUT_MS) || 5000;
+
+  let pubClient;
+  let subClient;
   try {
-    const pubClient = createClient({
+    pubClient = createClient({
       url,
       socket: {
+        connectTimeout: connectTimeoutMs,
         // Redis geçici olarak düşerse süreç ölmemeli; artan aralıklarla
         // yeniden dener ve bu sırada sunucu ayakta kalır.
         reconnectStrategy: (retries) => Math.min(retries * 200, 5000)
       }
     });
-    const subClient = pubClient.duplicate();
+    subClient = pubClient.duplicate();
 
     // Bağlantı koptuğunda 'error' yayılır; yakalanmazsa süreci düşürür.
     pubClient.on('error', (err) => console.error('[redis:pub]', err.message));
     subClient.on('error', (err) => console.error('[redis:sub]', err.message));
 
-    await Promise.all([pubClient.connect(), subClient.connect()]);
+    await Promise.race([
+      Promise.all([pubClient.connect(), subClient.connect()]),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`Redis ${connectTimeoutMs}ms içinde yanıt vermedi`)),
+          connectTimeoutMs
+        )
+      )
+    ]);
 
     io.adapter(createAdapter(pubClient, subClient));
     clients = [pubClient, subClient];
@@ -47,6 +65,11 @@ async function attachRedisAdapter(io) {
     // Redis'e ulaşılamıyorsa tek süreç modunda devam edilir. Sunucunun hiç
     // açılmaması, ölçeklenememesinden daha kötüdür.
     console.error('[redis] Adapter kurulamadı, tek süreç modunda devam ediliyor:', error.message);
+    // Yarım kalan istemciler arkada yeniden bağlanmayı denemeye devam eder ve
+    // sonsuz hata logu üretir; kapatılmaları gerekir.
+    await Promise.all(
+      [pubClient, subClient].filter(Boolean).map((c) => c.disconnect().catch(() => {}))
+    );
     return { enabled: false, reason: error.message };
   }
 }

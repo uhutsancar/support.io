@@ -2,249 +2,261 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useLanguage } from '../contexts/LanguageContext';
-import {
-  CheckCircle,
-  HelpCircle,
-  ArrowRight,
-  Zap
-} from 'lucide-react';
-import Header from '../components/Header';
+import { Check, Minus, ArrowRight } from 'lucide-react';
+
+import Shell, { PageHero, Section, useMarketingRoutes } from '../components/marketing/Shell';
+
+/**
+ * Fiyatlandırma.
+ *
+ * Planların kapsamı uydurma değil: backend'deki `planFeatures` tablosu ve
+ * DashboardLayout'taki menü kapıları ne diyorsa o. Bugün gerçekten kapılı olan
+ * şeyler şunlar:
+ *
+ *   FREE        multiUser: false, export: false, advancedAnalytics: false
+ *   PRO         hepsi açık + Ziyaretçiler ve CRM menüleri
+ *   ENTERPRISE  PRO + Denetim Kayıtları
+ *
+ * Eski sayfada "10.000'den fazla şirket güveniyor", "100 Temel Entegrasyon" ve
+ * "Gelişmiş Yapay Zeka Botları" yazıyordu; hiçbirinin karşılığı yoktu.
+ */
+
+const PLANS = [
+  { id: 'free', monthly: 0, yearly: 0, highlight: false },
+  { id: 'pro', monthly: 490, yearly: 392, highlight: true },
+  { id: 'enterprise', monthly: null, yearly: null, highlight: false }
+];
+
+/** Karşılaştırma tablosu — satır: özellik, sütun: plan. */
+const MATRIX = [
+  { key: 'sites', free: '1', pro: '10', enterprise: '∞' },
+  { key: 'agents', free: '1', pro: '∞', enterprise: '∞' },
+  { key: 'conversations', free: true, pro: true, enterprise: true },
+  { key: 'widget', free: true, pro: true, enterprise: true },
+  { key: 'faq', free: true, pro: true, enterprise: true },
+  { key: 'departments', free: false, pro: true, enterprise: true },
+  { key: 'automation', free: true, pro: true, enterprise: true },
+  { key: 'proactive', free: true, pro: true, enterprise: true },
+  { key: 'analytics', free: false, pro: true, enterprise: true },
+  { key: 'visitors', free: false, pro: true, enterprise: true },
+  { key: 'crm', free: false, pro: true, enterprise: true },
+  { key: 'aiAssist', free: false, pro: true, enterprise: true },
+  { key: 'export', free: false, pro: true, enterprise: true },
+  { key: 'audit', free: false, pro: false, enterprise: true },
+  { key: 'sso', free: false, pro: false, enterprise: true }
+];
+
+const Cell = ({ value, yesLabel, noLabel }) => {
+  if (value === true) {
+    return (
+      <>
+        <Check className="w-4 h-4 mx-auto text-green-600 dark:text-green-500" aria-hidden="true" />
+        <span className="sr-only">{yesLabel}</span>
+      </>
+    );
+  }
+  if (value === false) {
+    return (
+      <>
+        <Minus className="w-4 h-4 mx-auto text-gray-300 dark:text-gray-700" aria-hidden="true" />
+        <span className="sr-only">{noLabel}</span>
+      </>
+    );
+  }
+  return <span className="text-[13.5px] text-gray-900 dark:text-white tabular-nums">{value}</span>;
+};
 
 const Pricing = () => {
-  const { t } = useTranslation();
-  const { language } = useLanguage();
-  const [isAnnual, setIsAnnual] = useState(true);
+  const { t, i18n } = useTranslation();
+  const routes = useMarketingRoutes();
+  const [yearly, setYearly] = useState(false);
 
-  const langPrefix = language === 'en' ? '/en' : '';
-  const routes = {
-    register: `${langPrefix}/register`,
-    home: langPrefix || '/'
-  };
-
-  const starterFeatures = t('landing.pricing.starterFeatures', { returnObjects: true });
-  const proFeatures = t('landing.pricing.proFeatures', { returnObjects: true });
-  const enterpriseFeatures = t('landing.pricing.enterpriseFeatures', { returnObjects: true });
-
-  const plans = [
-    {
-      name: t('landing.pricing.plans.starter.name', 'Starter'),
-      description: t('landing.pricing.plans.starter.description', 'Küçük ekipler için ideal başlangıç planı.'),
-      price: isAnnual ? '4.990' : '499',
-      period: isAnnual ? '/yıl' : '/ay',
-      isPopular: false,
-      features: Array.isArray(starterFeatures) ? starterFeatures : [
-        '5 Operatör',
-        'Sınırsız Canlı Sohbet',
-        'Temel Analitik',
-        '100 Temel Entegrasyon',
-        'E-posta Desteği',
-        '14 Gün Kayıt Geçmişi'
-      ]
-    },
-    {
-      name: t('landing.pricing.plans.pro.name', 'Pro'),
-      description: t('landing.pricing.plans.pro.description', 'Hızla büyüyen profesyonel ekipler için.'),
-      price: isAnnual ? '9.990' : '999',
-      period: isAnnual ? '/yıl' : '/ay',
-      isPopular: true,
-      features: Array.isArray(proFeatures) ? proFeatures : [
-        'Sınırsız Operatör',
-        'Gelişmiş Yapay Zeka Botları',
-        'Derinlemesine Analitik & Raporlama',
-        'Sınırsız Entegrasyon + API Erişimi',
-        'Öncelikli 7/24 Destek',
-        'Sınırsız Kayıt Geçmişi',
-        'Çoklu Dil Desteği'
-      ]
-    },
-    {
-      name: t('landing.pricing.plans.enterprise.name', 'Enterprise'),
-      description: t('landing.pricing.plans.enterprise.description', 'Büyük ölçekli işletmeler için özel çözümler.'),
-      price: t('landing.pricing.customTitle'),
-      period: '',
-      isPopular: false,
-      features: Array.isArray(enterpriseFeatures) ? enterpriseFeatures : [
-        'Özel Yapay Zeka Modelleri',
-        'On-Premise Kurulum Seçeneği',
-        'SLA Garantisi',
-        'Özel Müşteri Başarı Yöneticisi',
-        'Gelişmiş Güvenlik ve Uyumluluk',
-        'White-label Özelleştirme'
-      ]
-    }
-  ];
-
-  const faqs = [
-    {
-      question: t('landing.pricing.faq.q1', 'Kredi kartı gerekli mi?'),
-      answer: t('landing.pricing.faq.a1', 'Hayır, 14 günlük ücretsiz deneme sürümümüz için kredi kartı gerekmez. Sadece e-posta adresinizle kayıt olabilirsiniz.')
-    },
-    {
-      question: t('landing.pricing.faq.q2', 'Planımı daha sonra değiştirebilir miyim?'),
-      answer: t('landing.pricing.faq.a2', 'Evet, istediğiniz zaman planlar arasında geçiş yapabilirsiniz. Değişiklik yaptığınızda kullanım sürenize göre oranlanmış bir fiyatlandırma uygulanır.')
-    },
-    {
-      question: t('landing.pricing.faq.q3', 'Sözleşme taahhüdü var mı?'),
-      answer: t('landing.pricing.faq.a3', 'Yıllık planlar dışında herhangi bir taahhüt yoktur. Aylık planlarda istediğiniz zaman iptal edebilirsiniz.')
-    },
-    {
-      question: t('landing.pricing.faq.q4', 'Özelleştirilmiş bir plana ihtiyacım var, ne yapmalıyım?'),
-      answer: t('landing.pricing.faq.a4', 'Büyük ekipler veya özel ihtiyaçlar için Enterprise planımızı inecleyebilirsiniz. Detaylar için satış ekibimizle iletişime geçin.')
-    }
-  ];
+  const currency = new Intl.NumberFormat(i18n.language === 'en' ? 'en-US' : 'tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    maximumFractionDigits: 0
+  });
 
   return (
-    <>
+    <Shell>
       <Helmet>
-        <title>{`${t('pricing.title') || 'Fiyatlandırma'} - Support.io`}</title>
-        <meta name="description" content="Support.io için şeffaf fiyatlandırma planları. İhtiyacınıza uygun planı seçin." />
+        <title>{`${t('pricingPage.meta.title')} — Support.io`}</title>
+        <meta name="description" content={t('pricingPage.meta.description')} />
       </Helmet>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-brand-dark overflow-hidden font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300">
-        <Header />
+      <PageHero title={t('pricingPage.title')} description={t('pricingPage.description')}>
+        <div className="mt-8 inline-flex items-center gap-1 p-1 rounded-lg bg-gray-100 dark:bg-gray-900"
+             role="radiogroup" aria-label={t('pricingPage.billing')}>
+          {[
+            { value: false, label: t('pricingPage.monthly') },
+            { value: true, label: t('pricingPage.yearly') }
+          ].map((option) => (
+            <button
+              key={String(option.value)}
+              role="radio"
+              aria-checked={yearly === option.value}
+              onClick={() => setYearly(option.value)}
+              className={`px-3.5 py-1.5 rounded-md text-[13.5px] font-medium transition
+                ${yearly === option.value
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+            >
+              {option.label}
+            </button>
+          ))}
+          <span className="ml-1.5 mr-1 px-2 py-0.5 rounded text-[11px] font-medium
+            bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400">
+            {t('pricingPage.discount')}
+          </span>
+        </div>
+      </PageHero>
 
-        <main className="pt-32 pb-24">
-          {/* Header */}
-          <section className="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center mb-16 z-10">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none -z-10 animate-blob"></div>
+      {/* ----------------------------------------------------- plan kartları */}
+      <Section bordered>
+        <div className="grid gap-5 lg:grid-cols-3">
+          {PLANS.map((plan) => {
+            const price = yearly ? plan.yearly : plan.monthly;
+            const features = t(`pricingPage.plans.${plan.id}.features`, { returnObjects: true });
+            const list = Array.isArray(features) ? features : [];
 
-            <h1
-              className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] mb-6 tracking-tight text-gray-900 dark:text-white"
-              dangerouslySetInnerHTML={{ __html: `${t('landing.pricing.title1')} <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-500">${t('landing.pricing.title2')}</span>` }}
-            />
-
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              {t('landing.pricing.desc')}
-            </p>
-
-            {/* Billing Toggle */}
-            <div className="flex items-center justify-center gap-4 mb-16">
-              <span className={`text-sm font-medium ${!isAnnual ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                {t('landing.pricing.monthly')}
-              </span>
-              <button
-                onClick={() => setIsAnnual(!isAnnual)}
-                className="w-16 h-8 bg-gray-200 dark:bg-gray-800 rounded-full p-1 transition-colors duration-300 relative focus:outline-none border border-gray-300 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500"
+            return (
+              <div
+                key={plan.id}
+                className={`rounded-2xl border p-6 flex flex-col
+                  ${plan.highlight
+                    ? 'border-gray-900 dark:border-white'
+                    : 'border-gray-200 dark:border-gray-800'}`}
               >
-                <div
-                  className={`w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-md transition-transform duration-300 transform ${isAnnual ? 'translate-x-8' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${isAnnual ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {t('landing.pricing.yearly')}
-                </span>
-                <span className="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-1 rounded-full border border-green-500/30">
-                  {t('landing.pricing.discount')}
-                </span>
-              </div>
-            </div>
-          </section>
-
-          {/* Pricing Cards */}
-          <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative z-10 mb-32">
-            <div className="grid lg:grid-cols-3 gap-8 items-start">
-              {plans.map((plan, index) => (
-                <div
-                  key={index}
-                  className={`relative bg-brand-card rounded-3xl p-8 transition-all duration-300 ${plan.isPopular
-                    ? 'scale-105 border-indigo-500 shadow-[0_0_40px_rgba(99,102,241,0.2)] z-20 border-2'
-                    : 'border border-gray-800 hover:border-gray-600 hover:-translate-y-1'
-                    }`}
-                >
-                  {plan.isPopular && (
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        {t('landing.pricing.popular')}
-                      </span>
-                    </div>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                    {t(`pricingPage.plans.${plan.id}.name`)}
+                  </h2>
+                  {plan.highlight && (
+                    <span className="px-2 py-0.5 rounded text-[10.5px] font-semibold uppercase tracking-wide
+                      bg-gray-900 dark:bg-white text-white dark:text-gray-900">
+                      {t('pricingPage.popular')}
+                    </span>
                   )}
-
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm h-10">{plan.description}</p>
-                  </div>
-
-                  <div className="mb-8 pb-8 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-end gap-1 mb-1">
-                      {plan.price !== t('landing.pricing.customTitle') && <span className="text-2xl font-semibold text-gray-400 dark:text-gray-300">₺</span>}
-                      <span className="text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">{plan.price}</span>
-                    </div>
-                    <div className="text-gray-500 text-sm mt-1">
-                      {plan.price !== t('landing.pricing.customTitle') ? (isAnnual ? t('landing.pricing.billedYearly') : t('landing.pricing.billedMonthly')) : t('landing.pricing.customDesc')}
-                    </div>
-                  </div>
-
-                  <ul className="space-y-4 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start text-sm text-gray-600 dark:text-gray-300">
-                        <CheckCircle className="w-5 h-5 text-indigo-500 dark:text-indigo-400 mr-3 flex-shrink-0 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    to={plan.price === t('landing.pricing.customTitle') ? routes.home : routes.register}
-                    className={`w-full py-4 rounded-xl font-bold flex items-center justify-center transition-all ${plan.isPopular
-                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]'
-                      : 'bg-white/5 hover:bg-white/10 text-white border border-gray-700'
-                      }`}
-                  >
-                    {plan.price === t('landing.pricing.customTitle') ? t('landing.pricing.btnSales') : t('landing.pricing.btnStart')}
-                  </Link>
                 </div>
-              ))}
-            </div>
-          </section>
 
-          {/* Logo cloud */}
-          <section className="py-12 border-y border-gray-200 dark:border-gray-800/50 bg-gray-50/50 dark:bg-[#0B0D17]/50 mb-32">
-            <div className="max-w-7xl mx-auto px-4 text-center">
-              <p className="text-sm text-gray-500 font-medium mb-8">{t('landing.pricing.trustedBy')}</p>
-              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-opacity">
-                <span className="text-2xl font-bold font-serif text-gray-900 dark:text-white">VOLTIFY</span>
-                <span className="text-2xl font-bold font-serif text-gray-900 dark:text-white">ZENITH</span>
-                <span className="text-2xl font-bold font-serif text-gray-900 dark:text-white">NEXUS</span>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400 min-h-[42px]">
+                  {t(`pricingPage.plans.${plan.id}.tagline`)}
+                </p>
+
+                <div className="mt-5">
+                  {price === null ? (
+                    <span className="text-[30px] font-semibold tracking-[-0.03em] text-gray-900 dark:text-white">
+                      {t('pricingPage.custom')}
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-[36px] font-semibold tracking-[-0.035em] text-gray-900 dark:text-white tabular-nums">
+                        {currency.format(price)}
+                      </span>
+                      <span className="ml-1.5 text-[13.5px] text-gray-500 dark:text-gray-400">
+                        {t('pricingPage.perSeat')}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <p className="mt-1.5 text-[12px] text-gray-500 dark:text-gray-500 min-h-[18px]">
+                  {price === null
+                    ? t('pricingPage.contactNote')
+                    : yearly
+                      ? t('pricingPage.billedYearly')
+                      : t('pricingPage.billedMonthly')}
+                </p>
+
+                <Link
+                  to={plan.id === 'enterprise' ? routes.about : routes.register}
+                  className={`mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                    text-[14px] font-medium transition
+                    ${plan.highlight
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
+                      : 'border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'}`}
+                >
+                  {t(`pricingPage.plans.${plan.id}.cta`)}
+                  {plan.highlight && <ArrowRight className="w-3.5 h-3.5" />}
+                </Link>
+
+                <ul className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-900 space-y-2.5">
+                  {list.map((item, i) => (
+                    <li key={i} className="flex gap-2.5">
+                      <Check className="w-3.5 h-3.5 mt-1 shrink-0 text-green-600 dark:text-green-500" />
+                      <span className="text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          </section>
+            );
+          })}
+        </div>
+      </Section>
 
-          {/* FAQ section */}
-          <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">{t('landing.pricing.faqTitle')}</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">{t('landing.pricing.faqDesc')}</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-              {faqs.map((faq, index) => (
-                <div key={index}>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-start gap-3 mb-3">
-                    <HelpCircle className="w-5 h-5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-                    {faq.question}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-sm ml-8">
-                    {faq.answer}
-                  </p>
-                </div>
+      {/* --------------------------------------------- karşılaştırma tablosu */}
+      <Section title={t('pricingPage.compareTitle')} bordered>
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full min-w-[560px] border-collapse text-left">
+            <caption className="sr-only">{t('pricingPage.compareTitle')}</caption>
+            <thead>
+              <tr>
+                <th scope="col" className="pb-3 text-[11.5px] font-semibold uppercase tracking-wider
+                  text-gray-400 dark:text-gray-500">
+                  {t('pricingPage.feature')}
+                </th>
+                {PLANS.map((plan) => (
+                  <th key={plan.id} scope="col" className="pb-3 w-[110px] text-center text-[13px] font-semibold
+                    text-gray-900 dark:text-white">
+                    {t(`pricingPage.plans.${plan.id}.name`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {MATRIX.map((row) => (
+                <tr key={row.key} className="border-t border-gray-100 dark:border-gray-900">
+                  <th scope="row" className="py-3 pr-4 text-[13.5px] font-normal text-gray-700 dark:text-gray-300">
+                    {t(`pricingPage.matrix.${row.key}`)}
+                  </th>
+                  {['free', 'pro', 'enterprise'].map((plan) => (
+                    <td key={plan} className="py-3 text-center">
+                      <Cell
+                        value={row[plan]}
+                        yesLabel={t('common.yes')}
+                        noLabel={t('common.no')}
+                      />
+                    </td>
+                  ))}
+                </tr>
               ))}
-            </div>
-          </section>
-        </main>
+            </tbody>
+          </table>
+        </div>
+      </Section>
 
-        <footer className="bg-gray-100 dark:bg-[#0A0A0C] border-t border-gray-200 dark:border-gray-800/80 pt-10 pb-10 text-center" role="contentinfo">
-          <Link to={routes.home} className="inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold mb-6">
-            <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
-            {t('landing.pricing.backHome')}
-          </Link>
-          <p className="text-gray-500 text-sm">{t('landing.pricing.footerCopyright')}</p>
-        </footer>
-      </div>
-    </>
+      {/* ------------------------------------------------------------- SSS */}
+      <Section title={t('pricingPage.faqTitle')} bordered={false}>
+        <div className="mt-8 max-w-3xl">
+          {['q1', 'q2', 'q3', 'q4', 'q5'].map((key) => (
+            <details
+              key={key}
+              className="group border-b border-gray-100 dark:border-gray-900"
+            >
+              <summary className="flex items-center justify-between gap-6 py-4 cursor-pointer
+                text-[15px] font-medium text-gray-900 dark:text-white list-none">
+                {t(`pricingPage.faq.${key}.q`)}
+                <span className="shrink-0 text-gray-400 transition-transform group-open:rotate-45">+</span>
+              </summary>
+              <p className="pb-5 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[64ch]">
+                {t(`pricingPage.faq.${key}.a`)}
+              </p>
+            </details>
+          ))}
+        </div>
+      </Section>
+    </Shell>
   );
 };
 

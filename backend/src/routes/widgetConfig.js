@@ -8,6 +8,20 @@ const { checkPermission } = require('../middleware/rbac');
 const { uploadLogo } = require('../middleware/s3Upload');
 const { isValidObjectId } = require('../db/objectId');
 
+// Siteyi ÇAĞIRANIN organizasyonu içinde çözer.
+//
+// PUT /site/:siteId ve logo uçları eskiden yalnızca `WidgetConfig.findOne({ siteId })`
+// yapıyordu: rol izni olan herhangi bir kullanıcı, başka bir organizasyonun
+// site id'sini göndererek onun widget'ını değiştirebiliyordu (IDOR). Artık her
+// yazma işlemi önce siteyi kiracı sınırı içinde bulmak zorunda.
+async function resolveOwnedSite(req, siteId) {
+  if (!isValidObjectId(siteId)) return { error: { status: 400, body: { error: 'Invalid site id', code: 'VALIDATION_ERROR' } } };
+  const orgId = req.organization?._id || req.user.organizationId;
+  const site = await Site.findOne({ _id: siteId, ...(orgId ? { organizationId: orgId } : {}) });
+  if (!site) return { error: { status: 404, body: { error: 'Site not found', code: 'NOT_FOUND' } } };
+  return { site, orgId: orgId || site.organizationId };
+}
+
 // Siteye özel config getirme
 router.get('/site/:siteId', auth, async (req, res) => {
   try {
@@ -65,10 +79,15 @@ router.put('/site/:siteId', auth, checkPermission('manage_sites'), async (req, r
   try {
     const { siteId } = req.params;
     const updates = req.body;
-    
+
+    const owned = await resolveOwnedSite(req, siteId);
+    if (owned.error) return res.status(owned.error.status).json(owned.error.body);
+
     let config = await WidgetConfig.findOne({ siteId });
     if (!config) {
-      return res.status(404).json({ error: 'Config not found' });
+      // Config henüz üretilmemişse 404 atmak yerine varsayılanlarla oluşturmak
+      // doğru davranış: site var, sadece hiç kaydedilmemiş.
+      config = new WidgetConfig({ siteId, organizationId: owned.orgId });
     }
 
     // Dinamik güncellemeleri yapıyoruz
@@ -91,18 +110,17 @@ router.put('/site/:siteId', auth, checkPermission('manage_sites'), async (req, r
 router.post('/site/:siteId/logo', auth, checkPermission('manage_sites'), uploadLogo.single('logo'), async (req, res) => {
   try {
     const { siteId } = req.params;
-    
+
+    const owned = await resolveOwnedSite(req, siteId);
+    if (owned.error) return res.status(owned.error.status).json(owned.error.body);
+
     if (!req.file) {
-      return res.status(400).json({ error: 'Dosya yüklenemedi' });
+      return res.status(400).json({ error: 'Dosya yüklenemedi', code: 'VALIDATION_ERROR' });
     }
 
     let config = await WidgetConfig.findOne({ siteId });
     if (!config) {
-      const site = await Site.findById(siteId);
-      config = new WidgetConfig({
-        siteId,
-        organizationId: site.organizationId
-      });
+      config = new WidgetConfig({ siteId, organizationId: owned.orgId });
     }
 
     // S3'ten gelen tam URL'yi veritabanına yazıyoruz
@@ -123,10 +141,13 @@ router.post('/site/:siteId/logo', auth, checkPermission('manage_sites'), uploadL
 router.delete('/site/:siteId/logo', auth, checkPermission('manage_sites'), async (req, res) => {
   try {
     const { siteId } = req.params;
+
+    const owned = await resolveOwnedSite(req, siteId);
+    if (owned.error) return res.status(owned.error.status).json(owned.error.body);
+
     const config = await WidgetConfig.findOne({ siteId });
-    
     if (!config) {
-      return res.status(404).json({ error: 'Config not found' });
+      return res.status(404).json({ error: 'Config not found', code: 'NOT_FOUND' });
     }
 
     // S3 linkini siliyoruz (S3 üzerindeki dosyayı silmek istersen ilerde ayrı bir fonksiyon ekleyebiliriz)

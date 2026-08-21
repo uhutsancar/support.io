@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#0B0D17"/>
+  <g transform="translate(392 232) scale(4.4)">
+    <rect width="40" height="40" rx="11" fill="#4F46E5"/>
+    <rect x="7" y="6.5" width="19" height="14" rx="5.5" fill="#fff" fill-opacity=".45"/>
+    <rect x="12.2" y="12.3" width="21.6" height="17" rx="7" fill="#4F46E5"/>
+    <path d="M19 13.5h8a5.5 5.5 0 0 1 5.5 5.5v3.5a5.5 5.5 0 0 1-5.5 5.5h-4.3l-6.5 4.8a.6.6 0 0 1-.95-.6l1.2-4.35A5.5 5.5 0 0 1 13.5 22.5V19a5.5 5.5 0 0 1 5.5-5.5z" fill="#fff"/>
+  </g>
+  <text x="600" y="470" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="72" font-weight="650" letter-spacing="-2" fill="#fff">Support<tspan fill="#818CF8">.io</tspan></text>
+  <text x="600" y="528" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="26" font-weight="400" fill="#9CA3AF">Canli destek, tek satir kodla</text>
+</svg>

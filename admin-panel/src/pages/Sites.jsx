@@ -3,13 +3,14 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
-import { Plus, Globe, Copy, Check, Settings, Trash2, Palette } from 'lucide-react';
+import { Plus, Globe, Copy, Check, Trash2, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const Sites = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const langPrefix = i18n.language === 'en' ? '/en' : '';
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -72,13 +73,20 @@ const Sites = () => {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  // Universal embed: TEK etiket, her framework icin ayni.
+  //
+  // Eski kod iki etiket uretiyordu: once `window.SupportIOConfig` tanimlayan bir
+  // inline script, sonra widget.js. Inline script bircok musteride CSP
+  // (`script-src` unsafe-inline yok) yuzunden calismiyordu ve React/Next gibi
+  // ortamlarda "global degiskeni script'ten ONCE tanimla" sirasini korumak
+  // zordu. Yeni runtime yapilandirmayi kendi etiketinin data-* niteliklerinden
+  // ve kendi src'sinden okur; inline script gerekmez.
   const getInstallCode = (siteKey) => {
-    return `<script>
-  window.SupportIOConfig = {
-    siteKey: '${siteKey}'
-  };
-</script>
-<script src="${import.meta.env.VITE_API_URL}/widget.js"></script>`;
+    const origin = import.meta.env.VITE_API_URL || window.location.origin;
+    return `<script
+  src="${origin}/widget.js"
+  data-site-key="${siteKey}"
+  async><\/script>`;
   };
 
   if (loading) {
@@ -134,9 +142,18 @@ const Sites = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">{site.domain}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${site.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                    {site.isActive ? t('sites.active') : t('sites.inactive')}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span className={`px-2 py-1 text-xs rounded-full ${site.isActive ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                      {site.isActive ? t('sites.active') : t('sites.inactive')}
+                    </span>
+                    { /* Kurulum dogrulamasi: widget siteye eklendiginde kendini
+                         bildirir (POST /api/widget/installed). Boylece "kodu
+                         koydum ama calisiyor mu?" sorusu panelden cevaplanir. */ }
+                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${site.installation?.verifiedAt ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${site.installation?.verifiedAt ? 'bg-green-500' : 'bg-gray-400 animate-pulse'}`} />
+                      {site.installation?.verifiedAt ? t('studio.embed.verified') : t('studio.embed.waiting')}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -179,16 +196,13 @@ const Sites = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                    { /* Dil oneki: /en altindayken oneksiz yol 404'e dusuyordu. */ }
                     <button
-                      onClick={() => navigate(`/dashboard/widget-customization/${site._id}`)}
+                      onClick={() => navigate(`${langPrefix}/dashboard/widget-customization/${site._id}`)}
                       className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg transition text-xs sm:text-sm"
                     >
                       <Palette className="w-4 h-4" />
-                      <span className="leading-tight text-center whitespace-normal">Customize Widget</span>
-                    </button>
-                    <button className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300 rounded-lg transition text-xs sm:text-sm">
-                      <Settings className="w-4 h-4" />
-                      <span className="leading-tight text-center whitespace-normal">{t('sites.settings')}</span>
+                      <span className="leading-tight text-center whitespace-normal">{t('studio.title')}</span>
                     </button>
                     <button
                       onClick={() => openDeleteConfirm(site._id, site.name)}

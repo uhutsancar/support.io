@@ -6,6 +6,20 @@ const TeamChat = require('../models/TeamChat');
 const Team = require('../models/Team');
 const User = require('../models/User');
 const { resolveChatParticipants, unreadTeamChatCount } = require('../db/queries');
+
+// Bir kimliğin çağıranla AYNI organizasyonda olduğunu doğrular.
+//
+// Sohbet açma uçları gövdeden gelen id'ye koşulsuz güveniyordu: başka bir
+// organizasyonun kullanıcı id'si gönderilerek onunla doğrudan sohbet
+// açılabiliyordu. Kiracı sınırı artık yazma yolunda da kontrol ediliyor.
+async function belongsToOrganization(id, orgId) {
+  if (!id || !orgId) return false;
+  const [asUser, asTeam] = await Promise.all([
+    User.findOne({ _id: id, organizationId: orgId, isActive: true }),
+    Team.findOne({ _id: id, organizationId: orgId, isActive: true })
+  ]);
+  return Boolean(asUser || asTeam);
+}
 router.get('/chats', auth, async (req, res) => {
   try {
     const chats = await TeamChat.find({ participants: req.user._id }).lean();
@@ -27,6 +41,16 @@ router.get('/chats', auth, async (req, res) => {
 router.post('/chats/direct', auth, async (req, res) => {
   try {
     const { targetUserId } = req.body;
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'targetUserId is required', code: 'VALIDATION_ERROR' });
+    }
+    if (String(targetUserId) === String(req.user._id)) {
+      return res.status(400).json({ error: 'Cannot open a chat with yourself', code: 'VALIDATION_ERROR' });
+    }
+    const orgId = req.organization?._id || req.user.organizationId;
+    if (!(await belongsToOrganization(targetUserId, orgId))) {
+      return res.status(404).json({ error: 'Team member not found', code: 'NOT_FOUND' });
+    }
     const chatId = [req.user._id, targetUserId].sort().join('_');
     let chat = await TeamChat.findOne({ chatId }).lean();
     if (!chat) {
@@ -52,7 +76,20 @@ router.post('/chats/direct', auth, async (req, res) => {
 router.post('/chats/group', auth, async (req, res) => {
   try {
     const { name, participantIds } = req.body;
-    const allParticipants = [...new Set([req.user._id.toString(), ...participantIds])];
+    if (!Array.isArray(participantIds) || participantIds.length === 0) {
+      return res.status(400).json({ error: 'participantIds must be a non-empty array', code: 'VALIDATION_ERROR' });
+    }
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'name is required', code: 'VALIDATION_ERROR' });
+    }
+    const orgId = req.organization?._id || req.user.organizationId;
+    const checked = await Promise.all(
+      participantIds.map(async (id) => ((await belongsToOrganization(id, orgId)) ? String(id) : null))
+    );
+    if (checked.some((id) => id === null)) {
+      return res.status(404).json({ error: 'One or more members are not in your organization', code: 'NOT_FOUND' });
+    }
+    const allParticipants = [...new Set([req.user._id.toString(), ...checked])];
     const chat = new TeamChat({
       chatId: `group_${Date.now()}_${req.user._id}`,
       chatType: 'group',
@@ -76,6 +113,19 @@ router.get('/chats/:chatId/messages', auth, async (req, res) => {
   try {
     const { chatId } = req.params;
     const { limit = 50, before } = req.query;
+
+    // Sohbet mesajları yalnızca katılımcılara açıktır. Eski kod chatId'yi
+    // doğrudan sorguya koyuyordu: id'yi bilen (veya tahmin eden) herkes
+    // başkasının yazışmasını okuyabiliyordu.
+    const chat = await TeamChat.findOne({ chatId });
+    if (!chat) {
+      return res.status(404).json({ error: 'Chat not found', code: 'NOT_FOUND' });
+    }
+    const isParticipant = (chat.participants || []).some((p) => String(p) === String(req.user._id));
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'You are not a participant of this chat', code: 'FORBIDDEN' });
+    }
+
     const query = { chatId };
     if (before) {
       query.createdAt = { $lt: new Date(before) };
@@ -95,16 +145,45 @@ router.get('/chats/:chatId/messages', auth, async (req, res) => {
 });
 router.get('/members', auth, async (req, res) => {
   try {
-    const teamMembers = await Team.find({ isActive: true })
-      .select('name email avatar status role')
-      .sort({ name: 1 }).lean();
+    // Kiracı izolasyonu. Eski sorgu `Team.find({ isActive: true })` ve
+    // `User.find({})` idi: filtre yoktu, yani ekip sohbeti üye seçicisi
+    // SİSTEMDEKİ TÜM organizasyonların kullanıcılarını listeliyordu. Panelde
+    // aynı ismin ("advisory owner") defalarca görünmesinin sebebi buydu —
+    // farklı organizasyonlara ait ayrı kayıtlardı. Bu hem bir veri sızıntısı
+    // hem de bir UI hatasıydı: yabancı bir kullanıcı seçilip ona doğrudan
+    // mesaj açılabiliyordu.
+    const orgId = req.organization?._id || req.user.organizationId;
+    if (!orgId) {
+      // Organizasyonu olmayan bir hesap yalnızca kendisini görür; boş liste
+      // döndürmek "ekip yok" durumundan ayırt edilemezdi.
+      return res.json([]);
+    }
 
-    const users = await User.find({})
-      .select('name email avatar status role')
-      .sort({ name: 1 }).lean();
+    const [teamMembers, users] = await Promise.all([
+      Team.find({ isActive: true, organizationId: orgId })
+        .select('name email avatar status role')
+        .sort({ name: 1 })
+        .lean(),
+      User.find({ isActive: true, organizationId: orgId })
+        .select('name email avatar status role')
+        .sort({ name: 1 })
+        .lean()
+    ]);
 
-    // Combine and send back
-    const members = [...users, ...teamMembers];
+    // Aynı kişi hem users hem teams tablosunda bulunabilir (sahip hesabı ekip
+    // üyesi olarak da eklendiğinde). id bazlı tekilleştirme, seçicide çift
+    // satır çıkmasını engeller.
+    const seen = new Set();
+    const members = [];
+    for (const person of [...users, ...teamMembers]) {
+      const key = String(person._id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      // Kişinin kendisi listede olmamalı: kendine DM açmak anlamsız.
+      if (key === String(req.user._id)) continue;
+      members.push(person);
+    }
+
     res.json(members);
   } catch (error) {
     res.status(500).json({ error: error.message });

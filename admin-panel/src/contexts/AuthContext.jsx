@@ -90,12 +90,29 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setAuthChecked(false);
   };
+  /**
+   * Oturumdaki kullanicinin alanlarini yerinde gunceller.
+   *
+   * Bunun olmamasi, DashboardLayout'ta durum degistirmenin
+   * `window.location.reload()` ile yapilmasina sebep oluyordu: tum uygulama
+   * bastan yukleniyor, acik konusma ve soket baglantisi kopuyordu.
+   */
+  const patchUser = (updates) => {
+    setUser((current) => {
+      if (!current) return current;
+      const next = { ...current, ...updates };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    patchUser,
     isAuthenticated: !!user,
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

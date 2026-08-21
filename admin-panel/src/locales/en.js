@@ -1,143 +1,4 @@
 export default {
-  dashboard: {
-    welcomeTitle: 'Welcome - Support.io Admin',
-    welcome: 'Welcome',
-    last7Days: 'Last 7 Days',
-    refreshing: 'Refreshing...',
-    refresh: 'Refresh',
-    openTickets: 'Open Tickets',
-    slaBreaches: 'SLA Breaches',
-    unassignedTickets: 'Unassigned',
-    customerSatisfaction: 'Customer Satisfaction',
-    activeAgents: 'Active Agents',
-    avgFirstResponse: 'Avg First Response',
-    avgResolutionTime: 'Avg Resolution Time',
-    resolvedToday: 'Resolved Today',
-    waiting: 'Waiting',
-    none: 'None',
-    recentTickets: 'Recent Tickets',
-    viewAll: 'View All',
-    ticket: 'Ticket',
-    priority: 'Priority',
-    status: 'Status',
-    time: 'Time',
-    noTickets: 'No tickets yet',
-    visitor: 'Visitor',
-    urgent: 'Urgent',
-    high: 'High',
-    medium: 'Medium',
-    low: 'Low',
-    open: 'Open',
-    assigned: 'Assigned',
-    pending: 'Pending',
-    resolved: 'Resolved',
-    closed: 'Closed',
-    quickActions: 'Quick Actions',
-    tickets: 'Tickets',
-    ticketsDesc: 'Manage support tickets',
-    team: 'Team',
-    teamDesc: 'Manage team members',
-    sites: 'Sites',
-    sitesDesc: 'Manage sites and widgets',
-    advancedReportsLocked: 'Advanced Reports Locked',
-    advancedReportsDesc: 'Upgrade your organization to see analytics, average response times, and visitor traffic.',
-    upgradeNow: 'Upgrade Now'
-  },
-  analytics: {
-    title: 'Analytics',
-    subtitle: 'Analyze your customer service performance',
-    last7days: 'Last 7 Days',
-    last30days: 'Last 30 Days',
-    last90days: 'Last 90 Days',
-    openTickets: 'Open Tickets',
-    slaBreaches: 'SLA Breaches',
-    unassignedTickets: 'Unassigned',
-    satisfaction: 'Customer Satisfaction',
-    dailyTrend: 'Daily Trend',
-    responseTime: 'Average Response Time',
-    channelDistribution: 'Channel Distribution',
-    slaCompliance: 'SLA Compliance',
-    departmentPerformance: 'Department Performance',
-    agentPerformance: 'Agent Performance'
-  },
-  team: {
-    title: 'Team Management',
-    subtitle: 'Manage your team members and their roles',
-    addMember: 'Add Member',
-    allSites: 'All Sites',
-    searchPlaceholder: 'Search name or email...',
-    loading: 'Loading team members...',
-    noSites: 'No sites available yet',
-    addSiteFirst: 'Add Site First',
-    noMembers: 'No members found matching criteria',
-    departments: 'Departments',
-    edit: 'Edit',
-    deleteSuccess: 'Team member successfully deleted',
-    deleteError: 'An error occurred while deleting member',
-    createSuccess: 'Team member successfully created',
-    updateSuccess: 'Team member successfully updated',
-    saveError: 'An error occurred while saving',
-    filters: {
-      allStatus: 'All Statuses',
-      online: 'Online',
-      offline: 'Offline',
-      busy: 'Busy',
-      away: 'Away',
-      allRoles: 'All Roles',
-      owner: 'Owner',
-      admin: 'Admin',
-      manager: 'Manager',
-      agent: 'Agent'
-    },
-    stats: {
-      active: 'Active Conversations',
-      resolved: 'Resolved Tickets'
-    },
-    modal: {
-      role: 'Role',
-      editTitle: 'Edit Member',
-      addTitle: 'Add New Member',
-      name: 'Full Name',
-      email: 'Email',
-      password: 'Password',
-      permissions: 'Permissions',
-      canManageTeam: 'Can Manage Team',
-      canManageDepartments: 'Can Manage Departments',
-      canViewAllConversations: 'Can View All Conversations',
-      canAssignConversations: 'Can Assign Conversations',
-      canDeleteConversations: 'Can Delete Conversations',
-      cancel: 'Cancel',
-      saving: 'Saving...',
-      update: 'Update',
-      create: 'Create'
-    }
-  },
-  audit: {
-    title: 'Audit Logs',
-    subtitle: 'Monitor all critical actions within the system',
-    time: 'Time',
-    action: 'Action',
-    entity: 'Entity',
-    user: 'User',
-    ip: 'IP Address',
-    metadata: 'Details',
-    noRecords: 'No audit records found',
-    expand: 'Expand',
-    collapse: 'Collapse',
-    copy: 'Copy',
-    actions: {
-      LOGIN_SUCCESS: 'Login Success',
-      LOGIN_FAILED: 'Login Failed',
-      CREATE_AGENT: 'Agent Created',
-      DELETE_AGENT: 'Agent Deleted',
-      UPDATE_AGENT_ROLE: 'Agent Role Updated',
-      PLAN_CHANGED: 'Plan Changed',
-      UPDATE_SLA: 'SLA Updated',
-      TICKET_CLOSED: 'Ticket Closed',
-      TICKET_REOPENED: 'Ticket Reopened',
-      SLA_BREACH: 'SLA Breach'
-    }
-  },
   landing: {
     pricing: {
       title1: 'Flexible Pricing, <br />',
@@ -248,13 +109,13 @@ export default {
       footerCopyright: '© 2024 Support.io Inc. All rights reserved.',
     },
     home: {
-      badge: 'NEXT-GEN SUPPORT EXPERIENCE',
+      badge: 'One script, every stack',
       heroTitle1: 'Take Your ',
       heroTitle2: ' Customer Service ',
       heroTitle3: 'To The Next',
       heroTitle4: ' Level',
-      heroDesc: 'Engage with your visitors instantly using Support.io. Increase your sales with a modern, fast, and easy-to-use live support system.',
-      btnStart: 'Get Started Free',
+      heroDesc: 'Support.io is a live support platform you add with a single script tag. Real-time chat, team management, automation and analytics in one dashboard.',
+      btnStart: 'Start for free',
       btnDemo: 'Watch Demo',
       trustedBy: 'Trusted by 5,000+ businesses',
       team: 'Support Team',
@@ -263,8 +124,8 @@ export default {
       msg2: 'How long does the integration take?',
       msg3: 'You can add the code and start in just 2 minutes! 🚀',
       brands: 'GLOBAL GIANTS CHOSE US',
-      featuresTitle: 'Powerful Features',
-      featuresDesc: 'Everything you need to streamline your customer support is gathered in a modern interface.',
+      featuresTitle: 'What a support team actually needs',
+      featuresDesc: 'Not a wall of impressive-sounding modules — the tools that carry the daily work.',
       integrateTitle: 'Integrate in<br />Seconds',
       integrateDesc: 'Add Support.io to your website with a single line of code. 100% compatible with WordPress, Shopify, or custom software.',
       fastSetup: 'Fast Setup',
@@ -273,11 +134,11 @@ export default {
       zeroLagDesc: 'With its ultra-lightweight script, it absolutely does not affect your page load speed.',
       active: 'Active and running',
       copyCode: 'Copy Code',
-      ctaTitle: 'Ready to Communicate Better <br className="hidden md:block" /> With Your Customers?',
-      ctaDesc: 'Thousands of businesses are increasing customer satisfaction and sales with Support.io. Create your free account now.',
-      ctaBtn1: 'Create Free Account',
-      ctaBtn2: 'Talk to Sales',
-      footerDesc: 'All-in-one customer communication platform designed for modern businesses.',
+      ctaTitle: 'Your first conversation is two minutes away',
+      ctaDesc: 'Create an account, add your site, paste the snippet.',
+      ctaBtn1: 'Create a free account',
+      ctaBtn2: 'See pricing',
+      footerDesc: 'Live support and customer messaging for modern teams.',
       footerProduct: 'Product',
       footerFeatures: 'Features',
       footerPricing: 'Pricing',
@@ -297,17 +158,79 @@ export default {
       footerPrivacy: 'Privacy Policy',
       footerTerms: 'Terms of Use',
       footerCookies: 'Cookie Settings',
-    }
-  },
-  common: {
-    ok: 'OK',
-    cancel: 'Cancel',
-    yes: 'Yes',
-    no: 'No',
-    confirm: 'Confirm',
-    delete: 'Delete',
-    save: 'Save',
-    close: 'Close',
+      metaTitle: 'Support.io — Live support in one line of code',
+      heroTitle: 'Start talking to your visitors today.',
+      btnDocs: 'Documentation',
+      heroNote: 'No credit card. Setup takes two minutes.',
+      sameSnippet: 'The same snippet everywhere. No framework gets a different embed.',
+      preview: {
+        inbox: 'Inbox',
+        thread1: 'How many seats does the business plan include?',
+        thread2: 'Thanks, that solved it.',
+        thread3: 'Can I update my invoice details?',
+        thread4: 'The widget will not open on mobile',
+        pending: 'Pending',
+        msg1: 'Hi — how many seats are included in the business plan?',
+        msg2: 'Hi Elif! The business plan includes 25 seats, and anything above that is billed per seat.',
+        msg3: 'Perfect, thank you.',
+        composer: 'Write a reply...'
+      },
+      howTitle: 'Live in three steps',
+      howDesc: 'No build step, no npm package, no server-side code. Grab your site key, drop the tag into your page, start talking.',
+      step1Title: 'Add your site',
+      step1Desc: 'Create the site in the dashboard. Each site gets its own key and its own widget configuration.',
+      step2Title: 'Paste the script tag',
+      step2Desc: 'One line. Plain HTML, React, Next.js, WordPress — the same code with the same behaviour.',
+      step3Title: 'Let it verify itself',
+      step3Desc: 'The widget reports itself the first time it runs; the installation badge in the dashboard turns green on its own.',
+      cap: {
+        liveChat: {
+          title: 'Real-time chat',
+          body: 'Instant messaging over WebSocket, typing indicators, file sharing, and automatic recovery when the connection drops.'
+        },
+        automation: {
+          title: 'Automation and proactive messages',
+          body: 'Condition-based rules that tag, assign and auto-reply. Messages that open themselves based on visitor behaviour.'
+        },
+        team: {
+          title: 'Team and departments',
+          body: 'Role-based permissions, automatic routing to departments, business hours, capacity limits and internal team chat.'
+        },
+        analytics: {
+          title: 'Analytics',
+          body: 'Response time, resolution rate, SLA compliance and agent performance — all computed from the real rows in the database.'
+        },
+        multisite: {
+          title: 'Multiple sites',
+          body: 'Run several sites from one account. Each gets its own widget design, help content and team.'
+        },
+        security: {
+          title: 'Tenant isolation',
+          body: 'Every request is checked at the workspace boundary. One workspace can never see another’s conversations, visitors or team.'
+        }
+      },
+      allFeatures: 'All features',
+      securityTitle: 'You can tell exactly what the code on your site does',
+      securityDesc: 'The widget contacts no third-party domain and never touches how your page looks. There is one address to allow in your policy: your own Support.io server.',
+      sec: {
+        isolation: {
+          title: 'Shadow DOM isolation',
+          body: 'the widget’s CSS cannot leak into your site, and your global rules cannot break the widget.'
+        },
+        tenant: {
+          title: 'Server-side authorisation',
+          body: 'no browser-supplied identity is trusted; every read and write is checked at the workspace boundary.'
+        },
+        csp: {
+          title: 'Strict-CSP friendly',
+          body: 'no inline script, no third-party CDN — even the Socket.IO client comes from your own server.'
+        },
+        data: {
+          title: 'Minimal data',
+          body: 'only a visitor id is kept in the browser, and installation checks never store the URL’s query string.'
+        }
+      }
+    },
   },
   header: {
     features: 'Features',
@@ -331,6 +254,17 @@ export default {
     switchToTurkish: 'Türkçe\'ye Geç',
   },
   sidebar: {
+    groups: {
+      inbox: 'Inbox',
+      workspace: 'Workspace',
+      insights: 'Insights',
+      account: 'Account'
+    },
+    visitors: 'Visitors',
+    crm: 'CRM',
+    automationRules: 'Automation',
+    proactiveRules: 'Proactive messages',
+    openMenu: 'Open menu',
     dashboard: 'Dashboard',
     sites: 'Sites',
     auditLogs: 'Audit Logs',
@@ -401,6 +335,9 @@ export default {
     isTyping: 'is typing...',
     yesterday: 'Yesterday',
     unknownUser: 'Unknown',
+    deleteTitle: 'Delete message',
+    deleteMessage: 'Delete this message? This cannot be undone.',
+    deleteConfirm: 'Yes, delete',
   },
   analytics: {
     title: 'Analytics',
@@ -417,7 +354,7 @@ export default {
     agentPerformance: 'Agent Performance',
     last7days: 'Last 7 Days',
     last30days: 'Last 30 Days',
-    last90days: 'Last 90 Days',
+    last90days: 'Last 90 Days'
   },
   home: {
     hero: {
@@ -664,8 +601,10 @@ export default {
   dashboard: {
     title: 'Dashboard',
     subtitle: 'Welcome to your Support.io management panel',
-    welcome: 'Welcome',    refresh: 'Refresh',
-    refreshing: 'Refreshing...',    totalConversations: 'Total Conversations',
+    welcome: 'Welcome',
+    refresh: 'Refresh',
+    refreshing: 'Refreshing...',
+    totalConversations: 'Total Conversations',
     activeSites: 'Active Sites',
     totalFaqs: 'Total FAQs',
     responseRate: 'Response Rate',
@@ -719,6 +658,10 @@ export default {
     sitesDesc: 'Configure websites',
     waiting: 'Waiting',
     none: 'None',
+    welcomeTitle: 'Welcome - Support.io Admin',
+    advancedReportsLocked: 'Advanced Reports Locked',
+    advancedReportsDesc: 'Upgrade your organization to see analytics, average response times, and visitor traffic.',
+    upgradeNow: 'Upgrade Now'
   },
   assigned: {
     title: 'Assigned Tickets',
@@ -755,6 +698,8 @@ export default {
     claimError: 'Failed to claim conversation!',
     noEmail: 'No email',
     deleteConversationTooltip: 'Delete conversation',
+    assignedNotification: 'A conversation was assigned to you',
+    claimedNotification: 'Conversation claimed',
   },
   sites: {
     title: 'Sites',
@@ -856,285 +801,245 @@ export default {
     allPages: 'All pages',
   },
   featuresPage: {
-    title: 'Features',
-    subtitle: 'Everything You Need',
-    description: 'Support.io contains all the features needed for a modern customer support system. Designed to provide a professional experience.',
-    integrationTitle: 'Easy Integration',
-    integrationDescription: 'Integrate to your website in minutes. Just a few lines of code are enough.',
-    integrationNote: 'It\'s that simple! Setup is completed in 5 minutes.',
-    cta: 'Start for Free',
-    backToHome: 'Back to Home',
-    features: [
-      {
-        title: 'Real-Time Live Chat',
-        description: 'Connect with your customers instantly. Messages are delivered immediately thanks to WebSocket technology.',
-        benefits: [
-          'Instant messaging',
-          'Typing indicator',
-          'Read receipts',
-          'File sharing'
-        ]
+    meta: {
+      title: 'Features',
+      description: 'Live chat, a universal widget, department routing, automation, proactive messages, help articles, analytics and team management.'
+    },
+    eyebrow: 'Product',
+    title: 'The tools that carry a support team’s day',
+    description: 'Everything below works in the product today. Not a roadmap — what it does.',
+    devTitle: 'For developers',
+    devDesc: 'Integration is not a day-long project; it is one tag.',
+    dev: {
+      embed: {
+        title: 'One embed',
+        body: 'Plain HTML, React, Next.js, Vue, WordPress, Laravel — the same script tag with the same behaviour. No framework gets its own snippet.'
       },
-      {
-        title: 'Multi-Operator Support',
-        description: 'Your entire team can work on the same platform. Share conversations and increase customer satisfaction.',
-        benefits: [
-          'Unlimited operators',
-          'Role management',
-          'Conversation transfer',
-          'Team performance tracking'
-        ]
+      sdk: {
+        title: 'A real SDK',
+        body: 'open, close, identify, logout, setAttributes, setLocale, setTheme, on/off, destroy and debug() for diagnostics. All typed and documented.'
       },
-      {
-        title: 'Multi-Site Management',
-        description: 'Manage multiple websites from a single panel. Separate settings and customizations for each site.',
-        benefits: [
-          'Unlimited sites',
-          'Site-based reporting',
-          'Custom widget design',
-          'Domain control'
-        ]
-      },
-      {
-        title: 'Auto Responses & Bots',
-        description: 'Save time by automatically answering frequently asked questions. Smart bot system.',
-        benefits: [
-          'Customizable bot',
-          'Welcome messages',
-          'Business hours',
-          'Automatic routing'
-        ]
-      },
-      {
-        title: 'Detailed Analytics & Reports',
-        description: 'Analyze your customer interactions in detail. Measure and improve your performance.',
-        benefits: [
-          'Conversation statistics',
-          'Response times',
-          'Operator performance',
-          'Visitor analytics'
-        ]
-      },
-      {
-        title: 'Smart Notifications',
-        description: 'Don\'t miss new messages. Always stay informed with desktop, email and mobile notifications.',
-        benefits: [
-          'Desktop notifications',
-          'Email notifications',
-          'Sound alerts',
-          'Customizable notifications'
-        ]
-      },
-      {
-        title: 'Mobile Friendly',
-        description: 'Works perfectly on every device. Your customers can easily reach you from mobile, tablet or desktop.',
-        benefits: [
-          'Responsive design',
-          'PWA support',
-          'Fast on every device',
-          'Touch optimized'
-        ]
-      },
-      {
-        title: 'Easy Integration',
-        description: 'Integrate to your website in minutes. Activate live support system with a single line of code.',
-        benefits: [
-          'Simple setup',
-          'Compatible with every platform',
-          'API support',
-          'Detailed documentation'
-        ]
-      },
-      {
-        title: 'Chat History',
-        description: 'Save and archive all conversations. Easily access customer history.',
-        benefits: [
-          'Unlimited archive',
-          'Advanced search',
-          'Export data',
-          'GDPR compliant'
-        ]
-      },
-      {
-        title: 'Security & Privacy',
-        description: 'Your data is encrypted with SSL and stored securely. Full compliance with GDPR and data protection laws.',
-        benefits: [
-          'SSL encryption',
-          'GDPR compliant',
-          'Data backup',
-          'Two-factor authentication'
-        ]
-      },
-      {
-        title: 'Fast and Performant',
-        description: 'High performance thanks to optimized infrastructure. No delays, fast response times.',
-        benefits: [
-          'CDN support',
-          'Optimized code',
-          'Fast loading',
-          'High availability'
-        ]
-      },
-      {
-        title: '24/7 Accessibility',
-        description: 'System works without interruption. Your customers can always reach you.',
-        benefits: [
-          '99.9% uptime',
-          'Automatic backup',
-          'Load balancing',
-          'Fast support'
-        ]
+      isolation: {
+        title: 'Style isolation',
+        body: 'The widget runs inside a Shadow Root. Your global CSS cannot reach it, and its CSS cannot reach your page.'
       }
-    ],
+    },
+    readDocs: 'Read the docs',
+    backToList: 'All features',
+    moreTitle: 'More features',
+    notFound: {
+      title: 'No such feature page',
+      body: 'The link may be out of date. Continue from the list.'
+    },
+    aside: {
+      title: 'At a glance',
+      plan: 'Plan',
+      setup: 'Setup'
+    },
+    items: {
+      'live-chat': {
+        title: 'Live chat',
+        summary: 'Real-time messaging over WebSocket, typing indicators and file sharing.',
+        setup: 'Built in',
+        body: 'Messages flow both ways over Socket.IO. When the connection drops the widget retries on a backoff and shows the state in its header; nothing is lost. Every sent message appears optimistically, settles when the server confirms it, and is marked "not sent" with a one-click retry if it does not.',
+        points: ['Messages are deduplicated by id — the API response and the socket event never render twice', 'File and image sharing with a 10 MB limit and MIME checking', 'Typing indicators in both directions', 'History resumes where the visitor left off']
+      },
+      'universal-widget': {
+        title: 'Universal widget',
+        summary: 'One script tag; the same code and behaviour in every framework.',
+        setup: 'One line',
+        body: 'The widget reads its configuration from its own data-* attributes and its own src. That means no inline script block and no global variable, so it runs cleanly under a strict Content-Security-Policy. All of its DOM and CSS lives in a Shadow Root, so host rules cannot break it.',
+        points: ['Singleton runtime: adding the script twice never creates a second widget', 'SPA navigation is tracked; the socket and open conversation survive', 'Version pinning: /widget/v3/widget.js is cached as immutable', 'No third-party domain is contacted, not even for the Socket.IO client']
+      },
+      routing: {
+        title: 'Department routing',
+        summary: 'Distributes conversations to departments and available agents on its own.',
+        setup: 'In the dashboard',
+        body: 'Define departments and add members. Incoming conversations are assigned by the strategy you choose: round-robin, least-active, or manual. With business hours configured, conversations arriving out of hours get an informative reply. When an agent goes away or offline, their open conversations are redistributed.',
+        points: ['Round-robin and least-active assignment strategies', 'Per-agent capacity limits', 'Per-department business hours and out-of-hours message', 'Automatic reassignment when an agent changes status']
+      },
+      automation: {
+        title: 'Automation rules',
+        summary: 'Tag, assign, change status or auto-reply when a condition matches.',
+        setup: 'In the dashboard',
+        body: 'The rule engine builds conditions on message content, conversation status, channel and page, combined with AND/OR. On a match it runs actions: add a tag, route to a department, change priority, send a canned reply. Every run is logged: which rule, which conversation, how long it took, whether it succeeded.',
+        points: ['Rules evaluated in priority order', 'Execution log and a per-rule success counter', 'Triggers recorded in the audit trail', 'Rules isolated at the organisation boundary']
+      },
+      proactive: {
+        title: 'Proactive messages',
+        summary: 'Messages that open themselves based on visitor behaviour.',
+        setup: 'In the dashboard',
+        body: 'The widget reports time on page, scroll depth, inactivity, exit intent and custom events. When one of your rules matches, the visitor is shown a message. Frequency control stops the same rule from pestering the same visitor.',
+        points: ['Time-on-page, scroll, inactivity and exit-intent triggers', 'URL and audience conditions', 'Per-visitor frequency caps', 'Trigger history kept on record']
+      },
+      'knowledge-base': {
+        title: 'Help articles',
+        summary: 'Makes your common answers searchable inside the widget.',
+        setup: 'In the dashboard',
+        body: 'Questions you add in the dashboard appear in the widget’s Help tab and filter from a search box, with the top three surfaced on the home screen. When a visitor finds the answer themselves the conversation never opens, and your team carries less.',
+        points: ['Instant search inside the widget', 'Categories and ordering', 'View and helpfulness counters', 'Page-specific content']
+      },
+      analytics: {
+        title: 'Analytics',
+        summary: 'Response time, resolution rate, SLA compliance and agent performance.',
+        setup: 'Built in',
+        body: 'The numbers are aggregated server-side from the real rows in the database. The panel does not compute them in the browser — the old approach summed a list capped at 50 rows per page, so any team above that cap silently saw understated charts.',
+        points: ['Server-side aggregation over the selected window', 'First-response and resolution time distributions', 'SLA met / breached breakdown', 'Per-agent breakdown and a personal performance screen']
+      },
+      team: {
+        title: 'Team management',
+        summary: 'Role-based permissions, availability and internal team chat.',
+        setup: 'In the dashboard',
+        body: 'Owner, admin, manager, agent and viewer roles are enforced server-side on every endpoint. Each user can be online, away, busy or offline, and that state is what drives the availability the widget shows visitors. Internal chat lets agents consult each other without leaving the conversation.',
+        points: ['Five roles, permission checks per endpoint', 'Four availability states with automatic reassignment', 'One-to-one and group internal chat', 'Every list scoped to the organisation']
+      },
+      'ai-assist': {
+        title: 'AI assistant',
+        summary: 'Conversation summaries, reply suggestions, tone rewriting and translation.',
+        setup: 'Needs an API key',
+        body: 'With a provider key configured on the server, the assistant appears in the agent panel: it summarises the conversation, drafts a reply, rewrites your tone and translates. Without a key the feature shows as unavailable — no answer is fabricated. The key stays on the server and is never sent to the browser.',
+        points: ['Conversation summary and sentiment analysis', 'Reply suggestions grounded in your help articles', 'Tone rewriting and translation', 'Silently disabled without a key — no invented output']
+      },
+      visitors: {
+        title: 'Live visitors',
+        summary: 'See who is on the site right now and what page they are on.',
+        setup: 'Built in',
+        body: 'On every page carrying the widget, the visitor record is updated: current page, browser, referrer and last-active time. It streams into the dashboard as a live list, so you can see what people are doing before a conversation ever opens.',
+        points: ['Real-time page tracking', 'Updates on SPA navigations too', 'Referrer and browser details', 'Links up with CRM records']
+      }
+    }
   },
   pricingPage: {
-    title: 'Simple and Transparent Pricing',
-    subtitle: 'Choose the plan that fits your business size. No hidden fees, cancel anytime.',
-    featuresTitle: 'All Plans Include',
-    featuresDescription: 'Basic features are available in all plans',
-    faqTitle: 'Frequently Asked Questions',
-    faqDescription: 'Everything you need to know',
-    ctaTitle: 'Ready to Get Started?',
-    ctaDescription: 'Try all features for free for 14 days. No credit card required.',
-    ctaButton: 'Try for Free',
-    backToHome: 'Back to Home',
-    plans: [
-      {
+    meta: {
+      title: 'Pricing',
+      description: 'Per-user monthly pricing. A free plan, Pro and Enterprise.'
+    },
+    title: 'Pay as your team grows',
+    description: 'Per user, per month. No hidden fees, no setup cost, no commitment.',
+    billing: 'Billing period',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    discount: '2 months free',
+    popular: 'Most chosen',
+    perSeat: '/ user / month',
+    billedMonthly: 'Billed monthly',
+    billedYearly: 'Billed yearly',
+    custom: 'Let’s talk',
+    contactNote: 'Priced to your needs',
+    compareTitle: 'Compare plans',
+    feature: 'Feature',
+    faqTitle: 'Common questions',
+    plans: {
+      free: {
         name: 'Free',
-        price: '$0',
-        period: '',
-        description: 'Entry level - For small businesses and entrepreneurs',
-        features: [
-          '1 site',
-          '100 conversations/month limit',
-          '1 operator',
-          'Basic widget (no color/logo customization)',
-          '30 days chat history',
-          'Email support',
-          'Basic real-time chat features'
-        ],
-        cta: 'Get Started',
-        popular: false,
-        link: '/register'
+        tagline: 'For one-person teams and first trials.',
+        cta: 'Create an account',
+        features: ['1 site', '1 user', 'Unlimited conversations', 'Widget customisation', 'Help articles', 'Automation and proactive messages']
       },
-      {
+      pro: {
         name: 'Pro',
-        price: '$50',
-        period: '/month',
-        description: 'For growing teams - Smart auto-distribution and widget customization',
-        features: [
-          '5 sites',
-          'Unlimited conversations',
-          '5 operators',
-          'Widget customization (color, header, logo, welcome message)',
-          'Skill-based + least-load auto assignment',
-          'Capacity limits',
-          'Auto-reassign',
-          'Basic SLA tracking and alert system',
-          '1 year chat history',
-          'Basic analytics',
-          'API access',
-          'Priority support'
-        ],
-        cta: 'Upgrade Now',
-        popular: true,
-        badge: 'Most Popular',
-        link: '/register'
+        tagline: 'For support teams with more than one agent.',
+        cta: 'Try free for 14 days',
+        features: ['Up to 10 sites', 'Unlimited users', 'Departments and auto-assignment', 'Analytics and reports', 'Live visitors and CRM', 'AI assistant', 'Data export']
       },
-      {
+      enterprise: {
         name: 'Enterprise',
-        price: '$190',
-        period: '/month',
-        description: 'Full enterprise level - Advanced SLA/integration and full control',
-        features: [
-          'Unlimited sites and operators',
-          'Advanced widget customization (full theme control and custom design)',
-          'Advanced routing (skill-based + escalation chain + business hours enforcement)',
-          'Advanced SLA management and auto escalation',
-          'Unlimited chat history',
-          'Advanced analytics and reporting',
-          'Full API access',
-          'Custom integrations',
-          'SLA guarantee',
-          'Dedicated server option',
-          '24/7 priority support'
-        ],
-        cta: 'Contact Us',
-        popular: false,
-        link: '/register'
+        tagline: 'For organisations with audit and compliance needs.',
+        cta: 'Get in touch',
+        features: ['Everything in Pro', 'Unlimited sites', 'Audit logs', 'SSO', 'Custom retention period', 'Priority support']
       }
-    ],
-    faqs: [
-      {
-        question: 'Is a credit card required?',
-        answer: 'No, credit card information is not required to use the free plan. You can upgrade to paid plans anytime.'
+    },
+    matrix: {
+      sites: 'Sites',
+      agents: 'Users',
+      conversations: 'Unlimited conversations',
+      widget: 'Widget customisation',
+      faq: 'Help articles',
+      departments: 'Departments and auto-assignment',
+      automation: 'Automation rules',
+      proactive: 'Proactive messages',
+      analytics: 'Analytics and reports',
+      visitors: 'Live visitors',
+      crm: 'CRM',
+      aiAssist: 'AI assistant',
+      export: 'Data export',
+      audit: 'Audit logs',
+      sso: 'SSO'
+    },
+    faq: {
+      q1: {
+        q: 'Do I need a card for the trial?',
+        a: 'No. We do not ask for card details at sign-up, and the account falls back to the Free plan when the trial ends.'
       },
-      {
-        question: 'Can I change my plan?',
-        answer: 'Yes, you can upgrade or downgrade your plan anytime. Changes take effect immediately.'
+      q2: {
+        q: 'Can I change plan later?',
+        a: 'Yes, upgrade or downgrade whenever you like. The difference is prorated over the remaining days.'
       },
-      {
-        question: 'What is your cancellation policy?',
-        answer: 'You can cancel anytime. Refund will be made for the remaining period.'
+      q3: {
+        q: 'What are the Free plan limits?',
+        a: 'One site and one user. Conversations are unlimited; team features, analytics and export unlock with Pro.'
       },
-      {
-        question: 'I have special needs, what should I do?',
-        answer: 'Enterprise plan is customizable. Contact us for your special needs.'
+      q4: {
+        q: 'Can we export our data?',
+        a: 'On Pro and Enterprise you can export conversations, messages and report data.'
       },
-      {
-        question: 'What are the payment methods?',
-        answer: 'You can pay by credit card, debit card and bank transfer.'
-      },
-      {
-        question: 'Is there a free trial period?',
-        answer: 'We offer a 14-day free trial for paid plans. You can start with a credit card and cancel anytime.'
+      q5: {
+        q: 'Can the widget be branded on the Free plan?',
+        a: 'Yes. Colours, logo, position, copy and behaviour settings are all available on every plan.'
       }
-    ],
+    }
   },
   aboutPage: {
-    title: 'Redefining Customer Communication',
-    subtitle: 'At Support.io, we provide a modern and user-friendly platform that helps businesses communicate better with their customers.',
+    meta: {
+      title: 'About',
+      description: 'What Support.io is, the decisions behind it, and what it is built on.'
+    },
+    title: 'Own your support stack',
+    description: 'Support.io is an attempt to turn live support from a black box into software you can read, host and audit.',
+    storyEyebrow: 'Why',
     story: {
-      title: 'Our Story',
-      paragraph1: 'Support.io was born from our experience in customer service. We saw many businesses struggling to communicate effectively with their customers. Existing solutions were either too complex or too expensive.',
-      paragraph2: 'We set out to solve this problem. Our goal was to create a platform that would allow businesses of all sizes to provide professional customer support, easy to use and affordable.',
-      paragraph3: 'Today, thousands of businesses communicate better with their customers using Support.io and increase customer satisfaction. And we continue to develop.',
+      p1: 'Most live support tools sit at one of two extremes: a closed service you can set up in minutes but never look inside, or a flexible stack that takes a week to stand up.',
+      p2: 'Support.io aims for the middle. What your customer adds to their site is a single line of script — but what that script does, where it connects and what it stores is all readable. The widget contacts no third-party domain; even the Socket.IO client comes from your own server.',
+      p3: 'The same holds in the dashboard: every number shown is computed from real rows in the database. There are no filler charts, no representative statistics, and no screen that presents a roadmap feature as if it shipped.'
     },
-    values: {
-      title: 'Our Values',
-      mission: {
-        title: 'Our Mission',
-        description: 'To enable businesses of all sizes to provide professional customer support. Increase customer satisfaction by providing easy-to-use, affordable and powerful tools.',
+    principlesEyebrow: 'Principles',
+    principles: {
+      own: {
+        title: 'You own the data',
+        body: 'It runs on your server, your PostgreSQL, your S3 bucket. Conversations never pass through an intermediary.'
       },
-      vision: {
-        title: 'Our Vision',
-        description: 'To set new standards in customer service. To make communication between businesses and their customers more meaningful, faster and more effective.',
+      plain: {
+        title: 'A plain interface',
+        body: 'The dashboard is not a marketing page; it is a tool someone looks at for eight hours a day. White space, typography and hierarchy — colour only where it carries meaning.'
       },
-      culture: {
-        title: 'Our Values',
-        description: 'Customer focus, continuous improvement, transparency and reliability. The success of our users is our success.',
+      honest: {
+        title: 'No fabricated content',
+        body: 'If a feature is missing it says so. Without a configured key the AI assistant shows as unavailable rather than inventing an answer.'
       },
+      accessible: {
+        title: 'Accessibility by default',
+        body: 'Keyboard navigation, focus rings, ARIA labels and contrast thresholds are not a layer bolted on later.'
+      }
     },
-    stats: {
-      title: 'Support.io in Numbers',
-      users: 'Active Users',
-      conversations: 'Monthly Conversations',
-      countries: 'Countries',
-      uptime: 'Uptime',
+    stackEyebrow: 'Built on',
+    stackNote: 'No exotic dependencies; every piece is common, documented and replaceable.',
+    stack: {
+      frontend: 'Dashboard and marketing pages',
+      backend: 'API and rule engines',
+      db: 'Conversations, messages, reports',
+      realtime: 'Real-time messaging, multi-process fan-out',
+      storage: 'Chat files and logos',
+      widget: 'Style isolation on the customer site'
     },
-    team: {
-      title: 'Our Team',
-      subtitle: 'Our passionate and experienced team of professionals',
-      name: 'Support.io Team',
-      role: 'Developers & Support',
-      description: 'Our team of experienced software developers and customer support specialists is working for you.',
-    },
-    technology: {
-      title: 'Our Technology',
-      description: 'Support.io, developed with modern web technologies, offers high performance and reliability. Built on powerful technologies like React, Node.js, Socket.IO and PostgreSQL.',
-    },
+    contactEyebrow: 'Contact',
+    contactBody: 'If you have a question, a bug report or an enterprise need, write to us. This site runs a Support.io widget too — the button in the bottom right reaches us directly.'
   },
   common: {
+    retry: 'Retry',
+    copy: 'Copy',
+    copied: 'Copied',
+    reset: 'Reset',
+    apply: 'Apply',
     loading: 'Loading...',
     save: 'Save',
     cancel: 'Cancel',
@@ -1158,6 +1063,7 @@ export default {
     error: 'Error!',
     warning: 'Warning!',
     info: 'Info',
+    ok: 'OK'
   },
   docs: {
     meta: {
@@ -1279,11 +1185,11 @@ export default {
       owner: 'Owner',
       admin: 'Admin',
       manager: 'Manager',
-      agent: 'Agent',
+      agent: 'Agent'
     },
     stats: {
       active: 'Active',
-      resolved: 'Resolved',
+      resolved: 'Resolved'
     },
     departments: 'Departments',
     edit: 'Edit',
@@ -1311,7 +1217,7 @@ export default {
       update: 'Update',
       saving: 'Saving...',
       createSuccess: 'Team member created successfully!',
-      updateSuccess: 'Team member updated successfully!',
+      updateSuccess: 'Team member updated successfully!'
     },
     deleteSuccess: 'Team member deleted successfully!',
     deleteError: 'Failed to delete team member!',
@@ -1320,7 +1226,7 @@ export default {
     deleteConfirm: 'Yes, Delete',
     saveError: 'Failed to save team member!',
     createSuccess: 'Team member added successfully!',
-    updateSuccess: 'Team member updated successfully!',
+    updateSuccess: 'Team member updated successfully!'
   },
   departments: {
     title: 'Departments',
@@ -1554,5 +1460,362 @@ export default {
       customCss: 'Custom CSS'
     },
     livePreview: 'Live Preview'
-  }
+  },
+  studio: {
+    title: 'Widget Studio',
+    unsaved: 'Unsaved changes',
+    revert: 'Revert changes',
+    loadError: 'Could not load widget settings',
+    contrast: 'Contrast',
+    tabs: {
+      theme: 'Theme',
+      brand: 'Brand',
+      launcher: 'Launcher',
+      messages: 'Messages',
+      advanced: 'Advanced'
+    },
+    theme: {
+      presets: 'Presets',
+      presetsHint: 'Every preset is a coherent palette that clears the contrast thresholds. Pick one, then adjust any single colour.',
+      palette: 'Colour palette',
+      paletteHint: 'Text colours show their WCAG contrast ratio. Anything under 4.5:1 is unreadable at body size.',
+      derive: 'Derive from primary'
+    },
+    colors: {
+      primary: 'Primary',
+      header: 'Header background',
+      background: 'Window background',
+      text: 'Text',
+      textSecondary: 'Secondary text',
+      border: 'Border',
+      visitorMessage: 'Visitor bubble',
+      agentMessage: 'Agent bubble'
+    },
+    brand: {
+      logo: 'Logo',
+      logoHint: 'PNG, SVG or WebP. 5 MB maximum. A transparent background works best.',
+      upload: 'Upload a logo',
+      uploadHint: 'Click or drop a file',
+      replace: 'Replace',
+      identity: 'Identity',
+      name: 'Brand name',
+      showName: 'Show brand name in the header',
+      logoWidth: 'Logo width',
+      logoHeight: 'Logo height'
+    },
+    launcher: {
+      position: 'Position',
+      positionHint: 'Which corner the launcher sits in. On mobile the window opens full screen.',
+      topLeft: 'Top left',
+      topRight: 'Top right',
+      bottomLeft: 'Bottom left',
+      bottomRight: 'Bottom right',
+      size: 'Size',
+      small: 'Small',
+      medium: 'Medium',
+      large: 'Large',
+      icon: 'Icon',
+      shape: 'Shape',
+      radius: 'Corner radius',
+      shadow: 'Shadow',
+      showLabel: 'Show a label beside it',
+      showLabelHint: 'A short call to action appears next to the launcher',
+      labelText: 'Label text',
+      labelPlaceholder: 'Chat with us'
+    },
+    messages: {
+      copy: 'Copy',
+      copyHint: 'Leave a field empty and the widget falls back to its own translated default.',
+      welcome: 'Welcome message',
+      welcomePlaceholder: 'Hi there! How can we help?',
+      placeholder: 'Composer placeholder',
+      bubbles: 'Bubbles',
+      bubbleRadius: 'Bubble corner radius',
+      timestamps: 'Show timestamps',
+      senderNames: 'Show sender name'
+    },
+    behavior: {
+      title: 'Behaviour',
+      hint: 'How the widget reaches out on its own.',
+      autoOpen: 'Open automatically',
+      autoOpenHint: 'The window opens by itself once the visitor has stayed on the page',
+      delay: 'Delay',
+      unreadBadge: 'Unread badge',
+      sound: 'Notification sound',
+      soundHint: 'Plays a short tone when a new message arrives'
+    },
+    advanced: {
+      window: 'Window size',
+      windowHint: 'Desktop only. Below 480px the widget opens full screen.',
+      width: 'Width',
+      height: 'Height',
+      radius: 'Corner radius',
+      headerHeight: 'Header height',
+      showHeader: 'Show header',
+      showClose: 'Show close button',
+      motion: 'Animation speed',
+      fast: 'Fast',
+      normal: 'Normal',
+      slow: 'Slow',
+      customCss: 'Custom CSS and z-index',
+      customCssHint: 'CSS is injected inside the widget Shadow DOM; it cannot affect the host page.',
+      zIndex: 'z-index'
+    },
+    preview: {
+      title: 'Live preview',
+      desktop: 'Desktop',
+      mobile: 'Mobile',
+      collapsed: 'Collapsed',
+      expanded: 'Expanded',
+      note: 'The preview uses the real widget measurements and layout, scaled down to fit this panel.',
+      online: 'Online',
+      away: 'Back shortly',
+      offline: 'We are offline right now',
+      placeholder: 'Type your message...',
+      sampleVisitor: 'When will my order ship?'
+    },
+    embed: {
+      title: 'Installation code',
+      hint: 'This one line is identical for every stack: HTML, React, Next.js, Vue, WordPress, Laravel…',
+      verified: 'Installation verified — the widget is live on your site',
+      waiting: 'Waiting for installation. This updates on its own once the snippet is on your site.'
+    },
+    toast: {
+      saved: 'Widget settings saved',
+      saveFailed: 'Could not save settings',
+      reverted: 'Reverted to the last save',
+      derived: 'Palette derived from the primary colour',
+      copied: 'Installation code copied',
+      copyFailed: 'Could not copy',
+      logoUploaded: 'Logo uploaded',
+      logoRemoved: 'Logo removed',
+      logoFailed: 'Logo operation failed',
+      logoTooLarge: 'The logo must be under 5 MB',
+      logoNotImage: 'Only image files can be uploaded'
+    }
+  },
+  status: {
+    online: 'Online',
+    away: 'Away',
+    busy: 'Busy',
+    offline: 'Offline',
+    updateFailed: 'Could not update your status',
+    changedTo: {
+      online: 'You are online',
+      away: 'Marked as away',
+      busy: 'Marked as busy',
+      offline: 'You are offline'
+    }
+  },
+  connection: {
+    connected: 'Connected',
+    connecting: 'Connecting',
+    reconnecting: 'Reconnecting',
+    disconnected: 'Disconnected',
+    lost: 'Connection lost. Retrying…',
+    restored: 'Back online'
+  },
+  notifications: {
+    title: 'Notifications',
+    empty: 'Nothing new',
+    clear: 'Clear',
+    types: {
+      assigned: 'A conversation was assigned to you',
+      claimed: 'A conversation was claimed',
+      message: 'New message'
+    }
+  },
+  theme: {
+    switchToDark: 'Switch to dark theme',
+    switchToLight: 'Switch to light theme'
+  },
+  account: {
+    delete: 'Delete account',
+    deleteConfirm: 'Delete your account? This cannot be undone.',
+    deleteFailed: 'Could not delete the account'
+  },
+  docsPage: {
+    meta: {
+      title: 'Developer Documentation',
+      description: 'Add the Support.io widget with one line of code. Installation, JavaScript SDK, events and security for React, Next.js, Vue, Nuxt, Angular, Svelte, Astro, WordPress, Laravel and plain HTML.'
+    },
+    hero: {
+      title: 'One script. Every stack.',
+      description: 'The Support.io widget is framework-agnostic. The same script tag behaves identically in plain HTML, in a React app and in a WordPress theme. Every example below describes the real API of this installation.'
+    },
+    nav: {
+      quickstart: 'Quick start',
+      embed: 'Universal embed',
+      api: 'JavaScript API',
+      events: 'Events',
+      identify: 'Identification',
+      spa: 'SPA integration',
+      frameworks: 'Frameworks',
+      backend: 'Backend & Socket',
+      theming: 'Theming',
+      localization: 'Localization',
+      security: 'Security',
+      troubleshooting: 'Troubleshooting'
+    },
+    table: {
+      attribute: 'Attribute',
+      required: 'Required',
+      description: 'Description',
+      event: 'Event',
+      endpoint: 'Endpoint',
+      direction: 'Direction'
+    },
+    quickstart: {
+      title: 'Quick start',
+      intro: 'Installation is three steps and one script tag. No build step, no npm package, no server-side code.',
+      step1: {
+        title: 'Get your site key',
+        body: 'Create your site under Dashboard → Sites. Each site gets its own key; the key determines which workspace the conversation lands in.'
+      },
+      step2: {
+        title: 'Drop the script tag into your page',
+        body: 'Put it immediately before the closing </body> tag. The async attribute keeps it off your page’s critical path.'
+      },
+      step3: {
+        title: 'Verify the installation',
+        body: 'The first time the widget runs on a page it reports itself to the server. The “Waiting for installation” badge under Dashboard → Sites turns green on its own.'
+      },
+      calloutTitle: 'No global variable to declare',
+      calloutBody: 'The widget reads its configuration from its own script tag’s data-* attributes and from its own src. Because no separate inline <script> block is needed, it works under a strict Content-Security-Policy.',
+      getKey: 'Get my site key'
+    },
+    embed: {
+      title: 'Universal embed',
+      intro: 'There is one runtime and it is the same everywhere. No framework gets a different embed snippet; only the file the tag goes into changes.',
+      attrs: 'Script attributes',
+      versioning: 'Versioning',
+      versioningBody: '/widget.js always serves the current release with a short cache. To pin a version, use the major-version path: that URL is cached as immutable, so a new deployment cannot change the widget already running on your site.',
+      latest: 'always current',
+      pinned: 'version pinned',
+      consent: 'Running behind a cookie banner',
+      consentBody: 'With data-defer="true" the script loads but boots nothing and collects no visitor data. Call SupportChat.init() once consent is given.'
+    },
+    api: {
+      title: 'JavaScript API',
+      intro: 'Loading the script creates exactly one global: window.SupportChat. Nothing else is written to the global scope (the old window.SupportIO remains only as a backwards-compatible alias).'
+    },
+    events: {
+      title: 'Events',
+      intro: 'on() returns an unsubscribe function. An exception thrown by one listener never stops the others or the widget.',
+      sample: 'new message:',
+      unsub: 'unsubscribe',
+      wildcard: 'to observe every event in one place:'
+    },
+    identify: {
+      title: 'Identification',
+      intro: 'An anonymous visitor automatically gets a visitor id and a session id. Once a user signs in on your site, call identify() so the agent can match the conversation to a real person.',
+      afterLogin: 'after the user signs in',
+      attrs: 'free-form fields shown to the agent',
+      afterLogout: 'when the user signs out',
+      warnTitle: 'These fields are not trusted on their own',
+      warnBody: 'Anything passed to identify() comes from the browser and can be forged by anyone. The server uses it for display only; no authorisation decision is ever based on a visitor-supplied identity. When you need a verified identity, use a server-generated signed value (HMAC); the runtime carries a userHash field for exactly that.',
+      logoutTitle: 'Call logout() on sign-out',
+      logoutBody: 'logout() clears the identity and mints a NEW visitor id. Skip it and, on a shared computer, the second person to sign in sees the first person’s chat history.'
+    },
+    spa: {
+      title: 'SPA integration',
+      intro: 'In React, Next.js, Vue, Nuxt, Angular, Svelte and friends you do not need to do anything extra; the runtime handles these cases itself.',
+      singleton: {
+        title: 'Singleton runtime',
+        body: 'Adding the script twice, mounting the component twice, or React Strict Mode running an effect twice never produces a second widget.'
+      },
+      history: {
+        title: 'Navigation tracking',
+        body: 'pushState, replaceState, popstate and hashchange are all observed. The page change is reported to the server while the socket and the open conversation are preserved, not reset.'
+      },
+      cleanup: {
+        title: 'Clean teardown',
+        body: 'destroy() removes the DOM, the socket, the timers and the listeners — and restores the patched history methods to their originals.'
+      },
+      ssr: {
+        title: 'SSR and hydration',
+        body: 'The widget renders nothing on the server and attaches itself to the DOM, so it cannot cause a hydration mismatch.'
+      },
+      sampleTitle: 'When the app unmounts entirely (rarely needed)',
+      sampleNote: 'you do not need init(); the script tag already boots it.',
+      sampleDev: 'avoid tearing down on every HMR reload'
+    },
+    frameworks: {
+      title: 'Frameworks',
+      intro: 'Every example below uses the SAME script tag. The only thing that changes is which file that tag goes into.'
+    },
+    backend: {
+      title: 'Backend and Socket',
+      intro: 'The complete surface the widget talks to. These endpoints are authenticated by site key, need no session, and return no internal workspace fields.',
+      bootstrap: 'Widget configuration, help articles and agent availability in a single response. Cached for 30 seconds.',
+      installed: 'Installation verification. Called once when the widget first runs on a page; only the origin and path are stored.',
+      upload: 'Chat file upload. Authenticated by the X-Site-Key header, 10 MB limit with MIME checking.',
+      track: 'Visitor behaviour events (the proactive-message rules listen to this stream).',
+      socket: 'Socket.IO namespace. The client loads /socket.io/socket.io.js from the same server.',
+      socketEvents: 'Socket events',
+      join: 'Join a conversation or prepare a new one. The site key is verified here.',
+      send: 'Send a message. clientMessageId prevents duplicates.',
+      typing: 'Visitor typing indicator.',
+      pageview: 'Report the current page on SPA navigation.',
+      joined: 'The conversation and its last 100 messages (or the welcome message for a new visitor).',
+      newMessage: 'A message broadcast.',
+      agentTyping: 'An agent is typing.',
+      error: 'An error message; the widget shows it as a banner.'
+    },
+    theming: {
+      title: 'Theming',
+      intro: 'Colours, sizes and copy are managed from Widget Studio in the dashboard; in code you only ever need to switch light and dark.',
+      auto: 'follows the system preference',
+      follow: 'flip the widget when the system theme changes:',
+      isolationTitle: 'Style isolation',
+      isolationBody: 'All of the widget’s DOM and CSS lives inside a Shadow Root. Your site’s global rules — * { }, button { }, input { } — cannot reach it, and the widget’s CSS cannot leak into your page. The custom CSS field in Widget Studio is injected inside that same Shadow Root.'
+    },
+    localization: {
+      title: 'Localization',
+      intro: 'The widget ships with Turkish and English. Resolution order: explicit setting → <html lang> → browser language. Leave a field like the welcome message empty in the dashboard and the widget falls back to its own translation.',
+      viaAttr: 'via the script tag',
+      viaApi: 'at runtime'
+    },
+    security: {
+      title: 'Security',
+      cspTitle: 'Content-Security-Policy',
+      cspBody: 'The widget contacts no third-party domain. Everything, including the Socket.IO client, is served from your own Support.io server, so you only have to allow one origin.',
+      inlineTitle: 'No unsafe-inline needed',
+      inlineBody: 'The install snippet contains no inline <script> block; configuration is read from data-* attributes. Only style-src needs unsafe-inline, and that is for the style tag inside the Shadow Root, which cannot affect your page’s styles.',
+      corsTitle: 'CORS',
+      corsBody: 'The server’s CORS_ORIGINS variable controls which addresses may open the dashboard. Widget endpoints are separate: widget.js is open to every origin (it is a public file), while the API endpoints are authorised by site key.',
+      keyTitle: 'The site key is not a secret',
+      keyBody: 'The site key is shipped to the browser. It is not a credential — it is an identifier that says which workspace a conversation belongs to. Read and write permissions are constrained server-side by visitor identity; one key can never reach another workspace’s data.',
+      dataTitle: 'Stored data',
+      dataBody: 'In the browser the widget stores only the visitor id and, optionally, a name and email in localStorage. If localStorage is unavailable (private window, blocked cookies) it falls back to an in-memory store and keeps working. Installation verification records only the origin and the path, never the full URL — the query string may carry personal data, so it is dropped.'
+    },
+    troubleshooting: {
+      title: 'Troubleshooting',
+      intro: 'The first place to look is SupportChat.debug() in the browser console.',
+      notShowing: {
+        q: 'The widget never appears',
+        a: 'Run SupportChat.debug() in the console. If initialized is false the script never loaded — check the widget.js request in the Network tab. If fatal is set, read the message: MISSING_SITE_KEY means data-site-key is absent, WIDGET_NOT_FOUND means the key is wrong or the site is inactive. Also check whether the “show only on these pages” rules in Widget Studio exclude the current page.'
+      },
+      wrongKey: {
+        q: 'I get a WIDGET_NOT_FOUND error',
+        a: 'The key is mistyped or the site is inactive. Re-copy the key from Dashboard → Sites and confirm the site shows as Active. The same response is returned in both cases on purpose, so that probing keys cannot reveal which sites exist.'
+      },
+      csp: {
+        q: 'The console shows a Content-Security-Policy error',
+        a: 'Add your Support.io server to the script-src and connect-src directives. connect-src must include both the https and the wss scheme, because the chat runs over WebSocket. The example policy in the Security section covers it.'
+      },
+      duplicate: {
+        q: 'Two widgets appear on the page',
+        a: 'The new runtime makes this impossible: a second boot is silently ignored. If you see two, an old-version script tag is most likely still on the page. Check with document.querySelectorAll("script[src*=widget]") and remove the stale tag.'
+      },
+      styles: {
+        q: 'My site’s CSS breaks the widget',
+        a: 'It should not: the widget lives in a Shadow Root and no host rule crosses that boundary. If you still see a problem, something is probably styling the widget’s root element (#support-chat-widget) — an over-broad div { position } rule, for example. Narrow the CSS that reaches the root element.'
+      },
+      disconnect: {
+        q: 'The connection keeps dropping',
+        a: 'The widget shows “Reconnecting” in the header and retries on a backoff by itself; no messages are lost. If it drops constantly, a proxy or load balancer in front of the server may be blocking the WebSocket upgrade. If the server runs as more than one process, REDIS_URL must be set — otherwise a visitor and an agent on different processes never see each other’s messages.'
+      }
+    }
+  },
 };

@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MessageSquare } from 'lucide-react';
-import logo from '../public/support.io.webp';
+import Logo from '../components/Logo';
 const Login = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -49,7 +49,7 @@ const Login = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8 transition-colors duration-200">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center mb-4">
-              <img src={logo} alt="Support.io" className="h-12 w-auto dark:invert-0 mb-4" />
+              <Logo size={32} className="mb-4" />
             </div>
             <p className="text-gray-600 dark:text-gray-400 mt-2">{t('login.subtitle')}</p>
           </div>

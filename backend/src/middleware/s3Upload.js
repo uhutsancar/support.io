@@ -36,16 +36,31 @@ const makeStorage = (prefix, namePrefix = '') => multerS3({
   }
 });
 
-// Logolar için özel S3 yükleyici
-const uploadLogo = multer({
-  storage: makeStorage('logos', 'logo-'),
-  limits: { fileSize: 5 * 1024 * 1024 }
+const S3_CONFIGURED = Boolean(BUCKET && REGION && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+
+// S3 yapılandırılmamışsa multer-s3 modül yüklenirken "bucket is required" ile
+// PATLIYORDU; yani eksik bir S3 anahtarı tüm sunucuyu ayağa kaldırılamaz hale
+// getiriyordu. Dosya yükleme, uygulamanın geri kalanının çalışmasını
+// engellememeli: yükleyici yerine 503 döndüren bir vekil konur.
+const unavailable = () => ({
+  single: () => (req, res) => res.status(503).json({
+    error: 'File storage is not configured on this server',
+    code: 'STORAGE_UNAVAILABLE'
+  }),
+  array: () => (req, res) => res.status(503).json({
+    error: 'File storage is not configured on this server',
+    code: 'STORAGE_UNAVAILABLE'
+  })
 });
+
+// Logolar için özel S3 yükleyici
+const uploadLogo = S3_CONFIGURED
+  ? multer({ storage: makeStorage('logos', 'logo-'), limits: { fileSize: 5 * 1024 * 1024 } })
+  : unavailable();
 
 // Genel chat dosyaları için S3 yükleyici
-const uploadFile = multer({
-  storage: makeStorage('files'),
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+const uploadFile = S3_CONFIGURED
+  ? multer({ storage: makeStorage('files'), limits: { fileSize: 10 * 1024 * 1024 } })
+  : unavailable();
 
-module.exports = { uploadLogo, uploadFile, s3, BUCKET, REGION };
+module.exports = { uploadLogo, uploadFile, s3, BUCKET, REGION, S3_CONFIGURED };

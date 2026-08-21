@@ -108,6 +108,12 @@ CREATE INDEX IF NOT EXISTS idx_sites_organization_id ON sites (organization_id);
 CREATE INDEX IF NOT EXISTS idx_sites_site_key_active ON sites (site_key, is_active);
 CREATE INDEX IF NOT EXISTS idx_sites_domain ON sites (domain);
 
+-- Kurulum doğrulaması. Widget bir sayfada ilk kez ayağa kalktığında buraya
+-- kendini bildirir; panel "kurulum bekleniyor / kurulu" durumunu bu alandan
+-- okur. Ayrı bir tablo açmak yerine jsonb: alan sayısı azdır ve sorgulanmaz,
+-- yalnızca site kaydıyla birlikte okunur.
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS installation jsonb NOT NULL DEFAULT '{}'::jsonb;
+
 
 -- ---------------------------------------------------------------------------
 -- teams  (agents created from the admin panel)

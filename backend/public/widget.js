@@ -1,1666 +1,1809 @@
-/**
- * Support.io Widget
- * Embeddable customer support chat widget
- * Version: 2.0.0
- * Build: Feb 10, 2026 - Modern UI with FAQ and Multi-View System
+/*!
+ * Support.io Widget Runtime
+ * Universal, framework-agnostic embeddable chat widget.
+ *
+ * Kurulum (TEK satir, her stack icin ayni):
+ *
+ *   <script src="https://YOUR_HOST/widget.js" data-site-key="SITE_KEY" async></script>
+ *
+ * Tasarim notlari:
+ *
+ * - Tek dosya, bagimliliksiz. Yalnizca Socket.IO istemcisi disaridan yuklenir
+ *   ve o da BIZIM sunucumuzdan (`/socket.io/socket.io.js`) gelir. Eski surum
+ *   ucuncu parti bir CDN'den (cdn.socket.io) yukluyordu: musterinin CSP'si
+ *   script-src'yi kisitliyorsa widget hic acilmiyordu ve musteriye baska bir
+ *   alan adina guvenmesi dayatiliyordu.
+ *
+ * - API adresi kod icine GOMULU DEGILDIR. Script'in kendi `src`'inden turetilir
+ *   (document.currentScript). Eski surumde `http://localhost:5000` sabiti vardi
+ *   ve yapilandirilmadiginda widget musterinin sitesinde sessizce olu kaliyordu.
+ *
+ * - Tum DOM ve CSS bir Shadow Root icindedir. Host sitenin `* { box-sizing }`,
+ *   `button {}`, `input {}` gibi global kurallari widget'i bozamaz; widget'in
+ *   kendi CSS'i de host sayfaya sizamaz.
+ *
+ * - Singleton. Script iki kez eklenirse, React bileseni iki kez mount olursa
+ *   veya SPA yonlendirmesi tekrar init cagirirsa ikinci bir widget OLUSMAZ.
+ *
+ * - SPA farkindaligi. history.pushState/replaceState/popstate dinlenir; sayfa
+ *   degisimi sunucuya bildirilir ama soket ve konusma korunur.
  */
-
-(function() {
+(function () {
   'use strict';
 
-  const API_URL = window.SupportIOConfig?.apiUrl || 'http://localhost:5000';
-  const SOCKET_URL = window.SupportIOConfig?.socketUrl || 'http://localhost:5000';
-
-  class SupportIOWidget {
-    constructor(config) {
-      this.siteKey = config.siteKey;
-      if (!this.siteKey) {
-        console.error('SupportIOWidget initialized without a siteKey');
-      }
-      this.widgetConfig = null; // Will be loaded from backend
-      
-      // Default config (will be overridden by backend config)
-      this.config = {
-        siteKey: config.siteKey,
-        position: config.position || 'bottom-right',
-        primaryColor: config.primaryColor || '#4F46E5',
-        brandName: config.brandName || 'Support',
-        ...config
-      };
-
-      this.socket = null;
-      this.conversationId = null;
-      this.visitorId = this.getOrCreateVisitorId();
-      this.isOpen = false;
-      this.isMinimized = true;
-      this.currentView = 'home'; // home, messages, help
-      this.faqs = [];
-      this.siteSettings = null;
-      this.messagesEnabled = false;
-
-      this.init();
-    }
-
-    async init() {
-      // Load widget config from backend first
-      await this.loadWidgetConfig();
-      this.injectStyles();
-      this.createWidget();
-      this.loadSiteSettings();
-      this.loadFAQs();
-      this.connectSocket();
-      this.setupEventListeners();
-    }
-
-    async loadWidgetConfig() {
-      try {
-        const response = await fetch(`${API_URL}/api/widget-config/public/${this.siteKey}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.config) {
-            this.widgetConfig = data.config;
-            // Merge config with widget config
-            this.config = {
-              ...this.config,
-              position: this.widgetConfig.button?.position || this.config.position,
-              primaryColor: this.widgetConfig.colors?.primary || this.config.primaryColor,
-              brandName: this.widgetConfig.branding?.brandName || this.config.brandName,
-              colors: this.widgetConfig.colors,
-              branding: this.widgetConfig.branding,
-              button: this.widgetConfig.button,
-              window: this.widgetConfig.window,
-              messages: this.widgetConfig.messages,
-              behavior: this.widgetConfig.behavior,
-              typography: this.widgetConfig.typography,
-              advanced: this.widgetConfig.advanced
-            };
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load widget config:', error);
-        // Continue with default config
-      }
-    }
-
-    getOrCreateVisitorId() {
-      let visitorId = localStorage.getItem('sc_visitor_id');
-      if (!visitorId) {
-        visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('sc_visitor_id', visitorId);
-      }
-      return visitorId;
-    }
-
-    adjustColor(color, amount) {
-      return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
-    }
-
-    injectStyles() {
-      const colors = this.config.colors || {};
-      const button = this.config.button || {};
-      const window = this.config.window || {};
-      const typography = this.config.typography || {};
-      const advanced = this.config.advanced || {};
-      const branding = this.config.branding || {};
-      const messagesConfig = this.config.messages || {};
-      
-      const primaryColor = colors.primary || this.config.primaryColor || '#4F46E5';
-      const headerColor = colors.header || primaryColor;
-      const backgroundColor = colors.background || '#FFFFFF';
-      const textColor = colors.text || '#1F2937';
-      const textSecondaryColor = colors.textSecondary || '#6B7280';
-      const borderColor = colors.border || '#E5E7EB';
-      const visitorMsgBg = colors.visitorMessageBg || primaryColor;
-      const agentMsgBg = colors.agentMessageBg || '#F3F4F6';
-      
-      const buttonSize = button.size === 'small' ? '50px' : button.size === 'large' ? '70px' : '60px';
-      const buttonRadius = button.borderRadius === 50 ? '50%' : `${button.borderRadius || 50}%`;
-      const buttonShadow = button.shadow !== false ? `0 4px 12px ${button.shadowColor || 'rgba(0,0,0,0.15)'}` : 'none';
-      
-      const windowWidth = window.width || 400;
-      const windowHeight = window.height || 650;
-      const windowRadius = window.borderRadius || 16;
-      const headerHeight = window.headerHeight || 60;
-      
-      const fontFamily = typography.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-      const zIndex = advanced.zIndex || 999999;
-      const messageBubbleRadius = messagesConfig.messageBubbleRadius || 12;
-      
-      const style = document.createElement('style');
-      style.textContent = `
-        .sc-widget-container {
-          position: fixed;
-          z-index: ${zIndex};
-          font-family: ${fontFamily};
-        }
-        .sc-widget-container.bottom-right {
-          bottom: 20px;
-          right: 20px;
-        }
-        .sc-widget-container.bottom-left {
-          bottom: 20px;
-          left: 20px;
-        }
-        .sc-widget-container.top-right {
-          top: 20px;
-          right: 20px;
-        }
-        .sc-widget-container.top-left {
-          top: 20px;
-          left: 20px;
-        }
-
-        .sc-chat-bubble {
-          width: ${buttonSize};
-          height: ${buttonSize};
-          border-radius: ${buttonRadius};
-          background: ${primaryColor};
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          box-shadow: ${buttonShadow};
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .sc-chat-bubble:hover {
-          transform: scale(1.05);
-          box-shadow: ${button.shadow !== false ? `0 6px 16px ${button.shadowColor || 'rgba(0,0,0,0.2)'}` : 'none'};
-        }
-        .sc-chat-bubble svg {
-          width: 28px;
-          height: 28px;
-          fill: white;
-        }
-
-        .sc-chat-window {
-          width: ${windowWidth}px;
-          height: ${windowHeight}px;
-          background: ${backgroundColor};
-          border-radius: ${windowRadius}px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-          display: none;
-          flex-direction: column;
-          overflow: hidden;
-          animation: slideUp 0.3s ease-out;
-        }
-        .sc-chat-window.open {
-          display: flex;
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .sc-header {
-          background: ${headerColor};
-          height: ${headerHeight}px;
-          color: white;
-          padding: 20px;
-          display: ${(this.config.window || {}).showHeader !== false ? 'flex' : 'none'};
-          justify-content: space-between;
-          align-items: center;
-        }
-        .sc-header-info {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .sc-header-logo {
-          width: ${(this.config.branding || {}).logoWidth || 40}px;
-          height: ${(this.config.branding || {}).logoHeight || 40}px;
-          object-fit: contain;
-        }
-        .sc-header-text {
-          flex: 1;
-        }
-        .sc-header-title {
-          font-size: 18px;
-          font-weight: 600;
-        }
-        .sc-header-subtitle {
-          font-size: 13px;
-          opacity: 0.9;
-          margin-top: 2px;
-        }
-        .sc-close-btn {
-          background: rgba(255,255,255,0.2);
-          border: none;
-          color: white;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          cursor: pointer;
-          display: ${(this.config.window || {}).showCloseButton !== false ? 'flex' : 'none'};
-          align-items: center;
-          justify-content: center;
-          transition: background 0.2s;
-          flex-shrink: 0;
-        }
-        .sc-close-btn:hover {
-          background: rgba(255,255,255,0.3);
-        }
-
-        .sc-content {
-          flex: 1;
-          overflow: hidden;
-          position: relative;
-          background: ${backgroundColor};
-        }
-
-        .sc-view {
-          display: none;
-          flex-direction: column;
-          height: 100%;
-          animation: fadeIn 0.3s ease-out;
-        }
-        .sc-view.active {
-          display: flex;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        .sc-home-content {
-          flex: 1;
-          overflow-y: auto;
-          padding: 24px;
-        }
-        .sc-welcome {
-          background: white;
-          border-radius: 12px;
-          padding: 24px;
-          margin-bottom: 20px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .sc-welcome h2 {
-          font-size: 24px;
-          font-weight: 700;
-          color: #1a1a1a;
-          margin-bottom: 8px;
-        }
-        .sc-welcome p {
-          font-size: 15px;
-          color: #666;
-          line-height: 1.5;
-        }
-        .sc-status-card {
-          background: white;
-          border-radius: 12px;
-          padding: 16px 20px;
-          margin-bottom: 16px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .sc-status-icon {
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-        .sc-status-icon.online {
-          background: #10b981;
-        }
-        .sc-status-icon.offline {
-          background: #ef4444;
-        }
-        .sc-status-text {
-          flex: 1;
-        }
-        .sc-status-title {
-          font-size: 14px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin-bottom: 2px;
-        }
-        .sc-status-subtitle {
-          font-size: 12px;
-          color: #666;
-        }
-        .sc-quick-links {
-          background: white;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .sc-quick-links h3 {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin-bottom: 16px;
-        }
-        .sc-quick-link {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 0;
-          border-bottom: 1px solid #f0f0f0;
-          cursor: pointer;
-          transition: opacity 0.2s;
-        }
-        .sc-quick-link:last-child {
-          border-bottom: none;
-        }
-        .sc-quick-link:hover {
-          opacity: 0.7;
-        }
-        .sc-quick-link-text {
-          font-size: 14px;
-          color: #333;
-        }
-        .sc-quick-link-arrow {
-          color: #999;
-        }
-
-        .sc-help-content {
-          flex: 1;
-          overflow-y: auto;
-        }
-        .sc-search-box {
-          padding: 16px 20px;
-          background: white;
-          border-bottom: 1px solid #e5e5e5;
-        }
-        .sc-search-input {
-          width: 100%;
-          padding: 12px 40px 12px 16px;
-          border: 1px solid #e5e5e5;
-          border-radius: 8px;
-          font-size: 14px;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        .sc-search-input:focus {
-          border-color: ${this.config.primaryColor};
-        }
-        .sc-faq-list {
-          padding: 12px 20px;
-        }
-        .sc-faq-item {
-          background: white;
-          border-radius: 8px;
-          margin-bottom: 8px;
-          overflow: hidden;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .sc-faq-question {
-          padding: 16px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          transition: background 0.2s;
-        }
-        .sc-faq-question:hover {
-          background: #f8f9fa;
-        }
-        .sc-faq-question-text {
-          font-size: 14px;
-          font-weight: 500;
-          color: #1a1a1a;
-          flex: 1;
-        }
-        .sc-faq-arrow {
-          width: 16px;
-          height: 16px;
-          transition: transform 0.3s;
-          color: #666;
-        }
-        .sc-faq-item.open .sc-faq-arrow {
-          transform: rotate(180deg);
-        }
-        .sc-faq-answer {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.3s ease-out;
-          padding: 0 16px;
-          color: #666;
-          font-size: 14px;
-          line-height: 1.6;
-        }
-        .sc-faq-item.open .sc-faq-answer {
-          max-height: 500px;
-          padding: 0 16px 16px 16px;
-        }
-        .sc-no-faqs {
-          text-align: center;
-          padding: 60px 20px;
-          color: #999;
-        }
-
-        .sc-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 20px;
-          background: ${backgroundColor};
-        }
-        .sc-message {
-          margin-bottom: 16px;
-          animation: messageIn 0.3s ease-out;
-        }
-        @keyframes messageIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .sc-message-content {
-          max-width: 75%;
-          padding: 12px 16px;
-          border-radius: ${messageBubbleRadius}px;
-          word-wrap: break-word;
-          line-height: 1.4;
-        }
-        .sc-message.visitor .sc-message-content {
-          background: ${visitorMsgBg};
-          color: white;
-          margin-left: auto;
-          border-bottom-right-radius: 4px;
-        }
-        .sc-message.agent .sc-message-content,
-        .sc-message.bot .sc-message-content {
-          background: ${agentMsgBg};
-          color: ${textColor};
-          border-bottom-left-radius: 4px;
-        }
-        .sc-message-sender {
-          font-size: 11px;
-          color: #666;
-          margin-bottom: 4px;
-          font-weight: 500;
-        }
-        .sc-message-time {
-          font-size: 11px;
-          color: #999;
-          margin-top: 4px;
-        }
-
-        .sc-typing {
-          display: none;
-          padding: 12px 16px;
-          background: white;
-          border-radius: 12px;
-          width: fit-content;
-          margin-bottom: 16px;
-        }
-        .sc-typing.active {
-          display: block;
-        }
-        .sc-typing-dots {
-          display: flex;
-          gap: 4px;
-        }
-        .sc-typing-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #999;
-          animation: bounce 1.4s infinite;
-        }
-        .sc-typing-dot:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-        .sc-typing-dot:nth-child(3) {
-          animation-delay: 0.4s;
-        }
-        @keyframes bounce {
-          0%, 60%, 100% {
-            transform: translateY(0);
-          }
-          30% {
-            transform: translateY(-8px);
-          }
-        }
-
-        .sc-input-container {
-          padding: 16px;
-          background: white;
-          border-top: 1px solid #e5e5e5;
-        }
-        .sc-input-wrapper {
-          display: flex;
-          gap: 8px;
-          align-items: flex-end;
-        }
-        .sc-file-btn {
-          background: transparent;
-          border: none;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #666;
-          transition: background 0.2s;
-        }
-        .sc-file-btn:hover {
-          background: #f0f0f0;
-        }
-        .sc-file-btn svg {
-          width: 20px;
-          height: 20px;
-          fill: currentColor;
-        }
-        .sc-file-input {
-          display: none;
-        }
-        .sc-input {
-          flex: 1;
-          border: 1px solid ${borderColor};
-          border-radius: 20px;
-          padding: 10px 16px;
-          font-size: 14px;
-          outline: none;
-          resize: none;
-          max-height: 100px;
-          font-family: ${fontFamily};
-          color: ${textColor};
-          background: ${backgroundColor};
-        }
-        .sc-input:focus {
-          border-color: ${primaryColor};
-        }
-        .sc-input::placeholder {
-          color: ${textSecondaryColor};
-        }
-        .sc-send-btn {
-          background: ${primaryColor};
-          color: white;
-          border: none;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.2s;
-          flex-shrink: 0;
-        }
-        .sc-send-btn:hover:not(:disabled) {
-          transform: scale(1.05);
-        }
-        .sc-send-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .sc-send-btn svg {
-          width: 20px;
-          height: 20px;
-          fill: white;
-        }
-
-        .sc-file-preview {
-          display: none;
-          padding: 8px 16px;
-          background: #f0f0f0;
-          border-radius: 8px;
-          margin-bottom: 8px;
-          align-items: center;
-          gap: 8px;
-        }
-        .sc-file-preview.active {
-          display: flex;
-        }
-        .sc-file-preview-icon {
-          width: 32px;
-          height: 32px;
-          background: white;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: ${this.config.primaryColor};
-        }
-        .sc-file-preview-info {
-          flex: 1;
-          min-width: 0;
-        }
-        .sc-file-preview-name {
-          font-size: 13px;
-          font-weight: 500;
-          color: #333;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .sc-file-preview-size {
-          font-size: 11px;
-          color: #666;
-        }
-        .sc-file-preview-remove {
-          background: none;
-          border: none;
-          color: #999;
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .sc-file-preview-remove:hover {
-          color: #ef4444;
-        }
-
-        .sc-file-attachment {
-          background: rgba(255,255,255,0.2);
-          border-radius: 8px;
-          padding: 12px;
-          margin-top: 4px;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-        .sc-message.agent .sc-file-attachment,
-        .sc-message.bot .sc-file-attachment {
-          background: #f0f0f0;
-        }
-        .sc-file-attachment:hover {
-          opacity: 0.9;
-        }
-        .sc-file-attachment-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .sc-file-attachment-icon {
-          width: 32px;
-          height: 32px;
-          background: rgba(255,255,255,0.3);
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .sc-message.agent .sc-file-attachment-icon,
-        .sc-message.bot .sc-file-attachment-icon {
-          background: white;
-        }
-        .sc-file-attachment-info {
-          flex: 1;
-          min-width: 0;
-        }
-        .sc-file-attachment-name {
-          font-size: 13px;
-          font-weight: 500;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .sc-file-attachment-size {
-          font-size: 11px;
-          opacity: 0.8;
-        }
-        .sc-file-image {
-          max-width: 100%;
-          max-height: 200px;
-          border-radius: 8px;
-          margin-top: 4px;
-          cursor: pointer;
-        }
-
-        .sc-disabled-message {
-          text-align: center;
-          padding: 60px 20px;
-          color: #999;
-        }
-        .sc-disabled-message h3 {
-          font-size: 18px;
-          color: #666;
-          margin-bottom: 8px;
-        }
-        .sc-disabled-message p {
-          font-size: 14px;
-        }
-
-        .sc-bottom-nav {
-          display: flex;
-          background: white;
-          border-top: 1px solid #e5e5e5;
-          padding: 8px 0;
-        }
-        .sc-nav-item {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          padding: 8px;
-          cursor: pointer;
-          transition: all 0.2s;
-          border: none;
-          background: none;
-          color: #666;
-        }
-        .sc-nav-item:hover {
-          background: #f8f9fa;
-        }
-        .sc-nav-item.active {
-          color: ${this.config.primaryColor};
-        }
-        .sc-nav-item.disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-        .sc-nav-item.disabled:hover {
-          background: none;
-        }
-        .sc-nav-icon {
-          width: 24px;
-          height: 24px;
-        }
-        .sc-nav-label {
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        @media (max-width: 480px) {
-          .sc-chat-window {
-            width: 100vw;
-            height: 100vh;
-            border-radius: 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-          }
-          .sc-widget-container {
-            bottom: 16px;
-            right: 16px;
-          }
-        }
-
-        .sc-toast {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #fff;
-          color: #333;
-          padding: 16px 20px;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          z-index: 1000000;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          min-width: 300px;
-          max-width: 400px;
-          animation: slideInRight 0.3s ease-out;
-        }
-        .sc-toast.error {
-          border-left: 4px solid #ef4444;
-        }
-        .sc-toast.success {
-          border-left: 4px solid #10b981;
-        }
-        .sc-toast-icon {
-          width: 20px;
-          height: 20px;
-          flex-shrink: 0;
-        }
-        .sc-toast-icon.error {
-          color: #ef4444;
-        }
-        .sc-toast-icon.success {
-          color: #10b981;
-        }
-        .sc-toast-message {
-          flex: 1;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-        @keyframes slideInRight {
-          from {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        @keyframes slideOutRight {
-          from {
-            transform: translateX(0);
-            opacity: 1;
-          }
-          to {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-        }
-        
-        ${advanced.customCSS || ''}
-      `;
-      document.head.appendChild(style);
-    }
-
-    showNotification(message, type = 'error') {
-      const toast = document.createElement('div');
-      toast.className = `sc-toast ${type}`;
-      
-      const icon = type === 'error' 
-        ? '<svg class="sc-toast-icon error" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'
-        : '<svg class="sc-toast-icon success" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-      
-      toast.innerHTML = `
-        ${icon}
-        <div class="sc-toast-message">${message}</div>
-      `;
-      
-      document.body.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease-in';
-        setTimeout(() => {
-          document.body.removeChild(toast);
-        }, 300);
-      }, 4000);
-    }
-
-    createWidget() {
-      const container = document.createElement('div');
-      const position = this.config.button?.position || this.config.position || 'bottom-right';
-      container.className = `sc-widget-container ${position}`;
-      
-      const branding = this.config.branding || {};
-      const brandName = branding.brandName || this.config.brandName || 'Support';
-      const logoUrl = branding.logo 
-        ? (branding.logo.startsWith('http') ? branding.logo : `${API_URL}${branding.logo}`)
-        : null;
-      const showBrandName = branding.showBrandName !== false;
-      const logoWidth = branding.logoWidth || 40;
-      const logoHeight = branding.logoHeight || 40;
-      
-      const messagesConfig = this.config.messages || {};
-      const welcomeMessage = messagesConfig.welcomeMessage || 'Hi! How can we help you today?';
-      const placeholderText = messagesConfig.placeholderText || 'Type your message...';
-      
-      container.innerHTML = `
-        <div class="sc-chat-bubble" id="sc-bubble">
-          <svg viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-          </svg>
-        </div>
-
-        <div class="sc-chat-window" id="sc-chat-window">
-          ${this.config.window?.showHeader !== false ? `
-          <div class="sc-header">
-            <div class="sc-header-info">
-              ${logoUrl ? `<img src="${logoUrl}" class="sc-header-logo" alt="${brandName}" style="width: ${logoWidth}px; height: ${logoHeight}px;" />` : ''}
-              ${showBrandName ? `
-              <div class="sc-header-text">
-                <div class="sc-header-title">${brandName}</div>
-                <div class="sc-header-subtitle">We're here to help!</div>
-              </div>
-              ` : ''}
-            </div>
-            ${this.config.window?.showCloseButton !== false ? `
-            <button class="sc-close-btn" id="sc-close">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
-                <path d="M15 1L1 15M1 1l14 14" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </button>
-            ` : ''}
-          </div>
-          ` : ''}
-
-          <div class="sc-content">
-            <!-- Home View -->
-            <div class="sc-view active" id="sc-view-home">
-              <div class="sc-home-content">
-                <div class="sc-welcome">
-                  <h2>Hello! How can we help?</h2>
-                  <p>Get quick answers or start a conversation with our team.</p>
-                </div>
-
-                <div class="sc-status-card">
-                  <div class="sc-status-icon online"></div>
-                  <div class="sc-status-text">
-                    <div class="sc-status-title">Status: All Systems Operational</div>
-                    <div class="sc-status-subtitle" id="sc-status-time">Updated recently</div>
-                  </div>
-                </div>
-
-                <div class="sc-quick-links">
-                  <h3>Quick Actions</h3>
-                  <div class="sc-quick-link" data-link="help">
-                    <div class="sc-quick-link-text">Browse Help Articles</div>
-                    <div class="sc-quick-link-arrow">→</div>
-                  </div>
-                  <div class="sc-quick-link" data-link="messages">
-                    <div class="sc-quick-link-text">Start a Conversation</div>
-                    <div class="sc-quick-link-arrow">→</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Messages View -->
-            <div class="sc-view" id="sc-view-messages">
-              <div class="sc-messages" id="sc-messages">
-                <!-- Messages will be appended here -->
-              </div>
-              <div class="sc-input-container">
-                <div class="sc-file-preview" id="sc-file-preview">
-                  <div class="sc-file-preview-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
-                    </svg>
-                  </div>
-                  <div class="sc-file-preview-info">
-                    <div class="sc-file-preview-name" id="sc-file-preview-name"></div>
-                    <div class="sc-file-preview-size" id="sc-file-preview-size"></div>
-                  </div>
-                  <button class="sc-file-preview-remove" id="sc-file-preview-remove">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                    </svg>
-                  </button>
-                </div>
-                <div class="sc-input-wrapper">
-                  <input type="file" class="sc-file-input" id="sc-file-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" />
-                  <button class="sc-file-btn" id="sc-file-btn" title="Attach file">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
-                    </svg>
-                  </button>
-                  <textarea 
-                    class="sc-input" 
-                    id="sc-input" 
-                    placeholder="${placeholderText}"
-                    rows="1"
-                  ></textarea>
-                  <button class="sc-send-btn" id="sc-send">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Help/FAQ View -->
-            <div class="sc-view" id="sc-view-help">
-              <div class="sc-help-content">
-                <div class="sc-search-box">
-                  <input 
-                    type="text" 
-                    class="sc-search-input" 
-                    id="sc-search-faq" 
-                    placeholder="Search for help..."
-                  />
-                </div>
-                <div class="sc-faq-list" id="sc-faq-list">
-                  <!-- FAQs will be rendered here -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bottom Navigation -->
-          <div class="sc-bottom-nav">
-            <button class="sc-nav-item active" data-view="home">
-              <svg class="sc-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-              </svg>
-              <span class="sc-nav-label">Home</span>
-            </button>
-            <button class="sc-nav-item" id="sc-nav-messages" data-view="messages">
-              <svg class="sc-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
-              </svg>
-              <span class="sc-nav-label">Messages</span>
-            </button>
-            <button class="sc-nav-item" data-view="help">
-              <svg class="sc-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-              </svg>
-              <span class="sc-nav-label">Help</span>
-            </button>
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(container);
-
-      this.elements = {
-        bubble: document.getElementById('sc-bubble'),
-        window: document.getElementById('sc-chat-window'),
-        close: document.getElementById('sc-close'),
-        messages: document.getElementById('sc-messages'),
-        input: document.getElementById('sc-input'),
-        send: document.getElementById('sc-send'),
-        fileInput: document.getElementById('sc-file-input'),
-        fileBtn: document.getElementById('sc-file-btn'),
-        filePreview: document.getElementById('sc-file-preview'),
-        filePreviewName: document.getElementById('sc-file-preview-name'),
-        filePreviewSize: document.getElementById('sc-file-preview-size'),
-        filePreviewRemove: document.getElementById('sc-file-preview-remove'),
-        viewHome: document.getElementById('sc-view-home'),
-        viewMessages: document.getElementById('sc-view-messages'),
-        viewHelp: document.getElementById('sc-view-help'),
-        faqList: document.getElementById('sc-faq-list'),
-        searchFaq: document.getElementById('sc-search-faq'),
-        navMessages: document.getElementById('sc-nav-messages')
-      };
-      
-      this.selectedFile = null;
-    }
-
-    setupEventListeners() {
-      this.elements.bubble.addEventListener('click', () => this.toggleChat());
-      this.elements.close.addEventListener('click', () => this.toggleChat());
-
-      const navItems = document.querySelectorAll('.sc-nav-item');
-      navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-          const view = item.getAttribute('data-view');
-          if (!item.classList.contains('disabled')) {
-            this.switchView(view);
-          }
-        });
-      });
-
-      const quickLinks = document.querySelectorAll('.sc-quick-link');
-      quickLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          const target = link.getAttribute('data-link');
-          this.switchView(target);
-        });
-      });
-
-      this.elements.send.addEventListener('click', () => this.sendMessage());
-      this.elements.input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          this.sendMessage();
-        }
-      });
-
-      let typingTimeout;
-      this.elements.input.addEventListener('input', () => {
-        if (this.socket && this.conversationId) {
-          clearTimeout(typingTimeout);
-          this.socket.emit('typing');
-          typingTimeout = setTimeout(() => {}, 1000);
-        }
-      });
-
-      this.elements.input.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-      });
-
-      this.elements.fileBtn.addEventListener('click', () => {
-        this.elements.fileInput.click();
-      });
-
-      this.elements.fileInput.addEventListener('change', (e) => {
-        this.handleFileSelect(e.target.files[0]);
-      });
-
-      this.elements.filePreviewRemove.addEventListener('click', () => {
-        this.clearFileSelection();
-      });
-
-      if (this.elements.searchFaq) {
-        this.elements.searchFaq.addEventListener('input', (e) => {
-          this.filterFAQs(e.target.value);
-        });
-      }
-    }
-
-    toggleChat() {
-      this.isOpen = !this.isOpen;
-      
-      if (this.isOpen) {
-        this.elements.window.classList.add('open');
-        this.elements.bubble.style.display = 'none';
-        
-        window.parent.postMessage({
-          type: 'widget-opened'
-        }, '*');
-        
-        const now = new Date();
-        const timeString = now.toLocaleString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-        const statusTime = document.getElementById('sc-status-time');
-        if (statusTime) {
-          statusTime.textContent = `Updated ${timeString}`;
-        }
-
-        if (!this.conversationId && this.messagesEnabled) {
-          this.joinConversation();
-        }
-      } else {
-        this.elements.window.classList.remove('open');
-        this.elements.bubble.style.display = 'flex';
-      }
-    }
-
-    switchView(viewName) {
-      if (viewName === 'messages' && !this.messagesEnabled) {
-        this.showDisabledMessage();
-        return;
-      }
-
-      const views = document.querySelectorAll('.sc-view');
-      views.forEach(view => view.classList.remove('active'));
-      
-      const targetView = document.getElementById(`sc-view-${viewName}`);
-      if (targetView) {
-        targetView.classList.add('active');
-      }
-
-      const navItems = document.querySelectorAll('.sc-nav-item');
-      navItems.forEach(item => item.classList.remove('active'));
-      
-      const activeNav = document.querySelector(`.sc-nav-item[data-view="${viewName}"]`);
-      if (activeNav) {
-        activeNav.classList.add('active');
-      }
-
-      this.currentView = viewName;
-
-      if (viewName === 'messages' && this.messagesEnabled) {
-        setTimeout(() => this.elements.input.focus(), 100);
-      }
-    }
-
-    async loadSiteSettings() {
-      try {
-        const response = await fetch(`${API_URL}/api/widget/settings?siteKey=${this.config.siteKey}`);
-        if (response.ok) {
-          const data = await response.json();
-          this.siteSettings = data.site;
-          this.messagesEnabled = data.site.isActive || false;
-          
-          // Merge widget config if available
-          if (data.config) {
-            this.widgetConfig = data.config;
-            // Update config with widget config values
-            if (data.config.colors) {
-              this.config.colors = { ...this.config.colors, ...data.config.colors };
-            }
-            if (data.config.branding) {
-              this.config.branding = { ...this.config.branding, ...data.config.branding };
-            }
-            if (data.config.messages) {
-              this.config.messages = { ...this.config.messages, ...data.config.messages };
-            }
-            // Re-inject styles with updated config
-            this.injectStyles();
-          }
-          
-          if (!this.messagesEnabled) {
-            this.elements.navMessages.classList.add('disabled');
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load site settings:', error);
-        this.messagesEnabled = false;
-      }
-    }
-
-    async loadFAQs() {
-      try {
-        const response = await fetch(`${API_URL}/api/faqs/search?siteKey=${this.config.siteKey}`);
-        if (response.ok) {
-          const data = await response.json();
-          this.faqs = data.faqs || [];
-          this.renderFAQs(this.faqs);
-        }
-      } catch (error) {
-        console.error('Failed to load FAQs:', error);
-      }
-    }
-
-    renderFAQs(faqs) {
-      if (!faqs || faqs.length === 0) {
-        this.elements.faqList.innerHTML = `
-          <div class="sc-no-faqs">
-            <p>No help articles available at the moment.</p>
-          </div>
-        `;
-        return;
-      }
-
-      this.elements.faqList.innerHTML = faqs.map((faq, index) => `
-        <div class="sc-faq-item" data-faq-id="${index}">
-          <div class="sc-faq-question">
-            <div class="sc-faq-question-text">${this.escapeHtml(faq.question)}</div>
-            <svg class="sc-faq-arrow" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 10l5 5 5-5z"/>
-            </svg>
-          </div>
-          <div class="sc-faq-answer">${this.escapeHtml(faq.answer)}</div>
-        </div>
-      `).join('');
-
-      const faqItems = this.elements.faqList.querySelectorAll('.sc-faq-item');
-      faqItems.forEach(item => {
-        const question = item.querySelector('.sc-faq-question');
-        question.addEventListener('click', () => {
-          const isOpen = item.classList.contains('open');
-          
-          faqItems.forEach(i => i.classList.remove('open'));
-          
-          if (!isOpen) {
-            item.classList.add('open');
-          }
-        });
-      });
-    }
-
-    filterFAQs(searchTerm) {
-      if (!searchTerm || searchTerm.trim() === '') {
-        this.renderFAQs(this.faqs);
-        return;
-      }
-
-      const term = searchTerm.toLowerCase();
-      const filtered = this.faqs.filter(faq => 
-        faq.question.toLowerCase().includes(term) || 
-        faq.answer.toLowerCase().includes(term) ||
-        (faq.keywords && faq.keywords.some(k => k.toLowerCase().includes(term)))
-      );
-
-      this.renderFAQs(filtered);
-    }
-
-    showDisabledMessage() {
-      this.elements.messages.innerHTML = `
-        <div class="sc-disabled-message">
-          <h3>Messages Not Available</h3>
-          <p>This feature is currently not active. Please check our Help section for answers to common questions.</p>
-        </div>
-      `;
-      
-      const views = document.querySelectorAll('.sc-view');
-      views.forEach(view => view.classList.remove('active'));
-      this.elements.viewMessages.classList.add('active');
-
-      const navItems = document.querySelectorAll('.sc-nav-item');
-      navItems.forEach(item => item.classList.remove('active'));
-      this.elements.navMessages.classList.add('active');
-    }
-
-    connectSocket() {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
-      script.onload = () => {
-        console.log('🔌 Socket.io script loaded, connecting...');
-        this.socket = io(`${SOCKET_URL}/widget`);
-
-        this.socket.on('connect', () => {
-          console.log('✅ Widget socket connected!');
-          this.joinConversation();
-        });
-
-        this.socket.on('disconnect', () => {
-          console.log('❌ Widget socket disconnected');
-        });
-
-        // keep track of fatal configuration errors to stop further interaction
-        this.hasFatalError = false;
-
-        this.socket.on('conversation-joined', (data) => {
-          if (data.conversation) {
-            console.log('🎯 Conversation joined:', data.conversation._id);
-            this.conversationId = data.conversation._id;
-            this.renderMessages(data.messages);
-          } else {
-            console.log('👋 New visitor - showing welcome message');
-            this.conversationId = null; // Will be created when visitor sends first message
-            
-            const welcomeMsg = {
-              _id: 'welcome-' + Date.now(),
-              senderType: 'bot',
-              senderName: 'Support',
-              content: data.welcomeMessage || this.config.messages?.welcomeMessage || 'Hi! How can we help you today?',
-              createdAt: new Date(),
-              isLocal: true // Mark as local message
-            };
-            this.renderMessages([welcomeMsg]);
-          }
-        });
-
-        this.socket.on('new-message', (data) => {
-          console.log('📨 Widget received new message:', data.message);
-          this.addMessage(data.message);
-          this.scrollToBottom();
-          
-          if (!this.isOpen) {
-            console.log('🔔 Sending notification to parent window');
-            window.parent.postMessage({
-              type: 'new-message',
-              message: data.message
-            }, '*');
-          } else {
-            console.log('📱 Widget is open, no notification needed');
-          }
-        });
-
-        this.socket.on('agent-typing', () => {
-          this.showTypingIndicator();
-          setTimeout(() => this.hideTypingIndicator(), 3000);
-        });
-
-        this.socket.on('error', (data) => {
-          console.error('Support.io error:', data.message);
-          // show feedback in widget in case of connectivity or configuration issues
-          this.addSystemMessage(data.message || 'An error occurred');
-          if (data.message && data.message.toLowerCase().includes('site organization')) {
-            this.hasFatalError = true;
-          }
-          try {
-            window.postMessage({ type: 'widget-error', message: data.message }, '*');
-          } catch (e) {
-            // ignore if posting not allowed
-          }
-        });
-      };
-      document.head.appendChild(script);
-    }
-
-    joinConversation() {
-      if (!this.socket) return;
-      if (!this.config.siteKey) {
-        console.error('Cannot join conversation: missing siteKey');
-        this.addSystemMessage('Widget configuration error: missing site key');
-        return;
-      }
-
-      console.log('🏠 Joining conversation...', {
-        siteKey: this.config.siteKey,
-        visitorId: this.visitorId
-      });
-
-      this.socket.emit('join-conversation', {
-        siteKey: this.config.siteKey,
-        visitorId: this.visitorId,
-        visitorName: localStorage.getItem('sc_visitor_name') || 'Visitor',
-        visitorEmail: localStorage.getItem('sc_visitor_email') || null,
-        currentPage: window.location.pathname,
-        metadata: {
-          userAgent: navigator.userAgent,
-          referrer: document.referrer,
-          language: navigator.language
-        }
-      });
-    }
-
-    async sendMessage() {
-      if (this.hasFatalError) {
-        this.addSystemMessage('Unable to send message: configuration error');
-        return;
-      }
-      const content = this.elements.input.value.trim();
-      if ((!content && !this.selectedFile) || !this.socket) return;
-
-      if (this.selectedFile) {
-        await this.uploadAndSendFile(content || 'File attachment');
-      } else {
-        this.socket.emit('send-message', {
-          content,
-          senderName: localStorage.getItem('sc_visitor_name') || 'You'
-        });
-      }
-
-      this.elements.input.value = '';
-      this.elements.input.style.height = 'auto';
-      this.clearFileSelection();
-    }
-
-    async uploadAndSendFile(content) {
-      try {
-        const formData = new FormData();
-        formData.append('file', this.selectedFile);
-
-        const response = await fetch(`${API_URL}/api/files/upload`, {
-          method: 'POST',
-          headers: {
-            'X-Site-Key': this.config.siteKey
-          },
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error('File upload failed');
-        }
-
-        const data = await response.json();
-        
-        const messageType = this.selectedFile.type.startsWith('image/') ? 'image' : 'file';
-        
-        this.socket.emit('send-message', {
-          content,
-          senderName: localStorage.getItem('sc_visitor_name') || 'You',
-          messageType,
-          fileData: data.file
-        });
-
-      } catch (error) {
-        console.error('File upload error:', error);
-        this.showNotification('Dosya yüklenemedi. Lütfen tekrar deneyin.', 'error');
-      }
-    }
-
-    handleFileSelect(file) {
-      if (!file) return;
-
-      const maxSize = 10 * 1024 * 1024;
-      if (file.size > maxSize) {
-        this.showNotification('Dosya çok büyük. Maksimum 10MB yükleyebilirsiniz.', 'error');
-        return;
-      }
-
-      const allowedTypes = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain',
-        'application/zip'
-      ];
-
-      if (!allowedTypes.includes(file.type)) {
-        this.showNotification('Bu dosya türü desteklenmiyor. Lütfen resim, PDF, Office belgesi veya metin dosyası yükleyin.', 'error');
-        return;
-      }
-
-      this.selectedFile = file;
-      this.showFilePreview(file);
-    }
-
-    showFilePreview(file) {
-      const size = this.formatFileSize(file.size);
-      this.elements.filePreviewName.textContent = file.name;
-      this.elements.filePreviewSize.textContent = size;
-      this.elements.filePreview.classList.add('active');
-    }
-
-    clearFileSelection() {
-      this.selectedFile = null;
-      this.elements.fileInput.value = '';
-      this.elements.filePreview.classList.remove('active');
-    }
-
-    formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-    }
-
-    renderMessages(messages) {
-      this.elements.messages.innerHTML = '';
-      messages.forEach(msg => this.addMessage(msg));
-      this.scrollToBottom();
-    }
-
-    addSystemMessage(text) {
-      const sysMsg = {
-        _id: 'sys-' + Date.now(),
-        senderType: 'bot',
-        senderName: 'System',
-        content: text,
-        createdAt: new Date()
-      };
-      this.addMessage(sysMsg);
-      this.scrollToBottom();
-    }
-
-    addMessage(message) {
-      const messageEl = document.createElement('div');
-      messageEl.className = `sc-message ${message.senderType}`;
-      
-      const time = new Date(message.createdAt).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      let fileAttachment = '';
-      if (message.fileData && (message.messageType === 'file' || message.messageType === 'image')) {
-        if (message.messageType === 'image') {
-          fileAttachment = `
-            <img src="${API_URL}${message.fileData.url}" 
-                 class="sc-file-image" 
-                 alt="${this.escapeHtml(message.fileData.originalName)}"
-                 onclick="window.open('${API_URL}${message.fileData.url}', '_blank')" />
-          `;
-        } else {
-          const fileIcon = this.getFileIcon(message.fileData.mimeType);
-          fileAttachment = `
-            <div class="sc-file-attachment" onclick="window.open('${API_URL}${message.fileData.url}', '_blank')">
-              <div class="sc-file-attachment-header">
-                <div class="sc-file-attachment-icon">
-                  ${fileIcon}
-                </div>
-                <div class="sc-file-attachment-info">
-                  <div class="sc-file-attachment-name">${this.escapeHtml(message.fileData.originalName)}</div>
-                  <div class="sc-file-attachment-size">${this.formatFileSize(message.fileData.size)}</div>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-      }
-
-      messageEl.innerHTML = `
-        ${message.senderType !== 'visitor' ? `<div class="sc-message-sender">${message.senderName}</div>` : ''}
-        <div class="sc-message-content">
-          ${this.escapeHtml(message.content)}
-          ${fileAttachment}
-        </div>
-        <div class="sc-message-time">${time}</div>
-      `;
-
-      this.elements.messages.appendChild(messageEl);
-    }
-
-    getFileIcon(mimeType) {
-      if (mimeType.includes('pdf')) {
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>';
-      } else if (mimeType.includes('word')) {
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
-      } else if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h5v2zm0-4H5v-2h5v2zm0-4H5V7h5v2zm4 8h-2l-2-4 2-4h2l-2 4 2 4zm6 0h-5v-2h5v2zm0-4h-5v-2h5v2zm0-4h-5V7h5v2z"/></svg>';
-      } else if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('7z')) {
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>';
-      }
-      return '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>';
-    }
-
-    showTypingIndicator() {
-      let indicator = document.querySelector('.sc-typing');
-      if (!indicator) {
-        indicator = document.createElement('div');
-        indicator.className = 'sc-typing';
-        indicator.innerHTML = `
-          <div class="sc-typing-dots">
-            <div class="sc-typing-dot"></div>
-            <div class="sc-typing-dot"></div>
-            <div class="sc-typing-dot"></div>
-          </div>
-        `;
-        this.elements.messages.appendChild(indicator);
-      }
-      indicator.classList.add('active');
-      this.scrollToBottom();
-    }
-
-    hideTypingIndicator() {
-      const indicator = document.querySelector('.sc-typing');
-      if (indicator) {
-        indicator.classList.remove('active');
-      }
-    }
-
-    scrollToBottom() {
-      this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
-    }
-
-    escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    openWidget() {
-      if (!this.isOpen) {
-        this.toggleChat();
-      }
-    }
+  var SDK_VERSION = '3.0.0';
+  var NAMESPACE = 'SupportChat';
+  var LEGACY_NAMESPACE = 'SupportIO';
+
+  // Ayni sayfada ikinci kez calisirsa hicbir sey yapma. Bu, "widget iki kere
+  // gorunuyor" siniflarinin tamamini kokten keser (cift script etiketi, SPA
+  // remount, Next.js strict mode double-effect, WordPress eklenti cakismasi).
+  if (window[NAMESPACE] && window[NAMESPACE].__runtime) {
+    return;
   }
 
-  function initSupportIO() {
-    if (window.SupportIOConfig) {
-      const widget = new SupportIOWidget(window.SupportIOConfig);
-      window.SupportIO = widget;
-      
-      window.SupportIOWidget = {
-        openWidget: function() {
-          widget.openWidget();
-        }
-      };
-    } else {
-      console.error('SupportIOConfig not found. Please configure the widget.');
+  // -------------------------------------------------------------------------
+  // 0. Yardimcilar
+  // -------------------------------------------------------------------------
+
+  /** localStorage private mode / disabled cookies durumunda ERROR ATAR. */
+  var store = {
+    get: function (key) {
+      try { return window.localStorage.getItem(key); } catch (e) { return memory[key] || null; }
+    },
+    set: function (key, value) {
+      try { window.localStorage.setItem(key, value); } catch (e) { memory[key] = value; }
+    },
+    remove: function (key) {
+      try { window.localStorage.removeItem(key); } catch (e) { delete memory[key]; }
     }
+  };
+  var memory = {};
+
+  function uid(prefix) {
+    var rnd;
+    try {
+      var buf = new Uint8Array(8);
+      (window.crypto || window.msCrypto).getRandomValues(buf);
+      rnd = Array.prototype.map.call(buf, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    } catch (e) {
+      rnd = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+    }
+    return prefix + '_' + Date.now().toString(36) + '_' + rnd;
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /** Rengin uzerine okunur metin rengi secer (WCAG luminance). */
+  function readableOn(hex) {
+    var c = String(hex || '').replace('#', '');
+    if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+    if (c.length !== 6) return '#FFFFFF';
+    var r = parseInt(c.slice(0, 2), 16) / 255;
+    var g = parseInt(c.slice(2, 4), 16) / 255;
+    var b = parseInt(c.slice(4, 6), 16) / 255;
+    var f = function (v) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    var L = 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    return L > 0.45 ? '#111827' : '#FFFFFF';
+  }
+
+  function withAlpha(hex, alpha) {
+    var c = String(hex || '').replace('#', '');
+    if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+    if (c.length !== 6) return 'rgba(0,0,0,' + alpha + ')';
+    return 'rgba(' + parseInt(c.slice(0, 2), 16) + ',' + parseInt(c.slice(2, 4), 16) + ',' + parseInt(c.slice(4, 6), 16) + ',' + alpha + ')';
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return '0 B';
+    var units = ['B', 'KB', 'MB'];
+    var i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    return Math.round((bytes / Math.pow(1024, i)) * 10) / 10 + ' ' + units[i];
+  }
+
+  // -------------------------------------------------------------------------
+  // 1. Yerellestirme
+  //
+  // Widget'in ic metinleri paneldeki i18n'den bagimsizdir: musterinin sitesi
+  // baska bir dilde olabilir. Dil sirasi: acik ayar > <html lang> > tarayici.
+  // -------------------------------------------------------------------------
+  var STRINGS = {
+    tr: {
+      launcherLabel: 'Destek sohbetini ac',
+      close: 'Kapat',
+      back: 'Geri',
+      home: 'Ana sayfa',
+      messages: 'Mesajlar',
+      help: 'Yardim',
+      online: 'Cevrimici',
+      away: 'Kisa sure icinde donecegiz',
+      offline: 'Su anda cevrimdisiyiz',
+      connecting: 'Baglaniyor...',
+      reconnecting: 'Yeniden baglaniyor...',
+      disconnected: 'Baglanti kesildi',
+      connectionLost: 'Baglanti koptu. Yeniden deneniyor...',
+      connectionRestored: 'Baglanti geri geldi',
+      placeholder: 'Mesajinizi yazin...',
+      send: 'Gonder',
+      attach: 'Dosya ekle',
+      startConversation: 'Sohbet baslat',
+      replyFast: 'Genelde birkac dakika icinde yanitliyoruz',
+      replyOffline: 'Mesajinizi birakin, dondugumuzde yanitlayalim',
+      greeting: 'Merhaba!',
+      greetingSub: 'Size nasil yardimci olabiliriz?',
+      searchHelp: 'Yardim konularinda ara...',
+      noResults: 'Sonuc bulunamadi',
+      noFaqs: 'Henuz yardim icerigi eklenmemis',
+      emptyThread: 'Sohbeti baslatmak icin bir mesaj yazin',
+      typing: 'yaziyor...',
+      sending: 'Gonderiliyor',
+      failed: 'Gonderilemedi',
+      retry: 'Tekrar dene',
+      fileTooLarge: 'Dosya cok buyuk. En fazla 10MB.',
+      fileTypeBlocked: 'Bu dosya turu desteklenmiyor.',
+      uploadFailed: 'Dosya yuklenemedi.',
+      loadFailed: 'Sohbet yuklenemedi. Lutfen sayfayi yenileyin.',
+      offlineNotice: 'Su anda cevrimdisiyiz. Mesajinizi birakin, en kisa surede donelim.',
+      poweredBy: 'Support.io ile guclendirilmistir'
+    },
+    en: {
+      launcherLabel: 'Open support chat',
+      close: 'Close',
+      back: 'Back',
+      home: 'Home',
+      messages: 'Messages',
+      help: 'Help',
+      online: 'Online',
+      away: 'Back shortly',
+      offline: 'We are offline right now',
+      connecting: 'Connecting...',
+      reconnecting: 'Reconnecting...',
+      disconnected: 'Disconnected',
+      connectionLost: 'Connection lost. Retrying...',
+      connectionRestored: 'Back online',
+      placeholder: 'Type your message...',
+      send: 'Send',
+      attach: 'Attach a file',
+      startConversation: 'Start a conversation',
+      replyFast: 'We usually reply within a few minutes',
+      replyOffline: 'Leave a message and we will get back to you',
+      greeting: 'Hi there!',
+      greetingSub: 'How can we help you today?',
+      searchHelp: 'Search help articles...',
+      noResults: 'No results found',
+      noFaqs: 'No help articles yet',
+      emptyThread: 'Send a message to start the conversation',
+      typing: 'is typing...',
+      sending: 'Sending',
+      failed: 'Not sent',
+      retry: 'Retry',
+      fileTooLarge: 'File is too large. Maximum 10MB.',
+      fileTypeBlocked: 'This file type is not supported.',
+      uploadFailed: 'Upload failed.',
+      loadFailed: 'Could not load the chat. Please refresh the page.',
+      offlineNotice: 'We are offline right now. Leave a message and we will get back to you.',
+      poweredBy: 'Powered by Support.io'
+    }
+  };
+
+  function pickLocale(explicit) {
+    var candidates = [
+      explicit,
+      document.documentElement.getAttribute('lang'),
+      navigator.language,
+      (navigator.languages || [])[0]
+    ];
+    for (var i = 0; i < candidates.length; i++) {
+      if (!candidates[i]) continue;
+      var code = String(candidates[i]).toLowerCase().slice(0, 2);
+      if (STRINGS[code]) return code;
+    }
+    return 'en';
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. Olay yayinlayici
+  // -------------------------------------------------------------------------
+  function Emitter() {
+    this._handlers = {};
+  }
+  Emitter.prototype.on = function (event, handler) {
+    if (typeof handler !== 'function') return function () {};
+    (this._handlers[event] = this._handlers[event] || []).push(handler);
+    var self = this;
+    return function () { self.off(event, handler); };
+  };
+  Emitter.prototype.off = function (event, handler) {
+    if (!this._handlers[event]) return;
+    if (!handler) { delete this._handlers[event]; return; }
+    this._handlers[event] = this._handlers[event].filter(function (h) { return h !== handler; });
+  };
+  Emitter.prototype.emit = function (event, payload) {
+    var list = (this._handlers[event] || []).slice();
+    for (var i = 0; i < list.length; i++) {
+      // Bir dinleyicinin hatasi digerlerini ve widget'i durdurmamali. Host
+      // sitenin callback'i bizim kontrolumuzde degil.
+      try { list[i](payload); } catch (e) {
+        if (window.console && console.error) console.error('[SupportChat] listener error for "' + event + '"', e);
+      }
+    }
+    var star = (this._handlers['*'] || []).slice();
+    for (var j = 0; j < star.length; j++) {
+      try { star[j]({ type: event, payload: payload }); } catch (e) {}
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // 3. Yapilandirma cozumlemesi
+  // -------------------------------------------------------------------------
+
+  // Script etiketini bul. `document.currentScript` async yuklemede de dogru
+  // calisir; yine de eski tarayicilar ve bazi paketleyiciler icin yedek arama.
+  function findScriptTag() {
+    if (document.currentScript && document.currentScript.src) return document.currentScript;
+    var all = document.getElementsByTagName('script');
+    for (var i = all.length - 1; i >= 0; i--) {
+      var src = all[i].src || '';
+      if (/\/widget(\/v\d+)?(\/widget)?\.js(\?|$)/.test(src) || all[i].hasAttribute('data-site-key')) {
+        return all[i];
+      }
+    }
+    return null;
+  }
+
+  var scriptTag = findScriptTag();
+
+  function attr(name) {
+    return scriptTag ? scriptTag.getAttribute(name) : null;
+  }
+
+  function bool(value, fallback) {
+    if (value === undefined || value === null || value === '') return fallback;
+    if (typeof value === 'boolean') return value;
+    return String(value).toLowerCase() !== 'false' && String(value) !== '0';
+  }
+
+  function resolveConfig(overrides) {
+    // Eski entegrasyonlar `window.SupportIOConfig` kullaniyordu; kirilmasin.
+    var legacy = window.SupportIOConfig || {};
+    var modern = window.SupportChatConfig || {};
+    var o = overrides || {};
+
+    var siteKey =
+      o.siteKey || attr('data-site-key') || attr('data-widget-id') ||
+      modern.siteKey || legacy.siteKey || null;
+
+    // API adresi sirasi: acik ayar > data-api-url > script'in kendi origin'i.
+    var apiUrl = o.apiUrl || attr('data-api-url') || modern.apiUrl || legacy.apiUrl || null;
+    if (!apiUrl && scriptTag && scriptTag.src) {
+      try { apiUrl = new URL(scriptTag.src, window.location.href).origin; } catch (e) { apiUrl = null; }
+    }
+    if (apiUrl) apiUrl = String(apiUrl).replace(/\/+$/, '');
+
+    return {
+      siteKey: siteKey,
+      apiUrl: apiUrl,
+      socketUrl: o.socketUrl || attr('data-socket-url') || modern.socketUrl || legacy.socketUrl || apiUrl,
+      locale: o.locale || attr('data-locale') || modern.locale || legacy.locale || null,
+      theme: o.theme || attr('data-theme') || modern.theme || null,
+      position: o.position || attr('data-position') || modern.position || legacy.position || null,
+      zIndex: o.zIndex || attr('data-z-index') || modern.zIndex || null,
+      autoOpen: o.autoOpen !== undefined ? o.autoOpen : (attr('data-auto-open') !== null ? bool(attr('data-auto-open')) : modern.autoOpen),
+      hidden: o.hidden !== undefined ? o.hidden : bool(attr('data-hidden'), false),
+      user: o.user || modern.user || null,
+      attributes: o.attributes || modern.attributes || null
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // 4. Widget
+  // -------------------------------------------------------------------------
+
+  var MAX_FILE_BYTES = 10 * 1024 * 1024;
+  var ALLOWED_MIME = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'application/pdf', 'text/plain', 'application/zip',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ];
+
+  function Widget(config) {
+    Emitter.call(this);
+
+    this.config = config;
+    this.locale = pickLocale(config.locale);
+    this.t = STRINGS[this.locale];
+
+    this.visitorId = store.get('sc_visitor_id');
+    if (!this.visitorId) {
+      this.visitorId = uid('v');
+      store.set('sc_visitor_id', this.visitorId);
+    }
+    // Oturum id'si sekme omurludur: proaktif kurallarin "bu ziyarette" mantigi
+    // buna dayanir.
+    this.sessionId = uid('s');
+
+    this.identity = null;
+    this.attributes = {};
+
+    this.remote = null;          // bootstrap yaniti
+    this.faqs = [];
+    this.availability = 'offline';
+
+    this.socket = null;
+    this.connection = 'idle';    // idle|connecting|connected|reconnecting|disconnected|error
+    this.conversationId = null;
+
+    this.isOpen = false;
+    this.isHidden = Boolean(config.hidden);
+    this.destroyed = false;
+    this.view = 'home';
+    this.unread = 0;
+
+    // Mesaj tekrarini KIMLIK uzerinden onler. API yaniti ve soket olayi ayni
+    // mesaji iki kez getirebiliyordu; eski surumde bu ekranda cift bubble
+    // olarak goruluyordu.
+    this.seen = Object.create(null);
+    this.pending = Object.create(null);
+    this.selectedFile = null;
+
+    this._listeners = [];  // {target, type, handler} — destroy'da sokulur
+    this._timers = [];
+  }
+  Widget.prototype = Object.create(Emitter.prototype);
+  Widget.prototype.constructor = Widget;
+
+  // --- yasam dongusu yardimcilari ------------------------------------------
+
+  Widget.prototype._listen = function (target, type, handler, options) {
+    target.addEventListener(type, handler, options);
+    this._listeners.push({ target: target, type: type, handler: handler, options: options });
+  };
+
+  Widget.prototype._timer = function (fn, ms) {
+    var id = setTimeout(fn, ms);
+    this._timers.push(id);
+    return id;
+  };
+
+  Widget.prototype._api = function (path) {
+    return this.config.apiUrl + path;
+  };
+
+  // --- baslangic ------------------------------------------------------------
+
+  Widget.prototype.init = async function () {
+    if (!this.config.siteKey) {
+      this._fail('MISSING_SITE_KEY', 'data-site-key is required on the widget script tag');
+      return;
+    }
+    if (!this.config.apiUrl) {
+      this._fail('MISSING_API_URL', 'Could not determine the API url from the script src');
+      return;
+    }
+
+    var ok = await this._bootstrap();
+    if (!ok) return;
+
+    if (!this._shouldShowOnThisPage()) {
+      this.isHidden = true;
+    }
+
+    this._render();
+    this._connect();
+    this._reportInstallation();
+    this._watchNavigation();
+
+    if (this.config.user) this.identify(this.config.user);
+    if (this.config.attributes) this.setAttributes(this.config.attributes);
+
+    var behavior = this.remote.config.behavior || {};
+    var autoOpen = this.config.autoOpen !== undefined && this.config.autoOpen !== null
+      ? this.config.autoOpen
+      : behavior.autoOpen;
+    if (autoOpen && !this.isHidden) {
+      this._timer(this.open.bind(this), Number(behavior.autoOpenDelay) || 5000);
+    }
+
+    this.emit('ready', { siteKey: this.config.siteKey, locale: this.locale, version: SDK_VERSION });
+  };
+
+  Widget.prototype._fail = function (code, message) {
+    this.fatal = { code: code, message: message };
+    if (window.console && console.error) console.error('[SupportChat] ' + code + ': ' + message);
+    this.emit('error', { code: code, message: message });
+  };
+
+  Widget.prototype._bootstrap = async function () {
+    try {
+      var res = await fetch(this._api('/api/widget/bootstrap?siteKey=' + encodeURIComponent(this.config.siteKey)), {
+        credentials: 'omit',
+        headers: { Accept: 'application/json' }
+      });
+      if (!res.ok) {
+        var body = await res.json().catch(function () { return {}; });
+        this._fail(body.code || 'WIDGET_NOT_FOUND', body.error || ('Bootstrap failed with HTTP ' + res.status));
+        return false;
+      }
+      this.remote = await res.json();
+      this.faqs = this.remote.faqs || [];
+      this.availability = this.remote.availability || 'offline';
+      // Sunucu bir dil onerisi vermez; ama config'te bir locale varsa o kazanir.
+      if (this.config.locale) this.setLocale(this.config.locale, true);
+      return true;
+    } catch (error) {
+      this._fail('NETWORK_ERROR', error.message);
+      return false;
+    }
+  };
+
+  // showOnPages / hideOnPages kurallari. Kurallar basit glob desenleridir.
+  Widget.prototype._shouldShowOnThisPage = function () {
+    var behavior = (this.remote && this.remote.config.behavior) || {};
+    var path = window.location.pathname;
+    var match = function (pattern) {
+      if (!pattern) return false;
+      var rx = new RegExp('^' + String(pattern)
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*') + '$');
+      return rx.test(path);
+    };
+    var hide = behavior.hideOnPages || [];
+    for (var i = 0; i < hide.length; i++) if (match(hide[i])) return false;
+    var show = behavior.showOnPages || [];
+    if (show.length === 0) return true;
+    for (var j = 0; j < show.length; j++) if (match(show[j])) return true;
+    return false;
+  };
+
+  Widget.prototype._reportInstallation = function () {
+    // Panelde "Kurulum bekleniyor" rozetini kapatir. Basarisiz olursa sessiz
+    // gecilir: kurulum dogrulamasi sohbetin calismasi icin gerekli degildir.
+    var payload = JSON.stringify({
+      siteKey: this.config.siteKey,
+      url: window.location.href,
+      sdkVersion: SDK_VERSION
+    });
+    try {
+      fetch(this._api('/api/widget/installed'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        credentials: 'omit',
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) {}
+  };
+
+  // -------------------------------------------------------------------------
+  // 5. SPA gezinme takibi
+  //
+  // React Router / Next.js / Vue Router tam sayfa yenilemez; `popstate` de
+  // pushState icin tetiklenmez. History metodlari sarilir. ONEMLI: orijinal
+  // metodlar saklanir ve destroy() sirasinda geri konur, aksi halde widget
+  // kaldirildiktan sonra bile host sitenin router'i bizim sarmalayicimizdan
+  // gecmeye devam ederdi.
+  // -------------------------------------------------------------------------
+  Widget.prototype._watchNavigation = function () {
+    var self = this;
+    var last = window.location.href;
+
+    var announce = function () {
+      if (window.location.href === last) return;
+      last = window.location.href;
+
+      var visible = self._shouldShowOnThisPage();
+      if (visible === self.isHidden) {
+        self.isHidden = !visible;
+        self._applyVisibility();
+      }
+      if (self.socket && self.socket.connected) {
+        self.socket.emit('visitor-page-view', { currentPage: window.location.pathname });
+      }
+      self.emit('navigate', { url: window.location.href, path: window.location.pathname });
+    };
+
+    this._historyPatch = {};
+    ['pushState', 'replaceState'].forEach(function (method) {
+      var original = window.history[method];
+      self._historyPatch[method] = original;
+      window.history[method] = function () {
+        var result = original.apply(this, arguments);
+        // Router'in kendi state guncellemesi bitsin diye bir tick beklenir.
+        setTimeout(announce, 0);
+        return result;
+      };
+    });
+
+    this._listen(window, 'popstate', announce);
+    this._listen(window, 'hashchange', announce);
+  };
+
+  // -------------------------------------------------------------------------
+  // 6. Soket
+  // -------------------------------------------------------------------------
+
+  Widget.prototype._loadSocketClient = function () {
+    if (window.io) return Promise.resolve(window.io);
+    if (Widget._ioPromise) return Widget._ioPromise;
+
+    var src = this.config.socketUrl + '/socket.io/socket.io.js';
+    Widget._ioPromise = new Promise(function (resolve, reject) {
+      var script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.onload = function () {
+        window.io ? resolve(window.io) : reject(new Error('socket.io client loaded but window.io is missing'));
+      };
+      script.onerror = function () { reject(new Error('Failed to load ' + src)); };
+      document.head.appendChild(script);
+    });
+    return Widget._ioPromise;
+  };
+
+  Widget.prototype._setConnection = function (state, detail) {
+    if (this.connection === state) return;
+    this.connection = state;
+    this._renderConnection();
+    this.emit('connection', { state: state, detail: detail || null });
+  };
+
+  Widget.prototype._connect = async function () {
+    var self = this;
+    this._setConnection('connecting');
+
+    var io;
+    try {
+      io = await this._loadSocketClient();
+    } catch (error) {
+      this._setConnection('error', error.message);
+      this._fail('SOCKET_ERROR', error.message);
+      return;
+    }
+    if (this.destroyed) return;
+
+    this.socket = io(this.config.socketUrl + '/widget', {
+      transports: ['websocket', 'polling'],
+      // Kendi baglantimizi yonetiriz; host sitenin baska bir socket.io
+      // baglantisiyla paylasmayiz.
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 800,
+      reconnectionDelayMax: 8000,
+      timeout: 10000
+    });
+
+    this.socket.on('connect', function () {
+      var wasDown = self.connection === 'reconnecting' || self.connection === 'disconnected';
+      self._setConnection('connected');
+      self._join();
+      if (wasDown) self._notice(self.t.connectionRestored, 'ok');
+    });
+
+    this.socket.on('disconnect', function (reason) {
+      // 'io client disconnect' bizim destroy()'umuzdur; kullaniciya
+      // "baglanti koptu" demek yanlis olur.
+      if (reason === 'io client disconnect') return;
+      self._setConnection('disconnected', reason);
+    });
+
+    this.socket.io.on('reconnect_attempt', function () { self._setConnection('reconnecting'); });
+    this.socket.io.on('error', function (err) { self._setConnection('error', err && err.message); });
+
+    this.socket.on('conversation-joined', function (data) {
+      if (data && data.conversation) {
+        self.conversationId = data.conversation._id;
+        self._renderThread(data.messages || []);
+      } else {
+        self.conversationId = null;
+        self._renderThread([]);
+        var welcome = (data && data.welcomeMessage) ||
+          (self.remote.config.messages && self.remote.config.messages.welcomeMessage);
+        if (welcome) {
+          self._appendMessage({
+            _id: 'welcome',
+            senderType: 'bot',
+            senderName: self.remote.config.branding.brandName,
+            content: welcome,
+            createdAt: new Date().toISOString()
+          });
+        }
+        self._renderEmptyStateIfNeeded();
+      }
+      self.emit('conversation:ready', { conversationId: self.conversationId });
+    });
+
+    this.socket.on('new-message', function (data) {
+      var message = data && data.message;
+      if (!message) return;
+      self._appendMessage(message);
+      if (message.senderType !== 'visitor' && !self.isOpen) {
+        self.unread += 1;
+        self._renderBadge();
+        self._playSound();
+      }
+      self.emit('message', { message: message });
+    });
+
+    this.socket.on('agent-typing', function () { self._showTyping(); });
+
+    this.socket.on('error', function (data) {
+      var message = (data && data.message) || 'Unknown socket error';
+      self.emit('error', { code: 'SOCKET_ERROR', message: message });
+      self._notice(message, 'error');
+    });
+  };
+
+  Widget.prototype._join = function () {
+    if (!this.socket) return;
+    this.socket.emit('join-conversation', {
+      siteKey: this.config.siteKey,
+      visitorId: this.visitorId,
+      visitorName: (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
+      visitorEmail: (this.identity && this.identity.email) || store.get('sc_visitor_email') || null,
+      currentPage: window.location.pathname,
+      metadata: {
+        userAgent: navigator.userAgent,
+        referrer: document.referrer,
+        language: navigator.language,
+        sessionId: this.sessionId,
+        attributes: this.attributes
+      }
+    });
+  };
+
+  // -------------------------------------------------------------------------
+  // 7. Arayuz — Shadow DOM
+  // -------------------------------------------------------------------------
+
+  Widget.prototype._css = function () {
+    var c = this.remote.config;
+    var colors = c.colors;
+    var button = c.button;
+    var win = c.window;
+    var advanced = c.advanced;
+    var typo = c.typography;
+
+    var primary = colors.primary;
+    var onPrimary = readableOn(primary);
+    var header = colors.header || primary;
+    var onHeader = readableOn(header);
+    var visitorBg = colors.visitorMessageBg || primary;
+    var onVisitor = readableOn(visitorBg);
+    var agentBg = colors.agentMessageBg;
+    var onAgent = readableOn(agentBg);
+
+    var size = button.size === 'small' ? 52 : button.size === 'large' ? 68 : 60;
+    var radius = typeof button.borderRadius === 'number' ? button.borderRadius : 50;
+    var bubbleRadius = radius >= 50 ? '50%' : radius + 'px';
+    var fontFamily = typo.fontFamily ||
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    var speed = advanced.animationSpeed === 'slow' ? 320 : advanced.animationSpeed === 'fast' ? 120 : 200;
+
+    var vertical = button.position.indexOf('top') === 0 ? 'top' : 'bottom';
+    var horizontal = button.position.indexOf('left') > -1 ? 'left' : 'right';
+
+    return [
+      /* Shadow root icinde bile :host'a yazmak gerekir; host sayfanin
+         `div { display: ... }` gibi kurallari host elemani etkileyebilir. */
+      ':host{all:initial;position:fixed;' + vertical + ':0;' + horizontal + ':0;',
+      'width:auto;height:auto;z-index:' + (this.config.zIndex || advanced.zIndex || 2147483000) + ';',
+      'font-family:' + fontFamily + ';color-scheme:light;}',
+      '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}',
+      /* SVG icin TABAN olcu.
+         viewBox'i olup width/height'i olmayan bir inline <svg> kabina gore
+         esnetilir: `.cta` gibi bir flex kutusunda dev bir ikona donusuyordu.
+         Shadow Root icinde host sayfanin `svg { width: ... }` kurali da
+         gecmedigi icin bu olcuyu burada bizim vermemiz gerekir. */
+      'svg{width:18px;height:18px;flex:0 0 auto;display:block;}',
+      'button{font:inherit;color:inherit;}',
+      '.root{position:fixed;' + vertical + ':20px;' + horizontal + ':20px;display:flex;flex-direction:column;',
+      'align-items:flex-' + (horizontal === 'right' ? 'end' : 'start') + ';gap:12px;}',
+      '.root[hidden]{display:none;}',
+
+      /* --- launcher --- */
+      '.launcher{width:' + size + 'px;height:' + size + 'px;border-radius:' + bubbleRadius + ';',
+      'background:' + primary + ';color:' + onPrimary + ';border:0;cursor:pointer;display:flex;',
+      'align-items:center;justify-content:center;position:relative;',
+      'box-shadow:' + (button.shadow === false ? 'none' : '0 8px 24px ' + withAlpha(primary, 0.32) + ',0 2px 6px rgba(0,0,0,.12)') + ';',
+      'transition:transform ' + speed + 'ms cubic-bezier(.2,.8,.2,1),box-shadow ' + speed + 'ms ease;}',
+      '.launcher:hover{transform:translateY(-2px) scale(1.04);}',
+      '.launcher:active{transform:scale(.96);}',
+      '.launcher:focus-visible{outline:3px solid ' + withAlpha(primary, 0.5) + ';outline-offset:3px;}',
+      '.launcher svg{width:26px;height:26px;}',
+      '.launcher .close-icon{display:none;}',
+      '.root.open .launcher .open-icon{display:none;}',
+      '.root.open .launcher .close-icon{display:block;}',
+      '.badge{position:absolute;top:-2px;' + horizontal + ':-2px;min-width:20px;height:20px;padding:0 6px;',
+      'border-radius:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:700;line-height:20px;',
+      'text-align:center;box-shadow:0 0 0 2px #fff;}',
+      '.badge[hidden]{display:none;}',
+
+      /* --- panel --- */
+      '.panel{width:' + win.width + 'px;max-width:calc(100vw - 40px);height:' + win.height + 'px;',
+      'max-height:calc(100vh - 120px);background:' + colors.background + ';color:' + colors.text + ';',
+      'border-radius:' + win.borderRadius + 'px;overflow:hidden;display:none;flex-direction:column;',
+      'box-shadow:0 24px 64px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);',
+      'border:1px solid ' + colors.border + ';',
+      'opacity:0;transform:translateY(12px) scale(.98);',
+      'transition:opacity ' + speed + 'ms ease,transform ' + speed + 'ms cubic-bezier(.2,.8,.2,1);}',
+      '.root.open .panel{display:flex;opacity:1;transform:none;}',
+
+      /* --- header --- */
+      '.header{background:' + header + ';color:' + onHeader + ';padding:16px 18px;display:flex;',
+      'align-items:center;gap:12px;min-height:' + win.headerHeight + 'px;flex:0 0 auto;}',
+      '.header-logo{width:' + c.branding.logoWidth + 'px;height:' + c.branding.logoHeight + 'px;',
+      'object-fit:contain;border-radius:8px;background:rgba(255,255,255,.14);flex:0 0 auto;}',
+      '.header-text{flex:1;min-width:0;}',
+      '.header-title{font-size:15px;font-weight:650;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.header-status{font-size:12px;opacity:.85;display:flex;align-items:center;gap:6px;margin-top:2px;}',
+      '.dot{width:7px;height:7px;border-radius:50%;background:#9CA3AF;flex:0 0 auto;}',
+      '.dot.online{background:#22C55E;}.dot.away{background:#F59E0B;}',
+      '.dot.pulse{animation:pulse 1.4s ease-in-out infinite;}',
+      '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}',
+      '.icon-btn{width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:inherit;',
+      'cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;',
+      'transition:background 140ms ease;}',
+      '.icon-btn:hover{background:rgba(255,255,255,.16);}',
+      '.icon-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px;}',
+      '.icon-btn svg{width:18px;height:18px;}',
+
+      /* --- banner --- */
+      '.banner{padding:8px 16px;font-size:12px;text-align:center;flex:0 0 auto;display:none;}',
+      '.banner.show{display:block;}',
+      '.banner.warn{background:#FEF3C7;color:#92400E;}',
+      '.banner.error{background:#FEE2E2;color:#991B1B;}',
+      '.banner.ok{background:#DCFCE7;color:#166534;}',
+
+      /* --- views --- */
+      '.body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}',
+      '.view{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden;}',
+      '.view.active{display:flex;}',
+
+      /* --- home ---
+         Duzen: karsilama blogu, ardindan tiklanabilir bir "eylem karti" ve
+         altinda yardim baslıklari. Onceki surumde burada tek bir dev buton
+         vardi; ikonun olcusu yoktu ve butonu tamamen dolduruyordu. */
+      '.home{overflow-y:auto;padding:26px 20px 20px;}',
+      '.home h2{font-size:23px;font-weight:680;letter-spacing:-.02em;line-height:1.25;}',
+      '.home p.sub{margin-top:7px;font-size:14.5px;color:' + colors.textSecondary + ';line-height:1.55;}',
+
+      '.card{margin-top:22px;width:100%;padding:14px;border:1px solid ' + colors.border + ';',
+      'border-radius:14px;background:' + colors.background + ';cursor:pointer;text-align:left;',
+      'display:flex;align-items:center;gap:12px;',
+      'transition:border-color 160ms ease,box-shadow 160ms ease,transform 160ms ease;}',
+      '.card:hover{border-color:' + withAlpha(primary, 0.45) + ';box-shadow:0 6px 18px ' + withAlpha(primary, 0.13) + ';transform:translateY(-1px);}',
+      '.card:active{transform:translateY(0);}',
+      '.card:focus-visible{outline:2px solid ' + primary + ';outline-offset:2px;}',
+      '.card-icon{width:38px;height:38px;border-radius:11px;background:' + primary + ';color:' + onPrimary + ';',
+      'display:flex;align-items:center;justify-content:center;flex:0 0 auto;}',
+      '.card-icon svg{width:19px;height:19px;}',
+      '.card-body{flex:1;min-width:0;}',
+      '.card-title{font-size:14.5px;font-weight:600;line-height:1.3;}',
+      '.card-sub{margin-top:2px;font-size:12.5px;color:' + colors.textSecondary + ';line-height:1.4;}',
+      '.card-go{flex:0 0 auto;color:' + colors.textSecondary + ';opacity:.55;}',
+      '.card-go svg{width:16px;height:16px;transform:rotate(-90deg);}',
+
+      '.faq-preview{margin-top:22px;}',
+      '.faq-preview h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;',
+      'color:' + colors.textSecondary + ';margin-bottom:8px;padding:0 2px;}',
+      '.faq-preview .faq-q{font-size:13.5px;padding:11px 12px;}',
+      '.faq-preview .faq-q svg{width:15px;height:15px;transform:rotate(-90deg);}',
+
+      /* faq */
+      '.help{overflow:hidden;}',
+      '.search{padding:14px 16px;border-bottom:1px solid ' + colors.border + ';flex:0 0 auto;}',
+      '.search input{width:100%;padding:10px 12px;border:1px solid ' + colors.border + ';border-radius:10px;',
+      'font-size:14px;font-family:inherit;background:' + colors.background + ';color:' + colors.text + ';outline:none;}',
+      '.search input:focus{border-color:' + primary + ';box-shadow:0 0 0 3px ' + withAlpha(primary, 0.16) + ';}',
+      '.faq-list{flex:1;overflow-y:auto;padding:8px;}',
+      '.faq{border-radius:10px;overflow:hidden;}',
+      '.faq + .faq{margin-top:2px;}',
+      '.faq-q{width:100%;text-align:left;padding:12px 14px;border:0;background:transparent;cursor:pointer;',
+      'font-size:14px;font-weight:550;font-family:inherit;color:' + colors.text + ';display:flex;',
+      'align-items:center;justify-content:space-between;gap:10px;border-radius:10px;transition:background 140ms ease;}',
+      '.faq-q:hover{background:' + withAlpha(colors.textSecondary, 0.08) + ';}',
+      '.faq-q svg{width:16px;height:16px;flex:0 0 auto;opacity:.5;transition:transform 180ms ease;}',
+      '.faq.open .faq-q svg{transform:rotate(180deg);}',
+      '.faq-a{display:none;padding:0 14px 14px;font-size:13.5px;line-height:1.6;color:' + colors.textSecondary + ';}',
+      '.faq.open .faq-a{display:block;}',
+
+      /* thread */
+      '.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;',
+      'scroll-behavior:smooth;overscroll-behavior:contain;}',
+      '.msg{max-width:82%;display:flex;flex-direction:column;gap:3px;}',
+      '.msg.visitor{align-self:flex-end;align-items:flex-end;}',
+      '.msg.agent,.msg.bot,.msg.system{align-self:flex-start;}',
+      '.msg-sender{font-size:11px;font-weight:600;color:' + colors.textSecondary + ';padding:0 4px;}',
+      '.bubble{padding:10px 13px;border-radius:' + c.messages.messageBubbleRadius + 'px;font-size:14px;',
+      'line-height:1.5;word-break:break-word;white-space:pre-wrap;}',
+      '.msg.visitor .bubble{background:' + visitorBg + ';color:' + onVisitor + ';border-bottom-right-radius:5px;}',
+      '.msg.agent .bubble,.msg.bot .bubble{background:' + agentBg + ';color:' + onAgent + ';border-bottom-left-radius:5px;}',
+      '.msg.system .bubble{background:transparent;border:1px dashed ' + colors.border + ';color:' + colors.textSecondary + ';font-size:13px;}',
+      '.meta{font-size:10.5px;color:' + colors.textSecondary + ';padding:0 4px;display:flex;align-items:center;gap:5px;}',
+      '.msg.pending{opacity:.62;}',
+      '.msg.failed .bubble{background:#FEE2E2;color:#991B1B;}',
+      '.retry{border:0;background:none;color:#DC2626;font-size:10.5px;font-weight:600;cursor:pointer;',
+      'text-decoration:underline;font-family:inherit;padding:0;}',
+      '.attachment{margin-top:8px;display:block;}',
+      '.attachment img{max-width:100%;border-radius:10px;display:block;cursor:pointer;}',
+      '.file{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;',
+      'background:' + withAlpha(colors.textSecondary, 0.1) + ';text-decoration:none;color:inherit;}',
+      '.file svg{width:18px;height:18px;flex:0 0 auto;opacity:.7;}',
+      '.file-name{font-size:12.5px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
+      '.file-size{font-size:10.5px;opacity:.7;}',
+      '.typing{align-self:flex-start;display:none;gap:4px;padding:11px 14px;border-radius:14px;',
+      'background:' + agentBg + ';}',
+      '.typing.show{display:flex;}',
+      '.typing i{width:6px;height:6px;border-radius:50%;background:' + colors.textSecondary + ';',
+      'animation:bounce 1.2s infinite;}',
+      '.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}',
+      '@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}',
+      '.empty{margin:auto;text-align:center;color:' + colors.textSecondary + ';font-size:13.5px;padding:24px;line-height:1.6;}',
+
+      /* composer */
+      '.composer{flex:0 0 auto;border-top:1px solid ' + colors.border + ';padding:10px 12px;',
+      'display:flex;align-items:flex-end;gap:8px;background:' + colors.background + ';',
+      'padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));}',
+      '.composer textarea{flex:1;min-width:0;resize:none;border:1px solid ' + colors.border + ';',
+      'border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;line-height:1.45;',
+      'max-height:120px;background:' + colors.background + ';color:' + colors.text + ';outline:none;}',
+      '.composer textarea:focus{border-color:' + primary + ';box-shadow:0 0 0 3px ' + withAlpha(primary, 0.16) + ';}',
+      '.composer textarea::placeholder{color:' + colors.textSecondary + ';opacity:.75;}',
+      '.send{width:38px;height:38px;flex:0 0 auto;border:0;border-radius:11px;background:' + primary + ';',
+      'color:' + onPrimary + ';cursor:pointer;display:flex;align-items:center;justify-content:center;',
+      'transition:filter 140ms ease,transform 140ms ease;}',
+      '.send:hover:not(:disabled){filter:brightness(1.08);}',
+      '.send:active:not(:disabled){transform:scale(.94);}',
+      '.send:disabled{opacity:.4;cursor:not-allowed;}',
+      '.send svg{width:17px;height:17px;}',
+      '.file-chip{display:none;align-items:center;gap:8px;margin:0 12px 8px;padding:8px 10px;',
+      'border-radius:10px;background:' + withAlpha(primary, 0.09) + ';font-size:12px;}',
+      '.file-chip.show{display:flex;}',
+      '.file-chip button{margin-left:auto;border:0;background:none;cursor:pointer;color:inherit;',
+      'opacity:.6;display:flex;padding:2px;}',
+      '.file-chip button:hover{opacity:1;}',
+
+      /* nav */
+      '.nav{flex:0 0 auto;display:flex;border-top:1px solid ' + colors.border + ';',
+      'padding-bottom:env(safe-area-inset-bottom,0px);}',
+      '.nav button{flex:1;padding:10px 4px;border:0;background:none;cursor:pointer;font-family:inherit;',
+      'font-size:11px;font-weight:550;color:' + colors.textSecondary + ';display:flex;flex-direction:column;',
+      'align-items:center;gap:3px;transition:color 140ms ease;}',
+      '.nav button svg{width:19px;height:19px;}',
+      '.nav button.active{color:' + primary + ';}',
+      '.nav button:focus-visible{outline:2px solid ' + primary + ';outline-offset:-2px;}',
+
+      '.footer{flex:0 0 auto;padding:7px;text-align:center;font-size:10.5px;color:' + colors.textSecondary + ';',
+      'opacity:.7;border-top:1px solid ' + colors.border + ';}',
+
+      /* --- mobil ---
+         100vh mobil tarayicilarda adres cubugunun ALTINA tasar. 100dvh dogru
+         olcudur; desteklenmeyen tarayicilar icin once 100vh yazilir. */
+      '@media (max-width:480px){',
+      '.root{' + vertical + ':0;' + horizontal + ':0;left:0;right:0;bottom:0;align-items:flex-end;padding:16px;gap:0;}',
+      '.root.open{padding:0;}',
+      '.root.open .launcher{display:none;}',
+      '.panel{position:fixed;inset:0;width:100%;max-width:none;height:100vh;height:100dvh;',
+      'max-height:none;border-radius:0;border:0;}',
+      '.header{padding-top:calc(16px + env(safe-area-inset-top,0px));}',
+      '}',
+      '@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}'
+    ].join('');
+  };
+
+  var ICONS = {
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    minimize: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>',
+    paperclip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+    message: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
+    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+    file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
+  };
+
+  Widget.prototype._render = function () {
+    var self = this;
+    var c = this.remote.config;
+    var t = this.t;
+
+    // Host elemani. Shadow DOM host sayfanin CSS'inden yalitir; `all:initial`
+    // ile birlikte kalitim yollarinin ikisi de kapanir.
+    var host = document.createElement('div');
+    host.id = 'support-chat-widget';
+    host.setAttribute('data-sdk-version', SDK_VERSION);
+
+    var root;
+    if (host.attachShadow) {
+      root = host.attachShadow({ mode: 'open' });
+    } else {
+      // Shadow DOM yoksa (cok eski tarayici) widget yine calisir; yalitim
+      // sinif adlarina duser. Sessizce bozulmaktansa zayif yalitim iyidir.
+      root = host;
+    }
+    this.host = host;
+    this.root = root;
+
+    var style = document.createElement('style');
+    style.textContent = this._css();
+    root.appendChild(style);
+
+    if (c.advanced.customCSS) {
+      var custom = document.createElement('style');
+      custom.textContent = String(c.advanced.customCSS);
+      root.appendChild(custom);
+    }
+
+    var brand = escapeHtml(c.branding.brandName);
+    var logo = c.branding.logo
+      ? '<img class="header-logo" src="' + escapeHtml(c.branding.logo) + '" alt="" />'
+      : '';
+    var showBrand = c.branding.showBrandName !== false;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'root';
+    wrap.innerHTML = [
+      '<div class="panel" role="dialog" aria-modal="false" aria-label="' + escapeHtml(brand) + '" tabindex="-1">',
+        '<div class="header">',
+          logo,
+          '<div class="header-text">',
+            showBrand ? '<div class="header-title">' + brand + '</div>' : '',
+            '<div class="header-status"><span class="dot"></span><span class="status-text"></span></div>',
+          '</div>',
+          c.window.showCloseButton !== false
+            ? '<button class="icon-btn js-close" aria-label="' + escapeHtml(t.close) + '">' + ICONS.minimize + '</button>'
+            : '',
+        '</div>',
+        '<div class="banner js-banner" role="status" aria-live="polite"></div>',
+        '<div class="body">',
+
+          '<section class="view home js-view-home active" aria-label="' + escapeHtml(t.home) + '">',
+            '<h2>' + escapeHtml(t.greeting) + '</h2>',
+            '<p class="sub">' + escapeHtml(t.greetingSub) + '</p>',
+            '<button class="card js-start">',
+              '<span class="card-icon">' + ICONS.message + '</span>',
+              '<span class="card-body">',
+                '<span class="card-title">' + escapeHtml(t.startConversation) + '</span>',
+                '<span class="card-sub js-reply-time"></span>',
+              '</span>',
+              '<span class="card-go">' + ICONS.chevron + '</span>',
+            '</button>',
+            '<div class="faq-preview js-faq-preview"></div>',
+          '</section>',
+
+          '<section class="view js-view-messages" aria-label="' + escapeHtml(t.messages) + '">',
+            '<div class="messages js-messages" role="log" aria-live="polite"></div>',
+            '<div class="typing js-typing" aria-hidden="true"><i></i><i></i><i></i></div>',
+            '<div class="file-chip js-file-chip">',
+              ICONS.file,
+              '<span class="file-name js-file-name"></span>',
+              '<span class="file-size js-file-size"></span>',
+              '<button class="js-file-clear" aria-label="' + escapeHtml(t.close) + '">' + ICONS.close + '</button>',
+            '</div>',
+            '<div class="composer">',
+              '<button class="icon-btn js-attach" aria-label="' + escapeHtml(t.attach) + '" style="color:' + c.colors.textSecondary + '">' + ICONS.paperclip + '</button>',
+              '<input type="file" class="js-file-input" hidden />',
+              '<textarea class="js-input" rows="1" aria-label="' + escapeHtml(t.placeholder) + '" placeholder="' + escapeHtml(c.messages.placeholderText || t.placeholder) + '"></textarea>',
+              '<button class="send js-send" aria-label="' + escapeHtml(t.send) + '" disabled>' + ICONS.send + '</button>',
+            '</div>',
+          '</section>',
+
+          '<section class="view help js-view-help" aria-label="' + escapeHtml(t.help) + '">',
+            '<div class="search"><input type="search" class="js-search" placeholder="' + escapeHtml(t.searchHelp) + '" aria-label="' + escapeHtml(t.searchHelp) + '" /></div>',
+            '<div class="faq-list js-faq-list"></div>',
+          '</section>',
+
+        '</div>',
+        '<nav class="nav" aria-label="' + escapeHtml(brand) + '">',
+          '<button class="js-nav-home active" data-view="home">' + ICONS.home + '<span>' + escapeHtml(t.home) + '</span></button>',
+          '<button class="js-nav-messages" data-view="messages">' + ICONS.message + '<span>' + escapeHtml(t.messages) + '</span></button>',
+          this.faqs.length ? '<button class="js-nav-help" data-view="help">' + ICONS.help + '<span>' + escapeHtml(t.help) + '</span></button>' : '',
+        '</nav>',
+      '</div>',
+      '<button class="launcher js-launcher" aria-label="' + escapeHtml(t.launcherLabel) + '" aria-expanded="false">',
+        '<span class="open-icon">' + ICONS.chat + '</span>',
+        '<span class="close-icon">' + ICONS.close + '</span>',
+        '<span class="badge" hidden>0</span>',
+      '</button>'
+    ].join('');
+
+    root.appendChild(wrap);
+    document.body.appendChild(host);
+
+    var q = function (sel) { return wrap.querySelector(sel); };
+    this.el = {
+      wrap: wrap,
+      panel: q('.panel'),
+      launcher: q('.js-launcher'),
+      badge: q('.badge'),
+      banner: q('.js-banner'),
+      statusDot: q('.dot'),
+      statusText: q('.status-text'),
+      messages: q('.js-messages'),
+      typing: q('.js-typing'),
+      input: q('.js-input'),
+      send: q('.js-send'),
+      attach: q('.js-attach'),
+      fileInput: q('.js-file-input'),
+      fileChip: q('.js-file-chip'),
+      fileName: q('.js-file-name'),
+      fileSize: q('.js-file-size'),
+      search: q('.js-search'),
+      faqList: q('.js-faq-list'),
+      faqPreview: q('.js-faq-preview'),
+      replyTime: q('.js-reply-time'),
+      views: {
+        home: q('.js-view-home'),
+        messages: q('.js-view-messages'),
+        help: q('.js-view-help')
+      },
+      nav: wrap.querySelectorAll('.nav button')
+    };
+
+    // --- olay baglamalari ---
+    this._listen(this.el.launcher, 'click', function () { self.toggle(); });
+    var closeBtn = q('.js-close');
+    if (closeBtn) this._listen(closeBtn, 'click', function () { self.close(); });
+    this._listen(q('.js-start'), 'click', function () { self._setView('messages'); self.el.input.focus(); });
+
+    for (var i = 0; i < this.el.nav.length; i++) {
+      this._listen(this.el.nav[i], 'click', function (e) {
+        self._setView(e.currentTarget.getAttribute('data-view'));
+      });
+    }
+
+    this._listen(this.el.input, 'input', function () {
+      var el = self.el.input;
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+      self.el.send.disabled = !el.value.trim() && !self.selectedFile;
+      self._emitTyping();
+    });
+
+    this._listen(this.el.input, 'keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        self.sendMessage();
+      }
+    });
+
+    this._listen(this.el.send, 'click', function () { self.sendMessage(); });
+    this._listen(this.el.attach, 'click', function () { self.el.fileInput.click(); });
+    this._listen(this.el.fileInput, 'change', function (e) { self._pickFile(e.target.files[0]); });
+    this._listen(q('.js-file-clear'), 'click', function () { self._clearFile(); });
+
+    if (this.el.search) {
+      this._listen(this.el.search, 'input', function (e) { self._renderFaqs(e.target.value); });
+    }
+
+    // Esc ile kapat — dialog davranisinin beklenen parcasi.
+    this._listen(document, 'keydown', function (e) {
+      if (e.key === 'Escape' && self.isOpen) { self.close(); self.el.launcher.focus(); }
+    });
+
+    this._renderFaqs('');
+    this._renderFaqPreview();
+    this._renderConnection();
+    this._applyVisibility();
+  };
+
+  Widget.prototype._applyVisibility = function () {
+    if (!this.el) return;
+    this.el.wrap.hidden = this.isHidden;
+  };
+
+  Widget.prototype._setView = function (view) {
+    if (!this.el || !this.el.views[view]) return;
+    this.view = view;
+    for (var key in this.el.views) {
+      if (this.el.views[key]) this.el.views[key].classList.toggle('active', key === view);
+    }
+    for (var i = 0; i < this.el.nav.length; i++) {
+      var btn = this.el.nav[i];
+      btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+    }
+    if (view === 'messages') {
+      this.unread = 0;
+      this._renderBadge();
+      this._scrollToEnd();
+    }
+  };
+
+  Widget.prototype._renderConnection = function () {
+    if (!this.el) return;
+    var t = this.t;
+    var state = this.connection;
+    var dot = this.el.statusDot;
+    var text = this.el.statusText;
+
+    dot.className = 'dot';
+    if (state === 'connecting' || state === 'reconnecting') {
+      dot.classList.add('pulse');
+      text.textContent = state === 'connecting' ? t.connecting : t.reconnecting;
+    } else if (state === 'disconnected' || state === 'error') {
+      text.textContent = t.disconnected;
+    } else if (state === 'connected') {
+      dot.classList.add(this.availability === 'online' ? 'online' : this.availability === 'away' ? 'away' : '');
+      text.textContent = this.availability === 'online' ? t.online
+        : this.availability === 'away' ? t.away : t.offline;
+    } else {
+      text.textContent = '';
+    }
+
+    // Ana ekrandaki eylem kartinin alt metni de uygunluga gore degisir:
+    // cevrimdisi bir ekip icin "birkac dakika icinde yanitliyoruz" yazmak
+    // ziyaretciye yanlis beklenti verir.
+    if (this.el.replyTime) {
+      this.el.replyTime.textContent = this.availability === 'offline' ? t.replyOffline : t.replyFast;
+    }
+
+    // Bant yalnizca gercek bir kopma varken gorunur; her yeniden baglanma
+    // denemesinde yanip sonen bir uyari dikkat dagitir.
+    if (state === 'disconnected' || state === 'error') {
+      this._banner(t.connectionLost, 'error', 0);
+    } else if (state === 'connected') {
+      this._hideBanner();
+    }
+  };
+
+  Widget.prototype._banner = function (message, kind, autoHideMs) {
+    if (!this.el) return;
+    var b = this.el.banner;
+    b.textContent = message;
+    b.className = 'banner show ' + (kind || 'warn');
+    if (this._bannerTimer) clearTimeout(this._bannerTimer);
+    if (autoHideMs !== 0) {
+      var self = this;
+      this._bannerTimer = setTimeout(function () { self._hideBanner(); }, autoHideMs || 4000);
+    }
+  };
+
+  Widget.prototype._hideBanner = function () {
+    if (!this.el) return;
+    this.el.banner.className = 'banner';
+  };
+
+  Widget.prototype._notice = function (message, kind) {
+    this._banner(message, kind, 3500);
+  };
+
+  Widget.prototype._renderBadge = function () {
+    if (!this.el) return;
+    var behavior = this.remote.config.behavior || {};
+    var show = behavior.showUnreadBadge !== false && this.unread > 0 && !this.isOpen;
+    this.el.badge.hidden = !show;
+    this.el.badge.textContent = this.unread > 99 ? '99+' : String(this.unread);
+    this.emit('unread', { count: this.unread });
+  };
+
+  Widget.prototype._playSound = function () {
+    var behavior = this.remote.config.behavior || {};
+    if (behavior.enableSound === false) return;
+    // Harici bir ses dosyasi indirmek yerine WebAudio ile kisa bir ton uretilir:
+    // ek istek yok, CORS yok, CSP media-src sorunu yok.
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      this._audio = this._audio || new Ctx();
+      var ctx = this._audio;
+      if (ctx.state === 'suspended') return;   // kullanici henuz etkilesmedi
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.24);
+    } catch (e) {}
+  };
+
+  // --- FAQ ------------------------------------------------------------------
+
+  Widget.prototype._renderFaqPreview = function () {
+    if (!this.el || !this.faqs.length) return;
+    var top = this.faqs.slice(0, 3);
+    var self = this;
+    this.el.faqPreview.innerHTML =
+      '<h3>' + escapeHtml(this.t.help) + '</h3>' +
+      top.map(function (f) {
+        return '<div class="faq"><button class="faq-q" data-id="' + escapeHtml(f.id) + '">' +
+          '<span>' + escapeHtml(f.question) + '</span>' + ICONS.chevron + '</button></div>';
+      }).join('');
+    var buttons = this.el.faqPreview.querySelectorAll('.faq-q');
+    for (var i = 0; i < buttons.length; i++) {
+      this._listen(buttons[i], 'click', function () {
+        self._setView('help');
+      });
+    }
+  };
+
+  Widget.prototype._renderFaqs = function (term) {
+    if (!this.el || !this.el.faqList) return;
+    var self = this;
+    var query = String(term || '').trim().toLowerCase();
+    var list = query
+      ? this.faqs.filter(function (f) {
+          return (f.question + ' ' + f.answer).toLowerCase().indexOf(query) > -1;
+        })
+      : this.faqs;
+
+    if (!list.length) {
+      this.el.faqList.innerHTML = '<div class="empty">' +
+        escapeHtml(this.faqs.length ? this.t.noResults : this.t.noFaqs) + '</div>';
+      return;
+    }
+
+    this.el.faqList.innerHTML = list.map(function (f) {
+      return '<div class="faq">' +
+        '<button class="faq-q"><span>' + escapeHtml(f.question) + '</span>' + ICONS.chevron + '</button>' +
+        '<div class="faq-a">' + escapeHtml(f.answer) + '</div>' +
+        '</div>';
+    }).join('');
+
+    var buttons = this.el.faqList.querySelectorAll('.faq-q');
+    for (var i = 0; i < buttons.length; i++) {
+      this._listen(buttons[i], 'click', function (e) {
+        var faq = e.currentTarget.parentNode;
+        var wasOpen = faq.classList.contains('open');
+        var all = self.el.faqList.querySelectorAll('.faq');
+        for (var k = 0; k < all.length; k++) all[k].classList.remove('open');
+        if (!wasOpen) faq.classList.add('open');
+      });
+    }
+  };
+
+  // --- mesajlar -------------------------------------------------------------
+
+  Widget.prototype._renderThread = function (messages) {
+    if (!this.el) return;
+    this.el.messages.innerHTML = '';
+    this.seen = Object.create(null);
+    for (var i = 0; i < messages.length; i++) this._appendMessage(messages[i], true);
+    this._renderEmptyStateIfNeeded();
+    this._scrollToEnd();
+  };
+
+  Widget.prototype._renderEmptyStateIfNeeded = function () {
+    if (!this.el) return;
+    if (this.el.messages.children.length === 0) {
+      var notice = this.availability === 'offline' ? this.t.offlineNotice : this.t.emptyThread;
+      this.el.messages.innerHTML = '<div class="empty">' + escapeHtml(notice) + '</div>';
+    }
+  };
+
+  Widget.prototype._appendMessage = function (message, bulk) {
+    if (!this.el) return;
+    var id = String(message._id || message.id || '');
+
+    // Ayni mesaj hem POST yanitindan hem soket olayindan gelebilir.
+    if (id && this.seen[id]) return;
+    if (id) this.seen[id] = true;
+
+    // Iyimser gonderilen mesajin sunucu karsiligi geldiginde yerel kopyayi
+    // degistir; yoksa ayni mesaj iki kere gorunur.
+    var clientId = message.clientMessageId;
+    if (clientId && this.pending[clientId]) {
+      var placeholder = this.pending[clientId];
+      delete this.pending[clientId];
+      placeholder.node.classList.remove('pending');
+      placeholder.node.querySelector('.meta').textContent = this._time(message.createdAt);
+      return;
+    }
+
+    var emptyState = this.el.messages.querySelector('.empty');
+    if (emptyState) emptyState.remove();
+
+    var node = this._messageNode(message);
+    this.el.messages.appendChild(node);
+    if (!bulk) this._scrollToEnd();
+    return node;
+  };
+
+  Widget.prototype._time = function (value) {
+    try {
+      return new Date(value).toLocaleTimeString(this.locale === 'tr' ? 'tr-TR' : 'en-US', {
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch (e) { return ''; }
+  };
+
+  Widget.prototype._messageNode = function (message) {
+    var c = this.remote.config;
+    var type = message.senderType || 'agent';
+    var node = document.createElement('div');
+    node.className = 'msg ' + type;
+
+    var parts = [];
+    if (type !== 'visitor' && c.messages.showAvatars !== false && message.senderName) {
+      parts.push('<div class="msg-sender">' + escapeHtml(message.senderName) + '</div>');
+    }
+
+    var attachment = '';
+    var file = message.fileData;
+    if (file && file.url) {
+      var url = /^https?:/i.test(file.url) ? file.url : this.config.apiUrl + file.url;
+      if (message.messageType === 'image') {
+        attachment = '<span class="attachment"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+          '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(file.originalName || '') + '" /></a></span>';
+      } else {
+        attachment = '<span class="attachment"><a class="file" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+          ICONS.file +
+          '<span><span class="file-name">' + escapeHtml(file.originalName || 'file') + '</span>' +
+          '<span class="file-size"> ' + escapeHtml(formatBytes(file.size)) + '</span></span></a></span>';
+      }
+    }
+
+    parts.push('<div class="bubble">' + escapeHtml(message.content || '') + attachment + '</div>');
+    if (c.messages.showTimestamps !== false) {
+      parts.push('<div class="meta">' + escapeHtml(this._time(message.createdAt || Date.now())) + '</div>');
+    } else {
+      parts.push('<div class="meta"></div>');
+    }
+
+    node.innerHTML = parts.join('');
+    return node;
+  };
+
+  Widget.prototype._scrollToEnd = function () {
+    if (!this.el) return;
+    var box = this.el.messages;
+    // rAF: DOM guncellemesi tamamlanmadan scrollHeight eski degeri verir.
+    requestAnimationFrame(function () { box.scrollTop = box.scrollHeight; });
+  };
+
+  Widget.prototype._showTyping = function () {
+    if (!this.el) return;
+    this.el.typing.classList.add('show');
+    this._scrollToEnd();
+    if (this._typingTimer) clearTimeout(this._typingTimer);
+    var self = this;
+    this._typingTimer = setTimeout(function () {
+      if (self.el) self.el.typing.classList.remove('show');
+    }, 3000);
+  };
+
+  Widget.prototype._emitTyping = function () {
+    if (!this.socket || !this.socket.connected || !this.conversationId) return;
+    // Her tusa basista emit etmek gereksiz trafik uretir; saniyede bir yeter.
+    var now = Date.now();
+    if (this._lastTypingAt && now - this._lastTypingAt < 1000) return;
+    this._lastTypingAt = now;
+    this.socket.emit('typing');
+  };
+
+  Widget.prototype._pickFile = function (file) {
+    if (!file) return;
+    if (file.size > MAX_FILE_BYTES) { this._notice(this.t.fileTooLarge, 'error'); return; }
+    if (ALLOWED_MIME.indexOf(file.type) === -1) { this._notice(this.t.fileTypeBlocked, 'error'); return; }
+    this.selectedFile = file;
+    this.el.fileName.textContent = file.name;
+    this.el.fileSize.textContent = formatBytes(file.size);
+    this.el.fileChip.classList.add('show');
+    this.el.send.disabled = false;
+  };
+
+  Widget.prototype._clearFile = function () {
+    this.selectedFile = null;
+    if (!this.el) return;
+    this.el.fileInput.value = '';
+    this.el.fileChip.classList.remove('show');
+    this.el.send.disabled = !this.el.input.value.trim();
+  };
+
+  Widget.prototype.sendMessage = async function () {
+    if (this.fatal) { this._notice(this.fatal.message, 'error'); return; }
+    var content = this.el.input.value.trim();
+    if (!content && !this.selectedFile) return;
+    if (!this.socket || !this.socket.connected) { this._notice(this.t.connectionLost, 'error'); return; }
+
+    var clientMessageId = uid('c');
+    var file = this.selectedFile;
+
+    // Iyimser gorunum: kullanici gonderdigini ANINDA gorur. Sunucu onayi
+    // gelince "pending" kalkar, hata olursa "failed" + tekrar dene cikar.
+    var localMessage = {
+      _id: clientMessageId,
+      clientMessageId: clientMessageId,
+      senderType: 'visitor',
+      content: content || (file ? file.name : ''),
+      createdAt: new Date().toISOString()
+    };
+    var node = this._appendMessage(localMessage);
+    if (node) {
+      node.classList.add('pending');
+      node.querySelector('.meta').textContent = this.t.sending;
+      this.pending[clientMessageId] = { node: node, content: content, file: file };
+    }
+
+    this.el.input.value = '';
+    this.el.input.style.height = 'auto';
+    this.el.send.disabled = true;
+    this._clearFile();
+
+    try {
+      var payload = {
+        content: content,
+        senderName: (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
+        clientMessageId: clientMessageId
+      };
+
+      if (file) {
+        var uploaded = await this._upload(file);
+        payload.messageType = file.type.indexOf('image/') === 0 ? 'image' : 'file';
+        payload.fileData = uploaded;
+        if (!payload.content) payload.content = file.name;
+      }
+
+      this.socket.emit('send-message', payload);
+      this.emit('message:sent', { content: payload.content, clientMessageId: clientMessageId });
+
+      // Sunucu 12 saniyede yankilamazsa gonderim basarisiz sayilir. Sessizce
+      // "gonderiliyor" durumunda asili kalmak en kotu sonuctur.
+      var self = this;
+      this._timer(function () {
+        var still = self.pending[clientMessageId];
+        if (!still) return;
+        delete self.pending[clientMessageId];
+        self._markFailed(still, clientMessageId);
+      }, 12000);
+    } catch (error) {
+      var entry = this.pending[clientMessageId];
+      delete this.pending[clientMessageId];
+      if (entry) this._markFailed(entry, clientMessageId);
+      this._notice(this.t.uploadFailed, 'error');
+      this.emit('error', { code: 'SEND_FAILED', message: error.message });
+    }
+  };
+
+  Widget.prototype._markFailed = function (entry, clientMessageId) {
+    var self = this;
+    entry.node.classList.remove('pending');
+    entry.node.classList.add('failed');
+    var meta = entry.node.querySelector('.meta');
+    meta.innerHTML = escapeHtml(this.t.failed) + ' <button class="retry">' + escapeHtml(this.t.retry) + '</button>';
+    this._listen(meta.querySelector('.retry'), 'click', function () {
+      entry.node.remove();
+      delete self.seen[clientMessageId];
+      self.el.input.value = entry.content;
+      self.selectedFile = entry.file || null;
+      self.el.send.disabled = false;
+      self.sendMessage();
+    });
+  };
+
+  Widget.prototype._upload = async function (file) {
+    var form = new FormData();
+    form.append('file', file);
+    var res = await fetch(this._api('/api/files/upload'), {
+      method: 'POST',
+      headers: { 'X-Site-Key': this.config.siteKey },
+      body: form
+    });
+    if (!res.ok) throw new Error('Upload failed with HTTP ' + res.status);
+    var data = await res.json();
+    return data.file;
+  };
+
+  // -------------------------------------------------------------------------
+  // 8. Public API
+  // -------------------------------------------------------------------------
+
+  Widget.prototype.open = function () {
+    if (this.destroyed || !this.el || this.isHidden) return;
+    this.isOpen = true;
+    this.el.wrap.classList.add('open');
+    this.el.launcher.setAttribute('aria-expanded', 'true');
+    this.unread = 0;
+    this._renderBadge();
+    if (this.view === 'messages') this._scrollToEnd();
+    // Odagi panele tasi — klavye kullanicisi acildiktan sonra sayfanin
+    // basindan devam etmemeli.
+    var panel = this.el.panel;
+    setTimeout(function () { panel.focus(); }, 50);
+    this.emit('open', {});
+  };
+
+  Widget.prototype.close = function () {
+    if (this.destroyed || !this.el) return;
+    this.isOpen = false;
+    this.el.wrap.classList.remove('open');
+    this.el.launcher.setAttribute('aria-expanded', 'false');
+    this.emit('close', {});
+  };
+
+  Widget.prototype.toggle = function () {
+    this.isOpen ? this.close() : this.open();
+  };
+
+  Widget.prototype.show = function () {
+    this.isHidden = false;
+    this._applyVisibility();
+    this.emit('show', {});
+  };
+
+  Widget.prototype.hide = function () {
+    this.isHidden = true;
+    this.close();
+    this._applyVisibility();
+    this.emit('hide', {});
+  };
+
+  /**
+   * Oturum acmis kullaniciyi tanitir.
+   *
+   * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. Sunucu bunlari yalnizca
+   * gosterim icin kullanir; yetkilendirme kararlari asla ziyaretcinin gonderdigi
+   * kimlige dayandirilmaz. Imzali kimlik (HMAC) destegi eklendiginde `userHash`
+   * alani buradan gecirilecektir.
+   */
+  Widget.prototype.identify = function (user) {
+    if (!user || typeof user !== 'object') return;
+    this.identity = {
+      userId: user.userId || user.id || null,
+      name: user.name || null,
+      email: user.email || null,
+      avatar: user.avatar || null,
+      userHash: user.userHash || null
+    };
+    if (this.identity.name) store.set('sc_visitor_name', this.identity.name);
+    if (this.identity.email) store.set('sc_visitor_email', this.identity.email);
+
+    // Zaten bagliysa sunucudaki ziyaretci kaydi guncellensin.
+    if (this.socket && this.socket.connected) this._join();
+    this.emit('identify', { user: this.identity });
+  };
+
+  /**
+   * Kullanici cikis yaptiginda cagrilir. YENI bir ziyaretci kimligi uretilir:
+   * aksi halde ortak bir bilgisayarda ikinci kullanici, birincinin sohbet
+   * gecmisini gorurdu.
+   */
+  Widget.prototype.logout = function () {
+    this.identity = null;
+    this.attributes = {};
+    this.conversationId = null;
+    store.remove('sc_visitor_name');
+    store.remove('sc_visitor_email');
+    this.visitorId = uid('v');
+    store.set('sc_visitor_id', this.visitorId);
+    this.sessionId = uid('s');
+    this.unread = 0;
+    this._renderBadge();
+    if (this.el) this._renderThread([]);
+    if (this.socket && this.socket.connected) this._join();
+    this.emit('logout', {});
+  };
+
+  Widget.prototype.setAttributes = function (attributes) {
+    if (!attributes || typeof attributes !== 'object') return;
+    for (var key in attributes) {
+      if (Object.prototype.hasOwnProperty.call(attributes, key)) this.attributes[key] = attributes[key];
+    }
+    if (this.socket && this.socket.connected) this._join();
+    this.emit('attributes', { attributes: this.attributes });
+  };
+
+  Widget.prototype.setLocale = function (locale, silent) {
+    var next = pickLocale(locale);
+    if (next === this.locale && !silent) return;
+    this.locale = next;
+    this.t = STRINGS[next];
+    if (this.el && !silent) {
+      // Metinleri yeniden ciz. Sohbet gecmisi korunur.
+      var openState = this.isOpen;
+      var view = this.view;
+      var messages = Array.prototype.map.call(this.el.messages.children, function (n) { return n; });
+      this._teardownDom();
+      this._render();
+      for (var i = 0; i < messages.length; i++) this.el.messages.appendChild(messages[i]);
+      this._renderEmptyStateIfNeeded();
+      this._setView(view);
+      if (openState) this.open();
+    }
+    this.emit('locale', { locale: next });
+  };
+
+  /** theme: 'light' | 'dark' | 'auto' — panel arkaplan/metin renklerini cevirir. */
+  Widget.prototype.setTheme = function (theme) {
+    var resolved = theme;
+    if (theme === 'auto' || !theme) {
+      resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var colors = this.remote.config.colors;
+    if (resolved === 'dark') {
+      this._lightColors = this._lightColors || Object.assign({}, colors);
+      colors.background = '#111827';
+      colors.text = '#F9FAFB';
+      colors.textSecondary = '#9CA3AF';
+      colors.border = '#1F2937';
+      colors.agentMessageBg = '#1F2937';
+    } else if (this._lightColors) {
+      Object.assign(colors, this._lightColors);
+    }
+    this.theme = resolved;
+    if (this.el) {
+      var styleEl = this.root.querySelector('style');
+      if (styleEl) styleEl.textContent = this._css();
+    }
+    this.emit('theme', { theme: resolved });
+  };
+
+  Widget.prototype._teardownDom = function () {
+    // Yalnizca DOM'u soker; soket ve durum korunur (setLocale yeniden cizimi).
+    for (var i = 0; i < this._listeners.length; i++) {
+      var l = this._listeners[i];
+      l.target.removeEventListener(l.type, l.handler, l.options);
+    }
+    this._listeners = [];
+    if (this.host && this.host.parentNode) this.host.parentNode.removeChild(this.host);
+    this.el = null;
+  };
+
+  /**
+   * Widget'i tamamen kaldirir. SPA'da uygulama unmount olurken cagrilmalidir:
+   * cagrilmazsa soket acik kalir, history sarmalayicisi yerinde durur ve
+   * dinleyiciler sizar.
+   */
+  Widget.prototype.destroy = function () {
+    if (this.destroyed) return;
+    this.destroyed = true;
+
+    for (var i = 0; i < this._timers.length; i++) clearTimeout(this._timers[i]);
+    this._timers = [];
+    if (this._bannerTimer) clearTimeout(this._bannerTimer);
+    if (this._typingTimer) clearTimeout(this._typingTimer);
+
+    // history metodlari geri konur. Bunu yapmazsak widget yok olduktan sonra
+    // bile host sitenin her yonlendirmesi bizim koddan gecerdi.
+    if (this._historyPatch) {
+      var self = this;
+      Object.keys(this._historyPatch).forEach(function (method) {
+        window.history[method] = self._historyPatch[method];
+      });
+      this._historyPatch = null;
+    }
+
+    this._teardownDom();
+
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    if (this._audio && this._audio.close) { try { this._audio.close(); } catch (e) {} }
+
+    this.emit('destroy', {});
+    this._handlers = {};
+
+    if (window[NAMESPACE] && window[NAMESPACE].__runtime === this) {
+      delete window[NAMESPACE].__runtime;
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // 9. Global arayuz
+  //
+  // Global alan kirliligi tek bir isimle sinirli: `window.SupportChat`.
+  // `window.SupportIO` yalnizca eski entegrasyonlar icin bir takma addir.
+  // -------------------------------------------------------------------------
+
+  // Script yuklenmeden once birikmis komutlar. Musteri sitesi su kaliplari
+  // kullanabilir ve hicbiri kaybolmaz:
+  //   SupportChat.q = SupportChat.q || []; SupportChat.q.push(['open']);
+  var queued = (window[NAMESPACE] && window[NAMESPACE].q) || [];
+
+  var api = {
+    version: SDK_VERSION,
+    __runtime: null,
+
+    init: function (overrides) {
+      if (api.__runtime && !api.__runtime.destroyed) return api.__runtime;
+      var widget = new Widget(resolveConfig(overrides));
+      api.__runtime = widget;
+      // `on()` init'ten once cagrilmis olabilir; bekleyen dinleyiciler tasinir.
+      for (var i = 0; i < earlyListeners.length; i++) {
+        widget.on(earlyListeners[i][0], earlyListeners[i][1]);
+      }
+      widget.init();
+      return widget;
+    },
+
+    open: function () { api.__runtime && api.__runtime.open(); },
+    close: function () { api.__runtime && api.__runtime.close(); },
+    toggle: function () { api.__runtime && api.__runtime.toggle(); },
+    show: function () { api.__runtime && api.__runtime.show(); },
+    hide: function () { api.__runtime && api.__runtime.hide(); },
+    identify: function (user) { api.__runtime && api.__runtime.identify(user); },
+    logout: function () { api.__runtime && api.__runtime.logout(); },
+    setAttributes: function (attrs) { api.__runtime && api.__runtime.setAttributes(attrs); },
+    setLocale: function (locale) { api.__runtime && api.__runtime.setLocale(locale); },
+    setTheme: function (theme) { api.__runtime && api.__runtime.setTheme(theme); },
+    sendMessage: function () { api.__runtime && api.__runtime.sendMessage(); },
+
+    on: function (event, handler) {
+      if (api.__runtime) return api.__runtime.on(event, handler);
+      earlyListeners.push([event, handler]);
+      return function () {
+        earlyListeners = earlyListeners.filter(function (pair) {
+          return !(pair[0] === event && pair[1] === handler);
+        });
+      };
+    },
+    off: function (event, handler) { api.__runtime && api.__runtime.off(event, handler); },
+
+    destroy: function () {
+      if (api.__runtime) { api.__runtime.destroy(); api.__runtime = null; }
+    },
+
+    /** Tanilama: entegrasyon sorunlarinda ilk bakilacak yer. */
+    debug: function () {
+      var w = api.__runtime;
+      return {
+        version: SDK_VERSION,
+        initialized: Boolean(w),
+        siteKey: w && w.config.siteKey,
+        apiUrl: w && w.config.apiUrl,
+        connection: w && w.connection,
+        availability: w && w.availability,
+        conversationId: w && w.conversationId,
+        visitorId: w && w.visitorId,
+        locale: w && w.locale,
+        hidden: w && w.isHidden,
+        fatal: w && w.fatal
+      };
+    }
+  };
+
+  var earlyListeners = [];
+
+  window[NAMESPACE] = api;
+  // Eski API yuzeyi: window.SupportIO.openWidget() cagiran sayfalar bozulmasin.
+  window[LEGACY_NAMESPACE] = window[LEGACY_NAMESPACE] || {};
+  window[LEGACY_NAMESPACE].openWidget = api.open;
+  window[LEGACY_NAMESPACE].closeWidget = api.close;
+  window.SupportIOWidget = { openWidget: api.open, closeWidget: api.close };
+
+  // Kuyruktaki komutlari isle.
+  function drain() {
+    for (var i = 0; i < queued.length; i++) {
+      var entry = queued[i];
+      var method = Array.isArray(entry) ? entry[0] : entry;
+      var args = Array.isArray(entry) ? entry.slice(1) : [];
+      if (typeof api[method] === 'function') {
+        try { api[method].apply(null, args); } catch (e) {}
+      }
+    }
+    queued.length = 0;
+  }
+
+  function boot() {
+    // `data-defer` verilmisse otomatik baslatilmaz; sayfa kendi zamanlamasiyla
+    // SupportChat.init() cagirir. Cerez onayi arkasinda calistirmak icin.
+    if (attr('data-defer') === null || attr('data-defer') === 'false') {
+      api.init();
+    }
+    drain();
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSupportIO);
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
   } else {
-    initSupportIO();
+    boot();
   }
-
 })();

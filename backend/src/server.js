@@ -217,30 +217,70 @@ app.get('/', (req, res) => {
 });
 
 // --- 📦 4. STATİK DOSYALAR ---
+//
+// Yollar __dirname'e göre çözülür. Eskiden `express.static('public')` yazıyordu:
+// bu ifade sürecin ÇALIŞMA DİZİNİNE görelidir, yani sunucu repo kökünden
+// (`node backend/src/server.js`) veya bir servis yöneticisinden başlatıldığında
+// widget.js 404 dönerdi. Aynı sorun /demo için de vardı.
 const adminPanelPath = path.join(__dirname, '../../admin-panel/dist');
+const publicPath = path.join(__dirname, '../public');
+const demoPath = path.join(__dirname, '../../demo');
+
 app.use(express.static(adminPanelPath, {
   maxAge: '1h',
   etag: true,
   lastModified: true
 }));
 
-app.use(express.static('public', {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
+// --- Widget dağıtımı ve sürümleme ---
+//
+//   /widget.js              → her zaman en güncel sürüm, kısa önbellek
+//   /widget/v3/widget.js    → sabitlenmiş sürüm, uzun ve değişmez önbellek
+//
+// Müşteri sabitlenmiş yolu kullanıyorsa yeni bir dağıtım onun sayfasını
+// bozamaz. Kök yolu kullanıyorsa güncellemeleri otomatik alır.
+const WIDGET_MAJOR = 'v3';
+const widgetFile = path.join(publicPath, 'widget.js');
+
+function serveWidget(immutable) {
+  return (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    // Widget herhangi bir müşteri alan adından yüklenir; bu dosya için * doğru
+    // olan tek değerdir. Dosya publictir, kimlik taşımaz.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader(
+      'Cache-Control',
+      immutable ? 'public, max-age=31536000, immutable' : 'public, max-age=300, must-revalidate'
+    );
+    res.sendFile(widgetFile);
+  };
+}
+
+app.get('/widget.js', serveWidget(false));
+app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget(true));
+// Yaygın yazım varyantları da aynı dosyaya düşer; kurulum talimatını yanlış
+// kopyalayan bir müşteri 404 yerine çalışan bir widget alır.
+app.get('/widget/widget.js', serveWidget(false));
+app.get('/embed.js', serveWidget(false));
+
+app.use(express.static(publicPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
       res.setHeader('Access-Control-Allow-Origin', '*');
     }
   }
 }));
 
-app.use('/demo', express.static('../demo'));
+app.use('/demo', express.static(demoPath));
 
 // React SPA fallback
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/widget.js') || req.path.startsWith('/demo')) {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/widget') || req.path.startsWith('/demo')) {
     return next();
   }
-  res.sendFile(path.join(__dirname, '../../admin-panel/dist/index.html'));
+  res.sendFile(path.join(adminPanelPath, 'index.html'));
 });
 
 // --- 💾 5. VERİTABANI VE BAŞLATMA ---
@@ -276,7 +316,23 @@ connectDB().then(async () => {
         ? `   Socket.IO Redis adapter aktif (${adapterState.url}) — çok süreç desteklenir`
         : `   Socket.IO tek süreç modu — ${adapterState.reason}`
     );
+    console.log(`   Widget: /widget.js  (sabitlenmiş: /widget/${WIDGET_MAJOR}/widget.js)`);
   });
+
+  // Süreç kapanırken açık bağlantılar düzgün kapatılır. SIGTERM'de anında
+  // ölmek, o an açık olan soketlerdeki mesajların kaybolması demektir.
+  const shutdown = async (signal) => {
+    console.log(`
+${signal} alındı, kapatılıyor...`);
+    server.close(() => console.log('   HTTP sunucusu kapandı'));
+    try {
+      io.close();
+      await require('./socket/adapter').closeRedisAdapter();
+    } catch (e) {}
+    setTimeout(() => process.exit(0), 3000).unref();
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }).catch((error) => {
   console.error('Bağlantı hatası:', error);
   process.exit(1);
