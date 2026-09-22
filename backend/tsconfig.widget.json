@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+
+    "rootDir": "src/widget",
+    "outDir": "public",
+
+    "strict": true,
+    "noImplicitAny": true,
+    "useUnknownInCatchVariables": false,
+
+    "removeComments": false,
+    "sourceMap": false,
+    "declaration": false,
+    "types": []
+  },
+  "include": ["src/widget/**/*.ts"]
+}

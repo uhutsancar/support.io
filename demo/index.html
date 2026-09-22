@@ -369,9 +369,28 @@
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  var BACKEND = 'http://localhost:5000';
   var params = new URLSearchParams(location.search);
-  var SITE_KEY = params.get('siteKey') || localStorage.getItem('demo_site_key') || '';
+  // Bu sayfa backend tarafindan (veya onun onundeki proxy'den) sunulur, yani
+  // API her zaman ayni origin'dedir. Eskiden 'http://localhost:5000' sabitti:
+  // backend baska bir portta calistiginda widget.js hic yuklenmiyordu.
+  // ?backend=http://host:port ile elle de verilebilir.
+  var BACKEND = params.get('backend') || location.origin;
+  // Sayfa dosyadan (file://) acilirsa origin "null" olur ve hicbir istek
+  // gitmez; o durumda yerel yigina yoneliyoruz.
+  if (!/^https?:/.test(BACKEND)) BACKEND = 'http://localhost';
+
+  // Bu sayfanin varsayilan olarak bagi. Buradan yazilan her mesaj bu anahtarin
+  // sahibi olan hesabin panelinde acilir. Degistirmek icin: asagidaki alana
+  // kendi anahtarinizi girin, ?siteKey=... ile acin ya da bu satiri duzenleyin.
+  //
+  // Site anahtari gizli bir bilgi degildir: musteri sitelerinde script
+  // etiketinin icinde herkese acik durur. Yetki vermez, yalnizca hangi sitenin
+  // widget'i oldugunu soyler.
+  var DEMO_SITE_KEY = '9ce96d3c44f6bed7e79dcae1f59bf4fe';
+  // `npm run db:seed` ile olusan ornek kiracinin anahtari; yukaridaki hesap
+  // yoksa geri dusulur.
+  var SEED_SITE_KEY = 'demo-site-key-0000-1111-2222';
+  var SITE_KEY = params.get('siteKey') || localStorage.getItem('demo_site_key') || DEMO_SITE_KEY;
   document.getElementById('key').value = SITE_KEY;
 
   function saveKey() {
@@ -471,7 +490,7 @@
   // Olay dinleyicileri script yuklenmeden ONCE kaydedilebilir olmali.
   window.SupportChat = window.SupportChat || { q: [] };
 
-  if (SITE_KEY) {
+  function loadWidget() {
     var tag = document.createElement('script');
     tag.src = BACKEND + '/widget.js';
     tag.setAttribute('data-site-key', SITE_KEY);
@@ -484,13 +503,50 @@
             log(event + '  ' + JSON.stringify(payload));
           });
         });
+
+      // Baloncuk sayfa acilir acilmaz acik gelsin. `ready` beklenir: widget
+      // arayuzu kurulmadan open() cagrilirsa sessizce hicbir sey yapmaz.
+      // ?autoOpen=false ile kapatilabilir.
+      if (params.get('autoOpen') !== 'false') {
+        SupportChat.on('ready', function () { SupportChat.open(); });
+      }
+
       log('widget.js yüklendi — SDK v' + SupportChat.version);
     };
     tag.onerror = function () { log('widget.js yüklenemedi — backend ' + BACKEND + ' çalışıyor mu?', 'bad'); };
     document.head.appendChild(tag);
-  } else {
-    log('Site anahtarı girin (Geliştirici paneli → Site anahtarı).', 'bad');
   }
+
+  // Anahtari once dogrula. Aksi halde tanimsiz bir anahtarda widget hic
+  // gorunmez ve sayfada sebebini soyleyen bir sey olmaz.
+  // Anahtari once dogrula: tanimsiz bir anahtarda widget hic gorunmez ve
+  // sayfada sebebini soyleyen hicbir sey olmazdi. Acik olarak verilmediyse
+  // varsayilan hesap yoksa tohum kiracisina geri dusulur.
+  function tryKey(key, isLastAttempt) {
+    log('site anahtarı deneniyor: ' + key);
+    return fetch(BACKEND + '/api/widget/bootstrap?siteKey=' + encodeURIComponent(key))
+      .then(function (res) {
+        if (res.ok) {
+          SITE_KEY = key;
+          document.getElementById('key').value = key;
+          return loadWidget();
+        }
+        if (res.status === 404) {
+          log('Bu site anahtarı tanınmadı: ' + key, 'bad');
+          if (!isLastAttempt) return tryKey(SEED_SITE_KEY, true);
+          log('Panelden kendi anahtarınızı alıp yukarıya girin (Siteler → kurulum kodu),', 'bad');
+          log('ya da örnek kiracı için backend dizininde:  npm run db:seed', 'bad');
+          return;
+        }
+        log('bootstrap yanıtı HTTP ' + res.status, 'bad');
+      })
+      .catch(function () {
+        log('backend ' + BACKEND + ' adresine erişilemedi — çalışıyor mu?', 'bad');
+      });
+  }
+
+  var explicitKey = Boolean(params.get('siteKey') || localStorage.getItem('demo_site_key'));
+  tryKey(SITE_KEY, explicitKey || SITE_KEY === SEED_SITE_KEY);
 </script>
 </body>
 </html>

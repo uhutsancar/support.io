@@ -1,0 +1,33 @@
+FROM node:22-alpine AS admin-build
+WORKDIR /build/admin-panel
+COPY admin-panel/package.json admin-panel/package-lock.json ./
+RUN npm ci
+COPY admin-panel/ ./
+ARG VITE_API_URL=""
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm run build
+
+FROM node:22-alpine AS backend-build
+WORKDIR /build/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci
+COPY backend/ ./
+# Compiles src/ to dist/ and the widget runtime to public/widget.js.
+RUN npm run build
+
+FROM node:22-alpine AS backend-deps
+WORKDIR /build/backend
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+FROM node:22-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app/backend
+COPY --chown=node:node backend/package.json ./
+COPY --from=backend-build --chown=node:node /build/backend/dist ./dist
+COPY --from=backend-build --chown=node:node /build/backend/public ./public
+COPY --from=backend-deps --chown=node:node /build/backend/node_modules ./node_modules
+COPY --from=admin-build --chown=node:node /build/admin-panel/dist /app/admin-panel/dist
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]

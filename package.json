@@ -8,9 +8,17 @@
     "dev:backend": "cd backend && npm run dev",
     "dev:admin": "cd admin-panel && npm run dev",
     "start:backend": "cd backend && npm start",
-    "build:admin": "cd admin-panel && npm run build"
+    "build:backend": "cd backend && npm run build",
+    "build:admin": "cd admin-panel && npm run build",
+    "typecheck": "cd backend && npm run typecheck && cd ../admin-panel && npm run typecheck",
+    "test:backend": "cd backend && npm test"
   },
-  "keywords": ["support", "chat", "saas", "customer-service"],
+  "keywords": [
+    "support",
+    "chat",
+    "saas",
+    "customer-service"
+  ],
   "author": "",
   "license": "MIT"
 }

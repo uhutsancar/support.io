@@ -83,3 +83,38 @@ code {
 .modal-scrollbar:hover::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.16);
 }
+
+/* ---------------------------------------------------------------- grafikler */
+/*
+ * Pazarlama sayfalarindaki grafik serileri. Degerler dogrulanmis bir ciftten
+ * gelir: OKLCH aydinlik bandi, kroma tabani, renk korlugu ayrimi (deuteran ve
+ * tritan) ve zemin kontrasti -- her iki tema icin de gecti.
+ *
+ * Koyu temadaki degerler acik temanin otomatik cevrilmisi DEGILDIR; koyu zemin
+ * icin ayrica secilmistir. Bu yuzden ikisi de burada acikca yazilidir.
+ */
+.viz {
+  --viz-s1: #7c3aed; /* gelen talepler */
+  --viz-s2: #059669; /* cozulen */
+}
+
+.dark .viz {
+  --viz-s1: #8b5cf6;
+  --viz-s2: #059669;
+}
+
+/*
+ * Pazarlama sayfalarinda icerige atlayan baglanti. Klavyeyle gezen biri her
+ * sayfada once basligin tamamini gecmek zorunda kalmasin.
+ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+}

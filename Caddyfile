@@ -14,11 +14,21 @@ handle /socket.io/* {
 }
 
 # The embeddable widget and the backend's own static assets.
-handle /widget.js {
+# /widget* olarak yazilir cunku sabitlenmis surum yolu (/widget/v3/widget.js)
+# ve /widget/widget.js de ayni dosyaya duser; yalnizca /widget.js yazilinca
+# bunlar SPA handler'ina dusup HTML donuyordu. SPA'da kok /widget rotasi yok.
+handle /widget* {
     reverse_proxy backend:3000
 }
 
 handle /health {
+    reverse_proxy backend:3000
+}
+
+# Widget entegrasyon test sayfasi backend'in statik dosyalari arasindadir.
+# Bu blok olmadan /demo asagidaki SPA handler'ina duser ve Vite admin
+# panelinin index.html'ini dondururdu.
+handle /demo* {
     reverse_proxy backend:3000
 }
 

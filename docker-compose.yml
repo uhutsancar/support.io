@@ -18,8 +18,12 @@ services:
       POSTGRES_DB: ${DB_NAME:-supportchat}
       POSTGRES_USER: ${DB_USER:-support_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-supportchat}
+    # Yalnizca bu makineden erisilir. Tum arayuzlere acik oldugunda varsayilan
+    # parolayla birlikte ayni agdaki (ortak Wi-Fi vb.) herkes gelistirme
+    # veritabanina baglanabiliyordu. Testler ve araclar localhost uzerinden
+    # baglandigi icin hicbir sey degismez; Redis de ayni sekilde bagli.
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-support_user} -d ${DB_NAME:-supportchat}"]
       interval: 10s
@@ -57,12 +61,18 @@ services:
       dockerfile: Dockerfile
     # postgres is already gated by a healthcheck below, so the wait loop only
     # covers the gap between "accepting connections" and "ready".
-    command: sh -c "until nc -z postgres 5432; do echo waiting for postgres; sleep 1; done; ./node_modules/.bin/nodemon src/server.js"
+    # npm run dev builds the widget runtime and then starts nodemon, which
+    # runs the server through tsx. Polling (legacyWatch) is set in
+    # backend/nodemon.json: on a Windows bind mount the host's filesystem
+    # events never reach the container, so the watcher would otherwise sit idle.
+    command: sh -c "until nc -z postgres 5432; do echo waiting for postgres; sleep 1; done; npm run dev"
     working_dir: /usr/src/backend
     volumes:
       - ./backend:/usr/src/backend
       - backend_node_modules:/usr/src/backend/node_modules
-      - ./uploads:/usr/src/backend/uploads
+      # server.ts /demo'yu ../../demo yolundan sunar; bu klasor backend build
+      # context'inin disindadir, yani imajda yoktur. Baglanmazsa /demo 404 doner.
+      - ./demo:/usr/src/demo:ro
     environment:
       - PORT=3000
       - NODE_ENV=development
@@ -91,6 +101,18 @@ services:
       # Redis: tanimliysa Socket.IO adapter'i devreye girer ve backend birden
       # fazla surec olarak calistirilabilir. Tanimsizken tek surec modunda calisir.
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      # PostgreSQL havuz boyutu. Cok surecli kurulumda toplam baglanti
+      # (surec sayisi x DB_POOL_MAX) PostgreSQL'in max_connections degerini
+      # asmamalidir; bkz. src/db/pool.ts.
+      - DB_POOL_MAX
+      # Development-only limits. The e2e suite registers a fresh tenant for
+      # almost every test, which legitimately exceeds the production
+      # registration limit; without these overrides the suite fails with 429
+      # rather than on anything it is actually asserting. Production keeps the
+      # strict defaults in src/middleware/rateLimit.ts.
+      - REGISTER_RATE_MAX=${REGISTER_RATE_MAX:-100000}
+      - AUTH_RATE_MAX=${AUTH_RATE_MAX:-100000}
+      - API_RATE_MAX=${API_RATE_MAX:-1000000}
       - ANTHROPIC_API_KEY
       - AI_PROVIDER
       - AI_ENABLED

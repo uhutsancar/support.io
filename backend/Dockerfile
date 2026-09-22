@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 3000
 
 # Default to running nodemon from local node_modules so the image works standalone
-CMD ["/bin/sh", "-c", "./node_modules/.bin/nodemon src/server.js"]
+CMD ["npm", "run", "dev"]
