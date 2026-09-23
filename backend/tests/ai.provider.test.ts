@@ -188,6 +188,30 @@ test('a JSON reply wrapped in a code fence is still parsed', async (t) => {
   }
 });
 
+test('a knowledge answer is only "answered" when the model says true, not "false"', async (t) => {
+  // Boolean("false") is true: the previous parser reported this as answered.
+  setProvider(new StubProvider('{"answered": "false", "answer": "uydurma", "usedEntries": ["x"]}'));
+  t.after(() => resetProvider());
+
+  const originalFind = FAQ.find;
+  FAQ.find = (() => ({
+    sort: () => ({ limit: async () => [{ _id: 'f1', question: 'İade?', answer: '14 gün.' }] })
+  })) as any;
+
+  try {
+    const result = await aiService.knowledgeAnswer(
+      { _id: 'c1', siteId: 's1' },
+      { question: 'iade' }
+    );
+    assert.equal(result.answered, false);
+    assert.equal(result.answer, null);
+    assert.ok('usedEntries' in result);
+    assert.deepEqual(result.usedEntries, [], 'an id that was never a source is dropped');
+  } finally {
+    FAQ.find = originalFind;
+  }
+});
+
 test('knowledge answer reports honestly when there is nothing to answer from', async (t) => {
   const stub = new StubProvider('{"answered": true, "answer": "uydurma"}');
   setProvider(stub);

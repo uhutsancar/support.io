@@ -17,6 +17,20 @@
 import { getProvider, AIError } from './ai';
 import Message from '../models/Message';
 import { findSources, renderSources } from './ai/knowledge';
+import {
+  ANALYSIS_SCHEMA,
+  COPILOT_SYSTEM,
+  KNOWLEDGE_SCHEMA,
+  SENTIMENTS,
+  SUGGESTED_PRIORITIES,
+  TRANSLATE_SYSTEM,
+  analysisPrompt,
+  knowledgePrompt,
+  replyPrompt,
+  rewritePrompt,
+  summaryPrompt,
+  translatePrompt
+} from './ai/prompts';
 import type { Priority } from '../domain';
 
 export interface ConversationInput {
@@ -130,32 +144,31 @@ function describeConversation(conversation: ConversationInput): string {
   return parts.join(' | ');
 }
 
-const BASE_SYSTEM = [
-  'Sen bir müşteri destek ekibine yardım eden asistansın.',
-  'Yanıtların doğrudan müşteriye gitmez; bir destek temsilcisi önce okur ve onaylar.',
-  'Türkçe yaz. Kısa, net ve profesyonel ol.',
-  'Emin olmadığın bilgiyi uydurma; bilgi eksikse bunu açıkça belirt.'
-].join(' ');
-
-// Strips code fences a model sometimes wraps JSON in.
-function parseJsonResponse(text: string): Record<string, any> {
+// Strips code fences a model sometimes wraps JSON in. Structured output makes
+// them unlikely, but a stray fence is not worth failing a request over.
+function parseJsonResponse(text: string): Record<string, unknown> {
   const cleaned = text
     .replace(/^\s*```(?:json)?\s*/i, '')
     .replace(/\s*```\s*$/, '')
     .trim();
+  let parsed: unknown;
   try {
-    return JSON.parse(cleaned);
+    parsed = JSON.parse(cleaned);
   } catch {
+    parsed = null;
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     throw new AIError('Model beklenen JSON biçiminde yanıt vermedi.', {
       code: 'ai_bad_format',
       status: 502,
       retryable: true
     });
   }
+  return parsed as Record<string, unknown>;
 }
 
 // Guards every task: an empty thread has nothing to reason about, and calling
-// the model anyway spends money to produce a confident hallucination.
+// the model anyway spends GPU time to produce a confident hallucination.
 function assertHasTranscript(transcript: string): void {
   if (!transcript || !transcript.trim()) {
     throw new AIError('Bu konuşmada henüz mesaj yok.', {
@@ -165,6 +178,13 @@ function assertHasTranscript(transcript: string): void {
   }
 }
 
+/** The copilot's output budget; a panel answer is read by an agent, not a customer. */
+const COPILOT_MAX_TOKENS = 400;
+const MAX_INPUT_CHARS = 4000;
+
+const oneOf = <T extends string>(values: readonly T[], value: unknown): T | null =>
+  typeof value === 'string' && (values as readonly string[]).includes(value) ? (value as T) : null;
+
 // --- tasks -----------------------------------------------------------------
 
 async function summarize(conversation: ConversationInput): Promise<SummaryResult> {
@@ -172,21 +192,9 @@ async function summarize(conversation: ConversationInput): Promise<SummaryResult
   assertHasTranscript(transcript);
 
   const result = await getProvider().complete({
-    system: BASE_SYSTEM,
-    prompt: [
-      'Aşağıdaki destek konuşmasını temsilci için özetle.',
-      '',
-      describeConversation(conversation),
-      '',
-      'Konuşma:',
-      transcript,
-      '',
-      'Biçim:',
-      '- En fazla 3 madde.',
-      '- İlk madde müşterinin asıl talebi.',
-      '- Son madde bekleyen aksiyon (yoksa "Bekleyen aksiyon yok").'
-    ].join('\n'),
-    maxTokens: 400,
+    system: COPILOT_SYSTEM,
+    prompt: summaryPrompt(describeConversation(conversation), transcript),
+    maxTokens: COPILOT_MAX_TOKENS,
     temperature: 0
   });
 
@@ -207,38 +215,15 @@ async function suggestReply(
     await findSources(conversation.siteId, lastVisitorMessage, conversation.currentPage)
   );
 
-  const prompt = [
-    'Temsilcinin müşteriye göndereceği yanıtı taslak olarak yaz.',
-    '',
-    describeConversation(conversation),
-    '',
-    'Konuşma:',
-    transcript
-  ];
-
-  if (knowledge) {
-    prompt.push(
-      '',
-      'Sitenin yayınlanmış cevapları (uygunsa bunlarla tutarlı ol, çelişme):',
-      knowledge
-    );
-  }
-  if (instruction) {
-    prompt.push('', `Temsilcinin ek talimatı: ${instruction}`);
-  }
-
-  prompt.push(
-    '',
-    'Kurallar:',
-    '- Sadece gönderilecek mesajı yaz, başlık veya açıklama ekleme.',
-    '- Bilmediğin bir bilgiyi uydurma; gerekirse bilgiyi kontrol edeceğini söyle.',
-    '- Söz verme (kesin tarih, iade garantisi vb.) yetkin yoksa verme.'
-  );
-
   const result = await getProvider().complete({
-    system: BASE_SYSTEM,
-    prompt: prompt.join('\n'),
-    maxTokens: 400,
+    system: COPILOT_SYSTEM,
+    prompt: replyPrompt({
+      context: describeConversation(conversation),
+      transcript,
+      knowledge,
+      instruction: instruction ? String(instruction).slice(0, 500) : null
+    }),
+    maxTokens: COPILOT_MAX_TOKENS,
     temperature: 0.3
   });
 
@@ -253,23 +238,10 @@ async function rewrite(
     throw new AIError('Yeniden yazılacak metin boş.', { code: 'ai_missing_draft', status: 400 });
   }
 
-  const tones: Record<string, string> = {
-    professional: 'profesyonel ve nötr',
-    friendly: 'sıcak ve samimi',
-    concise: 'mümkün olduğunca kısa',
-    apologetic: 'özür dileyen ve empatik'
-  };
-
   const result = await getProvider().complete({
-    system: BASE_SYSTEM,
-    prompt: [
-      `Aşağıdaki taslağı ${tones[tone] || tones.professional} bir tonda yeniden yaz.`,
-      'Anlamı değiştirme, yeni bilgi ekleme. Sadece yeni metni döndür.',
-      '',
-      'Taslak:',
-      String(draft).slice(0, 4000)
-    ].join('\n'),
-    maxTokens: 400,
+    system: COPILOT_SYSTEM,
+    prompt: rewritePrompt(String(draft).slice(0, MAX_INPUT_CHARS), tone),
+    maxTokens: COPILOT_MAX_TOKENS,
     temperature: 0.3
   });
 
@@ -288,14 +260,12 @@ async function translate(
   }
 
   const result = await getProvider().complete({
-    system: 'Sen bir çevirmensin. Yalnızca çeviriyi döndür, açıklama ekleme.',
-    prompt: [
-      `Aşağıdaki metni ${targetLanguage} diline çevir.`,
-      'Ton ve nezaket seviyesini koru.',
-      '',
-      String(text).slice(0, 4000)
-    ].join('\n'),
-    maxTokens: 400,
+    system: TRANSLATE_SYSTEM,
+    prompt: translatePrompt(
+      String(text).slice(0, MAX_INPUT_CHARS),
+      String(targetLanguage).slice(0, 40)
+    ),
+    maxTokens: COPILOT_MAX_TOKENS,
     temperature: 0
   });
 
@@ -310,27 +280,11 @@ async function analyze(conversation: ConversationInput): Promise<AnalysisResult>
   assertHasTranscript(transcript);
 
   const result = await getProvider().complete({
-    system: BASE_SYSTEM,
-    prompt: [
-      'Aşağıdaki destek konuşmasını sınıflandır.',
-      '',
-      describeConversation(conversation),
-      '',
-      'Konuşma:',
-      transcript,
-      '',
-      'Yalnızca şu JSON şemasında yanıt ver, başka hiçbir şey yazma:',
-      '{',
-      '  "sentiment": "positive" | "neutral" | "negative",',
-      '  "intent": "<kısa niyet etiketi>",',
-      '  "category": "<kısa kategori>",',
-      '  "suggestedPriority": "low" | "normal" | "high" | "urgent",',
-      '  "suggestedTags": ["<en fazla 3 etiket>"],',
-      '  "reason": "<tek cümle gerekçe>"',
-      '}'
-    ].join('\n'),
-    maxTokens: 400,
-    temperature: 0
+    system: COPILOT_SYSTEM,
+    prompt: analysisPrompt(describeConversation(conversation), transcript),
+    maxTokens: COPILOT_MAX_TOKENS,
+    temperature: 0,
+    responseSchema: ANALYSIS_SCHEMA
   });
 
   const parsed = parseJsonResponse(result.text);
@@ -338,21 +292,19 @@ async function analyze(conversation: ConversationInput): Promise<AnalysisResult>
   // The model's labels are constrained to the values the rest of the system
   // understands; anything else falls back rather than propagating a value the
   // Conversation model would reject.
-  const sentiments = ['positive', 'neutral', 'negative'];
-  const priorities = ['low', 'normal', 'high', 'urgent'];
-
   return {
     analysis: {
-      sentiment: sentiments.includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
-      intent: String(parsed.intent || '').slice(0, 80),
-      category: String(parsed.category || '').slice(0, 80),
-      suggestedPriority: priorities.includes(parsed.suggestedPriority)
-        ? parsed.suggestedPriority
-        : null,
+      sentiment: oneOf(SENTIMENTS, parsed.sentiment) ?? 'neutral',
+      intent: typeof parsed.intent === 'string' ? parsed.intent.slice(0, 80) : '',
+      category: typeof parsed.category === 'string' ? parsed.category.slice(0, 80) : '',
+      suggestedPriority: oneOf(SUGGESTED_PRIORITIES, parsed.suggestedPriority),
       suggestedTags: Array.isArray(parsed.suggestedTags)
-        ? parsed.suggestedTags.slice(0, 3).map((t: unknown) => String(t).slice(0, 40))
+        ? parsed.suggestedTags
+            .filter((tag): tag is string => typeof tag === 'string')
+            .slice(0, 3)
+            .map((tag) => tag.slice(0, 40))
         : [],
-      reason: String(parsed.reason || '').slice(0, 300)
+      reason: typeof parsed.reason === 'string' ? parsed.reason.slice(0, 300) : ''
     },
     model: result.model,
     usage: result.usage
@@ -370,40 +322,39 @@ async function knowledgeAnswer(
     throw new AIError('Soru boş.', { code: 'ai_missing_question', status: 400 });
   }
 
-  const knowledge = renderSources(
-    await findSources(conversation.siteId, String(question), conversation.currentPage)
+  const sources = await findSources(
+    conversation.siteId,
+    String(question),
+    conversation.currentPage
   );
-  if (!knowledge) {
+  if (!sources.length) {
     return {
       answered: false,
       answer: null,
-      reason: 'Bu site için yayınlanmış bilgi bankası içeriği yok.'
+      reason: 'Bu soruya uyan yayınlanmış bilgi bankası içeriği yok.'
     };
   }
 
   const result = await getProvider().complete({
-    system: BASE_SYSTEM,
-    prompt: [
-      'Aşağıdaki soruyu YALNIZCA verilen bilgi bankası içeriğine dayanarak yanıtla.',
-      'İçerikte cevap yoksa uydurma; answered alanını false yap.',
-      '',
-      `Soru: ${String(question).slice(0, 1000)}`,
-      '',
-      'Bilgi bankası:',
-      knowledge,
-      '',
-      'Yalnızca şu JSON ile yanıt ver:',
-      '{ "answered": true | false, "answer": "<cevap veya null>", "usedEntries": ["<kullanılan kaynakların köşeli parantez içindeki kimlikleri>"] }'
-    ].join('\n'),
-    maxTokens: 400,
-    temperature: 0
+    system: COPILOT_SYSTEM,
+    prompt: knowledgePrompt(String(question).slice(0, 1000), renderSources(sources)),
+    maxTokens: COPILOT_MAX_TOKENS,
+    temperature: 0,
+    responseSchema: KNOWLEDGE_SCHEMA
   });
 
   const parsed = parseJsonResponse(result.text);
+  // Strictly `true`: `Boolean("false")` is true, which is how the previous
+  // version reported an answer the model had just said it did not have.
+  const answer = typeof parsed.answer === 'string' ? parsed.answer.trim() : '';
+  const answered = parsed.answered === true && answer.length > 0;
+  const known = new Set(sources.map((s) => s.id));
   return {
-    answered: Boolean(parsed.answered),
-    answer: parsed.answered ? String(parsed.answer || '') : null,
-    usedEntries: Array.isArray(parsed.usedEntries) ? parsed.usedEntries.slice(0, 10) : [],
+    answered,
+    answer: answered ? answer : null,
+    usedEntries: Array.isArray(parsed.usedEntries)
+      ? parsed.usedEntries.filter((id): id is string => typeof id === 'string' && known.has(id))
+      : [],
     model: result.model,
     usage: result.usage
   };
