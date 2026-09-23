@@ -11,6 +11,7 @@
 import { api, clearCache, mutates } from './http';
 import type { AxiosResponse } from 'axios';
 import type {
+  AIStatus,
   AgentPerformance,
   AnalyticsOverview,
   AuditLogEntry,
@@ -338,7 +339,7 @@ export const aiAPI = {
   // The provider and its key live only on the server; the browser never sees
   // either. `status` lets the UI hide the controls when AI is not configured,
   // rather than offering buttons that always fail.
-  status: () => api.get<{ enabled: boolean; provider: string }>('/ai/status', { cache: false }),
+  status: () => api.get<AIStatus>('/ai/status', { cache: false }),
 
   summarize: (conversationId: string) =>
     api.post<AIAttribution & { summary: string }>(`${AI_CONVERSATIONS}/${conversationId}/summary`),

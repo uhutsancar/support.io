@@ -65,6 +65,17 @@ export interface CurrentUser {
   [extra: string]: unknown;
 }
 
+/** Where the self-hosted model is, as /ai/status reports it. */
+export type AIState = 'disabled' | 'warming_up' | 'ready' | 'unavailable';
+
+export interface AIStatus {
+  /** True only when the model is configured and ready to answer. */
+  enabled: boolean;
+  configured: boolean;
+  state: AIState;
+  model: string | null;
+}
+
 export interface Site {
   _id: string;
   name: string;

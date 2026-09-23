@@ -19,7 +19,6 @@ import Message from '../src/models/Message';
 import FAQ from '../src/models/FAQ';
 import { getPool } from '../src/db/pool';
 
-
 /** A scripted reply: a fixed completion, fixed text, or a function of the request. */
 type StubReply =
   string | AICompletion | ((request: AICompletionRequest) => AICompletion | Promise<AICompletion>);
@@ -56,7 +55,7 @@ test('the disabled provider refuses instead of returning content', async () => {
   assert.equal(provider.isConfigured, false);
 
   await assert.rejects(
-    () => provider.complete({ prompt: 'anything' }),
+    () => provider.complete({ prompt: 'anything', maxTokens: 8, temperature: 0 }),
     (err: any) => {
       assert.equal(err.name, 'AIError');
       assert.equal(err.code, 'ai_not_configured');
@@ -69,7 +68,10 @@ test('the disabled provider refuses instead of returning content', async () => {
 test('the base provider refuses to be used directly', async () => {
   const provider = new AIProvider();
   assert.equal(provider.isConfigured, false);
-  await assert.rejects(() => provider.complete({ prompt: '' }), /must implement complete/);
+  await assert.rejects(
+    () => provider.complete({ prompt: '', maxTokens: 8, temperature: 0 }),
+    /must implement complete/
+  );
   assert.throws(() => provider.name, /must define a name/);
 });
 

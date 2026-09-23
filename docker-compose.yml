@@ -112,6 +112,17 @@ services:
       - REGISTER_RATE_MAX=${REGISTER_RATE_MAX:-100000}
       - AUTH_RATE_MAX=${AUTH_RATE_MAX:-100000}
       - API_RATE_MAX=${API_RATE_MAX:-1000000}
+      # Yerel model (vLLM, bkz. ai/README.md). Degerler yalnizca kok .env'den
+      # gelir: burada acikca atandiklari icin backend/.env'deki bir AI satiri
+      # etkisizdir. Eksik ya da hatali bir deger AI'yi kapatir, backend'i durdurmaz.
+      - AI_ENABLED=${AI_ENABLED:-false}
+      - AI_BASE_URL=${AI_BASE_URL:-http://llm:8000/v1}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_MODEL=${AI_MODEL:-}
+      - AI_TIMEOUT_MS=${AI_TIMEOUT_MS:-20000}
+      - AI_CONCURRENCY=${AI_CONCURRENCY:-2}
+      - AI_QUEUE_MAX_WAIT_MS=${AI_QUEUE_MAX_WAIT_MS:-8000}
+      - AI_AUTO_REPLY_ENABLED=${AI_AUTO_REPLY_ENABLED:-false}
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:

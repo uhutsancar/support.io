@@ -63,14 +63,22 @@ function handler(run: AITask) {
 }
 
 // Lets the admin panel hide or disable the AI controls instead of offering
-// buttons that always fail.
-router.get('/status', auth, (_req: Request, res: Response) => {
-  const provider = getProvider();
-  res.json({
-    enabled: provider.isConfigured,
-    provider: provider.name
-  });
-});
+// buttons that always fail, and show "loading" while the model warms up.
+// Neither the key nor the model server's address is part of the answer.
+router.get(
+  '/status',
+  auth,
+  asyncHandler(async (_req: Request, res: Response) => {
+    const provider = getProvider();
+    const state = await provider.state();
+    res.json({
+      enabled: provider.isConfigured && state === 'ready',
+      configured: provider.isConfigured,
+      state,
+      model: provider.model
+    });
+  })
+);
 
 router.post(
   '/conversations/:conversationId/summary',

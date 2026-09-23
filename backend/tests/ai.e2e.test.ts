@@ -150,17 +150,16 @@ const TASKS = [
   { path: 'knowledge-answer', body: { question: 'İade süresi nedir?' } }
 ];
 
-test('AI status reports whether a provider is actually configured', async () => {
+test('AI status reports the model state and nothing about how it is reached', async () => {
   const tenant = await createTenant('status');
   const res = await api('/api/ai/status', { token: tenant.token });
 
   assert.equal(res.status, 200);
-  assert.equal(typeof res.body.enabled, 'boolean');
-  assert.ok(typeof res.body.provider === 'string' && res.body.provider.length > 0);
-
+  assert.deepEqual(Object.keys(res.body).sort(), ['configured', 'enabled', 'model', 'state']);
+  assert.ok(['disabled', 'warming_up', 'ready', 'unavailable'].includes(res.body.state));
   // The flag has to match reality, otherwise the panel shows buttons that fail.
-  // No model backend is wired in, so nothing may report itself usable.
-  assert.equal(res.body.enabled, false);
+  assert.equal(res.body.enabled, res.body.configured && res.body.state === 'ready');
+  assert.equal(res.body.configured, res.body.state !== 'disabled');
 });
 
 test('every AI task refuses a conversation from another organization', async (t) => {
@@ -246,6 +245,14 @@ test('a conversation with no messages is refused rather than summarized', async 
 });
 
 test('with no provider configured the API refuses instead of fabricating', async (t) => {
+  // Only meaningful when the server genuinely has no model configured.
+  const probe = await createTenant('probe');
+  const status = await api('/api/ai/status', { token: probe.token });
+  if (status.body.configured) {
+    t.skip('a model is configured on this server; the disabled path is covered by unit tests');
+    return;
+  }
+
   const tenant = await createTenant('disabled');
   const conversationId = await seedConversation(tenant.site);
   t.after(async () => {

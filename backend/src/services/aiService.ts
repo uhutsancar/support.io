@@ -174,7 +174,8 @@ async function summarize(conversation: ConversationInput): Promise<SummaryResult
       '- İlk madde müşterinin asıl talebi.',
       '- Son madde bekleyen aksiyon (yoksa "Bekleyen aksiyon yok").'
     ].join('\n'),
-    maxTokens: 700
+    maxTokens: 400,
+    temperature: 0
   });
 
   return { summary: result.text, model: result.model, usage: result.usage };
@@ -220,7 +221,8 @@ async function suggestReply(
   const result = await getProvider().complete({
     system: BASE_SYSTEM,
     prompt: prompt.join('\n'),
-    maxTokens: 1000
+    maxTokens: 400,
+    temperature: 0.3
   });
 
   return { reply: result.text, model: result.model, usage: result.usage };
@@ -250,7 +252,8 @@ async function rewrite(
       'Taslak:',
       String(draft).slice(0, 4000)
     ].join('\n'),
-    maxTokens: 1000
+    maxTokens: 400,
+    temperature: 0.3
   });
 
   return { reply: result.text, model: result.model, usage: result.usage };
@@ -275,7 +278,8 @@ async function translate(
       '',
       String(text).slice(0, 4000)
     ].join('\n'),
-    maxTokens: 1000
+    maxTokens: 400,
+    temperature: 0
   });
 
   return { text: result.text, model: result.model, usage: result.usage };
@@ -308,7 +312,8 @@ async function analyze(conversation: ConversationInput): Promise<AnalysisResult>
       '  "reason": "<tek cümle gerekçe>"',
       '}'
     ].join('\n'),
-    maxTokens: 600
+    maxTokens: 400,
+    temperature: 0
   });
 
   const parsed = parseJsonResponse(result.text);
@@ -371,7 +376,8 @@ async function knowledgeAnswer(
       'Yalnızca şu JSON ile yanıt ver:',
       '{ "answered": true | false, "answer": "<cevap veya null>", "usedEntries": [<kullanılan madde numaraları>] }'
     ].join('\n'),
-    maxTokens: 800
+    maxTokens: 400,
+    temperature: 0
   });
 
   const parsed = parseJsonResponse(result.text);
