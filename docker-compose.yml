@@ -97,7 +97,6 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_REGION
       - S3_BUCKET
-      # AI asistan. Anahtar yoksa ozellik kapali gorunur, sahte cevap uretilmez.
       # Redis: tanimliysa Socket.IO adapter'i devreye girer ve backend birden
       # fazla surec olarak calistirilabilir. Tanimsizken tek surec modunda calisir.
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -113,10 +112,6 @@ services:
       - REGISTER_RATE_MAX=${REGISTER_RATE_MAX:-100000}
       - AUTH_RATE_MAX=${AUTH_RATE_MAX:-100000}
       - API_RATE_MAX=${API_RATE_MAX:-1000000}
-      - ANTHROPIC_API_KEY
-      - AI_PROVIDER
-      - AI_ENABLED
-      - AI_MODEL
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:

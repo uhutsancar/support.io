@@ -61,7 +61,6 @@ services:
       S3_BUCKET: ${S3_BUCKET:-}
       S3_ACL: ${S3_ACL:-}
       AI_ENABLED: ${AI_ENABLED:-false}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       API_RATE_MAX: ${API_RATE_MAX:-3000}
       AUTH_RATE_MAX: ${AUTH_RATE_MAX:-100}
     expose:

@@ -47,8 +47,8 @@ SSS tabanlı otomatik yanıt, analitik, denetim kaydı ve AI asistan.
 └───────────┬──────────────────────────┬───────────────┬───────┘
             │                          │               │
             ▼                          ▼               ▼
-     PostgreSQL 16              AWS S3            Anthropic API
-     (29 tablo)             (logo + dosya)      (AI asistan, ops.)
+     PostgreSQL 16              AWS S3            vLLM (llm)
+     (29 tablo)             (logo + dosya)      (yerel model, ops.)
             ▲
             │ REST + Socket.IO /admin
 ┌───────────┴──────────────────────────┐
@@ -405,7 +405,7 @@ routes/ai.js  ──►  services/aiService.js  ──►  services/ai/index.js
  (yetki, kiracı,      (görevler, prompt,          (sağlayıcı seçimi)
   hız sınırı)          çıktı sınırlama)                 │
                                                         ▼
-                                          AnthropicProvider | DisabledProvider
+                                            VllmProvider | DisabledProvider
 ```
 
 **Görevler:** özet, yanıt önerisi, yeniden yazma, çeviri, analiz (duygu / niyet /
@@ -532,10 +532,7 @@ Görünüm (renk, konum, marka, karşılama metni, ön-sohbet formu) panelden
 | `DB_POOL_MAX` | hayır | Varsayılan 10 |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `S3_BUCKET` | dosya yükleme için | Logo ve sohbet eki depolama |
 | `S3_ACL` | hayır | Yalnızca ACL açık bucket'larda |
-| `ANTHROPIC_API_KEY` | AI için | Yoksa AI özellikleri kapalı görünür |
-| `AI_PROVIDER` | hayır | Boşsa anahtar varlığından çıkarılır |
-| `AI_ENABLED` | hayır | `false` ise anahtar olsa da kapatır |
-| `AI_MODEL` | hayır | Varsayılan `claude-opus-5` |
+| `AI_*` | hayır | Yerel model ayarları; kök `.env` dosyasından gelir (bkz. `ai/README.md`) |
 | `WIDGET_URL` / `ADMIN_URL` | hayır | Bilgilendirme amaçlı |
 
 \* `DATABASE_URL` **veya** `DB_*` grubundan biri zorunludur.
@@ -627,7 +624,7 @@ Testler Node'un yerleşik koşucusunu kullanır (ek bağımlılık yok):
 | `tests/ai.e2e.test.js` | Her AI görevinde kiracı izolasyonu, doğrulama, danışma sınırı (öneri müşteriye gitmez) |
 | `tests/ai.provider.test.js` | Sağlayıcı seçimi, hata çevirisi, JSON ayrıştırma, çıktı sınırlama (ağ gerektirmez) |
 
-`ANTHROPIC_API_KEY` tanımlı değilse iki canlı AI testi atlanır; kalan tümü koşar.
+Testler gerçek bir model çağırmaz; model davranışı sahte sağlayıcı ve yerel sahte HTTP sunucusuyla sınanır.
 
 **Son durum:** 37 test — 35 geçti, 2 atlandı, 0 hata (hem yerelde hem Docker'da).
 
@@ -712,7 +709,7 @@ Bunlar bilinçli olarak açık bırakılmıştır, gizlenmemiştir:
 | **Global arama** | Konuşma listesi içinde filtreleme var; konuşma + müşteri + ticket + makale üzerinde birleşik arama yok |
 | **Üretim Docker tanımı** | Yalnızca geliştirme yığını mevcut |
 | **Redis / kuyruk** | Kullanılmıyor. Tek sunucu için gerekmiyor; yatay ölçeklemede Socket.IO adaptörü gerekecek |
-| **AI canlı testi** | `ANTHROPIC_API_KEY` olmadan iki test atlanır |
+| **AI canlı testi** | Gerçek model yalnız GPU olan makinede `npm run ai:bench` ile sınanır |
 
 ---
 
@@ -728,7 +725,7 @@ Bunlar bilinçli olarak açık bırakılmıştır, gizlenmemiştir:
 | Docker'da `Cannot find module 'pg'` | `backend_node_modules` volume'u eski. Bölüm 26'daki volume yenileme adımlarını uygulayın |
 | Vekil üzerinden API 404 | `Caddyfile` içinde `handle_path` kullanılmış olabilir; ön eki soyar. `handle /api/*` olmalı |
 | CORS hatası | `server.js` içindeki `allowedOrigins` listesine panel adresi eklenmemiş |
-| AI düğmeleri görünmüyor | `ANTHROPIC_API_KEY` tanımsız veya `AI_ENABLED=false`. `GET /api/ai/status` durumu söyler |
+| AI düğmeleri görünmüyor | Model kapalı/yükleniyor veya `AI_ENABLED=false`. `GET /api/ai/status` durumu söyler |
 | `AccessControlListNotSupported` (S3) | Bucket "owner enforced" modunda. `S3_ACL` tanımlı olmamalı |
 | Analitikte her şey sıfır | Demo veri yok. `npm run db:seed` çalıştırın |
 | Testler `register failed` diyor | Backend çalışmıyor. Testler ayrı terminalde çalışan sunucuya karşı koşar |

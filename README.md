@@ -319,7 +319,7 @@ unset no ACL is sent at all.
 - [ ] Analytics dashboard
 
 ### Phase 3 (Future)
-- [ ] AI chatbot (GPT-4)
+- [ ] AI chatbot (local model)
 - [ ] Mobile apps
 - [ ] Video chat
 - [ ] Advanced analytics

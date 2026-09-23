@@ -7,9 +7,6 @@
 // (a suggestion is returned, never sent to the visitor), input validation, and
 // the disabled-provider path that must refuse rather than invent an answer.
 //
-// The live Anthropic call is covered separately by tests/ai.provider.test.js,
-// which is skipped unless ANTHROPIC_API_KEY is set.
-//
 // Requires a running backend. Run with: npm test
 
 // Loads .env before any module below reads it; see src/config/env.ts.
@@ -162,8 +159,8 @@ test('AI status reports whether a provider is actually configured', async () => 
   assert.ok(typeof res.body.provider === 'string' && res.body.provider.length > 0);
 
   // The flag has to match reality, otherwise the panel shows buttons that fail.
-  const expected = Boolean(process.env.ANTHROPIC_API_KEY) && process.env.AI_ENABLED !== 'false';
-  assert.equal(res.body.enabled, expected);
+  // No model backend is wired in, so nothing may report itself usable.
+  assert.equal(res.body.enabled, false);
 });
 
 test('every AI task refuses a conversation from another organization', async (t) => {
@@ -249,13 +246,6 @@ test('a conversation with no messages is refused rather than summarized', async 
 });
 
 test('with no provider configured the API refuses instead of fabricating', async (t) => {
-  // Only meaningful when the server genuinely has no key; with one configured
-  // this path cannot be reached without mutating the running process.
-  if (process.env.ANTHROPIC_API_KEY && process.env.AI_ENABLED !== 'false') {
-    t.skip('a provider is configured; disabled-path covered by unit test');
-    return;
-  }
-
   const tenant = await createTenant('disabled');
   const conversationId = await seedConversation(tenant.site);
   t.after(async () => {

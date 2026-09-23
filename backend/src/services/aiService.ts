@@ -220,8 +220,7 @@ async function suggestReply(
   const result = await getProvider().complete({
     system: BASE_SYSTEM,
     prompt: prompt.join('\n'),
-    maxTokens: 1000,
-    effort: 'medium'
+    maxTokens: 1000
   });
 
   return { reply: result.text, model: result.model, usage: result.usage };

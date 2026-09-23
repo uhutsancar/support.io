@@ -6,9 +6,6 @@
 // no running server. What it pins is the logic that would otherwise only be
 // exercised on a live call: error translation, JSON handling, value clamping,
 // and transcript assembly.
-//
-// The one test that does hit Anthropic is skipped unless ANTHROPIC_API_KEY is
-// set, so a normal run never spends money.
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
@@ -16,11 +13,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AIProvider, DisabledProvider } from '../src/services/ai/provider';
 import type { AICompletion, AICompletionRequest } from '../src/services/ai/provider';
-import { getProvider, setProvider, resetProvider } from '../src/services/ai';
+import { setProvider, resetProvider } from '../src/services/ai';
 import * as aiService from '../src/services/aiService';
 import Message from '../src/models/Message';
 import FAQ from '../src/models/FAQ';
-import { AnthropicProvider } from '../src/services/ai/anthropicProvider';
 import { getPool } from '../src/db/pool';
 
 
@@ -75,41 +71,6 @@ test('the base provider refuses to be used directly', async () => {
   assert.equal(provider.isConfigured, false);
   await assert.rejects(() => provider.complete({ prompt: '' }), /must implement complete/);
   assert.throws(() => provider.name, /must define a name/);
-});
-
-test('provider selection falls back to disabled without a key', () => {
-  const original = {
-    key: process.env.ANTHROPIC_API_KEY,
-    provider: process.env.AI_PROVIDER,
-    enabled: process.env.AI_ENABLED
-  };
-  try {
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.AI_PROVIDER;
-    delete process.env.AI_ENABLED;
-    resetProvider();
-    assert.equal(getProvider().isConfigured, false);
-    assert.equal(getProvider().name, 'disabled');
-
-    // A key alone is enough to select Anthropic; no extra configuration.
-    process.env.ANTHROPIC_API_KEY = 'sk-ant-not-a-real-key';
-    resetProvider();
-    assert.equal(getProvider().name, 'anthropic');
-    assert.equal(getProvider().isConfigured, true);
-
-    // The explicit off switch wins over a present key.
-    process.env.AI_ENABLED = 'false';
-    resetProvider();
-    assert.equal(getProvider().name, 'disabled');
-  } finally {
-    if (original.key === undefined) delete process.env.ANTHROPIC_API_KEY;
-    else process.env.ANTHROPIC_API_KEY = original.key;
-    if (original.provider === undefined) delete process.env.AI_PROVIDER;
-    else process.env.AI_PROVIDER = original.provider;
-    if (original.enabled === undefined) delete process.env.AI_ENABLED;
-    else process.env.AI_ENABLED = original.enabled;
-    resetProvider();
-  }
 });
 
 test('analyze clamps model output to values the rest of the system accepts', async (t) => {
@@ -312,46 +273,6 @@ test('an empty transcript is refused before the provider is called', async (t) =
     Message.find = originalFind;
   }
 });
-
-test(
-  'a live Anthropic call returns usable text',
-  { skip: !process.env.ANTHROPIC_API_KEY },
-  async () => {
-    const provider = new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-    assert.equal(provider.isConfigured, true);
-
-    const result = await provider.complete({
-      system: 'Yalnızca istenen kelimeyi yaz, başka hiçbir şey yazma.',
-      prompt: 'Sadece şu kelimeyi yaz: tamam',
-      maxTokens: 64
-    });
-
-    assert.ok(result.text.length > 0);
-    assert.match(result.text.toLowerCase(), /tamam/);
-    assert.ok(result.model, 'the response should report which model answered');
-  }
-);
-
-test(
-  'an invalid key surfaces as a typed auth error, not a crash',
-  { skip: !process.env.ANTHROPIC_API_KEY },
-  async () => {
-    const provider = new AnthropicProvider({ apiKey: 'sk-ant-definitely-invalid' });
-
-    await assert.rejects(
-      () => provider.complete({ system: 'x', prompt: 'y', maxTokens: 16 }),
-      (err: any) => {
-        assert.equal(err.name, 'AIError');
-        assert.ok(
-          ['ai_auth_failed', 'ai_bad_request'].includes(err.code),
-          `unexpected code ${err.code}`
-        );
-        return true;
-      }
-    );
-  }
-);
 
 test.after(async () => {
   await getPool().end();

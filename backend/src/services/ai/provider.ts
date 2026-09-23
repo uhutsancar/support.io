@@ -35,9 +35,6 @@ class AIError extends Error {
   }
 }
 
-/** The reasoning levels the vendors accept. */
-export type AIEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
-
 /** One single-shot request to a model. */
 export interface AICompletionRequest {
   /** The system prompt, when the feature needs one. */
@@ -45,8 +42,6 @@ export interface AICompletionRequest {
   /** The already-assembled user turn. */
   prompt: string;
   maxTokens?: number;
-  /** How hard the model should think, where the vendor supports it. */
-  effort?: AIEffort;
 }
 
 /** Token counts, or null when the vendor did not report them. */
@@ -63,7 +58,7 @@ export interface AICompletion {
 
 // What every provider must implement.
 //
-//   complete({ system, prompt, maxTokens, effort }) -> { text, model, usage }
+//   complete({ system, prompt, maxTokens }) -> { text, model, usage }
 //
 // `prompt` is the already-assembled user turn. Providers are deliberately
 // single-shot: the support features here (summary, suggested reply, sentiment)
@@ -85,7 +80,7 @@ class AIProvider {
   }
 }
 
-// Used when no key is configured. It never fabricates an answer — a made-up
+// Used when no model is configured. It never fabricates an answer — a made-up
 // summary is worse than no summary, because the agent cannot tell it apart from
 // a real one.
 class DisabledProvider extends AIProvider {
@@ -98,7 +93,7 @@ class DisabledProvider extends AIProvider {
   }
 
   override async complete(_request?: AICompletionRequest): Promise<AICompletion> {
-    throw new AIError('AI asistanı yapılandırılmamış. Sunucuda ANTHROPIC_API_KEY tanımlayın.', {
+    throw new AIError('Yapay zekâ bu sunucuda etkin değil.', {
       code: 'ai_not_configured',
       status: 503
     });
