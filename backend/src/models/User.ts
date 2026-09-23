@@ -4,10 +4,16 @@ import type { Ref } from '../db/model';
 import type { OrganizationDoc } from './Organization';
 import type { DepartmentDoc } from './Department';
 import type { SiteDoc } from './Site';
-import type { AgentStats, UserPermissions, UserPreferences } from '../types/domain';
+import { PRESENCE_STATUSES, USER_ROLES } from '../domain';
+import type {
+  AgentStats,
+  PresenceStatus,
+  UserPermissions,
+  UserPreferences,
+  UserRole
+} from '../domain';
 
-export type UserRole = 'owner' | 'admin' | 'manager' | 'agent' | 'viewer';
-export type PresenceStatus = 'online' | 'offline' | 'busy' | 'away';
+export type { PresenceStatus, UserRole };
 
 /** A department a user belongs to, with the role held there. */
 export interface UserDepartmentMembership {
@@ -41,12 +47,12 @@ export default defineModel<UserDoc>({
     email: { column: 'email', type: 'string', required: true, lowercase: true, trim: true },
     password: { column: 'password', type: 'string', required: true },
     name: { column: 'name', type: 'string', required: true, trim: true },
-    role: { column: 'role', type: 'string', enum: ['owner', 'admin', 'manager', 'agent', 'viewer'], default: 'agent' },
+    role: { column: 'role', type: 'string', enum: USER_ROLES, default: 'agent' },
     avatar: { column: 'avatar', type: 'string', default: null },
     isActive: { column: 'is_active', type: 'boolean', default: true },
     isOnboarded: { column: 'is_onboarded', type: 'boolean', default: false },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },
-    status: { column: 'status', type: 'string', enum: ['online', 'offline', 'busy', 'away'], default: 'offline' },
+    status: { column: 'status', type: 'string', enum: PRESENCE_STATUSES, default: 'offline' },
     permissions: {
       column: 'permissions',
       type: 'json',
@@ -61,12 +67,21 @@ export default defineModel<UserDoc>({
     preferences: {
       column: 'preferences',
       type: 'json',
-      default: () => ({ autoAcceptAssignments: true, maxActiveConversations: 10, notificationSound: true })
+      default: () => ({
+        autoAcceptAssignments: true,
+        maxActiveConversations: 10,
+        notificationSound: true
+      })
     },
     stats: {
       column: 'stats',
       type: 'json',
-      default: () => ({ totalConversations: 0, activeConversations: 0, resolvedConversations: 0, averageResponseTime: 0 })
+      default: () => ({
+        totalConversations: 0,
+        activeConversations: 0,
+        resolvedConversations: 0,
+        averageResponseTime: 0
+      })
     }
   },
   children: {
@@ -95,6 +110,16 @@ export default defineModel<UserDoc>({
   methods: {
     async comparePassword(candidatePassword: string) {
       return verifyPassword(candidatePassword, this.password);
+    },
+    // The Team model has always done this; User did not, so any handler that
+    // returned a user document whole — rather than picking fields by hand —
+    // serialised the bcrypt hash into the response body. Both account tables
+    // now behave the same way, so the safe behaviour no longer depends on
+    // every call site remembering to project the column away.
+    toJSON() {
+      const obj = this.toObject();
+      delete obj.password;
+      return obj;
     }
   }
 });

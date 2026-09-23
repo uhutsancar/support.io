@@ -7,7 +7,7 @@ import type {
   ProactiveFrequencyControl,
   ProactiveMetrics,
   ProactiveTriggerCondition
-} from '../types/domain';
+} from '../domain';
 
 export interface ProactiveActionSpec {
   /** 'send_message' | 'open_popup' | 'add_tag' */
@@ -43,13 +43,21 @@ export default defineModel<ProactiveRuleDoc>({
       type: 'json',
       default: () => ({ urlMatch: 'any', timeThresholdSeconds: 0, scrollPercentage: 0 })
     },
-    audienceContext: { column: 'audience_context', type: 'json', default: () => ({ deviceType: 'all' }) },
+    audienceContext: {
+      column: 'audience_context',
+      type: 'json',
+      default: () => ({ deviceType: 'all' })
+    },
     action: { column: 'action', type: 'json', default: () => ({}) },
     frequencyControl: {
       column: 'frequency_control',
       type: 'json',
       default: () => ({ triggerOncePerVisitor: true, cooldownMinutes: 1440 })
     },
-    metrics: { column: 'metrics', type: 'json', default: () => ({ triggersCount: 0, conversionsCount: 0 }) }
+    metrics: {
+      column: 'metrics',
+      type: 'json',
+      default: () => ({ triggersCount: 0, conversionsCount: 0 })
+    }
   }
 });

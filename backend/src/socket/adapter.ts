@@ -16,10 +16,9 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import type { Server } from 'socket.io';
 import type { RedisClient } from '../config/redis';
+import { errorText } from '../http/errors';
 
-export type AdapterStatus =
-  | { enabled: true; url: string }
-  | { enabled: false; reason: string };
+export type AdapterStatus = { enabled: true; url: string } | { enabled: false; reason: string };
 
 let clients: RedisClient[] = [];
 
@@ -71,7 +70,10 @@ async function attachRedisAdapter(io: Server): Promise<AdapterStatus> {
   } catch (error) {
     // Redis'e ulaşılamıyorsa tek süreç modunda devam edilir. Sunucunun hiç
     // açılmaması, ölçeklenememesinden daha kötüdür.
-    console.error('[redis] Adapter kurulamadı, tek süreç modunda devam ediliyor:', error.message);
+    console.error(
+      '[redis] Adapter kurulamadı, tek süreç modunda devam ediliyor:',
+      errorText(error)
+    );
     // Yarım kalan istemciler arkada yeniden bağlanmayı denemeye devam eder ve
     // sonsuz hata logu üretir; kapatılmaları gerekir.
     await Promise.all(
@@ -79,7 +81,7 @@ async function attachRedisAdapter(io: Server): Promise<AdapterStatus> {
         .filter((c): c is RedisClient => Boolean(c))
         .map((c) => c.disconnect().catch(() => {}))
     );
-    return { enabled: false, reason: error.message };
+    return { enabled: false, reason: errorText(error) };
   }
 }
 

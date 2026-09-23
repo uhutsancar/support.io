@@ -5,10 +5,19 @@ import { pool, query } from '../db/pool';
 import { applySchema } from '../db/migrate';
 import { startRetentionSweeps } from '../db/retention';
 
+/** The SQLSTATE and message behind whatever the driver threw. */
+function describeDriverError(error: unknown): { code: string; message: string } {
+  const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
+  const message = error instanceof Error ? error.message : String(error);
+  return { code, message };
+}
+
 const connectDB = async () => {
   try {
     if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
-      console.error('PostgreSQL configuration missing: set DATABASE_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD');
+      console.error(
+        'PostgreSQL configuration missing: set DATABASE_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD'
+      );
       process.exit(1);
     }
 
@@ -20,15 +29,18 @@ const connectDB = async () => {
       console.error('PostgreSQL pool error:', err.message);
     });
   } catch (error) {
-    console.error('PostgreSQL connection failed:', error.message);
+    // Narrowed rather than read off `unknown`: a driver that throws a string
+    // would otherwise log "undefined" and hide the actual cause.
+    const { code, message } = describeDriverError(error);
+    console.error('PostgreSQL connection failed:', message);
 
-    if (error.code === 'ECONNREFUSED') {
+    if (code === 'ECONNREFUSED') {
       console.error('The database refused the connection. Check DB_HOST and DB_PORT.');
-    } else if (error.code === '28P01' || /password authentication/i.test(error.message)) {
+    } else if (code === '28P01' || /password authentication/i.test(message)) {
       console.error('Authentication failed. Check DB_USER and DB_PASSWORD.');
-    } else if (error.code === '3D000') {
+    } else if (code === '3D000') {
       console.error('The database named in DB_NAME does not exist.');
-    } else if (error.code === 'ENOTFOUND') {
+    } else if (code === 'ENOTFOUND') {
       console.error('The database host could not be resolved.');
     }
 
@@ -41,7 +53,7 @@ const isConnected = async () => {
   try {
     await query('SELECT 1');
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };

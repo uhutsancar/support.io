@@ -3,12 +3,20 @@ import type { Ref } from '../db/model';
 import type { OrganizationDoc } from './Organization';
 
 export type AuditAction =
-  | 'LOGIN_SUCCESS' | 'LOGIN_FAILED'
-  | 'CREATE_AGENT' | 'DELETE_AGENT' | 'UPDATE_AGENT_ROLE'
-  | 'PLAN_CHANGED' | 'UPDATE_SLA'
-  | 'TICKET_CLOSED' | 'TICKET_REOPENED' | 'SLA_BREACH'
-  | 'AUTOMATION_RULE_CREATED' | 'AUTOMATION_RULE_UPDATED'
-  | 'AUTOMATION_RULE_DELETED' | 'AUTOMATION_EXECUTED';
+  | 'LOGIN_SUCCESS'
+  | 'LOGIN_FAILED'
+  | 'CREATE_AGENT'
+  | 'DELETE_AGENT'
+  | 'UPDATE_AGENT_ROLE'
+  | 'PLAN_CHANGED'
+  | 'UPDATE_SLA'
+  | 'TICKET_CLOSED'
+  | 'TICKET_REOPENED'
+  | 'SLA_BREACH'
+  | 'AUTOMATION_RULE_CREATED'
+  | 'AUTOMATION_RULE_UPDATED'
+  | 'AUTOMATION_RULE_DELETED'
+  | 'AUTOMATION_EXECUTED';
 
 export interface AuditLogDoc {
   organizationId: Ref<OrganizationDoc>;
@@ -35,12 +43,20 @@ export default defineModel<AuditLogDoc>({
       type: 'string',
       required: true,
       enum: [
-        'LOGIN_SUCCESS', 'LOGIN_FAILED',
-        'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
-        'PLAN_CHANGED', 'UPDATE_SLA',
-        'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
-        'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
-        'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED'
+        'LOGIN_SUCCESS',
+        'LOGIN_FAILED',
+        'CREATE_AGENT',
+        'DELETE_AGENT',
+        'UPDATE_AGENT_ROLE',
+        'PLAN_CHANGED',
+        'UPDATE_SLA',
+        'TICKET_CLOSED',
+        'TICKET_REOPENED',
+        'SLA_BREACH',
+        'AUTOMATION_RULE_CREATED',
+        'AUTOMATION_RULE_UPDATED',
+        'AUTOMATION_RULE_DELETED',
+        'AUTOMATION_EXECUTED'
       ]
     },
     entityType: { column: 'entity_type', type: 'string' },

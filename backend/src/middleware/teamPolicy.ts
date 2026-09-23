@@ -20,17 +20,19 @@ import Site from '../models/Site';
 import Department from '../models/Department';
 import Team from '../models/Team';
 import { isValidObjectId } from '../db/objectId';
+import { TEAM_ROLES, isTeamRole } from '../domain';
+import type { TeamRole } from '../domain';
 
-export const TEAM_ROLES = ['admin', 'manager', 'agent'] as const;
-export type TeamRoleName = (typeof TEAM_ROLES)[number];
+// The list and its membership test are declared in src/domain/constants.ts.
+// They lived here as a second copy, which meant a role added to the model's
+// enum was still rejected by this middleware until someone noticed.
+export { TEAM_ROLES, isTeamRole };
+export type TeamRoleName = TeamRole;
 
 const RANK: Record<string, number> = { viewer: 0, agent: 1, manager: 2, admin: 3, owner: 4 };
 
-const rank = (role: unknown): number => (typeof role === 'string' && role in RANK ? RANK[role] : -1);
-
-export function isTeamRole(role: unknown): role is TeamRoleName {
-  return typeof role === 'string' && (TEAM_ROLES as readonly string[]).includes(role);
-}
+const rank = (role: unknown): number =>
+  typeof role === 'string' && role in RANK ? RANK[role] : -1;
 
 /** Çağıranın verebileceği roller: owner hepsini, diğerleri yalnızca altını. */
 export function canAssignRole(callerRole: string, role: TeamRoleName): boolean {
@@ -71,14 +73,23 @@ export function sanitizePermissions(value: unknown): Record<string, boolean> | n
 export async function ownedSiteIds(orgId: string, value: unknown): Promise<string[] | null> {
   if (value === undefined) return [];
   if (!Array.isArray(value) || value.length > 200) return null;
-  const ids = [...new Set(value.map((v) => String(v && typeof v === 'object' && '_id' in v ? (v as { _id: unknown })._id : v)))];
+  const ids = [
+    ...new Set(
+      value.map((v) =>
+        String(v && typeof v === 'object' && '_id' in v ? (v as { _id: unknown })._id : v)
+      )
+    )
+  ];
   if (ids.some((id) => !isValidObjectId(id))) return null;
   if (ids.length === 0) return [];
   const count = await Site.countDocuments({ _id: { $in: ids }, organizationId: orgId });
   return count === ids.length ? ids : null;
 }
 
-interface MemberEntry { userId: string; role: 'manager' | 'agent' }
+interface MemberEntry {
+  userId: string;
+  role: 'manager' | 'agent';
+}
 
 /**
  * Departman üyesi kayıtlarının tamamı bu şirketin ekibindense onları döner.
@@ -94,7 +105,8 @@ export async function ownedMembers(orgId: string, value: unknown): Promise<Membe
   const entries: MemberEntry[] = [];
   for (const raw of value) {
     const id = raw && typeof raw === 'object' ? (raw as { userId?: unknown }).userId : undefined;
-    const userId = id && typeof id === 'object' && '_id' in (id as object) ? (id as { _id: unknown })._id : id;
+    const userId =
+      id && typeof id === 'object' && '_id' in (id as object) ? (id as { _id: unknown })._id : id;
     if (!isValidObjectId(userId)) return null;
     const role = (raw as { role?: unknown }).role === 'manager' ? 'manager' : 'agent';
     entries.push({ userId: String(userId), role });
@@ -105,15 +117,22 @@ export async function ownedMembers(orgId: string, value: unknown): Promise<Membe
   return count === ids.length ? entries : null;
 }
 
-interface DepartmentEntry { departmentId: string; role: 'manager' | 'agent' }
+interface DepartmentEntry {
+  departmentId: string;
+  role: 'manager' | 'agent';
+}
 
 /** Departman kayıtlarının tamamı bu şirketin sitelerinden birine aitse onları döner. */
-export async function ownedDepartments(orgId: string, value: unknown): Promise<DepartmentEntry[] | null> {
+export async function ownedDepartments(
+  orgId: string,
+  value: unknown
+): Promise<DepartmentEntry[] | null> {
   if (value === undefined) return [];
   if (!Array.isArray(value) || value.length > 100) return null;
   const entries: DepartmentEntry[] = [];
   for (const raw of value) {
-    const id = raw && typeof raw === 'object' ? (raw as { departmentId?: unknown }).departmentId : undefined;
+    const id =
+      raw && typeof raw === 'object' ? (raw as { departmentId?: unknown }).departmentId : undefined;
     if (!isValidObjectId(id)) return null;
     const role = (raw as { role?: unknown }).role === 'manager' ? 'manager' : 'agent';
     entries.push({ departmentId: String(id), role });

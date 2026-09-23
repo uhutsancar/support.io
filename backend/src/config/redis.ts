@@ -15,7 +15,16 @@
 // would instantiate the generics with their constraints rather than their
 // defaults, which is a wider type than any real client.
 import { createClient } from 'redis';
+import { errorText } from '../http/errors';
 
+// The generic slots are the client's module, function and script maps plus its
+// RESP version. `{}` is the library's own default for the three maps — it means
+// "nothing added" there, and substituting `Record<string, never>` makes the
+// result incompatible with what `createClient()` actually returns, because the
+// built-in modules no longer satisfy it. So the empty-object type is correct
+// here specifically, and the lint rule that normally catches it is turned off
+// for this one line rather than repaired into something that does not compile.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type RedisClient = ReturnType<typeof createClient<{}, {}, {}, 3, {}>>;
 
 let client: RedisClient | null = null;
@@ -48,7 +57,7 @@ async function getRedisClient(): Promise<RedisClient | null> {
       client = instance;
       return client;
     } catch (error) {
-      console.error('[redis:shared] Baglanti kurulamadi:', error.message);
+      console.error('[redis:shared] Baglanti kurulamadi:', errorText(error));
       client = null;
       return null;
     } finally {

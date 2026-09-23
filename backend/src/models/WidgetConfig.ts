@@ -109,7 +109,13 @@ export default defineModel<WidgetConfigDoc>({
     branding: {
       column: 'branding',
       type: 'json',
-      default: () => ({ logo: null, logoWidth: 40, logoHeight: 40, brandName: 'Support', showBrandName: true })
+      default: () => ({
+        logo: null,
+        logoWidth: 40,
+        logoHeight: 40,
+        brandName: 'Support',
+        showBrandName: true
+      })
     },
     button: {
       column: 'button',
@@ -128,7 +134,14 @@ export default defineModel<WidgetConfigDoc>({
     window: {
       column: 'window',
       type: 'json',
-      default: () => ({ width: 400, height: 650, borderRadius: 16, headerHeight: 60, showHeader: true, showCloseButton: true })
+      default: () => ({
+        width: 400,
+        height: 650,
+        borderRadius: 16,
+        headerHeight: 60,
+        showHeader: true,
+        showCloseButton: true
+      })
     },
     messages: {
       column: 'messages',
@@ -158,7 +171,8 @@ export default defineModel<WidgetConfigDoc>({
       column: 'typography',
       type: 'json',
       default: () => ({
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         fontSize: 'medium',
         fontWeight: 'normal'
       })

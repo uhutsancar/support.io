@@ -1,10 +1,12 @@
 import { defineModel } from '../db/model';
 import type { Ref } from '../db/model';
 import type { ConversationDoc } from './Conversation';
-import type { MessageFileData } from '../types/domain';
+import { MESSAGE_SENDER_TYPES, MESSAGE_TYPES } from '../domain';
+import type { MessageFileData, MessageSenderType, MessageType } from '../domain';
 
-export type MessageSenderType = 'visitor' | 'agent' | 'bot';
-export type MessageType = 'text' | 'image' | 'file' | 'system';
+// Declared once in src/domain/constants.ts; re-exported for callers that
+// already import these names from the model.
+export type { MessageSenderType, MessageType };
 
 export interface MessageDoc {
   conversationId: Ref<ConversationDoc>;
@@ -23,11 +25,16 @@ export default defineModel<MessageDoc>({
   table: 'messages',
   fields: {
     conversationId: { column: 'conversation_id', type: 'id', ref: 'Conversation', required: true },
-    senderType: { column: 'sender_type', type: 'string', enum: ['visitor', 'agent', 'bot'], required: true },
+    senderType: {
+      column: 'sender_type',
+      type: 'string',
+      enum: MESSAGE_SENDER_TYPES,
+      required: true
+    },
     senderId: { column: 'sender_id', type: 'string', required: true },
     senderName: { column: 'sender_name', type: 'string', required: true },
     content: { column: 'content', type: 'string', required: true },
-    messageType: { column: 'message_type', type: 'string', enum: ['text', 'image', 'file', 'system'], default: 'text' },
+    messageType: { column: 'message_type', type: 'string', enum: MESSAGE_TYPES, default: 'text' },
     fileData: { column: 'file_data', type: 'json' },
     isRead: { column: 'is_read', type: 'boolean', default: false },
     readAt: { column: 'read_at', type: 'date', default: null }

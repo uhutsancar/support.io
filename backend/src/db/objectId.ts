@@ -25,7 +25,10 @@ export function generateId(): string {
 export function isValidObjectId(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === 'string') return OBJECT_ID_RE.test(value);
-  if (typeof value === 'object' && typeof (value as { toString?: unknown }).toString === 'function') {
+  if (
+    typeof value === 'object' &&
+    typeof (value as { toString?: unknown }).toString === 'function'
+  ) {
     return OBJECT_ID_RE.test(String(value));
   }
   return false;

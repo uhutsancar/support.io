@@ -45,7 +45,9 @@ class AnthropicProvider extends AIProvider {
   }
 
   override async complete(
-    { system, prompt, maxTokens = DEFAULT_MAX_TOKENS, effort = 'low' }: AICompletionRequest = { prompt: '' }
+    { system, prompt, maxTokens = DEFAULT_MAX_TOKENS, effort = 'low' }: AICompletionRequest = {
+      prompt: ''
+    }
   ): Promise<AICompletion> {
     if (!this.client) {
       throw new AIError('Anthropic sağlayıcısı API anahtarı olmadan çağrıldı.', {
@@ -104,10 +106,13 @@ class AnthropicProvider extends AIProvider {
   // specific first, and never by string matching on the message.
   translateError(error: unknown): AIError {
     if (error instanceof Anthropic.AuthenticationError) {
-      return new AIError('AI sağlayıcı kimlik doğrulaması başarısız (API anahtarını kontrol edin).', {
-        code: 'ai_auth_failed',
-        status: 502
-      });
+      return new AIError(
+        'AI sağlayıcı kimlik doğrulaması başarısız (API anahtarını kontrol edin).',
+        {
+          code: 'ai_auth_failed',
+          status: 502
+        }
+      );
     }
     if (error instanceof Anthropic.RateLimitError) {
       return new AIError('AI sağlayıcı hız sınırına takıldı, birazdan tekrar deneyin.', {

@@ -15,6 +15,10 @@
 //
 // Tanımlı değilse bugünkü davranış korunur: mevcut dağıtım adresi listede
 // kalır, böylece bu değişiklik çalışan bir kurulumu bozmaz.
+// From config/env, which loads .env first. Computed here, it ran before the
+// environment existed and was therefore always false.
+import { isProduction } from './env';
+
 const FALLBACK_PRODUCTION_ORIGINS = ['https://main.d3gdzskzc1itkc.amplifyapp.com'];
 
 // Geliştirme portları yalnızca production dışında açılır. Üretimde localhost'a
@@ -22,13 +26,12 @@ const FALLBACK_PRODUCTION_ORIGINS = ['https://main.d3gdzskzc1itkc.amplifyapp.com
 // istek atabilmesi demektir.
 const DEVELOPMENT_ORIGINS = [
   'http://localhost:3000',
-  'http://localhost:3001',  // demo sayfası (npx serve)
-  'http://localhost:3002',  // admin panel (vite dev)
+  'http://localhost:3001', // demo sayfası (npx serve)
+  'http://localhost:3002', // admin panel (vite dev)
   'http://localhost:3004',
-  'http://localhost:5173'   // docker compose'daki admin servisi
+  'http://localhost:5173' // docker compose'daki admin servisi
 ];
 
-const isProduction = process.env.NODE_ENV === 'production';
 
 const configuredOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
@@ -59,7 +62,7 @@ function isOriginAllowed(origin: string | undefined): boolean {
   if (!isProduction) {
     try {
       if (new URL(origin).hostname.endsWith('.trycloudflare.com')) return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

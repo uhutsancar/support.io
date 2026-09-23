@@ -22,12 +22,17 @@
 // express-rate-limit'in Store arayuzu. Sayac Redis'te INCR ile tutulur; ilk
 // artista anahtara pencere suresi kadar TTL verilir.
 import { rateLimit, ipKeyGenerator, MemoryStore } from 'express-rate-limit';
-import type { ClientRateLimitInfo, Options, RateLimitRequestHandler, Store } from 'express-rate-limit';
+import type {
+  ClientRateLimitInfo,
+  Options,
+  RateLimitRequestHandler,
+  Store
+} from 'express-rate-limit';
 import type { NextFunction, Request, Response } from 'express';
 import { getRedisClient, isEnabled as redisConfigured } from '../config/redis';
 import { readToken } from '../config/session';
 import { verifySession } from '../config/tokens';
-import type { AuthTokenPayload } from '../types/auth';
+import { errorText } from '../http/errors';
 
 class RedisStore implements Store {
   prefix: string;
@@ -56,7 +61,8 @@ class RedisStore implements Store {
     if (!redisConfigured()) return null;
     try {
       return await getRedisClient();
-    } catch (error) {
+    } catch {
+      // No Redis: the in-process fallback counter takes over.
       return null;
     }
   }
@@ -86,7 +92,10 @@ class RedisStore implements Store {
     } catch (error) {
       // Hiz siniri bir yan sistemdir: Redis dustugunde tum API'yi durdurmak
       // yerine surec ici sayaca dusulur.
-      console.error('[rate-limit] Redis sayaci okunamadi, surec ici sayaca dusuluyor:', error.message);
+      console.error(
+        '[rate-limit] Redis sayaci okunamadi, surec ici sayaca dusuluyor:',
+        errorText(error)
+      );
       return this.fallback.increment(key);
     }
   }
@@ -96,7 +105,7 @@ class RedisStore implements Store {
     if (!client) return this.fallback.decrement(key);
     try {
       await client.decr(this.redisKey(key));
-    } catch (error) {
+    } catch {
       // Sayaci geri alamamak yalnizca istemcinin kotasindan bir hak eksiltir.
     }
   }
@@ -106,7 +115,7 @@ class RedisStore implements Store {
     if (!client) return this.fallback.resetKey(key);
     try {
       await client.del(this.redisKey(key));
-    } catch (error) {
+    } catch {
       /* pencere dolunca kendiliginden temizlenir */
     }
   }
@@ -115,13 +124,19 @@ class RedisStore implements Store {
     const client = await this.client();
     if (!client) return this.fallback.get(key);
     try {
-      const [hits, ttl] = await client.multi().get(this.redisKey(key)).pTTL(this.redisKey(key)).exec();
+      const [hits, ttl] = await client
+        .multi()
+        .get(this.redisKey(key))
+        .pTTL(this.redisKey(key))
+        .exec();
       if (hits === null) return undefined;
       return {
         totalHits: Number(hits),
         resetTime: new Date(Date.now() + (Number(ttl) > 0 ? Number(ttl) : this.windowMs))
       };
-    } catch (error) {
+    } catch {
+      // Redis unreachable: the limiter reports no record and the caller
+      // falls back to its in-process counter.
       return undefined;
     }
   }
@@ -138,7 +153,7 @@ function identifyClient(req: Request): string {
     try {
       const decoded = verifySession(token);
       return `u:${decoded.userId}`;
-    } catch (error) {
+    } catch {
       /* dogrulanamayan token anonim sayilir */
     }
   }
@@ -177,7 +192,15 @@ interface LimiterSpec {
   skipSuccessfulRequests?: boolean;
 }
 
-function createLimiter({ name, code, message, windowMs, max, keyGenerator, skipSuccessfulRequests }: LimiterSpec): RateLimitRequestHandler {
+function createLimiter({
+  name,
+  code,
+  message,
+  windowMs,
+  max,
+  keyGenerator,
+  skipSuccessfulRequests
+}: LimiterSpec): RateLimitRequestHandler {
   return rateLimit({
     windowMs,
     max,
@@ -217,7 +240,8 @@ const loginAccountLimiter = createLimiter({
   max: minutes(process.env.ACCOUNT_LOCK_MAX, 10),
   skipSuccessfulRequests: true,
   keyGenerator: (req: Request) => {
-    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : '';
+    const email =
+      typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : '';
     return email ? `acct:${email}` : `ip:${ipKeyGenerator(req.ip || '')}`;
   }
 });
@@ -242,4 +266,11 @@ const apiLimiter = createLimiter({
   max: minutes(process.env.API_RATE_MAX, 1000)
 });
 
-export { loginLimiter, loginAccountLimiter, registerLimiter, apiLimiter, createLimiter, identifyClient };
+export {
+  loginLimiter,
+  loginAccountLimiter,
+  registerLimiter,
+  apiLimiter,
+  createLimiter,
+  identifyClient
+};

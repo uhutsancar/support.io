@@ -23,7 +23,10 @@ class AIError extends Error {
   status: number;
   retryable: boolean;
 
-  constructor(message: string, { code = 'ai_error', status = 502, retryable = false }: AIErrorOptions = {}) {
+  constructor(
+    message: string,
+    { code = 'ai_error', status = 502, retryable = false }: AIErrorOptions = {}
+  ) {
     super(message);
     this.name = 'AIError';
     this.code = code;
@@ -95,10 +98,10 @@ class DisabledProvider extends AIProvider {
   }
 
   override async complete(_request?: AICompletionRequest): Promise<AICompletion> {
-    throw new AIError(
-      'AI asistanı yapılandırılmamış. Sunucuda ANTHROPIC_API_KEY tanımlayın.',
-      { code: 'ai_not_configured', status: 503 }
-    );
+    throw new AIError('AI asistanı yapılandırılmamış. Sunucuda ANTHROPIC_API_KEY tanımlayın.', {
+      code: 'ai_not_configured',
+      status: 503
+    });
   }
 }
 

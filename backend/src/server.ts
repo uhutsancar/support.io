@@ -1,4 +1,5 @@
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import { isProduction } from './config/env';
 import express from 'express';
 import http from 'http';
 import fs from 'fs';
@@ -13,7 +14,7 @@ import { contentSecurityPolicy, withNonce } from './middleware/csp';
 import compression from 'compression';
 import connectDB from './config/database';
 import { isConnected } from './config/database';
-import SocketHandler from './socket/socketHandler';
+import SocketHandler from './socket';
 import authRoutes from './routes/auth';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
@@ -37,12 +38,18 @@ import { initialize as initializeAutomationEngine } from './services/automationE
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper } from './services/slaSweeper';
 import { closeRedisAdapter } from './socket/adapter';
-import { loginLimiter, loginAccountLimiter, registerLimiter, apiLimiter } from './middleware/rateLimit';
+import {
+  loginLimiter,
+  loginAccountLimiter,
+  registerLimiter,
+  apiLimiter
+} from './middleware/rateLimit';
+import { apiNotFound, errorHandler } from './http';
+import { IMAGE_TYPES, UPLOAD_ROOT, UPLOAD_URL_PREFIX, describeStorage } from './middleware/upload';
 import './services/auditService';
 import { attachRedisAdapter } from './socket/adapter';
 import type { Request, Response, NextFunction } from 'express';
 
-dotenv.config();
 
 // --- Route Tanımları ---
 
@@ -69,7 +76,7 @@ if (process.env.NODE_ENV === 'production') {
 //
 // Köken listesi ve kuralları config/origins.ts'te; yönetici soketi de aynı
 // listeye bakıyor.
-const isProduction = process.env.NODE_ENV === 'production';
+
 
 // Socket.io CORS ayarı
 const io = new Server(server, {
@@ -96,25 +103,27 @@ const PUBLIC_EMBED_PATHS = [
   '/api/files/upload',
   '/api/events/'
 ];
-app.use(cors((req, callback) => {
-  const isPublicEmbedRequest = PUBLIC_EMBED_PATHS.some((prefix) => req.path.startsWith(prefix));
-  callback(null, {
-    origin: isPublicEmbedRequest
-      ? true
-      : (origin, originCallback) => {
-          if (isOriginAllowed(origin)) return originCallback(null, true);
-          console.warn(`[CORS] Rejected: ${origin}`);
-          return originCallback(new Error('CORS origin denied'));
-        },
-    // Herkese acik uclar her kokeni yansitir; kimlik bilgisi (cerez) tasimalari
-    // hem gereksiz (widget credentials: 'omit' kullanir) hem de tehlikeli olurdu:
-    // 'her koken + kimlik bilgisi' bir sitenin kullanicinin oturumuyla istek
-    // atip yaniti okuyabilmesi demektir. Panel uclari izin listesiyle kalir.
-    credentials: !isPublicEmbedRequest,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-site-key', 'x-csrf-token']
-  });
-}));
+app.use(
+  cors((req, callback) => {
+    const isPublicEmbedRequest = PUBLIC_EMBED_PATHS.some((prefix) => req.path.startsWith(prefix));
+    callback(null, {
+      origin: isPublicEmbedRequest
+        ? true
+        : (origin, originCallback) => {
+            if (isOriginAllowed(origin)) return originCallback(null, true);
+            console.warn(`[CORS] Rejected: ${origin}`);
+            return originCallback(new Error('CORS origin denied'));
+          },
+      // Herkese acik uclar her kokeni yansitir; kimlik bilgisi (cerez) tasimalari
+      // hem gereksiz (widget credentials: 'omit' kullanir) hem de tehlikeli olurdu:
+      // 'her koken + kimlik bilgisi' bir sitenin kullanicinin oturumuyla istek
+      // atip yaniti okuyabilmesi demektir. Panel uclari izin listesiyle kalir.
+      credentials: !isPublicEmbedRequest,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-site-key', 'x-csrf-token']
+    });
+  })
+);
 
 // Helmet Ayarları (S3 resimlerinin engellenmesini çözen kısım)
 //
@@ -122,21 +131,25 @@ app.use(cors((req, callback) => {
 // ile /demo'nun ihtiyaçları farklı ve SPA kabuğunun satır içi bloğu için yanıt
 // başına nonce üretilmesi gerekiyor. Kapalı bırakıldığında panelde XSS'e karşı
 // ikinci bir savunma hattı kalmıyordu.
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginResourcePolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false
+  })
+);
 app.use(contentSecurityPolicy({ isProduction }));
 
 // --- ⚙️ 2. ARA KATMANLAR (MIDDLEWARES) ---
-app.use(compression({
-  filter: (req: Request, res: Response) => {
-    if (req.headers['x-no-compression']) return false;
-    return compression.filter(req, res);
-  },
-  level: 6,
-}));
+app.use(
+  compression({
+    filter: (req: Request, res: Response) => {
+      if (req.headers['x-no-compression']) return false;
+      return compression.filter(req, res);
+    },
+    level: 6
+  })
+);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.url.includes('/widget.js')) {
@@ -190,14 +203,13 @@ app.use('/api/ai', aiRoutes);
 
 app.use('/api/audit', auditRoutes);
 
-// API callers always receive JSON. This also converts upload/parser errors to
-// controlled responses instead of Express' HTML stack trace page.
-app.use('/api', (req: Request, res: Response) => {
-  res.status(404).json({ error: 'API endpoint not found', code: 'NOT_FOUND' });
-});
+// API callers always receive JSON rather than the SPA shell for an unmatched
+// path. Failures inside a route are answered by `errorHandler`, registered
+// after the static handlers at the bottom of this file.
+app.use('/api', apiNotFound);
 
 // Sağlık Kontrolü
-app.get('/health', async (req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   const databaseConnected = await isConnected();
   res.status(databaseConnected ? 200 : 503).json({
     status: databaseConnected ? 'ok' : 'degraded',
@@ -207,7 +219,7 @@ app.get('/health', async (req: Request, res: Response) => {
   });
 });
 
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     name: 'DestekChat API',
     version: '1.0.0',
@@ -225,11 +237,13 @@ const adminPanelPath = path.join(__dirname, '../../admin-panel/dist');
 const publicPath = path.join(__dirname, '../public');
 const demoPath = path.join(__dirname, '../../demo');
 
-app.use(express.static(adminPanelPath, {
-  maxAge: '1h',
-  etag: true,
-  lastModified: true
-}));
+app.use(
+  express.static(adminPanelPath, {
+    maxAge: '1h',
+    etag: true,
+    lastModified: true
+  })
+);
 
 // --- Widget dağıtımı ve sürümleme ---
 //
@@ -242,7 +256,7 @@ const WIDGET_MAJOR = 'v3';
 const widgetFile = path.join(publicPath, 'widget.js');
 
 function serveWidget(immutable: boolean) {
-  return (req: Request, res: Response) => {
+  return (_req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     // Widget herhangi bir müşteri alan adından yüklenir; bu dosya için * doğru
     // olan tek değerdir. Dosya publictir, kimlik taşımaz.
@@ -263,16 +277,43 @@ app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget(true));
 app.get('/widget/widget.js', serveWidget(false));
 app.get('/embed.js', serveWidget(false));
 
-app.use(express.static(publicPath, {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-      res.setHeader('Access-Control-Allow-Origin', '*');
+app.use(
+  express.static(publicPath, {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+      }
     }
-  }
-}));
+  })
+);
 
 app.use('/demo', express.static(demoPath));
+
+// Locally stored uploads. With S3 configured this directory stays empty and the
+// route is simply never hit; see middleware/upload.ts.
+//
+// These are files strangers uploaded, so they are served defensively: the
+// declared type is never re-sniffed, and anything that is not an image
+// downloads instead of rendering — an uploaded .html must not be openable as a
+// page on our own origin, where it would run with our cookies in scope.
+app.use(
+  UPLOAD_URL_PREFIX,
+  express.static(UPLOAD_ROOT, {
+    maxAge: '1y',
+    index: false,
+    dotfiles: 'deny',
+    setHeaders: (res, filePath) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      const type = express.static.mime.lookup(filePath);
+      if (!IMAGE_TYPES.has(type)) {
+        res.setHeader('Content-Disposition', 'attachment');
+      }
+      // The widget loads attachments from a customer's own page.
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  })
+);
 
 // React SPA fallback
 // React SPA fallback
@@ -282,99 +323,108 @@ app.use('/demo', express.static(demoPath));
 const shellPath = path.join(adminPanelPath, 'index.html');
 let shellCache: string | null = null;
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/widget') || req.path.startsWith('/demo')) {
+  if (
+    req.path.startsWith('/api/') ||
+    req.path.startsWith('/widget') ||
+    req.path.startsWith('/demo')
+  ) {
     return next();
   }
   try {
     // Uretimde kabuk degismez; gelistirmede her istekte yeniden okunur ki
     // yeniden derlenen panel aninda gorunsun.
     if (!shellCache || !isProduction) shellCache = fs.readFileSync(shellPath, 'utf8');
-  } catch (error) {
+  } catch {
     // Gelistirmede panel Vite tarafindan sunulur ve dist hic uretilmez. Hatayi
     // yukari birakmak Expressin varsayilan isleyicisine dusup yigin izini
     // istemciye basiyordu; burasi durumu oldugu gibi soyluyor.
-    return res.status(404).type('text').send(
-      isProduction
-        ? 'Not found'
-        : 'Panel derlemesi yok (admin-panel/dist). Gelistirmede panel Vite tarafindan sunulur: http://localhost'
-    );
+    return res
+      .status(404)
+      .type('text')
+      .send(
+        isProduction
+          ? 'Not found'
+          : 'Panel derlemesi yok (admin-panel/dist). Gelistirmede panel Vite tarafindan sunulur: http://localhost'
+      );
   }
   res.type('html').send(withNonce(shellCache, res.locals.cspNonce));
 });
 
-// Hata isleyici TUM rotalardan sonra gelmeli. Rotalardan once
-// tanimlandiginda statik dosya ve SPA hatalari buraya hic ugramiyor, Expressin
-// varsayilan isleyicisine dusuyor ve uretim disinda yigin izini istemciye
-// basiyordu.
-app.use((error: Error & { code?: string }, req: Request, res: Response, next: NextFunction) => {
-  if (res.headersSent) return next(error);
-  const validationCodes = new Set([
-    'LIMIT_FILE_SIZE', 'LIMIT_FILE_COUNT', 'LIMIT_UNEXPECTED_FILE',
-    'UNSUPPORTED_FILE_TYPE'
-  ]);
-  const status = validationCodes.has(error.code as string)
-    ? 400
-    : (/CORS origin denied/i.test(error.message || '') ? 403 : 500);
-  if (status === 500) console.error('[http]', error);
-  return res.status(status).json({
-    error: status === 500 ? 'Internal server error' : error.message,
-    code: error.code || (status === 403 ? 'CORS_DENIED' : 'REQUEST_ERROR')
-  });
-});
+// The error handler must come after EVERY route and static handler. Declared
+// before them, failures while serving a file or the SPA shell never reach it
+// and fall through to Express' default handler, which renders the stack trace
+// outside production.
+//
+// What each kind of failure becomes is decided in src/http/errors.ts.
+app.use(errorHandler);
 
 // --- 💾 5. VERİTABANI VE BAŞLATMA ---
 const PORT = process.env.PORT || 3000;
 
-connectDB().then(async () => {
-  // Yatay ölçekleme: REDIS_URL varsa olaylar süreçler arasında yayılır.
-  // Socket.io başlatılmadan önce bağlanmalı.
-  const adapterState = await attachRedisAdapter(io);
+// How long open connections are given to finish before the process exits.
+const SHUTDOWN_GRACE_MS = 3000;
 
-  // Socket.io başlat
-  new SocketHandler(io);
+connectDB()
+  .then(async () => {
+    // Yatay ölçekleme: REDIS_URL varsa olaylar süreçler arasında yayılır.
+    // Socket.io başlatılmadan önce bağlanmalı.
+    const adapterState = await attachRedisAdapter(io);
 
-  // Kural motorları io'ya ihtiyaç duyar, bu yüzden soketten sonra kurulur.
-  // Bu çağrı yapılmazsa getEngine() sürekli null döner ve kurallar hiç çalışmaz.
-  initializeAutomationEngine(io);
-  initializeProactiveEngine(io);
+    // Socket.io başlat
+    new SocketHandler(io);
 
-  // SLA sayaçları artık istek yolunda değil burada işlenir; okuma istekleri
-  // veritabanına yazmaz.
-  //
-  // Çok süreçli kurulumda her sürecin süpürmesi gereksiz tekrar üretir.
-  // SLA_SWEEPER=off ile kapatılıp yalnızca bir süreçte açık bırakılabilir.
-  if (process.env.SLA_SWEEPER !== 'off') {
-    startSlaSweeper(io);
-  }
+    // Kural motorları io'ya ihtiyaç duyar, bu yüzden soketten sonra kurulur.
+    // Bu çağrı yapılmazsa getEngine() sürekli null döner ve kurallar hiç çalışmaz.
+    initializeAutomationEngine(io);
+    initializeProactiveEngine(io);
 
-  server.listen(PORT, () => {
-    console.log(`🚀 Sunucu ${PORT} portunda ve bulutlarda uçuyor!`);
-    console.log(
-      adapterState.enabled
-        ? `   Socket.IO Redis adapter aktif (${adapterState.url}) — çok süreç desteklenir`
-        : `   Socket.IO tek süreç modu — ${adapterState.reason}`
-    );
-    console.log(`   Widget: /widget.js  (sabitlenmiş: /widget/${WIDGET_MAJOR}/widget.js)`);
-  });
+    // SLA sayaçları artık istek yolunda değil burada işlenir; okuma istekleri
+    // veritabanına yazmaz.
+    //
+    // Çok süreçli kurulumda her sürecin süpürmesi gereksiz tekrar üretir.
+    // SLA_SWEEPER=off ile kapatılıp yalnızca bir süreçte açık bırakılabilir.
+    if (process.env.SLA_SWEEPER !== 'off') {
+      startSlaSweeper(io);
+    }
 
-  // Süreç kapanırken açık bağlantılar düzgün kapatılır. SIGTERM'de anında
-  // ölmek, o an açık olan soketlerdeki mesajların kaybolması demektir.
-  const shutdown = async (signal: NodeJS.Signals) => {
-    console.log(`
+    server.listen(PORT, () => {
+      console.log(`🚀 Sunucu ${PORT} portunda ve bulutlarda uçuyor!`);
+      console.log(
+        adapterState.enabled
+          ? `   Socket.IO Redis adapter aktif (${adapterState.url}) — çok süreç desteklenir`
+          : `   Socket.IO tek süreç modu — ${adapterState.reason}`
+      );
+      console.log(`   Widget: /widget.js  (sabitlenmiş: /widget/${WIDGET_MAJOR}/widget.js)`);
+    console.log(`   Dosya depolama: ${describeStorage()}`);
+    });
+
+    // Süreç kapanırken açık bağlantılar düzgün kapatılır. SIGTERM'de anında
+    // ölmek, o an açık olan soketlerdeki mesajların kaybolması demektir.
+    const shutdown = async (signal: NodeJS.Signals) => {
+      console.log(`
 ${signal} alındı, kapatılıyor...`);
-    server.close(() => console.log('   HTTP sunucusu kapandı'));
-    try {
-      io.close();
-      await closeRedisAdapter();
-    } catch (e) {}
-    setTimeout(() => process.exit(0), 3000).unref();
-  };
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-}).catch((error) => {
-  console.error('Bağlantı hatası:', error);
-  process.exit(1);
-});
+      server.close(() => console.log('   HTTP sunucusu kapandı'));
+      try {
+        // Awaited so open sockets are actually flushed before the grace
+        // timer below pulls the process down under them.
+        await io.close();
+        await closeRedisAdapter();
+      } catch (error) {
+        // Already shutting down: a failure to close cleanly is worth seeing in
+        // the log but must not stop the process from exiting.
+        console.error('[shutdown] could not close sockets cleanly', error);
+      }
+      setTimeout(() => process.exit(0), SHUTDOWN_GRACE_MS).unref();
+    };
+    // `void`: the process is on its way out, and there is nobody left to
+    // report a failed shutdown to beyond the log inside `shutdown`.
+    process.on('SIGTERM', () => void shutdown('SIGTERM'));
+    process.on('SIGINT', () => void shutdown('SIGINT'));
+  })
+  .catch((error) => {
+    console.error('Bağlantı hatası:', error);
+    process.exit(1);
+  });
 
 // Hata Yönetimi
 process.on('unhandledRejection', (err) => {

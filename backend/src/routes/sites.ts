@@ -1,125 +1,114 @@
+// Sites: the customer domains a tenant installs the widget on.
+//
+// Every handler here is scoped to the caller's organization. That is enforced
+// by the router-level `requireOrganization` below plus `loadOwnedSite`, not by
+// each handler remembering to filter — see src/http/guards.ts for why.
+
 import express from 'express';
-import { requireOrgId } from '../middleware/siteAuth';
-import { sendError } from '../middleware/errors';
 import { randomUUID } from 'crypto';
 import Site from '../models/Site';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
+import {
+  asyncHandler,
+  loadOwnedSite,
+  notFound,
+  orgId,
+  pickStrict,
+  requireOrganization
+} from '../http';
 import type { Request, Response } from 'express';
+import type { SiteDoc } from '../models/Site';
 
 const router = express.Router();
-router.get('/', auth, async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const sites = await Site.find({ organizationId: orgId }).sort({ createdAt: -1 });
+
+// Applied once instead of in each handler: a signed-in account with no
+// organization has nothing to read or write here.
+router.use(auth, requireOrganization);
+
+/** The fields a client may set on a site; everything else is server-owned. */
+const WRITABLE_FIELDS = ['name', 'domain', 'widgetSettings', 'aiSettings', 'isActive'] as const;
+
+/** Nested settings are merged rather than replaced, so a partial update of one
+ *  key does not blank out the rest of the object. */
+const MERGED_FIELDS = new Set<string>(['widgetSettings', 'aiSettings']);
+
+router.get(
+  '/',
+  asyncHandler(async (req: Request, res: Response) => {
+    const sites = await Site.find({ organizationId: orgId(req) }).sort({ createdAt: -1 });
     res.json({ sites });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.post('/', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
+  })
+);
+
+router.post(
+  '/',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
     const { name, domain } = req.body;
-    // Organizasyonu olmayan bir çağırana burada sessizce şirket açılıyordu;
-    // kiracılık kayıt ve girişte kurulur, site oluşturmanın yan etkisi değil.
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
     const site = new Site({
       name,
       domain,
       siteKey: randomUUID(),
       userId: req.user._id,
-      organizationId: orgId
+      organizationId: orgId(req)
     });
     await site.save();
     res.status(201).json({ site });
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
-router.get('/:siteId', auth, async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({
-      _id: req.params.siteId,
-      organizationId: orgId
-    });
-    if (!site) {
-      return res.status(404).json({ error: 'Site not found' });
-    }
+  })
+);
+
+router.get(
+  '/:siteId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
     res.json({ site });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.put('/:siteId', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const updates = req.body;
-    const allowedUpdates = ['name', 'domain', 'widgetSettings', 'aiSettings', 'isActive'];
-    const updateKeys = Object.keys(updates);
-    const isValidOperation = updateKeys.every(key => allowedUpdates.includes(key));
-    if (!isValidOperation) {
-      return res.status(400).json({ error: 'Invalid updates' });
+  })
+);
+
+router.put(
+  '/:siteId',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    // `pickStrict` rejects an unknown key rather than dropping it, which is what
+    // this endpoint did before — a caller sending a field this route does not own
+    // gets told so instead of watching it vanish.
+    const updates = pickStrict<SiteDoc>(req.body, WRITABLE_FIELDS);
+
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const writable = site as unknown as Record<string, unknown>;
+    for (const [key, value] of Object.entries(updates)) {
+      writable[key] = MERGED_FIELDS.has(key)
+        ? { ...(writable[key] as object), ...(value as object) }
+        : value;
     }
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({
-      _id: req.params.siteId,
-      organizationId: orgId
-    });
-    if (!site) {
-      return res.status(404).json({ error: 'Site not found' });
-    }
-    // The allow-list above decides which keys reach the row, so the write goes
-    // through an index rather than a fixed property.
-    const writable = site as Record<string, any>;
-    updateKeys.forEach((key: string) => {
-      if (key === 'widgetSettings' || key === 'aiSettings') {
-        writable[key] = { ...writable[key], ...updates[key] };
-      } else {
-        writable[key] = updates[key];
-      }
-    });
     await site.save();
     res.json({ site });
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
-router.delete('/:siteId', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
+  })
+);
+
+router.delete(
+  '/:siteId',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
     const site = await Site.findOneAndDelete({
       _id: req.params.siteId,
-      organizationId: orgId
+      organizationId: orgId(req)
     });
-    if (!site) {
-      return res.status(404).json({ error: 'Site not found' });
-    }
+    if (!site) throw notFound('Site');
     res.json({ message: 'Site deleted successfully' });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.post('/:siteId/regenerate-key', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({
-      _id: req.params.siteId,
-      organizationId: orgId
-    });
-    if (!site) {
-      return res.status(404).json({ error: 'Site not found' });
-    }
+  })
+);
+
+router.post(
+  '/:siteId/regenerate-key',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
     site.siteKey = randomUUID();
     await site.save();
     res.json({ site });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
+
 export default router;

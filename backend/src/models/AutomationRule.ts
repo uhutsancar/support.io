@@ -1,9 +1,10 @@
 import { defineModel } from '../db/model';
 import type { Ref } from '../db/model';
 import type { SiteDoc } from './Site';
-import type { AutomationAction, AutomationCondition, AutomationMetrics } from '../types/domain';
+import type { AutomationAction, AutomationCondition, AutomationMetrics } from '../domain';
 
-export type AutomationTrigger = 'message_received' | 'conversation_created' | 'visitor_event' | 'schedule';
+export type AutomationTrigger =
+  'message_received' | 'conversation_created' | 'visitor_event' | 'schedule';
 
 export interface AutomationRuleDoc {
   siteId: Ref<SiteDoc>;

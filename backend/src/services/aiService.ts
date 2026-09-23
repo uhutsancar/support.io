@@ -17,7 +17,7 @@
 import { getProvider, AIError } from './ai';
 import Message from '../models/Message';
 import FAQ from '../models/FAQ';
-import type { Priority } from '../types/domain';
+import type { Priority } from '../domain';
 
 export interface ConversationInput {
   _id: string;
@@ -75,9 +75,7 @@ const SPEAKER: Record<string, string> = { visitor: 'Müşteri', agent: 'Temsilci
 
 // Renders a conversation as a plain transcript for the prompt.
 async function buildTranscript(conversationId: string): Promise<TranscriptResult> {
-  const messages = await Message.find({ conversationId })
-    .sort({ createdAt: 1 })
-    .limit(200);
+  const messages = await Message.find({ conversationId }).sort({ createdAt: 1 }).limit(200);
 
   if (!messages.length) return { transcript: '', messageCount: 0 };
 
@@ -111,9 +109,7 @@ function describeConversation(conversation: ConversationInput): string {
 // wording support already stands behind rather than inventing policy. This is
 // the knowledge-base hook: the same shape works when articles replace FAQs.
 async function buildKnowledgeContext(siteId: unknown, limit = 12): Promise<string> {
-  const faqs = await FAQ.find({ siteId, isActive: true })
-    .sort({ order: 1 })
-    .limit(limit);
+  const faqs = await FAQ.find({ siteId, isActive: true }).sort({ order: 1 }).limit(limit);
 
   if (!faqs.length) return '';
 
@@ -137,7 +133,7 @@ function parseJsonResponse(text: string): Record<string, any> {
     .trim();
   try {
     return JSON.parse(cleaned);
-  } catch (e) {
+  } catch {
     throw new AIError('Model beklenen JSON biçiminde yanıt vermedi.', {
       code: 'ai_bad_format',
       status: 502,
@@ -232,7 +228,7 @@ async function suggestReply(
 }
 
 async function rewrite(
-  conversation: ConversationInput,
+  _conversation: ConversationInput,
   { draft, tone = 'professional' }: { draft?: string; tone?: string } = {}
 ): Promise<ReplyResult> {
   if (!draft || !String(draft).trim()) {
@@ -262,7 +258,7 @@ async function rewrite(
 }
 
 async function translate(
-  conversation: ConversationInput,
+  _conversation: ConversationInput,
   { text, targetLanguage }: { text?: string; targetLanguage?: string }
 ): Promise<TranslationResult> {
   if (!text || !String(text).trim()) {
@@ -329,7 +325,9 @@ async function analyze(conversation: ConversationInput): Promise<AnalysisResult>
       sentiment: sentiments.includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
       intent: String(parsed.intent || '').slice(0, 80),
       category: String(parsed.category || '').slice(0, 80),
-      suggestedPriority: priorities.includes(parsed.suggestedPriority) ? parsed.suggestedPriority : null,
+      suggestedPriority: priorities.includes(parsed.suggestedPriority)
+        ? parsed.suggestedPriority
+        : null,
       suggestedTags: Array.isArray(parsed.suggestedTags)
         ? parsed.suggestedTags.slice(0, 3).map((t: unknown) => String(t).slice(0, 40))
         : [],
@@ -387,4 +385,13 @@ async function knowledgeAnswer(
   };
 }
 
-export { summarize, suggestReply, rewrite, translate, analyze, knowledgeAnswer, buildTranscript, AIError };
+export {
+  summarize,
+  suggestReply,
+  rewrite,
+  translate,
+  analyze,
+  knowledgeAnswer,
+  buildTranscript,
+  AIError
+};

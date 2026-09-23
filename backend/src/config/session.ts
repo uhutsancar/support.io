@@ -78,7 +78,8 @@ export function endSession(res: Response): void {
  *  CSRF de söz konusu değildir. */
 export function readToken(req: Request): { token: string | null; fromCookie: boolean } {
   const cookieToken = req.cookies?.[SESSION_COOKIE];
-  if (typeof cookieToken === 'string' && cookieToken) return { token: cookieToken, fromCookie: true };
+  if (typeof cookieToken === 'string' && cookieToken)
+    return { token: cookieToken, fromCookie: true };
 
   const header = req.header('Authorization') || '';
   const match = /^Bearer\s+(.+)$/i.exec(header.trim());

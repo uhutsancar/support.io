@@ -8,22 +8,33 @@ import type { Doc } from '../db/model';
 import type { ProactiveRuleDoc } from '../models/ProactiveRule';
 import type { VisitorEventType } from '../models/EventLog';
 
+/**
+ * One visitor event, as the tracking endpoint reports it.
+ *
+ * The nullable members say "the widget did not report this", which is a real
+ * state: a page view with no referrer, an event with no URL. The route has
+ * always sent `null` for those; the interface said `undefined` and only
+ * type-checked because the route built the object from an untyped `any`. The
+ * numeric members are read through comparisons below, so they are defaulted
+ * rather than cast.
+ */
 export interface ProactiveEventData {
   siteId: string;
   visitorId: string;
-  sessionId?: string;
+  sessionId?: string | null;
   eventType: VisitorEventType | string;
-  url?: string;
-  timeOnPage?: number;
-  scrollDepth?: number;
-  customEventName?: string;
+  url?: string | null;
+  timeOnPage?: number | null;
+  scrollDepth?: number | null;
+  customEventName?: string | null;
   audienceContext?: {
-    referrer?: string;
-    userAgent?: string;
-    deviceType?: string;
+    referrer?: string | null;
+    userAgent?: string | null;
+    deviceType?: string | null;
+    country?: string | null;
     [extra: string]: unknown;
   };
-  payload?: Record<string, unknown>;
+  payload?: Record<string, unknown> | null;
 }
 
 /**
@@ -50,7 +61,7 @@ class ProactiveEngine {
       const { siteId, visitorId, eventType } = eventData;
 
       // Log the event asynchronously
-      this.logEvent(eventData).catch(err => console.error('Failed to log event', err));
+      this.logEvent(eventData).catch((err) => console.error('Failed to log event', err));
 
       // 1. Fetch active rules for this site and eventType
       const rules = await ProactiveRule.find({
@@ -72,16 +83,16 @@ class ProactiveEngine {
 
         // 🟢 HIGH PERFORMANCE LOCK: Check memory FIRST to block parallel execution
         if (this._recentTriggers.has(cacheKey)) {
-           const lastFire = this._recentTriggers.get(cacheKey) as TriggerLock;
-           
-           if (lastFire === 'PROCESSING') {
-              continue; // Another event is currently evaluating the DB for this rule
-           }
-           
-           // Use <= cooldownMs to ensure even 0ms cooldown is respected effectively in high-speed bursts
-           if (lastFire === -1 || (Date.now() - lastFire <= cooldownMs)) {
-              continue; // Blocked in memory by cooldown or permanent lock
-           }
+          const lastFire = this._recentTriggers.get(cacheKey) as TriggerLock;
+
+          if (lastFire === 'PROCESSING') {
+            continue; // Another event is currently evaluating the DB for this rule
+          }
+
+          // Use <= cooldownMs to ensure even 0ms cooldown is respected effectively in high-speed bursts
+          if (lastFire === -1 || Date.now() - lastFire <= cooldownMs) {
+            continue; // Blocked in memory by cooldown or permanent lock
+          }
         }
 
         // 🟢 IMMEDIATE LOCK: Set a 'PROCESSING' flag in memory BEFORE DB check
@@ -91,7 +102,10 @@ class ProactiveEngine {
         const canTrigger = await this.checkFrequencyControl(rule, visitorId);
         if (canTrigger) {
           // Confirm permanent lock (-1 for once-per-visitor, timestamp for cooldown)
-          this._recentTriggers.set(cacheKey, frequencyControl?.triggerOncePerVisitor ? -1 : Date.now());
+          this._recentTriggers.set(
+            cacheKey,
+            frequencyControl?.triggerOncePerVisitor ? -1 : Date.now()
+          );
 
           await this.executeAction(rule, eventData);
           return true; // Break after first rule fires
@@ -122,24 +136,45 @@ class ProactiveEngine {
     await log.save();
   }
 
-  async checkConditions(rule: Doc<ProactiveRuleDoc>, eventData: ProactiveEventData): Promise<boolean> {
+  async checkConditions(
+    rule: Doc<ProactiveRuleDoc>,
+    eventData: ProactiveEventData
+  ): Promise<boolean> {
     const { triggerCondition, audienceContext: ruleAudience } = rule;
-    
+
     // Check URL Match
     if (triggerCondition.urlMatch !== 'any' && eventData.url) {
       const dbUrl = triggerCondition.urlValue || '';
       const currentUrl = eventData.url || '';
-      
+
       if (triggerCondition.urlMatch === 'exact' && currentUrl !== dbUrl) return false;
       if (triggerCondition.urlMatch === 'contains' && !currentUrl.includes(dbUrl)) return false;
-      if (triggerCondition.urlMatch === 'regex' && !(new RegExp(dbUrl, 'i').test(currentUrl))) return false;
+      if (triggerCondition.urlMatch === 'regex' && !new RegExp(dbUrl, 'i').test(currentUrl))
+        return false;
     }
 
     // Check specific event metrics
-    if (triggerCondition.eventType === 'time_on_page' && (eventData.timeOnPage as number) < triggerCondition.timeThresholdSeconds) return false;
-    if (triggerCondition.eventType === 'inactivity' && (eventData.timeOnPage as number) < triggerCondition.timeThresholdSeconds) return false; // Reusing timeOnPage for inactivity duration for simplicity
-    if (triggerCondition.eventType === 'scroll_depth' && (eventData.scrollDepth as number) < triggerCondition.scrollPercentage) return false;
-    if (triggerCondition.eventType === 'custom_event' && eventData.customEventName !== triggerCondition.customEventName) return false;
+    if (
+      triggerCondition.eventType === 'time_on_page' &&
+      (eventData.timeOnPage ?? 0) < triggerCondition.timeThresholdSeconds
+    )
+      return false;
+    // Inactivity reuses timeOnPage as the idle duration the widget reports.
+    if (
+      triggerCondition.eventType === 'inactivity' &&
+      (eventData.timeOnPage ?? 0) < triggerCondition.timeThresholdSeconds
+    )
+      return false;
+    if (
+      triggerCondition.eventType === 'scroll_depth' &&
+      (eventData.scrollDepth ?? 0) < triggerCondition.scrollPercentage
+    )
+      return false;
+    if (
+      triggerCondition.eventType === 'custom_event' &&
+      eventData.customEventName !== triggerCondition.customEventName
+    )
+      return false;
 
     // Check Audience Context
     const currentAudience = eventData.audienceContext || {};
@@ -149,8 +184,12 @@ class ProactiveEngine {
       if (ruleAudience.deviceType !== currentDevice) return false;
     }
 
-    if (ruleAudience.country && currentAudience.country && ruleAudience.country !== currentAudience.country) {
-       return false;
+    if (
+      ruleAudience.country &&
+      currentAudience.country &&
+      ruleAudience.country !== currentAudience.country
+    ) {
+      return false;
     }
 
     return true; // All conditions met
@@ -161,7 +200,9 @@ class ProactiveEngine {
     const cooldownMs = (frequencyControl.cooldownMinutes || 0) * 60 * 1000;
 
     // Pure DB check — memory caching is handled by evaluateEvent
-    const existingLogs = await ProactiveTriggerLog.find({ ruleId: rule._id, visitorId }).sort({ triggeredAt: -1 });
+    const existingLogs = await ProactiveTriggerLog.find({ ruleId: rule._id, visitorId }).sort({
+      triggeredAt: -1
+    });
 
     if (existingLogs.length > 0) {
       if (frequencyControl.triggerOncePerVisitor) {
@@ -178,9 +219,12 @@ class ProactiveEngine {
     return true; // OK to trigger
   }
 
-  async executeAction(rule: Doc<ProactiveRuleDoc>, eventData: ProactiveEventData): Promise<boolean> {
+  async executeAction(
+    rule: Doc<ProactiveRuleDoc>,
+    eventData: ProactiveEventData
+  ): Promise<boolean> {
     const { action, siteId } = rule;
-    const { visitorId, sessionId } = eventData;
+    const { visitorId } = eventData;
 
     try {
       // Create Trigger Log
@@ -197,35 +241,39 @@ class ProactiveEngine {
       // Emit socket event to the widget
       if (this.io) {
         const widgetNs = this.io.of('/widget');
-        
+
         // Find if this visitor has an active conversation to send the message to
-        let conversation = await Conversation.findOne({ siteId, visitorId, status: { $in: ['open', 'assigned', 'pending'] } });
+        const conversation = await Conversation.findOne({
+          siteId,
+          visitorId,
+          status: { $in: ['open', 'assigned', 'pending'] }
+        });
 
         if (action.type === 'send_message' || action.type === 'open_popup') {
-           if (!conversation && action.type === 'send_message') {
-              // Create a dummy/bot message to trigger the popup without creating a full conversation yet,
-              // or just emit raw event
-           }
-           
-           // Target visitor-specific room. DO NOT double-emit to session room as it causes duplicates.
-           widgetNs.to(`site:${siteId}:visitor:${visitorId}`).emit('proactive-trigger', {
-              actionType: action.type,
-              messageContent: action.messageContent,
-              ruleId: rule._id
-           });
+          if (!conversation && action.type === 'send_message') {
+            // Create a dummy/bot message to trigger the popup without creating a full conversation yet,
+            // or just emit raw event
+          }
+
+          // Target visitor-specific room. DO NOT double-emit to session room as it causes duplicates.
+          widgetNs.to(`site:${siteId}:visitor:${visitorId}`).emit('proactive-trigger', {
+            actionType: action.type,
+            messageContent: action.messageContent,
+            ruleId: rule._id
+          });
         }
 
         if (action.type === 'add_tag' && conversation) {
-           if (!conversation.tags.includes(action.tag as string)) {
-              conversation.tags.push(action.tag as string);
-              await conversation.save();
-           }
+          if (!conversation.tags.includes(action.tag as string)) {
+            conversation.tags.push(action.tag as string);
+            await conversation.save();
+          }
         }
       }
       return true;
     } catch (error) {
-       console.error('Proactive executeAction error:', error);
-       return false;
+      console.error('Proactive executeAction error:', error);
+      return false;
     }
   }
 }

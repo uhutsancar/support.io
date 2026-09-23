@@ -1,8 +1,9 @@
 'use strict';
 
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../config/env';
 import fs from 'fs';
 import path from 'path';
-import dotenv from 'dotenv';
 import { pool } from './pool';
 
 const SCHEMA_FILE = path.join(__dirname, 'schema.sql');
@@ -33,7 +34,6 @@ async function applySchema() {
 export { applySchema };
 // Run directly (`npm run db:migrate`) rather than imported by the server.
 if (require.main === module) {
-  dotenv.config();
   applySchema()
     .then(() => {
       console.log('PostgreSQL schema applied.');

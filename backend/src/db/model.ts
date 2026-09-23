@@ -161,7 +161,9 @@ interface QueryChain {
  * property stays deliberately open rather than forcing a narrowing cast into
  * every caller. The type argument records which model it points at.
  */
-export type Ref<TModel = unknown> = any;
+// `TModel | any` is `any`. Naming the parameter in the definition keeps it
+// from reading as dead while the value stays deliberately open.
+export type Ref<TModel = unknown> = TModel | any;
 
 /** A row as it comes back from the driver. */
 type Row = Record<string, any>;
@@ -201,11 +203,13 @@ export type Doc<TFields> = Document & TFields;
  * (see mergeDefaults), so a caller that sets one key of `widgetSettings` really
  * does get the rest filled in. The input type says so.
  */
-export type DeepPartial<T> =
-  T extends Date ? T
-  : T extends (infer TItem)[] ? DeepPartial<TItem>[]
-  : T extends object ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : T;
+export type DeepPartial<T> = T extends Date
+  ? T
+  : T extends (infer TItem)[]
+    ? DeepPartial<TItem>[]
+    : T extends object
+      ? { [K in keyof T]?: DeepPartial<T[K]> }
+      : T;
 
 export type CreateInput<TFields> = DeepPartial<TFields> & Record<string, any>;
 
@@ -213,9 +217,19 @@ export type CreateInput<TFields> = DeepPartial<TFields> & Record<string, any>;
 export type Plain<TDoc> = TDoc extends Document
   ? Omit<
       TDoc,
-      'save' | 'toObject' | 'toJSON' | 'populate' | 'deleteOne' | 'isModified'
-      | '$model' | '$isNew' | '$snapshot' | '$populated' | '$id'
-    > & Record<string, any>
+      | 'save'
+      | 'toObject'
+      | 'toJSON'
+      | 'populate'
+      | 'deleteOne'
+      | 'isModified'
+      | '$model'
+      | '$isNew'
+      | '$snapshot'
+      | '$populated'
+      | '$id'
+    > &
+      Record<string, any>
   : TDoc;
 
 /** Applies Plain through the array / nullable shapes a query can resolve to. */
@@ -226,7 +240,10 @@ export type LeanOf<TResult> = TResult extends (infer TItem)[] ? Plain<TItem>[] :
  * and services call. `TFields` is the declared document shape, `TStatics` the
  * extra statics a model adds.
  */
-export type Model<TFields = Record<string, unknown>, TStatics = Record<string, never>> = TStatics & {
+export type Model<
+  TFields = Record<string, unknown>,
+  TStatics = Record<string, never>
+> = TStatics & {
   new (data?: CreateInput<TFields>): Doc<TFields>;
   (data?: CreateInput<TFields>): Doc<TFields>;
 
@@ -243,8 +260,16 @@ export type Model<TFields = Record<string, unknown>, TStatics = Record<string, n
   create(data: CreateInput<TFields>[]): Promise<Doc<TFields>[]>;
   create(data: CreateInput<TFields>): Promise<Doc<TFields>>;
 
-  findOneAndUpdate(filter: Filter, update: UpdateSpec, options?: UpdateOptions): DeferredQuery<Doc<TFields> | null>;
-  findByIdAndUpdate(id: unknown, update: UpdateSpec, options?: UpdateOptions): DeferredQuery<Doc<TFields> | null>;
+  findOneAndUpdate(
+    filter: Filter,
+    update: UpdateSpec,
+    options?: UpdateOptions
+  ): DeferredQuery<Doc<TFields> | null>;
+  findByIdAndUpdate(
+    id: unknown,
+    update: UpdateSpec,
+    options?: UpdateOptions
+  ): DeferredQuery<Doc<TFields> | null>;
   updateMany(filter: Filter, update: UpdateSpec): Promise<UpdateResult>;
   updateOne(filter: Filter, update: UpdateSpec): Promise<UpdateResult>;
 
@@ -295,7 +320,9 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 function isPlainObject(value: unknown): value is Record<string, any> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date);
+  return (
+    value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)
+  );
 }
 
 // Merges a partial object into a default object without dropping keys the
@@ -338,12 +365,18 @@ function toNumber(value: unknown): number | null {
 function fromColumn(def: FieldDef, value: unknown): unknown {
   if (value === null || value === undefined) return null;
   switch (def.type) {
-    case 'number': return toNumber(value);
-    case 'boolean': return value === true || value === 't' || value === 'true';
-    case 'date': return toDate(value);
-    case 'json': return value;
-    case 'stringArray': return Array.isArray(value) ? value : [];
-    default: return value;
+    case 'number':
+      return toNumber(value);
+    case 'boolean':
+      return value === true || value === 't' || value === 'true';
+    case 'date':
+      return toDate(value);
+    case 'json':
+      return value;
+    case 'stringArray':
+      return Array.isArray(value) ? value : [];
+    default:
+      return value;
   }
 }
 
@@ -355,13 +388,16 @@ function toColumn(def: FieldDef, value: unknown): unknown {
       const id = toId(value);
       return id === '' ? null : id;
     }
-    case 'number': return toNumber(value);
+    case 'number':
+      return toNumber(value);
     case 'boolean': {
       if (value === null) return null;
       return Boolean(value);
     }
-    case 'date': return toDate(value);
-    case 'json': return value === null ? null : JSON.stringify(value);
+    case 'date':
+      return toDate(value);
+    case 'json':
+      return value === null ? null : JSON.stringify(value);
     case 'stringArray': {
       if (value === null) return [];
       const arr = Array.isArray(value) ? value : [value];
@@ -371,7 +407,8 @@ function toColumn(def: FieldDef, value: unknown): unknown {
       if (value === null) return null;
       return typeof value === 'string' ? value : String(value);
     }
-    default: return value === null ? null : value;
+    default:
+      return value === null ? null : value;
   }
 }
 
@@ -504,7 +541,8 @@ class FilterCompiler {
     const target = this.model.resolveColumnPath(path);
     if (!target) throw new Error(`Unknown field "${path}" on model ${this.model.modelName}`);
 
-    if (target.jsonPath) return this.compileJsonPath(target as ColumnTarget & { jsonPath: string[] }, condition);
+    if (target.jsonPath)
+      return this.compileJsonPath(target as ColumnTarget & { jsonPath: string[] }, condition);
     return this.compileColumn(target.def, `${this.alias}.${ident(target.def.column)}`, condition);
   }
 
@@ -536,12 +574,18 @@ class FilterCompiler {
       const value = (condition as Record<string, any>)[op];
       switch (op) {
         case '$eq':
-          parts.push(value === null ? `${expr} IS NULL` : `${expr} = ${this.builder.bind(toColumn(def, value))}`);
+          parts.push(
+            value === null
+              ? `${expr} IS NULL`
+              : `${expr} = ${this.builder.bind(toColumn(def, value))}`
+          );
           break;
         case '$ne':
-          parts.push(value === null
-            ? `${expr} IS NOT NULL`
-            : `(${expr} IS DISTINCT FROM ${this.builder.bind(toColumn(def, value))})`);
+          parts.push(
+            value === null
+              ? `${expr} IS NOT NULL`
+              : `(${expr} IS DISTINCT FROM ${this.builder.bind(toColumn(def, value))})`
+          );
           break;
         case '$in': {
           const candidates = (value || []) as unknown[];
@@ -558,10 +602,16 @@ class FilterCompiler {
         case '$nin': {
           const list = ((value || []) as unknown[]).filter((v) => v !== null && v !== undefined);
           if (!list.length) parts.push('TRUE');
-          else parts.push(`(${expr} <> ALL(${this.builder.bind(list.map((v) => toColumn(def, v)))}) OR ${expr} IS NULL)`);
+          else
+            parts.push(
+              `(${expr} <> ALL(${this.builder.bind(list.map((v) => toColumn(def, v)))}) OR ${expr} IS NULL)`
+            );
           break;
         }
-        case '$gt': case '$gte': case '$lt': case '$lte':
+        case '$gt':
+        case '$gte':
+        case '$lt':
+        case '$lte':
           parts.push(`${expr} ${COMPARATORS[op]} ${this.builder.bind(toColumn(def, value))}`);
           break;
         case '$exists':
@@ -581,7 +631,7 @@ class FilterCompiler {
 
   compileRegex(expr: string, value: unknown, options?: string): string {
     const source = value instanceof RegExp ? value.source : String(value);
-    const flags = value instanceof RegExp ? value.flags : (options || '');
+    const flags = value instanceof RegExp ? value.flags : options || '';
     const operator = flags.includes('i') ? '~*' : '~';
     return `${expr} ${operator} ${this.builder.bind(source)}`;
   }
@@ -593,7 +643,8 @@ class FilterCompiler {
     const column = (field ? field.column : child.valueColumn) as string;
     const def: FieldDef = field || { type: 'id' };
 
-    const negate = isPlainObject(condition) && Object.keys(condition).length === 1 && '$ne' in condition;
+    const negate =
+      isPlainObject(condition) && Object.keys(condition).length === 1 && '$ne' in condition;
     const effective = negate ? (condition as Record<string, unknown>).$ne : condition;
 
     const inner = this.compileColumn(def, `c.${ident(column)}`, negate ? effective : effective);
@@ -770,13 +821,28 @@ export class Query<TResult = unknown> implements PromiseLike<TResult> {
     this._meta = options.meta || null;
   }
 
-  select(value: Projection): this { this._select = value; return this; }
-  sort(value: string | Record<string, unknown> | null): this { this._sort = value; return this; }
-  limit(value: number | string | null): this { this._limit = value === null ? null : parseInt(String(value), 10); return this; }
-  skip(value: number | string | null): this { this._skip = value === null ? null : parseInt(String(value), 10); return this; }
+  select(value: Projection): this {
+    this._select = value;
+    return this;
+  }
+  sort(value: string | Record<string, unknown> | null): this {
+    this._sort = value;
+    return this;
+  }
+  limit(value: number | string | null): this {
+    this._limit = value === null ? null : parseInt(String(value), 10);
+    return this;
+  }
+  skip(value: number | string | null): this {
+    this._skip = value === null ? null : parseInt(String(value), 10);
+    return this;
+  }
 
   /** Plain objects instead of documents; the shape is otherwise the same. */
-  lean(): Query<LeanOf<TResult>> { this._lean = true; return this as unknown as Query<LeanOf<TResult>>; }
+  lean(): Query<LeanOf<TResult>> {
+    this._lean = true;
+    return this as unknown as Query<LeanOf<TResult>>;
+  }
 
   populate(path: string | PopulateSpec | PopulateSpec[], select?: Projection): this {
     if (Array.isArray(path)) this._populate.push(...path);
@@ -793,11 +859,17 @@ export class Query<TResult = unknown> implements PromiseLike<TResult> {
   then<TFulfilled = TResult, TRejected = never>(
     onFulfilled?: ((value: TResult) => TFulfilled | PromiseLike<TFulfilled>) | null,
     onRejected?: ((reason: any) => TRejected | PromiseLike<TRejected>) | null
-  ): Promise<TFulfilled | TRejected> { return this.exec().then(onFulfilled, onRejected); }
+  ): Promise<TFulfilled | TRejected> {
+    return this.exec().then(onFulfilled, onRejected);
+  }
   catch<TRejected = never>(
     onRejected?: ((reason: any) => TRejected | PromiseLike<TRejected>) | null
-  ): Promise<TResult | TRejected> { return this.exec().catch(onRejected); }
-  finally(onFinally?: (() => void) | null): Promise<TResult> { return this.exec().finally(onFinally); }
+  ): Promise<TResult | TRejected> {
+    return this.exec().catch(onRejected);
+  }
+  finally(onFinally?: (() => void) | null): Promise<TResult> {
+    return this.exec().finally(onFinally);
+  }
 }
 
 // findOneAndUpdate / findOneAndDelete return a chainable result rather than a
@@ -813,8 +885,14 @@ export class DeferredQuery<TResult = unknown> implements PromiseLike<TResult> {
     this._chain = { select: null, populate: [], lean: false };
   }
 
-  select(value: Projection): this { this._chain.select = value; return this; }
-  lean(): DeferredQuery<LeanOf<TResult>> { this._chain.lean = true; return this as unknown as DeferredQuery<LeanOf<TResult>>; }
+  select(value: Projection): this {
+    this._chain.select = value;
+    return this;
+  }
+  lean(): DeferredQuery<LeanOf<TResult>> {
+    this._chain.lean = true;
+    return this as unknown as DeferredQuery<LeanOf<TResult>>;
+  }
 
   populate(pathOrSpec: string | PopulateSpec | PopulateSpec[], select?: Projection): this {
     if (Array.isArray(pathOrSpec)) this._chain.populate.push(...pathOrSpec);
@@ -824,9 +902,15 @@ export class DeferredQuery<TResult = unknown> implements PromiseLike<TResult> {
   }
 
   // Accepted and ignored: the result is always a single document.
-  sort(): this { return this; }
-  limit(): this { return this; }
-  skip(): this { return this; }
+  sort(): this {
+    return this;
+  }
+  limit(): this {
+    return this;
+  }
+  skip(): this {
+    return this;
+  }
 
   exec(): Promise<TResult> {
     if (!this._promise) this._promise = this._run(this._chain);
@@ -836,11 +920,17 @@ export class DeferredQuery<TResult = unknown> implements PromiseLike<TResult> {
   then<TFulfilled = TResult, TRejected = never>(
     onFulfilled?: ((value: TResult) => TFulfilled | PromiseLike<TFulfilled>) | null,
     onRejected?: ((reason: any) => TRejected | PromiseLike<TRejected>) | null
-  ): Promise<TFulfilled | TRejected> { return this.exec().then(onFulfilled, onRejected); }
+  ): Promise<TFulfilled | TRejected> {
+    return this.exec().then(onFulfilled, onRejected);
+  }
   catch<TRejected = never>(
     onRejected?: ((reason: any) => TRejected | PromiseLike<TRejected>) | null
-  ): Promise<TResult | TRejected> { return this.exec().catch(onRejected); }
-  finally(onFinally?: (() => void) | null): Promise<TResult> { return this.exec().finally(onFinally); }
+  ): Promise<TResult | TRejected> {
+    return this.exec().catch(onRejected);
+  }
+  finally(onFinally?: (() => void) | null): Promise<TResult> {
+    return this.exec().finally(onFinally);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -937,11 +1027,13 @@ class ModelRuntime {
 
     for (const [name, def] of Object.entries(this.fields)) {
       let value = data[name];
-      if (value === undefined && def.alias && data[def.alias] !== undefined) value = data[def.alias];
+      if (value === undefined && def.alias && data[def.alias] !== undefined)
+        value = data[def.alias];
 
       if (value === undefined) {
         if (def.default !== undefined) {
-          value = typeof def.default === 'function' ? def.default.call(doc) : deepClone(def.default);
+          value =
+            typeof def.default === 'function' ? def.default.call(doc) : deepClone(def.default);
         } else if (def.type === 'json') {
           value = null;
         } else if (def.type === 'stringArray') {
@@ -950,7 +1042,8 @@ class ModelRuntime {
           value = null;
         }
       } else if (def.type === 'json' && def.default !== undefined && isPlainObject(value)) {
-        const base = typeof def.default === 'function' ? def.default.call(doc) : deepClone(def.default);
+        const base =
+          typeof def.default === 'function' ? def.default.call(doc) : deepClone(def.default);
         value = mergeDefaults(base, value);
       }
 
@@ -999,7 +1092,9 @@ class ModelRuntime {
    */
   validateField(name: string, def: FieldDef, value: unknown): void {
     if (def.required && (value === null || value === undefined || value === '')) {
-      throw new ValidationError(`${this.modelName} validation failed: ${name}: Path \`${name}\` is required.`);
+      throw new ValidationError(
+        `${this.modelName} validation failed: ${name}: Path \`${name}\` is required.`
+      );
     }
     if (def.enum && value !== null && value !== undefined && !def.enum.includes(value)) {
       throw new ValidationError(
@@ -1007,10 +1102,14 @@ class ModelRuntime {
       );
     }
     if (def.min !== undefined && typeof value === 'number' && value < def.min) {
-      throw new ValidationError(`${this.modelName} validation failed: ${name}: Path \`${name}\` (${value}) is less than minimum allowed value (${def.min}).`);
+      throw new ValidationError(
+        `${this.modelName} validation failed: ${name}: Path \`${name}\` (${value}) is less than minimum allowed value (${def.min}).`
+      );
     }
     if (def.max !== undefined && typeof value === 'number' && value > def.max) {
-      throw new ValidationError(`${this.modelName} validation failed: ${name}: Path \`${name}\` (${value}) is more than maximum allowed value (${def.max}).`);
+      throw new ValidationError(
+        `${this.modelName} validation failed: ${name}: Path \`${name}\` (${value}) is more than maximum allowed value (${def.max}).`
+      );
     }
   }
 
@@ -1019,7 +1118,9 @@ class ModelRuntime {
     for (const name of this.fieldNames) snap[name] = deepClone(doc[name]);
     for (const name of this.childNames) snap[name] = deepClone(doc[name]);
     if (this.timestamps) {
-      snap.createdAt = doc.createdAt ? new Date(doc.createdAt.getTime ? doc.createdAt.getTime() : doc.createdAt) : null;
+      snap.createdAt = doc.createdAt
+        ? new Date(doc.createdAt.getTime ? doc.createdAt.getTime() : doc.createdAt)
+        : null;
     }
     return snap;
   }
@@ -1221,7 +1322,9 @@ class ModelRuntime {
       const map = await this.fetchRefs({ ref: child.ref }, ids, select);
       for (const doc of docs) {
         const list = (doc[head] || []) as unknown[];
-        const replaced = list.map((v) => (v && map.has(toId(v) as string) ? map.get(toId(v) as string) : v));
+        const replaced = list.map((v) =>
+          v && map.has(toId(v) as string) ? map.get(toId(v) as string) : v
+        );
         doc[head] = replaced;
         doc.$populated[head] = replaced;
       }
@@ -1247,7 +1350,11 @@ class ModelRuntime {
   }
 
   // Loads referenced rows in a single round trip per target table.
-  async fetchRefs(def: Pick<FieldDef, 'ref' | 'refAny'>, ids: string[], select?: Projection): Promise<Map<string, Row>> {
+  async fetchRefs(
+    def: Pick<FieldDef, 'ref' | 'refAny'>,
+    ids: string[],
+    select?: Projection
+  ): Promise<Map<string, Row>> {
     const unique = [...new Set(ids.filter(Boolean))];
     const map = new Map<string, Row>();
     if (!unique.length) return map;
@@ -1261,7 +1368,9 @@ class ModelRuntime {
       const missing = unique.filter((id) => !map.has(id));
       if (!missing.length) break;
 
-      const { rows } = await query(`SELECT * FROM ${ident(model.table)} WHERE id = ANY($1)`, [missing]);
+      const { rows } = await query(`SELECT * FROM ${ident(model.table)} WHERE id = ANY($1)`, [
+        missing
+      ]);
       if (!rows.length) continue;
 
       const docs = rows.map((row) => model.hydrate(row));
@@ -1312,14 +1421,19 @@ class ModelRuntime {
       sets.push(`${ident(def.column)} = $${values.length}`);
     }
 
-    const childrenChanged = this.childNames.some((name) => doc[name] !== undefined && !deepEqual(snapshot[name], doc[name]));
+    const childrenChanged = this.childNames.some(
+      (name) => doc[name] !== undefined && !deepEqual(snapshot[name], doc[name])
+    );
 
     if (!sets.length && !childrenChanged) return doc;
 
     await withTransaction(async (client) => {
       if (sets.length) {
         values.push(doc._id);
-        await client.query(`UPDATE ${ident(this.table)} SET ${sets.join(', ')} WHERE id = $${values.length}`, values);
+        await client.query(
+          `UPDATE ${ident(this.table)} SET ${sets.join(', ')} WHERE id = $${values.length}`,
+          values
+        );
       }
       if (childrenChanged) await this.writeChildren(client, doc, snapshot);
     });
@@ -1329,13 +1443,19 @@ class ModelRuntime {
     return doc;
   }
 
-  async writeChildren(client: PoolClient, doc: AnyDoc, snapshot: Record<string, any> | null): Promise<void> {
+  async writeChildren(
+    client: PoolClient,
+    doc: AnyDoc,
+    snapshot: Record<string, any> | null
+  ): Promise<void> {
     for (const [name, child] of Object.entries(this.children)) {
       const rows = doc[name];
       if (rows === undefined) continue;
       if (snapshot && deepEqual(snapshot[name], rows)) continue;
 
-      await client.query(`DELETE FROM ${ident(child.table)} WHERE ${ident(child.parentKey)} = $1`, [doc._id]);
+      await client.query(`DELETE FROM ${ident(child.table)} WHERE ${ident(child.parentKey)} = $1`, [
+        doc._id
+      ]);
       if (!rows.length) continue;
 
       const seen = new Set<unknown>();
@@ -1352,7 +1472,10 @@ class ModelRuntime {
         }
         const columns: string[] = [child.parentKey];
         const vals: unknown[] = [doc._id];
-        if (child.ownId) { columns.push('id'); vals.push(item._id); }
+        if (child.ownId) {
+          columns.push('id');
+          vals.push(item._id);
+        }
         for (const [fname, def] of Object.entries(child.fields || {})) {
           columns.push(def.column);
           vals.push(toColumn(def, item[fname]));
@@ -1377,8 +1500,9 @@ class ModelRuntime {
       else if (key === '$inc') Object.assign(inc, value);
       else if (key === '$addToSet') Object.assign(addToSet, value);
       else if (key === '$pull') Object.assign(pull, value);
-      else if (key === '$unset') { for (const k of Object.keys(value as object)) set[k] = null; }
-      else if (!key.startsWith('$')) set[key] = value;
+      else if (key === '$unset') {
+        for (const k of Object.keys(value as object)) set[k] = null;
+      } else if (!key.startsWith('$')) set[key] = value;
       else throw new Error(`Unsupported update operator ${key}`);
     }
 
@@ -1405,7 +1529,8 @@ class ModelRuntime {
       if (!jsonPatches.has(column)) jsonPatches.set(column, []);
       (jsonPatches.get(column) as JsonPatch[]).push(patch);
     };
-    const pathLiteralOf = (segments: string[]): string => segments.map((k) => `'${k.replace(/'/g, "''")}'`).join(', ');
+    const pathLiteralOf = (segments: string[]): string =>
+      segments.map((k) => `'${k.replace(/'/g, "''")}'`).join(', ');
 
     for (const [path, value] of Object.entries(set)) {
       if (value === undefined) continue;
@@ -1427,7 +1552,11 @@ class ModelRuntime {
       const target = this.resolveColumnPath(path);
       if (!target) continue;
       if (target.jsonPath) {
-        addJsonPatch(target.def.column, { kind: 'inc', path: target.jsonPath, value: Number(delta) });
+        addJsonPatch(target.def.column, {
+          kind: 'inc',
+          path: target.jsonPath,
+          value: Number(delta)
+        });
         continue;
       }
       values.push(Number(delta));
@@ -1498,7 +1627,10 @@ class ModelRuntime {
     await withTransaction(async (client) => {
       if (sets.length) {
         values.push(ids);
-        await client.query(`UPDATE ${ident(this.table)} SET ${sets.join(', ')} WHERE id = ANY($${values.length})`, values);
+        await client.query(
+          `UPDATE ${ident(this.table)} SET ${sets.join(', ')} WHERE id = ANY($${values.length})`,
+          values
+        );
       }
 
       for (const [path, value] of Object.entries(addToSet)) {
@@ -1517,7 +1649,10 @@ class ModelRuntime {
             }
             const columns: string[] = [child.parentKey];
             const vals: unknown[] = [id];
-            if (child.ownId) { columns.push('id'); vals.push(item._id); }
+            if (child.ownId) {
+              columns.push('id');
+              vals.push(item._id);
+            }
             for (const [fname, def] of Object.entries(child.fields || {})) {
               columns.push(def.column);
               vals.push(toColumn(def, item[fname]));
@@ -1539,14 +1674,19 @@ class ModelRuntime {
           vals.push(toId(criteria));
           conditions.push(`${ident(child.valueColumn as string)} = $${vals.length}`);
         } else {
-          for (const [fname, fvalue] of Object.entries((criteria || {}) as Record<string, unknown>)) {
+          for (const [fname, fvalue] of Object.entries(
+            (criteria || {}) as Record<string, unknown>
+          )) {
             const def = (child.fields || {})[fname];
             if (!def) continue;
             vals.push(toColumn(def, fvalue));
             conditions.push(`${ident(def.column)} = $${vals.length}`);
           }
         }
-        await client.query(`DELETE FROM ${ident(child.table)} WHERE ${conditions.join(' AND ')}`, vals);
+        await client.query(
+          `DELETE FROM ${ident(child.table)} WHERE ${conditions.join(' AND ')}`,
+          vals
+        );
       }
     });
   }
@@ -1592,7 +1732,8 @@ class ModelRuntime {
 
   findById(id: unknown, projection?: Projection): Query<AnyDoc | null> {
     const key = toId(id);
-    if (!key) return new Query<AnyDoc | null>(this, 'findOne', { _id: null }, { select: projection });
+    if (!key)
+      return new Query<AnyDoc | null>(this, 'findOne', { _id: null }, { select: projection });
     return new Query<AnyDoc | null>(this, 'findOne', { _id: key }, { select: projection });
   }
 
@@ -1615,8 +1756,14 @@ class ModelRuntime {
     return doc;
   }
 
-  findOneAndUpdate(filter: Filter, update: UpdateSpec, options: UpdateOptions = {}): DeferredQuery<AnyDoc | null> {
-    return new DeferredQuery<AnyDoc | null>((chain) => this.runFindOneAndUpdate(filter, update, options, chain));
+  findOneAndUpdate(
+    filter: Filter,
+    update: UpdateSpec,
+    options: UpdateOptions = {}
+  ): DeferredQuery<AnyDoc | null> {
+    return new DeferredQuery<AnyDoc | null>((chain) =>
+      this.runFindOneAndUpdate(filter, update, options, chain)
+    );
   }
 
   async runFindOneAndUpdate(
@@ -1661,7 +1808,9 @@ class ModelRuntime {
           const target = this.resolveColumnPath(path);
           if (!target) continue;
           if (target.jsonPath) {
-            const jsonFieldName = Object.keys(this.fields).find((n) => this.fields[n].column === target.def.column) as string;
+            const jsonFieldName = Object.keys(this.fields).find(
+              (n) => this.fields[n].column === target.def.column
+            ) as string;
             let cursor = doc[jsonFieldName];
             if (!isPlainObject(cursor)) cursor = {};
             let node = cursor;
@@ -1673,7 +1822,9 @@ class ModelRuntime {
             const last = target.jsonPath[target.jsonPath.length - 1];
             node[last] = (Number(node[last]) || 0) + Number(delta);
           } else {
-            const fieldName = Object.keys(this.fields).find((n) => this.fields[n].column === target.def.column);
+            const fieldName = Object.keys(this.fields).find(
+              (n) => this.fields[n].column === target.def.column
+            );
             if (fieldName) doc[fieldName] = (Number(doc[fieldName]) || 0) + Number(delta);
           }
         }
@@ -1685,7 +1836,11 @@ class ModelRuntime {
     }
   }
 
-  findByIdAndUpdate(id: unknown, update: UpdateSpec, options: UpdateOptions = {}): DeferredQuery<AnyDoc | null> {
+  findByIdAndUpdate(
+    id: unknown,
+    update: UpdateSpec,
+    options: UpdateOptions = {}
+  ): DeferredQuery<AnyDoc | null> {
     const key = toId(id);
     return new DeferredQuery<AnyDoc | null>((chain) => {
       if (!key) return Promise.resolve(null);
@@ -1739,7 +1894,10 @@ class ModelRuntime {
     const builder = new SqlBuilder();
     const compiler = new FilterCompiler(this, builder, 't');
     const where = compiler.compile(filter);
-    const { rowCount } = await query(`DELETE FROM ${ident(this.table)} t WHERE ${where}`, builder.params);
+    const { rowCount } = await query(
+      `DELETE FROM ${ident(this.table)} t WHERE ${where}`,
+      builder.params
+    );
     return { deletedCount: rowCount ?? 0, acknowledged: true };
   }
 
@@ -1763,7 +1921,8 @@ export function defineModel<TFields = Record<string, unknown>, TStatics = Record
   // The exported value is callable with `new Model(data)` while still carrying
   // every static the old Mongoose models exposed.
   function ExportedCtor(this: unknown, data?: Row): AnyDoc {
-    if (!(this instanceof ExportedCtor)) return new (ExportedCtor as unknown as new (d?: Row) => AnyDoc)(data);
+    if (!(this instanceof ExportedCtor))
+      return new (ExportedCtor as unknown as new (d?: Row) => AnyDoc)(data);
     return new model.Document(model, data, true);
   }
   const Exported = ExportedCtor as unknown as Record<string, any> & { prototype: unknown };
@@ -1771,9 +1930,20 @@ export function defineModel<TFields = Record<string, unknown>, TStatics = Record
   Exported.prototype = model.Document.prototype;
 
   const statics = [
-    'find', 'findOne', 'findById', 'countDocuments', 'estimatedDocumentCount', 'create',
-    'findOneAndUpdate', 'findByIdAndUpdate', 'updateMany', 'updateOne',
-    'findOneAndDelete', 'findByIdAndDelete', 'deleteMany', 'deleteOne'
+    'find',
+    'findOne',
+    'findById',
+    'countDocuments',
+    'estimatedDocumentCount',
+    'create',
+    'findOneAndUpdate',
+    'findByIdAndUpdate',
+    'updateMany',
+    'updateOne',
+    'findOneAndDelete',
+    'findByIdAndDelete',
+    'deleteMany',
+    'deleteOne'
   ] as const;
   const runtime = model as unknown as Record<string, (...args: any[]) => unknown>;
   for (const name of statics) {

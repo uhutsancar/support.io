@@ -62,7 +62,10 @@ async function conversationCountsByAgent(agentIds: string[]) {
   );
 
   for (const row of rows) {
-    result.set(row.agent_id, { activeConversations: row.active, resolvedConversations: row.resolved });
+    result.set(row.agent_id, {
+      activeConversations: row.active,
+      resolvedConversations: row.resolved
+    });
   }
   return result;
 }
@@ -113,8 +116,24 @@ async function resolveChatParticipants(ids: string[]) {
   ]);
 
   // Team rows win, matching the previous "look in Team first" lookup order.
-  for (const row of users.rows) map.set(row.id, { _id: row.id, name: row.name, email: row.email, avatar: row.avatar, status: row.status, role: row.role });
-  for (const row of teams.rows) map.set(row.id, { _id: row.id, name: row.name, email: row.email, avatar: row.avatar, status: row.status, role: row.role });
+  for (const row of users.rows)
+    map.set(row.id, {
+      _id: row.id,
+      name: row.name,
+      email: row.email,
+      avatar: row.avatar,
+      status: row.status,
+      role: row.role
+    });
+  for (const row of teams.rows)
+    map.set(row.id, {
+      _id: row.id,
+      name: row.name,
+      email: row.email,
+      avatar: row.avatar,
+      status: row.status,
+      role: row.role
+    });
   return map;
 }
 
@@ -216,9 +235,22 @@ async function agentPerformance(agentId: string, days: number) {
     csatScore: round(t.csat),
     slaCompliance: t.sla_decided > 0 ? Math.round((t.sla_met / t.sla_decided) * 100) : null,
     activeChats: active.rows[0].c,
-    dailyActivity: daily.rows.map((r) => ({ day: r.day, resolved: r.resolved, assigned: r.assigned })),
+    dailyActivity: daily.rows.map((r) => ({
+      day: r.day,
+      resolved: r.resolved,
+      assigned: r.assigned
+    })),
     responseTrend: trend.rows.map((r) => ({ day: r.day, avgMinutes: round(r.avg_minutes) }))
   };
 }
 
-export { latestMessagesByConversation, unreadCountsByOrganization, conversationCountsByAgent, agentConversationStats, departmentConversationStats, resolveChatParticipants, unreadTeamChatCount, agentPerformance };
+export {
+  latestMessagesByConversation,
+  unreadCountsByOrganization,
+  conversationCountsByAgent,
+  agentConversationStats,
+  departmentConversationStats,
+  resolveChatParticipants,
+  unreadTeamChatCount,
+  agentPerformance
+};

@@ -28,7 +28,11 @@ type SiteId = string | null | undefined;
 
 // Shared WHERE fragment: one organization, optionally one site, inside the
 // window. Returns the SQL text plus the parameter list it expects.
-function scope(organizationId: OrgId, siteId: SiteId, days: number): { sql: string; params: unknown[] } {
+function scope(
+  organizationId: OrgId,
+  siteId: SiteId,
+  days: number
+): { sql: string; params: unknown[] } {
   const params: unknown[] = [organizationId, `${days} days`];
   let sql = 'c.organization_id = $1 AND c.created_at >= now() - $2::interval';
   if (siteId) {
@@ -101,9 +105,7 @@ async function overviewStats(organizationId: OrgId, siteId: SiteId, days: number
     resolvedToday: t.resolved_today,
     // Yalnizca olculebilmis konusmalar payda olur: SLA'si hic degerlendirilmemis
     // kayitlari paydaya koymak orani oldugundan dusuk gosterirdi.
-    slaComplianceRate: t.sla_measured > 0
-      ? Math.round((t.sla_met / t.sla_measured) * 100)
-      : null
+    slaComplianceRate: t.sla_measured > 0 ? Math.round((t.sla_met / t.sla_measured) * 100) : null
   };
 }
 
@@ -210,8 +212,20 @@ async function slaCompliance(organizationId: OrgId, siteId: SiteId, days: number
 
   const r = rows[0];
   return [
-    { category: 'İlk Yanıt SLA', key: 'firstResponse', met: r.fr_met, breached: r.fr_breached, pending: r.fr_pending },
-    { category: 'Çözüm SLA', key: 'resolution', met: r.res_met, breached: r.res_breached, pending: r.res_pending }
+    {
+      category: 'İlk Yanıt SLA',
+      key: 'firstResponse',
+      met: r.fr_met,
+      breached: r.fr_breached,
+      pending: r.fr_pending
+    },
+    {
+      category: 'Çözüm SLA',
+      key: 'resolution',
+      met: r.res_met,
+      breached: r.res_breached,
+      pending: r.res_pending
+    }
   ];
 }
 

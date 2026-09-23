@@ -31,7 +31,8 @@ export interface DepartmentSla {
   onlyBusinessHours: boolean;
 }
 
-export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+export type Weekday =
+  'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 export interface BusinessHoursDay {
   start: string;

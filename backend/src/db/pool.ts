@@ -41,7 +41,10 @@ function buildConfig(): PoolConfig {
   let ssl: PoolConfig['ssl'] = false;
   if (sslEnv === 'true' || sslEnv === 'require') ssl = { rejectUnauthorized: false };
   else if (sslEnv === 'false' || sslEnv === 'disable') ssl = false;
-  else if (process.env.DATABASE_URL && /[?&]sslmode=(require|verify)/i.test(process.env.DATABASE_URL)) {
+  else if (
+    process.env.DATABASE_URL &&
+    /[?&]sslmode=(require|verify)/i.test(process.env.DATABASE_URL)
+  ) {
     ssl = { rejectUnauthorized: false };
   }
 
@@ -50,7 +53,9 @@ function buildConfig(): PoolConfig {
   }
 
   if (!process.env.DB_HOST || !process.env.DB_NAME) {
-    throw new Error('PostgreSQL configuration missing: set DATABASE_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD');
+    throw new Error(
+      'PostgreSQL configuration missing: set DATABASE_URL or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD'
+    );
   }
 
   return {
@@ -104,7 +109,11 @@ async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promi
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    try { await client.query('ROLLBACK'); } catch { /* connection already gone */ }
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      /* connection already gone */
+    }
     throw error;
   } finally {
     client.release();

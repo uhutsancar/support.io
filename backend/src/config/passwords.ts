@@ -29,8 +29,10 @@ export const PASSWORD_MAX_BYTES = 72;
 /** Politikaya uymayan parola için kullanıcıya gösterilecek mesaj; uyuyorsa null. */
 export function passwordProblem(password: unknown): string | null {
   if (typeof password !== 'string') return 'Password is required';
-  if (password.length < PASSWORD_MIN_LENGTH) return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
-  if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES) return `Password must be at most ${PASSWORD_MAX_BYTES} bytes`;
+  if (password.length < PASSWORD_MIN_LENGTH)
+    return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+  if (Buffer.byteLength(password, 'utf8') > PASSWORD_MAX_BYTES)
+    return `Password must be at most ${PASSWORD_MAX_BYTES} bytes`;
   return null;
 }
 

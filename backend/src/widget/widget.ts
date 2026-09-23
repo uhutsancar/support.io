@@ -159,7 +159,12 @@ interface WidgetInstance extends EmitterInstance {
   }>;
   _timers: Array<ReturnType<typeof setTimeout>>;
   _timer(fn: () => void, ms: number): ReturnType<typeof setTimeout>;
-  _listen(target: EventTarget, type: string, handler: EventListener, options?: AddEventListenerOptions): void;
+  _listen(
+    target: EventTarget,
+    type: string,
+    handler: EventListener,
+    options?: AddEventListenerOptions
+  ): void;
 
   _audio: any;
   _bannerTimer: ReturnType<typeof setTimeout> | null;
@@ -173,12 +178,12 @@ interface WidgetInstance extends EmitterInstance {
 }
 
 interface Window {
-    SupportChat?: any;
-    SupportIO?: any;
-    SupportChatConfig?: Partial<WidgetConfig>;
-    SupportIOConfig?: Partial<WidgetConfig>;
-    /** The Socket.IO client, once it has been loaded from our own origin. */
-    io?: any;
+  SupportChat?: any;
+  SupportIO?: any;
+  SupportChatConfig?: Partial<WidgetConfig>;
+  SupportIOConfig?: Partial<WidgetConfig>;
+  /** The Socket.IO client, once it has been loaded from our own origin. */
+  io?: any;
   /** Legacy IE/Edge alias, still probed before falling back to Math.random. */
   msCrypto?: Crypto;
 }
@@ -204,13 +209,25 @@ interface Window {
   /** localStorage private mode / disabled cookies durumunda ERROR ATAR. */
   var store = {
     get: function (key: string): string | null {
-      try { return window.localStorage.getItem(key); } catch (e) { return memory[key] || null; }
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return memory[key] || null;
+      }
     },
     set: function (key: string, value: string): void {
-      try { window.localStorage.setItem(key, value); } catch (e) { memory[key] = value; }
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {
+        memory[key] = value;
+      }
     },
     remove: function (key: string): void {
-      try { window.localStorage.removeItem(key); } catch (e) { delete memory[key]; }
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {
+        delete memory[key];
+      }
     }
   };
   var memory: Record<string, string> = {};
@@ -220,7 +237,11 @@ interface Window {
     try {
       var buf = new Uint8Array(8);
       (window.crypto || window.msCrypto).getRandomValues(buf);
-      rnd = Array.prototype.map.call(buf, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+      rnd = Array.prototype.map
+        .call(buf, function (b) {
+          return b.toString(16).padStart(2, '0');
+        })
+        .join('');
     } catch (e) {
       rnd = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
     }
@@ -244,7 +265,9 @@ interface Window {
     var r = parseInt(c.slice(0, 2), 16) / 255;
     var g = parseInt(c.slice(2, 4), 16) / 255;
     var b = parseInt(c.slice(4, 6), 16) / 255;
-    var f = function (v: number) { return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    var f = function (v: number) {
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
     var L = 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
     return L > 0.45 ? '#111827' : '#FFFFFF';
   }
@@ -253,7 +276,17 @@ interface Window {
     var c = String(hex || '').replace('#', '');
     if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
     if (c.length !== 6) return 'rgba(0,0,0,' + alpha + ')';
-    return 'rgba(' + parseInt(c.slice(0, 2), 16) + ',' + parseInt(c.slice(2, 4), 16) + ',' + parseInt(c.slice(4, 6), 16) + ',' + alpha + ')';
+    return (
+      'rgba(' +
+      parseInt(c.slice(0, 2), 16) +
+      ',' +
+      parseInt(c.slice(2, 4), 16) +
+      ',' +
+      parseInt(c.slice(4, 6), 16) +
+      ',' +
+      alpha +
+      ')'
+    );
   }
 
   function formatBytes(bytes: number): string {
@@ -373,25 +406,41 @@ interface Window {
     if (typeof handler !== 'function') return function () {};
     (this._handlers[event] = this._handlers[event] || []).push(handler);
     var self = this;
-    return function () { self.off(event, handler); };
+    return function () {
+      self.off(event, handler);
+    };
   };
   Emitter.prototype.off = function (this: EmitterInstance, event: string, handler?: EventHandler) {
     if (!this._handlers[event]) return;
-    if (!handler) { delete this._handlers[event]; return; }
-    this._handlers[event] = this._handlers[event].filter(function (h) { return h !== handler; });
+    if (!handler) {
+      delete this._handlers[event];
+      return;
+    }
+    this._handlers[event] = this._handlers[event].filter(function (h) {
+      return h !== handler;
+    });
   };
   Emitter.prototype.emit = function (this: EmitterInstance, event: string, payload?: unknown) {
     var list = (this._handlers[event] || []).slice();
     for (var i = 0; i < list.length; i++) {
       // Bir dinleyicinin hatasi digerlerini ve widget'i durdurmamali. Host
       // sitenin callback'i bizim kontrolumuzde degil.
-      try { list[i](payload); } catch (e) {
-        if (window.console && console.error) console.error('[SupportChat] listener error for "' + event + '"', e);
+      try {
+        list[i](payload);
+      } catch (e) {
+        if (window.console && console.error)
+          console.error('[SupportChat] listener error for "' + event + '"', e);
       }
     }
     var star = (this._handlers['*'] || []).slice();
     for (var j = 0; j < star.length; j++) {
-      try { star[j]({ type: event, payload: payload }); } catch (e) {}
+      try {
+        star[j]({ type: event, payload: payload });
+      } catch (e) {
+        // A customer's own listener threw. Their bug must not stop the rest of
+        // the listeners running, and must not surface in their console as if
+        // the widget had failed.
+      }
     }
   };
 
@@ -407,7 +456,10 @@ interface Window {
     var all = document.getElementsByTagName('script');
     for (var i = all.length - 1; i >= 0; i--) {
       var src = all[i].src || '';
-      if (/\/widget(\/v\d+)?(\/widget)?\.js(\?|$)/.test(src) || all[i].hasAttribute('data-site-key')) {
+      if (
+        /\/widget(\/v\d+)?(\/widget)?\.js(\?|$)/.test(src) ||
+        all[i].hasAttribute('data-site-key')
+      ) {
         return all[i];
       }
     }
@@ -436,25 +488,39 @@ interface Window {
     var o = overrides || {};
 
     var siteKey =
-      o.siteKey || attr('data-site-key') || attr('data-widget-id') ||
-      modern.siteKey || legacy.siteKey || null;
+      o.siteKey ||
+      attr('data-site-key') ||
+      attr('data-widget-id') ||
+      modern.siteKey ||
+      legacy.siteKey ||
+      null;
 
     // API adresi sirasi: acik ayar > data-api-url > script'in kendi origin'i.
     var apiUrl = o.apiUrl || attr('data-api-url') || modern.apiUrl || legacy.apiUrl || null;
     if (!apiUrl && scriptTag && scriptTag.src) {
-      try { apiUrl = new URL(scriptTag.src, window.location.href).origin; } catch (e) { apiUrl = null; }
+      try {
+        apiUrl = new URL(scriptTag.src, window.location.href).origin;
+      } catch (e) {
+        apiUrl = null;
+      }
     }
     if (apiUrl) apiUrl = String(apiUrl).replace(/\/+$/, '');
 
     return {
       siteKey: siteKey,
       apiUrl: apiUrl,
-      socketUrl: o.socketUrl || attr('data-socket-url') || modern.socketUrl || legacy.socketUrl || apiUrl,
+      socketUrl:
+        o.socketUrl || attr('data-socket-url') || modern.socketUrl || legacy.socketUrl || apiUrl,
       locale: o.locale || attr('data-locale') || modern.locale || legacy.locale || null,
       theme: o.theme || attr('data-theme') || modern.theme || null,
       position: o.position || attr('data-position') || modern.position || legacy.position || null,
       zIndex: o.zIndex || attr('data-z-index') || modern.zIndex || null,
-      autoOpen: o.autoOpen !== undefined ? o.autoOpen : (attr('data-auto-open') !== null ? bool(attr('data-auto-open'), false) : modern.autoOpen),
+      autoOpen:
+        o.autoOpen !== undefined
+          ? o.autoOpen
+          : attr('data-auto-open') !== null
+            ? bool(attr('data-auto-open'), false)
+            : modern.autoOpen,
       hidden: o.hidden !== undefined ? o.hidden : bool(attr('data-hidden'), false),
       user: o.user || modern.user || null,
       attributes: o.attributes || modern.attributes || null
@@ -467,8 +533,13 @@ interface Window {
 
   var MAX_FILE_BYTES = 10 * 1024 * 1024;
   var ALLOWED_MIME = [
-    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-    'application/pdf', 'text/plain', 'application/zip',
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'application/pdf',
+    'text/plain',
+    'application/zip',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
@@ -495,12 +566,12 @@ interface Window {
     this.attributes = {};
 
     // Doldurulana kadar null; okuyan her yol _bootstrap() sonrasi calisir.
-    this.remote = null as unknown as WidgetBootstrap;  // bootstrap yaniti
+    this.remote = null as unknown as WidgetBootstrap; // bootstrap yaniti
     this.faqs = [];
     this.availability = 'offline';
 
     this.socket = null;
-    this.connection = 'idle';    // idle|connecting|connected|reconnecting|disconnected|error
+    this.connection = 'idle'; // idle|connecting|connected|reconnecting|disconnected|error
     this.conversationId = null;
 
     this.isOpen = false;
@@ -516,7 +587,7 @@ interface Window {
     this.pending = Object.create(null);
     this.selectedFile = null;
 
-    this._listeners = [];  // {target, type, handler} — destroy'da sokulur
+    this._listeners = []; // {target, type, handler} — destroy'da sokulur
     this._timers = [];
   }
   Widget.prototype = Object.create(Emitter.prototype);
@@ -573,9 +644,10 @@ interface Window {
     if (this.config.attributes) this.setAttributes(this.config.attributes);
 
     var behavior = this.remote.config.behavior || {};
-    var autoOpen = this.config.autoOpen !== undefined && this.config.autoOpen !== null
-      ? this.config.autoOpen
-      : behavior.autoOpen;
+    var autoOpen =
+      this.config.autoOpen !== undefined && this.config.autoOpen !== null
+        ? this.config.autoOpen
+        : behavior.autoOpen;
     if (autoOpen && !this.isHidden) {
       this._timer(this.open.bind(this), Number(behavior.autoOpenDelay) || 5000);
     }
@@ -591,13 +663,23 @@ interface Window {
 
   Widget.prototype._bootstrap = async function (this: WidgetInstance) {
     try {
-      var res = await fetch(this._api('/api/widget/bootstrap?siteKey=' + encodeURIComponent(String(this.config.siteKey))), {
-        credentials: 'omit',
-        headers: { Accept: 'application/json' }
-      });
+      var res = await fetch(
+        this._api(
+          '/api/widget/bootstrap?siteKey=' + encodeURIComponent(String(this.config.siteKey))
+        ),
+        {
+          credentials: 'omit',
+          headers: { Accept: 'application/json' }
+        }
+      );
       if (!res.ok) {
-        var body = await res.json().catch(function () { return {}; });
-        this._fail(body.code || 'WIDGET_NOT_FOUND', body.error || ('Bootstrap failed with HTTP ' + res.status));
+        var body = await res.json().catch(function () {
+          return {};
+        });
+        this._fail(
+          body.code || 'WIDGET_NOT_FOUND',
+          body.error || 'Bootstrap failed with HTTP ' + res.status
+        );
         return false;
       }
       this.remote = await res.json();
@@ -618,9 +700,13 @@ interface Window {
     var path = window.location.pathname;
     var match = function (pattern: string) {
       if (!pattern) return false;
-      var rx = new RegExp('^' + String(pattern)
-        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-        .replace(/\*/g, '.*') + '$');
+      var rx = new RegExp(
+        '^' +
+          String(pattern)
+            .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+            .replace(/\*/g, '.*') +
+          '$'
+      );
       return rx.test(path);
     };
     var hide = behavior.hideOnPages || [];
@@ -646,8 +732,14 @@ interface Window {
         body: payload,
         credentials: 'omit',
         keepalive: true
-      }).catch(function () {});
-    } catch (e) {}
+      }).catch(function () {
+        // Analytics delivery is best effort; a dropped beacon changes nothing
+        // the visitor can see.
+      });
+    } catch (e) {
+      // `fetch` with `keepalive` is refused by some browsers during unload.
+      // There is no fallback worth attempting and nothing to report.
+    }
   };
 
   // -------------------------------------------------------------------------
@@ -711,15 +803,23 @@ interface Window {
       script.async = true;
       script.crossOrigin = 'anonymous';
       script.onload = function () {
-        window.io ? resolve(window.io) : reject(new Error('socket.io client loaded but window.io is missing'));
+        window.io
+          ? resolve(window.io)
+          : reject(new Error('socket.io client loaded but window.io is missing'));
       };
-      script.onerror = function () { reject(new Error('Failed to load ' + src)); };
+      script.onerror = function () {
+        reject(new Error('Failed to load ' + src));
+      };
       document.head.appendChild(script);
     });
     return ioPromise;
   };
 
-  Widget.prototype._setConnection = function (this: WidgetInstance, state: string, detail?: string) {
+  Widget.prototype._setConnection = function (
+    this: WidgetInstance,
+    state: string,
+    detail?: string
+  ) {
     if (this.connection === state) return;
     this.connection = state;
     this._renderConnection();
@@ -766,8 +866,12 @@ interface Window {
       self._setConnection('disconnected', reason);
     });
 
-    this.socket.io.on('reconnect_attempt', function () { self._setConnection('reconnecting'); });
-    this.socket.io.on('error', function (err: Error) { self._setConnection('error', err && err.message); });
+    this.socket.io.on('reconnect_attempt', function () {
+      self._setConnection('reconnecting');
+    });
+    this.socket.io.on('error', function (err: Error) {
+      self._setConnection('error', err && err.message);
+    });
 
     this.socket.on('conversation-joined', function (data: any) {
       if (data && data.conversation) {
@@ -776,7 +880,8 @@ interface Window {
       } else {
         self.conversationId = null;
         self._renderThread([]);
-        var welcome = (data && data.welcomeMessage) ||
+        var welcome =
+          (data && data.welcomeMessage) ||
           (self.remote.config.messages && self.remote.config.messages.welcomeMessage);
         if (welcome) {
           self._appendMessage({
@@ -812,7 +917,9 @@ interface Window {
       self.emit('message', { message: message });
     });
 
-    this.socket.on('agent-typing', function () { self._showTyping(); });
+    this.socket.on('agent-typing', function () {
+      self._showTyping();
+    });
 
     this.socket.on('error', function (data: any) {
       var message = (data && data.message) || 'Unknown socket error';
@@ -824,20 +931,33 @@ interface Window {
   Widget.prototype._join = function (this: WidgetInstance) {
     if (!this.socket) return;
     var ua = navigator.userAgent || '';
-    var browser = /Edg\//.test(ua) ? 'Edge' :
-      (/OPR\//.test(ua) ? 'Opera' :
-        (/Chrome\//.test(ua) ? 'Chrome' :
-          (/Firefox\//.test(ua) ? 'Firefox' :
-            (/Safari\//.test(ua) ? 'Safari' : 'Other'))));
-    var os = /Windows/i.test(ua) ? 'Windows' :
-      (/Android/i.test(ua) ? 'Android' :
-        (/iPhone|iPad|iPod/i.test(ua) ? 'iOS' :
-          (/Mac OS/i.test(ua) ? 'macOS' :
-            (/Linux/i.test(ua) ? 'Linux' : 'Other'))));
+    var browser = /Edg\//.test(ua)
+      ? 'Edge'
+      : /OPR\//.test(ua)
+        ? 'Opera'
+        : /Chrome\//.test(ua)
+          ? 'Chrome'
+          : /Firefox\//.test(ua)
+            ? 'Firefox'
+            : /Safari\//.test(ua)
+              ? 'Safari'
+              : 'Other';
+    var os = /Windows/i.test(ua)
+      ? 'Windows'
+      : /Android/i.test(ua)
+        ? 'Android'
+        : /iPhone|iPad|iPod/i.test(ua)
+          ? 'iOS'
+          : /Mac OS/i.test(ua)
+            ? 'macOS'
+            : /Linux/i.test(ua)
+              ? 'Linux'
+              : 'Other';
     this.socket.emit('join-conversation', {
       siteKey: this.config.siteKey,
       visitorId: this.visitorId,
-      visitorName: (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
+      visitorName:
+        (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
       visitorEmail: (this.identity && this.identity.email) || store.get('sc_visitor_email') || null,
       // Query strings often contain tokens or personal data; page context does
       // not need them. Origin + path is useful to the operator and safe to keep.
@@ -877,9 +997,11 @@ interface Window {
     var size = button.size === 'small' ? 52 : button.size === 'large' ? 68 : 60;
     var radius = typeof button.borderRadius === 'number' ? button.borderRadius : 50;
     var bubbleRadius = radius >= 50 ? '50%' : radius + 'px';
-    var fontFamily = typo.fontFamily ||
+    var fontFamily =
+      typo.fontFamily ||
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-    var speed = advanced.animationSpeed === 'slow' ? 320 : advanced.animationSpeed === 'fast' ? 120 : 200;
+    var speed =
+      advanced.animationSpeed === 'slow' ? 320 : advanced.animationSpeed === 'fast' ? 120 : 200;
 
     var vertical = button.position.indexOf('top') === 0 ? 'top' : 'bottom';
     var horizontal = button.position.indexOf('left') > -1 ? 'left' : 'right';
@@ -888,7 +1010,9 @@ interface Window {
       /* Shadow root icinde bile :host'a yazmak gerekir; host sayfanin
          `div { display: ... }` gibi kurallari host elemani etkileyebilir. */
       ':host{all:initial;position:fixed;' + vertical + ':0;' + horizontal + ':0;',
-      'width:auto;height:auto;z-index:' + (this.config.zIndex || advanced.zIndex || 2147483000) + ';',
+      'width:auto;height:auto;z-index:' +
+        (this.config.zIndex || advanced.zIndex || 2147483000) +
+        ';',
       'font-family:' + fontFamily + ';color-scheme:light;}',
       '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}',
       /* SVG icin TABAN olcu.
@@ -898,7 +1022,11 @@ interface Window {
          gecmedigi icin bu olcuyu burada bizim vermemiz gerekir. */
       'svg{width:18px;height:18px;flex:0 0 auto;display:block;}',
       'button{font:inherit;color:inherit;}',
-      '.root{position:fixed;' + vertical + ':20px;' + horizontal + ':20px;display:flex;flex-direction:column;',
+      '.root{position:fixed;' +
+        vertical +
+        ':20px;' +
+        horizontal +
+        ':20px;display:flex;flex-direction:column;',
       'align-items:flex-' + (horizontal === 'right' ? 'end' : 'start') + ';gap:12px;}',
       '.root[hidden]{display:none;}',
 
@@ -906,28 +1034,50 @@ interface Window {
       '.launcher{width:' + size + 'px;height:' + size + 'px;border-radius:' + bubbleRadius + ';',
       'background:' + primary + ';color:' + onPrimary + ';border:0;cursor:pointer;display:flex;',
       'align-items:center;justify-content:center;position:relative;',
-      'box-shadow:' + (button.shadow === false ? 'none' : '0 8px 24px ' + withAlpha(primary, 0.32) + ',0 2px 6px rgba(0,0,0,.12)') + ';',
-      'transition:transform ' + speed + 'ms cubic-bezier(.2,.8,.2,1),box-shadow ' + speed + 'ms ease;}',
+      'box-shadow:' +
+        (button.shadow === false
+          ? 'none'
+          : '0 8px 24px ' + withAlpha(primary, 0.32) + ',0 2px 6px rgba(0,0,0,.12)') +
+        ';',
+      'transition:transform ' +
+        speed +
+        'ms cubic-bezier(.2,.8,.2,1),box-shadow ' +
+        speed +
+        'ms ease;}',
       '.launcher:hover{transform:translateY(-2px) scale(1.04);}',
       '.launcher:active{transform:scale(.96);}',
-      '.launcher:focus-visible{outline:3px solid ' + withAlpha(primary, 0.5) + ';outline-offset:3px;}',
+      '.launcher:focus-visible{outline:3px solid ' +
+        withAlpha(primary, 0.5) +
+        ';outline-offset:3px;}',
       '.launcher svg{width:26px;height:26px;}',
       '.launcher .close-icon{display:none;}',
       '.root.open .launcher .open-icon{display:none;}',
       '.root.open .launcher .close-icon{display:block;}',
-      '.badge{position:absolute;top:-2px;' + horizontal + ':-2px;min-width:20px;height:20px;padding:0 6px;',
+      '.badge{position:absolute;top:-2px;' +
+        horizontal +
+        ':-2px;min-width:20px;height:20px;padding:0 6px;',
       'border-radius:10px;background:#EF4444;color:#fff;font-size:11px;font-weight:700;line-height:20px;',
       'text-align:center;box-shadow:0 0 0 2px #fff;}',
       '.badge[hidden]{display:none;}',
 
       /* --- panel --- */
       '.panel{width:' + win.width + 'px;max-width:calc(100vw - 40px);height:' + win.height + 'px;',
-      'max-height:calc(100vh - 120px);background:' + colors.background + ';color:' + colors.text + ';',
-      'border-radius:' + win.borderRadius + 'px;overflow:hidden;display:none;flex-direction:column;',
+      'max-height:calc(100vh - 120px);background:' +
+        colors.background +
+        ';color:' +
+        colors.text +
+        ';',
+      'border-radius:' +
+        win.borderRadius +
+        'px;overflow:hidden;display:none;flex-direction:column;',
       'box-shadow:0 24px 64px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);',
       'border:1px solid ' + colors.border + ';',
       'opacity:0;transform:translateY(12px) scale(.98);',
-      'transition:opacity ' + speed + 'ms ease,transform ' + speed + 'ms cubic-bezier(.2,.8,.2,1);}',
+      'transition:opacity ' +
+        speed +
+        'ms ease,transform ' +
+        speed +
+        'ms cubic-bezier(.2,.8,.2,1);}',
       '.root.open .panel{display:flex;opacity:1;transform:none;}',
 
       /* --- header --- */
@@ -967,23 +1117,35 @@ interface Window {
          vardi; ikonun olcusu yoktu ve butonu tamamen dolduruyordu. */
       '.home{overflow-y:auto;padding:26px 20px 20px;}',
       '.home h2{font-size:23px;font-weight:680;letter-spacing:-.02em;line-height:1.25;}',
-      '.home p.sub{margin-top:7px;font-size:14.5px;color:' + colors.textSecondary + ';line-height:1.55;}',
+      '.home p.sub{margin-top:7px;font-size:14.5px;color:' +
+        colors.textSecondary +
+        ';line-height:1.55;}',
 
       '.card{margin-top:22px;width:100%;padding:14px;border:1px solid ' + colors.border + ';',
       'border-radius:14px;background:' + colors.background + ';cursor:pointer;text-align:left;',
       'display:flex;align-items:center;gap:12px;',
       'transition:border-color 160ms ease,box-shadow 160ms ease,transform 160ms ease;}',
-      '.card:hover{border-color:' + withAlpha(primary, 0.45) + ';box-shadow:0 6px 18px ' + withAlpha(primary, 0.13) + ';transform:translateY(-1px);}',
+      '.card:hover{border-color:' +
+        withAlpha(primary, 0.45) +
+        ';box-shadow:0 6px 18px ' +
+        withAlpha(primary, 0.13) +
+        ';transform:translateY(-1px);}',
       '.card:active{transform:translateY(0);}',
       '.card:focus-visible{outline:2px solid ' + primary + ';outline-offset:2px;}',
-      '.card-icon{width:38px;height:38px;border-radius:11px;background:' + primary + ';color:' + onPrimary + ';',
+      '.card-icon{width:38px;height:38px;border-radius:11px;background:' +
+        primary +
+        ';color:' +
+        onPrimary +
+        ';',
       'display:flex;align-items:center;justify-content:center;flex:0 0 auto;}',
       '.card-icon svg{width:19px;height:19px;}',
       // Iki satir da <span>: kap flex sutunu olmazsa yan yana yapisiyor ve
       // .card-sub'in margin-top'u satir ici oldugu icin yok sayiliyordu.
       '.card-body{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;}',
       '.card-title{font-size:14.5px;font-weight:600;line-height:1.3;}',
-      '.card-sub{margin-top:2px;font-size:12.5px;color:' + colors.textSecondary + ';line-height:1.4;}',
+      '.card-sub{margin-top:2px;font-size:12.5px;color:' +
+        colors.textSecondary +
+        ';line-height:1.4;}',
       '.card-go{flex:0 0 auto;color:' + colors.textSecondary + ';opacity:.55;}',
       '.card-go svg{width:16px;height:16px;transform:rotate(-90deg);}',
 
@@ -996,9 +1158,19 @@ interface Window {
       /* faq */
       '.help{overflow:hidden;}',
       '.search{padding:14px 16px;border-bottom:1px solid ' + colors.border + ';flex:0 0 auto;}',
-      '.search input{width:100%;padding:10px 12px;border:1px solid ' + colors.border + ';border-radius:10px;',
-      'font-size:14px;font-family:inherit;background:' + colors.background + ';color:' + colors.text + ';outline:none;}',
-      '.search input:focus{border-color:' + primary + ';box-shadow:0 0 0 3px ' + withAlpha(primary, 0.16) + ';}',
+      '.search input{width:100%;padding:10px 12px;border:1px solid ' +
+        colors.border +
+        ';border-radius:10px;',
+      'font-size:14px;font-family:inherit;background:' +
+        colors.background +
+        ';color:' +
+        colors.text +
+        ';outline:none;}',
+      '.search input:focus{border-color:' +
+        primary +
+        ';box-shadow:0 0 0 3px ' +
+        withAlpha(primary, 0.16) +
+        ';}',
       '.faq-list{flex:1;overflow-y:auto;padding:8px;}',
       '.faq{border-radius:10px;overflow:hidden;}',
       '.faq + .faq{margin-top:2px;}',
@@ -1008,7 +1180,9 @@ interface Window {
       '.faq-q:hover{background:' + withAlpha(colors.textSecondary, 0.08) + ';}',
       '.faq-q svg{width:16px;height:16px;flex:0 0 auto;opacity:.5;transition:transform 180ms ease;}',
       '.faq.open .faq-q svg{transform:rotate(180deg);}',
-      '.faq-a{display:none;padding:0 14px 14px;font-size:13.5px;line-height:1.6;color:' + colors.textSecondary + ';}',
+      '.faq-a{display:none;padding:0 14px 14px;font-size:13.5px;line-height:1.6;color:' +
+        colors.textSecondary +
+        ';}',
       '.faq.open .faq-a{display:block;}',
 
       /* thread */
@@ -1017,13 +1191,31 @@ interface Window {
       '.msg{max-width:82%;display:flex;flex-direction:column;gap:3px;}',
       '.msg.visitor{align-self:flex-end;align-items:flex-end;}',
       '.msg.agent,.msg.bot,.msg.system{align-self:flex-start;}',
-      '.msg-sender{font-size:11px;font-weight:600;color:' + colors.textSecondary + ';padding:0 4px;}',
-      '.bubble{padding:10px 13px;border-radius:' + c.messages.messageBubbleRadius + 'px;font-size:14px;',
+      '.msg-sender{font-size:11px;font-weight:600;color:' +
+        colors.textSecondary +
+        ';padding:0 4px;}',
+      '.bubble{padding:10px 13px;border-radius:' +
+        c.messages.messageBubbleRadius +
+        'px;font-size:14px;',
       'line-height:1.5;word-break:break-word;white-space:pre-wrap;}',
-      '.msg.visitor .bubble{background:' + visitorBg + ';color:' + onVisitor + ';border-bottom-right-radius:5px;}',
-      '.msg.agent .bubble,.msg.bot .bubble{background:' + agentBg + ';color:' + onAgent + ';border-bottom-left-radius:5px;}',
-      '.msg.system .bubble{background:transparent;border:1px dashed ' + colors.border + ';color:' + colors.textSecondary + ';font-size:13px;}',
-      '.meta{font-size:10.5px;color:' + colors.textSecondary + ';padding:0 4px;display:flex;align-items:center;gap:5px;}',
+      '.msg.visitor .bubble{background:' +
+        visitorBg +
+        ';color:' +
+        onVisitor +
+        ';border-bottom-right-radius:5px;}',
+      '.msg.agent .bubble,.msg.bot .bubble{background:' +
+        agentBg +
+        ';color:' +
+        onAgent +
+        ';border-bottom-left-radius:5px;}',
+      '.msg.system .bubble{background:transparent;border:1px dashed ' +
+        colors.border +
+        ';color:' +
+        colors.textSecondary +
+        ';font-size:13px;}',
+      '.meta{font-size:10.5px;color:' +
+        colors.textSecondary +
+        ';padding:0 4px;display:flex;align-items:center;gap:5px;}',
       '.msg.pending{opacity:.62;}',
       '.msg.failed .bubble{background:#FEE2E2;color:#991B1B;}',
       '.retry{border:0;background:none;color:#DC2626;font-size:10.5px;font-weight:600;cursor:pointer;',
@@ -1031,7 +1223,9 @@ interface Window {
       '.attachment{margin-top:8px;display:block;}',
       '.attachment img{max-width:100%;border-radius:10px;display:block;cursor:pointer;}',
       '.file{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;',
-      'background:' + withAlpha(colors.textSecondary, 0.1) + ';text-decoration:none;color:inherit;}',
+      'background:' +
+        withAlpha(colors.textSecondary, 0.1) +
+        ';text-decoration:none;color:inherit;}',
       '.file svg{width:18px;height:18px;flex:0 0 auto;opacity:.7;}',
       '.file-name{font-size:12.5px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
       '.file-size{font-size:10.5px;opacity:.7;}',
@@ -1042,7 +1236,9 @@ interface Window {
       'animation:bounce 1.2s infinite;}',
       '.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}',
       '@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}',
-      '.empty{margin:auto;text-align:center;color:' + colors.textSecondary + ';font-size:13.5px;padding:24px;line-height:1.6;}',
+      '.empty{margin:auto;text-align:center;color:' +
+        colors.textSecondary +
+        ';font-size:13.5px;padding:24px;line-height:1.6;}',
 
       /* composer */
       '.composer{flex:0 0 auto;border-top:1px solid ' + colors.border + ';padding:10px 12px;',
@@ -1050,11 +1246,23 @@ interface Window {
       'padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));}',
       '.composer textarea{flex:1;min-width:0;resize:none;border:1px solid ' + colors.border + ';',
       'border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;line-height:1.45;',
-      'max-height:120px;background:' + colors.background + ';color:' + colors.text + ';outline:none;}',
-      '.composer textarea:focus{border-color:' + primary + ';box-shadow:0 0 0 3px ' + withAlpha(primary, 0.16) + ';}',
+      'max-height:120px;background:' +
+        colors.background +
+        ';color:' +
+        colors.text +
+        ';outline:none;}',
+      '.composer textarea:focus{border-color:' +
+        primary +
+        ';box-shadow:0 0 0 3px ' +
+        withAlpha(primary, 0.16) +
+        ';}',
       '.composer textarea::placeholder{color:' + colors.textSecondary + ';opacity:.75;}',
-      '.send{width:38px;height:38px;flex:0 0 auto;border:0;border-radius:11px;background:' + primary + ';',
-      'color:' + onPrimary + ';cursor:pointer;display:flex;align-items:center;justify-content:center;',
+      '.send{width:38px;height:38px;flex:0 0 auto;border:0;border-radius:11px;background:' +
+        primary +
+        ';',
+      'color:' +
+        onPrimary +
+        ';cursor:pointer;display:flex;align-items:center;justify-content:center;',
       'transition:filter 140ms ease,transform 140ms ease;}',
       '.send:hover:not(:disabled){filter:brightness(1.08);}',
       '.send:active:not(:disabled){transform:scale(.94);}',
@@ -1071,20 +1279,28 @@ interface Window {
       '.nav{flex:0 0 auto;display:flex;border-top:1px solid ' + colors.border + ';',
       'padding-bottom:env(safe-area-inset-bottom,0px);}',
       '.nav button{flex:1;padding:10px 4px;border:0;background:none;cursor:pointer;font-family:inherit;',
-      'font-size:11px;font-weight:550;color:' + colors.textSecondary + ';display:flex;flex-direction:column;',
+      'font-size:11px;font-weight:550;color:' +
+        colors.textSecondary +
+        ';display:flex;flex-direction:column;',
       'align-items:center;gap:3px;transition:color 140ms ease;}',
       '.nav button svg{width:19px;height:19px;}',
       '.nav button.active{color:' + primary + ';}',
       '.nav button:focus-visible{outline:2px solid ' + primary + ';outline-offset:-2px;}',
 
-      '.footer{flex:0 0 auto;padding:7px;text-align:center;font-size:10.5px;color:' + colors.textSecondary + ';',
+      '.footer{flex:0 0 auto;padding:7px;text-align:center;font-size:10.5px;color:' +
+        colors.textSecondary +
+        ';',
       'opacity:.7;border-top:1px solid ' + colors.border + ';}',
 
       /* --- mobil ---
          100vh mobil tarayicilarda adres cubugunun ALTINA tasar. 100dvh dogru
          olcudur; desteklenmeyen tarayicilar icin once 100vh yazilir. */
       '@media (max-width:480px){',
-      '.root{' + vertical + ':0;' + horizontal + ':0;left:0;right:0;bottom:0;align-items:flex-end;padding:16px;gap:0;}',
+      '.root{' +
+        vertical +
+        ':0;' +
+        horizontal +
+        ':0;left:0;right:0;bottom:0;align-items:flex-end;padding:16px;gap:0;}',
       '.root.open{padding:0;}',
       '.root.open .launcher{display:none;}',
       '.panel{position:fixed;inset:0;width:100%;max-width:none;height:100vh;height:100dvh;',
@@ -1097,14 +1313,19 @@ interface Window {
 
   var ICONS = {
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
-    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
-    minimize: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+    close:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+    minimize:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
     send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>',
-    paperclip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+    paperclip:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
-    message: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    message:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
     help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
-    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+    chevron:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
     file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
   };
 
@@ -1149,74 +1370,120 @@ interface Window {
     var wrap = document.createElement('div');
     wrap.className = 'root';
     wrap.innerHTML = [
-      '<div class="panel" role="dialog" aria-modal="false" aria-label="' + escapeHtml(brand) + '" tabindex="-1">',
-        '<div class="header">',
-          logo,
-          '<div class="header-text">',
-            showBrand ? '<div class="header-title">' + brand + '</div>' : '',
-            '<div class="header-status"><span class="dot"></span><span class="status-text"></span></div>',
-          '</div>',
-          c.window.showCloseButton !== false
-            ? '<button class="icon-btn js-close" aria-label="' + escapeHtml(t.close) + '">' + ICONS.minimize + '</button>'
-            : '',
-        '</div>',
-        '<div class="banner js-banner" role="status" aria-live="polite"></div>',
-        '<div class="body">',
-
-          '<section class="view home js-view-home active" aria-label="' + escapeHtml(t.home) + '">',
-            '<h2>' + escapeHtml(t.greeting) + '</h2>',
-            '<p class="sub">' + escapeHtml(t.greetingSub) + '</p>',
-            '<button class="card js-start">',
-              '<span class="card-icon">' + ICONS.message + '</span>',
-              '<span class="card-body">',
-                '<span class="card-title">' + escapeHtml(t.startConversation) + '</span>',
-                '<span class="card-sub js-reply-time"></span>',
-              '</span>',
-              '<span class="card-go">' + ICONS.chevron + '</span>',
-            '</button>',
-            '<div class="faq-preview js-faq-preview"></div>',
-          '</section>',
-
-          '<section class="view js-view-messages" aria-label="' + escapeHtml(t.messages) + '">',
-            '<div class="messages js-messages" role="log" aria-live="polite"></div>',
-            '<div class="typing js-typing" aria-hidden="true"><i></i><i></i><i></i></div>',
-            '<div class="file-chip js-file-chip">',
-              ICONS.file,
-              '<span class="file-name js-file-name"></span>',
-              '<span class="file-size js-file-size"></span>',
-              '<button class="js-file-clear" aria-label="' + escapeHtml(t.close) + '">' + ICONS.close + '</button>',
-            '</div>',
-            '<div class="composer">',
-              '<button class="icon-btn js-attach" aria-label="' + escapeHtml(t.attach) + '" style="color:' + c.colors.textSecondary + '">' + ICONS.paperclip + '</button>',
-              '<input type="file" class="js-file-input" hidden />',
-              '<textarea class="js-input" rows="1" aria-label="' + escapeHtml(t.placeholder) + '" placeholder="' + escapeHtml(c.messages.placeholderText || t.placeholder) + '"></textarea>',
-              '<button class="send js-send" aria-label="' + escapeHtml(t.send) + '" disabled>' + ICONS.send + '</button>',
-            '</div>',
-          '</section>',
-
-          '<section class="view help js-view-help" aria-label="' + escapeHtml(t.help) + '">',
-            '<div class="search"><input type="search" class="js-search" placeholder="' + escapeHtml(t.searchHelp) + '" aria-label="' + escapeHtml(t.searchHelp) + '" /></div>',
-            '<div class="faq-list js-faq-list"></div>',
-          '</section>',
-
-        '</div>',
-        '<nav class="nav" aria-label="' + escapeHtml(brand) + '">',
-          '<button class="js-nav-home active" data-view="home">' + ICONS.home + '<span>' + escapeHtml(t.home) + '</span></button>',
-          '<button class="js-nav-messages" data-view="messages">' + ICONS.message + '<span>' + escapeHtml(t.messages) + '</span></button>',
-          this.faqs.length ? '<button class="js-nav-help" data-view="help">' + ICONS.help + '<span>' + escapeHtml(t.help) + '</span></button>' : '',
-        '</nav>',
+      '<div class="panel" role="dialog" aria-modal="false" aria-label="' +
+        escapeHtml(brand) +
+        '" tabindex="-1">',
+      '<div class="header">',
+      logo,
+      '<div class="header-text">',
+      showBrand ? '<div class="header-title">' + brand + '</div>' : '',
+      '<div class="header-status"><span class="dot"></span><span class="status-text"></span></div>',
       '</div>',
-      '<button class="launcher js-launcher" aria-label="' + escapeHtml(t.launcherLabel) + '" aria-expanded="false">',
-        '<span class="open-icon">' + ICONS.chat + '</span>',
-        '<span class="close-icon">' + ICONS.close + '</span>',
-        '<span class="badge" hidden>0</span>',
+      c.window.showCloseButton !== false
+        ? '<button class="icon-btn js-close" aria-label="' +
+          escapeHtml(t.close) +
+          '">' +
+          ICONS.minimize +
+          '</button>'
+        : '',
+      '</div>',
+      '<div class="banner js-banner" role="status" aria-live="polite"></div>',
+      '<div class="body">',
+
+      '<section class="view home js-view-home active" aria-label="' + escapeHtml(t.home) + '">',
+      '<h2>' + escapeHtml(t.greeting) + '</h2>',
+      '<p class="sub">' + escapeHtml(t.greetingSub) + '</p>',
+      '<button class="card js-start">',
+      '<span class="card-icon">' + ICONS.message + '</span>',
+      '<span class="card-body">',
+      '<span class="card-title">' + escapeHtml(t.startConversation) + '</span>',
+      '<span class="card-sub js-reply-time"></span>',
+      '</span>',
+      '<span class="card-go">' + ICONS.chevron + '</span>',
+      '</button>',
+      '<div class="faq-preview js-faq-preview"></div>',
+      '</section>',
+
+      '<section class="view js-view-messages" aria-label="' + escapeHtml(t.messages) + '">',
+      '<div class="messages js-messages" role="log" aria-live="polite"></div>',
+      '<div class="typing js-typing" aria-hidden="true"><i></i><i></i><i></i></div>',
+      '<div class="file-chip js-file-chip">',
+      ICONS.file,
+      '<span class="file-name js-file-name"></span>',
+      '<span class="file-size js-file-size"></span>',
+      '<button class="js-file-clear" aria-label="' +
+        escapeHtml(t.close) +
+        '">' +
+        ICONS.close +
+        '</button>',
+      '</div>',
+      '<div class="composer">',
+      '<button class="icon-btn js-attach" aria-label="' +
+        escapeHtml(t.attach) +
+        '" style="color:' +
+        c.colors.textSecondary +
+        '">' +
+        ICONS.paperclip +
+        '</button>',
+      '<input type="file" class="js-file-input" hidden />',
+      '<textarea class="js-input" rows="1" aria-label="' +
+        escapeHtml(t.placeholder) +
+        '" placeholder="' +
+        escapeHtml(c.messages.placeholderText || t.placeholder) +
+        '"></textarea>',
+      '<button class="send js-send" aria-label="' +
+        escapeHtml(t.send) +
+        '" disabled>' +
+        ICONS.send +
+        '</button>',
+      '</div>',
+      '</section>',
+
+      '<section class="view help js-view-help" aria-label="' + escapeHtml(t.help) + '">',
+      '<div class="search"><input type="search" class="js-search" placeholder="' +
+        escapeHtml(t.searchHelp) +
+        '" aria-label="' +
+        escapeHtml(t.searchHelp) +
+        '" /></div>',
+      '<div class="faq-list js-faq-list"></div>',
+      '</section>',
+
+      '</div>',
+      '<nav class="nav" aria-label="' + escapeHtml(brand) + '">',
+      '<button class="js-nav-home active" data-view="home">' +
+        ICONS.home +
+        '<span>' +
+        escapeHtml(t.home) +
+        '</span></button>',
+      '<button class="js-nav-messages" data-view="messages">' +
+        ICONS.message +
+        '<span>' +
+        escapeHtml(t.messages) +
+        '</span></button>',
+      this.faqs.length
+        ? '<button class="js-nav-help" data-view="help">' +
+          ICONS.help +
+          '<span>' +
+          escapeHtml(t.help) +
+          '</span></button>'
+        : '',
+      '</nav>',
+      '</div>',
+      '<button class="launcher js-launcher" aria-label="' +
+        escapeHtml(t.launcherLabel) +
+        '" aria-expanded="false">',
+      '<span class="open-icon">' + ICONS.chat + '</span>',
+      '<span class="close-icon">' + ICONS.close + '</span>',
+      '<span class="badge" hidden>0</span>',
       '</button>'
     ].join('');
 
     root.appendChild(wrap);
     document.body.appendChild(host);
 
-    var q = function (sel: string) { return wrap.querySelector(sel) as HTMLElement; };
+    var q = function (sel: string) {
+      return wrap.querySelector(sel) as HTMLElement;
+    };
     this.el = {
       wrap: wrap,
       panel: q('.panel'),
@@ -1247,10 +1514,18 @@ interface Window {
     };
 
     // --- olay baglamalari ---
-    this._listen(this.el.launcher, 'click', function () { self.toggle(); });
+    this._listen(this.el.launcher, 'click', function () {
+      self.toggle();
+    });
     var closeBtn = q('.js-close');
-    if (closeBtn) this._listen(closeBtn, 'click', function () { self.close(); });
-    this._listen(q('.js-start'), 'click', function () { self._setView('messages'); self.el!.input.focus(); });
+    if (closeBtn)
+      this._listen(closeBtn, 'click', function () {
+        self.close();
+      });
+    this._listen(q('.js-start'), 'click', function () {
+      self._setView('messages');
+      self.el!.input.focus();
+    });
 
     for (var i = 0; i < this.el.nav.length; i++) {
       this._listen(this.el.nav[i], 'click', function (e) {
@@ -1273,12 +1548,18 @@ interface Window {
       }
     });
 
-    this._listen(this.el.send, 'click', function () { self.sendMessage(); });
-    this._listen(this.el!.attach, 'click', function () { self.el!.fileInput.click(); });
+    this._listen(this.el.send, 'click', function () {
+      self.sendMessage();
+    });
+    this._listen(this.el!.attach, 'click', function () {
+      self.el!.fileInput.click();
+    });
     this._listen(this.el.fileInput, 'change', function (e) {
       self._pickFile((e.target as HTMLInputElement).files?.[0]);
     });
-    this._listen(q('.js-file-clear'), 'click', function () { self._clearFile(); });
+    this._listen(q('.js-file-clear'), 'click', function () {
+      self._clearFile();
+    });
 
     if (this.el.search) {
       this._listen(this.el.search, 'input', function (e) {
@@ -1288,7 +1569,10 @@ interface Window {
 
     // Esc ile kapat — dialog davranisinin beklenen parcasi.
     this._listen(document, 'keydown', function (e) {
-      if ((e as KeyboardEvent).key === 'Escape' && self.isOpen) { self.close(); self.el!.launcher.focus(); }
+      if ((e as KeyboardEvent).key === 'Escape' && self.isOpen) {
+        self.close();
+        self.el!.launcher.focus();
+      }
     });
 
     this._renderFaqs('');
@@ -1336,10 +1620,15 @@ interface Window {
       // 'offline' has no modifier class, and classList.add('') throws a
       // DOMException that aborted the rest of this function — so the status
       // text below never ran and the header kept the previous state.
-      var availabilityClass = this.availability === 'online' ? 'online' : this.availability === 'away' ? 'away' : '';
+      var availabilityClass =
+        this.availability === 'online' ? 'online' : this.availability === 'away' ? 'away' : '';
       if (availabilityClass) dot.classList.add(availabilityClass);
-      text.textContent = this.availability === 'online' ? t.online
-        : this.availability === 'away' ? t.away : t.offline;
+      text.textContent =
+        this.availability === 'online'
+          ? t.online
+          : this.availability === 'away'
+            ? t.away
+            : t.offline;
     } else {
       text.textContent = '';
     }
@@ -1348,7 +1637,8 @@ interface Window {
     // cevrimdisi bir ekip icin "birkac dakika icinde yanitliyoruz" yazmak
     // ziyaretciye yanlis beklenti verir.
     if (this.el.replyTime) {
-      this.el.replyTime.textContent = this.availability === 'offline' ? t.replyOffline : t.replyFast;
+      this.el.replyTime.textContent =
+        this.availability === 'offline' ? t.replyOffline : t.replyFast;
     }
 
     // Bant yalnizca gercek bir kopma varken gorunur; her yeniden baglanma
@@ -1373,7 +1663,9 @@ interface Window {
     if (this._bannerTimer) clearTimeout(this._bannerTimer);
     if (autoHideMs !== 0) {
       var self = this;
-      this._bannerTimer = setTimeout(function () { self._hideBanner(); }, autoHideMs || 4000);
+      this._bannerTimer = setTimeout(function () {
+        self._hideBanner();
+      }, autoHideMs || 4000);
     }
   };
 
@@ -1405,7 +1697,7 @@ interface Window {
       if (!Ctx) return;
       this._audio = this._audio || new Ctx();
       var ctx = this._audio;
-      if (ctx.state === 'suspended') return;   // kullanici henuz etkilesmedi
+      if (ctx.state === 'suspended') return; // kullanici henuz etkilesmedi
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
       osc.frequency.value = 880;
@@ -1415,7 +1707,10 @@ interface Window {
       osc.connect(gain).connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.24);
-    } catch (e) {}
+    } catch (e) {
+      // No Web Audio, or autoplay is blocked until the visitor interacts. The
+      // notification sound is an enhancement; the message still arrives.
+    }
   };
 
   // --- FAQ ------------------------------------------------------------------
@@ -1425,11 +1720,23 @@ interface Window {
     var top = this.faqs.slice(0, 3);
     var self = this;
     this.el.faqPreview.innerHTML =
-      '<h3>' + escapeHtml(this.t.help) + '</h3>' +
-      top.map(function (f) {
-        return '<div class="faq"><button class="faq-q" data-id="' + escapeHtml(f.id) + '">' +
-          '<span>' + escapeHtml(f.question) + '</span>' + ICONS.chevron + '</button></div>';
-      }).join('');
+      '<h3>' +
+      escapeHtml(this.t.help) +
+      '</h3>' +
+      top
+        .map(function (f) {
+          return (
+            '<div class="faq"><button class="faq-q" data-id="' +
+            escapeHtml(f.id) +
+            '">' +
+            '<span>' +
+            escapeHtml(f.question) +
+            '</span>' +
+            ICONS.chevron +
+            '</button></div>'
+          );
+        })
+        .join('');
     var buttons = this.el.faqPreview.querySelectorAll('.faq-q');
     for (var i = 0; i < buttons.length; i++) {
       this._listen(buttons[i], 'click', function () {
@@ -1441,7 +1748,9 @@ interface Window {
   Widget.prototype._renderFaqs = function (this: WidgetInstance, term?: string) {
     if (!this.el || !this.el.faqList) return;
     var self = this;
-    var query = String(term || '').trim().toLowerCase();
+    var query = String(term || '')
+      .trim()
+      .toLowerCase();
     var list = query
       ? this.faqs.filter(function (f) {
           return (f.question + ' ' + f.answer).toLowerCase().indexOf(query) > -1;
@@ -1449,17 +1758,29 @@ interface Window {
       : this.faqs;
 
     if (!list.length) {
-      this.el.faqList.innerHTML = '<div class="empty">' +
-        escapeHtml(this.faqs.length ? this.t.noResults : this.t.noFaqs) + '</div>';
+      this.el.faqList.innerHTML =
+        '<div class="empty">' +
+        escapeHtml(this.faqs.length ? this.t.noResults : this.t.noFaqs) +
+        '</div>';
       return;
     }
 
-    this.el.faqList.innerHTML = list.map(function (f) {
-      return '<div class="faq">' +
-        '<button class="faq-q"><span>' + escapeHtml(f.question) + '</span>' + ICONS.chevron + '</button>' +
-        '<div class="faq-a">' + escapeHtml(f.answer) + '</div>' +
-        '</div>';
-    }).join('');
+    this.el.faqList.innerHTML = list
+      .map(function (f) {
+        return (
+          '<div class="faq">' +
+          '<button class="faq-q"><span>' +
+          escapeHtml(f.question) +
+          '</span>' +
+          ICONS.chevron +
+          '</button>' +
+          '<div class="faq-a">' +
+          escapeHtml(f.answer) +
+          '</div>' +
+          '</div>'
+        );
+      })
+      .join('');
 
     var buttons = this.el.faqList.querySelectorAll('.faq-q');
     for (var i = 0; i < buttons.length; i++) {
@@ -1492,7 +1813,11 @@ interface Window {
     }
   };
 
-  Widget.prototype._appendMessage = function (this: WidgetInstance, message: WidgetMessage, bulk?: boolean) {
+  Widget.prototype._appendMessage = function (
+    this: WidgetInstance,
+    message: WidgetMessage,
+    bulk?: boolean
+  ) {
     if (!this.el) return;
     var id = String(message._id || message.id || '');
 
@@ -1520,12 +1845,21 @@ interface Window {
     return node;
   };
 
-  Widget.prototype._time = function (this: WidgetInstance, value: string | number | Date | undefined) {
+  Widget.prototype._time = function (
+    this: WidgetInstance,
+    value: string | number | Date | undefined
+  ) {
     try {
-      return new Date(value as string | number | Date).toLocaleTimeString(this.locale === 'tr' ? 'tr-TR' : 'en-US', {
-        hour: '2-digit', minute: '2-digit'
-      });
-    } catch (e) { return ''; }
+      return new Date(value as string | number | Date).toLocaleTimeString(
+        this.locale === 'tr' ? 'tr-TR' : 'en-US',
+        {
+          hour: '2-digit',
+          minute: '2-digit'
+        }
+      );
+    } catch (e) {
+      return '';
+    }
   };
 
   Widget.prototype._messageNode = function (this: WidgetInstance, message: WidgetMessage) {
@@ -1544,19 +1878,35 @@ interface Window {
     if (file && file.url) {
       var url = /^https?:/i.test(file.url) ? file.url : this.config.apiUrl + file.url;
       if (message.messageType === 'image') {
-        attachment = '<span class="attachment"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
-          '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(file.originalName || '') + '" /></a></span>';
+        attachment =
+          '<span class="attachment"><a href="' +
+          escapeHtml(url) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          '<img src="' +
+          escapeHtml(url) +
+          '" alt="' +
+          escapeHtml(file.originalName || '') +
+          '" /></a></span>';
       } else {
-        attachment = '<span class="attachment"><a class="file" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+        attachment =
+          '<span class="attachment"><a class="file" href="' +
+          escapeHtml(url) +
+          '" target="_blank" rel="noopener noreferrer">' +
           ICONS.file +
-          '<span><span class="file-name">' + escapeHtml(file.originalName || 'file') + '</span>' +
-          '<span class="file-size"> ' + escapeHtml(formatBytes(file.size)) + '</span></span></a></span>';
+          '<span><span class="file-name">' +
+          escapeHtml(file.originalName || 'file') +
+          '</span>' +
+          '<span class="file-size"> ' +
+          escapeHtml(formatBytes(file.size)) +
+          '</span></span></a></span>';
       }
     }
 
     parts.push('<div class="bubble">' + escapeHtml(message.content || '') + attachment + '</div>');
     if (c.messages.showTimestamps !== false) {
-      parts.push('<div class="meta">' + escapeHtml(this._time(message.createdAt || Date.now())) + '</div>');
+      parts.push(
+        '<div class="meta">' + escapeHtml(this._time(message.createdAt || Date.now())) + '</div>'
+      );
     } else {
       parts.push('<div class="meta"></div>');
     }
@@ -1569,7 +1919,9 @@ interface Window {
     if (!this.el) return;
     var box = this.el.messages;
     // rAF: DOM guncellemesi tamamlanmadan scrollHeight eski degeri verir.
-    requestAnimationFrame(function () { box.scrollTop = box.scrollHeight; });
+    requestAnimationFrame(function () {
+      box.scrollTop = box.scrollHeight;
+    });
   };
 
   Widget.prototype._showTyping = function (this: WidgetInstance) {
@@ -1594,8 +1946,14 @@ interface Window {
 
   Widget.prototype._pickFile = function (this: WidgetInstance, file?: File | null) {
     if (!file) return;
-    if (file.size > MAX_FILE_BYTES) { this._notice(this.t.fileTooLarge, 'error'); return; }
-    if (ALLOWED_MIME.indexOf(file.type) === -1) { this._notice(this.t.fileTypeBlocked, 'error'); return; }
+    if (file.size > MAX_FILE_BYTES) {
+      this._notice(this.t.fileTooLarge, 'error');
+      return;
+    }
+    if (ALLOWED_MIME.indexOf(file.type) === -1) {
+      this._notice(this.t.fileTypeBlocked, 'error');
+      return;
+    }
     this.selectedFile = file;
     this.el!.fileName.textContent = file.name;
     this.el!.fileSize.textContent = formatBytes(file.size);
@@ -1612,10 +1970,16 @@ interface Window {
   };
 
   Widget.prototype.sendMessage = async function (this: WidgetInstance) {
-    if (this.fatal) { this._notice(this.fatal.message, 'error'); return; }
+    if (this.fatal) {
+      this._notice(this.fatal.message, 'error');
+      return;
+    }
     var content = this.el!.input.value.trim();
     if (!content && !this.selectedFile) return;
-    if (!this.socket || !this.socket.connected) { this._notice(this.t.connectionLost, 'error'); return; }
+    if (!this.socket || !this.socket.connected) {
+      this._notice(this.t.connectionLost, 'error');
+      return;
+    }
 
     var clientMessageId = uid('c');
     var file = this.selectedFile;
@@ -1650,7 +2014,8 @@ interface Window {
         fileData?: Record<string, any>;
       } = {
         content: content,
-        senderName: (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
+        senderName:
+          (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
         clientMessageId: clientMessageId
       };
 
@@ -1682,12 +2047,20 @@ interface Window {
     }
   };
 
-  Widget.prototype._markFailed = function (this: WidgetInstance, entry: any, clientMessageId: string) {
+  Widget.prototype._markFailed = function (
+    this: WidgetInstance,
+    entry: any,
+    clientMessageId: string
+  ) {
     var self = this;
     entry.node.classList.remove('pending');
     entry.node.classList.add('failed');
     var meta = entry.node.querySelector('.meta');
-    meta.innerHTML = escapeHtml(this.t.failed) + ' <button class="retry">' + escapeHtml(this.t.retry) + '</button>';
+    meta.innerHTML =
+      escapeHtml(this.t.failed) +
+      ' <button class="retry">' +
+      escapeHtml(this.t.retry) +
+      '</button>';
     this._listen(meta.querySelector('.retry'), 'click', function () {
       entry.node.remove();
       delete self.seen[clientMessageId];
@@ -1726,7 +2099,9 @@ interface Window {
     // Odagi panele tasi — klavye kullanicisi acildiktan sonra sayfanin
     // basindan devam etmemeli.
     var panel = this.el.panel;
-    setTimeout(function () { panel.focus(); }, 50);
+    setTimeout(function () {
+      panel.focus();
+    }, 50);
     this.emit('open', {});
   };
 
@@ -1801,10 +2176,14 @@ interface Window {
     this.emit('logout', {});
   };
 
-  Widget.prototype.setAttributes = function (this: WidgetInstance, attributes: Record<string, unknown>) {
+  Widget.prototype.setAttributes = function (
+    this: WidgetInstance,
+    attributes: Record<string, unknown>
+  ) {
     if (!attributes || typeof attributes !== 'object') return;
     for (var key in attributes) {
-      if (Object.prototype.hasOwnProperty.call(attributes, key)) this.attributes[key] = attributes[key];
+      if (Object.prototype.hasOwnProperty.call(attributes, key))
+        this.attributes[key] = attributes[key];
     }
     if (this.socket && this.socket.connected) this._join();
     this.emit('attributes', { attributes: this.attributes });
@@ -1819,7 +2198,9 @@ interface Window {
       // Metinleri yeniden ciz. Sohbet gecmisi korunur.
       var openState = this.isOpen;
       var view = this.view;
-      var messages = Array.prototype.map.call(this.el.messages.children, function (n) { return n; });
+      var messages = Array.prototype.map.call(this.el.messages.children, function (n) {
+        return n;
+      });
       this._teardownDom();
       this._render();
       for (var i = 0; i < messages.length; i++) this.el.messages.appendChild(messages[i]);
@@ -1834,7 +2215,10 @@ interface Window {
   Widget.prototype.setTheme = function (this: WidgetInstance, theme: string | null) {
     var resolved = theme;
     if (theme === 'auto' || !theme) {
-      resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      resolved =
+        window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
     }
     var colors = this.remote.config.colors;
     if (resolved === 'dark') {
@@ -1897,7 +2281,13 @@ interface Window {
       this.socket.disconnect();
       this.socket = null;
     }
-    if (this._audio && this._audio.close) { try { this._audio.close(); } catch (e) {} }
+    if (this._audio && this._audio.close) {
+      try {
+        this._audio.close();
+      } catch (e) {
+        // Already closed by the browser on navigation.
+      }
+    }
 
     this.emit('destroy', {});
     this._handlers = {};
@@ -1937,17 +2327,39 @@ interface Window {
       return widget;
     },
 
-    open: function () { api.__runtime && api.__runtime.open(); },
-    close: function () { api.__runtime && api.__runtime.close(); },
-    toggle: function () { api.__runtime && api.__runtime.toggle(); },
-    show: function () { api.__runtime && api.__runtime.show(); },
-    hide: function () { api.__runtime && api.__runtime.hide(); },
-    identify: function (user: WidgetIdentity | null) { api.__runtime && api.__runtime.identify(user); },
-    logout: function () { api.__runtime && api.__runtime.logout(); },
-    setAttributes: function (attrs: Record<string, unknown>) { api.__runtime && api.__runtime.setAttributes(attrs); },
-    setLocale: function (locale: string) { api.__runtime && api.__runtime.setLocale(locale); },
-    setTheme: function (theme: string | null) { api.__runtime && api.__runtime.setTheme(theme); },
-    sendMessage: function () { api.__runtime && api.__runtime.sendMessage(); },
+    open: function () {
+      api.__runtime && api.__runtime.open();
+    },
+    close: function () {
+      api.__runtime && api.__runtime.close();
+    },
+    toggle: function () {
+      api.__runtime && api.__runtime.toggle();
+    },
+    show: function () {
+      api.__runtime && api.__runtime.show();
+    },
+    hide: function () {
+      api.__runtime && api.__runtime.hide();
+    },
+    identify: function (user: WidgetIdentity | null) {
+      api.__runtime && api.__runtime.identify(user);
+    },
+    logout: function () {
+      api.__runtime && api.__runtime.logout();
+    },
+    setAttributes: function (attrs: Record<string, unknown>) {
+      api.__runtime && api.__runtime.setAttributes(attrs);
+    },
+    setLocale: function (locale: string) {
+      api.__runtime && api.__runtime.setLocale(locale);
+    },
+    setTheme: function (theme: string | null) {
+      api.__runtime && api.__runtime.setTheme(theme);
+    },
+    sendMessage: function () {
+      api.__runtime && api.__runtime.sendMessage();
+    },
 
     on: function (event: string, handler: EventHandler) {
       if (api.__runtime) return api.__runtime.on(event, handler);
@@ -1958,10 +2370,15 @@ interface Window {
         });
       };
     },
-    off: function (event: string, handler?: EventHandler) { api.__runtime && api.__runtime.off(event, handler); },
+    off: function (event: string, handler?: EventHandler) {
+      api.__runtime && api.__runtime.off(event, handler);
+    },
 
     destroy: function () {
-      if (api.__runtime) { api.__runtime.destroy(); api.__runtime = null; }
+      if (api.__runtime) {
+        api.__runtime.destroy();
+        api.__runtime = null;
+      }
     },
 
     /** Tanilama: entegrasyon sorunlarinda ilk bakilacak yer. */
@@ -2000,7 +2417,12 @@ interface Window {
       var method = Array.isArray(entry) ? entry[0] : entry;
       var args = Array.isArray(entry) ? entry.slice(1) : [];
       if (typeof api[method] === 'function') {
-        try { api[method].apply(null, args); } catch (e) {}
+        try {
+          api[method].apply(null, args);
+        } catch (e) {
+          // One queued call from the host page was malformed. The remaining
+          // queued calls still run; throwing here would abandon them.
+        }
       }
     }
     queued.length = 0;

@@ -2,7 +2,7 @@ import { defineModel } from '../db/model';
 import type { Ref } from '../db/model';
 import type { OrganizationDoc } from './Organization';
 import type { UserDoc } from './User';
-import type { SiteAiSettings, SiteInstallation, SiteWidgetSettings } from '../types/domain';
+import type { SiteAiSettings, SiteInstallation, SiteWidgetSettings } from '../domain';
 
 export interface SiteDoc {
   name: string;

@@ -4,12 +4,7 @@ import type { Ref } from '../db/model';
 import type { SiteDoc } from './Site';
 import type { TeamDoc } from './Team';
 import type { UserDoc } from './User';
-import type {
-  AutoAssignRules,
-  BusinessHours,
-  DepartmentSla,
-  DepartmentStats
-} from '../types/domain';
+import type { AutoAssignRules, BusinessHours, DepartmentSla, DepartmentStats } from '../domain';
 
 export interface DepartmentMember {
   userId: Ref<TeamDoc | UserDoc>;
@@ -38,7 +33,13 @@ export default defineModel<DepartmentDoc>({
   fields: {
     name: { column: 'name', type: 'string', required: true, trim: true },
     description: { column: 'description', type: 'string', default: '' },
-    requiredSkills: { column: 'required_skills', type: 'stringArray', lowercase: true, trim: true, default: () => [] },
+    requiredSkills: {
+      column: 'required_skills',
+      type: 'stringArray',
+      lowercase: true,
+      trim: true,
+      default: () => []
+    },
     siteId: { column: 'site_id', type: 'id', ref: 'Site', required: true },
     color: { column: 'color', type: 'string', default: '#3B82F6' },
     icon: { column: 'icon', type: 'string', default: '💬' },

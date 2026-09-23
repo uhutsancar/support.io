@@ -1,8 +1,8 @@
 /** Which clock is close to breaching, and by how much. */
 import Team from '../models/Team';
-import Conversation from '../models/Conversation';
 import { autoAssignConversation } from './autoAssignment';
 import events from '../events';
+import { AdminNotifier } from '../realtime';
 import type { Server } from 'socket.io';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -21,14 +21,14 @@ function isSLAWarningThreshold(conversation: Doc<ConversationDoc>): SlaWarning |
   if (!conversation.firstResponseAt) {
     const remaining = conversation.sla.firstResponseTarget - elapsedMinutes;
     const threshold = conversation.sla.firstResponseTarget * 0.8;
-    if (remaining > 0 && remaining <= (conversation.sla.firstResponseTarget - threshold)) {
+    if (remaining > 0 && remaining <= conversation.sla.firstResponseTarget - threshold) {
       return { type: 'firstResponse', remaining, threshold };
     }
   }
   if (conversation.status !== 'resolved' && conversation.status !== 'closed') {
     const remaining = conversation.sla.resolutionTarget - elapsedMinutes;
     const threshold = conversation.sla.resolutionTarget * 0.8;
-    if (remaining > 0 && remaining <= (conversation.sla.resolutionTarget - threshold)) {
+    if (remaining > 0 && remaining <= conversation.sla.resolutionTarget - threshold) {
       return { type: 'resolution', remaining, threshold };
     }
   }
@@ -46,13 +46,20 @@ async function sendSLAWarning(conversation: Doc<ConversationDoc>, io: Server) {
     siteId: conversation.siteId,
     assignedAgent: conversation.assignedAgent
   };
+  const notifier = new AdminNotifier(io);
+  // The assignee hears it wherever they are; the site room so a lead watching
+  // the inbox sees it too.
   if (conversation.assignedAgent) {
-    io.of('/admin').to(`user:${conversation.assignedAgent}`).emit('sla-warning', warningData);
+    notifier.toUser(conversation.assignedAgent, 'sla-warning', warningData);
   }
-  io.of('/admin').to(`site:${conversation.siteId}`).emit('sla-warning', warningData);
+  notifier.toSite(conversation.siteId, 'sla-warning', warningData);
   return warningData;
 }
-async function handleSLABreach(conversation: Doc<ConversationDoc>, organizationId: string, io: Server) {
+async function handleSLABreach(
+  conversation: Doc<ConversationDoc>,
+  organizationId: string,
+  io: Server
+) {
   try {
     // `reassigned` / `newAgentId` are added below when the breach triggers a
     // hand-over, so the shape is declared up front rather than grown ad hoc.
@@ -79,17 +86,20 @@ async function handleSLABreach(conversation: Doc<ConversationDoc>, organizationI
       organizationId,
       isActive: true,
       role: { $in: ['admin', 'manager'] }
-    }).select('_id name email').lean();
-    teamLeads.forEach(lead => {
-      io.of('/admin').to(`user:${lead._id}`).emit('sla-breach-escalation', breachData);
-    });
-    io.of('/admin').to(`site:${conversation.siteId}`).emit('sla-breach-escalation', breachData);
+    })
+      .select('_id name email')
+      .lean();
+    const notifier = new AdminNotifier(io);
+    for (const lead of teamLeads) {
+      notifier.toUser(lead._id, 'sla-breach-escalation', breachData);
+    }
+    notifier.toSite(conversation.siteId, 'sla-breach-escalation', breachData);
     if (conversation.sla.firstResponseStatus === 'breached' && !conversation.firstResponseAt) {
       const reassignResult = await autoAssignConversation(conversation._id, organizationId);
       if (reassignResult.success) {
         breachData.reassigned = true;
         breachData.newAgentId = reassignResult.agentId;
-        io.of('/admin').to(`site:${conversation.siteId}`).emit('sla-breach-reassigned', breachData);
+        notifier.toSite(conversation.siteId, 'sla-breach-reassigned', breachData);
       }
     }
     try {
@@ -101,10 +111,17 @@ async function handleSLABreach(conversation: Doc<ConversationDoc>, organizationI
         ip: null,
         ua: null
       });
-    } catch (e) {
+    } catch (error) {
+      // The breach has already been announced to the agents; failing to write
+      // the audit row must not undo that.
+      console.error('[sla] could not emit sla.breach for', conversation._id, error);
     }
     return breachData;
   } catch (error) {
+    // Escalation is best effort — the sweep continues with the next
+    // conversation — but a persistent failure here means nobody is being told
+    // about breaches at all, so it has to be visible.
+    console.error('[sla] breach escalation failed for', conversation._id, error);
     return null;
   }
 }

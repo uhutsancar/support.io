@@ -1,10 +1,14 @@
 import express from 'express';
-import { sendError } from '../middleware/errors';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
-import { findOwnedSite } from '../middleware/siteAuth';
+import {
+  asyncHandler,
+  badRequest,
+  loadOwnedSite,
+  requireOrganization,
+  requireSiteOwnership
+} from '../http';
 import ProactiveRule from '../models/ProactiveRule';
-import { isValidObjectId } from '../db/objectId';
 import type { Request, Response } from 'express';
 
 const router = express.Router();
@@ -19,15 +23,13 @@ const DEVICE_TYPES = ['all', 'desktop', 'mobile', 'tablet'];
 
 // Same ownership rule as the automation routes: a rule is only reachable when
 // the caller's organization owns the site it belongs to.
-async function findOwnedRule(req: Request, ruleId: unknown) {
-  if (!isValidObjectId(ruleId)) return null;
-  const rule = await ProactiveRule.findById(ruleId);
-  if (!rule) return null;
-  const site = await findOwnedSite(req, rule.siteId);
-  return site ? rule : null;
-}
+const loadOwnedRule = async (req: Request, ruleId: unknown) =>
+  requireSiteOwnership(req, await ProactiveRule.findById(ruleId), 'Rule');
 
-function validateRuleBody(body: Record<string, any>, { partial = false }: { partial?: boolean } = {}): string[] {
+function validateRuleBody(
+  body: Record<string, any>,
+  { partial = false }: { partial?: boolean } = {}
+): string[] {
   const errors = [];
 
   if (!partial || body.name !== undefined) {
@@ -46,7 +48,10 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
         errors.push('triggerCondition.timeThresholdSeconds must be a non-negative number');
       }
       const scroll = trigger.scrollPercentage;
-      if (scroll !== undefined && (!Number.isFinite(Number(scroll)) || Number(scroll) < 0 || Number(scroll) > 100)) {
+      if (
+        scroll !== undefined &&
+        (!Number.isFinite(Number(scroll)) || Number(scroll) < 0 || Number(scroll) > 100)
+      ) {
         errors.push('triggerCondition.scrollPercentage must be between 0 and 100');
       }
       if (trigger.eventType !== undefined && !EVENT_TYPES.includes(trigger.eventType)) {
@@ -60,7 +65,7 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
       if (trigger.urlMatch === 'regex') {
         try {
           new RegExp(trigger.urlValue || '');
-        } catch (e) {
+        } catch {
           errors.push('triggerCondition.urlValue is not a valid regular expression');
         }
       }
@@ -97,8 +102,10 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
     const freq = body.frequencyControl;
     if (typeof freq !== 'object' || freq === null) {
       errors.push('frequencyControl must be an object');
-    } else if (freq.cooldownMinutes !== undefined
-      && (!Number.isFinite(Number(freq.cooldownMinutes)) || Number(freq.cooldownMinutes) < 0)) {
+    } else if (
+      freq.cooldownMinutes !== undefined &&
+      (!Number.isFinite(Number(freq.cooldownMinutes)) || Number(freq.cooldownMinutes) < 0)
+    ) {
       errors.push('frequencyControl.cooldownMinutes must be a non-negative number');
     }
   }
@@ -106,29 +113,31 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
   return errors;
 }
 
-router.get('/:siteId', auth, async (req: Request, res: Response) => {
-  try {
-    const site = await findOwnedSite(req, req.params.siteId);
-    if (!site) return res.status(404).json({ error: 'Site not found' });
+router.get(
+  '/:siteId',
+  auth,
+  requireOrganization,
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
 
-    const rules = await ProactiveRule.find({ siteId: site._id })
-      .sort({ createdAt: -1 })
-      .limit(200);
+    const rules = await ProactiveRule.find({ siteId: site._id }).sort({ createdAt: -1 }).limit(200);
     res.json(rules);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
-router.post('/', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const { siteId, name, triggerCondition, audienceContext, action, frequencyControl, isActive } = req.body;
+router.post(
+  '/',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { siteId, name, triggerCondition, audienceContext, action, frequencyControl, isActive } =
+      req.body;
 
-    const site = await findOwnedSite(req, siteId);
-    if (!site) return res.status(404).json({ error: 'Site not found' });
+    const site = await loadOwnedSite(req, siteId);
 
     const errors = validateRuleBody(req.body);
-    if (errors.length) return res.status(400).json({ error: 'Validation failed', details: errors });
+    if (errors.length) throw badRequest('Validation failed', errors);
 
     const rule = new ProactiveRule({
       siteId: site._id,
@@ -141,22 +150,30 @@ router.post('/', auth, checkPermission('manage_sites'), async (req: Request, res
     });
     await rule.save();
     res.status(201).json(rule);
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
+  })
+);
 
-router.put('/:id', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const rule = await findOwnedRule(req, req.params.id);
-    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+router.put(
+  '/:id',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const rule = await loadOwnedRule(req, req.params.id);
 
     const errors = validateRuleBody(req.body, { partial: true });
-    if (errors.length) return res.status(400).json({ error: 'Validation failed', details: errors });
+    if (errors.length) throw badRequest('Validation failed', errors);
 
     // siteId and metrics stay server-owned so a rule cannot be moved between
     // tenants and its counters cannot be forged.
-    const assignable = ['name', 'triggerCondition', 'audienceContext', 'action', 'frequencyControl', 'isActive'];
+    const assignable = [
+      'name',
+      'triggerCondition',
+      'audienceContext',
+      'action',
+      'frequencyControl',
+      'isActive'
+    ];
     for (const key of assignable) {
       if (req.body[key] === undefined) continue;
       if (key === 'name') rule.name = String(req.body.name).trim();
@@ -165,21 +182,20 @@ router.put('/:id', auth, checkPermission('manage_sites'), async (req: Request, r
     }
     await rule.save();
     res.json(rule);
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
+  })
+);
 
-router.delete('/:id', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const rule = await findOwnedRule(req, req.params.id);
-    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+router.delete(
+  '/:id',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const rule = await loadOwnedRule(req, req.params.id);
 
     await ProactiveRule.findByIdAndDelete(rule._id);
     res.json({ message: 'Rule deleted' });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
 export default router;

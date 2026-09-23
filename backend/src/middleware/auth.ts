@@ -3,19 +3,28 @@ import Team from '../models/Team';
 import Organization from '../models/Organization';
 import { readToken, csrfOk } from '../config/session';
 import { verifySession } from '../config/tokens';
-import type { AuthTokenPayload, AuthenticatedUser } from '../types/auth';
-import type { Request, Response, NextFunction } from 'express';
+import { forbidden, unauthorized } from '../http/errors';
+import { HttpError } from '../http/errors';
+import type { AuthenticatedUser } from '../types/auth';
+import type { NextFunction, Request, Response } from 'express';
 
-const auth = async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Establishes who is calling.
+ *
+ * Any failure here answers the same way — 401, no detail — so a caller cannot
+ * learn from the response whether a token was malformed, expired, or simply
+ * belonged to a deactivated account. The two exceptions carry their own status
+ * because they describe a request that was understood and refused rather than
+ * one that could not be identified.
+ */
+const auth = async (req: Request, _res: Response, next: NextFunction) => {
   try {
     // Token httpOnly çerezden okunur; Authorization başlığı tarayıcı dışı
     // istemciler için durur. Ayrıntı ve CSRF gerekçesi: config/session.ts
     const { token, fromCookie } = readToken(req);
-    if (!token) {
-      throw new Error('No token provided');
-    }
+    if (!token) throw unauthorized();
     if (!csrfOk(req, fromCookie)) {
-      return res.status(403).json({ error: 'CSRF token missing or invalid', code: 'CSRF_FAILED' });
+      throw forbidden('CSRF token missing or invalid', 'CSRF_FAILED');
     }
     // Amaç (aud), algoritma, süre ve userId birlikte doğrulanır. Ayrıntı ve
     // bu kontrolün neden şart olduğu: config/tokens.ts
@@ -26,9 +35,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
     } else {
       user = await User.findOne({ _id: decoded.userId, isActive: true });
     }
-    if (!user) {
-      throw new Error('User not found');
-    }
+    if (!user) throw unauthorized();
     // Kimlik doğrulama burada biter; kiracılığı değiştirmek bu katmanın işi
     // değil. Eskiden organizasyonu olmayan bir hesap her istekte, atandığı
     // ilk sitenin şirketine sessizce katılıyor (o liste doğrulanmıyordu, yani
@@ -44,13 +51,13 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
     // Token bugün başka bir şirket iddia ediyorsa oturum geçersizdir.
     const orgId = user.organizationId ? String(user.organizationId) : null;
     if (decoded.organizationId && String(decoded.organizationId) !== orgId) {
-      return res.status(401).json({ error: 'Please authenticate.' });
+      throw unauthorized();
     }
     let organization = null;
     if (orgId) {
       organization = await Organization.findOne({ _id: orgId, isActive: true });
       if (!organization) {
-        return res.status(403).json({ error: 'Organization not found or inactive' });
+        throw forbidden('Organization not found or inactive', 'ORGANIZATION_INACTIVE');
       }
     }
     req.user = user;
@@ -61,7 +68,10 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
     req.tokenPayload = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Please authenticate.' });
+    // A deliberate refusal keeps its own status; anything else — a bad
+    // signature, an expired token, a malformed claim — is indistinguishable
+    // from the outside, on purpose.
+    next(error instanceof HttpError ? error : unauthorized());
   }
 };
 // Rol kontrolleri middleware/rbac.ts (checkPermission) üzerinden yapılır.

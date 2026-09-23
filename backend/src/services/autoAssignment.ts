@@ -2,9 +2,8 @@
 import Team from '../models/Team';
 import Conversation from '../models/Conversation';
 import Department from '../models/Department';
-import Site from '../models/Site';
-import type { Filter } from '../db/model';
-import type { Doc } from '../db/model';
+import { isAwayPresence } from '../domain';
+import type { Doc, Filter } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
 
 export interface AssignmentResult {
@@ -14,6 +13,12 @@ export interface AssignmentResult {
   agentName?: string;
 }
 
+/** How many times a conversation may bounce before it stops being reassigned. */
+const MAX_REASSIGN_ATTEMPTS = 3;
+
+/** How long a fresh assignment is left alone before it can be revisited. */
+const MIN_REASSIGN_INTERVAL_MS = 5 * 60 * 1000;
+
 export interface ReassignmentResult {
   reassigned: boolean;
   reason?: string;
@@ -21,68 +26,65 @@ export interface ReassignmentResult {
   oldAgentId?: string;
 }
 
+/** The columns the selection below reads; nothing else is loaded. */
+const AGENT_SELECTION = '_id name email status skills maxCapacity currentLoad organizationId';
+
+/** Cap for an agent whose row does not set one. */
+const DEFAULT_CAPACITY = 10;
+
+function loadAgents(filter: Filter) {
+  return Team.find(filter).select(AGENT_SELECTION).lean();
+}
+
+/**
+ * Picks who should take a conversation, widening the pool in three steps.
+ *
+ * 1. Members of the conversation's department, when it has one with members.
+ * 2. Anyone online in the organization, when that narrower set is empty.
+ * 3. Of those, agents whose skills cover what the conversation needs — unless
+ *    that leaves nobody, in which case skills are ignored rather than letting
+ *    the conversation go unassigned.
+ *
+ * Whoever is left with spare capacity and the lightest load wins. Returns null
+ * when nobody qualifies, and the caller marks the conversation unassigned.
+ *
+ * The previous version ran the same query up to three times and reused one
+ * mutated filter object between them, deleting a key from it partway through;
+ * the third call could therefore search a wider set than the comment claimed.
+ * Failures were swallowed and reported as "no agent available", so a broken
+ * query looked exactly like an empty team.
+ */
 async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId: string) {
-  try {
-    const { requiredSkills = [], department, siteId, priority } = conversation;
-    const baseQuery: Filter = {
-      organizationId,
-      isActive: true,
-      status: 'online'
-    };
-    let departmentMembers: string[] = [];
-    if (department) {
-      const dept = await Department.findById(department).lean();
-      if (dept && dept.members && dept.members.length > 0) {
-        departmentMembers = dept.members.map(m => m.userId.toString());
-        baseQuery._id = { $in: departmentMembers };
-      }
+  const { requiredSkills = [], department } = conversation;
+  const onlineInOrg: Filter = { organizationId, isActive: true, status: 'online' };
+
+  let candidates: Awaited<ReturnType<typeof loadAgents>> = [];
+  if (department) {
+    const dept = await Department.findById(department).lean();
+    const memberIds = (dept?.members ?? []).map((m) => String(m.userId));
+    if (memberIds.length > 0) {
+      candidates = await loadAgents({ ...onlineInOrg, _id: { $in: memberIds } });
     }
-    let agents = await Team.find(baseQuery)
-      .select('_id name email status skills maxCapacity currentLoad organizationId')
-      .lean();
-    if (agents.length === 0) {
-      delete baseQuery._id;
-      agents = await Team.find(baseQuery)
-        .select('_id name email status skills maxCapacity currentLoad organizationId')
-        .lean();
-    }
-    if (agents.length === 0) {
-      return null;
-    }
-    if (requiredSkills && requiredSkills.length > 0) {
-      agents = agents.filter(agent => {
-        if (!agent.skills || agent.skills.length === 0) {
-          return false;
-        }
-        return requiredSkills.some((skill: string) =>
-          agent.skills.some(agentSkill => 
-            agentSkill.toLowerCase() === skill.toLowerCase()
-          )
-        );
-      });
-    }
-    if (agents.length === 0) {
-      agents = await Team.find(baseQuery)
-        .select('_id name email status skills maxCapacity currentLoad organizationId')
-        .lean();
-    }
-    agents = agents.filter(agent => {
-      const load = agent.currentLoad || 0;
-      const capacity = agent.maxCapacity || 10;
-      return load < capacity;
-    });
-    if (agents.length === 0) {
-      return null;
-    }
-    agents.sort((a, b) => {
-      const loadA = a.currentLoad || 0;
-      const loadB = b.currentLoad || 0;
-      return loadA - loadB;
-    });
-    return agents[0];
-  } catch (error) {
-    return null;
   }
+
+  const everyone = candidates.length > 0 ? candidates : await loadAgents(onlineInOrg);
+  if (everyone.length === 0) return null;
+
+  const wanted = requiredSkills.map((skill: string) => skill.toLowerCase());
+  const skilled = wanted.length
+    ? everyone.filter((agent) =>
+        (agent.skills ?? []).some((skill) => wanted.includes(skill.toLowerCase()))
+      )
+    : everyone;
+  const pool = skilled.length > 0 ? skilled : everyone;
+
+  const available = pool.filter(
+    (agent) => (agent.currentLoad || 0) < (agent.maxCapacity || DEFAULT_CAPACITY)
+  );
+  if (available.length === 0) return null;
+
+  // Least busy first, so work spreads instead of piling onto whoever sorts first.
+  return available.sort((a, b) => (a.currentLoad || 0) - (b.currentLoad || 0))[0];
 }
 async function autoAssignConversation(
   conversationId: unknown,
@@ -97,8 +99,7 @@ async function autoAssignConversation(
     }
     if (conversation.assignedAgent && conversation.assignedAt) {
       const timeSinceAssignment = Date.now() - conversation.assignedAt.getTime();
-      const minReassignInterval = 5 * 60 * 1000;
-      if (timeSinceAssignment < minReassignInterval) {
+      if (timeSinceAssignment < MIN_REASSIGN_INTERVAL_MS) {
         return { success: false, reason: 'Recently assigned, skipping auto-reassign' };
       }
     }
@@ -115,19 +116,23 @@ async function autoAssignConversation(
     conversation.status = 'assigned';
     await conversation.save();
     await Team.findByIdAndUpdate(bestAgent._id, {
-      $inc: { 
-        'currentLoad': 1,
+      $inc: {
+        currentLoad: 1,
         'stats.activeConversations': 1,
         'stats.totalConversations': 1
       }
     });
-    return { 
-      success: true, 
+    return {
+      success: true,
       agentId: bestAgent._id,
       agentName: bestAgent.name
     };
   } catch (error) {
-    return { success: false, reason: error.message };
+    // Auto-assignment is best effort: the conversation still exists and an
+    // agent can pick it up by hand. The cause is logged rather than only
+    // returned, because callers routinely ignore the reason string.
+    console.error('[assignment] auto-assign failed for', conversationId, error);
+    return { success: false, reason: error instanceof Error ? error.message : 'assignment failed' };
   }
 }
 async function checkAndReassign(
@@ -142,17 +147,20 @@ async function checkAndReassign(
       return { reassigned: false, reason: 'No assigned agent' };
     }
     const agent = conversation.assignedAgent;
-    const shouldReassign = 
-      (agent.status === 'offline' || agent.status === 'away') ||
+    // Hand the conversation on when the agent cannot answer it: they have gone
+    // away, they have already missed the first-response target, or it has been
+    // bounced between agents enough times to stop trying.
+    const shouldReassign =
+      isAwayPresence(agent.status) ||
       (conversation.sla.firstResponseStatus === 'breached' && !conversation.firstResponseAt) ||
-      (conversation.autoReassignAttempts >= 3);
+      conversation.autoReassignAttempts >= MAX_REASSIGN_ATTEMPTS;
     if (!shouldReassign) {
       return { reassigned: false, reason: 'No need to reassign' };
     }
     const oldAgentId = conversation.assignedAgent._id;
     await Team.findByIdAndUpdate(oldAgentId, {
-      $inc: { 
-        'currentLoad': -1,
+      $inc: {
+        currentLoad: -1,
         'stats.activeConversations': -1
       }
     });
@@ -171,15 +179,29 @@ async function checkAndReassign(
       oldAgentId: oldAgentId.toString()
     };
   } catch (error) {
-    return { reassigned: false, reason: error.message };
+    console.error('[assignment] reassignment check failed for', conversationId, error);
+    return {
+      reassigned: false,
+      reason: error instanceof Error ? error.message : 'reassign failed'
+    };
   }
 }
+
+/**
+ * Moves an agent's live workload counter.
+ *
+ * Deliberately never throws: the caller has already committed the change this
+ * counter describes, and failing the request afterwards would be worse than a
+ * counter that is briefly out of step — db/queries.ts recomputes the real
+ * figure from the conversations themselves. Unlike the empty catch this
+ * replaces, the failure is at least visible.
+ */
 async function updateAgentLoad(agentId: unknown, delta: number): Promise<void> {
+  if (!agentId) return;
   try {
-    await Team.findByIdAndUpdate(agentId, {
-      $inc: { currentLoad: delta }
-    });
+    await Team.findByIdAndUpdate(agentId, { $inc: { currentLoad: delta } });
   } catch (error) {
+    console.error('[assignment] could not adjust load for agent', agentId, error);
   }
 }
 export { findBestAgent, autoAssignConversation, checkAndReassign, updateAgentLoad };

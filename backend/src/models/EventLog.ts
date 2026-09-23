@@ -3,8 +3,15 @@ import type { Ref } from '../db/model';
 import type { SiteDoc } from './Site';
 
 export type VisitorEventType =
-  | 'page_view' | 'time_on_page' | 'scroll_depth' | 'inactivity'
-  | 'exit_intent' | 'click' | 'custom_event' | 'form_start' | 'form_submit';
+  | 'page_view'
+  | 'time_on_page'
+  | 'scroll_depth'
+  | 'inactivity'
+  | 'exit_intent'
+  | 'click'
+  | 'custom_event'
+  | 'form_start'
+  | 'form_submit';
 
 export interface EventLogDoc {
   siteId: Ref<SiteDoc>;
@@ -29,7 +36,17 @@ export default defineModel<EventLogDoc>({
       column: 'event_type',
       type: 'string',
       required: true,
-      enum: ['page_view', 'time_on_page', 'scroll_depth', 'inactivity', 'exit_intent', 'click', 'custom_event', 'form_start', 'form_submit']
+      enum: [
+        'page_view',
+        'time_on_page',
+        'scroll_depth',
+        'inactivity',
+        'exit_intent',
+        'click',
+        'custom_event',
+        'form_start',
+        'form_submit'
+      ]
     },
     eventData: { column: 'event_data', type: 'json', default: () => ({}) },
     url: { column: 'url', type: 'string' },

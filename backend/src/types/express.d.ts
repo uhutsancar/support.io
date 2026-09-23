@@ -8,7 +8,12 @@
 import type { RateLimitInfo } from 'express-rate-limit';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
-import type { AuthTokenPayload, AuthenticatedOrganization, AuthenticatedUser, UserType } from './auth';
+import type {
+  AuthTokenPayload,
+  AuthenticatedOrganization,
+  AuthenticatedUser,
+  UserType
+} from './auth';
 
 declare global {
   namespace Express {

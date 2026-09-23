@@ -59,10 +59,18 @@ export function verifySession(token: string): AuthTokenPayload {
   // Kimliği olmayan bir oturum olamaz. Bu kontrol ORM'e tanımsız bir koşul
   // ulaşmasını da imza katmanından bağımsız olarak engeller.
   if (!isValidObjectId(decoded.userId)) throw new Error('Session carries no user');
-  if (decoded.userType !== undefined && decoded.userType !== 'user' && decoded.userType !== 'team') {
+  if (
+    decoded.userType !== undefined &&
+    decoded.userType !== 'user' &&
+    decoded.userType !== 'team'
+  ) {
     throw new Error('Session carries an unknown user type');
   }
-  if (decoded.organizationId !== undefined && decoded.organizationId !== null && !isValidObjectId(decoded.organizationId)) {
+  if (
+    decoded.organizationId !== undefined &&
+    decoded.organizationId !== null &&
+    !isValidObjectId(decoded.organizationId)
+  ) {
     throw new Error('Session carries a malformed organization');
   }
   return decoded;

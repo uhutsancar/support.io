@@ -2,11 +2,22 @@ import { defineModel } from '../db/model';
 
 export type ChatType = 'direct' | 'group';
 
-/** The denormalised preview shown in the chat list. */
+/**
+ * The denormalised preview shown in the chat list.
+ *
+ * `createdAt` is what the socket handler actually writes and what the chat list
+ * sorts on. This interface declared `timestamp` instead, and the open index
+ * signature below meant neither the write nor the read was ever type-checked
+ * against it — the sort silently read `undefined` and fell back to the row's
+ * `updatedAt` every time. `timestamp` is kept as optional for rows written
+ * before the mismatch was noticed.
+ */
 export interface TeamChatPreview {
   content?: string;
   senderId?: string;
   senderName?: string;
+  createdAt?: Date | string;
+  /** @deprecated Older rows only; new previews carry `createdAt`. */
   timestamp?: Date | string;
   [extra: string]: unknown;
 }

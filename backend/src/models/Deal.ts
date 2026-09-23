@@ -3,8 +3,10 @@ import type { Ref } from '../db/model';
 import type { OrganizationDoc } from './Organization';
 import type { TeamDoc } from './Team';
 import type { UserDoc } from './User';
+import { DEAL_STAGES } from '../domain';
+import type { DealStage } from '../domain';
 
-export type DealStage = 'new' | 'potential' | 'quoted' | 'negotiation' | 'won' | 'lost';
+export type { DealStage };
 
 export interface DealDoc {
   title: string;
@@ -34,7 +36,7 @@ export default defineModel<DealDoc>({
     stage: {
       column: 'stage',
       type: 'string',
-      enum: ['new', 'potential', 'quoted', 'negotiation', 'won', 'lost'],
+      enum: DEAL_STAGES,
       default: 'new'
     },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', required: true },

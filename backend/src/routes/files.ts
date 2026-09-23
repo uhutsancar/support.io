@@ -1,66 +1,70 @@
+// Chat attachments.
+//
+// This endpoint is public by design: a visitor on a customer's page uploads
+// before any conversation exists, so the only credential is the site key. That
+// makes the returned URL unauthenticated too, which is why the response carries
+// a short-lived signed proof. When the URL later arrives over the socket as
+// part of a message, the socket handler verifies that proof rather than
+// trusting the client's word that we stored the file. See config/tokens.ts for
+// why that proof is signed with its own derived key.
+
 import express from 'express';
-import { signUploadProof } from '../config/tokens';
-import { uploadFile } from '../middleware/s3Upload';
-import { verifySiteKey } from '../middleware/siteAuth';
 import rateLimit from 'express-rate-limit';
+import { signUploadProof } from '../config/tokens';
+import { describeUpload, uploadFile } from '../middleware/upload';
+import { verifySiteKey } from '../middleware/siteAuth';
+import { asyncHandler, badRequest, unavailable } from '../http';
 import type { Request, Response } from 'express';
 
 const router = express.Router();
+
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
-  message: 'Çok fazla dosya yükleme isteği. Lütfen daha sonra tekrar deneyin.'
+  message: { error: 'Çok fazla dosya yükleme isteği. Lütfen daha sonra tekrar deneyin.' }
 });
-router.post('/upload', uploadLimiter, verifySiteKey, uploadFile.single('file'), async (req: Request, res: Response) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Dosya yüklenemedi' });
-    }
-    // Depolama bir anahtar ve adres döndürmediyse kaydedilmiş bir dosya yoktur;
-    // tanımsız bir URL için kanıt imzalamak yerine açıkça başarısız olunur.
-    if (!req.file.key || !req.file.location) {
-      console.error('[files] storage returned no key/location for an upload');
-      return res.status(502).json({ error: 'File storage is unavailable', code: 'STORAGE_UNAVAILABLE' });
+
+router.post(
+  '/upload',
+  uploadLimiter,
+  verifySiteKey,
+  uploadFile.single('file'),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.file) throw badRequest('Dosya yüklenemedi');
+
+    // Nothing stored means no file to vouch for. Signing a proof for an
+    // undefined URL would hand the client a token pointing at nothing, so this
+    // fails loudly instead.
+    const stored = describeUpload(req, req.file);
+    if (!stored) {
+      console.error('[files] storage returned no key/url for an upload');
+      throw unavailable('File storage is unavailable', 'STORAGE_UNAVAILABLE');
     }
 
-    // S3'ten gelen yanıt - Location zaten S3 URL'si
-    // `uploadToken` is filled in just below, so the shape is declared here
-    // rather than grown by assignment.
-    const publicFile: {
-      filename?: string;
-      originalName: string;
-      mimeType: string;
-      size: number;
-      url?: string;
-      uploadToken?: string;
-    } = {
-      filename: req.file.key,
+    const file = {
+      filename: stored.key,
       originalName: req.file.originalname,
       mimeType: req.file.mimetype,
       size: req.file.size,
-      url: req.file.location
+      url: stored.url
     };
-    // The site key is public by design, so a file URL supplied later over the
-    // socket needs its own short-lived proof that our upload route created it.
-    // Kendi türetilmiş anahtarı ve amacı (aud) olan ayrı bir token türü:
-    // oturum yerine kullanılamaz. Ayrıntı: config/tokens.ts
-    publicFile.uploadToken = signUploadProof({
-      kind: 'chat-upload',
-      siteId: String(req.site._id),
-      filename: req.file.key,
-      url: req.file.location,
-      size: publicFile.size,
-      mimeType: publicFile.mimeType
-    });
 
     res.json({
       success: true,
-      file: publicFile,
+      file: {
+        ...file,
+        uploadToken: signUploadProof({
+          kind: 'chat-upload',
+          siteId: String(req.site._id),
+          filename: file.filename,
+          url: file.url,
+          size: file.size,
+          mimeType: file.mimeType
+        })
+      },
       message: 'Dosya başarıyla yüklendi'
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Dosya yükleme hatası' });
-  }
-});
+  })
+);
 
 export default router;

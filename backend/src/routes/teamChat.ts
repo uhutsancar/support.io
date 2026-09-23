@@ -1,222 +1,237 @@
+// Internal chat between agents: direct messages and group threads.
+//
+// Every id in a request body is checked against the caller's organization
+// before it is written. Without that, sending another tenant's user id opened a
+// direct chat with them, and the member picker listed every account in the
+// system rather than the caller's colleagues.
+
 import express from 'express';
-import { requireOrgId } from '../middleware/siteAuth';
-import { sendError } from '../middleware/errors';
-import { auth } from '../middleware/auth';
 import TeamMessage from '../models/TeamMessage';
 import TeamChat from '../models/TeamChat';
 import Team from '../models/Team';
 import User from '../models/User';
+import { auth } from '../middleware/auth';
 import { resolveChatParticipants, unreadTeamChatCount } from '../db/queries';
+import { asyncHandler, badRequest, forbidden, notFound, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 import type { Filter } from '../db/model';
+import type { TeamChatPreview } from '../models/TeamChat';
 
 const router = express.Router();
 
-// Bir kimliğin çağıranla AYNI organizasyonda olduğunu doğrular.
-//
-// Sohbet açma uçları gövdeden gelen id'ye koşulsuz güveniyordu: başka bir
-// organizasyonun kullanıcı id'si gönderilerek onunla doğrudan sohbet
-// açılabiliyordu. Kiracı sınırı artık yazma yolunda da kontrol ediliyor.
-async function belongsToOrganization(id: unknown, orgId: unknown): Promise<boolean> {
-  if (!id || !orgId) return false;
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 200;
+const PERSON_FIELDS = 'name email avatar status role';
+
+/** Shown in place of a participant whose account has since been deleted. */
+const UNKNOWN_PERSON = { name: 'Unknown', role: 'unknown' };
+
+/**
+ * Swaps participant ids for the people behind them.
+ *
+ * Three handlers each wrote this `.map(...)` with the same fallback object
+ * inline. Both account tables are read once for the whole list rather than once
+ * per participant.
+ */
+async function withParticipants<T extends { participants?: unknown }>(chat: T): Promise<T> {
+  const ids = (chat.participants as string[] | undefined) ?? [];
+  const people = await resolveChatParticipants(ids);
+  // The response replaces each id with the person behind it, so the property
+  // deliberately changes shape here.
+  (chat as { participants: unknown }).participants = ids.map(
+    (id) => people.get(id) || { _id: id, ...UNKNOWN_PERSON }
+  );
+  return chat;
+}
+
+/**
+ * Whether an id names an active account in this organization.
+ *
+ * An account can live in either table, so both are checked; the chat routes
+ * accept ids from either.
+ */
+async function belongsToOrganization(id: unknown, organizationId: string): Promise<boolean> {
+  if (!id) return false;
   const [asUser, asTeam] = await Promise.all([
-    User.findOne({ _id: id, organizationId: orgId, isActive: true }),
-    Team.findOne({ _id: id, organizationId: orgId, isActive: true })
+    User.findOne({ _id: id, organizationId, isActive: true }),
+    Team.findOne({ _id: id, organizationId, isActive: true })
   ]);
   return Boolean(asUser || asTeam);
 }
-router.get('/chats', auth, async (req: Request, res: Response) => {
-  try {
+
+/**
+ * When a chat last saw activity, for ordering the list.
+ *
+ * Falls back to the row's own timestamp for a thread with no messages yet, and
+ * to `timestamp` for previews written before the field was renamed.
+ */
+function lastActivity(chat: { lastMessage?: TeamChatPreview | null; updatedAt?: unknown }): number {
+  const at = chat.lastMessage?.createdAt ?? chat.lastMessage?.timestamp ?? chat.updatedAt;
+  const time = at ? new Date(at as string | Date).getTime() : 0;
+  return Number.isNaN(time) ? 0 : time;
+}
+
+router.use(auth);
+
+router.get(
+  '/chats',
+  asyncHandler(async (req: Request, res: Response) => {
     const chats = await TeamChat.find({ participants: req.user._id }).lean();
 
-    // Both participant tables are read once for the whole list.
+    // One lookup for every participant across every chat.
     const people = await resolveChatParticipants(chats.flatMap((chat) => chat.participants));
     for (const chat of chats) {
       chat.participants = chat.participants.map(
-        (pId: string) => people.get(pId) || { _id: pId, name: 'Unknown', role: 'unknown' }
+        (id: string) => people.get(id) || { _id: id, ...UNKNOWN_PERSON }
       );
     }
 
-    chats.sort(
-      (a, b) =>
-        new Date((b.lastMessage?.createdAt as string) || b.updatedAt).getTime() -
-        new Date((a.lastMessage?.createdAt as string) || a.updatedAt).getTime()
-    );
+    chats.sort((a, b) => lastActivity(b) - lastActivity(a));
     res.json(chats);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.post('/chats/direct', auth, async (req: Request, res: Response) => {
-  try {
+  })
+);
+
+router.post(
+  '/chats/direct',
+  requireOrganization,
+  asyncHandler(async (req: Request, res: Response) => {
     const { targetUserId } = req.body;
-    if (!targetUserId) {
-      return res.status(400).json({ error: 'targetUserId is required', code: 'VALIDATION_ERROR' });
-    }
+    if (!targetUserId) throw badRequest('targetUserId is required');
     if (String(targetUserId) === String(req.user._id)) {
-      return res.status(400).json({ error: 'Cannot open a chat with yourself', code: 'VALIDATION_ERROR' });
+      throw badRequest('Cannot open a chat with yourself');
     }
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    if (!(await belongsToOrganization(targetUserId, orgId))) {
-      return res.status(404).json({ error: 'Team member not found', code: 'NOT_FOUND' });
-    }
-    const chatId = [req.user._id, targetUserId].sort().join('_');
-    // The response swaps each participant id for the resolved person, so the
-    // row is widened once here instead of at every assignment below.
-    let chat: Record<string, any> | null = await TeamChat.findOne({ chatId }).lean();
-    if (!chat) {
-      const newChat = new TeamChat({
-        chatId,
-        chatType: 'direct',
-        participants: [req.user._id, targetUserId],
-        createdBy: req.user._id
-      });
-      await newChat.save();
-      chat = newChat.toObject();
+    if (!(await belongsToOrganization(targetUserId, orgId(req)))) {
+      throw notFound('Team member');
     }
 
-    const people = await resolveChatParticipants(chat!.participants);
-    chat!.participants = chat!.participants.map(
-      (pId: string) => people.get(pId) || { _id: pId, name: 'Unknown', role: 'unknown' }
-    );
-    res.json(chat);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.post('/chats/group', auth, async (req: Request, res: Response) => {
-  try {
+    // Sorting the pair makes the id stable whichever side opens the chat, so the
+    // same two people never end up with two threads.
+    const chatId = [req.user._id, targetUserId].sort().join('_');
+
+    const existing = await TeamChat.findOne({ chatId }).lean();
+    const chat =
+      existing ??
+      (
+        await TeamChat.create({
+          chatId,
+          chatType: 'direct',
+          participants: [req.user._id, targetUserId],
+          createdBy: req.user._id
+        })
+      ).toObject();
+
+    res.json(await withParticipants(chat));
+  })
+);
+
+router.post(
+  '/chats/group',
+  requireOrganization,
+  asyncHandler(async (req: Request, res: Response) => {
     const { name, participantIds } = req.body;
     if (!Array.isArray(participantIds) || participantIds.length === 0) {
-      return res.status(400).json({ error: 'participantIds must be a non-empty array', code: 'VALIDATION_ERROR' });
+      throw badRequest('participantIds must be a non-empty array');
     }
-    if (!name || !String(name).trim()) {
-      return res.status(400).json({ error: 'name is required', code: 'VALIDATION_ERROR' });
-    }
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
+    if (!name || !String(name).trim()) throw badRequest('name is required');
+
+    const organizationId = orgId(req);
     const checked = await Promise.all(
-      participantIds.map(async (id) => ((await belongsToOrganization(id, orgId)) ? String(id) : null))
+      participantIds.map(async (id) =>
+        (await belongsToOrganization(id, organizationId)) ? String(id) : null
+      )
     );
     if (checked.some((id) => id === null)) {
-      return res.status(404).json({ error: 'One or more members are not in your organization', code: 'NOT_FOUND' });
+      throw notFound('One or more members are not in your organization');
     }
-    // Every entry is non-null here: the guard above returned 404 otherwise.
-    const allParticipants = [...new Set([req.user._id.toString(), ...(checked as string[])])];
-    const chat = new TeamChat({
+
+    const chat = await TeamChat.create({
       chatId: `group_${Date.now()}_${req.user._id}`,
       chatType: 'group',
-      participants: allParticipants,
+      // Every entry is non-null: the guard above threw otherwise.
+      participants: [...new Set([String(req.user._id), ...(checked as string[])])],
       groupName: name,
       createdBy: req.user._id
     });
-    await chat.save();
 
-    const populated = chat.toObject();
-    const people = await resolveChatParticipants(populated.participants);
-    populated.participants = populated.participants.map(
-      (pId: string) => people.get(pId) || { _id: pId, name: 'Unknown', role: 'unknown' }
-    );
-    res.json(populated);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.get('/chats/:chatId/messages', auth, async (req: Request, res: Response) => {
-  try {
+    res.json(await withParticipants(chat.toObject()));
+  })
+);
+
+router.get(
+  '/chats/:chatId/messages',
+  asyncHandler(async (req: Request, res: Response) => {
     const { chatId } = req.params;
-    const { limit = 50, before } = req.query;
 
-    // Sohbet mesajları yalnızca katılımcılara açıktır. Eski kod chatId'yi
-    // doğrudan sorguya koyuyordu: id'yi bilen (veya tahmin eden) herkes
-    // başkasının yazışmasını okuyabiliyordu.
+    // Messages are readable only by participants. An earlier version put the
+    // chat id straight into the query, so anyone who knew — or guessed — an id
+    // could read somebody else's thread.
     const chat = await TeamChat.findOne({ chatId });
-    if (!chat) {
-      return res.status(404).json({ error: 'Chat not found', code: 'NOT_FOUND' });
-    }
-    const isParticipant = (chat.participants || []).some((p) => String(p) === String(req.user._id));
-    if (!isParticipant) {
-      return res.status(403).json({ error: 'You are not a participant of this chat', code: 'FORBIDDEN' });
+    if (!chat) throw notFound('Chat');
+    if (!(chat.participants || []).some((p) => String(p) === String(req.user._id))) {
+      throw forbidden('You are not a participant of this chat');
     }
 
-    const query: Filter = { chatId };
-    if (before) {
-      const cutoff = new Date(String(before));
-      if (Number.isNaN(cutoff.getTime())) {
-        return res.status(400).json({ error: 'before must be a date', code: 'VALIDATION_ERROR' });
-      }
-      query.createdAt = { $lt: cutoff };
+    const filter: Filter = { chatId };
+    if (req.query.before) {
+      const cutoff = new Date(String(req.query.before));
+      if (Number.isNaN(cutoff.getTime())) throw badRequest('before must be a date');
+      filter.createdAt = { $lt: cutoff };
     }
-    // Sayfa boyu sınırlı: sınırsız bir `limit` tek istekte bütün yazışmayı
-    // belleğe çekebiliyordu.
-    const pageSize = Math.min(Math.max(parseInt(String(limit), 10) || 50, 1), 200);
-    const messages = await TeamMessage.find(query)
-      .sort({ createdAt: -1 })
-      .limit(pageSize)
-      .lean();
+
+    // Bounded: an unrestricted `limit` pulled an entire thread into memory.
+    const pageSize = Math.min(
+      Math.max(parseInt(String(req.query.limit ?? ''), 10) || DEFAULT_PAGE_SIZE, 1),
+      MAX_PAGE_SIZE
+    );
+
+    const messages = await TeamMessage.find(filter).sort({ createdAt: -1 }).limit(pageSize).lean();
     await TeamMessage.updateMany(
       { chatId, readBy: { $ne: req.user._id } },
       { $addToSet: { readBy: req.user._id } }
     );
+
     res.json(messages.reverse());
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.get('/members', auth, async (req: Request, res: Response) => {
-  try {
-    // Kiracı izolasyonu. Eski sorgu `Team.find({ isActive: true })` ve
-    // `User.find({})` idi: filtre yoktu, yani ekip sohbeti üye seçicisi
-    // SİSTEMDEKİ TÜM organizasyonların kullanıcılarını listeliyordu. Panelde
-    // aynı ismin ("advisory owner") defalarca görünmesinin sebebi buydu —
-    // farklı organizasyonlara ait ayrı kayıtlardı. Bu hem bir veri sızıntısı
-    // hem de bir UI hatasıydı: yabancı bir kullanıcı seçilip ona doğrudan
-    // mesaj açılabiliyordu.
-    const orgId = req.organization?._id || req.user.organizationId;
-    if (!orgId) {
-      // Organizasyonu olmayan bir hesap yalnızca kendisini görür; boş liste
-      // döndürmek "ekip yok" durumundan ayırt edilemezdi.
-      return res.json([]);
+  })
+);
+
+router.get(
+  '/members',
+  asyncHandler(async (req: Request, res: Response) => {
+    // Tenant isolation. The old queries were `Team.find({ isActive: true })` and
+    // `User.find({})` — no filter at all, so the picker listed every account in
+    // every organization. That was both a leak and the reason the same name
+    // appeared several times: they were separate rows in different tenants.
+    const organizationId = req.organization?._id || req.user.organizationId;
+    if (!organizationId) {
+      res.json([]);
+      return;
     }
 
     const [teamMembers, users] = await Promise.all([
-      Team.find({ isActive: true, organizationId: orgId })
-        .select('name email avatar status role')
-        .sort({ name: 1 })
-        .lean(),
-      User.find({ isActive: true, organizationId: orgId })
-        .select('name email avatar status role')
-        .sort({ name: 1 })
-        .lean()
+      Team.find({ isActive: true, organizationId }).select(PERSON_FIELDS).sort({ name: 1 }).lean(),
+      User.find({ isActive: true, organizationId }).select(PERSON_FIELDS).sort({ name: 1 }).lean()
     ]);
 
-    // Aynı kişi hem users hem teams tablosunda bulunabilir (sahip hesabı ekip
-    // üyesi olarak da eklendiğinde). id bazlı tekilleştirme, seçicide çift
-    // satır çıkmasını engeller.
-    const seen = new Set();
-    const members = [];
-    for (const person of [...users, ...teamMembers]) {
-      const key = String(person._id);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      // Kişinin kendisi listede olmamalı: kendine DM açmak anlamsız.
-      if (key === String(req.user._id)) continue;
-      members.push(person);
-    }
+    // One person can exist in both tables — an owner who was also added as an
+    // agent — so the list is de-duplicated by id, and the caller is left out
+    // because a chat with yourself is meaningless.
+    const seen = new Set<string>([String(req.user._id)]);
+    const members = [...users, ...teamMembers].filter((person) => {
+      const id = String(person._id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
 
     res.json(members);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.get('/unread', auth, async (req: Request, res: Response) => {
-  try {
-    // Counted across every chat the user belongs to in one query.
-    const total = await unreadTeamChatCount(req.user._id);
-    res.json({ unreadCount: total });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
+
+router.get(
+  '/unread',
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json({ unreadCount: await unreadTeamChatCount(req.user._id) });
+  })
+);
+
 export default router;

@@ -1,142 +1,221 @@
+// The agents an organization invites into its workspace.
+//
+// Two layers of authorization apply here and they answer different questions:
+//
+//   checkPermission('manage_users')  may this caller manage the team at all
+//   middleware/teamPolicy            *whom* may they manage, and what role may
+//                                    they hand out
+//
+// The first alone let an admin create another admin, demote a peer and delete
+// them. Both are needed on every mutating handler.
+
 import express from 'express';
-import { sendError } from '../middleware/errors';
-import { requireOrgId } from '../middleware/siteAuth';
 import Team from '../models/Team';
 import Conversation from '../models/Conversation';
 import Department from '../models/Department';
 import { auth } from '../middleware/auth';
 import { checkPermission, hasPermission } from '../middleware/rbac';
 import {
-  isTeamRole, canAssignRole, canManageMember,
-  sanitizePermissions, ownedSiteIds, ownedDepartments
+  isTeamRole,
+  canAssignRole,
+  canManageMember,
+  sanitizePermissions,
+  ownedSiteIds,
+  ownedDepartments
 } from '../middleware/teamPolicy';
 import events from '../events';
 import { passwordProblem } from '../config/passwords';
+import { ACTIVE_CONVERSATION_STATUSES, PRESENCE_STATUSES, isPresenceStatus } from '../domain';
+import { notifyAdmin } from '../realtime';
+import {
+  asyncHandler,
+  badRequest,
+  conflict,
+  forbidden,
+  loadOwnedTeamMember,
+  notFound,
+  orgId,
+  requireOrganization
+} from '../http';
 import { conversationCountsByAgent, agentConversationStats, agentPerformance } from '../db/queries';
 import type { Request, Response } from 'express';
 import type { Doc, Filter } from '../db/model';
 import type { TeamDoc } from '../models/Team';
 
 const router = express.Router();
-// Performance figures for the signed-in agent. Declared before the "/:id"
-// routes below so "me" is not captured as an agent id.
-//
-// The window is chosen from a fixed set rather than parsed from the query
-// string, so no caller-supplied value ever reaches the interval expression.
-const PERFORMANCE_RANGES = { '7d': 7, '30d': 30, '90d': 90 };
 
-router.get('/me/performance', auth, async (req: Request, res: Response) => {
-  try {
+router.use(auth, requireOrganization);
+
+/** The projections the panel renders a member from; `-password` is not optional. */
+const MEMBER_PROJECTION = '-password';
+const DEPARTMENT_FIELDS = 'name color';
+const SITE_FIELDS = 'name domain';
+
+/**
+ * Everything the panel needs to draw a member's row.
+ *
+ * Typed structurally rather than against one of the model's query classes,
+ * because `find*` and `find*AndUpdate` return different chainable types that
+ * share these two methods.
+ */
+interface MemberQuery<T> extends PromiseLike<T> {
+  select(projection: string): MemberQuery<T>;
+  populate(path: string, select?: string): MemberQuery<T>;
+}
+
+function withRelations<T>(query: MemberQuery<T>): MemberQuery<T> {
+  return query
+    .select(MEMBER_PROJECTION)
+    .populate('departments.departmentId', DEPARTMENT_FIELDS)
+    .populate('assignedSites', SITE_FIELDS);
+}
+
+// ------------------------------------------------------------- own performance
+
+/**
+ * The windows this endpoint will report on.
+ *
+ * Chosen from a fixed set rather than parsed from the query string, so no
+ * caller-supplied value ever reaches the SQL interval expression.
+ */
+const PERFORMANCE_RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 };
+
+// Declared before the "/:id" routes below so "me" is not captured as an id.
+router.get(
+  '/me/performance',
+  asyncHandler(async (req: Request, res: Response) => {
     const range = String(req.query.range || '7d');
-    const days = (PERFORMANCE_RANGES as Record<string, number>)[range];
+    const days = PERFORMANCE_RANGES[range];
     if (!days) {
-      return res.status(400).json({
-        error: `range must be one of: ${Object.keys(PERFORMANCE_RANGES).join(', ')}`
-      });
+      throw badRequest(`range must be one of: ${Object.keys(PERFORMANCE_RANGES).join(', ')}`);
     }
 
-    // Scoped to the caller's own id, so an agent can only ever read their own
+    // Scoped to the caller's own id, so an agent only ever reads their own
     // numbers regardless of what they send.
     const performance = await agentPerformance(req.userId, days);
     res.json({ range, days, performance });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
-router.get('/', auth, async (req: Request, res: Response) => {
-  try {
+// --------------------------------------------------------------------- listing
+
+router.get(
+  '/',
+  asyncHandler(async (req: Request, res: Response) => {
     const { siteId } = req.query;
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const query: Filter = { isActive: true };
-    query.organizationId = orgId;
-    if (siteId) {
-      query.assignedSites = siteId;
-    }
-    const members = await Team.find(query)
-      .select('-password')
-      .populate('departments.departmentId', 'name color')
-      .sort({ createdAt: -1 });
-    // Counted for every member in a single grouped query.
-    const counts = await conversationCountsByAgent(members.map((m) => m._id));
-    const membersWithStats = members.map((member) => {
-      const counted = counts.get(member._id) || { activeConversations: 0, resolvedConversations: 0 };
-      return {
-        ...member.toObject(),
-        stats: {
-          ...member.stats,
-          activeConversations: counted.activeConversations,
-          resolvedConversations: counted.resolvedConversations
-        }
-      };
-    });
-    res.json(membersWithStats);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch team members' });
-  }
-});
-router.get('/:id', auth, async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    // Org filtresi sorgunun icinde: kayit yuklendikten sonra karsilastirmak,
-    // organizationId bos olan bir kaydi kontrolsuz geciriyordu.
-    const member = await Team.findOne({ _id: req.params.id, organizationId: orgId })
-      .select('-password')
-      .populate('departments.departmentId', 'name color icon')
-      .populate('assignedSites', 'name domain');
-    if (!member) {
-      return res.status(404).json({ error: 'Team member not found' });
-    }
-    res.json(member);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch team member' });
-  }
-});
-router.post('/', auth, checkPermission('manage_users'), async (req: Request, res: Response) => {
-  try {
-    const { email, password, name, role = 'agent', assignedSites, departments, permissions } = req.body;
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
+    const query: Filter = { isActive: true, organizationId: orgId(req) };
+    if (siteId) query.assignedSites = siteId;
 
-    // Rol, izinler, siteler ve departmanlar gövdeden geliyor; hiçbiri
-    // doğrulanmadan yazılmıyor. Ayrıntı: middleware/teamPolicy.ts
-    if (!isTeamRole(role)) {
-      return res.status(400).json({ error: 'Invalid role', code: 'VALIDATION_ERROR' });
+    const members = await Team.find(query)
+      .select(MEMBER_PROJECTION)
+      .populate('departments.departmentId', DEPARTMENT_FIELDS)
+      .sort({ createdAt: -1 });
+
+    // Counted for every member in one grouped query rather than one per row.
+    const counts = await conversationCountsByAgent(members.map((m) => m._id));
+    res.json(
+      members.map((member) => {
+        const counted = counts.get(member._id) || {
+          activeConversations: 0,
+          resolvedConversations: 0
+        };
+        return {
+          ...member.toObject(),
+          stats: { ...member.stats, ...counted }
+        };
+      })
+    );
+  })
+);
+
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    const member = await withRelations(
+      Team.findOne({ _id: req.params.id, organizationId: orgId(req) })
+    );
+    // The organization filter is inside the query. Loading first and comparing
+    // afterwards let a row with an empty organizationId through unchecked.
+    if (!member) throw notFound('Team member');
+    res.json(member);
+  })
+);
+
+router.get(
+  '/:id/stats',
+  asyncHandler(async (req: Request, res: Response) => {
+    // This handler used to call `Team.findById(req.params.id)` with no tenant
+    // filter at all: any signed-in user could read the workload of any agent in
+    // any other organization by guessing an id.
+    const member = await loadOwnedTeamMember(req, req.params.id);
+
+    const counted = await agentConversationStats(member._id);
+    res.json({
+      total: counted.total,
+      assigned: counted.assigned,
+      pending: counted.pending,
+      resolved: counted.resolved,
+      closed: counted.closed,
+      avgResponseTime: member.stats.averageResponseTime || 0,
+      currentLoad: member.stats.activeConversations || 0,
+      // The cap a Team row actually carries is `maxCapacity`; `permissions` holds
+      // no per-agent limit, so this has always fallen through to the default.
+      maxLoad: member.maxCapacity || 10
+    });
+  })
+);
+
+// -------------------------------------------------------------------- creating
+
+router.post(
+  '/',
+  checkPermission('manage_users'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = orgId(req);
+    const {
+      email,
+      password,
+      name,
+      role = 'agent',
+      assignedSites,
+      departments,
+      permissions
+    } = req.body;
+
+    // Role, permissions, sites and departments all arrive in the body; none of
+    // them is written without being checked against this organization first.
+    if (!isTeamRole(role)) throw badRequest('Invalid role');
+    if (!canAssignRole(req.user.role, role)) {
+      throw forbidden('You cannot assign this role');
     }
-    // Eskiden bu uç parolayı hiç kontrol etmiyordu: bir admin tek karakterli
-    // bir parolayla hesap açabiliyordu.
+
     const passwordIssue = passwordProblem(password);
-    if (passwordIssue) {
-      return res.status(400).json({ error: passwordIssue, code: 'VALIDATION_ERROR' });
-    }
-    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-      return res.status(400).json({ error: 'Invalid email address', code: 'VALIDATION_ERROR' });
+    if (passwordIssue) throw badRequest(passwordIssue);
+
+    if (
+      typeof email !== 'string' ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      email.length > 254
+    ) {
+      throw badRequest('Invalid email address');
     }
     if (typeof name !== 'string' || !name.trim() || name.length > 100) {
-      return res.status(400).json({ error: 'Invalid name', code: 'VALIDATION_ERROR' });
-    }
-    if (!canAssignRole(req.user.role, role)) {
-      return res.status(403).json({ error: 'You cannot assign this role', code: 'FORBIDDEN' });
-    }
-    const cleanPermissions = sanitizePermissions(permissions);
-    if (!cleanPermissions) {
-      return res.status(400).json({ error: 'Invalid permissions', code: 'VALIDATION_ERROR' });
-    }
-    const siteIds = await ownedSiteIds(orgId, assignedSites);
-    if (!siteIds) {
-      return res.status(400).json({ error: 'Unknown site in assignedSites', code: 'VALIDATION_ERROR' });
-    }
-    const departmentEntries = await ownedDepartments(orgId, departments);
-    if (!departmentEntries) {
-      return res.status(400).json({ error: 'Unknown department', code: 'VALIDATION_ERROR' });
+      throw badRequest('Invalid name');
     }
 
-    const existingTeamMember = await Team.findOne({ email, isActive: true });
-    if (existingTeamMember) {
-      return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanılıyor' });
+    const cleanPermissions = sanitizePermissions(permissions);
+    if (!cleanPermissions) throw badRequest('Invalid permissions');
+
+    const siteIds = await ownedSiteIds(organizationId, assignedSites);
+    if (!siteIds) throw badRequest('Unknown site in assignedSites');
+
+    const departmentEntries = await ownedDepartments(organizationId, departments);
+    if (!departmentEntries) throw badRequest('Unknown department');
+
+    if (await Team.findOne({ email, isActive: true })) {
+      throw conflict('Bu e-posta adresi zaten kullanılıyor');
     }
+
     const teamMember = new Team({
       email,
       password,
@@ -145,245 +224,197 @@ router.post('/', auth, checkPermission('manage_users'), async (req: Request, res
       assignedSites: siteIds,
       departments: departmentEntries,
       permissions: cleanPermissions,
-      organizationId: orgId,
+      organizationId,
       isActive: true,
       status: 'offline'
     });
     await teamMember.save();
-    // Kimlikler yukarıda bu şirketin departmanlarıyla eşleştirildi; burada
-    // yalnızca doğrulanmış kayıtlar yazılıyor.
-    for (const dept of departmentEntries) {
-      await Department.findByIdAndUpdate(dept.departmentId, {
-        $addToSet: { members: { userId: teamMember._id, role: dept.role } }
-      });
-    }
-    // Read back right after the insert in this same handler, so the row is there.
-    const memberData = (await Team.findById(teamMember._id)
-      .select('-password')
-      .populate('departments.departmentId', 'name color')
-      .populate('assignedSites', 'name domain')) as Doc<TeamDoc>;
-    const io = req.app.get('io');
-    if (io) {
-      io.of('/admin').to(`user:${memberData._id}`).emit('team-member-added', memberData);
-      if (memberData.assignedSites && memberData.assignedSites.length > 0) {
-        memberData.assignedSites.forEach(s => {
-          const siteId = s._id ? s._id.toString() : s.toString();
-          io.of('/admin').to(`site:${siteId}`).emit('team-member-added', memberData);
-        });
-      }
-    }
+
+    // The ids were matched against this organization above, so these writes stay
+    // inside the tenant.
+    await Promise.all(
+      departmentEntries.map((dept) =>
+        Department.findByIdAndUpdate(dept.departmentId, {
+          $addToSet: { members: { userId: teamMember._id, role: dept.role } }
+        })
+      )
+    );
+
+    const memberData = (await withRelations(Team.findById(teamMember._id))) as Doc<TeamDoc>;
+
+    notifyAdmin(req)?.teamMemberChanged(
+      'team-member-added',
+      memberData._id,
+      memberData.assignedSites,
+      memberData.toObject() as Record<string, unknown>
+    );
+
     res.status(201).json(memberData);
+
     events.emit('agent.created', {
-      organizationId: orgId,
-      userId: req.user ? req.user._id : null,
+      organizationId,
+      userId: req.user?._id ?? null,
       entityId: memberData._id,
       metadata: { name: memberData.name, email: memberData.email },
       ip: req.ip,
       ua: req.get('user-agent')
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create team member' });
-  }
-});
-router.put('/:id', auth, checkPermission('manage_users'), async (req: Request, res: Response) => {
-  try {
-    const { name, role, assignedSites, status, permissions, preferences, isActive } = req.body;
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const existing = await Team.findOne({ _id: req.params.id, organizationId: orgId });
-    if (!existing) return res.status(404).json({ error: 'Team member not found' });
+  })
+);
 
-    // Akranını ya da üstünü yönetemez; kendi rütbesinin altına rol verebilir.
+// -------------------------------------------------------------------- updating
+
+router.put(
+  '/:id',
+  checkPermission('manage_users'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = orgId(req);
+    const { name, role, assignedSites, status, permissions, preferences, isActive } = req.body;
+
+    const existing = await loadOwnedTeamMember(req, req.params.id);
+
+    // A caller manages only below their own rank, and hands out only roles below
+    // it. Nobody edits a peer or a superior.
     if (!canManageMember(req.user.role, existing.role)) {
-      return res.status(403).json({ error: 'You cannot manage this member', code: 'FORBIDDEN' });
+      throw forbidden('You cannot manage this member');
     }
     if (role !== undefined) {
-      if (!isTeamRole(role)) {
-        return res.status(400).json({ error: 'Invalid role', code: 'VALIDATION_ERROR' });
-      }
-      if (!canAssignRole(req.user.role, role)) {
-        return res.status(403).json({ error: 'You cannot assign this role', code: 'FORBIDDEN' });
-      }
+      if (!isTeamRole(role)) throw badRequest('Invalid role');
+      if (!canAssignRole(req.user.role, role)) throw forbidden('You cannot assign this role');
     }
-    if (status !== undefined && !['online', 'offline', 'busy', 'away'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status', code: 'VALIDATION_ERROR' });
-    }
+    if (status !== undefined && !isPresenceStatus(status)) throw badRequest('Invalid status');
     if (isActive !== undefined && typeof isActive !== 'boolean') {
-      return res.status(400).json({ error: 'isActive must be a boolean', code: 'VALIDATION_ERROR' });
+      throw badRequest('isActive must be a boolean');
     }
     if (name !== undefined && (typeof name !== 'string' || !name.trim() || name.length > 100)) {
-      return res.status(400).json({ error: 'Invalid name', code: 'VALIDATION_ERROR' });
+      throw badRequest('Invalid name');
     }
-    const cleanPermissions = permissions === undefined ? undefined : sanitizePermissions(permissions);
-    if (cleanPermissions === null) {
-      return res.status(400).json({ error: 'Invalid permissions', code: 'VALIDATION_ERROR' });
-    }
-    const siteIds = assignedSites === undefined ? undefined : await ownedSiteIds(orgId, assignedSites);
-    if (siteIds === null) {
-      return res.status(400).json({ error: 'Unknown site in assignedSites', code: 'VALIDATION_ERROR' });
-    }
-    if (preferences !== undefined && (typeof preferences !== 'object' || preferences === null || Array.isArray(preferences))) {
-      return res.status(400).json({ error: 'Invalid preferences', code: 'VALIDATION_ERROR' });
+    if (
+      preferences !== undefined &&
+      (typeof preferences !== 'object' || preferences === null || Array.isArray(preferences))
+    ) {
+      throw badRequest('Invalid preferences');
     }
 
-    // Yalnızca gönderilen ve doğrulanan alanlar yazılır.
-    const updateData = Object.fromEntries(Object.entries({
-      name: typeof name === 'string' ? name.trim() : undefined,
-      role, assignedSites: siteIds, status, permissions: cleanPermissions, preferences, isActive
-    }).filter(([, value]) => value !== undefined));
+    const cleanPermissions =
+      permissions === undefined ? undefined : sanitizePermissions(permissions);
+    if (cleanPermissions === null) throw badRequest('Invalid permissions');
+
+    const siteIds =
+      assignedSites === undefined ? undefined : await ownedSiteIds(organizationId, assignedSites);
+    if (siteIds === null) throw badRequest('Unknown site in assignedSites');
+
+    // Only fields that were sent, and that passed the checks above, are written.
+    const updateData = Object.fromEntries(
+      Object.entries({
+        name: typeof name === 'string' ? name.trim() : undefined,
+        role,
+        assignedSites: siteIds,
+        status,
+        permissions: cleanPermissions,
+        preferences,
+        isActive
+      }).filter(([, value]) => value !== undefined)
+    );
+
     const previousRole = existing.role;
-    // `existing` was loaded under the same filter a line above, so the update
-    // matches the row it just read.
-    const member = (await Team.findOneAndUpdate(
-      { _id: req.params.id, organizationId: orgId },
-      updateData,
-      { new: true }
-    )
-      .select('-password')
-      .populate('departments.departmentId', 'name color')
-      .populate('assignedSites', 'name domain')) as Doc<TeamDoc>;
-    if (previousRole && role && previousRole !== role) {
+    const member = (await withRelations(
+      Team.findOneAndUpdate({ _id: existing._id, organizationId }, updateData, { new: true })
+    )) as Doc<TeamDoc>;
+
+    if (role && previousRole !== role) {
       events.emit('agent.role.updated', {
-        organizationId: orgId,
-        userId: req.user ? req.user._id : null,
+        organizationId,
+        userId: req.user?._id ?? null,
         entityId: member._id,
         metadata: { previousRole, newRole: role },
         ip: req.ip,
         ua: req.get('user-agent')
       });
     }
+
     res.json(member);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update team member' });
-  }
-});
-router.patch('/:id/status', auth, async (req: Request, res: Response) => {
-  try {
+  })
+);
+
+router.patch(
+  '/:id/status',
+  asyncHandler(async (req: Request, res: Response) => {
     const { status } = req.body;
-    if (!['online', 'offline', 'busy', 'away'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+    if (!isPresenceStatus(status)) {
+      throw badRequest(`status must be one of: ${PRESENCE_STATUSES.join(', ')}`);
     }
-    // Eskiden yalnızca oturum isteniyordu: herhangi bir şirketin kullanıcısı
-    // başka bir şirketin temsilcisini çevrimdışı yapabiliyor (otomatik atama
-    // bozulur) ve yanıtta o kişinin profilini okuyabiliyordu. Artık üye
-    // çağıranın şirketinde aranıyor; başkasının durumunu değiştirmek ekip
-    // yönetimi izni istiyor.
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const target = await Team.findOne({ _id: req.params.id, organizationId: orgId }).select('_id role');
-    if (!target) {
-      return res.status(404).json({ error: 'Team member not found' });
-    }
+
+    // Only a session used to be required here: a user of any organization could
+    // set another organization's agent offline — which breaks auto-assignment —
+    // and read that agent's profile out of the response.
+    const target = await loadOwnedTeamMember(req, req.params.id);
+
     const isSelf = String(target._id) === String(req.user._id);
-    if (!isSelf && !(hasPermission(req.user.role, 'manage_team') && canManageMember(req.user.role, target.role))) {
-      return res.status(403).json({ error: "You cannot change this member's status", code: 'FORBIDDEN' });
+    const mayManage =
+      hasPermission(req.user.role, 'manage_team') && canManageMember(req.user.role, target.role);
+    if (!isSelf && !mayManage) {
+      throw forbidden("You cannot change this member's status");
     }
-    const member = await Team.findOneAndUpdate(
-      { _id: target._id, organizationId: orgId },
+
+    const member = (await Team.findOneAndUpdate(
+      { _id: target._id, organizationId: orgId(req) },
       { status },
       { new: true }
-    ).select('-password');
-    if (!member) {
-      return res.status(404).json({ error: 'Team member not found' });
-    }
-    const io = req.app.get('io');
-    if (io) {
-      if (member.assignedSites && member.assignedSites.length > 0) {
-        member.assignedSites.forEach(s => {
-          const siteId = s._id ? s._id.toString() : s.toString();
-          io.of('/admin').to(`site:${siteId}`).emit('agent-status-changed', {
-            userId: req.params.id,
-            status
-          });
-        });
-      }
-      io.of('/admin').to(`user:${req.params.id}`).emit('agent-status-changed', {
-        userId: req.params.id,
-        status
-      });
-    }
+    ).select(MEMBER_PROJECTION)) as Doc<TeamDoc>;
+
+    notifyAdmin(req)?.teamMemberChanged('agent-status-changed', member._id, member.assignedSites, {
+      userId: String(member._id),
+      status
+    });
+
     res.json(member);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update status' });
-  }
-});
-router.get('/:id/stats', auth, async (req: Request, res: Response) => {
-  try {
-    const member = await Team.findById(req.params.id);
-    if (!member) {
-      return res.status(404).json({ error: 'Team member not found' });
-    }
-    const counted = await agentConversationStats(member._id);
-    const stats = {
-      total: counted.total,
-      assigned: counted.assigned,
-      pending: counted.pending,
-      resolved: counted.resolved,
-      closed: counted.closed,
-      avgResponseTime: member.stats.averageResponseTime || 0,
-      currentLoad: member.stats.activeConversations || 0,
-      // Team permissions carry no per-agent conversation cap — the capacity a
-      // Team row actually holds is `maxCapacity` — so this lookup falls through
-      // to the default. Kept as it was rather than silently changing the number
-      // the panel shows.
-      maxLoad: ((member.permissions as unknown as Record<string, unknown>)?.maxActiveConversations as number) || 10
-    };
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch statistics' });
-  }
-});
-router.delete('/:id', auth, checkPermission('manage_users'), async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const member = await Team.findOne({ _id: req.params.id, organizationId: orgId });
-    if (!member) {
-      return res.status(404).json({ error: 'Team member not found' });
-    }
+  })
+);
+
+// -------------------------------------------------------------------- deleting
+
+router.delete(
+  '/:id',
+  checkPermission('manage_users'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = orgId(req);
+    const member = await loadOwnedTeamMember(req, req.params.id);
+
     if (!canManageMember(req.user.role, member.role)) {
-      return res.status(403).json({ error: 'You cannot manage this member', code: 'FORBIDDEN' });
+      throw forbidden('You cannot manage this member');
     }
+
     const activeConversations = await Conversation.countDocuments({
       assignedAgent: member._id,
-      status: { $in: ['assigned', 'pending'] }
+      status: { $in: ACTIVE_CONVERSATION_STATUSES }
     });
     if (activeConversations > 0) {
-      return res.status(400).json({
-        error: 'Cannot delete team member with active conversations',
-        activeConversations
-      });
+      // Their queue would be orphaned; the caller is told how many to reassign.
+      throw conflict(`Cannot delete team member with ${activeConversations} active conversations`);
     }
+
     await Department.updateMany(
       { 'members.userId': member._id },
-      {
-        $pull: {
-          members: { userId: member._id }
-        }
-      }
+      { $pull: { members: { userId: member._id } } }
     );
-    await Team.deleteOne({ _id: member._id, organizationId: orgId });
-    const io = req.app.get('io');
-    if (io) {
-      if (member.assignedSites && member.assignedSites.length > 0) {
-        member.assignedSites.forEach(s => {
-          const siteId = s._id ? s._id.toString() : s.toString();
-          io.of('/admin').to(`site:${siteId}`).emit('team-member-deleted', { userId: req.params.id });
-        });
-      }
-      io.of('/admin').to(`user:${req.params.id}`).emit('team-member-deleted', { userId: req.params.id });
-    }
+    await Team.deleteOne({ _id: member._id, organizationId });
+
+    notifyAdmin(req)?.teamMemberChanged('team-member-deleted', member._id, member.assignedSites, {
+      userId: String(member._id)
+    });
+
     events.emit('agent.deleted', {
-      organizationId: orgId,
-      userId: req.user ? req.user._id : null,
-      entityId: req.params.id,
+      organizationId,
+      userId: req.user?._id ?? null,
+      entityId: member._id,
       metadata: { email: member.email, name: member.name },
       ip: req.ip,
       ua: req.get('user-agent')
     });
+
     res.json({ message: 'Team member deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete team member' });
-  }
-});
+  })
+);
+
 export default router;

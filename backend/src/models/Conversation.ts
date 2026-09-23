@@ -8,12 +8,19 @@ import type { OrganizationDoc } from './Organization';
 import type { SiteDoc } from './Site';
 import type { TeamDoc } from './Team';
 import type { UserDoc } from './User';
+import {
+  CONVERSATION_CHANNELS,
+  CONVERSATION_STATUSES,
+  DEFAULT_SLA_TARGETS,
+  PRIORITIES
+} from '../domain';
 import type {
+  ConversationChannel,
   ConversationRating,
   ConversationSla,
-  Priority,
-  PriorityTargets
-} from '../types/domain';
+  ConversationStatus,
+  Priority
+} from '../domain';
 
 async function nextTicketNumber(): Promise<number> {
   const { rows } = await query<{ seq: string | number }>(
@@ -24,11 +31,9 @@ async function nextTicketNumber(): Promise<number> {
   return Number(rows[0].seq);
 }
 
-const DEFAULT_FIRST_RESPONSE: PriorityTargets = { urgent: 5, high: 10, normal: 15, low: 30 };
-const DEFAULT_RESOLUTION: PriorityTargets = { urgent: 60, high: 120, normal: 240, low: 480 };
-
-export type ConversationStatus = 'open' | 'assigned' | 'pending' | 'resolved' | 'closed' | 'unassigned';
-export type ConversationChannel = 'web-chat' | 'email' | 'whatsapp' | 'phone';
+// Re-exported so callers that already import the status from the model keep
+// working; the single declaration lives in src/domain/constants.ts.
+export type { ConversationChannel, ConversationStatus };
 
 /** A note visible only to agents. */
 export interface ConversationInternalNote {
@@ -97,17 +102,28 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
     department: { column: 'department_id', type: 'id', ref: 'Department', default: null },
     // Either a Team or a User can own a conversation, so the reference resolves
     // against both tables.
-    assignedAgent: { column: 'assigned_agent_id', type: 'id', refAny: ['Team', 'User'], default: null },
+    assignedAgent: {
+      column: 'assigned_agent_id',
+      type: 'id',
+      refAny: ['Team', 'User'],
+      default: null
+    },
     assignedAt: { column: 'assigned_at', type: 'date', default: null },
     assignedBy: { column: 'assigned_by_id', type: 'id', refAny: ['Team', 'User'], default: null },
     status: {
       column: 'status',
       type: 'string',
-      enum: ['open', 'assigned', 'pending', 'resolved', 'closed', 'unassigned'],
+      enum: CONVERSATION_STATUSES,
       default: 'open'
     },
-    priority: { column: 'priority', type: 'string', enum: ['low', 'normal', 'high', 'urgent'], default: 'normal' },
-    requiredSkills: { column: 'required_skills', type: 'stringArray', lowercase: true, trim: true, default: () => [] },
+    priority: { column: 'priority', type: 'string', enum: PRIORITIES, default: 'normal' },
+    requiredSkills: {
+      column: 'required_skills',
+      type: 'stringArray',
+      lowercase: true,
+      trim: true,
+      default: () => []
+    },
     unreadCount: { column: 'unread_count', type: 'number', default: 0, min: 0 },
     nextSlaCheckAt: { column: 'next_sla_check_at', type: 'date', default: null },
     autoReassignAttempts: { column: 'auto_reassign_attempts', type: 'number', default: 0 },
@@ -118,8 +134,8 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
       type: 'json',
       default(this: { priority: Priority }) {
         return {
-          firstResponseTarget: DEFAULT_FIRST_RESPONSE[this.priority] || 15,
-          resolutionTarget: DEFAULT_RESOLUTION[this.priority] || 240,
+          firstResponseTarget: DEFAULT_SLA_TARGETS.firstResponse[this.priority],
+          resolutionTarget: DEFAULT_SLA_TARGETS.resolution[this.priority],
           firstResponseStatus: 'pending',
           resolutionStatus: 'pending',
           firstResponseTimeRemaining: null,
@@ -129,7 +145,12 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
         };
       }
     },
-    channel: { column: 'channel', type: 'string', enum: ['web-chat', 'email', 'whatsapp', 'phone'], default: 'web-chat' },
+    channel: {
+      column: 'channel',
+      type: 'string',
+      enum: CONVERSATION_CHANNELS,
+      default: 'web-chat'
+    },
     currentPage: { column: 'current_page', type: 'string', default: '/' },
     metadata: { column: 'metadata', type: 'json', default: () => ({}) },
     tags: { column: 'tags', type: 'stringArray', default: () => [] },
@@ -165,7 +186,7 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
           if (site && site.organizationId) {
             this.organizationId = site.organizationId;
           }
-        } catch (e) {
+        } catch {
           // Leave organizationId unset; validation reports it.
         }
       }
@@ -198,7 +219,11 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
     calculateSLA() {
       const now = new Date();
 
-      if (!this.createdAt || !(this.createdAt instanceof Date) || isNaN(new Date(this.createdAt).getTime())) {
+      if (
+        !this.createdAt ||
+        !(this.createdAt instanceof Date) ||
+        isNaN(new Date(this.createdAt).getTime())
+      ) {
         this.createdAt = now;
       } else {
         this.createdAt = new Date(this.createdAt);
@@ -219,15 +244,20 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
         if (remaining < 0) {
           this.sla.firstResponseStatus = 'breached';
           if (!this.sla.firstResponseBreachedAt) {
-            this.sla.firstResponseBreachedAt = new Date(createdTime + this.sla.firstResponseTarget * 60 * 1000);
+            this.sla.firstResponseBreachedAt = new Date(
+              createdTime + this.sla.firstResponseTarget * 60 * 1000
+            );
           }
           nextCheckMinutes = 1;
         } else {
           this.sla.firstResponseStatus = 'pending';
         }
       } else {
-        const responseMinutes = Math.floor((this.firstResponseAt.getTime() - createdTime) / 1000 / 60);
-        this.sla.firstResponseStatus = responseMinutes <= this.sla.firstResponseTarget ? 'met' : 'breached';
+        const responseMinutes = Math.floor(
+          (this.firstResponseAt.getTime() - createdTime) / 1000 / 60
+        );
+        this.sla.firstResponseStatus =
+          responseMinutes <= this.sla.firstResponseTarget ? 'met' : 'breached';
         this.sla.firstResponseTimeRemaining = null;
 
         if (this.sla.firstResponseStatus === 'breached' && !this.sla.firstResponseBreachedAt) {
@@ -246,7 +276,9 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
         if (remaining < 0) {
           this.sla.resolutionStatus = 'breached';
           if (!this.sla.resolutionBreachedAt) {
-            this.sla.resolutionBreachedAt = new Date(createdTime + this.sla.resolutionTarget * 60 * 1000);
+            this.sla.resolutionBreachedAt = new Date(
+              createdTime + this.sla.resolutionTarget * 60 * 1000
+            );
           }
           nextCheckMinutes = 1;
         } else {
@@ -254,7 +286,8 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
         }
       } else if (this.resolvedAt) {
         const resolutionMinutes = Math.floor((this.resolvedAt.getTime() - createdTime) / 1000 / 60);
-        this.sla.resolutionStatus = resolutionMinutes <= this.sla.resolutionTarget ? 'met' : 'breached';
+        this.sla.resolutionStatus =
+          resolutionMinutes <= this.sla.resolutionTarget ? 'met' : 'breached';
         this.sla.resolutionTimeRemaining = null;
 
         if (this.sla.resolutionStatus === 'breached' && !this.sla.resolutionBreachedAt) {

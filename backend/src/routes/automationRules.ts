@@ -1,8 +1,14 @@
 import express from 'express';
-import { sendError } from '../middleware/errors';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
-import { findOwnedSite } from '../middleware/siteAuth';
+import {
+  asyncHandler,
+  badRequest,
+  loadOwnedSite,
+  orgId,
+  requireOrganization,
+  requireSiteOwnership
+} from '../http';
 import AutomationRule from '../models/AutomationRule';
 import { isValidObjectId } from '../db/objectId';
 import events from '../events';
@@ -11,30 +17,41 @@ import type { Request, Response } from 'express';
 const router = express.Router();
 
 const TRIGGER_TYPES = ['message_received', 'conversation_created', 'visitor_event', 'schedule'];
-const ACTION_TYPES = ['send_message', 'assign_team', 'assign_agent', 'add_tag', 'change_status', 'internal_note'];
+const ACTION_TYPES = [
+  'send_message',
+  'assign_team',
+  'assign_agent',
+  'add_tag',
+  'change_status',
+  'internal_note'
+];
 const CONDITION_OPERATORS = ['AND', 'OR'];
 const CONVERSATION_STATUSES = ['open', 'assigned', 'pending', 'resolved', 'closed', 'unassigned'];
 const COMPARATORS = [
-  'equals', 'not_equals', 'contains', 'not_contains',
-  'greater_than', 'less_than', 'exists', 'not_exists'
+  'equals',
+  'not_equals',
+  'contains',
+  'not_contains',
+  'greater_than',
+  'less_than',
+  'exists',
+  'not_exists'
 ];
 
 // Loads a rule only if the caller's organization owns the site it belongs to.
 // Every mutating handler goes through this, so a rule id guessed from another
 // tenant resolves to null rather than to somebody else's rule.
-async function findOwnedRule(req: Request, ruleId: unknown) {
-  if (!isValidObjectId(ruleId)) return null;
-  const rule = await AutomationRule.findById(ruleId);
-  if (!rule) return null;
-  const site = await findOwnedSite(req, rule.siteId);
-  return site ? rule : null;
-}
+const loadOwnedRule = async (req: Request, ruleId: unknown) =>
+  requireSiteOwnership(req, await AutomationRule.findById(ruleId), 'Rule');
 
 // Rejects malformed rule bodies before they reach the engine. The engine reads
 // conditions and actions as opaque JSON, so anything not validated here would
 // only fail later at execution time, inside a background trigger where the
 // author never sees the error.
-function validateRuleBody(body: Record<string, any>, { partial = false }: { partial?: boolean } = {}): string[] {
+function validateRuleBody(
+  body: Record<string, any>,
+  { partial = false }: { partial?: boolean } = {}
+): string[] {
   const errors: string[] = [];
 
   if (!partial || body.name !== undefined) {
@@ -49,7 +66,10 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
     }
   }
 
-  if (body.conditionOperator !== undefined && !CONDITION_OPERATORS.includes(body.conditionOperator)) {
+  if (
+    body.conditionOperator !== undefined &&
+    !CONDITION_OPERATORS.includes(body.conditionOperator)
+  ) {
     errors.push('conditionOperator must be AND or OR');
   }
 
@@ -104,7 +124,9 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
           errors.push(`actions[${i}].payload.departmentId must be a valid id`);
         }
         if (action.type === 'change_status' && !CONVERSATION_STATUSES.includes(payload.status)) {
-          errors.push(`actions[${i}].payload.status must be one of: ${CONVERSATION_STATUSES.join(', ')}`);
+          errors.push(
+            `actions[${i}].payload.status must be one of: ${CONVERSATION_STATUSES.join(', ')}`
+          );
         }
       });
     }
@@ -118,29 +140,41 @@ function validateRuleBody(body: Record<string, any>, { partial = false }: { part
 }
 
 // List the rules of one owned site, highest priority first.
-router.get('/:siteId', auth, async (req: Request, res: Response) => {
-  try {
-    const site = await findOwnedSite(req, req.params.siteId);
-    if (!site) return res.status(404).json({ error: 'Site not found' });
+router.get(
+  '/:siteId',
+  auth,
+  requireOrganization,
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
 
     const rules = await AutomationRule.find({ siteId: site._id })
       .sort({ priority: -1, createdAt: -1 })
       .limit(200);
     res.json(rules);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
-router.post('/', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const { siteId, name, triggerType, conditions, conditionOperator, actions, priority, isActive } = req.body;
+router.post(
+  '/',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const {
+      siteId,
+      name,
+      triggerType,
+      conditions,
+      conditionOperator,
+      actions,
+      priority,
+      isActive
+    } = req.body;
 
-    const site = await findOwnedSite(req, siteId);
-    if (!site) return res.status(404).json({ error: 'Site not found' });
+    const site = await loadOwnedSite(req, siteId);
 
     const errors = validateRuleBody(req.body);
-    if (errors.length) return res.status(400).json({ error: 'Validation failed', details: errors });
+    if (errors.length) throw badRequest('Validation failed', errors);
 
     const rule = new AutomationRule({
       siteId: site._id,
@@ -162,22 +196,31 @@ router.post('/', auth, checkPermission('manage_sites'), async (req: Request, res
     });
 
     res.status(201).json(rule);
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
+  })
+);
 
-router.put('/:id', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const rule = await findOwnedRule(req, req.params.id);
-    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+router.put(
+  '/:id',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const rule = await loadOwnedRule(req, req.params.id);
 
     const errors = validateRuleBody(req.body, { partial: true });
-    if (errors.length) return res.status(400).json({ error: 'Validation failed', details: errors });
+    if (errors.length) throw badRequest('Validation failed', errors);
 
     // siteId, metrics and timestamps are deliberately not assignable: letting a
     // client set siteId would move a rule into another organization's site.
-    const assignable = ['name', 'triggerType', 'conditions', 'conditionOperator', 'actions', 'priority', 'isActive'];
+    const assignable = [
+      'name',
+      'triggerType',
+      'conditions',
+      'conditionOperator',
+      'actions',
+      'priority',
+      'isActive'
+    ];
     for (const key of assignable) {
       if (req.body[key] === undefined) continue;
       if (key === 'name') rule.name = String(req.body.name).trim();
@@ -188,36 +231,35 @@ router.put('/:id', auth, checkPermission('manage_sites'), async (req: Request, r
     await rule.save();
 
     events.emit('automation.rule.updated', {
-      organizationId: req.organization?._id || req.user.organizationId,
+      organizationId: orgId(req),
       userId: req.userId,
       entityId: rule._id,
       metadata: { name: rule.name, isActive: rule.isActive }
     });
 
     res.json(rule);
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
+  })
+);
 
-router.delete('/:id', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const rule = await findOwnedRule(req, req.params.id);
-    if (!rule) return res.status(404).json({ error: 'Rule not found' });
+router.delete(
+  '/:id',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const rule = await loadOwnedRule(req, req.params.id);
 
     await AutomationRule.findByIdAndDelete(rule._id);
 
     events.emit('automation.rule.deleted', {
-      organizationId: req.organization?._id || req.user.organizationId,
+      organizationId: orgId(req),
       userId: req.userId,
       entityId: rule._id,
       metadata: { name: rule.name }
     });
 
     res.json({ message: 'Rule deleted' });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
 export default router;

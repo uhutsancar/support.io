@@ -9,7 +9,7 @@
 /** What the widget reports about the visitor's browser session. */
 import type { Socket } from 'socket.io';
 import type { UserType } from '../types/auth';
-import type { Priority } from '../types/domain';
+import type { Priority } from '../domain';
 import type { MessageType } from '../models/Message';
 
 export interface VisitorMetadata {

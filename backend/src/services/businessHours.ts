@@ -1,27 +1,34 @@
 /** A department, or nothing when a conversation has none. */
 import type { Doc } from '../db/model';
 import type { DepartmentDoc } from '../models/Department';
-import type { Weekday } from '../types/domain';
+import type { Weekday } from '../domain';
 
 type MaybeDepartment = Doc<DepartmentDoc> | DepartmentDoc | null | undefined;
 
-const DAY_NAMES: Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const DAY_NAMES: Weekday[] = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday'
+];
 
 function isWithinBusinessHours(department: MaybeDepartment): boolean {
   if (!department || !department.businessHours || !department.businessHours.enabled) {
     return true;
   }
   const now = new Date();
-  const timezone = department.businessHours.timezone || 'Europe/Istanbul';
   const dayName = DAY_NAMES[now.getDay()];
   const daySchedule = department.businessHours.schedule[dayName];
   if (!daySchedule || !daySchedule.enabled) {
     return false;
   }
-  const currentTime = now.toLocaleTimeString('en-US', { 
-    hour12: false, 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  const currentTime = now.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
   });
   const startTime = daySchedule.start || '09:00';
   const endTime = daySchedule.end || '18:00';

@@ -4,10 +4,12 @@ import type { Ref } from '../db/model';
 import type { OrganizationDoc } from './Organization';
 import type { DepartmentDoc } from './Department';
 import type { SiteDoc } from './Site';
-import type { AgentStats, TeamPermissions } from '../types/domain';
+import { PRESENCE_STATUSES, TEAM_ROLES } from '../domain';
+import type { AgentStats, PresenceStatus, TeamPermissions, TeamRole } from '../domain';
 
-export type TeamRole = 'admin' | 'manager' | 'agent';
-export type TeamStatus = 'online' | 'offline' | 'away' | 'busy';
+export type { TeamRole };
+/** A team agent carries the same presence states as any other account. */
+export type TeamStatus = PresenceStatus;
 
 export interface TeamDepartmentMembership {
   departmentId: Ref<DepartmentDoc>;
@@ -44,12 +46,18 @@ export default defineModel<TeamDoc>({
     email: { column: 'email', type: 'string', required: true, lowercase: true, trim: true },
     password: { column: 'password', type: 'string', required: true },
     name: { column: 'name', type: 'string', required: true, trim: true },
-    role: { column: 'role', type: 'string', enum: ['admin', 'manager', 'agent'], default: 'agent' },
+    role: { column: 'role', type: 'string', enum: TEAM_ROLES, default: 'agent' },
     avatar: { column: 'avatar', type: 'string', default: null },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },
     isActive: { column: 'is_active', type: 'boolean', default: true },
-    status: { column: 'status', type: 'string', enum: ['online', 'offline', 'away', 'busy'], default: 'offline' },
-    skills: { column: 'skills', type: 'stringArray', lowercase: true, trim: true, default: () => [] },
+    status: { column: 'status', type: 'string', enum: PRESENCE_STATUSES, default: 'offline' },
+    skills: {
+      column: 'skills',
+      type: 'stringArray',
+      lowercase: true,
+      trim: true,
+      default: () => []
+    },
     maxCapacity: { column: 'max_capacity', type: 'number', default: 10, min: 1 },
     currentLoad: { column: 'current_load', type: 'number', default: 0, min: 0 },
     permissions: {

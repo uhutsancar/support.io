@@ -2,8 +2,11 @@
 // türetilir, böylece yeni bir izin eklendiğinde owner'a elle eklemeyi unutmak
 // mümkün olmaz.
 import Organization from '../models/Organization';
-import { sendError } from './errors';
-import type { Request, Response, NextFunction } from 'express';
+import { asyncMiddleware } from '../http/asyncHandler';
+import { forbidden } from '../http/errors';
+import { PLAN_TYPES } from '../domain';
+import type { PlanType } from '../domain';
+import type { NextFunction, Request, Response } from 'express';
 
 const ALL_PERMISSIONS = [
   'manage_billing',
@@ -67,52 +70,56 @@ const rolePermissions: Record<string, string[]> = {
   viewer: ['read_only', 'view_assigned']
 };
 
-const planFeatures: Record<string, Record<string, boolean>> = {
+/** What each plan unlocks. Roles say who may act; plans say what is available. */
+const planFeatures: Record<PlanType, Record<string, boolean>> = {
   FREE: { multiUser: false, advancedAnalytics: false, export: false, apiAccess: false },
   PRO: { multiUser: true, advancedAnalytics: true, export: true, apiAccess: true },
   ENTERPRISE: { multiUser: true, advancedAnalytics: true, export: true, apiAccess: true }
+};
+
+/** Permissions that a plan can withhold even from a role that carries them. */
+const PLAN_GATED_PERMISSIONS: Record<string, keyof (typeof planFeatures)['FREE']> = {
+  export: 'export'
 };
 
 function hasPermission(role: string, permission: string): boolean {
   return (rolePermissions[role] || []).includes(permission);
 }
 
-const checkPermission = (permission: string) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userRole = req.user?.role;
-      if (!userRole) {
-        return res.status(403).json({
-          error: 'No role assigned',
-          code: 'FORBIDDEN'
-        });
-      }
-      if (!hasPermission(userRole, permission)) {
-        // Hangi iznin eksik olduğunu söylemek, panelde "neden olmadı"
-        // sorusunu ayıklanabilir hale getirir.
-        return res.status(403).json({
-          error: `Insufficient role permissions: '${permission}' required, role '${userRole}' does not have it`,
-          code: 'FORBIDDEN',
-          requiredPermission: permission,
-          role: userRole
-        });
-      }
-      if (req.organization) {
-        const org = await Organization.findById(req.organization._id);
-        const plan = org?.planType || 'FREE';
-        const features = planFeatures[plan] || planFeatures.FREE;
-        if (permission === 'export' && !features.export) {
-          return res.status(403).json({
-            error: 'Feature not available on your plan',
-            code: 'PLAN_UPGRADE_REQUIRED'
-          });
-        }
-      }
-      next();
-    } catch (err) {
-      sendError(res, err);
+/** The plan an organization is on, defaulting to FREE for anything unknown. */
+function planOf(planType: unknown): PlanType {
+  return (PLAN_TYPES as readonly string[]).includes(planType as string)
+    ? (planType as PlanType)
+    : 'FREE';
+}
+
+/**
+ * Requires a named permission, and the plan that backs it where one applies.
+ *
+ * Naming the missing permission in the message is deliberate: it turns "why
+ * didn't that work?" in the panel into something answerable without reading
+ * the server log.
+ */
+const checkPermission = (permission: string) =>
+  asyncMiddleware(async (req: Request, _res: Response, next: NextFunction) => {
+    const userRole = req.user?.role;
+    if (!userRole) throw forbidden('No role assigned');
+
+    if (!hasPermission(userRole, permission)) {
+      throw forbidden(
+        `Insufficient role permissions: '${permission}' required, role '${userRole}' does not have it`
+      );
     }
-  };
-};
+
+    const gatedFeature = PLAN_GATED_PERMISSIONS[permission];
+    if (gatedFeature && req.organization) {
+      const org = await Organization.findById(req.organization._id);
+      if (!planFeatures[planOf(org?.planType)][gatedFeature]) {
+        throw forbidden('Feature not available on your plan', 'PLAN_UPGRADE_REQUIRED');
+      }
+    }
+
+    next();
+  });
 
 export { checkPermission, hasPermission, rolePermissions, planFeatures, ALL_PERMISSIONS };

@@ -16,7 +16,11 @@ import { getRedisClient, isEnabled } from '../config/redis';
 
 const inFlight = new Map<string, Promise<unknown>>();
 
-async function cached<T>(key: string, ttlSeconds: number, produce: () => Promise<T> | T): Promise<T> {
+async function cached<T>(
+  key: string,
+  ttlSeconds: number,
+  produce: () => Promise<T> | T
+): Promise<T> {
   if (!isEnabled()) return produce();
 
   const client = await getRedisClient();
@@ -25,7 +29,7 @@ async function cached<T>(key: string, ttlSeconds: number, produce: () => Promise
   try {
     const hit = await client.get(key);
     if (hit !== null) return JSON.parse(hit);
-  } catch (error) {
+  } catch {
     // Okunamayan onbellek, onbellek yokmus gibi ele alinir.
   }
 
@@ -35,7 +39,7 @@ async function cached<T>(key: string, ttlSeconds: number, produce: () => Promise
     const value = await produce();
     try {
       await client.set(key, JSON.stringify(value), { EX: ttlSeconds });
-    } catch (error) {
+    } catch {
       // Yazilamamasi yalnizca bir sonraki cagrinin da hesaplamasi demektir.
     }
     return value;

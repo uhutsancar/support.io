@@ -1,9 +1,15 @@
 import express from 'express';
-import { sendError } from '../middleware/errors';
 import { auth } from '../middleware/auth';
 import { rolePermissions } from '../middleware/rbac';
-import { findOwnedSite } from '../middleware/siteAuth';
 import { analyticsOverview, RANGES } from '../db/analyticsQueries';
+import {
+  asyncHandler,
+  badRequest,
+  forbidden,
+  loadOwnedSite,
+  orgId,
+  requireOrganization
+} from '../http';
 import type { Request, Response, NextFunction } from 'express';
 
 const router = express.Router();
@@ -16,43 +22,32 @@ const router = express.Router();
 // other routes already depend on.
 const REPORTING_PERMISSIONS = ['view_analytics', 'view_reports'];
 
-const canViewReports = (req: Request, res: Response, next: NextFunction) => {
+const canViewReports = (req: Request, _res: Response, next: NextFunction) => {
   const granted = rolePermissions[req.user?.role] || [];
   if (!REPORTING_PERMISSIONS.some((p) => granted.includes(p))) {
-    return res.status(403).json({ error: 'Insufficient role permissions' });
+    throw forbidden('Insufficient role permissions');
   }
   next();
 };
 
 // Whole analytics dashboard in one request. The aggregation is always scoped to
 // the caller's organization, so a permitted user still only sees their tenant.
-router.get('/overview', auth, canViewReports, async (req: Request, res: Response) => {
-  try {
-    const organizationId = req.organization?._id || req.user.organizationId;
-    if (!organizationId) {
-      return res.status(400).json({ error: 'No organization context' });
-    }
-
+router.get(
+  '/overview',
+  auth,
+  requireOrganization,
+  canViewReports,
+  asyncHandler(async (req: Request, res: Response) => {
     const range = String(req.query.range || '7days');
     if (!RANGES[range]) {
-      return res.status(400).json({
-        error: `range must be one of: ${Object.keys(RANGES).join(', ')}`
-      });
+      throw badRequest(`range must be one of: ${Object.keys(RANGES).join(', ')}`);
     }
 
     // An explicit site filter has to be a site this organization owns.
-    let siteId = null;
-    if (req.query.siteId) {
-      const site = await findOwnedSite(req, req.query.siteId);
-      if (!site) return res.status(404).json({ error: 'Site not found' });
-      siteId = site._id;
-    }
+    const siteId = req.query.siteId ? (await loadOwnedSite(req, req.query.siteId))._id : null;
 
-    const data = await analyticsOverview(organizationId, { siteId, range });
-    res.json(data);
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+    res.json(await analyticsOverview(orgId(req), { siteId, range }));
+  })
+);
 
 export default router;

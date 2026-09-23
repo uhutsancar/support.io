@@ -1,120 +1,131 @@
+// FAQs: the canned answers the widget offers before a visitor starts a chat.
+//
+// Two audiences in one file, with deliberately different authentication:
+//   /admin/*   the dashboard, behind a session and the caller's organization
+//   /search    the widget, on a customer's page, behind a site key only
+
 import express from 'express';
-import { sendError } from '../middleware/errors';
 import FAQ from '../models/FAQ';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
-import Site from '../models/Site';
 import { verifySiteKey } from '../middleware/siteAuth';
-import { requireOrgId } from '../middleware/siteAuth';
+import {
+  asyncHandler,
+  badRequest,
+  loadOwnedSite,
+  pick,
+  requireOrganization,
+  requireSiteOwnership
+} from '../http';
 import type { Request, Response } from 'express';
-import type { Filter } from '../db/model';
+import type { Doc, Filter } from '../db/model';
+import type { FAQDoc } from '../models/FAQ';
 
 const router = express.Router();
-router.get('/admin/:siteId', auth, async (req: Request, res: Response) => {
-  try {
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({
-      _id: req.params.siteId,
-      organizationId: orgId
-    });
-    if (!site) return res.status(404).json({ error: 'Site not found' });
-    const faqs = await FAQ.find({ siteId: req.params.siteId }).sort({ order: 1, createdAt: -1 });
+
+/** The fields a client may set; `siteId` is fixed at creation and never moves. */
+const WRITABLE_FIELDS = [
+  'question',
+  'answer',
+  'category',
+  'keywords',
+  'pageSpecific',
+  'order',
+  'isActive'
+] as const;
+
+/**
+ * An FAQ the caller's organization owns.
+ *
+ * An FAQ carries no organization of its own — it hangs from a site — so
+ * ownership is the site's. The update and delete handlers each wrote this out
+ * separately; the delete one re-read the row it had just loaded, and the update
+ * one checked for a missing row twice, the second time after it could no longer
+ * be missing.
+ */
+const loadOwnedFaq = async (req: Request, faqId: unknown): Promise<Doc<FAQDoc>> =>
+  requireSiteOwnership(req, await FAQ.findById(faqId), 'FAQ');
+
+// ------------------------------------------------------------------ dashboard
+
+router.get(
+  '/admin/:siteId',
+  auth,
+  requireOrganization,
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const faqs = await FAQ.find({ siteId: site._id }).sort({ order: 1, createdAt: -1 });
     res.json({ faqs });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.post('/admin', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const { siteId, question, answer, category, keywords, pageSpecific, order } = req.body;
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({ _id: siteId, organizationId: orgId });
-    if (!site) return res.status(404).json({ error: 'Site not found' });
-    const faq = new FAQ({
-      siteId,
-      question,
-      answer,
-      category,
-      keywords,
-      pageSpecific,
-      order
-    });
+  })
+);
+
+router.post(
+  '/admin',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.body?.siteId);
+    const faq = new FAQ({ ...pick<FAQDoc>(req.body, WRITABLE_FIELDS), siteId: site._id });
     await faq.save();
     res.status(201).json({ faq });
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
-router.put('/admin/:faqId', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const allowedUpdates = ['question', 'answer', 'category', 'keywords', 'pageSpecific', 'order', 'isActive'];
-    const updates = Object.fromEntries(
-      Object.entries(req.body || {}).filter(([key]) => allowedUpdates.includes(key))
-    );
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: 'No valid updates supplied' });
-    }
-    const faq = await FAQ.findById(req.params.faqId);
-    if (!faq) return res.status(404).json({ error: 'FAQ not found' });
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({ _id: faq.siteId, organizationId: orgId });
-    if (!site) return res.status(404).json({ error: 'FAQ not found' });
+  })
+);
+
+router.put(
+  '/admin/:faqId',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const updates = pick<FAQDoc>(req.body, WRITABLE_FIELDS);
+    if (Object.keys(updates).length === 0) throw badRequest('No valid updates supplied');
+
+    const faq = await loadOwnedFaq(req, req.params.faqId);
     Object.assign(faq, updates);
     await faq.save();
-    if (!faq) {
-      return res.status(404).json({ error: 'FAQ not found' });
-    }
     res.json({ faq });
-  } catch (error) {
-    sendError(res, error, 400);
-  }
-});
-router.delete('/admin/:faqId', auth, checkPermission('manage_sites'), async (req: Request, res: Response) => {
-  try {
-    const faq = await FAQ.findById(req.params.faqId);
-    if (!faq) return res.status(404).json({ error: 'FAQ not found' });
-    const orgId = requireOrgId(req, res);
-    if (!orgId) return;
-    const site = await Site.findOne({ _id: faq.siteId, organizationId: orgId });
-    if (!site) return res.status(404).json({ error: 'FAQ not found' });
-    await FAQ.findByIdAndDelete(req.params.faqId);
+  })
+);
+
+router.delete(
+  '/admin/:faqId',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const faq = await loadOwnedFaq(req, req.params.faqId);
+    await faq.deleteOne();
     res.json({ message: 'FAQ deleted successfully' });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
-router.get('/search', verifySiteKey, async (req: Request, res: Response) => {
-  try {
+  })
+);
+
+// --------------------------------------------------------------------- widget
+
+/** Public: called from the customer's page, authenticated by site key alone. */
+router.get(
+  '/search',
+  verifySiteKey,
+  asyncHandler(async (req: Request, res: Response) => {
     const { query, page } = req.query;
+
+    // A page-specific FAQ shows on its own page; '*' shows everywhere. Without a
+    // page the widget only gets the site-wide ones.
     const filter: Filter = {
       siteId: req.site._id,
-      isActive: true
+      isActive: true,
+      ...(page ? { $or: [{ pageSpecific: page }, { pageSpecific: '*' }] } : { pageSpecific: '*' })
     };
-    if (page) {
-      filter.$or = [
-        { pageSpecific: page },
-        { pageSpecific: '*' }
-      ];
-    } else {
-      filter.pageSpecific = '*';
-    }
-    let faqs;
-    if (query && String(query).trim()) {
-      faqs = await FAQ.find({
-        ...filter,
-        $text: { $search: query }
-      }, {
-        score: { $meta: 'textScore' }
-      }).sort({ score: { $meta: 'textScore' } }).limit(5);
-    } else {
-      faqs = await FAQ.find(filter).sort({ order: 1 }).limit(5);
-    }
+
+    const search = typeof query === 'string' ? query.trim() : '';
+    const faqs = search
+      ? await FAQ.find({ ...filter, $text: { $search: search } }, { score: { $meta: 'textScore' } })
+          .sort({ score: { $meta: 'textScore' } })
+          .limit(5)
+      : await FAQ.find(filter).sort({ order: 1 }).limit(5);
+
     res.json({ faqs });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
+
 export default router;

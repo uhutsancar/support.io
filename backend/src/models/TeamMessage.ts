@@ -27,7 +27,12 @@ const TeamMessage = defineModel<TeamMessageDoc, TeamMessageStatics>({
     senderId: { column: 'sender_id', type: 'id', required: true },
     senderName: { column: 'sender_name', type: 'string', required: true },
     content: { column: 'content', type: 'string', required: true },
-    messageType: { column: 'message_type', type: 'string', enum: ['text', 'system'], default: 'text' },
+    messageType: {
+      column: 'message_type',
+      type: 'string',
+      enum: ['text', 'system'],
+      default: 'text'
+    },
     groupName: { column: 'group_name', type: 'string', default: null }
   },
   children: {

@@ -9,7 +9,7 @@
 
 import express from 'express';
 import { plainString } from '../middleware/sanitize';
-import { sendError } from '../middleware/errors';
+import { asyncHandler, badRequest, notFound } from '../http';
 import Site from '../models/Site';
 import WidgetConfig from '../models/WidgetConfig';
 import FAQ from '../models/FAQ';
@@ -18,7 +18,7 @@ import User from '../models/User';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
-import type { SiteWidgetSettings } from '../types/domain';
+import type { SiteWidgetSettings } from '../domain';
 
 const router = express.Router();
 
@@ -38,7 +38,13 @@ const DEFAULTS = {
     visitorMessageBg: '#4F46E5',
     agentMessageBg: '#F3F4F6'
   },
-  branding: { logo: null, logoWidth: 40, logoHeight: 40, brandName: 'Support', showBrandName: true },
+  branding: {
+    logo: null,
+    logoWidth: 40,
+    logoHeight: 40,
+    brandName: 'Support',
+    showBrandName: true
+  },
   button: {
     position: 'bottom-right',
     size: 'medium',
@@ -49,7 +55,14 @@ const DEFAULTS = {
     shadow: true,
     shadowColor: 'rgba(0,0,0,0.15)'
   },
-  window: { width: 400, height: 640, borderRadius: 16, headerHeight: 64, showHeader: true, showCloseButton: true },
+  window: {
+    width: 400,
+    height: 640,
+    borderRadius: 16,
+    headerHeight: 64,
+    showHeader: true,
+    showCloseButton: true
+  },
   messages: {
     welcomeMessage: '',
     placeholderText: '',
@@ -116,7 +129,8 @@ function publicConfig(site: Doc<SiteDoc> | SiteDoc, saved: Record<string, any> |
   }
 
   const branding = merge(DEFAULTS.branding, cfg.branding);
-  if (!(cfg.branding && cfg.branding.brandName)) branding.brandName = site.name || DEFAULTS.branding.brandName;
+  if (!(cfg.branding && cfg.branding.brandName))
+    branding.brandName = site.name || DEFAULTS.branding.brandName;
 
   return {
     colors,
@@ -132,7 +146,9 @@ function publicConfig(site: Doc<SiteDoc> | SiteDoc, saved: Record<string, any> |
 
 // Ziyaretciye "biri var mi" sorusunun gercek cevabi. Sahte bir "Online"
 // gostermek, yanit alamayan ziyaretciyi bekletmekten daha kotudur.
-async function resolveAvailability(site: Doc<SiteDoc> | SiteDoc): Promise<'online' | 'away' | 'offline'> {
+async function resolveAvailability(
+  site: Doc<SiteDoc> | SiteDoc
+): Promise<'online' | 'away' | 'offline'> {
   const orgId = site.organizationId;
   if (!orgId) return 'offline';
 
@@ -148,10 +164,13 @@ async function resolveAvailability(site: Doc<SiteDoc> | SiteDoc): Promise<'onlin
   return 'offline';
 }
 
-function safeUrlPart(url: unknown, part: 'origin' | 'pathname' | 'host' | 'hostname'): string | null {
+function safeUrlPart(
+  url: unknown,
+  part: 'origin' | 'pathname' | 'host' | 'hostname'
+): string | null {
   try {
     return url ? new URL(String(url))[part] : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -163,19 +182,16 @@ function safeUrlPart(url: unknown, part: 'origin' | 'pathname' | 'host' | 'hostn
 // ayri istek atiyordu (config + settings + faqs); ucu de ayri gecikme ekliyor,
 // ikisi de ayni siteyi yeniden okuyordu.
 // ---------------------------------------------------------------------------
-router.get('/bootstrap', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/bootstrap',
+  asyncHandler(async (req: Request, res: Response) => {
     const siteKey = String(req.query.siteKey || '').trim();
-    if (!siteKey) {
-      return res.status(400).json({ error: 'siteKey is required', code: 'VALIDATION_ERROR' });
-    }
+    if (!siteKey) throw badRequest('siteKey is required');
 
     const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) {
-      // Gecersiz anahtar ile pasif site ayni yaniti alir: anahtar denemesiyle
-      // "bu site var ama kapali" bilgisi cikarilamaz.
-      return res.status(404).json({ error: 'Widget not found', code: 'WIDGET_NOT_FOUND' });
-    }
+    // An invalid key and a disabled site answer identically, so probing keys
+    // cannot reveal "this site exists but is switched off".
+    if (!site) throw notFound('Widget');
 
     const [saved, faqs, availability] = await Promise.all([
       WidgetConfig.findOne({ siteId: site._id, isActive: true }),
@@ -198,10 +214,8 @@ router.get('/bootstrap', async (req: Request, res: Response) => {
         category: f.category || null
       }))
     });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
 // ---------------------------------------------------------------------------
 // POST /api/widget/installed
@@ -210,18 +224,15 @@ router.get('/bootstrap', async (req: Request, res: Response) => {
 // Yalnizca site anahtari + sayfanin origin'i kaydedilir; ziyaretciye ait
 // hicbir kimlik bilgisi burada tutulmaz.
 // ---------------------------------------------------------------------------
-router.post('/installed', async (req: Request, res: Response) => {
-  try {
+router.post(
+  '/installed',
+  asyncHandler(async (req: Request, res: Response) => {
     const { url, sdkVersion } = req.body || {};
     const siteKey = plainString(req.body?.siteKey, 128);
-    if (!siteKey) {
-      return res.status(400).json({ error: 'siteKey is required', code: 'VALIDATION_ERROR' });
-    }
+    if (!siteKey) throw badRequest('siteKey is required');
 
     const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) {
-      return res.status(404).json({ error: 'Widget not found', code: 'WIDGET_NOT_FOUND' });
-    }
+    if (!site) throw notFound('Widget');
 
     const now = new Date().toISOString();
     const previous = site.installation || {};
@@ -240,33 +251,26 @@ router.post('/installed', async (req: Request, res: Response) => {
     await site.save();
 
     res.json({ ok: true, verifiedAt: site.installation.verifiedAt });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
 // ---------------------------------------------------------------------------
 // Geriye donuk uyumluluk: eski widget surumleri /api/widget/settings cagirir.
 // ---------------------------------------------------------------------------
-router.get('/settings', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/settings',
+  asyncHandler(async (req: Request, res: Response) => {
     const siteKey = plainString(req.query.siteKey, 128);
-    if (!siteKey) {
-      return res.status(400).json({ error: 'siteKey is required', code: 'VALIDATION_ERROR' });
-    }
+    if (!siteKey) throw badRequest('siteKey is required');
     const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) {
-      return res.status(404).json({ error: 'Site not found or inactive', code: 'WIDGET_NOT_FOUND' });
-    }
+    if (!site) throw notFound('Widget');
     const saved = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
     res.json({
       site: { name: site.name, isActive: site.isActive, widgetSettings: site.widgetSettings },
       config: publicConfig(site, saved ? saved.toObject() : null)
     });
-  } catch (error) {
-    sendError(res, error);
-  }
-});
+  })
+);
 
 export { WIDGET_VERSION, publicConfig };
 export default router;

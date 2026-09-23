@@ -30,8 +30,15 @@ const DEFAULT_LIMIT = 30;
 // Arama metni SQL'e hicbir zaman metin olarak girmez; yalnizca parametre
 // olarak gecer. Yine de ILIKE kaliplarindaki joker karakterler kacisilir,
 // aksi halde "%" yazan bir kullanici butun tabloyu tarar.
+//
+// Bu kacis daha once hicbir sey yapmiyordu: degistirme deseni `'\$1'` yaziyordu
+// ve normal bir dizgede `\$` yalnizca `$` demek, yani `%` karakteri yine `%`
+// ile degistiriliyordu. Tek karakterlik bir arama ("%") butun tabloyu tariyor,
+// "_" ise her karakterle eslesiyordu. Ters egik cizgi PostgreSQL'in LIKE/ILIKE
+// icin varsayilan kacis karakteridir; ters egik cizginin kendisi de kacisilmak
+// zorunda, aksi halde sondaki kacis bir sonraki karakteri yutar.
 function likePattern(term: string): string {
-  return `%${term.replace(/([\%_])/g, '\$1')}%`;
+  return `%${term.replace(/([%_\\])/g, '\\$1')}%`;
 }
 
 /** Everything the inbox list and its counters can be narrowed by. */
@@ -136,7 +143,10 @@ function buildScope({
 // eksiksizdir.
 const MESSAGE_MATCH_LIMIT = Number(process.env.INBOX_MESSAGE_MATCH_LIMIT) || 1000;
 
-async function messageMatchesForSearch(siteId: string, search: string | null | undefined): Promise<string[]> {
+async function messageMatchesForSearch(
+  siteId: string,
+  search: string | null | undefined
+): Promise<string[]> {
   if (!search) return [];
   const { rows } = await query(
     `SELECT DISTINCT m.conversation_id AS id
@@ -209,9 +219,13 @@ async function conversationCounts(options: InboxScope) {
 
 function countsCacheKey(options: InboxScope): string {
   const shape = JSON.stringify([
-    options.organizationId, options.siteId, options.priority ?? null,
-    options.departmentId ?? null, options.assignedAgentId ?? null,
-    Boolean(options.unassigned), options.search ?? '',
+    options.organizationId,
+    options.siteId,
+    options.priority ?? null,
+    options.departmentId ?? null,
+    options.assignedAgentId ?? null,
+    Boolean(options.unassigned),
+    options.search ?? '',
     options.searchMessageMatches?.length ?? 0
   ]);
   return `inbox:counts:${createHash('sha1').update(shape).digest('base64url')}`;
@@ -248,9 +262,17 @@ function decodeCursor(cursor: string): { lastMessageAt: string; id: string } | n
     const [stamp, id] = Buffer.from(String(cursor), 'base64url').toString('utf8').split('|');
     if (!stamp || !id || Number.isNaN(Date.parse(stamp))) return null;
     return { lastMessageAt: stamp, id };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
 
-export { listConversations, conversationCounts, messageMatchesForSearch, STATUSES, PRIORITIES, MAX_LIMIT, MESSAGE_MATCH_LIMIT };
+export {
+  listConversations,
+  conversationCounts,
+  messageMatchesForSearch,
+  STATUSES,
+  PRIORITIES,
+  MAX_LIMIT,
+  MESSAGE_MATCH_LIMIT
+};
