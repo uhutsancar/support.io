@@ -7,6 +7,7 @@
 import express from 'express';
 import { randomUUID } from 'crypto';
 import Site from '../models/Site';
+import { newSecret, seal } from '../config/secretBox';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import {
@@ -188,6 +189,20 @@ router.delete(
     });
     if (!site) throw notFound('Site');
     res.json({ message: 'Site deleted successfully' });
+  })
+);
+
+// A new identity-verification key. It is shown this once and stored sealed;
+// generating another invalidates every userHash signed with the previous one.
+router.post(
+  '/:siteId/integrations/identity-secret',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const secret = newSecret();
+    site.integrations = { ...site.integrations, identitySecret: seal(secret) };
+    await site.save();
+    res.json({ site, secret });
   })
 );
 

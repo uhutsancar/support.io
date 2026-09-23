@@ -16,7 +16,13 @@ import { refreshSla } from '../../services/conversationSla';
 import { tryFaqAutoResponse } from '../../services/faqAutoResponse';
 import { runAutomation } from '../../services/automationTrigger';
 import { assistantActive, requestHuman, scheduleAutoReply } from '../../services/ai/autoReply';
-import { CLIENT_MESSAGE_TYPES, isAwayPresence, isClientMessageType } from '../../domain';
+import { verifiedIdentity } from '../../services/identity';
+import {
+  ACTIVE_CONVERSATION_STATUSES,
+  CLIENT_MESSAGE_TYPES,
+  isAwayPresence,
+  isClientMessageType
+} from '../../domain';
 import { conversationRoom } from '../../realtime/rooms';
 import type { Socket } from 'socket.io';
 import type { CreateInput } from '../../db/model';
@@ -121,25 +127,57 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           return;
         }
 
+        // Only an id the shop signed counts; see services/identity.ts. Stored on
+        // the socket and the conversation, never taken from the client as-is.
+        const verifiedUserId = verifiedIdentity(site.integrations, data?.userId, data?.userHash);
+
         socket.siteId = site._id;
         socket.visitorId = visitorId;
         socket.visitorName = boundedString(visitorName, LIMITS.visitorName)?.trim() || 'Visitor';
         socket.visitorEmail = boundedString(visitorEmail, LIMITS.visitorEmail)?.trim() ?? null;
         socket.currentPage = boundedString(currentPage, LIMITS.page) ?? '/';
-        socket.metadata = sanitizeMetadata(metadata);
+        socket.verifiedUserId = verifiedUserId;
+        socket.metadata = { ...sanitizeMetadata(metadata), verifiedUserId };
 
         // An open conversation is resumed; otherwise the widget shows the site's
         // welcome message and the conversation is created on the first message.
-        const conversation = await Conversation.findOne({
+        //
+        // A conversation a verified customer had is theirs: it is not reopened
+        // for anyone else in the same browser — another identity, or none. So
+        // one browser can hold more than one open conversation, and the newest
+        // one this identity may see is the one resumed.
+        const candidates = await Conversation.find({
           siteId: site._id,
           visitorId,
-          status: { $in: ['open', 'assigned', 'pending'] }
-        }).populate('department', 'name color icon');
+          // Every status that is still work in progress. 'unassigned' — what a
+          // conversation is while no agent is free — used to be missing here,
+          // so a visitor who reloaded the page lost their thread.
+          status: { $in: [...ACTIVE_CONVERSATION_STATUSES] }
+        })
+          .sort({ lastMessageAt: -1 })
+          .limit(5)
+          .populate('department', 'name color icon');
+        const conversation =
+          candidates.find((c) => {
+            const holder = c.metadata?.verifiedUserId;
+            return !holder || holder === verifiedUserId;
+          }) ?? null;
+        const owner = conversation?.metadata?.verifiedUserId;
+
+        // `identify()` joins again on the same socket; it must not stay in the
+        // room of a conversation it no longer resumes.
+        if (socket.conversationId && socket.conversationId !== conversation?._id) {
+          await socket.leave(conversationRoom(socket.conversationId));
+          socket.conversationId = undefined;
+        }
 
         if (conversation) {
           await socket.join(conversationRoom(conversation._id));
           socket.conversationId = conversation._id;
           conversation.currentPage = socket.currentPage;
+          if (verifiedUserId && !owner) {
+            conversation.metadata = { ...conversation.metadata, verifiedUserId };
+          }
           refreshSla(conversation);
           await conversation.save();
 

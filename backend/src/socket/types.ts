@@ -39,6 +39,8 @@ export interface WidgetSocketState {
    * assistant.
    */
   prefersHuman?: boolean;
+  /** The user id the shop vouched for with a valid userHash; null when anonymous. */
+  verifiedUserId?: string | null;
 }
 
 export type WidgetSocket = Socket & WidgetSocketState;
@@ -69,6 +71,9 @@ export interface WidgetJoinPayload extends ClientPayloadBase {
   visitorName?: string;
   visitorEmail?: string;
   currentPage?: string;
+  /** From SupportChat.identify(); trusted only when userHash verifies. */
+  userId?: string;
+  userHash?: string;
   metadata?: {
     browser?: string;
     os?: string;

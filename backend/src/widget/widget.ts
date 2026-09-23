@@ -959,6 +959,10 @@ interface Window {
       visitorName:
         (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
       visitorEmail: (this.identity && this.identity.email) || store.get('sc_visitor_email') || null,
+      // The server accepts the id only when the shop's signature (userHash)
+      // checks out; an unsigned or forged pair simply leaves the visitor anonymous.
+      userId: (this.identity && this.identity.userId) || null,
+      userHash: (this.identity && this.identity.userHash) || null,
       // Query strings often contain tokens or personal data; page context does
       // not need them. Origin + path is useful to the operator and safe to keep.
       currentPage: window.location.origin + window.location.pathname,
@@ -2133,10 +2137,11 @@ interface Window {
   /**
    * Oturum acmis kullaniciyi tanitir.
    *
-   * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. Sunucu bunlari yalnizca
-   * gosterim icin kullanir; yetkilendirme kararlari asla ziyaretcinin gonderdigi
-   * kimlige dayandirilmaz. Imzali kimlik (HMAC) destegi eklendiginde `userHash`
-   * alani buradan gecirilecektir.
+   * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. `userId` ancak magazanin
+   * sunucusunun urettigi `userHash` = HMAC_SHA256(kimlik anahtari, userId)
+   * sunucuda dogrulanirsa kimlik sayilir (services/identity.ts); siparis
+   * sorgusu yalnizca bu dogrulanmis kimlikle yapilir. Ad ve e-posta yalnizca
+   * gosterim icindir.
    */
   Widget.prototype.identify = function (this: WidgetInstance, user: WidgetIdentity | null) {
     if (!user || typeof user !== 'object') return;
