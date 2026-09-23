@@ -12,14 +12,14 @@
 //
 // Calisan bir backend gerektirir. Calistirma: npm run test:compose
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
 import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -69,7 +69,11 @@ async function api(
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   let json = null;
-  try { json = await res.json(); } catch (e) { /* bos govde */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* bos govde */
+  }
   return { status: res.status, body: json, headers: res.headers };
 }
 
@@ -84,7 +88,10 @@ async function createTenant(label: string) {
       companyName: `${label} co`
     }
   });
-  assert.ok(reg.status === 200 || reg.status === 201, `register failed: ${JSON.stringify(reg.body)}`);
+  assert.ok(
+    reg.status === 200 || reg.status === 201,
+    `register failed: ${JSON.stringify(reg.body)}`
+  );
   const site = await api('/api/sites', {
     method: 'POST',
     token: sessionToken(reg),
@@ -121,8 +128,16 @@ async function seedConversation({
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'normal', '{}', 0, 0,
              '{}'::jsonb, 'web-chat', '/', '{}'::jsonb, '{}', '{}'::jsonb, $10, $10, $10)`,
     [
-      id, ticketNumber, `#${String(ticketNumber).padStart(4, '0')}`,
-      site._id, site.organizationId, `inbox-${id}`, visitorName, visitorEmail, status, at
+      id,
+      ticketNumber,
+      `#${String(ticketNumber).padStart(4, '0')}`,
+      site._id,
+      site.organizationId,
+      `inbox-${id}`,
+      visitorName,
+      visitorEmail,
+      status,
+      at
     ]
   );
   return id;
@@ -142,19 +157,23 @@ test('search reaches conversations that are not on the first page', async (t) =>
   const ids: string[] = [];
 
   // Aranan kayit en eski olsun: ilk sayfada kesinlikle bulunmaz.
-  ids.push(await seedConversation({
-    site: tenant.site,
-    visitorName: 'Nadire Beyzade',
-    visitorEmail: 'nadire@musteri.test',
-    minutesAgo: 10000
-  }));
-  for (let i = 0; i < 40; i++) {
-    ids.push(await seedConversation({
+  ids.push(
+    await seedConversation({
       site: tenant.site,
-      visitorName: `Gurultu ${i}`,
-      visitorEmail: `noise${i}@musteri.test`,
-      minutesAgo: i + 1
-    }));
+      visitorName: 'Nadire Beyzade',
+      visitorEmail: 'nadire@musteri.test',
+      minutesAgo: 10000
+    })
+  );
+  for (let i = 0; i < 40; i++) {
+    ids.push(
+      await seedConversation({
+        site: tenant.site,
+        visitorName: `Gurultu ${i}`,
+        visitorEmail: `noise${i}@musteri.test`,
+        minutesAgo: i + 1
+      })
+    );
   }
   t.after(() => query('DELETE FROM conversations WHERE id = ANY($1)', [ids]));
 
@@ -165,10 +184,9 @@ test('search reaches conversations that are not on the first page', async (t) =>
     'test kurulumu gecersiz: aranan kayit ilk sayfada'
   );
 
-  const found = await api(
-    `/api/conversations/${tenant.site._id}?search=Nadire`,
-    { token: tenant.token }
-  );
+  const found = await api(`/api/conversations/${tenant.site._id}?search=Nadire`, {
+    token: tenant.token
+  });
   assert.equal(found.status, 200);
   assert.equal(found.body.conversations.length, 1);
   assert.equal(found.body.conversations[0].visitorName, 'Nadire Beyzade');
@@ -192,10 +210,9 @@ test('search also looks inside message bodies', async (t) => {
   await addMessage(other, 'Merhaba, bilgi almak istiyorum');
   t.after(() => query('DELETE FROM conversations WHERE id = ANY($1)', [[target, other]]));
 
-  const res = await api(
-    `/api/conversations/${tenant.site._id}?search=Trabzon`,
-    { token: tenant.token }
-  );
+  const res = await api(`/api/conversations/${tenant.site._id}?search=Trabzon`, {
+    token: tenant.token
+  });
   assert.equal(res.status, 200);
   assert.equal(res.body.conversations.length, 1);
   assert.equal(res.body.conversations[0]._id, target);
@@ -205,19 +222,20 @@ test('a search matching nothing returns nothing rather than the whole inbox', as
   const tenant = await createTenant('empty');
   const ids: string[] = [];
   for (let i = 0; i < 5; i++) {
-    ids.push(await seedConversation({
-      site: tenant.site,
-      visitorName: `Musteri ${i}`,
-      visitorEmail: `m${i}@musteri.test`,
-      minutesAgo: i + 1
-    }));
+    ids.push(
+      await seedConversation({
+        site: tenant.site,
+        visitorName: `Musteri ${i}`,
+        visitorEmail: `m${i}@musteri.test`,
+        minutesAgo: i + 1
+      })
+    );
   }
   t.after(() => query('DELETE FROM conversations WHERE id = ANY($1)', [ids]));
 
-  const res = await api(
-    `/api/conversations/${tenant.site._id}?search=zzqqxxyy`,
-    { token: tenant.token }
-  );
+  const res = await api(`/api/conversations/${tenant.site._id}?search=zzqqxxyy`, {
+    token: tenant.token
+  });
   assert.equal(res.status, 200);
   assert.equal(res.body.conversations.length, 0);
   assert.equal(res.body.hasMore, false);
@@ -229,29 +247,32 @@ test('status filtering is applied by the database, not by the page', async (t) =
   // Cozulmus kayitlar en eski: ilk sayfaya girmezler, yani filtre yalnizca
   // yuklenen sayfaya uygulansaydi bu test bos donerdi.
   for (let i = 0; i < 6; i++) {
-    ids.push(await seedConversation({
-      site: tenant.site,
-      visitorName: `Cozulmus ${i}`,
-      visitorEmail: `r${i}@musteri.test`,
-      status: 'resolved',
-      minutesAgo: 5000 + i
-    }));
+    ids.push(
+      await seedConversation({
+        site: tenant.site,
+        visitorName: `Cozulmus ${i}`,
+        visitorEmail: `r${i}@musteri.test`,
+        status: 'resolved',
+        minutesAgo: 5000 + i
+      })
+    );
   }
   for (let i = 0; i < 40; i++) {
-    ids.push(await seedConversation({
-      site: tenant.site,
-      visitorName: `Acik ${i}`,
-      visitorEmail: `o${i}@musteri.test`,
-      status: 'open',
-      minutesAgo: i + 1
-    }));
+    ids.push(
+      await seedConversation({
+        site: tenant.site,
+        visitorName: `Acik ${i}`,
+        visitorEmail: `o${i}@musteri.test`,
+        status: 'open',
+        minutesAgo: i + 1
+      })
+    );
   }
   t.after(() => query('DELETE FROM conversations WHERE id = ANY($1)', [ids]));
 
-  const res = await api(
-    `/api/conversations/${tenant.site._id}?status=resolved`,
-    { token: tenant.token }
-  );
+  const res = await api(`/api/conversations/${tenant.site._id}?status=resolved`, {
+    token: tenant.token
+  });
   assert.equal(res.status, 200);
   assert.equal(res.body.conversations.length, 6);
   assert.ok(res.body.conversations.every((c: any) => c.status === 'resolved'));
@@ -275,10 +296,9 @@ test('the inbox never returns rows from another organization', async (t) => {
   const bySite = await api(`/api/conversations/${theirs.site._id}`, { token: mine.token });
   assert.equal(bySite.status, 404, 'baska bir kiracinin sitesi gorunmemeli');
 
-  const bySearch = await api(
-    `/api/conversations/${mine.site._id}?search=Yabanci`,
-    { token: mine.token }
-  );
+  const bySearch = await api(`/api/conversations/${mine.site._id}?search=Yabanci`, {
+    token: mine.token
+  });
   assert.equal(bySearch.status, 200);
   assert.equal(bySearch.body.conversations.length, 0);
 });

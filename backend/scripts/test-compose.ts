@@ -19,7 +19,10 @@ function backendPort(): string {
   if (process.env.BACKEND_PORT) return process.env.BACKEND_PORT;
   const envFile = path.join(__dirname, '../../.env');
   const line = fs.existsSync(envFile)
-    ? fs.readFileSync(envFile, 'utf8').split(/\r?\n/).find((l) => l.startsWith('BACKEND_PORT='))
+    ? fs
+        .readFileSync(envFile, 'utf8')
+        .split(/\r?\n/)
+        .find((l) => l.startsWith('BACKEND_PORT='))
     : undefined;
   return line ? line.slice('BACKEND_PORT='.length).trim() : '5000';
 }

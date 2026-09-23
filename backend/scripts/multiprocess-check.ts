@@ -15,10 +15,10 @@
 // Kullanım (iki backend ayrı portlarda çalışıyor olmalı):
 //   node scripts/multiprocess-check.js --a 5000 --b 5010
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import { io } from 'socket.io-client';
 
-dotenv.config();
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -42,7 +42,9 @@ async function main() {
   if (!loginRes.ok) throw new Error(`Giriş başarısız (${loginRes.status}). Önce: npm run db:seed`);
   const { token } = (await loginRes.json()) as { token: string };
 
-  const sitesRes = await fetch(`${URL_A}/api/sites`, { headers: { Authorization: `Bearer ${token}` } });
+  const sitesRes = await fetch(`${URL_A}/api/sites`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   const { sites } = (await sitesRes.json()) as { sites: any[] };
   const site = sites.find((s: any) => s.siteKey === 'demo-site-key-0000-1111-2222') || sites[0];
   if (!site) throw new Error('Site yok. Önce: npm run db:seed');
@@ -52,11 +54,21 @@ async function main() {
   console.log(`Site      : ${site.name}\n`);
 
   // 1) Temsilci B sürecine bağlanır ve sitenin odasına girer.
-  const admin = io(`${URL_B}/admin`, { transports: ['websocket'], auth: { token }, forceNew: true });
+  const admin = io(`${URL_B}/admin`, {
+    transports: ['websocket'],
+    auth: { token },
+    forceNew: true
+  });
   await new Promise<void>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error('admin bağlanamadı')), 15000);
-    admin.on('connect', () => { clearTimeout(t); resolve(); });
-    admin.on('connect_error', (e) => { clearTimeout(t); reject(e); });
+    admin.on('connect', () => {
+      clearTimeout(t);
+      resolve();
+    });
+    admin.on('connect_error', (e) => {
+      clearTimeout(t);
+      reject(e);
+    });
   });
   admin.emit('join-site', { siteId: site._id });
   console.log('1) temsilci B sürecine bağlandı');
@@ -88,8 +100,14 @@ async function main() {
         metadata: { country: 'TR' }
       });
     });
-    visitor.once('conversation-joined', () => { clearTimeout(t); resolve(); });
-    visitor.on('connect_error', (e) => { clearTimeout(t); reject(e); });
+    visitor.once('conversation-joined', () => {
+      clearTimeout(t);
+      resolve();
+    });
+    visitor.on('connect_error', (e) => {
+      clearTimeout(t);
+      reject(e);
+    });
   });
   console.log('2) ziyaretçi A sürecine bağlandı');
 

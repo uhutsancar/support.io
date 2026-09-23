@@ -11,7 +11,8 @@
 //
 // Requires a running backend. Run with: npm test
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
@@ -19,7 +20,6 @@ import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 import { getPool } from '../src/db/pool';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -69,7 +69,11 @@ async function api(
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   let json = null;
-  try { json = await res.json(); } catch (e) { /* empty body */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* empty body */
+  }
   return { status: res.status, body: json, headers: res.headers };
 }
 
@@ -124,9 +128,10 @@ async function seedConversation({
   const id = generateId();
   const ticketNumber = await Conversation.nextTicketNumber();
   const createdAt = new Date(Date.now() - ageHours * 3600 * 1000);
-  const firstResponseAt = firstResponseMinutes === null
-    ? null
-    : new Date(createdAt.getTime() + firstResponseMinutes * 60 * 1000);
+  const firstResponseAt =
+    firstResponseMinutes === null
+      ? null
+      : new Date(createdAt.getTime() + firstResponseMinutes * 60 * 1000);
   const terminal = ['resolved', 'closed'].includes(status);
 
   await query(
@@ -151,7 +156,11 @@ async function seedConversation({
         firstResponseStatus: slaStatus,
         resolutionStatus: 'pending'
       }),
-      JSON.stringify({ score: ratingScore, feedback: null, ratedAt: ratingScore ? new Date() : null }),
+      JSON.stringify({
+        score: ratingScore,
+        feedback: null,
+        ratedAt: ratingScore ? new Date() : null
+      }),
       createdAt,
       firstResponseAt,
       terminal ? createdAt : null,
@@ -169,12 +178,14 @@ test('the aggregate covers more rows than the conversation list endpoint returns
   // 60 conversations: past the 50 row cap the old client-side aggregation hit.
   const ids: string[] = [];
   for (let i = 0; i < 60; i++) {
-    ids.push(await seedConversation({
-      site: tenant.site,
-      ageHours: 1 + (i % 20),
-      status: i % 2 === 0 ? 'resolved' : 'open',
-      slaStatus: i % 2 === 0 ? 'met' : 'pending'
-    }));
+    ids.push(
+      await seedConversation({
+        site: tenant.site,
+        ageHours: 1 + (i % 20),
+        status: i % 2 === 0 ? 'resolved' : 'open',
+        slaStatus: i % 2 === 0 ? 'met' : 'pending'
+      })
+    );
   }
   t.after(async () => {
     await query('DELETE FROM conversations WHERE id = ANY($1)', [ids]);
@@ -219,9 +230,39 @@ test('overview figures agree with the rows behind them', async (t) => {
   const ids: string[] = [];
 
   // Two resolved with known response times and ratings, one open and breached.
-  ids.push(await seedConversation({ site: tenant.site, agentId: tenant.userId, ageHours: 5, status: 'resolved', priority: 'high', firstResponseMinutes: 10, ratingScore: 5, slaStatus: 'met' }));
-  ids.push(await seedConversation({ site: tenant.site, agentId: tenant.userId, ageHours: 6, status: 'closed', priority: 'low', firstResponseMinutes: 20, ratingScore: 3, slaStatus: 'breached' }));
-  ids.push(await seedConversation({ site: tenant.site, ageHours: 7, status: 'open', priority: 'urgent', slaStatus: 'breached' }));
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      agentId: tenant.userId,
+      ageHours: 5,
+      status: 'resolved',
+      priority: 'high',
+      firstResponseMinutes: 10,
+      ratingScore: 5,
+      slaStatus: 'met'
+    })
+  );
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      agentId: tenant.userId,
+      ageHours: 6,
+      status: 'closed',
+      priority: 'low',
+      firstResponseMinutes: 20,
+      ratingScore: 3,
+      slaStatus: 'breached'
+    })
+  );
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      ageHours: 7,
+      status: 'open',
+      priority: 'urgent',
+      slaStatus: 'breached'
+    })
+  );
 
   t.after(async () => {
     await query('DELETE FROM conversations WHERE id = ANY($1)', [ids]);
@@ -237,8 +278,8 @@ test('overview figures agree with the rows behind them', async (t) => {
   assert.equal(stats.unassigned, 1);
   assert.equal(stats.slaBreaches, 2);
   assert.equal(stats.avgFirstResponseMinutes, 15); // mean of 10 and 20
-  assert.equal(stats.csat, 4);                     // mean of 5 and 3
-  assert.equal(stats.satisfaction, 80);            // 4 / 5 as a percentage
+  assert.equal(stats.csat, 4); // mean of 5 and 3
+  assert.equal(stats.satisfaction, 80); // 4 / 5 as a percentage
   assert.equal(stats.ratedCount, 2);
 
   const firstResponse = slaCompliance.find((r: any) => r.key === 'firstResponse');
@@ -271,7 +312,10 @@ test('agent headcount tiles are real, not the old hardcoded 4 and 5', async (t) 
         siteIds: [tenant.site._id]
       }
     });
-    assert.ok(r.status === 200 || r.status === 201, `team create failed: ${JSON.stringify(r.body)}`);
+    assert.ok(
+      r.status === 200 || r.status === 201,
+      `team create failed: ${JSON.stringify(r.body)}`
+    );
     const created = r.body.teamMember || r.body.member || r.body.user || r.body;
     const id = created._id || created.id;
     if (status !== 'offline') {
@@ -303,9 +347,25 @@ test('agent headcount tiles are real, not the old hardcoded 4 and 5', async (t) 
 test('the window filter actually excludes older conversations', async (t) => {
   const tenant = await createTenant('window');
   const ids: string[] = [];
-  ids.push(await seedConversation({ site: tenant.site, ageHours: 2, status: 'resolved', slaStatus: 'met' }));
-  ids.push(await seedConversation({ site: tenant.site, ageHours: 24 * 20, status: 'resolved', slaStatus: 'met' }));
-  ids.push(await seedConversation({ site: tenant.site, ageHours: 24 * 60, status: 'resolved', slaStatus: 'met' }));
+  ids.push(
+    await seedConversation({ site: tenant.site, ageHours: 2, status: 'resolved', slaStatus: 'met' })
+  );
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      ageHours: 24 * 20,
+      status: 'resolved',
+      slaStatus: 'met'
+    })
+  );
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      ageHours: 24 * 60,
+      status: 'resolved',
+      slaStatus: 'met'
+    })
+  );
 
   t.after(async () => {
     await query('DELETE FROM conversations WHERE id = ANY($1)', [ids]);
@@ -329,7 +389,14 @@ test('analytics never crosses a tenant boundary', async (t) => {
 
   const ids: string[] = [];
   for (let i = 0; i < 4; i++) {
-    ids.push(await seedConversation({ site: owner.site, ageHours: 2, status: 'resolved', slaStatus: 'met' }));
+    ids.push(
+      await seedConversation({
+        site: owner.site,
+        ageHours: 2,
+        status: 'resolved',
+        slaStatus: 'met'
+      })
+    );
   }
   t.after(async () => {
     await query('DELETE FROM conversations WHERE id = ANY($1)', [ids]);
@@ -341,10 +408,9 @@ test('analytics never crosses a tenant boundary', async (t) => {
   assert.equal(theirs.body.stats.totalConversations, 0);
 
   // Nor may they scope the report to a site they do not own.
-  const scoped = await api(
-    `/api/analytics/overview?range=7days&siteId=${owner.site._id}`,
-    { token: intruder.token }
-  );
+  const scoped = await api(`/api/analytics/overview?range=7days&siteId=${owner.site._id}`, {
+    token: intruder.token
+  });
   assert.equal(scoped.status, 404);
 
   // The owner does see their own four.
@@ -358,7 +424,10 @@ test('range is validated against an allow list', async () => {
   const bad = await api('/api/analytics/overview?range=all', { token: tenant.token });
   assert.equal(bad.status, 400);
 
-  const injection = await api("/api/analytics/overview?range=7days'; DROP TABLE conversations; --", { token: tenant.token });
+  const injection = await api(
+    "/api/analytics/overview?range=7days'; DROP TABLE conversations; --",
+    { token: tenant.token }
+  );
   assert.equal(injection.status, 400);
 
   const { rows } = await query("SELECT to_regclass('public.conversations') AS t");

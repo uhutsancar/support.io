@@ -12,7 +12,8 @@
 //
 // Requires a running backend. Run with: npm test
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
@@ -20,7 +21,6 @@ import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 import { getPool } from '../src/db/pool';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -70,7 +70,11 @@ async function api(
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   let json = null;
-  try { json = await res.json(); } catch (e) { /* empty body */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* empty body */
+  }
   return { status: res.status, body: json, headers: res.headers };
 }
 
@@ -100,7 +104,10 @@ async function createTenant(label: string) {
 
 // A conversation with a short transcript, written directly so the tests do not
 // depend on the widget socket.
-async function seedConversation(site: any, { withMessages = true }: { withMessages?: boolean } = {}) {
+async function seedConversation(
+  site: any,
+  { withMessages = true }: { withMessages?: boolean } = {}
+) {
   const id = generateId();
   const ticketNumber = await Conversation.nextTicketNumber();
   await query(
@@ -111,7 +118,14 @@ async function seedConversation(site: any, { withMessages = true }: { withMessag
      VALUES ($1, $2, $3, $4, $5, $6, 'AI Visitor',
              'open', 'normal', '{}'::jsonb, '{}'::jsonb, 'web-chat', '/', '{}'::jsonb, '{}',
              now(), now(), now())`,
-    [id, ticketNumber, `#${String(ticketNumber).padStart(4, '0')}`, site._id, site.organizationId, `ai-${id}`]
+    [
+      id,
+      ticketNumber,
+      `#${String(ticketNumber).padStart(4, '0')}`,
+      site._id,
+      site.organizationId,
+      `ai-${id}`
+    ]
   );
 
   if (withMessages) {
@@ -265,7 +279,9 @@ test('an AI suggestion is never delivered to the visitor', async (t) => {
     await query('DELETE FROM conversations WHERE id = $1', [conversationId]);
   });
 
-  const before = await query('SELECT count(*)::int AS c FROM messages WHERE conversation_id = $1', [conversationId]);
+  const before = await query('SELECT count(*)::int AS c FROM messages WHERE conversation_id = $1', [
+    conversationId
+  ]);
 
   await api(`/api/ai/conversations/${conversationId}/suggest-reply`, {
     method: 'POST',
@@ -273,14 +289,22 @@ test('an AI suggestion is never delivered to the visitor', async (t) => {
     body: {}
   });
 
-  const after = await query('SELECT count(*)::int AS c FROM messages WHERE conversation_id = $1', [conversationId]);
+  const after = await query('SELECT count(*)::int AS c FROM messages WHERE conversation_id = $1', [
+    conversationId
+  ]);
 
   // Whether the call succeeded or was refused for lack of a key, asking for a
   // suggestion must not append anything to the transcript.
-  assert.equal(after.rows[0].c, before.rows[0].c, 'suggest-reply wrote a message into the conversation');
+  assert.equal(
+    after.rows[0].c,
+    before.rows[0].c,
+    'suggest-reply wrote a message into the conversation'
+  );
 
   // Nor may it change the conversation itself.
-  const conv = await query('SELECT status, tags, priority FROM conversations WHERE id = $1', [conversationId]);
+  const conv = await query('SELECT status, tags, priority FROM conversations WHERE id = $1', [
+    conversationId
+  ]);
   assert.equal(conv.rows[0].status, 'open');
   assert.equal(conv.rows[0].priority, 'normal');
   assert.deepEqual(conv.rows[0].tags, []);
@@ -300,7 +324,9 @@ test('analyze does not apply its own suggestions', async (t) => {
   });
 
   // A suggested priority or tag is a recommendation for the agent, not an edit.
-  const conv = await query('SELECT priority, tags FROM conversations WHERE id = $1', [conversationId]);
+  const conv = await query('SELECT priority, tags FROM conversations WHERE id = $1', [
+    conversationId
+  ]);
   assert.equal(conv.rows[0].priority, 'normal');
   assert.deepEqual(conv.rows[0].tags, []);
 });

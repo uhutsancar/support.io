@@ -17,14 +17,14 @@
 // Requires a running backend (npm start) and the PostgreSQL it is configured
 // against. Run with: npm test
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { io } from 'socket.io-client';
 import { query } from '../src/db/pool';
 import { getPool } from '../src/db/pool';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -48,7 +48,11 @@ function sessionToken(res: { headers: Headers }): string {
 
 async function waitFor<T>(
   check: () => Promise<T> | T,
-  { timeoutMs = 10000, intervalMs = 200, label = 'condition' }: { timeoutMs?: number; intervalMs?: number; label?: string } = {}
+  {
+    timeoutMs = 10000,
+    intervalMs = 200,
+    label = 'condition'
+  }: { timeoutMs?: number; intervalMs?: number; label?: string } = {}
 ): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   let last: T | undefined;
@@ -92,7 +96,11 @@ async function api(
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   let json = null;
-  try { json = await res.json(); } catch (e) { /* empty body */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* empty body */
+  }
   return { status: res.status, body: json, headers: res.headers };
 }
 
@@ -183,73 +191,100 @@ test('automation rule fires end to end and records its effects', async (t) => {
   const ruleId = created.body._id;
 
   t.after(async () => {
-    await api(`/api/automation-rules/${ruleId}`, { method: 'DELETE', token: tenant.token }).catch(() => {});
+    await api(`/api/automation-rules/${ruleId}`, { method: 'DELETE', token: tenant.token }).catch(
+      () => {}
+    );
   });
 
   // Creating a rule is an audited operation.
-  const ruleAudit = await waitFor(async () => {
-    const { rows } = await query(
-      "SELECT id FROM audit_logs WHERE action = 'AUTOMATION_RULE_CREATED' AND entity_id = $1",
-      [ruleId]
-    );
-    return rows[0];
-  }, { label: 'AUTOMATION_RULE_CREATED audit row' });
+  const ruleAudit = await waitFor(
+    async () => {
+      const { rows } = await query(
+        "SELECT id FROM audit_logs WHERE action = 'AUTOMATION_RULE_CREATED' AND entity_id = $1",
+        [ruleId]
+      );
+      return rows[0];
+    },
+    { label: 'AUTOMATION_RULE_CREATED audit row' }
+  );
   assert.ok(ruleAudit, 'rule creation was not audited');
 
   const visitorId = `e2e-visitor-${Date.now()}`;
   const socket = await connectVisitor(tenant.site.siteKey, visitorId);
   t.after(() => socket.close());
 
-  socket.emit('send-message', { content: 'Hello, I need a refund for my order', senderName: 'E2E Visitor' });
+  socket.emit('send-message', {
+    content: 'Hello, I need a refund for my order',
+    senderName: 'E2E Visitor'
+  });
 
   // The conversation is created by the send-message handler itself.
-  const conversation = await waitFor(async () => {
-    const { rows } = await query(
-      'SELECT id, tags, organization_id FROM conversations WHERE visitor_id = $1',
-      [visitorId]
-    );
-    return rows[0];
-  }, { label: 'conversation row' });
+  const conversation = await waitFor(
+    async () => {
+      const { rows } = await query(
+        'SELECT id, tags, organization_id FROM conversations WHERE visitor_id = $1',
+        [visitorId]
+      );
+      return rows[0];
+    },
+    { label: 'conversation row' }
+  );
 
   // Action 1: the tag was applied.
-  const tagged = await waitFor(async () => {
-    const { rows } = await query('SELECT tags FROM conversations WHERE id = $1', [conversation.id]);
-    return rows[0] && (rows[0].tags || []).includes('refund') ? rows[0] : null;
-  }, { label: "conversation tagged 'refund'" });
+  const tagged = await waitFor(
+    async () => {
+      const { rows } = await query('SELECT tags FROM conversations WHERE id = $1', [
+        conversation.id
+      ]);
+      return rows[0] && (rows[0].tags || []).includes('refund') ? rows[0] : null;
+    },
+    { label: "conversation tagged 'refund'" }
+  );
   assert.ok(tagged!.tags.includes('refund'));
 
   // Action 2: the automated reply was persisted as a bot message.
-  const reply = await waitFor(async () => {
-    const { rows } = await query(
-      "SELECT content FROM messages WHERE conversation_id = $1 AND sender_type = 'bot' AND sender_id = 'automation-bot'",
-      [conversation.id]
-    );
-    return rows[0];
-  }, { label: 'automated bot reply' });
+  const reply = await waitFor(
+    async () => {
+      const { rows } = await query(
+        "SELECT content FROM messages WHERE conversation_id = $1 AND sender_type = 'bot' AND sender_id = 'automation-bot'",
+        [conversation.id]
+      );
+      return rows[0];
+    },
+    { label: 'automated bot reply' }
+  );
   assert.match(reply.content, /refund request/i);
 
   // The run was logged as a success and the rule's counters moved.
-  const log = await waitFor(async () => {
-    const { rows } = await query(
-      'SELECT status, execution_time_ms FROM automation_logs WHERE rule_id = $1 AND target_id = $2',
-      [ruleId, conversation.id]
-    );
-    return rows[0];
-  }, { label: 'automation_logs row' });
+  const log = await waitFor(
+    async () => {
+      const { rows } = await query(
+        'SELECT status, execution_time_ms FROM automation_logs WHERE rule_id = $1 AND target_id = $2',
+        [ruleId, conversation.id]
+      );
+      return rows[0];
+    },
+    { label: 'automation_logs row' }
+  );
   assert.equal(log.status, 'success');
 
-  const { rows: metricRows } = await query('SELECT metrics FROM automation_rules WHERE id = $1', [ruleId]);
+  const { rows: metricRows } = await query('SELECT metrics FROM automation_rules WHERE id = $1', [
+    ruleId
+  ]);
   assert.equal(metricRows[0].metrics.executionsCount, 1);
   assert.equal(metricRows[0].metrics.successCount, 1);
 
   // And the execution reached the audit trail.
-  const execAudit = await waitFor(async () => {
-    const { rows } = await query(
-      "SELECT metadata FROM audit_logs WHERE action = 'AUTOMATION_EXECUTED' AND entity_id = $1",
-      [conversation.id]
-    );
-    return rows[0];
-  }, { label: 'AUTOMATION_EXECUTED audit row' });
+  const execAudit = await waitFor(
+    async () => {
+      const { rows } = await query(
+        "SELECT metadata FROM audit_logs WHERE action = 'AUTOMATION_EXECUTED' AND entity_id = $1",
+        [conversation.id]
+      );
+      return rows[0];
+    },
+    { label: 'AUTOMATION_EXECUTED audit row' }
+  );
   assert.equal(execAudit.metadata.ruleName, 'Refund requests');
 });
 
@@ -271,25 +306,38 @@ test('a rule whose condition does not match leaves the conversation alone', asyn
   assert.equal(created.status, 201);
   const ruleId = created.body._id;
   t.after(async () => {
-    await api(`/api/automation-rules/${ruleId}`, { method: 'DELETE', token: tenant.token }).catch(() => {});
+    await api(`/api/automation-rules/${ruleId}`, { method: 'DELETE', token: tenant.token }).catch(
+      () => {}
+    );
   });
 
   const visitorId = `e2e-nomatch-${Date.now()}`;
   const socket = await connectVisitor(tenant.site.siteKey, visitorId);
   t.after(() => socket.close());
 
-  socket.emit('send-message', { content: 'What are your opening hours?', senderName: 'E2E Visitor' });
+  socket.emit('send-message', {
+    content: 'What are your opening hours?',
+    senderName: 'E2E Visitor'
+  });
 
-  const conversation = await waitFor(async () => {
-    const { rows } = await query('SELECT id, tags FROM conversations WHERE visitor_id = $1', [visitorId]);
-    return rows[0];
-  }, { label: 'conversation row' });
+  const conversation = await waitFor(
+    async () => {
+      const { rows } = await query('SELECT id, tags FROM conversations WHERE visitor_id = $1', [
+        visitorId
+      ]);
+      return rows[0];
+    },
+    { label: 'conversation row' }
+  );
 
   // Give the engine the same budget it would have had to act, then assert it did not.
   await new Promise((r) => setTimeout(r, 2000));
 
   const { rows } = await query('SELECT tags FROM conversations WHERE id = $1', [conversation.id]);
-  assert.ok(!(rows[0].tags || []).includes('refund'), 'tag was applied despite a non-matching condition');
+  assert.ok(
+    !(rows[0].tags || []).includes('refund'),
+    'tag was applied despite a non-matching condition'
+  );
 
   const { rows: logs } = await query('SELECT id FROM automation_logs WHERE rule_id = $1', [ruleId]);
   assert.equal(logs.length, 0, 'a non-matching rule should not produce an execution log');
@@ -325,7 +373,10 @@ test('rule routes are isolated between organizations', async () => {
   });
   assert.equal(update.status, 404, 'intruder could update another organization rule');
 
-  const removed = await api(`/api/automation-rules/${ruleId}`, { method: 'DELETE', token: intruder.token });
+  const removed = await api(`/api/automation-rules/${ruleId}`, {
+    method: 'DELETE',
+    token: intruder.token
+  });
   assert.equal(removed.status, 404, 'intruder could delete another organization rule');
 
   // The rule is untouched and still the owner's.
@@ -364,7 +415,11 @@ test('a rule cannot be moved into another organization through update', async ()
   assert.equal(update.status, 200);
 
   const { rows } = await query('SELECT site_id FROM automation_rules WHERE id = $1', [ruleId]);
-  assert.equal(rows[0].site_id, owner.site._id, 'siteId was reassignable, breaking tenant isolation');
+  assert.equal(
+    rows[0].site_id,
+    owner.site._id,
+    'siteId was reassignable, breaking tenant isolation'
+  );
 
   await api(`/api/automation-rules/${ruleId}`, { method: 'DELETE', token: owner.token });
 });

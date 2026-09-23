@@ -14,12 +14,12 @@
 // ve konteynerin yayinladigi portu golgeliyordu. Host'tan yapilan SQL yerel
 // sunucuya, backend'inki konteyner sunucusuna gidiyordu.
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -27,8 +27,8 @@ test('the API under test and this suite share one database', async () => {
   const health = await fetch(`${BASE}/health`).catch((error: any) => {
     assert.fail(
       `${BASE} adresinde backend yok (${error.message}).\n` +
-      `Baslatmak icin: docker compose up -d\n` +
-      `Baska bir adres icin: E2E_BASE_URL=http://host:port npm test`
+        `Baslatmak icin: docker compose up -d\n` +
+        `Baska bir adres icin: E2E_BASE_URL=http://host:port npm test`
     );
   });
   assert.ok(health.ok, `${BASE}/health saglikli degil: HTTP ${health.status}`);
@@ -48,7 +48,7 @@ test('the API under test and this suite share one database', async () => {
   assert.ok(
     registration.ok,
     `Kayit ucu HTTP ${registration.status} dondu. 429 ise hiz siniri kotasi ` +
-    `dolmustur: gelistirme yiginini REGISTER_RATE_MAX ile calistirin.`
+      `dolmustur: gelistirme yiginini REGISTER_RATE_MAX ile calistirin.`
   );
 
   // API'nin az once yazdigi satir bu paketin havuzundan gorunuyor mu?
@@ -57,10 +57,10 @@ test('the API under test and this suite share one database', async () => {
     seen.rowCount,
     1,
     'Backend ile bu paket AYRI veritabanlarina bakiyor.\n' +
-    `  Bu paketin havuzu : ${describePool()}\n` +
-    `  Backend           : ${BASE}\n` +
-    'Ikisini ayni veritabanina yoneltin. Compose yigini icin:\n' +
-    "  DATABASE_URL='postgresql://support_user:supportchat@localhost:5433/supportchat' npm test"
+      `  Bu paketin havuzu : ${describePool()}\n` +
+      `  Backend           : ${BASE}\n` +
+      'Ikisini ayni veritabanina yoneltin. Compose yigini icin:\n' +
+      "  DATABASE_URL='postgresql://support_user:supportchat@localhost:5433/supportchat' npm test"
   );
 });
 

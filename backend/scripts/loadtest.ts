@@ -12,10 +12,10 @@
 //
 // Çalışan bir backend ve tohumlanmış demo verisi gerektirir.
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import { io } from 'socket.io-client';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://127.0.0.1:${process.env.PORT || 5000}`;
 const DEMO_OWNER = { email: 'owner@demo.support.io', password: 'Demo1234!' };
@@ -41,9 +41,9 @@ function summarize(label: string, samples: number[], errors: number) {
   const avg = Math.round(s.reduce((a: any, b: any) => a + b, 0) / s.length);
   console.log(
     `  ${label.padEnd(26)} n=${String(s.length).padStart(4)}  ` +
-    `ort=${String(avg).padStart(5)}ms  p50=${String(at(50)).padStart(5)}ms  ` +
-    `p95=${String(at(95)).padStart(5)}ms  p99=${String(at(99)).padStart(5)}ms  ` +
-    `max=${String(s[s.length - 1]).padStart(5)}ms  hata=${errors}`
+      `ort=${String(avg).padStart(5)}ms  p50=${String(at(50)).padStart(5)}ms  ` +
+      `p95=${String(at(95)).padStart(5)}ms  p99=${String(at(99)).padStart(5)}ms  ` +
+      `max=${String(s[s.length - 1]).padStart(5)}ms  hata=${errors}`
   );
   return { avg, p50: at(50), p95: at(95), p99: at(99), max: s[s.length - 1], errors, n: s.length };
 }
@@ -63,8 +63,12 @@ async function timed(fn: () => Promise<unknown>) {
   try {
     const ok = await fn();
     return { ms: Date.now() - t0, ok };
-  } catch (e) {
-    return { ms: Date.now() - t0, ok: false, error: e.message };
+  } catch (error) {
+    return {
+      ms: Date.now() - t0,
+      ok: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 }
 
@@ -116,14 +120,24 @@ function visitorSession(siteKey: string, index: number): Promise<VisitorResult> 
 
     const done = (err: any) => {
       result.error = err || null;
-      try { socket.close(); } catch (e) { /* zaten kapalı */ }
+      try {
+        socket.close();
+      } catch {
+        /* zaten kapalı */
+      }
       resolve(result);
     };
 
     const guard = setTimeout(() => done('timeout'), 30000);
 
-    socket.on('connect_error', (e) => { clearTimeout(guard); done('connect_error: ' + e.message); });
-    socket.on('error', (e) => { clearTimeout(guard); done('error: ' + (e?.message || e)); });
+    socket.on('connect_error', (e) => {
+      clearTimeout(guard);
+      done('connect_error: ' + e.message);
+    });
+    socket.on('error', (e) => {
+      clearTimeout(guard);
+      done('error: ' + (e?.message || e));
+    });
 
     socket.on('connect', () => {
       socket.emit('join-conversation', {
@@ -164,7 +178,9 @@ async function scenarioWidget(siteKey: string) {
   const errorKinds = new Map();
 
   for (let round = 0; round < ROUNDS; round++) {
-    const batch = Array.from({ length: VISITORS }, (_, i) => visitorSession(siteKey, round * VISITORS + i));
+    const batch = Array.from({ length: VISITORS }, (_, i) =>
+      visitorSession(siteKey, round * VISITORS + i)
+    );
     const results = await Promise.all(batch);
     for (const r of results) {
       if (r.ok) {
@@ -188,10 +204,14 @@ async function scenarioWidget(siteKey: string) {
 
 async function main() {
   console.log(`Hedef: ${BASE}`);
-  console.log(`Profil: ${AGENTS} temsilci × ${ROUNDS} tur, ${VISITORS} ziyaretçi × ${ROUNDS} tur\n`);
+  console.log(
+    `Profil: ${AGENTS} temsilci × ${ROUNDS} tur, ${VISITORS} ziyaretçi × ${ROUNDS} tur\n`
+  );
 
   const { token } = (await login()) as { token: string };
-  const sitesRes = await fetch(`${BASE}/api/sites`, { headers: { Authorization: `Bearer ${token}` } });
+  const sitesRes = await fetch(`${BASE}/api/sites`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   const { sites } = (await sitesRes.json()) as { sites: any[] };
   const site = sites.find((s: any) => s.siteKey === 'demo-site-key-0000-1111-2222') || sites[0];
   if (!site) throw new Error('Site bulunamadı. Önce: npm run db:seed');

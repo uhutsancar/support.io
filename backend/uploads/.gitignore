@@ -1,3 +1,14 @@
-# Uploaded files should not be committed to git
+# Uploaded files are not source.
+#
+# With S3 configured this directory stays empty. Without it — the local
+# development default — chat attachments land in files/ and site logos in
+# logos/ (see src/middleware/upload.ts). Neither is source, and both hold
+# whatever a stranger uploaded.
+#
+# The three logos already committed here predate this rule and stay tracked;
+# git keeps tracking a file it already knows about regardless of a later
+# ignore. Nothing new is added.
 files/*
 !files/.gitkeep
+logos/*
+!logos/.gitkeep

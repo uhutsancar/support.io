@@ -9,7 +9,8 @@
 //
 // Requires a running backend. Run with: npm test
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
@@ -17,7 +18,6 @@ import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 import { getPool } from '../src/db/pool';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -67,7 +67,11 @@ async function api(
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   let json = null;
-  try { json = await res.json(); } catch (e) { /* empty body */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* empty body */
+  }
   return { status: res.status, body: json, headers: res.headers };
 }
 
@@ -125,9 +129,10 @@ async function seedConversation({
   // ticket numbers handed out by the running server.
   const ticketNumber = await Conversation.nextTicketNumber();
   const createdAt = new Date(Date.now() - ageHours * 3600 * 1000);
-  const firstResponseAt = firstResponseMinutes === null || firstResponseMinutes === undefined
-    ? null
-    : new Date(createdAt.getTime() + firstResponseMinutes * 60 * 1000);
+  const firstResponseAt =
+    firstResponseMinutes === null || firstResponseMinutes === undefined
+      ? null
+      : new Date(createdAt.getTime() + firstResponseMinutes * 60 * 1000);
 
   await query(
     `INSERT INTO conversations
@@ -151,7 +156,11 @@ async function seedConversation({
         firstResponseStatus: slaStatus,
         resolutionStatus: 'pending'
       }),
-      JSON.stringify({ score: ratingScore, feedback: null, ratedAt: ratingScore ? new Date() : null }),
+      JSON.stringify({
+        score: ratingScore,
+        feedback: null,
+        ratedAt: ratingScore ? new Date() : null
+      }),
       createdAt,
       firstResponseAt,
       ['resolved', 'closed'].includes(status) ? createdAt : null,
@@ -169,11 +178,51 @@ test('performance endpoint reports figures derived from real conversations', asy
   //   two resolved, first responses of 10 and 20 minutes, ratings 5 and 3,
   //   one SLA met / one breached, plus one still open.
   const ids: string[] = [];
-  ids.push(await seedConversation({ site: tenant.site, agentId, ageHours: 24, status: 'resolved', firstResponseMinutes: 10, ratingScore: 5, slaStatus: 'met' }));
-  ids.push(await seedConversation({ site: tenant.site, agentId, ageHours: 48, status: 'closed', firstResponseMinutes: 20, ratingScore: 3, slaStatus: 'breached' }));
-  ids.push(await seedConversation({ site: tenant.site, agentId, ageHours: 12, status: 'assigned', firstResponseMinutes: null, ratingScore: null, slaStatus: 'pending' }));
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      agentId,
+      ageHours: 24,
+      status: 'resolved',
+      firstResponseMinutes: 10,
+      ratingScore: 5,
+      slaStatus: 'met'
+    })
+  );
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      agentId,
+      ageHours: 48,
+      status: 'closed',
+      firstResponseMinutes: 20,
+      ratingScore: 3,
+      slaStatus: 'breached'
+    })
+  );
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      agentId,
+      ageHours: 12,
+      status: 'assigned',
+      firstResponseMinutes: null,
+      ratingScore: null,
+      slaStatus: 'pending'
+    })
+  );
   // Outside the window, so it must not affect the 7 day numbers.
-  ids.push(await seedConversation({ site: tenant.site, agentId, ageHours: 24 * 40, status: 'resolved', firstResponseMinutes: 90, ratingScore: 1, slaStatus: 'breached' }));
+  ids.push(
+    await seedConversation({
+      site: tenant.site,
+      agentId,
+      ageHours: 24 * 40,
+      status: 'resolved',
+      firstResponseMinutes: 90,
+      ratingScore: 1,
+      slaStatus: 'breached'
+    })
+  );
 
   t.after(async () => {
     await query('DELETE FROM conversations WHERE id = ANY($1)', [ids]);
@@ -251,7 +300,9 @@ test('the range parameter only accepts the supported windows', async () => {
   assert.equal(bad.status, 400);
 
   // An injection attempt is rejected by the same allow-list, never interpolated.
-  const injection = await api("/api/team/me/performance?range=7d'; DROP TABLE conversations; --", { token: tenant.token });
+  const injection = await api("/api/team/me/performance?range=7d'; DROP TABLE conversations; --", {
+    token: tenant.token
+  });
   assert.equal(injection.status, 400);
 
   const { rows } = await query("SELECT to_regclass('public.conversations') AS t");

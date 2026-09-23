@@ -16,11 +16,11 @@
 //
 // Calisan bir backend gerektirir. Calistirma: npm test
 
-import dotenv from 'dotenv';
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-dotenv.config();
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -71,7 +71,11 @@ async function api(
     ...(body ? { body: JSON.stringify(body) } : {})
   });
   let json = null;
-  try { json = await res.json(); } catch (e) { /* boş gövde */ }
+  try {
+    json = await res.json();
+  } catch {
+    /* boş gövde */
+  }
   return { status: res.status, body: json, headers: res.headers };
 }
 
@@ -86,7 +90,10 @@ async function createTenant(label: string) {
       companyName: `${label} co`
     }
   });
-  assert.ok(reg.status === 200 || reg.status === 201, `register failed: ${JSON.stringify(reg.body)}`);
+  assert.ok(
+    reg.status === 200 || reg.status === 201,
+    `register failed: ${JSON.stringify(reg.body)}`
+  );
 
   const site = await api('/api/sites', {
     method: 'POST',
@@ -121,9 +128,21 @@ test('widget.js is served with the right type, CORS and cache headers', async ()
   // Eski surumdeki iki hata: sabit localhost adresi ve ucuncu parti CDN.
   // Kaynak metninde bu adresler yalnizca aciklama satirlarinda gecebilir;
   // aranan sey gercek bir URL degeridir, o yuzden sema ile birlikte bakilir.
-  assert.doesNotMatch(source, /['"]http:\/\/localhost:5000['"]/, 'API url is hardcoded in the runtime');
-  assert.doesNotMatch(source, /https?:\/\/cdn\.socket\.io/, 'runtime still loads socket.io from a third-party CDN');
-  assert.match(source, /\/socket\.io\/socket\.io\.js/, 'runtime does not load the socket client from our own origin');
+  assert.doesNotMatch(
+    source,
+    /['"]http:\/\/localhost:5000['"]/,
+    'API url is hardcoded in the runtime'
+  );
+  assert.doesNotMatch(
+    source,
+    /https?:\/\/cdn\.socket\.io/,
+    'runtime still loads socket.io from a third-party CDN'
+  );
+  assert.match(
+    source,
+    /\/socket\.io\/socket\.io\.js/,
+    'runtime does not load the socket client from our own origin'
+  );
 });
 
 test('the pinned widget path is cacheable as immutable', async () => {
@@ -152,11 +171,23 @@ test('bootstrap returns everything the widget needs in one response', async () =
   assert.ok(payload.version, 'no SDK version');
   assert.ok(payload.config, 'no config');
   assert.ok(Array.isArray(payload.faqs), 'faqs is not an array');
-  assert.ok(['online', 'away', 'offline'].includes(payload.availability), 'availability is not a known state');
+  assert.ok(
+    ['online', 'away', 'offline'].includes(payload.availability),
+    'availability is not a known state'
+  );
 
   // Widget'in cizim icin ihtiyac duydugu her grup dolu gelmeli; eksik grup,
   // runtime'da `config.colors.primary` gibi okumalari patlatirdi.
-  for (const group of ['colors', 'branding', 'button', 'window', 'messages', 'behavior', 'typography', 'advanced']) {
+  for (const group of [
+    'colors',
+    'branding',
+    'button',
+    'window',
+    'messages',
+    'behavior',
+    'typography',
+    'advanced'
+  ]) {
     assert.ok(payload.config[group], `config.${group} is missing`);
   }
   assert.match(payload.config.colors.primary, /^#[0-9A-Fa-f]{6}$/);
@@ -171,7 +202,14 @@ test('bootstrap leaks no internal identifiers', async () => {
   // amaci tam olarak budur: modele yeni bir alan eklendiginde kazara
   // yayinlanmasin.
   const serialized = JSON.stringify(res.body);
-  for (const forbidden of ['organizationId', 'organization_id', 'siteId', 'site_id', '_id', 'userId']) {
+  for (const forbidden of [
+    'organizationId',
+    'organization_id',
+    'siteId',
+    'site_id',
+    '_id',
+    'userId'
+  ]) {
     assert.ok(!serialized.includes(forbidden), `bootstrap response leaks ${forbidden}`);
   }
 });
@@ -245,7 +283,11 @@ test('the first verification timestamp survives later heartbeats', async () => {
 
   const second = await api('/api/widget/installed', {
     method: 'POST',
-    body: { siteKey: tenant.site.siteKey, url: 'https://a.example.com/pricing', sdkVersion: '3.0.0' }
+    body: {
+      siteKey: tenant.site.siteKey,
+      url: 'https://a.example.com/pricing',
+      sdkVersion: '3.0.0'
+    }
   });
   assert.equal(second.status, 200);
 
