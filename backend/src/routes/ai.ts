@@ -1,9 +1,9 @@
 import express from 'express';
-import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import { auth } from '../middleware/auth';
 import * as aiService from '../services/aiService';
 import { getProvider } from '../services/ai';
-import { HttpError, asyncHandler, loadOwnedConversation, requireOrganization } from '../http';
+import { createLimiter } from '../middleware/rateLimit';
+import { HttpError, asyncHandler, loadAccessibleConversation, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -13,18 +13,17 @@ const router = express.Router();
 /** One AI task, given the conversation it was asked about. */
 type AITask = (conversation: Doc<ConversationDoc>, req: Request) => Promise<unknown>;
 
-// Model calls cost money per request, so these endpoints get a tighter budget
-// than the general API limiter. Keyed per authenticated user rather than per IP
-// so one busy office cannot exhaust everyone else's allowance.
-const aiLimiter = rateLimit({
+// Every call occupies the one GPU all tenants share, so these endpoints get a
+// tighter budget than the general API limiter. The shared limiter keys by the
+// signed-in user, so one busy office cannot exhaust everyone else's allowance,
+// and keeps its counter in Redis, so the limit holds across processes rather
+// than multiplying with them.
+const aiLimiter = createLimiter({
+  name: 'ai',
+  code: 'AI_RATE_LIMITED',
+  message: 'AI istek sınırına ulaşıldı, bir dakika sonra tekrar deneyin.',
   windowMs: 60 * 1000,
-  max: 20,
-  // Authenticated calls are keyed by user id. The anonymous fallback goes
-  // through ipKeyGenerator because a raw req.ip lets an IPv6 client sidestep
-  // the limit by walking its own /64.
-  keyGenerator: (req: Request) =>
-    req.userId ? `user:${req.userId}` : ipKeyGenerator(req.ip ?? ''),
-  message: { error: 'AI istek sınırına ulaşıldı, bir dakika sonra tekrar deneyin.' }
+  max: 20
 });
 
 /** True for the provider layer's own failure type, which carries a status. */
@@ -42,13 +41,14 @@ function isAIError(error: unknown): error is Error & {
  * allowed to see, run the task, and let a provider failure keep its own status
  * instead of collapsing into a blanket 500.
  *
- * `loadOwnedConversation` is the shared tenant guard (src/http/guards.ts).
- * Without it an agent could summarise another tenant's transcript by guessing
- * an id — and the summary would quote it straight back.
+ * `loadAccessibleConversation` is the inbox's own rule (src/http/guards.ts):
+ * the caller's organization *and* a site their role and assignment reach.
+ * Without it an agent could summarise a transcript they may not open by
+ * guessing an id — and the summary would quote it straight back.
  */
 function handler(run: AITask) {
   return asyncHandler(async (req: Request, res: Response) => {
-    const conversation = await loadOwnedConversation(req, req.params.conversationId);
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
     try {
       res.json(await run(conversation, req));
     } catch (error) {

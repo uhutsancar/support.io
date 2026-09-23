@@ -131,6 +131,46 @@ export async function loadOwnedConversation(
   return conversation;
 }
 
+/** Roles that reach every site in their organization regardless of assignment. */
+const UNRESTRICTED_ROLES = new Set(['owner', 'admin']);
+
+/**
+ * Whether an account may work on a site of its own organization.
+ *
+ * The inbox rule: owners and admins reach every site; anyone else reaches the
+ * sites they are assigned to, and an empty assignment list means all of them.
+ * The socket layer and the HTTP routes both ask this one function, so the two
+ * ways into a conversation cannot disagree about who may open it.
+ */
+export function mayAccessSite(
+  role: string | undefined,
+  assignedSites: Iterable<unknown> | undefined,
+  siteId: unknown
+): boolean {
+  if (role && UNRESTRICTED_ROLES.has(role)) return true;
+  const sites = Array.from(assignedSites ?? [], String);
+  return sites.length === 0 || sites.includes(String(siteId));
+}
+
+/**
+ * The conversation, if the caller may work on it: same organization *and* a
+ * site their role and assignment reach.
+ *
+ * `loadOwnedConversation` stops at the organization, which let an agent
+ * restricted to one site open another site's thread by id. Anything that reads
+ * a transcript back to the caller — the AI copilot in particular — uses this.
+ */
+export async function loadAccessibleConversation(
+  req: Request,
+  conversationId: unknown
+): Promise<Doc<ConversationDoc>> {
+  const conversation = await loadOwnedConversation(req, conversationId);
+  if (!mayAccessSite(req.user?.role, req.user?.assignedSites, conversation.siteId)) {
+    throw notFound('Conversation');
+  }
+  return conversation;
+}
+
 /**
  * The department, if the caller's organization owns the site it hangs from.
  *

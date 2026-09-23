@@ -18,7 +18,6 @@ import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 import { getPool } from '../src/db/pool';
 
-
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
 /** How one request to the running API is made. */
@@ -189,6 +188,59 @@ test('AI tasks require authentication', async () => {
   assert.equal(res.status, 401);
 
   await query('DELETE FROM conversations WHERE id = $1', [conversationId]);
+});
+
+test('an agent restricted to one site cannot run AI on another site of the same company', async (t) => {
+  const tenant = await createTenant('scoped');
+  const second = await api('/api/sites', {
+    method: 'POST',
+    token: tenant.token,
+    body: { name: 'second site', domain: `second${Date.now()}.test` }
+  });
+  assert.equal(second.status, 201);
+
+  const email = `scoped-agent${Date.now()}${Math.floor(Math.random() * 1000)}@ai.test`;
+  const created = await api('/api/team', {
+    method: 'POST',
+    token: tenant.token,
+    body: {
+      name: 'Scoped agent',
+      email,
+      password: 'E2ePassw0rd!',
+      role: 'agent',
+      assignedSites: [tenant.site._id]
+    }
+  });
+  assert.ok([200, 201].includes(created.status), `team create failed: ${JSON.stringify(created)}`);
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: 'E2ePassw0rd!' }
+  });
+  assert.equal(login.status, 200);
+  const agentToken = sessionToken(login);
+
+  const ownSite = await seedConversation(tenant.site);
+  const otherSite = await seedConversation(second.body.site);
+  t.after(async () => {
+    await query('DELETE FROM conversations WHERE id = ANY($1)', [[ownSite, otherSite]]);
+  });
+
+  for (const task of TASKS) {
+    const res = await api(`/api/ai/conversations/${otherSite}/${task.path}`, {
+      method: 'POST',
+      token: agentToken,
+      body: task.body
+    });
+    assert.equal(res.status, 404, `${task.path} reached a site the agent is not assigned to`);
+  }
+
+  // The same agent on their own site is past the access check: whatever the
+  // model's state, the answer is not "not found".
+  const own = await api(`/api/ai/conversations/${ownSite}/summary`, {
+    method: 'POST',
+    token: agentToken
+  });
+  assert.notEqual(own.status, 404);
 });
 
 test('a malformed conversation id is rejected, not looked up', async () => {
