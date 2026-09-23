@@ -201,6 +201,25 @@ export function parseAutoReply(text: string): AutoReplyOutput {
   };
 }
 
+/** The second call of an order question: an answer from the order data, or a handoff. */
+export function parseOrderReply(text: string): {
+  decision: 'answer' | 'handoff';
+  answer: string | null;
+} {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw badFormat();
+  }
+  if (typeof data !== 'object' || data === null) throw badFormat();
+  const o = data as Record<string, unknown>;
+  if ((o.decision !== 'answer' && o.decision !== 'handoff') || !isStringOrNull(o.answer)) {
+    throw badFormat();
+  }
+  return { decision: o.decision, answer: o.answer === null ? null : o.answer.trim() || null };
+}
+
 /** Why a reply the model wrote is not sent. */
 export type RejectReason =
   | 'missing_answer'

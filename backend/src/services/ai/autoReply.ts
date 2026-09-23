@@ -32,13 +32,17 @@ import { aiConfig } from '../../config/ai';
 import { buildTranscript } from '../aiService';
 import { isWithinBusinessHours } from '../businessHours';
 import { findSources } from './knowledge';
-import { checkReply, parseAutoReply, preCheck } from './replyPolicy';
+import { checkReply, parseAutoReply, parseOrderReply, preCheck } from './replyPolicy';
+import { lookupOrders } from '../orderLookup';
 import {
   AUTO_REPLY_SCHEMA,
   DECLINE_TEXT,
+  ORDER_REPLY_SCHEMA,
   PROMPT_VERSION,
   autoReplyPrompt,
-  autoReplySystem
+  autoReplySystem,
+  orderReplyPrompt,
+  orderReplySystem
 } from './prompts';
 import { withTransaction, query } from '../../db/pool';
 import { generateId } from '../../db/objectId';
@@ -86,6 +90,18 @@ const TEXT = {
   signIn: {
     tr: 'Siparişinizin durumunu görebilmem için lütfen siteye giriş yapın; giriş yaptıktan sonra sorunuzu buradan tekrar yazabilirsiniz.',
     en: 'Please sign in to the site so I can see your order; once you have, ask me again here.'
+  },
+  orderNotFound: {
+    tr: 'Bu numarayla hesabınıza ait bir sipariş bulamadım. Lütfen sipariş numarasını kontrol edip tekrar yazın.',
+    en: "I couldn't find an order with that number on your account. Please check the number and write again."
+  },
+  noOrders: {
+    tr: 'Hesabınıza ait bir sipariş bulamadım.',
+    en: "I couldn't find any orders on your account."
+  },
+  orderFailure: {
+    tr: 'Sipariş bilgilerinize şu anda ulaşamıyorum; sizi bir müşteri temsilcimize aktarıyorum.',
+    en: "I can't reach your order details right now; I'm passing you to one of our support agents."
   }
 } as const;
 
@@ -420,17 +436,67 @@ async function answer(
     if (sent) log(decision, extra.reason);
   };
 
+  // The second model call of an order question: the shop's data in, one
+  // answer out, checked against that data like any other answer.
+  const answerOrder = async (userId: string, orderNumber: string | null) => {
+    const lookup = await lookupOrders(site, userId, orderNumber);
+    if (signal.aborted) return;
+    if (!lookup.ok) {
+      return lookup.reason === 'disabled'
+        ? handOff('order_lookup_disabled')
+        : handOff(`order_lookup_${lookup.reason}`, TEXT.orderFailure[lang]);
+    }
+    const orders = orderNumber
+      ? lookup.orders.filter((o) => o.orderNumber === orderNumber)
+      : lookup.orders;
+    if (!orders.length) {
+      const text = orderNumber ? TEXT.orderNotFound[lang] : TEXT.noOrders[lang];
+      return send('order_lookup', text, { reason: 'not_found' });
+    }
+
+    const data = JSON.stringify(orders.slice(0, 3));
+    let reply;
+    try {
+      const result = await getProvider().complete({
+        system: orderReplySystem(persona),
+        prompt: orderReplyPrompt(question, data),
+        maxTokens: AUTO_REPLY_MAX_TOKENS,
+        temperature: 0,
+        responseSchema: ORDER_REPLY_SCHEMA,
+        signal
+      });
+      reply = parseOrderReply(result.text);
+    } catch (error) {
+      if (signal.aborted) return;
+      return handOff((error as { code?: string })?.code || 'ai_error', TEXT.failure[lang]);
+    }
+    if (signal.aborted) return;
+    if (reply.decision === 'handoff') return handOff('no_answer');
+
+    const rejected = checkReply({
+      decision: 'order',
+      answer: reply.answer,
+      sourceIds: [],
+      allowedSourceIds: [],
+      evidence: [data],
+      maxSentences: 3,
+      maxChars: 400
+    });
+    if (rejected) return handOff(`rejected:${rejected}`);
+    return send('order_answer', reply.answer as string);
+  };
+
   switch (output.decision) {
     case 'handoff':
       return handOff('no_answer');
 
-    case 'order_lookup':
-      // Order data is only ever fetched for a customer the shop has vouched
-      // for (see services/identity.ts). Anyone else is asked to sign in.
-      if (!verifiedUserId(conversation)) {
-        return send('order_lookup', TEXT.signIn[lang], { reason: 'not_signed_in' });
-      }
-      return handOff('order_lookup_unavailable');
+    case 'order_lookup': // Order data is only ever fetched for a customer the shop has vouched
+    // for (see services/identity.ts). Anyone else is asked to sign in.
+    {
+      const userId = verifiedUserId(conversation);
+      if (!userId) return send('order_lookup', TEXT.signIn[lang], { reason: 'not_signed_in' });
+      return answerOrder(userId, output.orderNumber);
+    }
 
     case 'decline': {
       const rejected = checkReply(limits('decline', output.answer, [], []));

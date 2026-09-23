@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.widget.json",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
+    "demo:orders": "tsx scripts/demoOrderService.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:compose": "tsx scripts/test-compose.ts",
     "lint": "eslint .",

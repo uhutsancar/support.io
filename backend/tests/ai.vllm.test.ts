@@ -64,6 +64,7 @@ function provider(baseUrl: string, overrides: Partial<AIConfig> = {}) {
     concurrency: 2,
     queueMaxWaitMs: 500,
     autoReplyEnabled: false,
+    orderLookupTimeoutMs: 3000,
     ...overrides
   });
 }

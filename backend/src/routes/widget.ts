@@ -15,6 +15,10 @@ import WidgetConfig from '../models/WidgetConfig';
 import FAQ from '../models/FAQ';
 import Team from '../models/Team';
 import User from '../models/User';
+import { isProduction } from '../config/env';
+import { open } from '../config/secretBox';
+import { userHashFor } from '../services/identity';
+import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
@@ -253,6 +257,28 @@ router.post(
     res.json({ ok: true, verifiedAt: site.installation.verifiedAt });
   })
 );
+
+// ---------------------------------------------------------------------------
+// GET /api/widget/demo-identity?siteKey=...  (yalnizca gelistirmede)
+//
+// Demo sayfasinin "Demo musteri olarak giris yap" dugmesi. Gercek bir magazada
+// userHash'i magazanin kendi sunucusu uretir; demo magazanin sunucusu olmadigi
+// icin bu uc onun yerine gecer. Uretimde hic baglanmaz ve yalnizca tohum
+// kiracisinin sitesi icin cevap verir.
+// ---------------------------------------------------------------------------
+if (!isProduction) {
+  router.get(
+    '/demo-identity',
+    asyncHandler(async (req: Request, res: Response) => {
+      const siteKey = plainString(req.query.siteKey, 128);
+      if (siteKey !== DEMO_SITE_KEY) throw notFound('Widget');
+      const site = await Site.findOne({ siteKey, isActive: true });
+      const secret = open(site?.integrations?.identitySecret);
+      if (!secret) throw notFound('Widget');
+      res.json({ ...DEMO_CUSTOMER, userHash: userHashFor(secret, DEMO_CUSTOMER.userId) });
+    })
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Geriye donuk uyumluluk: eski widget surumleri /api/widget/settings cagirir.

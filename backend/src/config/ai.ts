@@ -20,6 +20,8 @@ export interface AIConfig {
   queueMaxWaitMs: number;
   /** The widget auto-reply, switched separately from the panel copilot. */
   autoReplyEnabled: boolean;
+  /** Upper bound for one call to a shop's order service. */
+  orderLookupTimeoutMs: number;
 }
 
 const MIN_KEY_LENGTH = 32;
@@ -69,7 +71,8 @@ function readConfig(): AIConfig | null {
     timeoutMs: positiveInt(env.AI_TIMEOUT_MS, 20000),
     concurrency: positiveInt(env.AI_CONCURRENCY, 2),
     queueMaxWaitMs: positiveInt(env.AI_QUEUE_MAX_WAIT_MS, 8000),
-    autoReplyEnabled: env.AI_AUTO_REPLY_ENABLED === 'true'
+    autoReplyEnabled: env.AI_AUTO_REPLY_ENABLED === 'true',
+    orderLookupTimeoutMs: positiveInt(env.ORDER_LOOKUP_TIMEOUT_MS, 3000)
   };
 }
 

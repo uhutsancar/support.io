@@ -215,6 +215,24 @@ function createLimiter({
   });
 }
 
+/**
+ * The same shared counter for work that is not an HTTP request — an order
+ * lookup the assistant makes from a socket event, for instance. `take` counts
+ * one use and says whether it is still within the limit.
+ */
+function createQuota({ name, windowMs, max }: { name: string; windowMs: number; max: number }): {
+  take(key: string): Promise<boolean>;
+} {
+  const store = new RedisStore(`rl:${name}:`);
+  store.init({ windowMs } as Options);
+  return {
+    async take(key: string) {
+      const { totalHits } = await store.increment(key);
+      return totalHits <= max;
+    }
+  };
+}
+
 const minutes = (value: string | undefined, fallback: number): number => Number(value) || fallback;
 
 // Giris denemeleri: parola deneme saldirilarina karsi dar tutulur.
@@ -272,5 +290,6 @@ export {
   registerLimiter,
   apiLimiter,
   createLimiter,
+  createQuota,
   identifyClient
 };

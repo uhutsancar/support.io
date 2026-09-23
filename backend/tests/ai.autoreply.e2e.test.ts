@@ -38,6 +38,9 @@ import { resetAIConfig } from '../src/config/ai';
 import { setResponseOwner, stopAutoReplies } from '../src/services/ai/autoReply';
 import { generateId } from '../src/db/objectId';
 import { getPool, query } from '../src/db/pool';
+import { closeRedisClient } from '../src/config/redis';
+import { seal } from '../src/config/secretBox';
+import { userHashFor } from '../src/services/identity';
 
 // ------------------------------------------------------------------ harness
 
@@ -123,6 +126,7 @@ test.after(async () => {
   }
   resetAIConfig();
   resetProvider();
+  await closeRedisClient();
   await getPool().end();
 });
 
@@ -159,13 +163,16 @@ interface Visitor {
 }
 
 /** A visitor with an open widget on the site, collecting everything it hears. */
-async function visitor(siteKey: string): Promise<Visitor> {
+async function visitor(
+  siteKey: string,
+  identity: { userId: string; userHash: string } | null = null
+): Promise<Visitor> {
   const socket = connect(`${base}/widget`, { transports: ['websocket'], forceNew: true });
   sockets.push(socket);
   const messages: any[] = [];
   socket.on('new-message', (data: { message: any }) => messages.push(data.message));
   const joined = new Promise((resolve) => socket.once('conversation-joined', resolve));
-  socket.emit('join-conversation', { siteKey, visitorId: `v-${generateId()}` });
+  socket.emit('join-conversation', { siteKey, visitorId: `v-${generateId()}`, ...identity });
   await joined;
   return {
     socket,
@@ -438,4 +445,128 @@ test('the "talk to a person" button hands over at once', async () => {
   await sleep(1500);
   assert.equal(bots(v).length, 2);
   assert.equal(provider.calls.length, calls);
+});
+
+// ------------------------------------------------------------ order lookup
+
+const IDENTITY_KEY = 'i'.repeat(64);
+const SIGNING_KEY = 'o'.repeat(64);
+
+/** An auto site whose shop verifies identities and answers order lookups at `shopUrl`. */
+async function createShopSite(shopUrl: string) {
+  const { site } = await createSite('auto');
+  site.integrations = {
+    identitySecret: seal(IDENTITY_KEY),
+    orderLookup: { enabled: true, url: shopUrl, signingSecret: seal(SIGNING_KEY) }
+  };
+  await site.save();
+  return site;
+}
+
+async function fakeShop(orders: unknown[] | null) {
+  const requests: any[] = [];
+  const shop = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => {
+      requests.push(JSON.parse(body));
+      if (!orders) {
+        res.writeHead(500);
+        res.end();
+        return;
+      }
+      const wanted = JSON.parse(body).orderNumber;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          orders: orders.filter((o: any) => !wanted || o.orderNumber === wanted)
+        })
+      );
+    });
+  });
+  await new Promise<void>((resolve) => shop.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(shop.address() as AddressInfo).port}/orders`;
+  return { url, requests, close: () => new Promise<void>((r) => shop.close(() => r())) };
+}
+
+const SHOP_ORDER = {
+  orderNumber: '12345',
+  statusText: 'Kargoya verildi',
+  carrier: 'Örnek Kargo',
+  trackingNumber: 'TR123456789',
+  estimatedDelivery: '2026-09-25',
+  shippingAddress: 'Gizli Mah. 1 Sok.',
+  phone: '05551112233'
+};
+
+const signedIn = () => ({
+  userId: 'customer-9',
+  userHash: userHashFor(IDENTITY_KEY, 'customer-9')
+});
+
+test('a signed-in customer gets their real order, and only its public fields reach the model', async (t) => {
+  const shop = await fakeShop([SHOP_ORDER]);
+  t.after(shop.close);
+  const site = await createShopSite(shop.url);
+  beforeEach((request) => {
+    if (request.responseSchema?.name === 'auto_reply') {
+      return reply('order_lookup', null);
+    }
+    assert.doesNotMatch(request.prompt, /Gizli|05551112233/, 'address or phone reached the model');
+    return JSON.stringify({
+      decision: 'answer',
+      answer:
+        'Siparişiniz Örnek Kargo ile kargoya verildi, takip numarası TR123456789. Tahmini teslim 2026-09-25.'
+    });
+  });
+  const v = await visitor(site.siteKey, signedIn());
+
+  v.send('Siparişim nerede?');
+  await until(() => bots(v).length === 1);
+
+  assert.match(bots(v)[0].content, /TR123456789/);
+  assert.equal(provider.calls.length, 2);
+  assert.deepEqual(shop.requests, [{ userId: 'customer-9', orderNumber: null }]);
+  const [stored] = await storedBotReplies(v.conversationId());
+  assert.equal(stored.ai_metadata.decision, 'order_answer');
+  assert.ok(!JSON.stringify(stored.ai_metadata).includes('TR123456789'), 'order data in metadata');
+});
+
+test('an order number the customer does not have is "not found", never invented', async (t) => {
+  const shop = await fakeShop([SHOP_ORDER]);
+  t.after(shop.close);
+  const site = await createShopSite(shop.url);
+  beforeEach(() => reply('order_lookup', null, { orderNumber: '999999' }));
+  const v = await visitor(site.siteKey, signedIn());
+
+  v.send('999999 nolu siparişim nerede?');
+  await until(() => bots(v).length === 1);
+  assert.match(bots(v)[0].content, /bulamadım/);
+  assert.equal(provider.calls.length, 1, 'no second model call without data');
+});
+
+test('a forged identity asks to sign in and never reaches the shop', async (t) => {
+  const shop = await fakeShop([SHOP_ORDER]);
+  t.after(shop.close);
+  const site = await createShopSite(shop.url);
+  beforeEach(() => reply('order_lookup', null));
+  const v = await visitor(site.siteKey, { userId: 'customer-9', userHash: 'f'.repeat(64) });
+
+  v.send('Siparişim nerede?');
+  await until(() => bots(v).length === 1);
+  assert.match(bots(v)[0].content, /giriş yapın/);
+  assert.equal(shop.requests.length, 0);
+});
+
+test('an order service that fails hands over with a short note', async (t) => {
+  const shop = await fakeShop(null);
+  t.after(shop.close);
+  const site = await createShopSite(shop.url);
+  beforeEach(() => reply('order_lookup', null));
+  const v = await visitor(site.siteKey, signedIn());
+
+  v.send('Siparişim nerede?');
+  await until(() => bots(v).length === 1);
+  assert.match(bots(v)[0].content, /ulaşamıyorum/);
+  assert.equal(await owner(v.conversationId()), 'human');
 });

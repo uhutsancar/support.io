@@ -336,6 +336,7 @@
         <button class="btn btn-sm" onclick="call('show')">show()</button>
         <button class="btn btn-sm" onclick="call('hide')">hide()</button>
         <button class="btn btn-sm" onclick="doIdentify()">identify()</button>
+        <button class="btn btn-sm" onclick="signInDemoCustomer()">Demo müşteri olarak giriş yap</button>
         <button class="btn btn-sm" onclick="call('logout')">logout()</button>
         <button class="btn btn-sm" onclick="doAttributes()">setAttributes()</button>
         <button class="btn btn-sm" onclick="setLocale('en')">setLocale(en)</button>
@@ -426,6 +427,23 @@
   function doIdentify() {
     SupportChat.identify({ userId: 'u_42', name: 'Ayşe Yılmaz', email: 'ayse@ornek.com' });
     log('identify({ userId: "u_42", name: "Ayşe Yılmaz" })');
+  }
+  // Gercek bir magazada userHash'i magazanin sunucusu uretir. Demo magazanin
+  // sunucusu yok; bu uc yalnizca gelistirmede ve tohum kiracisinin sitesinde
+  // acik (backend/src/routes/widget.ts).
+  function signInDemoCustomer() {
+    fetch(BACKEND + '/api/widget/demo-identity?siteKey=' + encodeURIComponent(SITE_KEY))
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (customer) {
+        SupportChat.identify(customer);
+        log('identify({ userId: "' + customer.userId + '", userHash: "…" }) — doğrulanmış müşteri');
+      })
+      .catch(function () {
+        log('Demo müşteri yalnızca geliştirmede ve tohum kiracısının sitesinde (' + SEED_SITE_KEY + ') kullanılabilir.', 'bad');
+      });
   }
   function doAttributes() {
     SupportChat.setAttributes({ plan: 'ekip', seats: 12, mrr: 2160 });

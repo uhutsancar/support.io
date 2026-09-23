@@ -8,6 +8,7 @@ import express from 'express';
 import { randomUUID } from 'crypto';
 import Site from '../models/Site';
 import { newSecret, seal } from '../config/secretBox';
+import { checkOrderUrl, testOrderService } from '../services/orderLookup';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import {
@@ -203,6 +204,72 @@ router.post(
     site.integrations = { ...site.integrations, identitySecret: seal(secret) };
     await site.save();
     res.json({ site, secret });
+  })
+);
+
+// The shop's order service: where it is and whether the assistant may ask it.
+// The URL is checked when it is saved (https, public addresses only) and again
+// on every call, since DNS can change in between.
+router.put(
+  '/:siteId/integrations/order-lookup',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { enabled, url } = pickStrict<{ enabled: boolean; url: string | null }>(req.body, [
+      'enabled',
+      'url'
+    ]);
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const current = site.integrations.orderLookup;
+    const next = { ...current };
+
+    if (url !== undefined) {
+      if (url === null || url === '') {
+        next.url = null;
+      } else {
+        const checked = await checkOrderUrl(url);
+        if (!checked) {
+          throw badRequest('The order service URL must be https and resolve to a public address');
+        }
+        next.url = checked.toString();
+      }
+    }
+    if (enabled !== undefined) {
+      if (typeof enabled !== 'boolean') throw badRequest('enabled must be a boolean');
+      next.enabled = enabled;
+    }
+    if (next.enabled && (!next.url || !next.signingSecret)) {
+      throw badRequest('Set the URL and generate a signing key before switching the lookup on');
+    }
+
+    site.integrations = { ...site.integrations, orderLookup: next };
+    await site.save();
+    res.json({ site });
+  })
+);
+
+// A new signing key for requests to the order service; shown this once.
+router.post(
+  '/:siteId/integrations/order-lookup/signing-secret',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const secret = newSecret();
+    site.integrations = {
+      ...site.integrations,
+      orderLookup: { ...site.integrations.orderLookup, signingSecret: seal(secret) }
+    };
+    await site.save();
+    res.json({ site, secret });
+  })
+);
+
+router.post(
+  '/:siteId/integrations/order-lookup/test',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const result = await testOrderService(site);
+    res.json(result.ok ? { ok: true, orders: result.orders.length } : result);
   })
 );
 

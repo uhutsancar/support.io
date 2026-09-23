@@ -40,7 +40,14 @@ import Deal from '../models/Deal';
 import AutomationRule from '../models/AutomationRule';
 import ProactiveRule from '../models/ProactiveRule';
 import AuditLog from '../models/AuditLog';
-
+import { seal } from '../config/secretBox';
+import {
+  DEMO_CUSTOMER,
+  DEMO_IDENTITY_SECRET,
+  DEMO_ORDER_SERVICE_URL,
+  DEMO_ORDER_SIGNING_SECRET,
+  DEMO_SITE_KEY
+} from './demo';
 
 const DEMO_ORG_NAME = 'Acme Yazılım (Demo)';
 const DEMO_DOMAIN = 'demo.support.io';
@@ -164,9 +171,20 @@ async function seed() {
   const site = new Site({
     name: 'Acme Mağaza',
     domain: DEMO_DOMAIN,
-    siteKey: 'demo-site-key-0000-1111-2222',
+    siteKey: DEMO_SITE_KEY,
     userId: owner._id,
     organizationId: org._id,
+    // Identity verification and the demo order service (npm run demo:orders),
+    // so the assistant's order answers can be tried end to end. Sealed with
+    // this server's JWT_SECRET: seed inside the backend container.
+    integrations: {
+      identitySecret: seal(DEMO_IDENTITY_SECRET),
+      orderLookup: {
+        enabled: true,
+        url: DEMO_ORDER_SERVICE_URL,
+        signingSecret: seal(DEMO_ORDER_SIGNING_SECRET)
+      }
+    },
     widgetSettings: {
       position: 'bottom-right',
       primaryColor: '#4F46E5',
@@ -1061,6 +1079,8 @@ Demo verisi hazır.
 
   Organizasyon : ${DEMO_ORG_NAME} (ENTERPRISE)
   Site anahtarı: ${result.site.siteKey}
+  Demo müşteri : ${DEMO_CUSTOMER.userId} (demo sayfasındaki "Demo müşteri olarak giriş yap")
+  Sipariş servisi: npm run demo:orders  (${DEMO_ORDER_SERVICE_URL})
 
   Giriş:
     Sahip   ${result.owner.email} / ${DEMO_PASSWORD}
