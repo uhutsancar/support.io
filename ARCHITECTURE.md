@@ -1,350 +1,240 @@
-# SupportChat System Architecture
+# Architecture
 
-## 🏗️ System Overview
+How this codebase is laid out, and why. Read this before adding a file — most
+"where does this go?" questions are answered by the layer it belongs to.
 
-```
-┌─────────────────┐
-│  Visitor's      │
-│  Website        │
-│  (Widget)       │
-└────────┬────────┘
-         │
-         │ WebSocket
-         │
-┌────────▼────────────────────────────────────────────┐
-│                                                      │
-│            Backend Server (Express.js)               │
-│                                                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────┐ │
-│  │   REST API   │  │   Socket.IO  │  │ PostgreSQL│ │
-│  │              │  │              │  │           │ │
-│  │ - Auth       │  │ - Widget NS  │  │ - sites   │ │
-│  │ - Sites      │  │ - Admin NS   │  │ - users   │ │
-│  │ - FAQs       │  │              │  │ - convos  │ │
-│  │ - Convos     │  │              │  │ - messages│ │
-│  └──────────────┘  └──────────────┘  └───────────┘ │
-│                                                      │
-└───────────────────────┬──────────────────────────────┘
-                        │
-                        │ REST + WebSocket
-                        │
-┌───────────────────────▼──────────────────────────────┐
-│                                                       │
-│          Admin Panel (React)                          │
-│                                                       │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐    │
-│  │ Dashboard  │  │ Sites Mgmt │  │ Live Chat  │    │
-│  └────────────┘  └────────────┘  └────────────┘    │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐    │
-│  │ FAQs       │  │ Agents     │  │ Analytics  │    │
-│  └────────────┘  └────────────┘  └────────────┘    │
-│                                                       │
-└───────────────────────────────────────────────────────┘
-```
+The shape below is the result of a refactor whose goal was that a developer new
+to the project can open any file and tell what it does without reading three
+others first. Where a decision looks unusual, the file itself says why; this
+document is the map, not the reasoning.
 
 ---
 
-## 🔄 Data Flow
+## The two workspaces
 
-### 1. Widget Integration
 ```
-Website Owner → Admin Panel → Create Site → Get Site Key → Embed Widget
-```
-
-### 2. Visitor Starts Chat
-```
-1. Visitor opens website
-2. Widget loads with site key
-3. Widget connects to backend via WebSocket
-4. Backend validates site key
-5. Create/retrieve conversation
-6. Load conversation history
-7. Display chat interface
+backend/        the API, the realtime server, and the embeddable widget
+admin-panel/    the dashboard agents work in, and the marketing site
+demo/           a static page for trying the widget locally
 ```
 
-### 3. Message Flow
-```
-Visitor sends message
-    ↓
-Widget emits via WebSocket
-    ↓
-Backend receives message
-    ↓
-Save to PostgreSQL
-    ↓
-Search for FAQ match
-    ↓
-Emit to visitor (echo) + admin (notification)
-    ↓
-If FAQ found → Auto-respond
-```
-
-### 4. Agent Response
-```
-Agent types in admin panel
-    ↓
-Send via WebSocket
-    ↓
-Backend receives
-    ↓
-Save to PostgreSQL
-    ↓
-Emit to visitor + other agents
-    ↓
-Visitor receives in widget
-```
+They are separate npm projects with separate `tsconfig`s and separate lint
+configs. `package.json` at the root only delegates.
 
 ---
 
-## 📦 Database Schema
+## backend/src — the layers
 
-PostgreSQL. The full DDL lives in `backend/src/db/schema.sql`; each table is
-declared to the model runtime under `backend/src/models/`.
+Each layer may use the ones below it and must not reach upward.
 
-Primary keys are 24-character hexadecimal strings, carried over unchanged from
-the identifiers the previous document store used, so existing tokens and links
-keep working.
+```
+routes/  socket/       ← delivery: HTTP endpoints, socket events
+services/              ← what the product does
+domain/                ← the vocabulary: statuses, roles, SLA policy
+models/                ← one file per table, declared not written
+db/                    ← the relational runtime and hand-written SQL
+config/                ← secrets, sessions, tokens, connections
+http/  realtime/        ← the shared kernels the delivery layer is built on
+```
 
-### Core tables
+### `domain/` — the vocabulary
 
-| Table | Purpose | Notable columns |
-| --- | --- | --- |
-| `organizations` | Tenant, plan and owner | `plan_type`, `owner_user_id` |
-| `users` | Accounts created by sign-up | `email` (unique), `role`, `organization_id` |
-| `teams` | Agents created from the admin panel | `email` (unique), `skills`, `current_load`, `max_capacity` |
-| `sites` | Installed widgets | `site_key` (unique), `widget_settings`, `ai_settings` |
-| `departments` | Routing groups per site | `business_hours`, `sla`, `stats` |
-| `conversations` | Tickets | `ticket_number` (unique), `status`, `priority`, `sla`, `tags` |
-| `messages` | Chat transcript | `sender_type`, `file_data`, `is_read` |
-| `faqs` | Auto-answer knowledge base | `search_vector` (generated tsvector) |
-| `visitors` | Live visitor presence | `visitor_id`, `last_active_at` |
-| `widget_configs` | Appearance per site | one row per site |
-| `deals` | CRM pipeline | `stage`, `value` |
-| `audit_logs` | Append-only trail | updates blocked by a trigger |
-| `team_chats`, `team_messages` | Internal chat | `chat_id` (unique on chats) |
-| `automation_rules`, `automation_logs` | Rule engine | rule bodies stored as JSONB |
-| `proactive_rules`, `proactive_trigger_logs`, `event_logs` | Proactive engagement | 30 day retention sweep |
-| `counters` | Sequential ticket numbers | atomic upsert |
+`constants.ts` declares every status, priority, role, plan and message type
+exactly once, with the runtime list and the TypeScript union derived from the
+same literal. `types.ts` describes the shapes stored inside `json` columns.
 
-### Arrays that became their own tables
+Before this existed, the conversation statuses were spelled out as string
+literals in the model, three routes, the socket handler and the automation
+validator. Adding one meant finding every copy. Import from `../domain`.
 
-Embedded arrays that carry relationships are stored relationally:
+### `models/` — the tables
 
-| Previous embedded array | Table |
-| --- | --- |
-| `user.assignedSites`, `team.assignedSites` | `user_assigned_sites`, `team_assigned_sites` |
-| `user.departments`, `team.departments` | `user_departments`, `team_departments` |
-| `department.members` | `department_members` |
-| `conversation.internalNotes` | `conversation_internal_notes` |
-| `teamChat.participants` | `team_chat_participants` |
-| `teamMessage.readBy`, `teamMessage.participants` | `team_message_read_by`, `team_message_participants` |
+Each file calls `defineModel(...)` with its columns, child tables and
+references. It declares; it does not implement. The runtime that turns a
+declaration into SQL is `db/model.ts`.
 
-Configuration objects with no independent identity — widget colours, SLA targets,
-permissions, statistics, business hours, rule bodies — stay in `jsonb` columns and
-are read and written as a whole. Plain value lists such as `tags`, `skills` and
-`keywords` use native `text[]` columns.
+An enum column takes its list from `domain/constants.ts`, never a fresh literal.
 
-### Referential rules
+### `db/` — storage
 
-- Deleting a site cascades to its departments, conversations, FAQs, visitors,
-  widget config and rules. Deleting a conversation cascades to its messages and
-  internal notes.
-- `conversations.department_id` is set to NULL when the department goes away, so
-  the ticket survives.
-- Agent references (`assigned_agent_id`, `assigned_by_id`,
-  `department_members.user_id`, team chat participants) may point at either
-  `users` or `teams`. They are indexed but deliberately carry no foreign key,
-  because the application treats both tables as agents.
+`model.ts` is the runtime: filters compile to indexed `WHERE` clauses, embedded
+arrays become joins, references resolve with one batched query per path.
+`queries.ts`, `inboxQueries.ts` and `analyticsQueries.ts` hold the hand-written
+SQL for the places where a per-row access pattern would become an N+1.
 
+A filter value of `undefined` throws rather than being dropped. That is
+deliberate: dropping it widens the query in exactly the direction that leaks
+data across tenants.
 
-## 🔌 WebSocket Events
+### `services/` — what the product does
 
-### Widget Namespace (`/widget`)
+Domain operations that more than one delivery path needs, or that are too large
+to sit inside a handler:
 
-**Client → Server**
-- `join-conversation` - Join/create conversation
-- `send-message` - Send chat message
-- `typing` - Typing indicator
+| file | responsibility |
+|---|---|
+| `conversationIntake.ts` | opening a conversation from a visitor's first message |
+| `departmentRouting.ts` | which department that message belongs to |
+| `departmentStats.ts` | the SLA and workload counters a department keeps |
+| `autoAssignment.ts` | choosing an agent, and handing work on when they go away |
+| `slaSweeper.ts` | the **single** background SLA pass |
+| `escalation.ts` | warnings and breach notifications |
+| `conversationSla.ts` | recomputing SLA without letting one bad row break a page |
+| `automationEngine.ts` / `automationTrigger.ts` | customer-defined rules |
+| `proactiveEngine.ts` | visitor-behaviour triggers |
+| `faqAutoResponse.ts` | answering from the FAQ before an agent arrives |
+| `auditService.ts` | the audit trail, generated from one table of events |
 
-**Server → Client**
-- `conversation-joined` - Conversation data + history
-- `new-message` - New message received
-- `agent-typing` - Agent is typing
-- `error` - Error occurred
+### `http/` — the HTTP kernel
 
-### Admin Namespace (`/admin`)
+Everything a route needs in order to contain only its own logic.
 
-**Client → Server**
-- `join-site` - Subscribe to site updates
-- `join-conversation` - Join specific conversation
-- `send-message` - Send message to visitor
-- `typing` - Typing indicator
+```ts
+router.use(auth, requireOrganization);
 
-**Server → Client**
-- `conversation-update` - New/updated conversation
-- `new-message` - New message in conversation
-- `visitor-typing` - Visitor is typing
-- `error` - Error occurred
+router.get('/:siteId', asyncHandler(async (req, res) => {
+  const site = await loadOwnedSite(req, req.params.siteId);
+  res.json({ site });
+}));
+```
+
+- **`asyncHandler`** — Express 4 does not await a handler, so a rejected promise
+  inside one hangs the request. Wrapping once removes the try/catch that was
+  repeated in 58 handlers.
+- **`errors.ts`** — one error model. A handler reports failure by throwing:
+  `badRequest`, `forbidden`, `notFound`, `conflict`, `unavailable`.
+  `describeError` decides what the client is told, and never lets database text
+  reach it.
+- **`errorHandler`** — the last middleware. Must be registered after every route
+  *and* after the static handlers.
+- **`guards.ts`** — request-scoped authorization. `requireOrganization` is
+  middleware; `orgId(req)` reads the tenant; `loadOwnedSite`,
+  `loadOwnedConversation`, `loadOwnedDepartment`, `loadOwnedTeamMember` and
+  `requireSiteOwnership` resolve a row *and* check it belongs to the caller,
+  throwing `notFound` for every way the answer can be no.
+
+A resource belonging to another tenant answers **404, not 403** — a 403 confirms
+the id exists, which is what someone walking ids is trying to learn.
+
+### `realtime/` — what the server tells the panel
+
+`rooms.ts` builds the room names both sides agree on. `notifier.ts` turns each
+broadcast into a named method with a typed payload, so a rename is a compile
+error rather than a message delivered to an empty room.
+
+Routes get one with `notifyAdmin(req)`, which returns `null` when there is no
+socket server (a test, a script) so callers do not each write a null check.
+
+### `socket/` — the realtime delivery layer
+
+```
+index.ts                  composition root: wiring only
+auth.ts                   who is on an admin socket
+context.ts                the authorised lookups every handler shares
+handlers/widget.ts        the visitor's side
+handlers/adminConversations.ts
+handlers/adminPresence.ts
+handlers/adminTeamChat.ts
+types.ts                  the wire protocol
+adapter.ts                the Redis adapter for multi-process deployments
+```
+
+`SocketContext` is the socket layer's equivalent of `http/guards.ts`:
+`siteFor`, `conversationFor`, `widgetConversationFor`, `chatFor` and
+`verifyAttachment`. A handler never queries by id on its own, and `ctx.guard`
+wraps each listener so a throw cannot become an unhandled rejection.
+
+### `config/` — the things that must be right
+
+Sessions (`session.ts`), signed tokens (`tokens.ts`), password policy
+(`passwords.ts`), CORS origins (`origins.ts`), the database pool (`pool.ts`).
+Each file explains the decision it encodes. Read `tokens.ts` before touching
+anything that signs or verifies.
+
+### `widget/widget.ts`
+
+The embeddable script, compiled by its own `tsconfig.widget.json` for the
+browser. It runs on a customer's page, so it deliberately swallows errors rather
+than throwing into their code or logging into their console — every one of those
+catches says so.
 
 ---
 
-## 🎯 Key Features Implementation
+## admin-panel/src
 
-### 1. Site Verification
-```javascript
-// Every widget connection validates site key
-const site = await Site.findOne({ 
-  siteKey, 
-  isActive: true 
-});
-if (!site) throw new Error('Invalid site');
+```
+pages/                 one route each
+components/            shared and feature-scoped markup
+features/              feature-scoped hooks
+contexts/              auth, socket, theme, language
+hooks/                 useAsync, useAction
+lib/                   format, statusStyles, color, session, runtime
+services/              http.ts (transport) + api.ts (endpoints)
+types/api.ts           the shapes the API returns
+locales/               translations
 ```
 
-### 2. Visitor Identification
-```javascript
-// Persistent visitor ID in localStorage
-let visitorId = localStorage.getItem('sc_visitor_id');
-if (!visitorId) {
-  visitorId = generateUniqueId();
-  localStorage.setItem('sc_visitor_id', visitorId);
-}
+### `services/`
+
+`http.ts` owns the transport: credentials, the CSRF header, the short-lived GET
+cache, the 401 redirect. `api.ts` is a list of endpoints and nothing else. A
+write that invalidates reads declares it:
+
+```ts
+create: mutates('/sites', (data: Partial<Site>) => api.post('/sites', data))
 ```
 
-### 3. FAQ Auto-Response
-```javascript
-// Text search with scoring
-const faqs = await FAQ.find({
-  siteId,
-  isActive: true,
-  $text: { $search: userMessage }
-}, {
-  score: { $meta: 'textScore' }
-}).sort({ score: { $meta: 'textScore' } });
+### `hooks/useAsync.ts`
 
-if (faqs[0].score > 0.5) {
-  sendAutoResponse(faqs[0].answer);
-}
-```
+`useAsync` for loading, `useAction` for a user-triggered action. Both keep the
+failure instead of discarding it, cancel on unmount, and ignore the result of a
+superseded request. `errorMessage(error, fallback)` prefers what the API said
+over a generic string — use it everywhere rather than reaching into
+`error.response.data`.
 
-### 4. Real-time Sync
-```javascript
-// Room-based broadcasting
-socket.join(`conversation:${conversationId}`);
-io.to(`conversation:${conversationId}`).emit('new-message', data);
-```
+### `lib/format.ts` and `lib/statusStyles.ts`
+
+Formatters and Tailwind class tables, each declared once. `format.ts` turns
+values into text; `statusStyles.ts` turns values into classes. Both distinguish
+"never measured" (`—`) from zero, which the per-page copies they replaced did
+not agree on.
+
+### Types
+
+`types/api.ts` is the single source for API shapes and editor form shapes. A
+type declared inside a component body is invisible to every other file — put it
+here, or export it from the component that owns it.
 
 ---
 
-## 🔐 Security Measures
+## Conventions
 
-1. **JWT Authentication** for admin panel
-2. **Site Key Validation** for widget connections
-3. **CORS Configuration** for API access
-4. **Input Sanitization** to prevent XSS
-5. **Rate Limiting** (to be added)
-6. **Message Encryption** (future enhancement)
+**Authorization fails closed.** A caller with no organization can read nothing.
+Tenant filters go *inside* the query, never a comparison afterwards — loading a
+row and then comparing skips the check entirely when the compared id is empty.
 
----
+**Errors are reported, not swallowed.** An empty `catch` is indistinguishable
+from a forgotten one. If ignoring a failure is right, say why in the block. The
+linter enforces this (`no-empty` with `allowEmptyCatch: false`).
 
-## ⚡ Performance Optimizations
+**A domain value is declared once.** Statuses, roles, plans, SLA defaults: add
+to `domain/constants.ts` and import.
 
-1. **PostgreSQL Indexes**
-   - `siteKey` (unique)
-   - `conversationId + createdAt` for messages
-   - Text index on FAQ questions/answers
-
-2. **WebSocket Rooms**
-   - Efficient broadcasting to specific conversations
-   - Site-level rooms for admin notifications
-
-3. **Lazy Loading**
-   - Messages loaded on-demand
-   - Conversations paginated
-
-4. **Caching** (future)
-   - Redis for session storage
-   - FAQ cache for fast lookup
+**Reads do not write.** SLA is computed in memory for display; persisting it is
+the sweeper's job.
 
 ---
 
-## 🔮 Future Enhancements
+## Checks
 
-### Phase 2
-- [ ] File/Image uploads in chat
-- [ ] Typing indicator improvements
-- [ ] Read receipts
-- [ ] Agent status (online/offline/busy)
-- [ ] Conversation tags and filters
-
-### Phase 3
-- [ ] AI chatbot integration (GPT-4)
-- [ ] Sentiment analysis
-- [ ] CSAT surveys
-- [ ] Email notifications
-- [ ] Mobile apps (React Native)
-
-### Phase 4
-- [ ] Video chat
-- [ ] Screen sharing
-- [ ] Co-browsing
-- [ ] Advanced analytics
-- [ ] Multi-language support
-
----
-
-## 📊 Scalability Considerations
-
-### Current (MVP)
-- Single server
-- PostgreSQL on same machine
-- Handles ~100 concurrent connections
-
-### Production
-- Load balancer
-- Multiple backend instances
-- PostgreSQL streaming replication
-- Redis for session/socket state
-- CDN for widget.js
-- Handles ~10,000+ concurrent connections
-
-### Scaling Path
 ```
-Step 1: Separate PostgreSQL → managed PostgreSQL service
-Step 2: Add Redis → Socket.io adapter
-Step 3: Multiple servers → Load balancer
-Step 4: CDN → Serve widget globally
-Step 5: Microservices → Split concerns
+npm run check     typecheck + lint, both workspaces
+npm run lint
+npm run format
+npm run test:backend
 ```
 
----
-
-## 🎨 Widget Customization Options
-
-```javascript
-window.SupportChatConfig = {
-  // Required
-  siteKey: 'xxx',
-  
-  // Appearance
-  position: 'bottom-right',
-  primaryColor: '#4F46E5',
-  
-  // Behavior
-  autoOpen: false,
-  autoOpenDelay: 5000,
-  
-  // Messages
-  welcomeMessage: 'Hi! How can we help?',
-  placeholderText: 'Type your message...',
-  
-  // Advanced (future)
-  showOnPages: ['/pricing', '/contact'],
-  hideOnPages: ['/checkout'],
-  locale: 'en',
-  customCSS: 'custom-widget.css'
-}
-```
-
----
-
-This is a production-ready architecture that can scale from small websites to enterprise-level support systems! 🚀
+Both workspaces compile under `strict` plus `noUnusedLocals`,
+`noUnusedParameters`, `noImplicitReturns` and `useUnknownInCatchVariables`, and
+both are lint-clean. The backend's end-to-end tests need the compose stack
+running; see `backend/scripts/test-compose.ts`.
