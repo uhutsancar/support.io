@@ -13,7 +13,7 @@
     "strictNullChecks": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
-    "useUnknownInCatchVariables": false,
+    "useUnknownInCatchVariables": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -24,7 +24,10 @@
     "removeComments": false,
     "types": [
       "node"
-    ]
+    ],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true
   },
   "include": [
     "src/**/*.ts",

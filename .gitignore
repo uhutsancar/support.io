@@ -11,7 +11,7 @@ coverage/
 *.swp
 *.swo
 .cache/
-backend/uploads/files/
+# Uploads are governed by backend/uploads/.gitignore, next to what it describes.
 
 # Build output, not a source file: compiled from backend/src/widget/widget.ts by
 # `npm run build:widget`, which `npm run dev` and `npm run build` both do first.

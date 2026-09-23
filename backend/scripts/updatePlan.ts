@@ -1,25 +1,26 @@
 // Raises an organization's plan. Usage:
-//   node updatePlan.js <email> [FREE|PRO|ENTERPRISE]
-import dotenv from 'dotenv';
-import { pool } from './src/db/pool';
-import User from './src/models/User';
-import Organization from './src/models/Organization';
+//   npx tsx scripts/updatePlan.ts <email> [FREE|PRO|ENTERPRISE]
+// Loads .env before any module below reads it; see src/config/env.ts.
+import '../src/config/env';
+import { pool } from '../src/db/pool';
+import User from '../src/models/User';
+import Organization from '../src/models/Organization';
+import { PLAN_TYPES, isPlanType } from '../src/domain';
 
-dotenv.config();
-
-const VALID_PLANS = ['FREE', 'PRO', 'ENTERPRISE'];
 
 async function updatePlan() {
   const email = (process.argv[2] || '').toLowerCase().trim();
   const plan = (process.argv[3] || 'ENTERPRISE').toUpperCase();
 
   if (!email) {
-    console.error('Usage: node updatePlan.js <email> [FREE|PRO|ENTERPRISE]');
+    console.error('Usage: npx tsx scripts/updatePlan.ts <email> [FREE|PRO|ENTERPRISE]');
     process.exitCode = 1;
     return;
   }
-  if (!VALID_PLANS.includes(plan)) {
-    console.error(`Invalid plan "${plan}". Expected one of: ${VALID_PLANS.join(', ')}`);
+  // The list lives in src/domain/constants.ts, so this script cannot drift
+  // from what the model and the plan gate accept.
+  if (!isPlanType(plan)) {
+    console.error(`Invalid plan "${plan}". Expected one of: ${PLAN_TYPES.join(', ')}`);
     process.exitCode = 1;
     return;
   }

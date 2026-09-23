@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+coverage
+*.log
+backend/public/widget.js
+admin-panel/src/public
+admin-panel/src/locales
+package-lock.json
+uploads

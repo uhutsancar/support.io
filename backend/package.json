@@ -13,7 +13,12 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
-    "test:compose": "tsx scripts/test-compose.ts"
+    "test:compose": "tsx scripts/test-compose.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint"
   },
   "keywords": [
     "support",
@@ -45,6 +50,7 @@
     "socket.io": "^4.6.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
@@ -53,10 +59,14 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^22.20.4",
     "@types/pg": "^8.23.1",
+    "eslint": "^9.39.5",
+    "globals": "^17.12.0",
     "nodemon": "^3.0.1",
+    "prettier": "^3.9.8",
     "socket.io-client": "^4.8.3",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1"
   },
   "overrides": {
     "qs": "6.16.0"

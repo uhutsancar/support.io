@@ -11,7 +11,10 @@
     "build:backend": "cd backend && npm run build",
     "build:admin": "cd admin-panel && npm run build",
     "typecheck": "cd backend && npm run typecheck && cd ../admin-panel && npm run typecheck",
-    "test:backend": "cd backend && npm test"
+    "test:backend": "cd backend && npm test",
+    "lint": "cd backend && npm run lint && cd ../admin-panel && npm run lint",
+    "format": "cd backend && npm run format && cd ../admin-panel && npm run format",
+    "check": "cd backend && npm run check && cd ../admin-panel && npm run check"
   },
   "keywords": [
     "support",

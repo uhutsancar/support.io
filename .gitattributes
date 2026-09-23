@@ -1,0 +1,23 @@
+# One line ending everywhere.
+#
+# Without this, whether a file is stored with LF or CRLF depends on each
+# developer's `core.autocrlf`, so the same edit produces a different diff on a
+# different machine — and a whole-file diff when the two disagree. Normalising
+# in the repository (LF) while letting Git hand out the platform's own ending
+# in the working tree removes that variable entirely.
+* text=auto eol=lf
+
+# Binary: never touched, never diffed as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+
+# Generated and vendored output; excluded from diffs and language statistics.
+package-lock.json  linguist-generated=true -diff
+backend/public/widget.js linguist-generated=true -diff
