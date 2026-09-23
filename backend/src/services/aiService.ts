@@ -16,7 +16,7 @@
  */
 import { getProvider, AIError } from './ai';
 import Message from '../models/Message';
-import FAQ from '../models/FAQ';
+import { findSources, renderSources } from './ai/knowledge';
 import type { Priority } from '../domain';
 
 export interface ConversationInput {
@@ -34,9 +34,18 @@ export interface ConversationInput {
 /** A rendered transcript plus how much of the thread it covers. */
 export interface TranscriptResult {
   transcript: string;
+  /** Messages the transcript contains. */
   messageCount: number;
   /** True when older messages were dropped to fit the window. */
-  truncated?: boolean;
+  truncated: boolean;
+  /** The visitor's newest message, which is what a reply has to answer. */
+  lastVisitorMessage: string;
+}
+
+/** How much of a thread one prompt may carry. */
+export interface TranscriptWindow {
+  messages: number;
+  chars: number;
 }
 
 /** What every task returns alongside its own payload. */
@@ -66,29 +75,45 @@ export type KnowledgeAnswerResult =
   /** Returned without calling a model when the site has no knowledge base. */
   | { answered: false; answer: null; reason: string };
 
-// How much transcript to send. Long threads are truncated from the front so the
+// How much transcript to send. The model runs with a 4096-token context, so the
+// window is bounded in characters as well as messages; Turkish runs at roughly
+// four characters a token. Long threads lose their oldest messages, so the
 // most recent exchange — the part a reply must respond to — always survives.
-const MAX_TRANSCRIPT_MESSAGES = 40;
-const MAX_MESSAGE_CHARS = 2000;
+const COPILOT_WINDOW: TranscriptWindow = { messages: 20, chars: 6000 };
+const MAX_MESSAGE_CHARS = 800;
 
 const SPEAKER: Record<string, string> = { visitor: 'Müşteri', agent: 'Temsilci', bot: 'Bot' };
 
-// Renders a conversation as a plain transcript for the prompt.
-async function buildTranscript(conversationId: string): Promise<TranscriptResult> {
-  const messages = await Message.find({ conversationId }).sort({ createdAt: 1 }).limit(200);
+// Renders the newest part of a conversation as a plain transcript.
+//
+// It used to read the *first* 200 messages oldest-first and keep the last 40
+// of those, so on a thread longer than 200 the messages that mattered most —
+// the latest — were exactly the ones never loaded.
+async function buildTranscript(
+  conversationId: string,
+  window: TranscriptWindow = COPILOT_WINDOW
+): Promise<TranscriptResult> {
+  const newestFirst = await Message.find({ conversationId })
+    .sort({ createdAt: -1 })
+    .limit(window.messages + 1);
 
-  if (!messages.length) return { transcript: '', messageCount: 0 };
+  const lines: string[] = [];
+  let used = 0;
+  for (const m of newestFirst.slice(0, window.messages)) {
+    const who = SPEAKER[m.senderType] || m.senderType;
+    const line = `${who}: ${String(m.content || '').slice(0, MAX_MESSAGE_CHARS)}`;
+    if (lines.length && used + line.length > window.chars) break;
+    lines.push(line);
+    used += line.length;
+  }
 
-  const recent = messages.slice(-MAX_TRANSCRIPT_MESSAGES);
-  const transcript = recent
-    .map((m) => {
-      const who = SPEAKER[m.senderType] || m.senderType;
-      const body = String(m.content || '').slice(0, MAX_MESSAGE_CHARS);
-      return `${who}: ${body}`;
-    })
-    .join('\n');
-
-  return { transcript, messageCount: messages.length, truncated: messages.length > recent.length };
+  const lastVisitor = newestFirst.find((m) => m.senderType === 'visitor');
+  return {
+    transcript: lines.reverse().join('\n'),
+    messageCount: lines.length,
+    truncated: newestFirst.length > lines.length,
+    lastVisitorMessage: lastVisitor ? String(lastVisitor.content || '') : ''
+  };
 }
 
 // Conversation metadata worth giving the model alongside the transcript.
@@ -103,19 +128,6 @@ function describeConversation(conversation: ConversationInput): string {
   if (conversation.tags?.length) parts.push(`Etiketler: ${conversation.tags.join(', ')}`);
   if (conversation.currentPage) parts.push(`Sayfa: ${conversation.currentPage}`);
   return parts.join(' | ');
-}
-
-// Pulls the site's published answers in so a suggested reply can reuse the
-// wording support already stands behind rather than inventing policy. This is
-// the knowledge-base hook: the same shape works when articles replace FAQs.
-async function buildKnowledgeContext(siteId: unknown, limit = 12): Promise<string> {
-  const faqs = await FAQ.find({ siteId, isActive: true }).sort({ order: 1 }).limit(limit);
-
-  if (!faqs.length) return '';
-
-  return faqs
-    .map((f, i) => `${i + 1}. S: ${f.question}\n   C: ${String(f.answer).slice(0, 600)}`)
-    .join('\n');
 }
 
 const BASE_SYSTEM = [
@@ -185,10 +197,15 @@ async function suggestReply(
   conversation: ConversationInput,
   { instruction = null }: { instruction?: string | null } = {}
 ): Promise<ReplyResult> {
-  const { transcript } = await buildTranscript(conversation._id);
+  const { transcript, lastVisitorMessage } = await buildTranscript(conversation._id);
   assertHasTranscript(transcript);
 
-  const knowledge = await buildKnowledgeContext(conversation.siteId);
+  // The published answers that match what the visitor asked, so a suggested
+  // reply reuses the wording support already stands behind rather than
+  // inventing policy.
+  const knowledge = renderSources(
+    await findSources(conversation.siteId, lastVisitorMessage, conversation.currentPage)
+  );
 
   const prompt = [
     'Temsilcinin müşteriye göndereceği yanıtı taslak olarak yaz.',
@@ -353,7 +370,9 @@ async function knowledgeAnswer(
     throw new AIError('Soru boş.', { code: 'ai_missing_question', status: 400 });
   }
 
-  const knowledge = await buildKnowledgeContext(conversation.siteId, 20);
+  const knowledge = renderSources(
+    await findSources(conversation.siteId, String(question), conversation.currentPage)
+  );
   if (!knowledge) {
     return {
       answered: false,
@@ -374,7 +393,7 @@ async function knowledgeAnswer(
       knowledge,
       '',
       'Yalnızca şu JSON ile yanıt ver:',
-      '{ "answered": true | false, "answer": "<cevap veya null>", "usedEntries": [<kullanılan madde numaraları>] }'
+      '{ "answered": true | false, "answer": "<cevap veya null>", "usedEntries": ["<kullanılan kaynakların köşeli parantez içindeki kimlikleri>"] }'
     ].join('\n'),
     maxTokens: 400,
     temperature: 0

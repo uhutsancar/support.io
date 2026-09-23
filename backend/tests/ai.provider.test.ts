@@ -17,7 +17,11 @@ import { setProvider, resetProvider } from '../src/services/ai';
 import * as aiService from '../src/services/aiService';
 import Message from '../src/models/Message';
 import FAQ from '../src/models/FAQ';
-import { getPool } from '../src/db/pool';
+import Organization from '../src/models/Organization';
+import Site from '../src/models/Site';
+import { findSources } from '../src/services/ai/knowledge';
+import { generateId } from '../src/db/objectId';
+import { getPool, query } from '../src/db/pool';
 
 /** A scripted reply: a fixed completion, fixed text, or a function of the request. */
 type StubReply =
@@ -190,7 +194,9 @@ test('knowledge answer reports honestly when there is nothing to answer from', a
   t.after(() => resetProvider());
 
   const originalFind = FAQ.find;
+  const originalCount = FAQ.countDocuments;
   FAQ.find = (() => ({ sort: () => ({ limit: async () => [] }) })) as any;
+  FAQ.countDocuments = (async () => 0) as any;
 
   try {
     const result = await aiService.knowledgeAnswer(
@@ -202,6 +208,7 @@ test('knowledge answer reports honestly when there is nothing to answer from', a
     assert.equal(stub.calls.length, 0, 'with no knowledge base there is nothing to ask the model');
   } finally {
     FAQ.find = originalFind;
+    FAQ.countDocuments = originalCount;
   }
 });
 
@@ -274,6 +281,104 @@ test('an empty transcript is refused before the provider is called', async (t) =
   } finally {
     Message.find = originalFind;
   }
+});
+
+test('a long thread is read from its newest end', async () => {
+  // 250 messages, oldest first. The previous reader loaded the first 200 and
+  // never saw the last fifty — the ones a reply has to answer.
+  const thread = Array.from({ length: 250 }, (_, i) => ({
+    senderType: i % 2 ? 'agent' : 'visitor',
+    content: `mesaj-${i}`,
+    createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, i))
+  }));
+
+  const originalFind = Message.find;
+  // Honours the sort and limit the reader asks for, like the database would.
+  Message.find = (() => {
+    let rows = [...thread];
+    const chain = {
+      sort(spec: { createdAt: number }) {
+        rows.sort((a, b) => (a.createdAt.getTime() - b.createdAt.getTime()) * spec.createdAt);
+        return chain;
+      },
+      async limit(n: number) {
+        rows = rows.slice(0, n);
+        return rows;
+      }
+    };
+    return chain;
+  }) as any;
+
+  try {
+    const result = await aiService.buildTranscript('c1');
+    const lines = result.transcript.split('\n');
+    assert.equal(lines.at(-1), 'Temsilci: mesaj-249', 'the newest message must be last');
+    assert.ok(result.transcript.includes('mesaj-248'));
+    assert.ok(!result.transcript.includes('mesaj-0\n'), 'the oldest messages are the ones dropped');
+    assert.equal(result.lastVisitorMessage, 'mesaj-248');
+    assert.equal(result.truncated, true);
+
+    const narrow = await aiService.buildTranscript('c1', { messages: 10, chars: 3000 });
+    assert.equal(narrow.messageCount, 10);
+    assert.equal(narrow.transcript.split('\n')[0], 'Müşteri: mesaj-240');
+  } finally {
+    Message.find = originalFind;
+  }
+});
+
+test('FAQ sources are chosen by the question, from this site only', async (t) => {
+  const org = await new Organization({ name: `ai-knowledge-${Date.now()}` }).save();
+  t.after(async () => {
+    await query('DELETE FROM organizations WHERE id = $1', [org._id]);
+  });
+  const site = await new Site({
+    name: 'Bilgi',
+    domain: 'bilgi.test',
+    siteKey: `k-${generateId()}`,
+    organizationId: org._id
+  }).save();
+  const other = await new Site({
+    name: 'Başka',
+    domain: 'baska.test',
+    siteKey: `k-${generateId()}`,
+    organizationId: org._id
+  }).save();
+
+  const entries = [
+    ['Kargo ne kadar sürede gelir?', '1-3 iş günü içinde kargoya verilir.', ['kargo']],
+    ['İade koşulları nelerdir?', '14 gün içinde iade edebilirsiniz.', ['iade']],
+    ['Ürün garantisi ne kadar?', 'Ürünler 24 ay garantilidir.', ['garanti']]
+  ] as const;
+  for (const [i, [question, answer, keywords]] of entries.entries()) {
+    await new FAQ({ siteId: site._id, question, answer, keywords: [...keywords], order: i }).save();
+  }
+  await new FAQ({
+    siteId: other._id,
+    question: 'İade ücreti var mı?',
+    answer: 'Başka sitenin iade cevabı.',
+    keywords: ['iade']
+  }).save();
+
+  // A capital dotted İ, which JavaScript's default lower-casing breaks.
+  const byQuestion = await findSources(site._id, 'İADE süresi kaç gün?');
+  assert.equal(byQuestion[0]?.question, 'İade koşulları nelerdir?');
+  assert.ok(
+    byQuestion.every((s) => !s.answer.includes('Başka sitenin')),
+    "another site's entry must never be a source"
+  );
+
+  // A typo matches nothing indexed; a small site is then given whole.
+  const fallback = await findSources(site._id, 'gnderi takp');
+  assert.equal(fallback.length, 3);
+
+  // A site with nothing published has no sources at all.
+  const empty = await new Site({
+    name: 'Boş',
+    domain: 'bos.test',
+    siteKey: `k-${generateId()}`,
+    organizationId: org._id
+  }).save();
+  assert.deepEqual(await findSources(empty._id, 'iade'), []);
 });
 
 test.after(async () => {
