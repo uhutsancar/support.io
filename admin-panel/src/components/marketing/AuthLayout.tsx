@@ -12,7 +12,6 @@
  * kalır — kayıt formunu doldurmak için önce pazarlama metni kaydırmak
  * gerekmez.
  */
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Check, Moon, Sun, Languages } from 'lucide-react';
@@ -22,7 +21,19 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { InboxVisual } from './visuals';
 import { AppFrame } from './kit';
 
-const AuthLayout = ({ title, subtitle, children, footer, side = 'register' }: { title?: any; subtitle?: any; children?: any; footer?: any; [prop: string]: any }) => {
+const AuthLayout = ({
+  title,
+  subtitle,
+  children,
+  footer,
+  side = 'register'
+}: {
+  title?: any;
+  subtitle?: any;
+  children?: any;
+  footer?: any;
+  [prop: string]: any;
+}) => {
   const { t } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
   const { language, toggleLanguage } = useLanguage();
@@ -63,8 +74,10 @@ const AuthLayout = ({ title, subtitle, children, footer, side = 'register' }: { 
 
         <div className="flex-1 flex items-center justify-center py-10 sm:py-14">
           <div className="w-full max-w-[400px]">
-            <h1 className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.03em]
-              text-gray-900 dark:text-white">
+            <h1
+              className="text-[28px] sm:text-[32px] font-semibold tracking-[-0.03em]
+              text-gray-900 dark:text-white"
+            >
               {title}
             </h1>
             <p className="mt-2.5 text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
@@ -92,11 +105,15 @@ const AuthLayout = ({ title, subtitle, children, footer, side = 'register' }: { 
 
       {/* --------------------------------------------------------- yan panel */}
       {/* Düz koyu zemin — parıltı ve ızgara dokusu yok. */}
-      <div className="hidden lg:flex overflow-hidden bg-gray-950 dark:bg-black
-        flex-col justify-center px-12 xl:px-16 py-14">
+      <div
+        className="hidden lg:flex overflow-hidden bg-gray-950 dark:bg-black
+        flex-col justify-center px-12 xl:px-16 py-14"
+      >
         <div>
-          <h2 className="text-[28px] xl:text-[34px] font-semibold tracking-[-0.03em]
-            leading-[1.15] text-white max-w-[18ch]">
+          <h2
+            className="text-[28px] xl:text-[34px] font-semibold tracking-[-0.03em]
+            leading-[1.15] text-white max-w-[18ch]"
+          >
             {t('authPanel.' + side + '.title')}
           </h2>
 
@@ -123,7 +140,10 @@ const AuthLayout = ({ title, subtitle, children, footer, side = 'register' }: { 
             atasından çözülür, bu yüzden sarmalayıcı yeterli.
           */}
           <div className="dark mt-10 max-w-[560px]">
-            <AppFrame label={t('viz.inbox.frame')} className="shadow-[0_32px_80px_-24px_rgba(0,0,0,.8)]">
+            <AppFrame
+              label={t('viz.inbox.frame')}
+              className="shadow-[0_32px_80px_-24px_rgba(0,0,0,.8)]"
+            >
               <InboxVisual compact />
             </AppFrame>
           </div>
@@ -135,7 +155,15 @@ const AuthLayout = ({ title, subtitle, children, footer, side = 'register' }: { 
 
 /* ------------------------------------------------------------- form alanı */
 
-export const Field = ({ label, hint, ...props }: { label?: any; hint?: any; [prop: string]: any }) => (
+export const Field = ({
+  label,
+  hint,
+  ...props
+}: {
+  label?: any;
+  hint?: any;
+  [prop: string]: any;
+}) => (
   <label className="block">
     <span className="block text-[13.5px] font-medium text-gray-700 dark:text-gray-300 mb-1.5">
       {label}
@@ -149,7 +177,9 @@ export const Field = ({ label, hint, ...props }: { label?: any; hint?: any; [pro
         transition"
       {...props}
     />
-    {hint && <span className="block mt-1.5 text-[12px] text-gray-500 dark:text-gray-400">{hint}</span>}
+    {hint && (
+      <span className="block mt-1.5 text-[12px] text-gray-500 dark:text-gray-400">{hint}</span>
+    )}
   </label>
 );
 

@@ -89,7 +89,8 @@ export const accent = (name: string | undefined): (typeof ACCENTS)['indigo'] =>
  * cagrilinca React agaci patlar ve sayfa tamamen beyaz kalir -- tek bir
  * cevirinin eksik olmasi butun sayfayi dusurmemeli.
  */
-export const asList = <TItem = any,>(value: unknown): TItem[] => (Array.isArray(value) ? value : []);
+export const asList = <TItem = any,>(value: unknown): TItem[] =>
+  Array.isArray(value) ? value : [];
 
 /* ------------------------------------------------------------------ butonlar */
 
@@ -136,7 +137,15 @@ export interface ButtonProps extends Record<string, any> {
 }
 
 export const Button = ({
-  as, to, href, variant = 'primary', size = 'md', className = '', children, arrow = false, ...rest
+  as,
+  to,
+  href,
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  children,
+  arrow = false,
+  ...rest
 }: ButtonProps) => {
   const cls = [BUTTON_BASE, BUTTON_SIZE[size], BUTTON_VARIANT[variant], className].join(' ');
   const inner = (
@@ -145,14 +154,34 @@ export const Button = ({
       {arrow && <ArrowRight className="w-4 h-4 shrink-0" />}
     </>
   );
-  if (to) return <Link to={to} className={cls} {...rest}>{inner}</Link>;
-  if (href) return <a href={href} className={cls} {...rest}>{inner}</a>;
+  if (to)
+    return (
+      <Link to={to} className={cls} {...rest}>
+        {inner}
+      </Link>
+    );
+  if (href)
+    return (
+      <a href={href} className={cls} {...rest}>
+        {inner}
+      </a>
+    );
   const Tag = as || 'button';
-  return <Tag className={cls} {...rest}>{inner}</Tag>;
+  return (
+    <Tag className={cls} {...rest}>
+      {inner}
+    </Tag>
+  );
 };
 
 /** Ok işareti hover'da ilerleyen metin bağlantısı. */
-export const TextLink = ({ to, href, children, tone = 'indigo', className = '' }: {
+export const TextLink = ({
+  to,
+  href,
+  children,
+  tone = 'indigo',
+  className = ''
+}: {
   to?: string;
   href?: string;
   children?: React.ReactNode;
@@ -161,16 +190,26 @@ export const TextLink = ({ to, href, children, tone = 'indigo', className = '' }
   className?: string;
 }) => {
   const a = accent(tone);
-  const cls = ['group inline-flex items-center gap-1.5 text-[14.5px] font-medium', a.text, className].join(' ');
+  const cls = [
+    'group inline-flex items-center gap-1.5 text-[14.5px] font-medium',
+    a.text,
+    className
+  ].join(' ');
   const inner = (
     <>
       {children}
       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
     </>
   );
-  return href
-    ? <a href={href} className={cls}>{inner}</a>
-    : <Link to={to || ''} className={cls}>{inner}</Link>;
+  return href ? (
+    <a href={href} className={cls}>
+      {inner}
+    </a>
+  ) : (
+    <Link to={to || ''} className={cls}>
+      {inner}
+    </Link>
+  );
 };
 
 /* ------------------------------------------------------------------ tipografi */
@@ -184,24 +223,38 @@ export const TextLink = ({ to, href, children, tone = 'indigo', className = '' }
  * bileşen kataloğundan dizilmiş gibi görünüyor. Renk, metnin kendisinde
  * kalıyor; kutuya ihtiyaç yok.
  */
-export const Eyebrow = ({ children, tone = 'indigo', className = '' }: {
+export const Eyebrow = ({
+  children,
+  tone = 'indigo',
+  className = ''
+}: {
   children?: React.ReactNode;
   tone?: string;
   className?: string;
 }) => {
   const a = accent(tone);
   return (
-    <span className={[
-      'block text-[12px] font-semibold uppercase tracking-[0.1em]',
-      a.text, className
-    ].join(' ')}>
+    <span
+      className={[
+        'block text-[12px] font-semibold uppercase tracking-[0.1em]',
+        a.text,
+        className
+      ].join(' ')}
+    >
       {children}
     </span>
   );
 };
 
 /** Bölüm başlığı. `align="center"` yalnızca kısa başlıklar için. */
-export const SectionHead = ({ eyebrow, eyebrowTone, title, description, align = 'left', className = '' }: {
+export const SectionHead = ({
+  eyebrow,
+  eyebrowTone,
+  title,
+  description,
+  align = 'left',
+  className = ''
+}: {
   eyebrow?: React.ReactNode;
   eyebrowTone?: string;
   title?: React.ReactNode;
@@ -209,22 +262,30 @@ export const SectionHead = ({ eyebrow, eyebrowTone, title, description, align = 
   align?: 'left' | 'center';
   className?: string;
 }) => (
-  <div className={[align === 'center' ? 'text-center mx-auto max-w-2xl' : 'max-w-3xl', className].join(' ')}>
+  <div
+    className={[align === 'center' ? 'text-center mx-auto max-w-2xl' : 'max-w-3xl', className].join(
+      ' '
+    )}
+  >
     {eyebrow && <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>}
     {title && (
-      <h2 className={[
-        eyebrow ? 'mt-4' : '',
-        'text-[30px] sm:text-[38px] font-semibold tracking-[-0.03em] leading-[1.12]',
-        'text-gray-900 dark:text-white'
-      ].join(' ')}>
+      <h2
+        className={[
+          eyebrow ? 'mt-4' : '',
+          'text-[30px] sm:text-[38px] font-semibold tracking-[-0.03em] leading-[1.12]',
+          'text-gray-900 dark:text-white'
+        ].join(' ')}
+      >
         {title}
       </h2>
     )}
     {description && (
-      <p className={[
-        'mt-4 text-[16.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[60ch]',
-        align === 'center' ? 'mx-auto' : ''
-      ].join(' ')}>
+      <p
+        className={[
+          'mt-4 text-[16.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[60ch]',
+          align === 'center' ? 'mx-auto' : ''
+        ].join(' ')}
+      >
         {description}
       </p>
     )}
@@ -241,7 +302,13 @@ const TONE_BG = {
 };
 
 export const Section = ({
-  tone = 'plain', bordered = false, id, className = '', innerClassName = '', children, size = 'md'
+  tone = 'plain',
+  bordered = false,
+  id,
+  className = '',
+  innerClassName = '',
+  children,
+  size = 'md'
 }: {
   tone?: keyof typeof TONE_BG;
   bordered?: boolean;
@@ -251,12 +318,15 @@ export const Section = ({
   children?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
 }) => {
-  const pad = size === 'sm' ? 'py-14 sm:py-16' : size === 'lg' ? 'py-24 sm:py-32' : 'py-20 sm:py-24';
+  const pad =
+    size === 'sm' ? 'py-14 sm:py-16' : size === 'lg' ? 'py-24 sm:py-32' : 'py-20 sm:py-24';
   return (
     <section
       id={id}
       className={[
-        TONE_BG[tone], pad, 'px-5 sm:px-8',
+        TONE_BG[tone],
+        pad,
+        'px-5 sm:px-8',
         bordered ? 'border-t border-gray-200/80 dark:border-white/[0.07]' : '',
         className
       ].join(' ')}
@@ -268,7 +338,13 @@ export const Section = ({
 
 /* -------------------------------------------------------------------- kartlar */
 
-export const Card = ({ className = '', children, hover = false, as: Tag = 'div', ...rest }: {
+export const Card = ({
+  className = '',
+  children,
+  hover = false,
+  as: Tag = 'div',
+  ...rest
+}: {
   className?: string;
   children?: React.ReactNode;
   hover?: boolean;
@@ -277,7 +353,9 @@ export const Card = ({ className = '', children, hover = false, as: Tag = 'div',
   <Tag
     className={[
       'rounded-2xl border border-gray-200/90 dark:border-white/[0.08] bg-white dark:bg-white/[0.025]',
-      hover ? 'transition-all hover:border-gray-300 dark:hover:border-white/20 hover:shadow-panel' : '',
+      hover
+        ? 'transition-all hover:border-gray-300 dark:hover:border-white/20 hover:shadow-panel'
+        : '',
       className
     ].join(' ')}
     {...rest}
@@ -294,7 +372,12 @@ export const Card = ({ className = '', children, hover = false, as: Tag = 'div',
  * görünüyordu. Karo yalnızca panelin GERÇEKTEN karo kullandığı yerde
  * (gösterge kartları) kalır — bkz. `SolidIcon`.
  */
-export const AccentIcon = ({ icon: Icon, tone = 'indigo', size = 'md', className = '' }: {
+export const AccentIcon = ({
+  icon: Icon,
+  tone = 'indigo',
+  size = 'md',
+  className = ''
+}: {
   icon: React.ElementType;
   tone?: string;
   size?: 'sm' | 'md' | 'lg';
@@ -306,17 +389,25 @@ export const AccentIcon = ({ icon: Icon, tone = 'indigo', size = 'md', className
 };
 
 /** İçi dolu marka renkli karo — panelin gösterge kartlarındaki ile aynı. */
-export const SolidIcon = ({ icon: Icon, tone = 'indigo', className = '' }: {
+export const SolidIcon = ({
+  icon: Icon,
+  tone = 'indigo',
+  className = ''
+}: {
   icon: React.ElementType;
   tone?: string;
   className?: string;
 }) => {
   const a = accent(tone);
   return (
-    <span className={[
-      'inline-flex items-center justify-center shrink-0 w-11 h-11 rounded-xl',
-      a.bg, 'shadow-[0_6px_16px_-6px_rgba(15,18,40,.45)]', className
-    ].join(' ')}>
+    <span
+      className={[
+        'inline-flex items-center justify-center shrink-0 w-11 h-11 rounded-xl',
+        a.bg,
+        'shadow-[0_6px_16px_-6px_rgba(15,18,40,.45)]',
+        className
+      ].join(' ')}
+    >
       <Icon className="w-5 h-5 text-white" strokeWidth={2.1} />
     </span>
   );
@@ -330,16 +421,20 @@ export const SolidIcon = ({ icon: Icon, tone = 'indigo', className = '' }: {
  * Çerçeveli ve nötr. Pastel dolgulu hâli, sayfadaki diğer pastel çiplerle
  * birlikte her şeyi aynı hazır bileşenden çıkmış gösteriyordu.
  */
-export const Pill = ({ children, tone = 'indigo', className = '' }: {
+export const Pill = ({
+  children,
+  className = ''
+}: {
   children?: React.ReactNode;
-  tone?: string;
   className?: string;
 }) => (
-  <span className={[
-    'inline-flex items-center gap-1.5 px-2 py-[3px] rounded text-[11.5px] font-medium',
-    'border border-gray-200 dark:border-white/15 text-gray-600 dark:text-gray-400',
-    className
-  ].join(' ')}>
+  <span
+    className={[
+      'inline-flex items-center gap-1.5 px-2 py-[3px] rounded text-[11.5px] font-medium',
+      'border border-gray-200 dark:border-white/15 text-gray-600 dark:text-gray-400',
+      className
+    ].join(' ')}
+  >
     {children}
   </span>
 );
@@ -387,7 +482,12 @@ export interface TabItem {
   [field: string]: any;
 }
 
-export const Tabs = ({ items, active, onChange, className = '' }: {
+export const Tabs = ({
+  items,
+  active,
+  onChange,
+  className = ''
+}: {
   items: TabItem[];
   active: string;
   onChange: (key: string) => void;
@@ -461,11 +561,14 @@ export const Tabs = ({ items, active, onChange, className = '' }: {
 export const StepNumber = ({ n, tone = 'indigo' }: { n: React.ReactNode; tone?: string }) => {
   const a = accent(tone);
   return (
-    <span className={[
-      'inline-flex items-center justify-center w-9 h-9 shrink-0 rounded-full',
-      'border border-gray-200 dark:border-white/15 bg-white dark:bg-transparent',
-      'text-[13px] font-semibold tabular-nums', a.text
-    ].join(' ')}>
+    <span
+      className={[
+        'inline-flex items-center justify-center w-9 h-9 shrink-0 rounded-full',
+        'border border-gray-200 dark:border-white/15 bg-white dark:bg-transparent',
+        'text-[13px] font-semibold tabular-nums',
+        a.text
+      ].join(' ')}
+    >
       {n}
     </span>
   );
@@ -481,7 +584,12 @@ export const StepNumber = ({ n, tone = 'indigo' }: { n: React.ReactNode; tone?: 
  * bileşen dilini taklit eden DOM parçalarıdır; her iki temada da doğru,
  * her ekran yoğunluğunda keskin.
  */
-export const AppFrame = ({ label, children, className = '', tone = 'indigo' }: {
+export const AppFrame = ({
+  label,
+  children,
+  className = '',
+  tone = 'indigo'
+}: {
   label?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
@@ -489,18 +597,25 @@ export const AppFrame = ({ label, children, className = '', tone = 'indigo' }: {
 }) => {
   const a = accent(tone);
   return (
-    <div className={[
-      'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
-      'overflow-hidden shadow-panel', className
-    ].join(' ')}>
-      <div className="flex items-center gap-2 px-3.5 h-10 border-b border-gray-200 dark:border-white/[0.07]
-        bg-gray-50/80 dark:bg-white/[0.03]">
+    <div
+      className={[
+        'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
+        'overflow-hidden shadow-panel',
+        className
+      ].join(' ')}
+    >
+      <div
+        className="flex items-center gap-2 px-3.5 h-10 border-b border-gray-200 dark:border-white/[0.07]
+        bg-gray-50/80 dark:bg-white/[0.03]"
+      >
         <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
         <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
         <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
         {label && (
-          <span className="ml-2.5 inline-flex items-center gap-1.5 text-[11.5px] font-medium
-            text-gray-500 dark:text-gray-400">
+          <span
+            className="ml-2.5 inline-flex items-center gap-1.5 text-[11.5px] font-medium
+            text-gray-500 dark:text-gray-400"
+          >
             <span className={['w-1.5 h-1.5 rounded-full', a.dot].join(' ')} />
             {label}
           </span>
@@ -512,23 +627,34 @@ export const AppFrame = ({ label, children, className = '', tone = 'indigo' }: {
 };
 
 /** Ziyaretçi tarafını göstermek için tarayıcı penceresi. */
-export const BrowserFrame = ({ url, children, className = '' }: {
+export const BrowserFrame = ({
+  url,
+  children,
+  className = ''
+}: {
   url?: string;
   children?: React.ReactNode;
   className?: string;
 }) => (
-  <div className={[
-    'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
-    'overflow-hidden shadow-panel', className
-  ].join(' ')}>
-    <div className="flex items-center gap-2 px-3.5 h-10 border-b border-gray-200 dark:border-white/[0.07]
-      bg-gray-50/80 dark:bg-white/[0.03]">
+  <div
+    className={[
+      'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
+      'overflow-hidden shadow-panel',
+      className
+    ].join(' ')}
+  >
+    <div
+      className="flex items-center gap-2 px-3.5 h-10 border-b border-gray-200 dark:border-white/[0.07]
+      bg-gray-50/80 dark:bg-white/[0.03]"
+    >
       <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
       <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
       <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
-      <span className="ml-2 flex-1 h-6 rounded-md bg-white dark:bg-white/[0.05]
+      <span
+        className="ml-2 flex-1 h-6 rounded-md bg-white dark:bg-white/[0.05]
         border border-gray-200 dark:border-white/[0.07] flex items-center px-2.5
-        text-[10.5px] text-gray-400 dark:text-gray-500 truncate">
+        text-[10.5px] text-gray-400 dark:text-gray-500 truncate"
+      >
         {url}
       </span>
     </div>
@@ -542,7 +668,10 @@ export const BrowserFrame = ({ url, children, className = '' }: {
  * Sonsuz kayan şerit. İçerik iki kez basılır ve %50 kaydırılır; böylece
  * döngü başa döndüğünde görünür bir sıçrama olmaz.
  */
-export const Marquee = ({ children, className = '' }: {
+export const Marquee = ({
+  children,
+  className = ''
+}: {
   children?: React.ReactNode;
   className?: string;
 }) => (
@@ -555,8 +684,9 @@ export const Marquee = ({ children, className = '' }: {
   >
     <div className="flex w-max animate-marquee motion-reduce:animate-none hover:[animation-play-state:paused]">
       <div className="flex items-center gap-12 pr-12">{children}</div>
-      <div className="flex items-center gap-12 pr-12" aria-hidden="true">{children}</div>
+      <div className="flex items-center gap-12 pr-12" aria-hidden="true">
+        {children}
+      </div>
     </div>
   </div>
 );
-

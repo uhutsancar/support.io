@@ -14,11 +14,18 @@
  * temayla birlikte döner ve her boyutta keskin kalır.
  */
 
-import React from 'react';
-
 const BRAND = '#4F46E5';
 
-export const LogoMark = ({ size = 32, color = BRAND, rounded = true, className = '', title }: { title?: any; [prop: string]: any }) => (
+export const LogoMark = ({
+  size = 32,
+  color = BRAND,
+  rounded = true,
+  className = '',
+  title
+}: {
+  title?: any;
+  [prop: string]: any;
+}) => (
   <svg
     width={size}
     height={size}

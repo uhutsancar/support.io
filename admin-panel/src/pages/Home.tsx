@@ -20,24 +20,69 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  ArrowRight, Check, Copy, MessageSquare, Zap, BarChart3, Users, ShieldCheck,
-  Globe, Send, GitBranch, Sparkles, Clock, Inbox, Search, Store, Rocket,
-  Briefcase, Wrench, AlertTriangle, PlugZap
+  ArrowRight,
+  Check,
+  Copy,
+  MessageSquare,
+  Zap,
+  BarChart3,
+  Users,
+  ShieldCheck,
+  Globe,
+  Send,
+  GitBranch,
+  Sparkles,
+  Clock,
+  Inbox,
+  Store,
+  Rocket,
+  Briefcase,
+  Wrench,
+  AlertTriangle,
+  PlugZap
 } from 'lucide-react';
 import Shell, { useMarketingRoutes } from '../components/marketing/Shell';
 import {
-  Button, TextLink, Section, SectionHead, Card, AccentIcon, SolidIcon, Pill,
-  Accordion, Tabs, StepNumber, AppFrame, BrowserFrame, Marquee,
-  accent, asList
+  Button,
+  TextLink,
+  Section,
+  SectionHead,
+  Card,
+  AccentIcon,
+  SolidIcon,
+  Pill,
+  Accordion,
+  Tabs,
+  StepNumber,
+  AppFrame,
+  Marquee,
+  accent,
+  asList
 } from '../components/marketing/kit';
 import {
-  InboxVisual, WidgetVisual, MetricsVisual, AnalyticsVisual, RoutingVisual,
-  AutomationVisual, ProactiveVisual, AiVisual
+  InboxVisual,
+  WidgetVisual,
+  AnalyticsVisual,
+  RoutingVisual,
+  AutomationVisual,
+  ProactiveVisual,
+  AiVisual
 } from '../components/marketing/visuals';
 import { HOME_TABS, USE_CASES, FEATURE_TONE, FEATURE_ICON } from './marketing/features';
+
+/**
+ * The closing tag of an embed snippet, assembled rather than written whole.
+ *
+ * These snippets are text the customer copies. A literal closing script tag in
+ * a file that is ever inlined into an HTML `<script>` block would terminate
+ * that block early. It used to be written `<\/script>`, which reads as a guard
+ * but is not one — a backslash before `/` is not an escape sequence in a
+ * JavaScript string, so the character emitted was identical. Splitting it is
+ * the version that actually holds.
+ */
+const CLOSE_SCRIPT = `<${'/'}script>`;
 
 const ICONS = { MessageSquare, GitBranch, Zap, Send, BarChart3, Sparkles };
 const USE_CASE_ICON = { ecommerce: Store, saas: Rocket, agency: Briefcase, service: Wrench };
@@ -54,10 +99,14 @@ const Hero = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) => 
           Aynı bilgi butonların altındaki maddelerde zaten var; çip yalnızca
           sayfanın hazır bir şablondan çıktığını ele veriyordu.
         */}
-        <h1 className="text-[40px] sm:text-[60px] font-semibold tracking-[-0.038em]
-          leading-[1.04] text-gray-900 dark:text-white">
+        <h1
+          className="text-[40px] sm:text-[60px] font-semibold tracking-[-0.038em]
+          leading-[1.04] text-gray-900 dark:text-white"
+        >
           {t('landing.home.heroTitle')}{' '}
-          <span className="text-indigo-600 dark:text-indigo-400">{t('landing.home.heroTitleAccent')}</span>
+          <span className="text-indigo-600 dark:text-indigo-400">
+            {t('landing.home.heroTitleAccent')}
+          </span>
         </h1>
 
         <p className="mt-6 text-[18px] sm:text-[19px] leading-[1.6] text-gray-600 dark:text-gray-400 max-w-[54ch]">
@@ -65,13 +114,20 @@ const Hero = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) => 
         </p>
 
         <div className="mt-9 flex flex-wrap items-center gap-3">
-          <Button to={routes.register} size="lg" arrow>{t('landing.home.btnStart')}</Button>
-          <Button to={routes.features} variant="secondary" size="lg">{t('landing.home.btnTour')}</Button>
+          <Button to={routes.register} size="lg" arrow>
+            {t('landing.home.btnStart')}
+          </Button>
+          <Button to={routes.features} variant="secondary" size="lg">
+            {t('landing.home.btnTour')}
+          </Button>
         </div>
 
         <ul className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
           {['free', 'card', 'setup'].map((k) => (
-            <li key={k} className="flex items-center gap-1.5 text-[13.5px] text-gray-600 dark:text-gray-400">
+            <li
+              key={k}
+              className="flex items-center gap-1.5 text-[13.5px] text-gray-600 dark:text-gray-400"
+            >
               <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-500 shrink-0" />
               {t('landing.home.trust.' + k)}
             </li>
@@ -128,9 +184,16 @@ const Problem = ({ t }: { t?: any; [prop: string]: any }) => {
           {list.map((item, i) => (
             <div key={i}>
               <Card className="p-4 h-full">
-                <AlertTriangle className="w-[18px] h-[18px] text-rose-500 dark:text-rose-400" strokeWidth={2} />
-                <p className="mt-3 text-[14.5px] font-medium text-gray-900 dark:text-white">{item.title}</p>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">{item.body}</p>
+                <AlertTriangle
+                  className="w-[18px] h-[18px] text-rose-500 dark:text-rose-400"
+                  strokeWidth={2}
+                />
+                <p className="mt-3 text-[14.5px] font-medium text-gray-900 dark:text-white">
+                  {item.title}
+                </p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {item.body}
+                </p>
               </Card>
             </div>
           ))}
@@ -138,11 +201,15 @@ const Problem = ({ t }: { t?: any; [prop: string]: any }) => {
       </div>
 
       <div>
-        <div className="mt-12 rounded-2xl border border-indigo-200 dark:border-indigo-500/25
-          bg-indigo-50/70 dark:bg-indigo-500/[0.08] px-6 py-7 sm:px-8 flex flex-wrap items-center gap-6">
+        <div
+          className="mt-12 rounded-2xl border border-indigo-200 dark:border-indigo-500/25
+          bg-indigo-50/70 dark:bg-indigo-500/[0.08] px-6 py-7 sm:px-8 flex flex-wrap items-center gap-6"
+        >
           <SolidIcon icon={Inbox} tone="indigo" />
-          <p className="flex-1 min-w-[260px] text-[17px] sm:text-[19px] font-medium leading-snug
-            text-gray-900 dark:text-white">
+          <p
+            className="flex-1 min-w-[260px] text-[17px] sm:text-[19px] font-medium leading-snug
+            text-gray-900 dark:text-white"
+          >
             {t('landing.home.problem.answer')}
           </p>
         </div>
@@ -167,9 +234,30 @@ const HowItWorks = ({ t }: { t?: any; [prop: string]: any }) => {
       ),
       tone: 'indigo'
     },
-    { node: <AppFrame label={t('viz.inbox.frame')}><InboxVisual compact /></AppFrame>, tone: 'violet' },
-    { node: <AppFrame label={t('viz.routing.frame')} tone="emerald"><RoutingVisual /></AppFrame>, tone: 'emerald' },
-    { node: <AppFrame label={t('viz.analytics.frame')} tone="sky"><AnalyticsVisual /></AppFrame>, tone: 'sky' }
+    {
+      node: (
+        <AppFrame label={t('viz.inbox.frame')}>
+          <InboxVisual compact />
+        </AppFrame>
+      ),
+      tone: 'violet'
+    },
+    {
+      node: (
+        <AppFrame label={t('viz.routing.frame')} tone="emerald">
+          <RoutingVisual />
+        </AppFrame>
+      ),
+      tone: 'emerald'
+    },
+    {
+      node: (
+        <AppFrame label={t('viz.analytics.frame')} tone="sky">
+          <AnalyticsVisual />
+        </AppFrame>
+      ),
+      tone: 'sky'
+    }
   ];
 
   return (
@@ -190,12 +278,19 @@ const HowItWorks = ({ t }: { t?: any; [prop: string]: any }) => {
                 <div className={flip ? 'lg:order-2' : ''}>
                   <div className="flex items-center gap-3">
                     <StepNumber n={i + 1} tone={v.tone} />
-                    <span className={['text-[12.5px] font-semibold uppercase tracking-wider', accent(v.tone).text].join(' ')}>
+                    <span
+                      className={[
+                        'text-[12.5px] font-semibold uppercase tracking-wider',
+                        accent(v.tone).text
+                      ].join(' ')}
+                    >
                       {step.kicker}
                     </span>
                   </div>
-                  <h3 className="mt-5 text-[25px] sm:text-[30px] font-semibold tracking-[-0.028em]
-                    leading-[1.15] text-gray-900 dark:text-white max-w-[18ch]">
+                  <h3
+                    className="mt-5 text-[25px] sm:text-[30px] font-semibold tracking-[-0.028em]
+                    leading-[1.15] text-gray-900 dark:text-white max-w-[18ch]"
+                  >
                     {step.title}
                   </h3>
                   <p className="mt-4 text-[16px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[52ch]">
@@ -204,7 +299,9 @@ const HowItWorks = ({ t }: { t?: any; [prop: string]: any }) => {
                   <ul className="mt-6 space-y-2.5">
                     {(step.points || []).map((point: any, j: number) => (
                       <li key={j} className="flex gap-2.5">
-                        <Check className={['w-4 h-4 mt-1 shrink-0', accent(v.tone).text].join(' ')} />
+                        <Check
+                          className={['w-4 h-4 mt-1 shrink-0', accent(v.tone).text].join(' ')}
+                        />
                         <span className="text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">
                           {point}
                         </span>
@@ -229,12 +326,36 @@ const FeatureTour = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any
   const [active, setActive] = React.useState(HOME_TABS[0]);
 
   const panels = {
-    'live-chat': <AppFrame label={t('viz.inbox.frame')}><InboxVisual compact /></AppFrame>,
-    routing: <AppFrame label={t('viz.routing.frame')} tone="emerald"><RoutingVisual /></AppFrame>,
-    automation: <AppFrame label={t('viz.automation.frame')} tone="emerald"><AutomationVisual /></AppFrame>,
-    proactive: <AppFrame label={t('viz.proactive.frame')} tone="amber"><ProactiveVisual /></AppFrame>,
-    analytics: <AppFrame label={t('viz.analytics.frame')} tone="sky"><AnalyticsVisual /></AppFrame>,
-    'ai-assist': <AppFrame label={t('viz.ai.frame')} tone="violet"><AiVisual /></AppFrame>
+    'live-chat': (
+      <AppFrame label={t('viz.inbox.frame')}>
+        <InboxVisual compact />
+      </AppFrame>
+    ),
+    routing: (
+      <AppFrame label={t('viz.routing.frame')} tone="emerald">
+        <RoutingVisual />
+      </AppFrame>
+    ),
+    automation: (
+      <AppFrame label={t('viz.automation.frame')} tone="emerald">
+        <AutomationVisual />
+      </AppFrame>
+    ),
+    proactive: (
+      <AppFrame label={t('viz.proactive.frame')} tone="amber">
+        <ProactiveVisual />
+      </AppFrame>
+    ),
+    analytics: (
+      <AppFrame label={t('viz.analytics.frame')} tone="sky">
+        <AnalyticsVisual />
+      </AppFrame>
+    ),
+    'ai-assist': (
+      <AppFrame label={t('viz.ai.frame')} tone="violet">
+        <AiVisual />
+      </AppFrame>
+    )
   };
 
   const tabs = HOME_TABS.map((id) => ({
@@ -266,28 +387,36 @@ const FeatureTour = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any
         className="mt-7 grid lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)] gap-8 lg:gap-12 items-center"
       >
         <div key={active} className="animate-rise">
-          <Pill tone={tone}>{t('featuresPage.items.' + active + '.setup')}</Pill>
-          <h3 className="mt-4 text-[24px] sm:text-[28px] font-semibold tracking-[-0.026em]
-            leading-[1.18] text-gray-900 dark:text-white">
+          <Pill>{t('featuresPage.items.' + active + '.setup')}</Pill>
+          <h3
+            className="mt-4 text-[24px] sm:text-[28px] font-semibold tracking-[-0.026em]
+            leading-[1.18] text-gray-900 dark:text-white"
+          >
             {t('featuresPage.items.' + active + '.title')}
           </h3>
           <p className="mt-3.5 text-[15.5px] leading-[1.65] text-gray-600 dark:text-gray-400">
             {t('featuresPage.items.' + active + '.plain')}
           </p>
           <ul className="mt-5 space-y-2.5">
-            {asList(t('featuresPage.items.' + active + '.benefits', { returnObjects: true })).map((b, i) => (
-              <li key={i} className="flex gap-2.5">
-                <Check className={['w-4 h-4 mt-1 shrink-0', accent(tone).text].join(' ')} />
-                <span className="text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">{b}</span>
-              </li>
-            ))}
+            {asList(t('featuresPage.items.' + active + '.benefits', { returnObjects: true })).map(
+              (b, i) => (
+                <li key={i} className="flex gap-2.5">
+                  <Check className={['w-4 h-4 mt-1 shrink-0', accent(tone).text].join(' ')} />
+                  <span className="text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    {b}
+                  </span>
+                </li>
+              )
+            )}
           </ul>
           <TextLink to={routes.features + '/' + active} tone={tone} className="mt-6">
             {t('landing.home.tour.detail')}
           </TextLink>
         </div>
 
-        <div key={active + '-v'} className="animate-rise">{panels[active as keyof typeof panels]}</div>
+        <div key={active + '-v'} className="animate-rise">
+          {panels[active as keyof typeof panels]}
+        </div>
       </div>
     </Section>
   );
@@ -337,10 +466,14 @@ const UseCases = ({ t }: { t?: any; [prop: string]: any }) => {
                       {t('landing.home.cases.items.' + id + '.tag')}
                     </span>
                   </span>
-                  <ArrowRight className={[
-                    'w-4 h-4 shrink-0 transition-all',
-                    on ? a.text + ' translate-x-0 opacity-100' : 'text-gray-300 dark:text-gray-600 -translate-x-1 opacity-0'
-                  ].join(' ')} />
+                  <ArrowRight
+                    className={[
+                      'w-4 h-4 shrink-0 transition-all',
+                      on
+                        ? a.text + ' translate-x-0 opacity-100'
+                        : 'text-gray-300 dark:text-gray-600 -translate-x-1 opacity-0'
+                    ].join(' ')}
+                  />
                 </button>
               </li>
             );
@@ -349,8 +482,10 @@ const UseCases = ({ t }: { t?: any; [prop: string]: any }) => {
 
         {/* seçilen sektörün anlatımı */}
         <Card key={active} className="p-6 sm:p-8 animate-rise">
-          <h3 className="text-[22px] sm:text-[26px] font-semibold tracking-[-0.025em]
-            leading-snug text-gray-900 dark:text-white max-w-[24ch]">
+          <h3
+            className="text-[22px] sm:text-[26px] font-semibold tracking-[-0.025em]
+            leading-snug text-gray-900 dark:text-white max-w-[24ch]"
+          >
             {t('landing.home.cases.items.' + active + '.headline')}
           </h3>
           <p className="mt-4 text-[15.5px] leading-[1.7] text-gray-600 dark:text-gray-400 max-w-[58ch]">
@@ -358,12 +493,23 @@ const UseCases = ({ t }: { t?: any; [prop: string]: any }) => {
           </p>
 
           <div className="mt-7 grid sm:grid-cols-3 gap-4">
-            {asList(t('landing.home.cases.items.' + active + '.wins', { returnObjects: true })).map((w, i) => (
-              <div key={i} className="rounded-xl bg-gray-50 dark:bg-white/[0.04] p-4">
-                <p className={['text-[13px] font-semibold', accent(tones[active as keyof typeof tones]).text].join(' ')}>{w.label}</p>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">{w.body}</p>
-              </div>
-            ))}
+            {asList(t('landing.home.cases.items.' + active + '.wins', { returnObjects: true })).map(
+              (w, i) => (
+                <div key={i} className="rounded-xl bg-gray-50 dark:bg-white/[0.04] p-4">
+                  <p
+                    className={[
+                      'text-[13px] font-semibold',
+                      accent(tones[active as keyof typeof tones]).text
+                    ].join(' ')}
+                  >
+                    {w.label}
+                  </p>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    {w.body}
+                  </p>
+                </div>
+              )
+            )}
           </div>
         </Card>
       </div>
@@ -376,14 +522,18 @@ const UseCases = ({ t }: { t?: any; [prop: string]: any }) => {
 const Setup = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) => {
   const [copied, setCopied] = React.useState(false);
   const origin = import.meta.env.VITE_API_URL || window.location.origin;
-  const snippet = '<script\n  src="' + origin + '/widget.js"\n  data-site-key="SITE_ANAHTARINIZ"\n  async><\/script>';
+  const snippet =
+    '<script\n  src="' +
+    origin +
+    '/widget.js"\n  data-site-key="SITE_ANAHTARINIZ"\n  async>' +
+    CLOSE_SCRIPT;
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(snippet);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
+    } catch {
       // Pano izni yoksa sessiz kal; kod zaten ekranda ve seçilebilir.
     }
   };
@@ -406,7 +556,9 @@ const Setup = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) =>
               <li key={i} className="flex gap-4">
                 <StepNumber n={i + 1} tone="emerald" />
                 <div className="pt-1">
-                  <p className="text-[15.5px] font-semibold text-gray-900 dark:text-white">{s.title}</p>
+                  <p className="text-[15.5px] font-semibold text-gray-900 dark:text-white">
+                    {s.title}
+                  </p>
                   <p className="mt-1 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[46ch]">
                     {s.body}
                   </p>
@@ -416,8 +568,12 @@ const Setup = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) =>
           </ol>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button to={routes.register} arrow>{t('landing.home.setup.cta')}</Button>
-            <Button to={routes.docs} variant="secondary">{t('landing.home.btnDocs')}</Button>
+            <Button to={routes.register} arrow>
+              {t('landing.home.setup.cta')}
+            </Button>
+            <Button to={routes.docs} variant="secondary">
+              {t('landing.home.btnDocs')}
+            </Button>
           </div>
         </div>
 
@@ -429,8 +585,10 @@ const Setup = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) =>
             duruyor ve altındaki not "bunu yapıştıracak birine ihtiyacınız
             yoksa bize sorun" diyor.
           */}
-          <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10
-            bg-gray-950 shadow-panel">
+          <div
+            className="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10
+            bg-gray-950 shadow-panel"
+          >
             <div className="flex items-center justify-between px-4 h-11 border-b border-white/[0.07]">
               <span className="flex items-center gap-2 text-[12px] font-mono text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
@@ -441,7 +599,11 @@ const Setup = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) =>
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px]
                   font-medium text-gray-300 hover:text-white hover:bg-white/10 transition"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
                 {copied ? t('common.copied') : t('common.copy')}
               </button>
             </div>
@@ -461,7 +623,10 @@ const Setup = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any }) =>
             </p>
             <Marquee className="mt-4">
               {(Array.isArray(platforms) ? platforms : []).map((p) => (
-                <span key={p} className="text-[15px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                <span
+                  key={p}
+                  className="text-[15px] font-medium text-gray-400 dark:text-gray-500 whitespace-nowrap"
+                >
                   {p}
                 </span>
               ))}
@@ -494,8 +659,12 @@ const Security = ({ t }: { t?: any; [prop: string]: any }) => {
             return (
               <div key={i}>
                 <AccentIcon icon={Icon} tone="emerald" />
-                <h3 className="mt-3.5 text-[15.5px] font-semibold text-gray-900 dark:text-white">{item.title}</h3>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">{item.body}</p>
+                <h3 className="mt-3.5 text-[15.5px] font-semibold text-gray-900 dark:text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {item.body}
+                </p>
               </div>
             );
           })}
@@ -518,7 +687,14 @@ const PricingTeaser = ({ t, routes }: { t?: any; routes?: any; [prop: string]: a
 
       <div className="grid sm:grid-cols-3 gap-3">
         {['free', 'pro', 'enterprise'].map((id, i) => (
-          <Card key={id} hover className={['p-4', i === 1 ? 'ring-2 ring-indigo-500/25 border-indigo-200 dark:border-indigo-500/30' : ''].join(' ')}>
+          <Card
+            key={id}
+            hover
+            className={[
+              'p-4',
+              i === 1 ? 'ring-2 ring-indigo-500/25 border-indigo-200 dark:border-indigo-500/30' : ''
+            ].join(' ')}
+          >
             <p className="text-[13px] font-semibold text-gray-900 dark:text-white">
               {t('pricingPage.plans.' + id + '.name')}
             </p>
@@ -548,7 +724,10 @@ const Faq = ({ t }: { t?: any; [prop: string]: any }) => {
         {/* Başlık kaydırma boyunca sabit kalır; aksi halde uzun akordeonun
             yanında yarım ekranlık boş bir sütun duruyordu. */}
         <div className="lg:sticky lg:top-28">
-          <SectionHead title={t('landing.home.faq.title')} description={t('landing.home.faq.desc')} />
+          <SectionHead
+            title={t('landing.home.faq.title')}
+            description={t('landing.home.faq.desc')}
+          />
         </div>
         <Accordion items={Array.isArray(items) ? items : []} />
       </div>
@@ -571,7 +750,9 @@ const FinalCta = ({ t, routes }: { t?: any; routes?: any; [prop: string]: any })
         {t('landing.home.ctaDesc')}
       </p>
       <div className="mt-9 flex flex-wrap justify-center gap-3">
-        <Button to={routes.register} variant="inverse" size="lg" arrow>{t('landing.home.ctaBtn1')}</Button>
+        <Button to={routes.register} variant="inverse" size="lg" arrow>
+          {t('landing.home.ctaBtn1')}
+        </Button>
         <Button
           to={routes.pricing}
           size="lg"

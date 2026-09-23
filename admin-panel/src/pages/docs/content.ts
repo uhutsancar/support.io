@@ -16,6 +16,18 @@
  * anlatır.
  */
 
+/**
+ * The closing tag of an embed snippet, assembled rather than written whole.
+ *
+ * These snippets are text the customer copies. A literal closing script tag in
+ * a file that is ever inlined into an HTML `<script>` block would terminate
+ * that block early. It used to be written `<\/script>`, which reads as a guard
+ * but is not one — a backslash before `/` is not an escape sequence in a
+ * JavaScript string, so the character emitted was identical. Splitting it is
+ * the version that actually holds.
+ */
+const CLOSE_SCRIPT = `<${'/'}script>`;
+
 export const SECTIONS = [
   'quickstart',
   'embed',
@@ -34,7 +46,7 @@ export const SECTIONS = [
 
 /** Kurulum kodu her yerde aynı; tek kaynaktan üretilir. */
 export const embedSnippet = (origin: string, siteKey = 'YOUR_SITE_KEY') =>
-  `<script\n  src="${origin}/widget.js"\n  data-site-key="${siteKey}"\n  async><\/script>`;
+  `<script\n  src="${origin}/widget.js"\n  data-site-key="${siteKey}"\n  async>${CLOSE_SCRIPT}`;
 
 export const FRAMEWORKS = [
   {
@@ -60,7 +72,10 @@ export const FRAMEWORKS = [
     label: 'React',
     file: 'public/index.html  ·  src/App.jsx',
     lang: 'jsx',
-    code: (origin: string, key: string) => `// 1) En basit yol: public/index.html içine script etiketini koyun.
+    code: (
+      _origin: string,
+      _key: string
+    ) => `// 1) En basit yol: public/index.html içine script etiketini koyun.
 //    Widget kendi kendini başlatır, React'in haberi olmasına gerek yoktur.
 
 // 2) Kullanıcı oturumuna bağlamak isterseniz:
@@ -120,7 +135,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     label: 'Vue',
     file: 'index.html  ·  App.vue',
     lang: 'vue',
-    code: (origin: string, key: string) => `<!-- index.html içine script etiketini koymak yeterlidir. -->
+    code: (
+      _origin: string,
+      _key: string
+    ) => `<!-- index.html içine script etiketini koymak yeterlidir. -->
 
 <!-- Kullanıcıyı tanıtmak için: -->
 <script setup>
@@ -139,7 +157,10 @@ watch(() => props.user, (user) => {
     label: 'Nuxt',
     file: 'plugins/support-chat.client.ts',
     lang: 'ts',
-    code: (origin: string, key: string) => `// .client.ts uzantısı önemlidir: eklenti yalnızca tarayıcıda çalışır.
+    code: (
+      origin: string,
+      key: string
+    ) => `// .client.ts uzantısı önemlidir: eklenti yalnızca tarayıcıda çalışır.
 export default defineNuxtPlugin(() => {
   const script = document.createElement('script');
   script.src = '${origin}/widget.js';
@@ -182,7 +203,10 @@ export class AppComponent implements OnInit {
     label: 'Svelte',
     file: 'src/app.html  ·  +layout.svelte',
     lang: 'svelte',
-    code: (origin: string, key: string) => `<!-- SvelteKit: src/app.html içinde %sveltekit.body% sonrasına -->
+    code: (
+      origin: string,
+      key: string
+    ) => `<!-- SvelteKit: src/app.html içinde %sveltekit.body% sonrasına -->
 <script src="${origin}/widget.js" data-site-key="${key}" async></script>
 
 <!-- Ya da src/routes/+layout.svelte içinde: -->
@@ -256,7 +280,7 @@ add_action('wp_footer', function () {
     label: 'Laravel',
     file: 'resources/views/layouts/app.blade.php',
     lang: 'blade',
-    code: (origin: string, key: string) => `{{-- </body> etiketinden hemen önce --}}
+    code: (_origin: string, _key: string) => `{{-- </body> etiketinden hemen önce --}}
 <script src="{{ config('services.support_chat.url') }}/widget.js"
         data-site-key="{{ config('services.support_chat.key') }}"
         async></script>
@@ -296,7 +320,10 @@ $supportChatKey = getenv('SUPPORT_CHAT_KEY') ?: '${key}';
     label: 'Shopify',
     file: 'layout/theme.liquid',
     lang: 'liquid',
-    code: (origin: string, key: string) => `{%- comment -%} </body> etiketinden hemen önce {%- endcomment -%}
+    code: (
+      origin: string,
+      key: string
+    ) => `{%- comment -%} </body> etiketinden hemen önce {%- endcomment -%}
 <script src="${origin}/widget.js" data-site-key="${key}" async></script>
 
 {%- if customer -%}
@@ -316,50 +343,188 @@ $supportChatKey = getenv('SUPPORT_CHAT_KEY') ?: '${key}';
 ];
 
 export const API_METHODS = [
-  { sig: 'SupportChat.init(options?)', tr: 'Widget’ı başlatır. Script etiketi bunu kendisi çağırır; yalnızca `data-defer` kullandıysanız gerekir.', en: 'Boots the widget. The script tag calls this itself; only needed when you used `data-defer`.' },
+  {
+    sig: 'SupportChat.init(options?)',
+    tr: 'Widget’ı başlatır. Script etiketi bunu kendisi çağırır; yalnızca `data-defer` kullandıysanız gerekir.',
+    en: 'Boots the widget. The script tag calls this itself; only needed when you used `data-defer`.'
+  },
   { sig: 'SupportChat.open()', tr: 'Sohbet penceresini açar.', en: 'Opens the chat window.' },
-  { sig: 'SupportChat.close()', tr: 'Pencereyi kapatır, launcher kalır.', en: 'Closes the window, the launcher stays.' },
+  {
+    sig: 'SupportChat.close()',
+    tr: 'Pencereyi kapatır, launcher kalır.',
+    en: 'Closes the window, the launcher stays.'
+  },
   { sig: 'SupportChat.toggle()', tr: 'Açıksa kapatır, kapalıysa açar.', en: 'Toggles the window.' },
   { sig: 'SupportChat.show()', tr: 'Widget’ı görünür yapar.', en: 'Makes the widget visible.' },
-  { sig: 'SupportChat.hide()', tr: 'Widget’ı tamamen gizler (launcher dahil).', en: 'Hides the widget entirely, launcher included.' },
-  { sig: 'SupportChat.identify(user)', tr: 'Oturum açmış kullanıcıyı tanıtır: `{ userId, name, email, avatar }`.', en: 'Identifies the signed-in user: `{ userId, name, email, avatar }`.' },
-  { sig: 'SupportChat.logout()', tr: 'Kimliği temizler ve YENİ bir ziyaretçi kimliği üretir. Ortak bilgisayarda sohbet geçmişinin sızmaması için şarttır.', en: 'Clears the identity and mints a NEW visitor id. Required so a shared computer does not leak the previous chat.' },
-  { sig: 'SupportChat.setAttributes(attrs)', tr: 'Serbest biçimli özellikler ekler: `{ plan: "pro", mrr: 249 }`. Temsilci panelinde görünür.', en: 'Attaches free-form attributes: `{ plan: "pro", mrr: 249 }`. Visible to agents.' },
-  { sig: 'SupportChat.setLocale(locale)', tr: '`"tr"` veya `"en"`. Widget metinlerini anında değiştirir, sohbeti korur.', en: '`"tr"` or `"en"`. Swaps the widget copy instantly, keeps the thread.' },
-  { sig: 'SupportChat.setTheme(theme)', tr: '`"light"`, `"dark"` veya `"auto"` (sistem tercihini izler).', en: '`"light"`, `"dark"` or `"auto"` (follows the system preference).' },
-  { sig: 'SupportChat.on(event, handler)', tr: 'Olay dinler; aboneliği iptal eden bir fonksiyon döndürür.', en: 'Subscribes to an event; returns an unsubscribe function.' },
-  { sig: 'SupportChat.off(event, handler?)', tr: 'Dinleyiciyi kaldırır. Handler verilmezse o olayın tüm dinleyicileri gider.', en: 'Removes a listener. Without a handler, every listener for that event goes.' },
-  { sig: 'SupportChat.destroy()', tr: 'Widget’ı söker: DOM, soket, zamanlayıcılar ve history sarmalayıcısı geri alınır.', en: 'Tears the widget down: DOM, socket, timers and the history patch are all reverted.' },
-  { sig: 'SupportChat.debug()', tr: 'Tanılama nesnesi döndürür: sürüm, bağlantı durumu, site anahtarı, ziyaretçi kimliği, ölümcül hata.', en: 'Returns a diagnostics object: version, connection state, site key, visitor id, fatal error.' },
+  {
+    sig: 'SupportChat.hide()',
+    tr: 'Widget’ı tamamen gizler (launcher dahil).',
+    en: 'Hides the widget entirely, launcher included.'
+  },
+  {
+    sig: 'SupportChat.identify(user)',
+    tr: 'Oturum açmış kullanıcıyı tanıtır: `{ userId, name, email, avatar }`.',
+    en: 'Identifies the signed-in user: `{ userId, name, email, avatar }`.'
+  },
+  {
+    sig: 'SupportChat.logout()',
+    tr: 'Kimliği temizler ve YENİ bir ziyaretçi kimliği üretir. Ortak bilgisayarda sohbet geçmişinin sızmaması için şarttır.',
+    en: 'Clears the identity and mints a NEW visitor id. Required so a shared computer does not leak the previous chat.'
+  },
+  {
+    sig: 'SupportChat.setAttributes(attrs)',
+    tr: 'Serbest biçimli özellikler ekler: `{ plan: "pro", mrr: 249 }`. Temsilci panelinde görünür.',
+    en: 'Attaches free-form attributes: `{ plan: "pro", mrr: 249 }`. Visible to agents.'
+  },
+  {
+    sig: 'SupportChat.setLocale(locale)',
+    tr: '`"tr"` veya `"en"`. Widget metinlerini anında değiştirir, sohbeti korur.',
+    en: '`"tr"` or `"en"`. Swaps the widget copy instantly, keeps the thread.'
+  },
+  {
+    sig: 'SupportChat.setTheme(theme)',
+    tr: '`"light"`, `"dark"` veya `"auto"` (sistem tercihini izler).',
+    en: '`"light"`, `"dark"` or `"auto"` (follows the system preference).'
+  },
+  {
+    sig: 'SupportChat.on(event, handler)',
+    tr: 'Olay dinler; aboneliği iptal eden bir fonksiyon döndürür.',
+    en: 'Subscribes to an event; returns an unsubscribe function.'
+  },
+  {
+    sig: 'SupportChat.off(event, handler?)',
+    tr: 'Dinleyiciyi kaldırır. Handler verilmezse o olayın tüm dinleyicileri gider.',
+    en: 'Removes a listener. Without a handler, every listener for that event goes.'
+  },
+  {
+    sig: 'SupportChat.destroy()',
+    tr: 'Widget’ı söker: DOM, soket, zamanlayıcılar ve history sarmalayıcısı geri alınır.',
+    en: 'Tears the widget down: DOM, socket, timers and the history patch are all reverted.'
+  },
+  {
+    sig: 'SupportChat.debug()',
+    tr: 'Tanılama nesnesi döndürür: sürüm, bağlantı durumu, site anahtarı, ziyaretçi kimliği, ölümcül hata.',
+    en: 'Returns a diagnostics object: version, connection state, site key, visitor id, fatal error.'
+  },
   { sig: 'SupportChat.version', tr: 'Çalışan SDK sürümü.', en: 'The running SDK version.' }
 ];
 
 export const EVENTS = [
-  { name: 'ready', payload: '{ siteKey, locale, version }', tr: 'Widget yüklendi ve çizildi.', en: 'The widget loaded and rendered.' },
+  {
+    name: 'ready',
+    payload: '{ siteKey, locale, version }',
+    tr: 'Widget yüklendi ve çizildi.',
+    en: 'The widget loaded and rendered.'
+  },
   { name: 'open', payload: '{}', tr: 'Pencere açıldı.', en: 'The window opened.' },
   { name: 'close', payload: '{}', tr: 'Pencere kapandı.', en: 'The window closed.' },
-  { name: 'message', payload: '{ message }', tr: 'Yeni bir mesaj alındı (temsilci, bot veya sistem).', en: 'A message arrived (agent, bot or system).' },
-  { name: 'message:sent', payload: '{ content, clientMessageId }', tr: 'Ziyaretçi bir mesaj gönderdi.', en: 'The visitor sent a message.' },
-  { name: 'conversation:ready', payload: '{ conversationId }', tr: 'Konuşma açıldı veya mevcut konuşmaya bağlanıldı.', en: 'A conversation opened or was rejoined.' },
-  { name: 'connection', payload: '{ state, detail }', tr: 'Soket durumu değişti: connecting / connected / reconnecting / disconnected / error.', en: 'Socket state changed: connecting / connected / reconnecting / disconnected / error.' },
-  { name: 'unread', payload: '{ count }', tr: 'Okunmamış sayısı değişti.', en: 'The unread count changed.' },
-  { name: 'identify', payload: '{ user }', tr: 'Kullanıcı tanıtıldı.', en: 'A user was identified.' },
+  {
+    name: 'message',
+    payload: '{ message }',
+    tr: 'Yeni bir mesaj alındı (temsilci, bot veya sistem).',
+    en: 'A message arrived (agent, bot or system).'
+  },
+  {
+    name: 'message:sent',
+    payload: '{ content, clientMessageId }',
+    tr: 'Ziyaretçi bir mesaj gönderdi.',
+    en: 'The visitor sent a message.'
+  },
+  {
+    name: 'conversation:ready',
+    payload: '{ conversationId }',
+    tr: 'Konuşma açıldı veya mevcut konuşmaya bağlanıldı.',
+    en: 'A conversation opened or was rejoined.'
+  },
+  {
+    name: 'connection',
+    payload: '{ state, detail }',
+    tr: 'Soket durumu değişti: connecting / connected / reconnecting / disconnected / error.',
+    en: 'Socket state changed: connecting / connected / reconnecting / disconnected / error.'
+  },
+  {
+    name: 'unread',
+    payload: '{ count }',
+    tr: 'Okunmamış sayısı değişti.',
+    en: 'The unread count changed.'
+  },
+  {
+    name: 'identify',
+    payload: '{ user }',
+    tr: 'Kullanıcı tanıtıldı.',
+    en: 'A user was identified.'
+  },
   { name: 'logout', payload: '{}', tr: 'Kimlik temizlendi.', en: 'The identity was cleared.' },
-  { name: 'attributes', payload: '{ attributes }', tr: 'Özellikler güncellendi.', en: 'Attributes were updated.' },
+  {
+    name: 'attributes',
+    payload: '{ attributes }',
+    tr: 'Özellikler güncellendi.',
+    en: 'Attributes were updated.'
+  },
   { name: 'locale', payload: '{ locale }', tr: 'Dil değişti.', en: 'The locale changed.' },
   { name: 'theme', payload: '{ theme }', tr: 'Tema değişti.', en: 'The theme changed.' },
-  { name: 'navigate', payload: '{ url, path }', tr: 'SPA yönlendirmesi algılandı.', en: 'An SPA navigation was detected.' },
-  { name: 'error', payload: '{ code, message }', tr: 'Bir hata oluştu. Kodlar: MISSING_SITE_KEY, MISSING_API_URL, WIDGET_NOT_FOUND, NETWORK_ERROR, SOCKET_ERROR, SEND_FAILED.', en: 'Something failed. Codes: MISSING_SITE_KEY, MISSING_API_URL, WIDGET_NOT_FOUND, NETWORK_ERROR, SOCKET_ERROR, SEND_FAILED.' },
+  {
+    name: 'navigate',
+    payload: '{ url, path }',
+    tr: 'SPA yönlendirmesi algılandı.',
+    en: 'An SPA navigation was detected.'
+  },
+  {
+    name: 'error',
+    payload: '{ code, message }',
+    tr: 'Bir hata oluştu. Kodlar: MISSING_SITE_KEY, MISSING_API_URL, WIDGET_NOT_FOUND, NETWORK_ERROR, SOCKET_ERROR, SEND_FAILED.',
+    en: 'Something failed. Codes: MISSING_SITE_KEY, MISSING_API_URL, WIDGET_NOT_FOUND, NETWORK_ERROR, SOCKET_ERROR, SEND_FAILED.'
+  },
   { name: 'destroy', payload: '{}', tr: 'Widget söküldü.', en: 'The widget was torn down.' }
 ];
 
 export const SCRIPT_ATTRS = [
-  { attr: 'data-site-key', required: true, tr: 'Zorunlu. Panel → Siteler ekranındaki anahtar.', en: 'Required. The key from Dashboard → Sites.' },
-  { attr: 'data-api-url', required: false, tr: 'API adresi. Verilmezse script’in kendi origin’i kullanılır — normalde gerekmez.', en: 'API origin. Defaults to the script’s own origin — normally unnecessary.' },
-  { attr: 'data-locale', required: false, tr: '`tr` veya `en`. Verilmezse `<html lang>` ve tarayıcı dili sırayla denenir.', en: '`tr` or `en`. Falls back to `<html lang>` then the browser language.' },
-  { attr: 'data-theme', required: false, tr: '`light`, `dark` veya `auto`.', en: '`light`, `dark` or `auto`.' },
-  { attr: 'data-position', required: false, tr: 'Paneldeki konumu geçersiz kılar: `bottom-right`, `bottom-left`, `top-right`, `top-left`.', en: 'Overrides the dashboard position: `bottom-right`, `bottom-left`, `top-right`, `top-left`.' },
-  { attr: 'data-hidden', required: false, tr: '`true` ise widget gizli başlar; `SupportChat.show()` ile gösterilir.', en: 'When `true` the widget starts hidden; call `SupportChat.show()` to reveal it.' },
-  { attr: 'data-defer', required: false, tr: '`true` ise otomatik başlatma yapılmaz. Çerez onayı arkasında çalıştırmak için: onay sonrası `SupportChat.init()`.', en: 'When `true` nothing boots automatically. Use it behind a cookie banner: call `SupportChat.init()` after consent.' },
-  { attr: 'data-z-index', required: false, tr: 'Widget kökünün z-index değeri. Varsayılan 2147483000.', en: 'The z-index of the widget root. Defaults to 2147483000.' }
+  {
+    attr: 'data-site-key',
+    required: true,
+    tr: 'Zorunlu. Panel → Siteler ekranındaki anahtar.',
+    en: 'Required. The key from Dashboard → Sites.'
+  },
+  {
+    attr: 'data-api-url',
+    required: false,
+    tr: 'API adresi. Verilmezse script’in kendi origin’i kullanılır — normalde gerekmez.',
+    en: 'API origin. Defaults to the script’s own origin — normally unnecessary.'
+  },
+  {
+    attr: 'data-locale',
+    required: false,
+    tr: '`tr` veya `en`. Verilmezse `<html lang>` ve tarayıcı dili sırayla denenir.',
+    en: '`tr` or `en`. Falls back to `<html lang>` then the browser language.'
+  },
+  {
+    attr: 'data-theme',
+    required: false,
+    tr: '`light`, `dark` veya `auto`.',
+    en: '`light`, `dark` or `auto`.'
+  },
+  {
+    attr: 'data-position',
+    required: false,
+    tr: 'Paneldeki konumu geçersiz kılar: `bottom-right`, `bottom-left`, `top-right`, `top-left`.',
+    en: 'Overrides the dashboard position: `bottom-right`, `bottom-left`, `top-right`, `top-left`.'
+  },
+  {
+    attr: 'data-hidden',
+    required: false,
+    tr: '`true` ise widget gizli başlar; `SupportChat.show()` ile gösterilir.',
+    en: 'When `true` the widget starts hidden; call `SupportChat.show()` to reveal it.'
+  },
+  {
+    attr: 'data-defer',
+    required: false,
+    tr: '`true` ise otomatik başlatma yapılmaz. Çerez onayı arkasında çalıştırmak için: onay sonrası `SupportChat.init()`.',
+    en: 'When `true` nothing boots automatically. Use it behind a cookie banner: call `SupportChat.init()` after consent.'
+  },
+  {
+    attr: 'data-z-index',
+    required: false,
+    tr: 'Widget kökünün z-index değeri. Varsayılan 2147483000.',
+    en: 'The z-index of the widget root. Defaults to 2147483000.'
+  }
 ];

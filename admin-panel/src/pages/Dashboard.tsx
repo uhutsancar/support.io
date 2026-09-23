@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -20,9 +20,16 @@ import {
 import { sitesAPI, conversationsAPI, analyticsAPI, clearCache } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
+import { formatDate, formatMinutes, formatTime } from '../lib/format';
+import {
+  conversationStatusBadge as getStatusBadge,
+  priorityBadge as getPriorityBadge
+} from '../lib/statusStyles';
 
 const sortByNewest = (conversations: any) =>
-  [...conversations].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  [...conversations].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
 // Yalnizca temsilci panosu icin: kendisine atanmis, sinirli sayidaki konusma
 // uzerinden ozet. Organizasyon geneli rakamlar icin kullanilmaz, cunku bir
@@ -41,18 +48,23 @@ const statsFromConversations = (conversations: any, activeSites: any) => {
   const withResponse = conversations.filter((c: any) => c.responseTime);
   const withResolution = conversations.filter((c: any) => c.resolutionTime);
   const average = (rows: any, pick: any) =>
-    rows.length ? Math.round(rows.reduce((sum: number, row: any) => sum + (pick(row) || 0), 0) / rows.length) : 0;
+    rows.length
+      ? Math.round(rows.reduce((sum: number, row: any) => sum + (pick(row) || 0), 0) / rows.length)
+      : 0;
 
   return {
     openTickets: open,
-    slaBreaches: conversations.filter((c: any) =>
-      c.sla?.firstResponseStatus === 'breached' || c.sla?.resolutionStatus === 'breached'
+    slaBreaches: conversations.filter(
+      (c: any) =>
+        c.sla?.firstResponseStatus === 'breached' || c.sla?.resolutionStatus === 'breached'
     ).length,
-    unassignedTickets: conversations.filter((c: any) =>
-      ['open', 'unassigned'].includes(c.status) && !c.assignedAgent
+    unassignedTickets: conversations.filter(
+      (c: any) => ['open', 'unassigned'].includes(c.status) && !c.assignedAgent
     ).length,
     customerSatisfaction: rated.length
-      ? Math.round((rated.reduce((sum: number, c: any) => sum + c.rating.score, 0) / rated.length) * 20)
+      ? Math.round(
+          (rated.reduce((sum: number, c: any) => sum + c.rating.score, 0) / rated.length) * 20
+        )
       : 0,
     activeAgents: 0,
     totalAgents: 0,
@@ -60,7 +72,9 @@ const statsFromConversations = (conversations: any, activeSites: any) => {
     avgResolutionTime: average(withResolution, (c: any) => c.resolutionTime),
     totalConversations: conversations.length,
     activeSites,
-    resolvedToday: conversations.filter((c: any) => c.resolvedAt && new Date(c.resolvedAt) >= startOfToday).length,
+    resolvedToday: conversations.filter(
+      (c: any) => c.resolvedAt && new Date(c.resolvedAt) >= startOfToday
+    ).length,
     slaComplianceRate: measured.length ? Math.round((met / measured.length) * 100) : 0
   };
 };
@@ -99,7 +113,7 @@ const Dashboard = () => {
     fetchDashboardData();
     const refresh = () => fetchDashboardData(true);
     const onSlaBreach = (data: any) => {
-      setStats(prev => ({
+      setStats((prev) => ({
         ...prev,
         slaBreaches: prev.slaBreaches + 1
       }));
@@ -152,7 +166,7 @@ const Dashboard = () => {
       clearCache();
       const sitesResponse = await sitesAPI.getAll();
       const sites = sitesResponse.data.sites || [];
-      const activeSites = sites.filter(site => site.isActive).length;
+      const activeSites = sites.filter((site) => site.isActive).length;
 
       if (user?.role === 'agent') {
         // Temsilci panosu kendi kuyrugunu ozetler; bu kume zaten sinirlidir.
@@ -161,6 +175,9 @@ const Dashboard = () => {
           const assignedResp = await conversationsAPI.getAssigned();
           assigned = assignedResp.data.conversations || assignedResp.data || [];
         } catch (error) {
+          // Reported rather than discarded: a silent failure here leaves the
+          // page showing stale data with nothing to say why.
+          console.error('[dashboard] request failed', error);
         }
         setStats(statsFromConversations(assigned, activeSites));
         setRecentTickets(sortByNewest(assigned).slice(0, 5));
@@ -181,10 +198,10 @@ const Dashboard = () => {
       // Son talepler gercek satirlar ister; her siteden yalnizca en yeni
       // birkacini paralel cekip birlestirmek yeterlidir.
       const recentPages = await Promise.all(
-        sites.map(site =>
+        sites.map((site) =>
           conversationsAPI
             .getAll(site._id, { limit: 5 })
-            .then(response => response.data.conversations || [])
+            .then((response) => response.data.conversations || [])
             .catch(() => [])
         )
       );
@@ -205,56 +222,13 @@ const Dashboard = () => {
       });
       setRecentTickets(sortByNewest(recentPages.flat()).slice(0, 5));
     } catch (error) {
+      // Reported rather than discarded: a silent failure here leaves the
+      // page showing stale data with nothing to say why.
+      console.error('[dashboard] request failed', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
-  const formatTime = (date: any) => {
-    if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleTimeString('tr-TR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-  const formatDate = (date: any) => {
-    if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleDateString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-  const formatMinutes = (minutes: number) => {
-    if (!minutes || minutes === 0) return '-';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}s ${mins}dk`;
-    }
-    return `${mins}dk`;
-  };
-  const getPriorityBadge = (priority: string) => {
-    const badges = {
-      urgent: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-      normal: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      low: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-    };
-    return badges[priority as keyof typeof badges] || badges.normal;
-  };
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      open: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      assigned: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      pending: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-      resolved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      closed: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-    };
-    return badges[status as keyof typeof badges] || badges.open;
   };
   if (loading) {
     return (
@@ -331,7 +305,10 @@ const Dashboard = () => {
     <>
       <Helmet>
         <title>{t('dashboard.welcomeTitle', 'Hoş geldiniz - Support.io Admin')}</title>
-        <meta name="description" content={t('dashboard.ticketsDesc', 'Destek Talebi Yönetim Sistemi')} />
+        <meta
+          name="description"
+          content={t('dashboard.ticketsDesc', 'Destek Talebi Yönetim Sistemi')}
+        />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto">
@@ -360,7 +337,9 @@ const Dashboard = () => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                <div
+                  className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}
+                >
                   <stat.icon className="w-6 h-6 text-white" />
                 </div>
                 {stat.trend === 'up' && (
@@ -389,8 +368,15 @@ const Dashboard = () => {
                 <Lock className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('dashboard.advancedReportsLocked', 'Gelişmiş Raporlar Kilitli')}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{t('dashboard.advancedReportsDesc', 'Puanlama, ortalama yanıt süreleri ve ziyaretçi trafiğini görebilmek için organizasyonunuzu yükseltin.')}</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {t('dashboard.advancedReportsLocked', 'Gelişmiş Raporlar Kilitli')}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {t(
+                    'dashboard.advancedReportsDesc',
+                    'Puanlama, ortalama yanıt süreleri ve ziyaretçi trafiğini görebilmek için organizasyonunuzu yükseltin.'
+                  )}
+                </p>
               </div>
             </div>
             <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap shrink-0">
@@ -398,7 +384,9 @@ const Dashboard = () => {
             </button>
           </div>
         )}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 relative ${plan === 'FREE' ? 'group' : ''}`}>
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 relative ${plan === 'FREE' ? 'group' : ''}`}
+        >
           {plan === 'FREE' && (
             <div className="absolute inset-0 z-10 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[2px] rounded-xl cursor-not-allowed"></div>
           )}
@@ -407,7 +395,9 @@ const Dashboard = () => {
               key={index}
               className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex items-center space-x-4"
             >
-              <div className={`w-10 h-10 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
+              <div
+                className={`w-10 h-10 ${stat.bgColor} rounded-lg flex items-center justify-center`}
+              >
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
               <div>
@@ -419,7 +409,9 @@ const Dashboard = () => {
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('dashboard.recentTickets')}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              {t('dashboard.recentTickets')}
+            </h2>
             <button
               onClick={() => navigate(routes.conversations)}
               className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium flex items-center"
@@ -448,7 +440,10 @@ const Dashboard = () => {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {recentTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td
+                      colSpan={4}
+                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
                       {t('dashboard.noTickets')}
                     </td>
                   </tr>
@@ -460,8 +455,18 @@ const Dashboard = () => {
                       onClick={() => {
                         navigate(routes.conversations);
                         try {
-                          window.dispatchEvent(new CustomEvent('navigate:open-conversation', { detail: { conversationId: ticket._id, siteId: ticket.siteId || ticket.site?._id } }));
-                        } catch (e) {
+                          window.dispatchEvent(
+                            new CustomEvent('navigate:open-conversation', {
+                              detail: {
+                                conversationId: ticket._id,
+                                siteId: ticket.siteId || ticket.site?._id
+                              }
+                            })
+                          );
+                        } catch (error) {
+                          // Reported rather than discarded: a silent failure here leaves the
+                          // page showing stale data with nothing to say why.
+                          console.error('[dashboard] request failed', error);
                         }
                       }}
                     >
@@ -483,22 +488,31 @@ const Dashboard = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${getPriorityBadge(ticket.priority)}`}>
-                          {ticket.priority === 'urgent' ? t('dashboard.urgent')
-                            : ticket.priority === 'high' ? t('dashboard.high')
-                              : ticket.priority === 'normal' ? t('dashboard.medium')
-                                : t('dashboard.low')
-                          }
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${getPriorityBadge(ticket.priority)}`}
+                        >
+                          {ticket.priority === 'urgent'
+                            ? t('dashboard.urgent')
+                            : ticket.priority === 'high'
+                              ? t('dashboard.high')
+                              : ticket.priority === 'normal'
+                                ? t('dashboard.medium')
+                                : t('dashboard.low')}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${getStatusBadge(ticket.status)}`}>
-                          {ticket.status === 'open' ? t('dashboard.open')
-                            : ticket.status === 'assigned' ? t('dashboard.assigned')
-                              : ticket.status === 'pending' ? t('dashboard.pending')
-                                : ticket.status === 'resolved' ? t('dashboard.resolved')
-                                  : t('dashboard.closed')
-                          }
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${getStatusBadge(ticket.status)}`}
+                        >
+                          {ticket.status === 'open'
+                            ? t('dashboard.open')
+                            : ticket.status === 'assigned'
+                              ? t('dashboard.assigned')
+                              : ticket.status === 'pending'
+                                ? t('dashboard.pending')
+                                : ticket.status === 'resolved'
+                                  ? t('dashboard.resolved')
+                                  : t('dashboard.closed')}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -512,15 +526,21 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions')}</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            {t('dashboard.quickActions')}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
               onClick={() => navigate(routes.conversations)}
               className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
             >
               <MessageSquare className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.tickets')}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.ticketsDesc')}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {t('dashboard.tickets')}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {t('dashboard.ticketsDesc')}
+              </p>
             </button>
             <button
               onClick={() => navigate(routes.team)}
@@ -528,15 +548,21 @@ const Dashboard = () => {
             >
               <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
               <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.team')}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.teamDesc')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {t('dashboard.teamDesc')}
+              </p>
             </button>
             <button
               onClick={() => navigate(routes.sites)}
               className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition text-left"
             >
               <Globe className="w-8 h-8 text-indigo-600 dark:text-indigo-400 mb-2" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">{t('dashboard.sites')}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.sitesDesc')}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {t('dashboard.sites')}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {t('dashboard.sitesDesc')}
+              </p>
             </button>
           </div>
         </div>

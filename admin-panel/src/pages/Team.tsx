@@ -7,11 +7,10 @@ import toast from 'react-hot-toast';
 import { teamAPI, sitesAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useSocket } from '../contexts/SocketContext';
-import {
-  Users, Plus, Edit, Trash2, UserCheck, UserX,
-  Shield, Activity, MessageSquare, Clock, Search, Filter, Globe
-} from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Activity, MessageSquare, Search, Globe } from 'lucide-react';
 import type { Site, TeamMember } from '../types/api';
+import { presenceDot as getStatusColor } from '../lib/statusStyles';
+import { errorMessage } from '../hooks/useAsync';
 
 const Team = () => {
   const { t } = useTranslation();
@@ -30,7 +29,11 @@ const Team = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
-  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; userId: string | null; userName: string }>({
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+    userName: string;
+  }>({
     isOpen: false,
     userId: null,
     userName: ''
@@ -38,26 +41,28 @@ const Team = () => {
   const { socket } = useSocket();
   useEffect(() => {
     if (!socket) return undefined;
-    const onAgentStatusChanged = ({ userId, status }: { userId: string; status: TeamMember['status'] }) => {
-      setTeam(prevTeam =>
-        prevTeam.map(member =>
-          member._id === userId ? { ...member, status } : member
-        )
+    const onAgentStatusChanged = ({
+      userId,
+      status
+    }: {
+      userId: string;
+      status: TeamMember['status'];
+    }) => {
+      setTeam((prevTeam) =>
+        prevTeam.map((member) => (member._id === userId ? { ...member, status } : member))
       );
     };
     const onMemberAdded = (newMember: any) => {
-      setTeam(prevTeam => [...prevTeam, newMember]);
+      setTeam((prevTeam) => [...prevTeam, newMember]);
       toast.success(t('team.createSuccess', 'Yeni ekip üyesi eklendi'));
     };
     const onMemberUpdated = (updatedMember: any) => {
-      setTeam(prevTeam =>
-        prevTeam.map(member =>
-          member._id === updatedMember._id ? updatedMember : member
-        )
+      setTeam((prevTeam) =>
+        prevTeam.map((member) => (member._id === updatedMember._id ? updatedMember : member))
       );
     };
     const onMemberDeleted = ({ userId }: { userId?: string; [prop: string]: any }) => {
-      setTeam(prevTeam => prevTeam.filter(member => member._id !== userId));
+      setTeam((prevTeam) => prevTeam.filter((member) => member._id !== userId));
       toast.success(t('team.deleteSuccess', 'Ekip üyesi silindi'));
     };
     socket.on('agent-status-changed', onAgentStatusChanged);
@@ -90,7 +95,7 @@ const Team = () => {
       } else {
         setLoading(false);
       }
-    } catch (error) {
+    } catch {
       setLoading(false);
     }
   };
@@ -99,7 +104,7 @@ const Team = () => {
       setLoading(true);
       const response = await teamAPI.getAll(selectedSite);
       setTeam(response.data || []);
-    } catch (error) {
+    } catch {
       setTeam([]);
     } finally {
       setLoading(false);
@@ -110,44 +115,39 @@ const Team = () => {
       await teamAPI.updateStatus(userId, status);
       await fetchTeam();
     } catch (error) {
+      // Reported rather than discarded: a silent failure here leaves the
+      // page showing stale data with nothing to say why.
+      console.error('[team] request failed', error);
     }
   };
   const handleDeleteMember = async () => {
     const { userId } = confirmDialog;
     if (!userId) return;
     try {
-      const response = await teamAPI.delete(userId);
+      await teamAPI.delete(userId);
       await fetchTeam();
       toast.success(t('team.deleteSuccess'));
     } catch (error) {
-      toast.error(error.response?.data?.error || t('team.deleteError'));
+      toast.error(errorMessage(error, t('team.deleteError')));
     }
   };
   const openDeleteConfirm = (userId: string, userName: any) => {
     setConfirmDialog({ isOpen: true, userId, userName });
   };
-  const filteredTeam = team.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredTeam = team.filter((member) => {
+    const matchesSearch =
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
     return matchesSearch && matchesStatus && matchesRole;
   });
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online': return 'bg-green-500';
-      case 'offline': return 'bg-red-500';
-      case 'busy': return 'bg-yellow-500';
-      case 'away': return 'bg-gray-400';
-      default: return 'bg-gray-400';
-    }
-  };
   const getRoleBadge = (role: any) => {
     const colors = {
       owner: 'bg-purple-100 text-purple-800',
       admin: 'bg-blue-100 text-blue-800',
       manager: 'bg-indigo-100 text-indigo-800',
-      agent: 'bg-gray-100 text-gray-800',
+      agent: 'bg-gray-100 text-gray-800'
     };
     return colors[role as keyof typeof colors] || colors.agent;
   };
@@ -163,9 +163,7 @@ const Team = () => {
               <Users className="w-6 h-6" />
               {t('team.title')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {t('team.subtitle')}
-            </p>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">{t('team.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
@@ -182,8 +180,10 @@ const Team = () => {
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="">{t('team.allSites')}</option>
-            {sites.map(site => (
-              <option key={site._id} value={site._id}>{site.name}</option>
+            {sites.map((site) => (
+              <option key={site._id} value={site._id}>
+                {site.name}
+              </option>
             ))}
           </select>
         </div>
@@ -247,15 +247,20 @@ const Team = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTeam.map(member => (
-            <div key={member._id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition">
+          {filteredTeam.map((member) => (
+            <div
+              key={member._id}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
                       {member.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(member.status)}`}></div>
+                    <div
+                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(member.status)}`}
+                    ></div>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white">{member.name}</h3>
@@ -265,13 +270,19 @@ const Team = () => {
               </div>
               <div className="space-y-2 mb-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('team.modal.role')}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getRoleBadge(member.role)}`}>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {t('team.modal.role')}
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${getRoleBadge(member.role)}`}
+                  >
                     {t(`team.filters.${member.role}`)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('team.status', 'Durum')}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {t('team.status', 'Durum')}
+                  </span>
                   <select
                     value={member.status}
                     onChange={(e) => handleStatusChange(member._id, e.target.value)}
@@ -303,10 +314,15 @@ const Team = () => {
                 </div>
                 {member.departments && member.departments.length > 0 && (
                   <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{t('team.departments')}:</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {t('team.departments')}:
+                    </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {member.departments.map((dept, idx) => (
-                        <span key={idx} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs"
+                        >
                           {dept.departmentId?.name || 'Unknown'}
                         </span>
                       ))}
@@ -342,7 +358,7 @@ const Team = () => {
             setShowAddModal(false);
             setSelectedMember(null);
           }}
-          onSave={async (newMember: any) => {
+          onSave={async (_newMember: any) => {
             await fetchTeam();
             setShowAddModal(false);
             setSelectedMember(null);
@@ -354,7 +370,11 @@ const Team = () => {
         onClose={() => setConfirmDialog({ isOpen: false, userId: null, userName: '' })}
         onConfirm={handleDeleteMember}
         title={t('team.deleteMember', 'Ekip Üyesini Sil')}
-        message={t('team.deleteMessage', '"{name}" adlı ekip üyesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.', { name: confirmDialog.userName })}
+        message={t(
+          'team.deleteMessage',
+          '"{name}" adlı ekip üyesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+          { name: confirmDialog.userName }
+        )}
         confirmText={t('team.deleteYes', 'Evet, Sil')}
         cancelText={t('team.modal.cancel', 'İptal')}
         type="danger"
@@ -362,14 +382,27 @@ const Team = () => {
     </div>
   );
 };
-const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }: { member?: any; sites?: any; selectedSite?: any; onClose?: (...args: any[]) => void; onSave?: (...args: any[]) => void; [prop: string]: any }) => {
+const AddEditMemberModal = ({
+  member,
+  selectedSite,
+  onClose,
+  onSave
+}: {
+  member?: any;
+  sites?: any;
+  selectedSite?: any;
+  onClose?: (...args: any[]) => void;
+  onSave?: (...args: any[]) => void;
+  [prop: string]: any;
+}) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: member?.name || '',
     email: member?.email || '',
     password: '',
     role: member?.role || 'agent',
-    assignedSites: member?.assignedSites?.map((s: any) => s._id || s) || (selectedSite ? [selectedSite] : []),
+    assignedSites:
+      member?.assignedSites?.map((s: any) => s._id || s) || (selectedSite ? [selectedSite] : []),
     permissions: member?.permissions || {
       canManageTeam: false,
       canManageDepartments: false,
@@ -393,7 +426,7 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }: { 
       toast.success(member ? t('team.updateSuccess') : t('team.createSuccess'));
       setSaving(false);
     } catch (error) {
-      toast.error(error.response?.data?.error || error.message || t('team.saveError'));
+      toast.error(errorMessage(error, t('team.saveError')));
       setSaving(false);
     }
   };
@@ -462,15 +495,20 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }: { 
                 {t('team.modal.permissions')}
               </label>
               <div className="space-y-2">
-                {Object.keys(formData.permissions).map(key => (
-                  <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                {Object.keys(formData.permissions).map((key) => (
+                  <label
+                    key={key}
+                    className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                  >
                     <input
                       type="checkbox"
                       checked={formData.permissions[key]}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        permissions: { ...formData.permissions, [key]: e.target.checked }
-                      })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          permissions: { ...formData.permissions, [key]: e.target.checked }
+                        })
+                      }
                       className="rounded border-gray-300 dark:border-gray-600"
                     />
                     {t(`team.modal.${key}`)}
@@ -491,7 +529,11 @@ const AddEditMemberModal = ({ member, sites, selectedSite, onClose, onSave }: { 
                 disabled={saving}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {saving ? t('team.modal.saving') : member ? t('team.modal.update') : t('team.modal.create')}
+                {saving
+                  ? t('team.modal.saving')
+                  : member
+                    ? t('team.modal.update')
+                    : t('team.modal.create')}
               </button>
             </div>
           </form>

@@ -36,11 +36,22 @@ export const PRESETS = [
 /** Kaydedilmiş renkler bir hazır temayla birebir eşleşiyor mu? */
 export function matchPreset(colors: any) {
   if (!colors) return null;
-  const keys = ['primary', 'header', 'background', 'text', 'textSecondary', 'border', 'visitorMessageBg', 'agentMessageBg'];
+  const keys = [
+    'primary',
+    'header',
+    'background',
+    'text',
+    'textSecondary',
+    'border',
+    'visitorMessageBg',
+    'agentMessageBg'
+  ];
   const found = PRESETS.find((preset) =>
-    keys.every((key) =>
-      String(preset.colors[key as keyof typeof preset.colors] || '').toUpperCase() ===
-      String(colors[key as keyof typeof colors] || '').toUpperCase())
+    keys.every(
+      (key) =>
+        String(preset.colors[key as keyof typeof preset.colors] || '').toUpperCase() ===
+        String(colors[key as keyof typeof colors] || '').toUpperCase()
+    )
   );
   return found ? found.id : null;
 }

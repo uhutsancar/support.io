@@ -17,16 +17,22 @@
  * own `Ref` (backend/src/db/model.ts) is defined the same way for the same
  * reason.
  */
-export type Ref<TDoc> = any;
+// `TDoc | any` is `any`. Naming the parameter in the definition is what keeps
+// it from reading as dead — no suppression comment needed, and the signature
+// still records which document a column points at.
+export type Ref<TDoc> = TDoc | any;
 
 /** The id behind a reference, whether or not the endpoint populated it. */
-export function refId<TDoc extends { _id?: string }>(ref: Ref<TDoc> | null | undefined): string | null {
+export function refId<TDoc extends { _id?: string }>(
+  ref: Ref<TDoc> | null | undefined
+): string | null {
   if (!ref) return null;
-  return typeof ref === 'string' ? ref : ref._id ?? null;
+  return typeof ref === 'string' ? ref : (ref._id ?? null);
 }
 
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
-export type ConversationStatus = 'open' | 'assigned' | 'pending' | 'resolved' | 'closed' | 'unassigned';
+export type ConversationStatus =
+  'open' | 'assigned' | 'pending' | 'resolved' | 'closed' | 'unassigned';
 export type PresenceStatus = 'online' | 'offline' | 'away' | 'busy';
 export type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
 export type SlaState = 'pending' | 'met' | 'breached';
@@ -507,4 +513,38 @@ export interface ConversationPage {
   conversations: Conversation[];
   nextCursor?: string | null;
   counts?: Record<string, number> | null;
+}
+
+// ---------------------------------------------------------------------------
+// Editor form shapes
+//
+// A form is not the same thing as the record it produces: `value` is the text
+// the user has typed until it is submitted, and a half-written rule has fields
+// the API would reject. These were declared inside their page components, which
+// meant nothing outside those functions could name them — not the submit
+// handler's payload type, not a test, not a shared form component.
+// ---------------------------------------------------------------------------
+
+/** One automation rule as its editor holds it while it is being written. */
+export interface RuleForm {
+  siteId: string;
+  name: string;
+  isActive: boolean;
+  priority: number;
+  triggerType: string;
+  conditionOperator: string;
+  conditions: Array<{ field: string; operator: string; value: string; [extra: string]: string }>;
+  /** The payload's keys depend on the action: `text`, `tag`, `status` and so on. */
+  actions: Array<{ type: string; payload: Record<string, string> }>;
+}
+
+/** The new-deal form; `value` stays raw input text until it is submitted. */
+export interface DealForm {
+  title: string;
+  value: string | number;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  stage: string;
+  notes: string;
 }

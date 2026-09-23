@@ -4,7 +4,6 @@ import path from 'path';
 import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 
-
 /**
  * Marka ikonlarini uretir: favicon.svg + favicon.ico + PNG turevleri.
  *
@@ -38,13 +37,14 @@ function sdRoundRect(px: number, py: number, x: number, y: number, w: any, h: an
 
 /** Ucgen icin isaretli mesafe (kuyruk). */
 function sdTriangle(px: number, py: number, a: any, b: any, c: any) {
-  const sign = (p: any, q: any, r: any) => (p[0] - r[0]) * (q[1] - r[1]) - (q[0] - r[0]) * (p[1] - r[1]);
+  const sign = (p: any, q: any, r: any) =>
+    (p[0] - r[0]) * (q[1] - r[1]) - (q[0] - r[0]) * (p[1] - r[1]);
   const d1 = sign([px, py], a, b);
   const d2 = sign([px, py], b, c);
   const d3 = sign([px, py], c, a);
   const hasNeg = d1 < 0 || d2 < 0 || d3 < 0;
   const hasPos = d1 > 0 || d2 > 0 || d3 > 0;
-  return hasNeg && hasPos ? 1 : -1;   // sadece ic/dis; kenarlar supersampling ile yumusar
+  return hasNeg && hasPos ? 1 : -1; // sadece ic/dis; kenarlar supersampling ile yumusar
 }
 
 /**
@@ -83,7 +83,10 @@ function render(size: number) {
   const buf = Buffer.alloc(size * size * 4);
   for (let py = 0; py < size; py++) {
     for (let px = 0; px < size; px++) {
-      let r = 0, g = 0, b = 0, a = 0;
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0;
       for (let sy = 0; sy < S; sy++) {
         for (let sx = 0; sx < S; sx++) {
           const x = ((px + (sx + 0.5) / S) / size) * 40;
@@ -91,7 +94,10 @@ function render(size: number) {
           const c = shade(x, y, false);
           // alfa on-carpimli toplanir, aksi halde kenarlarda koyu hale olusur
           const w = c[3] / 255;
-          r += c[0] * w; g += c[1] * w; b += c[2] * w; a += c[3];
+          r += c[0] * w;
+          g += c[1] * w;
+          b += c[2] * w;
+          a += c[3];
         }
       }
       const n = S * S;
@@ -117,15 +123,17 @@ interface Crc32 {
 
 const crc32: Crc32 = function (buf: Uint8Array) {
   let c;
-  const table = crc32.table || (crc32.table = (() => {
-    const t = new Int32Array(256);
-    for (let n = 0; n < 256; n++) {
-      c = n;
-      for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-      t[n] = c;
-    }
-    return t;
-  })());
+  const table =
+    crc32.table ||
+    (crc32.table = (() => {
+      const t = new Int32Array(256);
+      for (let n = 0; n < 256; n++) {
+        c = n;
+        for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+        t[n] = c;
+      }
+      return t;
+    })());
   let crc = -1;
   for (let i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xff];
   return (crc ^ -1) >>> 0;
@@ -149,8 +157,8 @@ function encodePng(rgba: any, size: number) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0);
   ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8;    // bit depth
-  ihdr[9] = 6;    // colour type: RGBA
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 6; // colour type: RGBA
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
@@ -163,7 +171,7 @@ function encodePng(rgba: any, size: number) {
 function encodeIco(entries: Array<{ size: number; png: Buffer }>) {
   const header = Buffer.alloc(6);
   header.writeUInt16LE(0, 0);
-  header.writeUInt16LE(1, 2);           // type: icon
+  header.writeUInt16LE(1, 2); // type: icon
   header.writeUInt16LE(entries.length, 4);
 
   const dir = Buffer.alloc(16 * entries.length);

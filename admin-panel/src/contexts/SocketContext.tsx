@@ -1,5 +1,5 @@
 /** Where the shared connection currently stands. */
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';

@@ -45,7 +45,9 @@ export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
 export function normalizeHex(input: unknown): string | null {
-  let hex = String(input || '').trim().replace(/^#/, '');
+  let hex = String(input || '')
+    .trim()
+    .replace(/^#/, '');
   if (/^[0-9a-f]{3}$/i.test(hex)) {
     hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
   }
@@ -62,7 +64,11 @@ export function hexToRgb(hex: string): Rgb {
 }
 
 export const rgbToHex = ({ r, g, b }: Rgb): string =>
-  '#' + [r, g, b].map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+  '#' +
+  [r, g, b]
+    .map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
 
 export function rgbToHsl({ r, g, b }: Rgb): Hsl {
   const rn = r / 255;
@@ -199,7 +205,18 @@ export function derivePalette(
 
 /** Renk seçicideki hazır tonlar. Rastgele değil; her biri AA geçen bir ana renk. */
 export const SWATCHES = [
-  '#4F46E5', '#2563EB', '#0EA5E9', '#0D9488', '#059669',
-  '#65A30D', '#CA8A04', '#EA580C', '#DC2626', '#DB2777',
-  '#9333EA', '#7C3AED', '#475569', '#111827'
+  '#4F46E5',
+  '#2563EB',
+  '#0EA5E9',
+  '#0D9488',
+  '#059669',
+  '#65A30D',
+  '#CA8A04',
+  '#EA580C',
+  '#DC2626',
+  '#DB2777',
+  '#9333EA',
+  '#7C3AED',
+  '#475569',
+  '#111827'
 ];

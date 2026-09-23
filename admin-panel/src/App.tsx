@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
@@ -53,10 +53,18 @@ const ProtectedRoute = ({ children }: { children?: any; [prop: string]: any }) =
   if (!isAuthenticated) {
     return <Navigate to={`${langPrefix}/login`} state={{ from: location }} />;
   }
-  if (user?.role === 'owner' && user?.isOnboarded === false && !location.pathname.includes('/onboarding')) {
+  if (
+    user?.role === 'owner' &&
+    user?.isOnboarded === false &&
+    !location.pathname.includes('/onboarding')
+  ) {
     return <Navigate to={`${langPrefix}/onboarding`} replace />;
   }
-  if (user?.role === 'owner' && user?.isOnboarded === true && location.pathname.includes('/onboarding')) {
+  if (
+    user?.role === 'owner' &&
+    user?.isOnboarded === true &&
+    location.pathname.includes('/onboarding')
+  ) {
     return <Navigate to={`${langPrefix}/dashboard`} replace />;
   }
   return children;
@@ -73,7 +81,8 @@ const AdminRoute = ({ children }: { children?: any; [prop: string]: any }) => {
     );
   }
   if (!isAuthenticated) return <Navigate to={`${langPrefix}/login`} />;
-  if (!user || !['owner', 'admin'].includes(user.role)) return <Navigate to={`${langPrefix}/dashboard`} />;
+  if (!user || !['owner', 'admin'].includes(user.role))
+    return <Navigate to={`${langPrefix}/dashboard`} />;
   return children;
 };
 const PublicRoute = ({ children }: { children?: any; [prop: string]: any }) => {
@@ -102,147 +111,251 @@ function App() {
           <LanguageProvider>
             <AuthProvider>
               <SocketProvider>
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: 'var(--toast-bg, #363636)',
-                    color: 'var(--toast-color, #fff)',
-                  },
-                  success: {
-                    duration: 3000,
-                    iconTheme: {
-                      primary: '#10b981',
-                      secondary: '#fff',
-                    },
-                  },
-                  error: {
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
                     duration: 4000,
-                    iconTheme: {
-                      primary: '#ef4444',
-                      secondary: '#fff',
+                    style: {
+                      background: 'var(--toast-bg, #363636)',
+                      color: 'var(--toast-color, #fff)'
                     },
-                  },
-                }}
-              />
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/ozellikler" element={<Features />} />
-                  <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
-                  <Route path="/fiyatlandirma" element={<Pricing />} />
-                  <Route path="/dokumantasyon" element={<Docs />} />
-                  <Route path="/hakkimizda" element={<About />} />
-                  <Route
-                    path="/login"
-                    element={
-                      <PublicRoute>
-                        <Login />
-                      </PublicRoute>
+                    success: {
+                      duration: 3000,
+                      iconTheme: {
+                        primary: '#10b981',
+                        secondary: '#fff'
+                      }
+                    },
+                    error: {
+                      duration: 4000,
+                      iconTheme: {
+                        primary: '#ef4444',
+                        secondary: '#fff'
+                      }
                     }
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <PublicRoute>
-                        <Register />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route path="/en" element={<Home />} />
-                  <Route path="/en/features" element={<Features />} />
-                  <Route path="/en/features/:slug" element={<FeatureDetail />} />
-                  <Route path="/en/pricing" element={<Pricing />} />
-                  <Route path="/en/documentation" element={<Docs />} />
-                  <Route path="/en/about" element={<About />} />
-                  <Route
-                    path="/en/login"
-                    element={
-                      <PublicRoute>
-                        <Login />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route
-                    path="/en/register"
-                    element={
-                      <PublicRoute>
-                        <Register />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route
-                    path="/onboarding"
-                    element={
-                      <ProtectedRoute>
-                        <Onboarding />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/en/onboarding"
-                    element={
-                      <ProtectedRoute>
-                        <Onboarding />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <DashboardLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Dashboard />} />
-                    <Route path="sites" element={<Sites />} />
-                    <Route path="conversations" element={<Conversations />} />
-                    <Route path="assigned" element={<Assigned />} />
-                    <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
-                    <Route path="faqs" element={<FAQs />} />
-                    <Route path="team" element={<Team />} />
-                    <Route path="team-chat" element={<TeamChat />} />
-                    <Route path="departments" element={<Departments />} />
-                    <Route path="audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
-                    <Route path="widget-customization/:siteId" element={<WidgetCustomization />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="visitors" element={<AdminRoute><Visitors /></AdminRoute>} />
-                    <Route path="crm" element={<AdminRoute><CRM /></AdminRoute>} />
-                    <Route path="my-performance" element={<ProtectedRoute><AgentPerformance /></ProtectedRoute>} />
-                    <Route path="automation-rules" element={<AdminRoute><AutomationRules /></AdminRoute>} />
-                    <Route path="proactive-rules" element={<AdminRoute><ProactiveRules /></AdminRoute>} />
-                  </Route>
-                  <Route
-                    path="/en/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <DashboardLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Dashboard />} />
-                    <Route path="sites" element={<Sites />} />
-                    <Route path="conversations" element={<Conversations />} />
-                    <Route path="assigned" element={<Assigned />} />
-                    <Route path="analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
-                    <Route path="faqs" element={<FAQs />} />
-                    <Route path="team" element={<Team />} />
-                    <Route path="team-chat" element={<TeamChat />} />
-                    <Route path="departments" element={<Departments />} />
-                    <Route path="audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
-                    <Route path="widget-customization/:siteId" element={<WidgetCustomization />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="visitors" element={<AdminRoute><Visitors /></AdminRoute>} />
-                    <Route path="crm" element={<AdminRoute><CRM /></AdminRoute>} />
-                    <Route path="my-performance" element={<ProtectedRoute><AgentPerformance /></ProtectedRoute>} />
-                    <Route path="automation-rules" element={<AdminRoute><AutomationRules /></AdminRoute>} />
-                    <Route path="proactive-rules" element={<AdminRoute><ProactiveRules /></AdminRoute>} />
-                  </Route>
-                  <Route path="*" element={<DefaultRedirect />} />
-                </Routes>
-              </Suspense>
+                  }}
+                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/ozellikler" element={<Features />} />
+                    <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
+                    <Route path="/fiyatlandirma" element={<Pricing />} />
+                    <Route path="/dokumantasyon" element={<Docs />} />
+                    <Route path="/hakkimizda" element={<About />} />
+                    <Route
+                      path="/login"
+                      element={
+                        <PublicRoute>
+                          <Login />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        <PublicRoute>
+                          <Register />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route path="/en" element={<Home />} />
+                    <Route path="/en/features" element={<Features />} />
+                    <Route path="/en/features/:slug" element={<FeatureDetail />} />
+                    <Route path="/en/pricing" element={<Pricing />} />
+                    <Route path="/en/documentation" element={<Docs />} />
+                    <Route path="/en/about" element={<About />} />
+                    <Route
+                      path="/en/login"
+                      element={
+                        <PublicRoute>
+                          <Login />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/en/register"
+                      element={
+                        <PublicRoute>
+                          <Register />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/onboarding"
+                      element={
+                        <ProtectedRoute>
+                          <Onboarding />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/en/onboarding"
+                      element={
+                        <ProtectedRoute>
+                          <Onboarding />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <DashboardLayout />
+                        </ProtectedRoute>
+                      }
+                    >
+                      <Route index element={<Dashboard />} />
+                      <Route path="sites" element={<Sites />} />
+                      <Route path="conversations" element={<Conversations />} />
+                      <Route path="assigned" element={<Assigned />} />
+                      <Route
+                        path="analytics"
+                        element={
+                          <AdminRoute>
+                            <Analytics />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route path="faqs" element={<FAQs />} />
+                      <Route path="team" element={<Team />} />
+                      <Route path="team-chat" element={<TeamChat />} />
+                      <Route path="departments" element={<Departments />} />
+                      <Route
+                        path="audit-logs"
+                        element={
+                          <AdminRoute>
+                            <AuditLogs />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="widget-customization/:siteId"
+                        element={<WidgetCustomization />}
+                      />
+                      <Route path="settings" element={<Settings />} />
+                      <Route
+                        path="visitors"
+                        element={
+                          <AdminRoute>
+                            <Visitors />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="crm"
+                        element={
+                          <AdminRoute>
+                            <CRM />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="my-performance"
+                        element={
+                          <ProtectedRoute>
+                            <AgentPerformance />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="automation-rules"
+                        element={
+                          <AdminRoute>
+                            <AutomationRules />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="proactive-rules"
+                        element={
+                          <AdminRoute>
+                            <ProactiveRules />
+                          </AdminRoute>
+                        }
+                      />
+                    </Route>
+                    <Route
+                      path="/en/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <DashboardLayout />
+                        </ProtectedRoute>
+                      }
+                    >
+                      <Route index element={<Dashboard />} />
+                      <Route path="sites" element={<Sites />} />
+                      <Route path="conversations" element={<Conversations />} />
+                      <Route path="assigned" element={<Assigned />} />
+                      <Route
+                        path="analytics"
+                        element={
+                          <AdminRoute>
+                            <Analytics />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route path="faqs" element={<FAQs />} />
+                      <Route path="team" element={<Team />} />
+                      <Route path="team-chat" element={<TeamChat />} />
+                      <Route path="departments" element={<Departments />} />
+                      <Route
+                        path="audit-logs"
+                        element={
+                          <AdminRoute>
+                            <AuditLogs />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="widget-customization/:siteId"
+                        element={<WidgetCustomization />}
+                      />
+                      <Route path="settings" element={<Settings />} />
+                      <Route
+                        path="visitors"
+                        element={
+                          <AdminRoute>
+                            <Visitors />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="crm"
+                        element={
+                          <AdminRoute>
+                            <CRM />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="my-performance"
+                        element={
+                          <ProtectedRoute>
+                            <AgentPerformance />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="automation-rules"
+                        element={
+                          <AdminRoute>
+                            <AutomationRules />
+                          </AdminRoute>
+                        }
+                      />
+                      <Route
+                        path="proactive-rules"
+                        element={
+                          <AdminRoute>
+                            <ProactiveRules />
+                          </AdminRoute>
+                        }
+                      />
+                    </Route>
+                    <Route path="*" element={<DefaultRedirect />} />
+                  </Routes>
+                </Suspense>
               </SocketProvider>
             </AuthProvider>
           </LanguageProvider>

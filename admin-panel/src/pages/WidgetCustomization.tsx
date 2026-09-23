@@ -27,19 +27,45 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
-  ArrowLeft, Palette, Sparkles, MousePointerClick, MessageSquare, Settings2,
-  Monitor, Smartphone, Save, RotateCcw, Upload, Trash2, Wand2, Check, Copy,
-  Eye, EyeOff, Code2, Loader2
+  ArrowLeft,
+  Palette,
+  Sparkles,
+  MousePointerClick,
+  MessageSquare,
+  Settings2,
+  Monitor,
+  Smartphone,
+  Save,
+  RotateCcw,
+  Upload,
+  Trash2,
+  Wand2,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  Code2,
+  Loader2
 } from 'lucide-react';
 import { sitesAPI, widgetConfigAPI } from '../services/api';
 import StudioPreview from '../components/widget-studio/StudioPreview';
 import { PRESETS, matchPreset } from '../components/widget-studio/presets';
 import {
-  Section, Field, Segmented, Toggle, Slider, ColorField,
-  PositionPicker, SizePicker, PresetCard, IconPicker, Collapse
+  Section,
+  Field,
+  Segmented,
+  Toggle,
+  Slider,
+  ColorField,
+  PositionPicker,
+  SizePicker,
+  PresetCard,
+  IconPicker,
+  Collapse
 } from '../components/widget-studio/controls';
 import { derivePalette, normalizeHex } from '../lib/color';
 import type { Site, WidgetConfig } from '../types/api';
+import { errorMessage } from '../hooks/useAsync';
 
 const TABS = [
   { id: 'theme', icon: Palette },
@@ -54,6 +80,17 @@ const toDraft = (config: WidgetConfig): WidgetConfig => JSON.parse(JSON.stringif
 
 const equal = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
+/**
+ * The closing tag of an embed snippet, assembled rather than written whole.
+ *
+ * A literal closing script tag in a file that is ever inlined into an HTML
+ * `<script>` block would terminate that block early. It used to be written with
+ * a backslash before the slash, which reads as a guard but is not one: that is
+ * not an escape sequence in a JavaScript string, so the emitted character was
+ * identical. Splitting it is the version that actually holds.
+ */
+const CLOSE_SCRIPT = `<${'/'}script>`;
+
 const WidgetCustomization = () => {
   const { t, i18n } = useTranslation();
   // The route guarantees the parameter; useParams cannot know that.
@@ -61,8 +98,8 @@ const WidgetCustomization = () => {
   const navigate = useNavigate();
 
   const [site, setSite] = useState<Site | null>(null);
-  const [saved, setSaved] = useState<WidgetConfig | null>(null);   // sunucudaki son hâl
-  const [draft, setDraft] = useState<WidgetConfig | null>(null);   // düzenlenen hâl
+  const [saved, setSaved] = useState<WidgetConfig | null>(null); // sunucudaki son hâl
+  const [draft, setDraft] = useState<WidgetConfig | null>(null); // düzenlenen hâl
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -91,18 +128,23 @@ const WidgetCustomization = () => {
       setSaved(toDraft(config));
       setDraft(toDraft(config));
     } catch (error) {
-      setLoadError(error?.response?.data?.error || error.message);
+      setLoadError(errorMessage(error, t('studio.toast.loadFailed', 'Ayarlar yüklenemedi')));
     } finally {
       setLoading(false);
     }
   }, [siteId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Kaydedilmemiş değişiklikle sekmeyi kapatmak veri kaybıdır.
   useEffect(() => {
     if (!dirty) return undefined;
-    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [dirty]);
@@ -122,15 +164,15 @@ const WidgetCustomization = () => {
   /* ------------------------------------------------------------ değişim */
 
   const patch = useCallback((group: keyof WidgetConfig, values: Record<string, unknown>) => {
-    setDraft((current) => (
-      current
-        ? { ...current, [group]: { ...(current[group] as object), ...values } }
-        : current
-    ));
+    setDraft((current) =>
+      current ? { ...current, [group]: { ...(current[group] as object), ...values } } : current
+    );
   }, []);
 
   const applyPreset = (preset: any) => {
-    setDraft((current) => (current ? { ...current, colors: { ...current.colors, ...preset.colors } } : current));
+    setDraft((current) =>
+      current ? { ...current, colors: { ...current.colors, ...preset.colors } } : current
+    );
   };
 
   const deriveFromPrimary = () => {
@@ -164,7 +206,7 @@ const WidgetCustomization = () => {
       setDraft(next);
       toast.success(t('studio.toast.saved'));
     } catch (error) {
-      toast.error(error?.response?.data?.error || t('studio.toast.saveFailed'));
+      toast.error(errorMessage(error, t('studio.toast.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -181,8 +223,14 @@ const WidgetCustomization = () => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error(t('studio.toast.logoTooLarge')); return; }
-    if (!file.type.startsWith('image/')) { toast.error(t('studio.toast.logoNotImage')); return; }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('studio.toast.logoTooLarge'));
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('studio.toast.logoNotImage'));
+      return;
+    }
 
     setUploading(true);
     try {
@@ -194,7 +242,7 @@ const WidgetCustomization = () => {
       setDraft((d) => (d ? { ...d, branding: { ...d.branding, logo: next.branding.logo } } : d));
       toast.success(t('studio.toast.logoUploaded'));
     } catch (error) {
-      toast.error(error?.response?.data?.error || t('studio.toast.logoFailed'));
+      toast.error(errorMessage(error, t('studio.toast.logoFailed')));
     } finally {
       setUploading(false);
     }
@@ -208,7 +256,7 @@ const WidgetCustomization = () => {
       setDraft((d) => (d ? { ...d, branding: { ...d.branding, logo: null } } : d));
       toast.success(t('studio.toast.logoRemoved'));
     } catch (error) {
-      toast.error(error?.response?.data?.error || t('studio.toast.logoFailed'));
+      toast.error(errorMessage(error, t('studio.toast.logoFailed')));
     } finally {
       setUploading(false);
     }
@@ -218,7 +266,7 @@ const WidgetCustomization = () => {
 
   const embedCode = useMemo(() => {
     const origin = import.meta.env.VITE_API_URL || window.location.origin;
-    return `<script\n  src="${origin}/widget.js"\n  data-site-key="${site?.siteKey || 'YOUR_SITE_KEY'}"\n  async><\/script>`;
+    return `<script\n  src="${origin}/widget.js"\n  data-site-key="${site?.siteKey || 'YOUR_SITE_KEY'}"\n  async>${CLOSE_SCRIPT}`;
   }, [site]);
 
   const copyEmbed = async () => {
@@ -227,7 +275,7 @@ const WidgetCustomization = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast.success(t('studio.toast.copied'));
-    } catch (e) {
+    } catch {
       toast.error(t('studio.toast.copyFailed'));
     }
   };
@@ -315,8 +363,10 @@ const WidgetCustomization = () => {
 
           <div className="flex items-center gap-2 ml-auto">
             {dirty && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
-                text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+              <span
+                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 {t('studio.unsaved')}
               </span>
@@ -364,9 +414,11 @@ const WidgetCustomization = () => {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-[13px] font-medium
                     whitespace-nowrap transition-all duration-150
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
-                    ${tab === id
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                    ${
+                      tab === id
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
                   {t(`studio.tabs.${id}`)}
@@ -375,11 +427,13 @@ const WidgetCustomization = () => {
             </nav>
 
             <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 sm:p-6 space-y-8">
-
               {/* ============================================== TEMA */}
               {tab === 'theme' && (
                 <>
-                  <Section title={t('studio.theme.presets')} description={t('studio.theme.presetsHint')}>
+                  <Section
+                    title={t('studio.theme.presets')}
+                    description={t('studio.theme.presetsHint')}
+                  >
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {PRESETS.map((preset) => (
                         <PresetCard
@@ -503,12 +557,22 @@ const WidgetCustomization = () => {
                           text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600
                           dark:hover:border-indigo-500 transition disabled:opacity-50"
                       >
-                        {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}
+                        {uploading ? (
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                          <Upload className="w-6 h-6" />
+                        )}
                         <span className="text-[13px] font-medium">{t('studio.brand.upload')}</span>
                         <span className="text-xs">{t('studio.brand.uploadHint')}</span>
                       </button>
                     )}
-                    <input ref={fileRef} type="file" accept="image/*" onChange={uploadLogo} className="hidden" />
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={uploadLogo}
+                      className="hidden"
+                    />
                   </Section>
 
                   <Section title={t('studio.brand.identity')}>
@@ -536,14 +600,18 @@ const WidgetCustomization = () => {
                           label={t('studio.brand.logoWidth')}
                           value={draft.branding.logoWidth || 40}
                           onChange={(v: any) => patch('branding', { logoWidth: v })}
-                          min={20} max={80} unit="px"
+                          min={20}
+                          max={80}
+                          unit="px"
                         />
                         <Slider
                           id="logo-h"
                           label={t('studio.brand.logoHeight')}
                           value={draft.branding.logoHeight || 40}
                           onChange={(v: any) => patch('branding', { logoHeight: v })}
-                          min={20} max={80} unit="px"
+                          min={20}
+                          max={80}
+                          unit="px"
                         />
                       </div>
                     )}
@@ -554,7 +622,10 @@ const WidgetCustomization = () => {
               {/* ============================================== LAUNCHER */}
               {tab === 'launcher' && (
                 <>
-                  <Section title={t('studio.launcher.position')} description={t('studio.launcher.positionHint')}>
+                  <Section
+                    title={t('studio.launcher.position')}
+                    description={t('studio.launcher.positionHint')}
+                  >
                     <PositionPicker
                       value={draft.button.position}
                       onChange={(v: any) => patch('button', { position: v })}
@@ -587,7 +658,9 @@ const WidgetCustomization = () => {
                       label={t('studio.launcher.radius')}
                       value={draft.button.borderRadius ?? 50}
                       onChange={(v: any) => patch('button', { borderRadius: v })}
-                      min={12} max={50} unit="%"
+                      min={12}
+                      max={50}
+                      unit="%"
                     />
                     <Toggle
                       id="btn-shadow"
@@ -623,7 +696,10 @@ const WidgetCustomization = () => {
               {/* ============================================== MESAJLAR */}
               {tab === 'messages' && (
                 <>
-                  <Section title={t('studio.messages.copy')} description={t('studio.messages.copyHint')}>
+                  <Section
+                    title={t('studio.messages.copy')}
+                    description={t('studio.messages.copyHint')}
+                  >
                     <Field label={t('studio.messages.welcome')} htmlFor="welcome">
                       <textarea
                         id="welcome"
@@ -656,7 +732,9 @@ const WidgetCustomization = () => {
                       label={t('studio.messages.bubbleRadius')}
                       value={draft.messages.messageBubbleRadius ?? 14}
                       onChange={(v: any) => patch('messages', { messageBubbleRadius: v })}
-                      min={2} max={22} unit="px"
+                      min={2}
+                      max={22}
+                      unit="px"
                     />
                     <Toggle
                       id="timestamps"
@@ -672,7 +750,10 @@ const WidgetCustomization = () => {
                     />
                   </Section>
 
-                  <Section title={t('studio.behavior.title')} description={t('studio.behavior.hint')}>
+                  <Section
+                    title={t('studio.behavior.title')}
+                    description={t('studio.behavior.hint')}
+                  >
                     <Toggle
                       id="auto-open"
                       label={t('studio.behavior.autoOpen')}
@@ -686,7 +767,9 @@ const WidgetCustomization = () => {
                         label={t('studio.behavior.delay')}
                         value={Math.round((draft.behavior.autoOpenDelay ?? 5000) / 1000)}
                         onChange={(v: any) => patch('behavior', { autoOpenDelay: v * 1000 })}
-                        min={1} max={60} unit="s"
+                        min={1}
+                        max={60}
+                        unit="s"
                       />
                     )}
                     <Toggle
@@ -709,35 +792,48 @@ const WidgetCustomization = () => {
               {/* ============================================== GELİŞMİŞ */}
               {tab === 'advanced' && (
                 <>
-                  <Section title={t('studio.advanced.window')} description={t('studio.advanced.windowHint')}>
+                  <Section
+                    title={t('studio.advanced.window')}
+                    description={t('studio.advanced.windowHint')}
+                  >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Slider
                         id="win-w"
                         label={t('studio.advanced.width')}
                         value={draft.window.width ?? 400}
                         onChange={(v: any) => patch('window', { width: v })}
-                        min={320} max={520} step={10} unit="px"
+                        min={320}
+                        max={520}
+                        step={10}
+                        unit="px"
                       />
                       <Slider
                         id="win-h"
                         label={t('studio.advanced.height')}
                         value={draft.window.height ?? 640}
                         onChange={(v: any) => patch('window', { height: v })}
-                        min={420} max={760} step={10} unit="px"
+                        min={420}
+                        max={760}
+                        step={10}
+                        unit="px"
                       />
                       <Slider
                         id="win-r"
                         label={t('studio.advanced.radius')}
                         value={draft.window.borderRadius ?? 16}
                         onChange={(v: any) => patch('window', { borderRadius: v })}
-                        min={0} max={28} unit="px"
+                        min={0}
+                        max={28}
+                        unit="px"
                       />
                       <Slider
                         id="win-hh"
                         label={t('studio.advanced.headerHeight')}
                         value={draft.window.headerHeight ?? 64}
                         onChange={(v: any) => patch('window', { headerHeight: v })}
-                        min={48} max={96} unit="px"
+                        min={48}
+                        max={96}
+                        unit="px"
                       />
                     </div>
                     <Toggle
@@ -786,7 +882,9 @@ const WidgetCustomization = () => {
                       label={t('studio.advanced.zIndex')}
                       value={draft.advanced.zIndex ?? 2147483000}
                       onChange={(v: any) => patch('advanced', { zIndex: v })}
-                      min={1000} max={2147483000} step={1000}
+                      min={1000}
+                      max={2147483000}
+                      step={1000}
                     />
                   </Collapse>
                 </>
@@ -800,7 +898,9 @@ const WidgetCustomization = () => {
                   <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                     <Code2 className="w-4 h-4" /> {t('studio.embed.title')}
                   </h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('studio.embed.hint')}</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {t('studio.embed.hint')}
+                  </p>
                 </div>
                 <button
                   onClick={copyEmbed}
@@ -808,7 +908,11 @@ const WidgetCustomization = () => {
                     border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
                     hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-green-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                   {copied ? t('common.copied') : t('common.copy')}
                 </button>
               </div>
@@ -840,9 +944,11 @@ const WidgetCustomization = () => {
                     onClick={() => setDevice('desktop')}
                     aria-label={t('studio.preview.desktop')}
                     aria-pressed={device === 'desktop'}
-                    className={`p-1.5 rounded-md transition ${device === 'desktop'
-                      ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
-                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    className={`p-1.5 rounded-md transition ${
+                      device === 'desktop'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
+                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
                   >
                     <Monitor className="w-4 h-4" />
                   </button>
@@ -850,9 +956,11 @@ const WidgetCustomization = () => {
                     onClick={() => setDevice('mobile')}
                     aria-label={t('studio.preview.mobile')}
                     aria-pressed={device === 'mobile'}
-                    className={`p-1.5 rounded-md transition ${device === 'mobile'
-                      ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
-                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                    className={`p-1.5 rounded-md transition ${
+                      device === 'mobile'
+                        ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white'
+                        : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
                   >
                     <Smartphone className="w-4 h-4" />
                   </button>
@@ -863,7 +971,11 @@ const WidgetCustomization = () => {
                     bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300
                     hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                 >
-                  {previewOpen ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {previewOpen ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" />
+                  )}
                   {previewOpen ? t('studio.preview.collapsed') : t('studio.preview.expanded')}
                 </button>
               </div>
@@ -885,8 +997,10 @@ const WidgetCustomization = () => {
         {/* Mobil kaydet çubuğu — küçük ekranda başlıktaki buton kaydırma ile
             görünmez oluyordu. */}
         {dirty && (
-          <div className="xl:hidden fixed inset-x-0 bottom-0 z-40 p-3 bg-white/95 dark:bg-gray-900/95
-            backdrop-blur border-t border-gray-200 dark:border-gray-800 flex items-center gap-3">
+          <div
+            className="xl:hidden fixed inset-x-0 bottom-0 z-40 p-3 bg-white/95 dark:bg-gray-900/95
+            backdrop-blur border-t border-gray-200 dark:border-gray-800 flex items-center gap-3"
+          >
             <span className="flex-1 text-xs text-amber-700 dark:text-amber-400 font-medium">
               {t('studio.unsaved')}
             </span>

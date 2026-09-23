@@ -58,8 +58,7 @@ export default {
       problem: {
         eyebrow: 'Sound familiar',
         title: 'Customer messages are scattered everywhere',
-        desc:
-          'One writes on Instagram, another calls, another fills in the contact form. Whoever is answering loses track of which is which, and nobody notices the one that never got a reply.',
+        desc: 'One writes on Instagram, another calls, another fills in the contact form. Whoever is answering loses track of which is which, and nobody notices the one that never got a reply.',
         items: [
           {
             title: 'Messages get lost',
@@ -93,8 +92,7 @@ export default {
         {
           kicker: 'Visitor side',
           title: 'A chat bubble appears in the corner of your site',
-          body:
-            'A visitor clicks and types. No sign-up, no email required. You choose the colour, the greeting and where it sits, so it looks like part of your site.',
+          body: 'A visitor clicks and types. No sign-up, no email required. You choose the colour, the greeting and where it sits, so it looks like part of your site.',
           points: [
             'Works the same on phones and desktops',
             'The conversation stays open as they move between pages',
@@ -104,8 +102,7 @@ export default {
         {
           kicker: 'Team side',
           title: 'The message lands on your team’s screen instantly',
-          body:
-            'No refreshing. The message appears as it is typed, alongside the page the customer is on, what you talked about before, and who is already handling it.',
+          body: 'No refreshing. The message appears as it is typed, alongside the page the customer is on, what you talked about before, and who is already handling it.',
           points: [
             'You see the typing dots as they write',
             'Files and screenshots can be shared both ways',
@@ -115,8 +112,7 @@ export default {
         {
           kicker: 'Organisation',
           title: 'Each conversation reaches the right person on its own',
-          body:
-            'Billing questions to accounts, returns to sales. Define your departments once, and every new conversation goes to whoever is free.',
+          body: 'Billing questions to accounts, returns to sales. Define your departments once, and every new conversation goes to whoever is free.',
           points: [
             'Share the load in turn, or give it to whoever has least',
             'Automatic notice outside working hours',
@@ -126,8 +122,7 @@ export default {
         {
           kicker: 'Outcome',
           title: 'At the end of the month you see the numbers',
-          body:
-            'How many came in, the average minutes to first reply, how many each person closed. You look instead of guessing.',
+          body: 'How many came in, the average minutes to first reply, how many each person closed. You look instead of guessing.',
           points: [
             'First reply time and time to resolve',
             'A breakdown per team member',
@@ -154,34 +149,52 @@ export default {
             name: 'Online shops',
             tag: 'Shipping, returns, sizing',
             headline: 'Let the customer at checkout ask, so the order does not slip away',
-            body:
-              'Someone asking “do you have this in medium?” or “when does it ship?” on a product page cannot wait. The chat opens right there, and your agent answers while seeing exactly which product they are looking at. Set up saved replies for the shipping and returns questions you answer thirty times a day.',
+            body: 'Someone asking “do you have this in medium?” or “when does it ship?” on a product page cannot wait. The chat opens right there, and your agent answers while seeing exactly which product they are looking at. Set up saved replies for the shipping and returns questions you answer thirty times a day.',
             wins: [
-              { label: 'Fewer abandoned carts', body: 'A visitor stuck at checkout gets a message without being asked.' },
-              { label: 'Repeat questions stop', body: 'Shipping and returns answered instantly with a saved reply.' },
-              { label: 'Context is already there', body: 'The page they are on and your past conversations sit beside the chat.' }
+              {
+                label: 'Fewer abandoned carts',
+                body: 'A visitor stuck at checkout gets a message without being asked.'
+              },
+              {
+                label: 'Repeat questions stop',
+                body: 'Shipping and returns answered instantly with a saved reply.'
+              },
+              {
+                label: 'Context is already there',
+                body: 'The page they are on and your past conversations sit beside the chat.'
+              }
             ]
           },
           saas: {
             name: 'Software / SaaS',
             tag: 'Trials, setup, errors',
             headline: 'Catch the trial user who gets stuck before they quietly leave',
-            body:
-              'Someone new to your product usually does not ask when they hit a wall — they just leave. You can message a user who stalls on a screen or lingers in the setup step. Every question lands with the right team, so technical ones do not sit with support.',
+            body: 'Someone new to your product usually does not ask when they hit a wall — they just leave. You can message a user who stalls on a screen or lingers in the setup step. Every question lands with the right team, so technical ones do not sit with support.',
             wins: [
-              { label: 'You see the silent churn', body: 'Who is on which screen, and for how long, live in the dashboard.' },
-              { label: 'The right team picks it up', body: 'Billing to accounts, bug reports to engineering.' },
-              { label: 'Answers accumulate', body: 'Common questions become help content people find themselves.' }
+              {
+                label: 'You see the silent churn',
+                body: 'Who is on which screen, and for how long, live in the dashboard.'
+              },
+              {
+                label: 'The right team picks it up',
+                body: 'Billing to accounts, bug reports to engineering.'
+              },
+              {
+                label: 'Answers accumulate',
+                body: 'Common questions become help content people find themselves.'
+              }
             ]
           },
           agency: {
             name: 'Agencies / Many sites',
             tag: 'Client sites, separate teams',
             headline: 'Run several sites from one dashboard without mixing the data',
-            body:
-              'Each site you manage gets its own install line. Conversations, team members and reports stay separated per site, so one client’s data never shows up in another’s. You decide which team member can reach which site.',
+            body: 'Each site you manage gets its own install line. Conversations, team members and reports stay separated per site, so one client’s data never shows up in another’s. You decide which team member can reach which site.',
             wins: [
-              { label: 'Separated per site', body: 'Each site keeps its own conversations and reports.' },
+              {
+                label: 'Separated per site',
+                body: 'Each site keeps its own conversations and reports.'
+              },
               { label: 'Access is yours to set', body: 'Pick exactly who can see which site.' },
               { label: 'One login', body: 'No more one dashboard per client.' }
             ]
@@ -190,11 +203,16 @@ export default {
             name: 'Services / Bookings',
             tag: 'Clinics, studios, consulting',
             headline: 'Take in writing everything people currently phone you about',
-            body:
-              'Booking, pricing and directions tie up the phone. When the same questions arrive by chat, one person can help several people at once. Messages that arrive out of hours are not lost; they wait for you, and the customer knows when you will be back.',
+            body: 'Booking, pricing and directions tie up the phone. When the same questions arrive by chat, one person can help several people at once. Messages that arrive out of hours are not lost; they wait for you, and the customer knows when you will be back.',
             wins: [
-              { label: 'The phone frees up', body: 'Handle several conversations at the same time.' },
-              { label: 'Nothing lost after hours', body: 'A message sent at night is in your inbox in the morning.' },
+              {
+                label: 'The phone frees up',
+                body: 'Handle several conversations at the same time.'
+              },
+              {
+                label: 'Nothing lost after hours',
+                body: 'A message sent at night is in your inbox in the morning.'
+              },
               { label: 'Common answers ready', body: 'Pricing and address answered in one click.' }
             ]
           }
@@ -205,21 +223,34 @@ export default {
       setup: {
         eyebrow: 'Setup',
         title: 'One line of code, two minutes',
-        desc:
-          'Once your account is open we give you a line of your own. Send it to whoever looks after your site and they paste it in. That is the whole job.',
+        desc: 'Once your account is open we give you a line of your own. Send it to whoever looks after your site and they paste it in. That is the whole job.',
         steps: [
           { title: 'Open your account', body: 'An email and a password is all it takes. No card.' },
           { title: 'Add your site', body: 'Enter your address and we give you your install line.' },
-          { title: 'Paste the line into your site', body: 'The bubble shows up on your site within the minute.' }
+          {
+            title: 'Paste the line into your site',
+            body: 'The bubble shows up on your site within the minute.'
+          }
         ],
         file: 'your site’s page',
         cta: 'Open an account and get the line',
-        note:
-          'No one to do it for you? Send us your address and we will set it up together.',
+        note: 'No one to do it for you? Send us your address and we will set it up together.',
         worksWith: 'Works on whatever your site is built with',
         platforms: [
-          'WordPress', 'Shopify', 'WooCommerce', 'Wix', 'Webflow', 'Squarespace',
-          'BigCommerce', 'React', 'Next.js', 'Vue', 'Laravel', 'PHP', 'Django', 'Magento'
+          'WordPress',
+          'Shopify',
+          'WooCommerce',
+          'Wix',
+          'Webflow',
+          'Squarespace',
+          'BigCommerce',
+          'React',
+          'Next.js',
+          'Vue',
+          'Laravel',
+          'PHP',
+          'Django',
+          'Magento'
         ]
       },
 
@@ -227,8 +258,7 @@ export default {
       security: {
         eyebrow: 'Trust',
         title: 'Your customer data stays yours',
-        desc:
-          'A support tool sees everything your customers write to you. So we spell out how we keep it.',
+        desc: 'A support tool sees everything your customers write to you. So we spell out how we keep it.',
         items: [
           {
             title: 'Your data is kept apart',
@@ -253,8 +283,7 @@ export default {
       plans: {
         eyebrow: 'Pricing',
         title: 'Start free, move up as you grow',
-        desc:
-          'The free plan has no time limit. Start on your own and change plan when the team grows.',
+        desc: 'The free plan has no time limit. Start on your own and change plan when the team grows.',
         price: { free: '₺0', pro: '₺490', enterprise: 'Custom' },
         note: {
           free: 'One site, one user',
@@ -302,7 +331,8 @@ export default {
       ctaBtn2: 'See pricing',
       ctaNote: 'No card required · Leave whenever you like',
 
-      footerDesc: 'Live chat for your website. Your customer writes, your team answers from one screen.',
+      footerDesc:
+        'Live chat for your website. Your customer writes, your team answers from one screen.',
       footerMade: 'Built in Türkiye',
       footerProduct: 'Product',
       footerFeatures: 'Features',
@@ -332,8 +362,7 @@ export default {
     groups: {
       talk: {
         title: 'Where you talk to your customer',
-        desc:
-          'Visitors write from your site and your team answers from a single inbox. Common questions they can look up themselves.',
+        desc: 'Visitors write from your site and your team answers from a single inbox. Common questions they can look up themselves.',
         points: [
           'Messages appear on your team’s screen as they are typed',
           'Files, screenshots and links can be shared',
@@ -343,8 +372,7 @@ export default {
       },
       organize: {
         title: 'Where you decide who does what',
-        desc:
-          'Departments, automatic rules and roles. Answer “who handles this?” once instead of every day.',
+        desc: 'Departments, automatic rules and roles. Answer “who handles this?” once instead of every day.',
         points: [
           'Conversations reach the right department on their own',
           'Repetitive work becomes a rule',
@@ -354,8 +382,7 @@ export default {
       },
       grow: {
         title: 'Where you see what happened',
-        desc:
-          'Reports, live visitors, deal tracking and the AI assistant. Numbers instead of guesses.',
+        desc: 'Reports, live visitors, deal tracking and the AI assistant. Numbers instead of guesses.',
         points: [
           'Reply and resolution times, broken down per person',
           'Who is on your site right now, and on which page',
@@ -416,9 +443,15 @@ export default {
           'If the connection drops, the message is not lost'
         ],
         steps: [
-          { title: 'Open your account', body: 'Live chat is already on when you sign up; nothing to install.' },
+          {
+            title: 'Open your account',
+            body: 'Live chat is already on when you sign up; nothing to install.'
+          },
           { title: 'Paste the install line', body: 'The bubble starts showing on your site.' },
-          { title: 'Answer from the dashboard', body: 'Keep the inbox open and you will be notified of new messages.' }
+          {
+            title: 'Answer from the dashboard',
+            body: 'Keep the inbox open and you will be notified of new messages.'
+          }
         ]
       },
 
@@ -436,7 +469,10 @@ export default {
         ],
         steps: [
           { title: 'Add your site', body: 'Register your site address in the dashboard.' },
-          { title: 'Choose how it looks', body: 'Set colour, greeting and position, and check the preview.' },
+          {
+            title: 'Choose how it looks',
+            body: 'Set colour, greeting and position, and check the preview.'
+          },
           { title: 'Paste the line', body: 'Adding it to your site template is all it takes.' }
         ]
       },
@@ -454,9 +490,15 @@ export default {
           'Open work is handed on when someone goes offline'
         ],
         steps: [
-          { title: 'Define your departments', body: 'Sales, support, accounts — whatever fits your business.' },
+          {
+            title: 'Define your departments',
+            body: 'Sales, support, accounts — whatever fits your business.'
+          },
           { title: 'Place your team', body: 'Add each agent to the right department.' },
-          { title: 'Choose how work is shared', body: 'In turn, or to whoever has least on. One setting.' }
+          {
+            title: 'Choose how work is shared',
+            body: 'In turn, or to whoever has least on. One setting.'
+          }
         ]
       },
 
@@ -474,7 +516,10 @@ export default {
         ],
         steps: [
           { title: 'Pick the condition', body: 'Message content, page, department or status.' },
-          { title: 'Pick the action', body: 'Route it, tag it, raise the priority or send a saved reply.' },
+          {
+            title: 'Pick the action',
+            body: 'Route it, tag it, raise the priority or send a saved reply.'
+          },
           { title: 'Turn it on and watch', body: 'Track how many times the rule has run.' }
         ]
       },
@@ -511,7 +556,10 @@ export default {
           'Show specific content on specific pages'
         ],
         steps: [
-          { title: 'Write the first ten', body: 'Ask your team what they get asked most and start there.' },
+          {
+            title: 'Write the first ten',
+            body: 'Ask your team what they get asked most and start there.'
+          },
           { title: 'Order them', body: 'Put the most-asked at the top.' },
           { title: 'Measure', body: 'Check the read counts and fill in what is missing.' }
         ]
@@ -530,9 +578,15 @@ export default {
           'Calculated for any date range you pick'
         ],
         steps: [
-          { title: 'Use it for a week', body: 'The numbers need a little data before they mean anything.' },
+          {
+            title: 'Use it for a week',
+            body: 'The numbers need a little data before they mean anything.'
+          },
           { title: 'Pick the range', body: 'Last 7 days, last 30, or dates of your own.' },
-          { title: 'Set a target', body: 'Set a reply-time target and anything below it is flagged.' }
+          {
+            title: 'Set a target',
+            body: 'Set a reply-time target and anything below it is flagged.'
+          }
         ]
       },
 
@@ -568,9 +622,15 @@ export default {
           'Drafts based on your own help content'
         ],
         steps: [
-          { title: 'Enter your provider key', body: 'Set once in the dashboard; it is never sent to the browser.' },
+          {
+            title: 'Enter your provider key',
+            body: 'Set once in the dashboard; it is never sent to the browser.'
+          },
           { title: 'Open a conversation', body: 'The assistant appears in the side panel.' },
-          { title: 'Edit the draft and send', body: 'The draft is always shown to you and never sends itself.' }
+          {
+            title: 'Edit the draft and send',
+            body: 'The draft is always shown to you and never sends itself.'
+          }
         ]
       },
 
@@ -589,7 +649,10 @@ export default {
         steps: [
           { title: 'Add the install line', body: 'Visitor tracking comes with the bubble.' },
           { title: 'Open the visitors screen', body: 'The list starts filling on its own.' },
-          { title: 'Start it yourself if needed', body: 'Send a proactive message to a visitor who is stuck.' }
+          {
+            title: 'Start it yourself if needed',
+            body: 'Send a proactive message to a visitor who is stuck.'
+          }
         ]
       },
 
@@ -607,11 +670,13 @@ export default {
         ],
         steps: [
           { title: 'Set your stages', body: 'First call, proposal, closing, for example.' },
-          { title: 'Open a deal from a conversation', body: 'One click from the chat that turned into a sale.' },
+          {
+            title: 'Open a deal from a conversation',
+            body: 'One click from the chat that turned into a sale.'
+          },
           { title: 'Watch the pipeline', body: 'See how much work is waiting at each stage.' }
         ],
-        body:
-          'Deal records are kept within the same organisation boundary as conversations and stay linked to the conversation they were opened from. Stage, value and owner are edited from the dashboard, and every change is written to the audit log.',
+        body: 'Deal records are kept within the same organisation boundary as conversations and stay linked to the conversation they were opened from. Stage, value and owner are edited from the dashboard, and every change is written to the audit log.',
         points: [
           'Deals stay linked to the conversation they came from',
           'Stage and value changes are recorded',
@@ -650,7 +715,8 @@ export default {
     chooseTitle: 'Which plan fits you?',
 
     compareTitle: 'Plan comparison',
-    compareDesc: 'The table below reflects the screens that are actually unlocked in the dashboard.',
+    compareDesc:
+      'The table below reflects the screens that are actually unlocked in the dashboard.',
     feature: 'Feature',
 
     faqTitle: 'Questions about pricing',
@@ -779,23 +845,19 @@ export default {
     principles: {
       own: {
         title: 'Pricing in the open',
-        body:
-          'No form to fill in before you can see a price. The free plan has no time limit and needs no card — we should not need your card for you to try it.'
+        body: 'No form to fill in before you can see a price. The free plan has no time limit and needs no card — we should not need your card for you to try it.'
       },
       plain: {
         title: 'Plain words',
-        body:
-          'You will not find “AI-powered omnichannel solution” on this site. We describe what the product does in everyday words, and put the technical wording where the people who want it will look.'
+        body: 'You will not find “AI-powered omnichannel solution” on this site. We describe what the product does in everyday words, and put the technical wording where the people who want it will look.'
       },
       honest: {
         title: 'Nothing we cannot back up',
-        body:
-          'No customer counts, no satisfaction scores, no logos of companies that do not use us. Earlier versions of this site had all three. They were removed, because none of them had data behind them.'
+        body: 'No customer counts, no satisfaction scores, no logos of companies that do not use us. Earlier versions of this site had all three. They were removed, because none of them had data behind them.'
       },
       accessible: {
         title: 'Usable by everyone',
-        body:
-          'Navigable by keyboard, readable by a screen reader, legible in dark mode. Animation switches itself off for anyone who finds motion uncomfortable.'
+        body: 'Navigable by keyboard, readable by a screen reader, legible in dark mode. Animation switches itself off for anyone who finds motion uncomfortable.'
       }
     },
 
@@ -868,10 +930,34 @@ export default {
       count: '12 conversations',
       online: 'On site',
       rows: [
-        { name: 'Ella Kay', preview: 'When will my order ship?', time: '2m', tag: 'Shipping', tone: 'indigo' },
-        { name: 'Brian Shaw', preview: 'Could you update my invoice?', time: '14m', tag: 'Billing', tone: 'sky' },
-        { name: 'Zoe A.', preview: 'Do you have this in a medium?', time: '1h', tag: 'Product', tone: 'amber' },
-        { name: 'Dennis Yule', preview: 'Thanks, all sorted.', time: '3h', tag: 'Resolved', tone: 'emerald' }
+        {
+          name: 'Ella Kay',
+          preview: 'When will my order ship?',
+          time: '2m',
+          tag: 'Shipping',
+          tone: 'indigo'
+        },
+        {
+          name: 'Brian Shaw',
+          preview: 'Could you update my invoice?',
+          time: '14m',
+          tag: 'Billing',
+          tone: 'sky'
+        },
+        {
+          name: 'Zoe A.',
+          preview: 'Do you have this in a medium?',
+          time: '1h',
+          tag: 'Product',
+          tone: 'amber'
+        },
+        {
+          name: 'Dennis Yule',
+          preview: 'Thanks, all sorted.',
+          time: '3h',
+          tag: 'Resolved',
+          tone: 'emerald'
+        }
       ],
       openName: 'Ella Kay',
       openPage: 'on /track-order',
@@ -943,7 +1029,8 @@ export default {
       frame: 'Proactive message',
       triggers: ['After 30 seconds', 'On leaving intent', 'At the bottom of the page'],
       agent: 'Selin',
-      message: 'If you are stuck at the payment step, let me help — which card would you like to use?'
+      message:
+        'If you are stuck at the payment step, let me help — which card would you like to use?'
     },
 
     knowledge: {
@@ -960,9 +1047,27 @@ export default {
     team: {
       frame: 'Team',
       members: [
-        { name: 'Kerem Aslan', role: 'Support · Manager', state: 'online', stateLabel: 'Online', load: '3 open' },
-        { name: 'Selin Duru', role: 'Sales · Agent', state: 'online', stateLabel: 'Online', load: '2 open' },
-        { name: 'Mert Yalin', role: 'Support · Agent', state: 'busy', stateLabel: 'Busy', load: '5 open' },
+        {
+          name: 'Kerem Aslan',
+          role: 'Support · Manager',
+          state: 'online',
+          stateLabel: 'Online',
+          load: '3 open'
+        },
+        {
+          name: 'Selin Duru',
+          role: 'Sales · Agent',
+          state: 'online',
+          stateLabel: 'Online',
+          load: '2 open'
+        },
+        {
+          name: 'Mert Yalin',
+          role: 'Support · Agent',
+          state: 'busy',
+          stateLabel: 'Busy',
+          load: '5 open'
+        },
         { name: 'Ayca Toprak', role: 'Accounts', state: 'away', stateLabel: 'Away', load: '0 open' }
       ]
     },
@@ -993,9 +1098,20 @@ export default {
     crm: {
       frame: 'Deal tracking',
       stages: [
-        { name: 'First call', count: '4', cards: [{ title: 'Acme Ltd.', value: '₺24,000' }, { title: 'Nova Textiles', value: '₺8,500' }] },
+        {
+          name: 'First call',
+          count: '4',
+          cards: [
+            { title: 'Acme Ltd.', value: '₺24,000' },
+            { title: 'Nova Textiles', value: '₺8,500' }
+          ]
+        },
         { name: 'Proposal', count: '3', cards: [{ title: 'Beta Software', value: '₺46,000' }] },
-        { name: 'Negotiation', count: '2', cards: [{ title: 'Kaya Construction', value: '₺112,000' }] },
+        {
+          name: 'Negotiation',
+          count: '2',
+          cards: [{ title: 'Kaya Construction', value: '₺112,000' }]
+        },
         { name: 'Won', count: '6', cards: [{ title: 'Deniz Foods', value: '₺31,000' }] }
       ]
     }

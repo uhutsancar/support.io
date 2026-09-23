@@ -27,25 +27,21 @@ function deepMerge(base: any, override: any) {
   const out = { ...base };
   for (const key of Object.keys(override)) {
     const next = override[key];
-    out[key] = isPlainObject(next) && isPlainObject(base[key])
-      ? deepMerge(base[key], next)
-      : next;
+    out[key] = isPlainObject(next) && isPlainObject(base[key]) ? deepMerge(base[key], next) : next;
   }
   return out;
 }
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      tr: { translation: deepMerge(tr, marketingTr) },
-      en: { translation: deepMerge(en, marketingEn) },
-    },
-    lng: localStorage.getItem('language') || 'tr',
-    fallbackLng: 'tr',
-    interpolation: {
-      escapeValue: false,
-    },
-  });
+i18n.use(initReactI18next).init({
+  resources: {
+    tr: { translation: deepMerge(tr, marketingTr) },
+    en: { translation: deepMerge(en, marketingEn) }
+  },
+  lng: localStorage.getItem('language') || 'tr',
+  fallbackLng: 'tr',
+  interpolation: {
+    escapeValue: false
+  }
+});
 
 export default i18n;

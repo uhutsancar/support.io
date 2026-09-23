@@ -19,39 +19,69 @@
 
 /* ------------------------------------------------------------ ortak parçalar */
 
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Search, Paperclip, Send, Check, CheckCheck, Zap, ArrowRight, Sparkles,
-  Globe, Clock, MousePointer2, Star, ChevronRight, Filter
+  Search,
+  Paperclip,
+  Send,
+  Check,
+  CheckCheck,
+  Zap,
+  ArrowRight,
+  Sparkles,
+  Globe,
+  Clock,
+  MousePointer2,
+  Star,
+  ChevronRight,
+  Filter
 } from 'lucide-react';
 import { accent, asList } from './kit';
 
 const Avatar = ({ name, tone = 'indigo', size = 'md' }: { name?: string; [prop: string]: any }) => {
   const a = accent(tone);
-  const box = size === 'sm' ? 'w-6 h-6 text-[10px]' : size === 'lg' ? 'w-9 h-9 text-[13px]' : 'w-7 h-7 text-[11px]';
+  const box =
+    size === 'sm'
+      ? 'w-6 h-6 text-[10px]'
+      : size === 'lg'
+        ? 'w-9 h-9 text-[13px]'
+        : 'w-7 h-7 text-[11px]';
   return (
-    <span className={[
-      'inline-flex items-center justify-center rounded-full shrink-0 font-semibold',
-      box, a.soft, a.softText
-    ].join(' ')}>
-      {String(name ?? '').charAt(0).toUpperCase()}
+    <span
+      className={[
+        'inline-flex items-center justify-center rounded-full shrink-0 font-semibold',
+        box,
+        a.soft,
+        a.softText
+      ].join(' ')}
+    >
+      {String(name ?? '')
+        .charAt(0)
+        .toUpperCase()}
     </span>
   );
 };
 
 const Dot = ({ tone = 'emerald', pulse = false }) => (
-  <span className={[
-    'w-1.5 h-1.5 rounded-full shrink-0',
-    accent(tone).dot,
-    pulse ? 'animate-pulse-dot motion-reduce:animate-none' : ''
-  ].join(' ')} />
+  <span
+    className={[
+      'w-1.5 h-1.5 rounded-full shrink-0',
+      accent(tone).dot,
+      pulse ? 'animate-pulse-dot motion-reduce:animate-none' : ''
+    ].join(' ')}
+  />
 );
 
 const Tag = ({ children, tone = 'indigo' }: { children?: any; [prop: string]: any }) => {
   const a = accent(tone);
   return (
-    <span className={['px-1.5 py-[2px] rounded text-[9.5px] font-semibold shrink-0', a.soft, a.softText].join(' ')}>
+    <span
+      className={[
+        'px-1.5 py-[2px] rounded text-[9.5px] font-semibold shrink-0',
+        a.soft,
+        a.softText
+      ].join(' ')}
+    >
       {children}
     </span>
   );
@@ -70,18 +100,27 @@ export const InboxVisual = ({ compact = false }) => {
   const list = Array.isArray(rows) ? rows : [];
 
   return (
-    <div className={['grid grid-cols-[minmax(0,.85fr)_minmax(0,1.3fr)]', compact ? 'h-[300px]' : 'h-[372px]'].join(' ')}>
+    <div
+      className={[
+        'grid grid-cols-[minmax(0,.85fr)_minmax(0,1.3fr)]',
+        compact ? 'h-[300px]' : 'h-[372px]'
+      ].join(' ')}
+    >
       {/* ---- konuşma listesi ---- */}
       <div className="border-r border-gray-200 dark:border-white/[0.07] flex flex-col min-w-0">
         <div className="p-2.5 border-b border-gray-200 dark:border-white/[0.07]">
-          <div className="flex items-center gap-2 px-2.5 h-8 rounded-lg bg-gray-50 dark:bg-white/[0.04]
-            border border-gray-200 dark:border-white/[0.07]">
+          <div
+            className="flex items-center gap-2 px-2.5 h-8 rounded-lg bg-gray-50 dark:bg-white/[0.04]
+            border border-gray-200 dark:border-white/[0.07]"
+          >
             <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <span className="text-[11px] text-gray-400 truncate">{t('viz.inbox.search')}</span>
           </div>
           <div className="mt-2 flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium
-              bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
+            <span
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium
+              bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300"
+            >
               <Filter className="w-3 h-3" /> {t('viz.inbox.filterOpen')}
             </span>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
@@ -96,17 +135,25 @@ export const InboxVisual = ({ compact = false }) => {
               key={i}
               className={[
                 'px-2.5 py-2.5 border-b border-gray-100 dark:border-white/[0.05]',
-                i === 0 ? 'bg-indigo-50/70 dark:bg-indigo-500/[0.09] border-l-2 border-l-indigo-500' : 'border-l-2 border-l-transparent'
+                i === 0
+                  ? 'bg-indigo-50/70 dark:bg-indigo-500/[0.09] border-l-2 border-l-indigo-500'
+                  : 'border-l-2 border-l-transparent'
               ].join(' ')}
             >
               <div className="flex items-center gap-2">
-                <Avatar name={row.name} tone={['violet', 'sky', 'amber', 'emerald'][i % 4]} size="sm" />
+                <Avatar
+                  name={row.name}
+                  tone={['violet', 'sky', 'amber', 'emerald'][i % 4]}
+                  size="sm"
+                />
                 <span className="text-[12px] font-medium text-gray-900 dark:text-white truncate flex-1">
                   {row.name}
                 </span>
                 <span className="text-[9.5px] text-gray-400 shrink-0 tabular-nums">{row.time}</span>
               </div>
-              <p className="mt-1 pl-8 text-[11px] text-gray-500 dark:text-gray-400 truncate">{row.preview}</p>
+              <p className="mt-1 pl-8 text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                {row.preview}
+              </p>
               {row.tag && (
                 <div className="mt-1.5 pl-8 flex items-center gap-1">
                   <Tag tone={row.tone || 'indigo'}>{row.tag}</Tag>
@@ -120,8 +167,10 @@ export const InboxVisual = ({ compact = false }) => {
 
       {/* ---- açık konuşma ---- */}
       <div className="flex flex-col min-w-0 bg-gray-50/40 dark:bg-transparent">
-        <div className="px-3.5 py-2.5 border-b border-gray-200 dark:border-white/[0.07]
-          flex items-center gap-2.5 bg-white dark:bg-transparent">
+        <div
+          className="px-3.5 py-2.5 border-b border-gray-200 dark:border-white/[0.07]
+          flex items-center gap-2.5 bg-white dark:bg-transparent"
+        >
           <Avatar name={t('viz.inbox.openName')} tone="violet" />
           <span className="min-w-0 flex-1">
             <span className="block text-[12.5px] font-semibold text-gray-900 dark:text-white leading-tight truncate">
@@ -137,21 +186,27 @@ export const InboxVisual = ({ compact = false }) => {
 
         <div className="flex-1 p-3.5 space-y-2.5 overflow-hidden">
           <div className="flex justify-center">
-            <span className="px-2 py-[3px] rounded-full text-[9.5px] font-medium
-              bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-400">
+            <span
+              className="px-2 py-[3px] rounded-full text-[9.5px] font-medium
+              bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-gray-400"
+            >
               {t('viz.inbox.today')}
             </span>
           </div>
 
-          <div className="max-w-[82%] px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.06]
+          <div
+            className="max-w-[82%] px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.06]
             border border-gray-200 dark:border-transparent
-            text-[11.5px] leading-relaxed text-gray-700 dark:text-gray-200 shadow-sm">
+            text-[11.5px] leading-relaxed text-gray-700 dark:text-gray-200 shadow-sm"
+          >
             {t('viz.inbox.msg1')}
           </div>
 
           <div className="max-w-[82%] ml-auto">
-            <div className="px-3 py-2 rounded-2xl rounded-br-md bg-indigo-600 text-[11.5px]
-              leading-relaxed text-white shadow-[0_4px_12px_-4px_rgba(79,70,229,.5)]">
+            <div
+              className="px-3 py-2 rounded-2xl rounded-br-md bg-indigo-600 text-[11.5px]
+              leading-relaxed text-white shadow-[0_4px_12px_-4px_rgba(79,70,229,.5)]"
+            >
               {t('viz.inbox.msg2')}
             </div>
             <span className="mt-1 flex items-center justify-end gap-1 text-[9.5px] text-gray-400">
@@ -159,15 +214,19 @@ export const InboxVisual = ({ compact = false }) => {
             </span>
           </div>
 
-          <div className="max-w-[82%] px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.06]
+          <div
+            className="max-w-[82%] px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.06]
             border border-gray-200 dark:border-transparent
-            text-[11.5px] leading-relaxed text-gray-700 dark:text-gray-200 shadow-sm">
+            text-[11.5px] leading-relaxed text-gray-700 dark:text-gray-200 shadow-sm"
+          >
             {t('viz.inbox.msg3')}
           </div>
 
           {/* yazıyor göstergesi */}
-          <div className="inline-flex items-center gap-1 px-3 py-2.5 rounded-2xl rounded-bl-md
-            bg-white dark:bg-white/[0.06] border border-gray-200 dark:border-transparent shadow-sm">
+          <div
+            className="inline-flex items-center gap-1 px-3 py-2.5 rounded-2xl rounded-bl-md
+            bg-white dark:bg-white/[0.06] border border-gray-200 dark:border-transparent shadow-sm"
+          >
             {[0, 1, 2].map((i) => (
               <span
                 key={i}
@@ -182,8 +241,10 @@ export const InboxVisual = ({ compact = false }) => {
         <div className="p-2.5 border-t border-gray-200 dark:border-white/[0.07] bg-white dark:bg-transparent">
           <div className="flex items-center gap-2">
             <Paperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-            <span className="flex-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/[0.09]
-              text-[11px] text-gray-400 truncate">
+            <span
+              className="flex-1 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/[0.09]
+              text-[11px] text-gray-400 truncate"
+            >
               {t('viz.inbox.composer')}
             </span>
             <span className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
@@ -210,13 +271,19 @@ export const WidgetVisual = ({ className = '', launcher = true }) => {
   const { t } = useTranslation();
   return (
     <div className={['relative w-[268px]', className].join(' ')}>
-      <div className="w-[268px] rounded-2xl overflow-hidden bg-white dark:bg-[#171a29]
-        border border-gray-200 dark:border-white/[0.09] shadow-panel-lg">
+      <div
+        className="w-[268px] rounded-2xl overflow-hidden bg-white dark:bg-[#171a29]
+        border border-gray-200 dark:border-white/[0.09] shadow-panel-lg"
+      >
         {/* başlık */}
         <div className="px-3.5 py-3 bg-indigo-600 text-white">
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center
-              text-[11px] font-semibold">A</span>
+            <span
+              className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center
+              text-[11px] font-semibold"
+            >
+              A
+            </span>
             <span className="min-w-0">
               <span className="block text-[12.5px] font-semibold leading-tight truncate">
                 {t('viz.widget.title')}
@@ -231,18 +298,24 @@ export const WidgetVisual = ({ className = '', launcher = true }) => {
 
         {/* mesajlar */}
         <div className="p-3 space-y-2 bg-gray-50 dark:bg-transparent">
-          <div className="max-w-[86%] px-2.5 py-1.5 rounded-xl rounded-bl-sm bg-white dark:bg-white/[0.06]
+          <div
+            className="max-w-[86%] px-2.5 py-1.5 rounded-xl rounded-bl-sm bg-white dark:bg-white/[0.06]
             border border-gray-200 dark:border-transparent text-[11px] leading-relaxed
-            text-gray-700 dark:text-gray-200">
+            text-gray-700 dark:text-gray-200"
+          >
             {t('viz.widget.bot')}
           </div>
-          <div className="max-w-[86%] ml-auto px-2.5 py-1.5 rounded-xl rounded-br-sm bg-indigo-600
-            text-[11px] leading-relaxed text-white">
+          <div
+            className="max-w-[86%] ml-auto px-2.5 py-1.5 rounded-xl rounded-br-sm bg-indigo-600
+            text-[11px] leading-relaxed text-white"
+          >
             {t('viz.widget.visitor')}
           </div>
-          <div className="max-w-[86%] px-2.5 py-1.5 rounded-xl rounded-bl-sm bg-white dark:bg-white/[0.06]
+          <div
+            className="max-w-[86%] px-2.5 py-1.5 rounded-xl rounded-bl-sm bg-white dark:bg-white/[0.06]
             border border-gray-200 dark:border-transparent text-[11px] leading-relaxed
-            text-gray-700 dark:text-gray-200">
+            text-gray-700 dark:text-gray-200"
+          >
             {t('viz.widget.agent')}
           </div>
         </div>
@@ -250,16 +323,21 @@ export const WidgetVisual = ({ className = '', launcher = true }) => {
         {/* hızlı yanıtlar */}
         <div className="px-3 pb-2.5 flex flex-wrap gap-1.5 bg-gray-50 dark:bg-transparent">
           {asList(t('viz.widget.quick', { returnObjects: true })).map((q, i) => (
-            <span key={i} className="px-2 py-1 rounded-full text-[10px] font-medium
+            <span
+              key={i}
+              className="px-2 py-1 rounded-full text-[10px] font-medium
               border border-indigo-200 dark:border-indigo-500/30
-              text-indigo-700 dark:text-indigo-300 bg-white dark:bg-transparent">
+              text-indigo-700 dark:text-indigo-300 bg-white dark:bg-transparent"
+            >
               {q}
             </span>
           ))}
         </div>
 
-        <div className="px-3 py-2.5 border-t border-gray-200 dark:border-white/[0.07]
-          flex items-center gap-2">
+        <div
+          className="px-3 py-2.5 border-t border-gray-200 dark:border-white/[0.07]
+          flex items-center gap-2"
+        >
           <span className="flex-1 text-[10.5px] text-gray-400">{t('viz.widget.composer')}</span>
           <Send className="w-3.5 h-3.5 text-indigo-500" />
         </div>
@@ -267,11 +345,15 @@ export const WidgetVisual = ({ className = '', launcher = true }) => {
 
       {/* başlatıcı düğme */}
       {launcher && (
-        <div className="mt-2.5 ml-auto w-12 h-12 rounded-full bg-indigo-600
-          shadow-[0_10px_28px_-8px_rgba(79,70,229,.75)] flex items-center justify-center">
+        <div
+          className="mt-2.5 ml-auto w-12 h-12 rounded-full bg-indigo-600
+          shadow-[0_10px_28px_-8px_rgba(79,70,229,.75)] flex items-center justify-center"
+        >
           <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" aria-hidden="true">
-            <path d="M12 3c-4.97 0-9 3.36-9 7.5 0 2.3 1.25 4.36 3.2 5.72L6 21l4.1-2.4c.61.1 1.25.15 1.9.15 4.97 0 9-3.36 9-7.5S16.97 3 12 3z"
-              fill="#fff" />
+            <path
+              d="M12 3c-4.97 0-9 3.36-9 7.5 0 2.3 1.25 4.36 3.2 5.72L6 21l4.1-2.4c.61.1 1.25.15 1.9.15 4.97 0 9-3.36 9-7.5S16.97 3 12 3z"
+              fill="#fff"
+            />
           </svg>
         </div>
       )}
@@ -293,16 +375,26 @@ export const MetricsVisual = () => {
       {list.map((card, i) => {
         const a = accent(tones[i % 4]);
         return (
-          <div key={i} className="rounded-xl border border-gray-200 dark:border-white/[0.08]
-            bg-white dark:bg-white/[0.03] p-3">
+          <div
+            key={i}
+            className="rounded-xl border border-gray-200 dark:border-white/[0.08]
+            bg-white dark:bg-white/[0.03] p-3"
+          >
             <div className="flex items-start justify-between gap-2">
-              <span className={['inline-flex items-center justify-center w-8 h-8 rounded-lg', a.bg].join(' ')}>
+              <span
+                className={[
+                  'inline-flex items-center justify-center w-8 h-8 rounded-lg',
+                  a.bg
+                ].join(' ')}
+              >
                 <span className="w-3.5 h-3.5 rounded-[3px] bg-white/90" />
               </span>
-              <span className={[
-                'text-[10.5px] font-semibold tabular-nums',
-                card.up ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-              ].join(' ')}>
+              <span
+                className={[
+                  'text-[10.5px] font-semibold tabular-nums',
+                  card.up ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+                ].join(' ')}
+              >
                 {card.delta}
               </span>
             </div>
@@ -340,13 +432,27 @@ export const AnalyticsVisual = () => {
   const days = t('viz.analytics.days', { returnObjects: true });
   const labels = Array.isArray(days) ? days : ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
-  const W = 460, H = 180, P = { t: 14, r: 52, b: 26, l: 30 };
+  const W = 460,
+    H = 180,
+    P = { t: 14, r: 52, b: 26, l: 30 };
   const max = 40;
   const x = (i: number) => P.l + (i * (W - P.l - P.r)) / (incoming.length - 1);
   const y = (v: any) => P.t + (1 - v / max) * (H - P.t - P.b);
-  const line = (arr: any) => arr.map((v: any, i: number) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  const line = (arr: any) =>
+    arr
+      .map((v: any, i: number) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1))
+      .join(' ');
   const area = (arr: any) =>
-    line(arr) + ' L' + x(arr.length - 1).toFixed(1) + ' ' + y(0).toFixed(1) + ' L' + x(0).toFixed(1) + ' ' + y(0).toFixed(1) + ' Z';
+    line(arr) +
+    ' L' +
+    x(arr.length - 1).toFixed(1) +
+    ' ' +
+    y(0).toFixed(1) +
+    ' L' +
+    x(0).toFixed(1) +
+    ' ' +
+    y(0).toFixed(1) +
+    ' Z';
 
   return (
     <div className="viz p-4">
@@ -387,12 +493,19 @@ export const AnalyticsVisual = () => {
         {[0, 10, 20, 30, 40].map((v) => (
           <g key={v}>
             <line
-              x1={P.l} x2={W - P.r} y1={y(v)} y2={y(v)}
-              className="stroke-gray-200 dark:stroke-white/10" strokeWidth="1"
+              x1={P.l}
+              x2={W - P.r}
+              y1={y(v)}
+              y2={y(v)}
+              className="stroke-gray-200 dark:stroke-white/10"
+              strokeWidth="1"
             />
             <text
-              x={P.l - 8} y={y(v) + 3} textAnchor="end"
-              className="fill-gray-400 dark:fill-gray-500" fontSize="9"
+              x={P.l - 8}
+              y={y(v) + 3}
+              textAnchor="end"
+              className="fill-gray-400 dark:fill-gray-500"
+              fontSize="9"
             >
               {v}
             </text>
@@ -400,26 +513,73 @@ export const AnalyticsVisual = () => {
         ))}
 
         <path d={area(incoming)} fill="url(#viz-fill-1)" />
-        <path d={line(incoming)} fill="none" stroke="var(--viz-s1)" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round" />
-        <path d={line(solved)} fill="none" stroke="var(--viz-s2)" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round" strokeDasharray="0" />
+        <path
+          d={line(incoming)}
+          fill="none"
+          stroke="var(--viz-s1)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d={line(solved)}
+          fill="none"
+          stroke="var(--viz-s2)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray="0"
+        />
 
         {/* Uç işaretçiler: 8px çap, zemin rengiyle halkalanır. */}
-        <circle cx={x(6)} cy={y(incoming[6])} r="4" fill="var(--viz-s1)"
-          className="stroke-white dark:stroke-[#12141f]" strokeWidth="2" />
-        <circle cx={x(6)} cy={y(solved[6])} r="4" fill="var(--viz-s2)"
-          className="stroke-white dark:stroke-[#12141f]" strokeWidth="2" />
+        <circle
+          cx={x(6)}
+          cy={y(incoming[6])}
+          r="4"
+          fill="var(--viz-s1)"
+          className="stroke-white dark:stroke-[#12141f]"
+          strokeWidth="2"
+        />
+        <circle
+          cx={x(6)}
+          cy={y(solved[6])}
+          r="4"
+          fill="var(--viz-s2)"
+          className="stroke-white dark:stroke-[#12141f]"
+          strokeWidth="2"
+        />
 
         {/* Doğrudan etiket — kimlik renge tek başına bırakılmaz. */}
-        <text x={x(6) + 9} y={y(incoming[6]) + 3} fontSize="9.5" fontWeight="600"
-          className="fill-gray-700 dark:fill-gray-200">{incoming[6]}</text>
-        <text x={x(6) + 9} y={y(solved[6]) + 3} fontSize="9.5" fontWeight="600"
-          className="fill-gray-700 dark:fill-gray-200">{solved[6]}</text>
+        <text
+          x={x(6) + 9}
+          y={y(incoming[6]) + 3}
+          fontSize="9.5"
+          fontWeight="600"
+          className="fill-gray-700 dark:fill-gray-200"
+        >
+          {incoming[6]}
+        </text>
+        <text
+          x={x(6) + 9}
+          y={y(solved[6]) + 3}
+          fontSize="9.5"
+          fontWeight="600"
+          className="fill-gray-700 dark:fill-gray-200"
+        >
+          {solved[6]}
+        </text>
 
         {labels.map((d, i) => (
-          <text key={d} x={x(i)} y={H - 8} textAnchor="middle" fontSize="9"
-            className="fill-gray-400 dark:fill-gray-500">{d}</text>
+          <text
+            key={d}
+            x={x(i)}
+            y={H - 8}
+            textAnchor="middle"
+            fontSize="9"
+            className="fill-gray-400 dark:fill-gray-500"
+          >
+            {d}
+          </text>
         ))}
       </svg>
     </div>
@@ -437,8 +597,10 @@ export const RoutingVisual = () => {
 
   return (
     <div className="p-5">
-      <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl
-        border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.03]">
+      <div
+        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl
+        border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.03]"
+      >
         <Avatar name={t('viz.routing.visitor')} tone="amber" size="sm" />
         <span className="text-[12px] text-gray-700 dark:text-gray-300 truncate flex-1">
           {t('viz.routing.message')}
@@ -449,7 +611,12 @@ export const RoutingVisual = () => {
       {/* bağlantı */}
       <div className="flex justify-center py-2" aria-hidden="true">
         <svg width="24" height="26" viewBox="0 0 24 26" fill="none">
-          <path d="M12 0v18" className="stroke-gray-300 dark:stroke-white/20" strokeWidth="1.5" strokeDasharray="3 3" />
+          <path
+            d="M12 0v18"
+            className="stroke-gray-300 dark:stroke-white/20"
+            strokeWidth="1.5"
+            strokeDasharray="3 3"
+          />
           <path d="M12 25l-4.5-7h9L12 25z" className="fill-gray-300 dark:fill-white/20" />
         </svg>
       </div>
@@ -468,20 +635,26 @@ export const RoutingVisual = () => {
                   : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]'
               ].join(' ')}
             >
-              <p className={[
-                'text-[11.5px] font-semibold truncate',
-                isTarget ? a.softText : 'text-gray-700 dark:text-gray-300'
-              ].join(' ')}>
+              <p
+                className={[
+                  'text-[11.5px] font-semibold truncate',
+                  isTarget ? a.softText : 'text-gray-700 dark:text-gray-300'
+                ].join(' ')}
+              >
                 {d.name}
               </p>
-              <p className="mt-0.5 text-[9.5px] text-gray-500 dark:text-gray-400 tabular-nums">{d.load}</p>
+              <p className="mt-0.5 text-[9.5px] text-gray-500 dark:text-gray-400 tabular-nums">
+                {d.load}
+              </p>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-3 flex items-center gap-2.5 px-3 py-2.5 rounded-xl
-        border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/[0.08]">
+      <div
+        className="mt-3 flex items-center gap-2.5 px-3 py-2.5 rounded-xl
+        border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/[0.08]"
+      >
         <Avatar name={t('viz.routing.agent')} tone="emerald" size="sm" />
         <span className="min-w-0 flex-1">
           <span className="block text-[12px] font-semibold text-gray-900 dark:text-white truncate">
@@ -512,8 +685,10 @@ export const AutomationVisual = () => {
           <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           {t('viz.automation.ruleName')}
         </span>
-        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold
-          bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+        <span
+          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold
+          bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+        >
           <Dot tone="emerald" /> {t('viz.automation.active')}
         </span>
       </div>
@@ -528,14 +703,18 @@ export const AutomationVisual = () => {
           {(Array.isArray(conditions) ? conditions : []).map((c, i) => (
             <div key={i} className="flex items-center gap-2">
               {i > 0 && (
-                <span className="px-1.5 py-[1px] rounded text-[9px] font-bold
-                  bg-gray-100 dark:bg-white/[0.08] text-gray-500 dark:text-gray-400 shrink-0">
+                <span
+                  className="px-1.5 py-[1px] rounded text-[9px] font-bold
+                  bg-gray-100 dark:bg-white/[0.08] text-gray-500 dark:text-gray-400 shrink-0"
+                >
                   {t('viz.automation.and')}
                 </span>
               )}
-              <span className="px-2.5 py-1.5 rounded-lg text-[11px] flex-1
+              <span
+                className="px-2.5 py-1.5 rounded-lg text-[11px] flex-1
                 bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.07]
-                text-gray-700 dark:text-gray-300 truncate">
+                text-gray-700 dark:text-gray-300 truncate"
+              >
                 {c}
               </span>
             </div>
@@ -548,16 +727,21 @@ export const AutomationVisual = () => {
       </div>
 
       <div className="rounded-xl border border-emerald-200 dark:border-emerald-500/25 overflow-hidden">
-        <div className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/[0.10]
-          border-b border-emerald-200 dark:border-emerald-500/25">
+        <div
+          className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/[0.10]
+          border-b border-emerald-200 dark:border-emerald-500/25"
+        >
           <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
             {t('viz.automation.thenLabel')}
           </span>
         </div>
         <div className="p-2.5 space-y-1.5">
           {(Array.isArray(actions) ? actions : []).map((a, i) => (
-            <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg
-              bg-emerald-50/60 dark:bg-emerald-500/[0.06] text-[11px] text-gray-700 dark:text-gray-300">
+            <div
+              key={i}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg
+              bg-emerald-50/60 dark:bg-emerald-500/[0.06] text-[11px] text-gray-700 dark:text-gray-300"
+            >
               <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span className="truncate">{a}</span>
             </div>
@@ -583,20 +767,25 @@ export const ProactiveVisual = () => {
     <div className="p-5">
       <div className="flex flex-wrap gap-1.5">
         {(Array.isArray(triggers) ? triggers : []).map((tr, i) => (
-          <span key={i} className={[
-            'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-medium border',
-            i === 0
-              ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300'
-              : 'border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-gray-400'
-          ].join(' ')}>
+          <span
+            key={i}
+            className={[
+              'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-medium border',
+              i === 0
+                ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                : 'border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-gray-400'
+            ].join(' ')}
+          >
             {i === 0 ? <Clock className="w-3 h-3" /> : <MousePointer2 className="w-3 h-3" />}
             {tr}
           </span>
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl border border-gray-200 dark:border-white/[0.08]
-        bg-gray-50 dark:bg-white/[0.02] p-3.5 relative overflow-hidden">
+      <div
+        className="mt-4 rounded-xl border border-gray-200 dark:border-white/[0.08]
+        bg-gray-50 dark:bg-white/[0.02] p-3.5 relative overflow-hidden"
+      >
         <div className="space-y-1.5" aria-hidden="true">
           <div className="h-2 w-2/3 rounded bg-gray-200 dark:bg-white/[0.08]" />
           <div className="h-2 w-full rounded bg-gray-200 dark:bg-white/[0.08]" />
@@ -604,9 +793,11 @@ export const ProactiveVisual = () => {
           <div className="h-16 mt-2 rounded-lg bg-gray-200/70 dark:bg-white/[0.05]" />
         </div>
 
-        <div className="mt-3 ml-auto max-w-[86%] rounded-2xl rounded-br-md
+        <div
+          className="mt-3 ml-auto max-w-[86%] rounded-2xl rounded-br-md
           bg-white dark:bg-[#1b1e2e] border border-gray-200 dark:border-white/[0.09]
-          shadow-panel p-3">
+          shadow-panel p-3"
+        >
           <div className="flex items-center gap-2">
             <Avatar name={t('viz.proactive.agent')} tone="indigo" size="sm" />
             <span className="text-[11px] font-semibold text-gray-900 dark:text-white truncate">
@@ -631,8 +822,10 @@ export const KnowledgeVisual = () => {
 
   return (
     <div className="p-5">
-      <div className="flex items-center gap-2 px-3 h-10 rounded-xl
-        border border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/[0.07]">
+      <div
+        className="flex items-center gap-2 px-3 h-10 rounded-xl
+        border border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/[0.07]"
+      >
         <Search className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
         <span className="text-[12.5px] text-gray-800 dark:text-gray-200 truncate">
           {t('viz.knowledge.query')}
@@ -641,17 +834,22 @@ export const KnowledgeVisual = () => {
 
       <ul className="mt-3 space-y-1.5">
         {(Array.isArray(results) ? results : []).map((r, i) => (
-          <li key={i} className={[
-            'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition',
-            i === 0
-              ? 'border-amber-200 dark:border-amber-500/25 bg-amber-50/50 dark:bg-amber-500/[0.06]'
-              : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]'
-          ].join(' ')}>
+          <li
+            key={i}
+            className={[
+              'flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition',
+              i === 0
+                ? 'border-amber-200 dark:border-amber-500/25 bg-amber-50/50 dark:bg-amber-500/[0.06]'
+                : 'border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]'
+            ].join(' ')}
+          >
             <span className="min-w-0 flex-1">
               <span className="block text-[12px] font-medium text-gray-900 dark:text-white truncate">
                 {r.q}
               </span>
-              <span className="block text-[10.5px] text-gray-500 dark:text-gray-400 truncate">{r.meta}</span>
+              <span className="block text-[10.5px] text-gray-500 dark:text-gray-400 truncate">
+                {r.meta}
+              </span>
             </span>
             <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           </li>
@@ -677,17 +875,25 @@ export const TeamVisual = () => {
   return (
     <div className="p-4 space-y-1.5">
       {(Array.isArray(members) ? members : []).map((m, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl
-          border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]">
+        <div
+          key={i}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl
+          border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]"
+        >
           <Avatar name={m.name} tone={['violet', 'sky', 'emerald', 'amber'][i % 4]} />
           <span className="min-w-0 flex-1">
             <span className="block text-[12.5px] font-medium text-gray-900 dark:text-white truncate">
               {m.name}
             </span>
-            <span className="block text-[10.5px] text-gray-500 dark:text-gray-400 truncate">{m.role}</span>
+            <span className="block text-[10.5px] text-gray-500 dark:text-gray-400 truncate">
+              {m.role}
+            </span>
           </span>
           <span className="flex items-center gap-1.5 shrink-0">
-            <Dot tone={toneFor[m.state as keyof typeof toneFor] || 'indigo'} pulse={m.state === 'online'} />
+            <Dot
+              tone={toneFor[m.state as keyof typeof toneFor] || 'indigo'}
+              pulse={m.state === 'online'}
+            />
             <span className="text-[10.5px] text-gray-600 dark:text-gray-400">{m.stateLabel}</span>
           </span>
           <span className="w-12 text-right text-[10.5px] tabular-nums text-gray-500 dark:text-gray-400 shrink-0">
@@ -715,25 +921,37 @@ export const VisitorsVisual = () => {
         </span>
       </div>
       <div className="rounded-xl border border-gray-200 dark:border-white/[0.08] overflow-hidden">
-        <div className="grid grid-cols-[1.2fr_1.4fr_.8fr] gap-2 px-3 py-2
-          bg-gray-50 dark:bg-white/[0.04] border-b border-gray-200 dark:border-white/[0.07]">
+        <div
+          className="grid grid-cols-[1.2fr_1.4fr_.8fr] gap-2 px-3 py-2
+          bg-gray-50 dark:bg-white/[0.04] border-b border-gray-200 dark:border-white/[0.07]"
+        >
           {asList(t('viz.visitors.head', { returnObjects: true })).map((h, i) => (
-            <span key={i} className={[
-              'text-[9.5px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
-              i === 2 ? 'text-right' : ''
-            ].join(' ')}>
+            <span
+              key={i}
+              className={[
+                'text-[9.5px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
+                i === 2 ? 'text-right' : ''
+              ].join(' ')}
+            >
               {h}
             </span>
           ))}
         </div>
         {(Array.isArray(rows) ? rows : []).map((r, i) => (
-          <div key={i} className="grid grid-cols-[1.2fr_1.4fr_.8fr] gap-2 items-center px-3 py-2.5
-            border-b border-gray-100 dark:border-white/[0.05] last:border-0">
+          <div
+            key={i}
+            className="grid grid-cols-[1.2fr_1.4fr_.8fr] gap-2 items-center px-3 py-2.5
+            border-b border-gray-100 dark:border-white/[0.05] last:border-0"
+          >
             <span className="flex items-center gap-1.5 min-w-0">
               <Globe className="w-3 h-3 text-gray-400 shrink-0" />
-              <span className="text-[11px] text-gray-700 dark:text-gray-300 truncate">{r.city}</span>
+              <span className="text-[11px] text-gray-700 dark:text-gray-300 truncate">
+                {r.city}
+              </span>
             </span>
-            <span className="text-[11px] text-gray-600 dark:text-gray-400 truncate font-mono">{r.page}</span>
+            <span className="text-[11px] text-gray-600 dark:text-gray-400 truncate font-mono">
+              {r.page}
+            </span>
             <span className="text-[10.5px] text-right tabular-nums text-gray-500 dark:text-gray-400">
               {r.time}
             </span>
@@ -751,8 +969,10 @@ export const AiVisual = () => {
   const { t } = useTranslation();
   return (
     <div className="p-5">
-      <div className="rounded-xl border border-gray-200 dark:border-white/[0.08]
-        bg-gray-50 dark:bg-white/[0.02] p-3">
+      <div
+        className="rounded-xl border border-gray-200 dark:border-white/[0.08]
+        bg-gray-50 dark:bg-white/[0.02] p-3"
+      >
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
           {t('viz.ai.incoming')}
         </p>
@@ -761,8 +981,10 @@ export const AiVisual = () => {
         </p>
       </div>
 
-      <div className="mt-3 rounded-xl border border-violet-200 dark:border-violet-500/25
-        bg-violet-50/60 dark:bg-violet-500/[0.07] p-3">
+      <div
+        className="mt-3 rounded-xl border border-violet-200 dark:border-violet-500/25
+        bg-violet-50/60 dark:bg-violet-500/[0.07] p-3"
+      >
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
           <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-300">
@@ -774,12 +996,15 @@ export const AiVisual = () => {
         </p>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {asList(t('viz.ai.actions', { returnObjects: true })).map((a, i) => (
-            <span key={i} className={[
-              'px-2 py-1 rounded-md text-[10px] font-medium',
-              i === 0
-                ? 'bg-violet-600 text-white'
-                : 'border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-300'
-            ].join(' ')}>
+            <span
+              key={i}
+              className={[
+                'px-2 py-1 rounded-md text-[10px] font-medium',
+                i === 0
+                  ? 'bg-violet-600 text-white'
+                  : 'border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-300'
+              ].join(' ')}
+            >
               {a}
             </span>
           ))}
@@ -806,20 +1031,32 @@ export const CrmVisual = () => {
       {(Array.isArray(stages) ? stages : []).map((s, i) => {
         const a = accent(tones[i % 4]);
         return (
-          <div key={i} className="rounded-xl border border-gray-200 dark:border-white/[0.08]
-            bg-gray-50/60 dark:bg-white/[0.02] p-2">
+          <div
+            key={i}
+            className="rounded-xl border border-gray-200 dark:border-white/[0.08]
+            bg-gray-50/60 dark:bg-white/[0.02] p-2"
+          >
             <div className="flex items-center justify-between gap-1">
               <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 truncate">
                 {s.name}
               </span>
-              <span className={['text-[9.5px] font-bold tabular-nums', a.text].join(' ')}>{s.count}</span>
+              <span className={['text-[9.5px] font-bold tabular-nums', a.text].join(' ')}>
+                {s.count}
+              </span>
             </div>
             <div className="mt-1.5 space-y-1">
               {s.cards.map((c: any, j: number) => (
-                <div key={j} className="rounded-lg bg-white dark:bg-white/[0.05]
-                  border border-gray-200 dark:border-white/[0.07] px-2 py-1.5">
-                  <p className="text-[9.5px] font-medium text-gray-800 dark:text-gray-200 truncate">{c.title}</p>
-                  <p className={['text-[9px] font-semibold tabular-nums', a.text].join(' ')}>{c.value}</p>
+                <div
+                  key={j}
+                  className="rounded-lg bg-white dark:bg-white/[0.05]
+                  border border-gray-200 dark:border-white/[0.07] px-2 py-1.5"
+                >
+                  <p className="text-[9.5px] font-medium text-gray-800 dark:text-gray-200 truncate">
+                    {c.title}
+                  </p>
+                  <p className={['text-[9px] font-semibold tabular-nums', a.text].join(' ')}>
+                    {c.value}
+                  </p>
                 </div>
               ))}
             </div>

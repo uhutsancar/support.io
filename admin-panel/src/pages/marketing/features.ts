@@ -34,7 +34,11 @@ export const FEATURE_IDS = [
  * yapar hem de üst menüdeki açılırın iskeletidir.
  */
 export const FEATURE_GROUPS = [
-  { id: 'talk', tone: 'indigo', items: ['live-chat', 'universal-widget', 'knowledge-base', 'proactive'] },
+  {
+    id: 'talk',
+    tone: 'indigo',
+    items: ['live-chat', 'universal-widget', 'knowledge-base', 'proactive']
+  },
   { id: 'organize', tone: 'emerald', items: ['routing', 'automation', 'team'] },
   { id: 'grow', tone: 'sky', items: ['analytics', 'visitors', 'crm', 'ai-assist'] }
 ];
@@ -100,7 +104,14 @@ export const FEATURE_TONE = {
  * sonuna kadar tıklamadığı bir şerit üretiyordu; burası günlük işi en iyi
  * anlatan altısıdır, gerisi Özellikler sayfasında.
  */
-export const HOME_TABS = ['live-chat', 'routing', 'automation', 'proactive', 'analytics', 'ai-assist'];
+export const HOME_TABS = [
+  'live-chat',
+  'routing',
+  'automation',
+  'proactive',
+  'analytics',
+  'ai-assist'
+];
 
 /** Sektöre göre anlatım. Her biri aynı ürünü farklı bir dille anlatır. */
 export const USE_CASES = ['ecommerce', 'saas', 'agency', 'service'];

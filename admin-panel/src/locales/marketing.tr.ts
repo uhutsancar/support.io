@@ -66,8 +66,7 @@ export default {
       problem: {
         eyebrow: 'Tanıdık geldi mi',
         title: 'Müşteri mesajları her yere dağılmış durumda',
-        desc:
-          'Biri Instagram’dan yazıyor, biri telefonla arıyor, biri iletişim formunu dolduruyor. Cevaplayan kişi hangisine baktığını unutuyor, cevaplanmayanı kimse fark etmiyor.',
+        desc: 'Biri Instagram’dan yazıyor, biri telefonla arıyor, biri iletişim formunu dolduruyor. Cevaplayan kişi hangisine baktığını unutuyor, cevaplanmayanı kimse fark etmiyor.',
         items: [
           {
             title: 'Mesajlar kayboluyor',
@@ -94,16 +93,14 @@ export default {
       how: {
         eyebrow: 'Nasıl çalışır',
         title: 'Dört adımda, ilk günden çalışan bir destek hattı',
-        desc:
-          'Kurmak için teknik bilgiye ihtiyacınız yok. Sırayla ne olduğunu aşağıda görebilirsiniz.'
+        desc: 'Kurmak için teknik bilgiye ihtiyacınız yok. Sırayla ne olduğunu aşağıda görebilirsiniz.'
       },
 
       steps: [
         {
           kicker: 'Ziyaretçi tarafı',
           title: 'Sitenizin köşesinde bir sohbet balonu belirir',
-          body:
-            'Ziyaretçi tıklar, yazar. Kayıt olmasına, e-posta bırakmasına gerek yoktur. Balonun rengini, yazısını ve nerede duracağını siz seçersiniz; sitenizin tasarımına göre görünür.',
+          body: 'Ziyaretçi tıklar, yazar. Kayıt olmasına, e-posta bırakmasına gerek yoktur. Balonun rengini, yazısını ve nerede duracağını siz seçersiniz; sitenizin tasarımına göre görünür.',
           points: [
             'Telefonda da bilgisayarda da aynı şekilde çalışır',
             'Ziyaretçi sayfa değiştirse bile konuşma kapanmaz',
@@ -113,8 +110,7 @@ export default {
         {
           kicker: 'Ekip tarafı',
           title: 'Mesaj ekibinizin ekranına anında düşer',
-          body:
-            'Sayfayı yenilemeniz gerekmez; mesaj yazıldığı an görünür. Müşterinin hangi sayfada olduğunu, daha önce ne konuştuğunuzu ve kimin ilgilendiğini yanında görürsünüz.',
+          body: 'Sayfayı yenilemeniz gerekmez; mesaj yazıldığı an görünür. Müşterinin hangi sayfada olduğunu, daha önce ne konuştuğunuzu ve kimin ilgilendiğini yanında görürsünüz.',
           points: [
             'Karşı taraf yazarken üç nokta görünür',
             'Dosya ve ekran görüntüsü gönderilebilir',
@@ -124,8 +120,7 @@ export default {
         {
           kicker: 'Düzen',
           title: 'Konuşma doğru kişiye kendiliğinden gider',
-          body:
-            'Fatura sorusu muhasebeye, iade talebi satışa. Departmanları bir kez tanımlarsınız, gelen her konuşma o an müsait olan temsilciye dağıtılır.',
+          body: 'Fatura sorusu muhasebeye, iade talebi satışa. Departmanları bir kez tanımlarsınız, gelen her konuşma o an müsait olan temsilciye dağıtılır.',
           points: [
             'Sırayla ya da en az işi olana dağıtım',
             'Mesai saatleri dışında otomatik bilgilendirme',
@@ -135,8 +130,7 @@ export default {
         {
           kicker: 'Sonuç',
           title: 'Ay sonunda ne olduğunu rakamla görürsünüz',
-          body:
-            'Kaç soru geldi, ortalama kaç dakikada dönüldü, hangi temsilci kaç konuşma kapattı. Tahmin etmek yerine bakarsınız.',
+          body: 'Kaç soru geldi, ortalama kaç dakikada dönüldü, hangi temsilci kaç konuşma kapattı. Tahmin etmek yerine bakarsınız.',
           points: [
             'İlk yanıt süresi ve çözüm süresi',
             'Temsilci bazında kırılım',
@@ -163,34 +157,52 @@ export default {
             name: 'E-ticaret',
             tag: 'Kargo, iade, beden sorusu',
             headline: 'Sepetteki müşteri sorusunu sorabilsin, sipariş kaçmasın',
-            body:
-              'Ürün sayfasında “bu bedeni var mı”, “kargo ne zaman gelir” diye soran kişi cevabı bekleyemez. Sohbet balonu tam o sayfada açılır, temsilciniz ziyaretçinin hangi ürüne baktığını görerek yanıtlar. Sık sorulan kargo ve iade soruları için hazır cevaplar tanımlarsınız; aynı soruyu günde otuz kez yazmazsınız.',
+            body: 'Ürün sayfasında “bu bedeni var mı”, “kargo ne zaman gelir” diye soran kişi cevabı bekleyemez. Sohbet balonu tam o sayfada açılır, temsilciniz ziyaretçinin hangi ürüne baktığını görerek yanıtlar. Sık sorulan kargo ve iade soruları için hazır cevaplar tanımlarsınız; aynı soruyu günde otuz kez yazmazsınız.',
             wins: [
-              { label: 'Daha az terk edilen sepet', body: 'Ödeme adımında takılan ziyaretçiye kendiliğinden mesaj gider.' },
-              { label: 'Tekrarlayan sorular biter', body: 'Kargo ve iade soruları hazır cevapla anında yanıtlanır.' },
-              { label: 'Sipariş bağlamı elinizde', body: 'Müşterinin baktığı sayfa ve geçmiş konuşmaları yanınızda durur.' }
+              {
+                label: 'Daha az terk edilen sepet',
+                body: 'Ödeme adımında takılan ziyaretçiye kendiliğinden mesaj gider.'
+              },
+              {
+                label: 'Tekrarlayan sorular biter',
+                body: 'Kargo ve iade soruları hazır cevapla anında yanıtlanır.'
+              },
+              {
+                label: 'Sipariş bağlamı elinizde',
+                body: 'Müşterinin baktığı sayfa ve geçmiş konuşmaları yanınızda durur.'
+              }
             ]
           },
           saas: {
             name: 'Yazılım / SaaS',
             tag: 'Deneme süresi, kurulum, hata',
             headline: 'Deneme süresindeki kullanıcıyı takılıp bırakmadan yakalayın',
-            body:
-              'Ürününüzü yeni deneyen biri bir yerde takıldığında genellikle sormaz, sessizce çıkar. Belirli bir sayfada uzun süre kalan ya da kurulum adımında duran kullanıcıya kendiliğinden mesaj gönderebilirsiniz. Gelen her soru ilgili ekibe düşer, teknik olanlar destek ekibinde kalmaz.',
+            body: 'Ürününüzü yeni deneyen biri bir yerde takıldığında genellikle sormaz, sessizce çıkar. Belirli bir sayfada uzun süre kalan ya da kurulum adımında duran kullanıcıya kendiliğinden mesaj gönderebilirsiniz. Gelen her soru ilgili ekibe düşer, teknik olanlar destek ekibinde kalmaz.',
             wins: [
-              { label: 'Sessiz kaybı görürsünüz', body: 'Kim hangi ekranda ne kadar kaldı, panelde canlı akar.' },
-              { label: 'Doğru ekip bakar', body: 'Faturalandırma muhasebeye, hata bildirimi teknik ekibe gider.' },
-              { label: 'Cevaplar birikir', body: 'Sık sorulanlar yardım içeriğine dönüşür, kullanıcı kendi bulur.' }
+              {
+                label: 'Sessiz kaybı görürsünüz',
+                body: 'Kim hangi ekranda ne kadar kaldı, panelde canlı akar.'
+              },
+              {
+                label: 'Doğru ekip bakar',
+                body: 'Faturalandırma muhasebeye, hata bildirimi teknik ekibe gider.'
+              },
+              {
+                label: 'Cevaplar birikir',
+                body: 'Sık sorulanlar yardım içeriğine dönüşür, kullanıcı kendi bulur.'
+              }
             ]
           },
           agency: {
             name: 'Ajans / Birden çok site',
             tag: 'Müşteri siteleri, ayrı ekipler',
             headline: 'Tek panelden birden çok siteyi yönetin, veriler birbirine karışmasın',
-            body:
-              'Yönettiğiniz her site için ayrı bir kurulum kodu alırsınız. Konuşmalar, ekip üyeleri ve raporlar site bazında ayrılır; bir müşterinin verisi diğerinde görünmez. Hangi ekip üyesinin hangi siteye erişeceğini siz belirlersiniz.',
+            body: 'Yönettiğiniz her site için ayrı bir kurulum kodu alırsınız. Konuşmalar, ekip üyeleri ve raporlar site bazında ayrılır; bir müşterinin verisi diğerinde görünmez. Hangi ekip üyesinin hangi siteye erişeceğini siz belirlersiniz.',
             wins: [
-              { label: 'Site başına ayrım', body: 'Her sitenin konuşmaları ve raporları kendi içinde kalır.' },
+              {
+                label: 'Site başına ayrım',
+                body: 'Her sitenin konuşmaları ve raporları kendi içinde kalır.'
+              },
               { label: 'Yetki sizde', body: 'Kim hangi siteyi görecek, tek tek seçilir.' },
               { label: 'Tek giriş', body: 'Onlarca site için onlarca panel açmazsınız.' }
             ]
@@ -199,11 +211,16 @@ export default {
             name: 'Hizmet / Randevu',
             tag: 'Klinik, atölye, danışmanlık',
             headline: 'Telefonla sorulan her şeyi yazıyla, mesai dışında da alın',
-            body:
-              'Randevu, fiyat ve yol tarifi soruları telefonu meşgul eder. Aynı sorular sohbetten geldiğinde ekibiniz aynı anda birkaç kişiyle ilgilenebilir. Mesai saatleri dışında gelen mesaj kaybolmaz; sabah geldiğinizde sizi bekler ve müşteri ne zaman döneceğinizi bilir.',
+            body: 'Randevu, fiyat ve yol tarifi soruları telefonu meşgul eder. Aynı sorular sohbetten geldiğinde ekibiniz aynı anda birkaç kişiyle ilgilenebilir. Mesai saatleri dışında gelen mesaj kaybolmaz; sabah geldiğinizde sizi bekler ve müşteri ne zaman döneceğinizi bilir.',
             wins: [
-              { label: 'Telefon boşalır', body: 'Aynı anda birden fazla kişiyle yazışabilirsiniz.' },
-              { label: 'Mesai dışı kayıp yok', body: 'Gece gelen mesaj sabah gelen kutusunda durur.' },
+              {
+                label: 'Telefon boşalır',
+                body: 'Aynı anda birden fazla kişiyle yazışabilirsiniz.'
+              },
+              {
+                label: 'Mesai dışı kayıp yok',
+                body: 'Gece gelen mesaj sabah gelen kutusunda durur.'
+              },
               { label: 'Sık sorular hazır', body: 'Fiyat ve adres gibi sorulara tek tıkla cevap.' }
             ]
           }
@@ -214,21 +231,37 @@ export default {
       setup: {
         eyebrow: 'Kurulum',
         title: 'Bir satır kod, iki dakika',
-        desc:
-          'Hesabı açtıktan sonra size özel bir satır veriyoruz. Sitenizin tasarımını yapan kişiye gönderirsiniz, yapıştırır. Hepsi bu.',
+        desc: 'Hesabı açtıktan sonra size özel bir satır veriyoruz. Sitenizin tasarımını yapan kişiye gönderirsiniz, yapıştırır. Hepsi bu.',
         steps: [
           { title: 'Hesabınızı açın', body: 'E-posta ve şifre yeterli. Kredi kartı istemiyoruz.' },
-          { title: 'Sitenizi ekleyin', body: 'Site adresini yazın, size özel kurulum satırını verelim.' },
-          { title: 'Satırı sitenize yapıştırın', body: 'Balon aynı dakika içinde sitenizde görünmeye başlar.' }
+          {
+            title: 'Sitenizi ekleyin',
+            body: 'Site adresini yazın, size özel kurulum satırını verelim.'
+          },
+          {
+            title: 'Satırı sitenize yapıştırın',
+            body: 'Balon aynı dakika içinde sitenizde görünmeye başlar.'
+          }
         ],
         file: 'sitenizin sayfası',
         cta: 'Hesap açıp kodu alın',
-        note:
-          'Sitenizi yapan biri yoksa takılmayın: adresinizi yazın, kurulumu birlikte yapalım.',
+        note: 'Sitenizi yapan biri yoksa takılmayın: adresinizi yazın, kurulumu birlikte yapalım.',
         worksWith: 'Hangi altyapıda olursa olsun çalışır',
         platforms: [
-          'WordPress', 'Shopify', 'WooCommerce', 'Wix', 'Webflow', 'Ticimax',
-          'İdeasoft', 'React', 'Next.js', 'Vue', 'Laravel', 'PHP', 'Django', 'Squarespace'
+          'WordPress',
+          'Shopify',
+          'WooCommerce',
+          'Wix',
+          'Webflow',
+          'Ticimax',
+          'İdeasoft',
+          'React',
+          'Next.js',
+          'Vue',
+          'Laravel',
+          'PHP',
+          'Django',
+          'Squarespace'
         ]
       },
 
@@ -236,8 +269,7 @@ export default {
       security: {
         eyebrow: 'Güven',
         title: 'Müşteri verisi sizin, bizde kiracı gibi durmaz',
-        desc:
-          'Bir destek aracı, müşterilerinizin size yazdığı her şeyi görür. Bu yüzden nasıl sakladığımızı açıkça yazıyoruz.',
+        desc: 'Bir destek aracı, müşterilerinizin size yazdığı her şeyi görür. Bu yüzden nasıl sakladığımızı açıkça yazıyoruz.',
         items: [
           {
             title: 'Verileriniz ayrı durur',
@@ -262,8 +294,7 @@ export default {
       plans: {
         eyebrow: 'Fiyat',
         title: 'Ücretsiz başlayın, büyüdükçe geçin',
-        desc:
-          'Ücretsiz planın süresi yok. Tek kişilik başlarsınız, ekip büyüdüğünde plan değiştirirsiniz.',
+        desc: 'Ücretsiz planın süresi yok. Tek kişilik başlarsınız, ekip büyüdüğünde plan değiştirirsiniz.',
         price: { free: '₺0', pro: '₺490', enterprise: 'Size özel' },
         note: {
           free: 'Tek site, tek kullanıcı',
@@ -306,12 +337,14 @@ export default {
       },
 
       ctaTitle: 'İlk konuşmanız iki dakika uzağınızda',
-      ctaDesc: 'Hesabınızı açın, sitenizi ekleyin, satırı yapıştırın. Gerisi kendiliğinden çalışır.',
+      ctaDesc:
+        'Hesabınızı açın, sitenizi ekleyin, satırı yapıştırın. Gerisi kendiliğinden çalışır.',
       ctaBtn1: 'Ücretsiz hesap oluştur',
       ctaBtn2: 'Fiyatlandırmayı gör',
       ctaNote: 'Kredi kartı istemiyoruz · İstediğiniz zaman bırakabilirsiniz',
 
-      footerDesc: 'Sitenize eklenen canlı destek. Müşteriniz yazar, ekibiniz tek ekrandan yanıtlar.',
+      footerDesc:
+        'Sitenize eklenen canlı destek. Müşteriniz yazar, ekibiniz tek ekrandan yanıtlar.',
       footerMade: 'Türkiye’de geliştirildi',
       footerProduct: 'Ürün',
       footerFeatures: 'Özellikler',
@@ -341,8 +374,7 @@ export default {
     groups: {
       talk: {
         title: 'Müşterinizle konuştuğunuz yer',
-        desc:
-          'Ziyaretçi sitenizden yazar, ekibiniz tek gelen kutusundan yanıtlar. Sık sorulanlara müşteri kendi de bakabilir.',
+        desc: 'Ziyaretçi sitenizden yazar, ekibiniz tek gelen kutusundan yanıtlar. Sık sorulanlara müşteri kendi de bakabilir.',
         points: [
           'Mesaj yazıldığı an ekibinizin ekranında görünür',
           'Dosya, ekran görüntüsü ve bağlantı paylaşılabilir',
@@ -352,8 +384,7 @@ export default {
       },
       organize: {
         title: 'İşin kime düşeceğini belirlediğiniz yer',
-        desc:
-          'Departmanlar, otomatik kurallar ve roller. Kim neye bakacak sorusunu bir kez cevaplayın, her gün tekrar uğraşmayın.',
+        desc: 'Departmanlar, otomatik kurallar ve roller. Kim neye bakacak sorusunu bir kez cevaplayın, her gün tekrar uğraşmayın.',
         points: [
           'Konuşmalar doğru departmana kendiliğinden gider',
           'Tekrarlayan işler kurala bağlanır',
@@ -363,8 +394,7 @@ export default {
       },
       grow: {
         title: 'Ne olduğunu gördüğünüz yer',
-        desc:
-          'Raporlar, canlı ziyaretçiler, fırsat takibi ve yapay zekâ yardımcısı. Tahmin yerine rakam.',
+        desc: 'Raporlar, canlı ziyaretçiler, fırsat takibi ve yapay zekâ yardımcısı. Tahmin yerine rakam.',
         points: [
           'Yanıt ve çözüm süreleri, temsilci kırılımıyla',
           'O an sitede kimin hangi sayfada olduğu',
@@ -425,9 +455,15 @@ export default {
           'Bağlantı koparsa mesaj kaybolmaz, tekrar gönderilir'
         ],
         steps: [
-          { title: 'Hesabınızı açın', body: 'Kayıt olduğunuzda canlı sohbet zaten açıktır, ayrıca kurmanız gerekmez.' },
+          {
+            title: 'Hesabınızı açın',
+            body: 'Kayıt olduğunuzda canlı sohbet zaten açıktır, ayrıca kurmanız gerekmez.'
+          },
           { title: 'Kurulum satırını yapıştırın', body: 'Balon sitenizde görünmeye başlar.' },
-          { title: 'Panelden cevaplayın', body: 'Gelen kutusunu açık bırakın; yeni mesajda bildirim alırsınız.' }
+          {
+            title: 'Panelden cevaplayın',
+            body: 'Gelen kutusunu açık bırakın; yeni mesajda bildirim alırsınız.'
+          }
         ]
       },
 
@@ -445,7 +481,10 @@ export default {
         ],
         steps: [
           { title: 'Sitenizi ekleyin', body: 'Panelden site adresinizi tanımlayın.' },
-          { title: 'Görünümü seçin', body: 'Renk, karşılama metni ve konumu ayarlayın; önizlemeden görün.' },
+          {
+            title: 'Görünümü seçin',
+            body: 'Renk, karşılama metni ve konumu ayarlayın; önizlemeden görün.'
+          },
           { title: 'Satırı yapıştırın', body: 'Sitenizin şablonuna eklemeniz yeterli.' }
         ]
       },
@@ -465,7 +504,10 @@ export default {
         steps: [
           { title: 'Departmanları tanımlayın', body: 'Satış, destek, muhasebe — işinize göre.' },
           { title: 'Ekibi yerleştirin', body: 'Her temsilciyi ilgili departmana ekleyin.' },
-          { title: 'Dağıtımı seçin', body: 'Sırayla mı, en az işi olana mı? Tek seçimle belirlersiniz.' }
+          {
+            title: 'Dağıtımı seçin',
+            body: 'Sırayla mı, en az işi olana mı? Tek seçimle belirlersiniz.'
+          }
         ]
       },
 
@@ -483,7 +525,10 @@ export default {
         ],
         steps: [
           { title: 'Koşulu seçin', body: 'Mesaj içeriği, sayfa, departman ya da durum.' },
-          { title: 'Eylemi seçin', body: 'Yönlendir, etiketle, önceliği yükselt veya hazır cevap gönder.' },
+          {
+            title: 'Eylemi seçin',
+            body: 'Yönlendir, etiketle, önceliği yükselt veya hazır cevap gönder.'
+          },
           { title: 'Açın ve izleyin', body: 'Kuralın kaç kez çalıştığını panelden takip edin.' }
         ]
       },
@@ -502,8 +547,14 @@ export default {
         ],
         steps: [
           { title: 'Sayfayı seçin', body: 'Örneğin ödeme ya da fiyatlandırma sayfası.' },
-          { title: 'Tetikleyiciyi seçin', body: 'Kaç saniye sonra ya da hangi davranışta gösterilsin.' },
-          { title: 'Mesajı yazın', body: 'Kısa ve yardım teklif eden bir cümle en iyi sonucu verir.' }
+          {
+            title: 'Tetikleyiciyi seçin',
+            body: 'Kaç saniye sonra ya da hangi davranışta gösterilsin.'
+          },
+          {
+            title: 'Mesajı yazın',
+            body: 'Kısa ve yardım teklif eden bir cümle en iyi sonucu verir.'
+          }
         ]
       },
 
@@ -520,7 +571,10 @@ export default {
           'Belirli sayfalarda belirli içerikler gösterilebilir'
         ],
         steps: [
-          { title: 'İlk on soruyu yazın', body: 'Ekibinize “en çok neyi soruyorlar” diye sorun, oradan başlayın.' },
+          {
+            title: 'İlk on soruyu yazın',
+            body: 'Ekibinize “en çok neyi soruyorlar” diye sorun, oradan başlayın.'
+          },
           { title: 'Sıralayın', body: 'En çok sorulanı en üste alın.' },
           { title: 'Ölçün', body: 'Okunma sayılarına bakıp eksik kalan konuyu ekleyin.' }
         ]
@@ -539,9 +593,18 @@ export default {
           'İstediğiniz tarih aralığı için hesaplanır'
         ],
         steps: [
-          { title: 'Bir hafta kullanın', body: 'Rakamların anlamlı olması için biraz veri gerekir.' },
-          { title: 'Aralığı seçin', body: 'Son 7 gün, son 30 gün ya da kendi seçtiğiniz tarihler.' },
-          { title: 'Hedef koyun', body: 'Yanıt süresi hedefini belirleyin; altında kalanlar işaretlenir.' }
+          {
+            title: 'Bir hafta kullanın',
+            body: 'Rakamların anlamlı olması için biraz veri gerekir.'
+          },
+          {
+            title: 'Aralığı seçin',
+            body: 'Son 7 gün, son 30 gün ya da kendi seçtiğiniz tarihler.'
+          },
+          {
+            title: 'Hedef koyun',
+            body: 'Yanıt süresi hedefini belirleyin; altında kalanlar işaretlenir.'
+          }
         ]
       },
 
@@ -560,7 +623,10 @@ export default {
         steps: [
           { title: 'Davet gönderin', body: 'E-posta adresini yazın, davet ulaşsın.' },
           { title: 'Rolü seçin', body: 'Ne görebileceğini rol belirler.' },
-          { title: 'Departmana ekleyin', body: 'Konuşmaların ona düşmesi için departmanına yerleştirin.' }
+          {
+            title: 'Departmana ekleyin',
+            body: 'Konuşmaların ona düşmesi için departmanına yerleştirin.'
+          }
         ]
       },
 
@@ -577,9 +643,15 @@ export default {
           'Yardım içeriğinize dayanarak taslak önerir'
         ],
         steps: [
-          { title: 'Sağlayıcı anahtarını girin', body: 'Panelden bir kez tanımlanır, tarayıcıya hiç gönderilmez.' },
+          {
+            title: 'Sağlayıcı anahtarını girin',
+            body: 'Panelden bir kez tanımlanır, tarayıcıya hiç gönderilmez.'
+          },
           { title: 'Konuşmayı açın', body: 'Yardımcı yan panelde görünür.' },
-          { title: 'Öneriyi düzenleyip gönderin', body: 'Taslak her zaman size gösterilir; siz onaylamadan gitmez.' }
+          {
+            title: 'Öneriyi düzenleyip gönderin',
+            body: 'Taslak her zaman size gösterilir; siz onaylamadan gitmez.'
+          }
         ]
       },
 
@@ -619,8 +691,7 @@ export default {
           { title: 'Konuşmadan fırsat açın', body: 'Satışa dönen sohbetin üzerinden tek tıkla.' },
           { title: 'Hattı izleyin', body: 'Hangi aşamada ne kadar iş beklediğini görün.' }
         ],
-        body:
-          'Fırsat kayıtları konuşmalarla aynı organizasyon sınırında tutulur ve açıldıkları konuşmaya bağlı kalır. Aşama, tutar ve sorumlu temsilci alanları panelden düzenlenir; her değişiklik denetim kaydına yazılır.',
+        body: 'Fırsat kayıtları konuşmalarla aynı organizasyon sınırında tutulur ve açıldıkları konuşmaya bağlı kalır. Aşama, tutar ve sorumlu temsilci alanları panelden düzenlenir; her değişiklik denetim kaydına yazılır.',
         points: [
           'Fırsatlar açıldıkları konuşmayla ilişkili kalır',
           'Aşama ve tutar değişiklikleri kayda geçer',
@@ -635,7 +706,8 @@ export default {
   pricingPage: {
     meta: {
       title: 'Fiyatlandırma',
-      description: 'Ücretsiz planla başlayın. Kullanıcı başına aylık ücretlendirme, gizli ücret yok.'
+      description:
+        'Ücretsiz planla başlayın. Kullanıcı başına aylık ücretlendirme, gizli ücret yok.'
     },
     eyebrow: 'Fiyatlandırma',
     title: 'Ücretsiz başlayın, ekibiniz büyüdükçe ödeyin',
@@ -653,7 +725,8 @@ export default {
     custom: 'Size özel',
     freeNote: 'Süresiz ücretsiz, faturalandırma yok',
     contactNote: 'İhtiyacınıza göre belirlenir',
-    vatNote: 'Fiyatlara KDV dâhil değildir. İstediğiniz zaman plan değiştirebilir veya bırakabilirsiniz.',
+    vatNote:
+      'Fiyatlara KDV dâhil değildir. İstediğiniz zaman plan değiştirebilir veya bırakabilirsiniz.',
 
     chooseEyebrow: 'Karar verirken',
     chooseTitle: 'Hangi plan size uygun?',
@@ -715,7 +788,8 @@ export default {
         cta: 'Pro ile başlayın',
         includes: 'Ücretsiz plandaki her şey, ayrıca',
         forWho: 'Ekip olarak çalışanlar',
-        forWhoBody: 'Birden fazla temsilciniz varsa, raporlara ve departman dağıtımına ihtiyacınız olacak.',
+        forWhoBody:
+          'Birden fazla temsilciniz varsa, raporlara ve departman dağıtımına ihtiyacınız olacak.',
         features: [
           '10 site',
           'Sınırsız kullanıcı',
@@ -733,7 +807,8 @@ export default {
         cta: 'Bize yazın',
         includes: 'Pro’daki her şey, ayrıca',
         forWho: 'Büyük ekipler',
-        forWhoBody: 'Çok sayıda siteyi yönetiyor, denetim ve erişim kayıtlarına ihtiyaç duyuyorsanız.',
+        forWhoBody:
+          'Çok sayıda siteyi yönetiyor, denetim ve erişim kayıtlarına ihtiyaç duyuyorsanız.',
         features: [
           'Sınırsız site',
           'Denetim kayıtları',
@@ -788,23 +863,19 @@ export default {
     principles: {
       own: {
         title: 'Fiyat ortada olsun',
-        body:
-          'Fiyatı görmek için form doldurtmuyoruz. Ücretsiz planın süresi yok ve kredi kartı istemiyoruz — deneyip karar vermeniz için kartınızı almamız gerekmiyor.'
+        body: 'Fiyatı görmek için form doldurtmuyoruz. Ücretsiz planın süresi yok ve kredi kartı istemiyoruz — deneyip karar vermeniz için kartınızı almamız gerekmiyor.'
       },
       plain: {
         title: 'Düz konuşalım',
-        body:
-          'Bu sitede “yapay zekâ destekli omnichannel çözüm” yazmıyor. Ürünün ne yaptığını gündelik kelimelerle anlatıyoruz; teknik karşılıkları merak edene ayrıca veriyoruz.'
+        body: 'Bu sitede “yapay zekâ destekli omnichannel çözüm” yazmıyor. Ürünün ne yaptığını gündelik kelimelerle anlatıyoruz; teknik karşılıkları merak edene ayrıca veriyoruz.'
       },
       honest: {
         title: 'Olmayan şeyi yazmayalım',
-        body:
-          'Bu sayfalarda müşteri sayısı, memnuniyet oranı ya da kullanmadığımız firmaların logoları yok. Önceki sürümlerde vardı, hepsi kaldırıldı — çünkü hiçbirinin arkasında veri yoktu.'
+        body: 'Bu sayfalarda müşteri sayısı, memnuniyet oranı ya da kullanmadığımız firmaların logoları yok. Önceki sürümlerde vardı, hepsi kaldırıldı — çünkü hiçbirinin arkasında veri yoktu.'
       },
       accessible: {
         title: 'Herkes kullanabilsin',
-        body:
-          'Klavyeyle gezilebilsin, ekran okuyucu okuyabilsin, koyu temada da okunsun. Hareketi rahatsız edici bulanlar için animasyonlar kendiliğinden kapanır.'
+        body: 'Klavyeyle gezilebilsin, ekran okuyucu okuyabilsin, koyu temada da okunsun. Hareketi rahatsız edici bulanlar için animasyonlar kendiliğinden kapanır.'
       }
     },
 
@@ -877,10 +948,34 @@ export default {
       count: '12 konuşma',
       online: 'Sitede',
       rows: [
-        { name: 'Elif Kaya', preview: 'Siparişim ne zaman kargoya verilir?', time: '2dk', tag: 'Kargo', tone: 'indigo' },
-        { name: 'Burak Şen', preview: 'Faturamı güncelleyebilir misiniz?', time: '14dk', tag: 'Fatura', tone: 'sky' },
-        { name: 'Zeynep A.', preview: 'Bu ürünün M bedeni var mı?', time: '1sa', tag: 'Ürün', tone: 'amber' },
-        { name: 'Deniz Yurt', preview: 'Teşekkürler, çözüldü.', time: '3sa', tag: 'Çözüldü', tone: 'emerald' }
+        {
+          name: 'Elif Kaya',
+          preview: 'Siparişim ne zaman kargoya verilir?',
+          time: '2dk',
+          tag: 'Kargo',
+          tone: 'indigo'
+        },
+        {
+          name: 'Burak Şen',
+          preview: 'Faturamı güncelleyebilir misiniz?',
+          time: '14dk',
+          tag: 'Fatura',
+          tone: 'sky'
+        },
+        {
+          name: 'Zeynep A.',
+          preview: 'Bu ürünün M bedeni var mı?',
+          time: '1sa',
+          tag: 'Ürün',
+          tone: 'amber'
+        },
+        {
+          name: 'Deniz Yurt',
+          preview: 'Teşekkürler, çözüldü.',
+          time: '3sa',
+          tag: 'Çözüldü',
+          tone: 'emerald'
+        }
       ],
       openName: 'Elif Kaya',
       openPage: '/kargo-takip sayfasında',
@@ -944,7 +1039,11 @@ export default {
       and: 've',
       thenLabel: 'O zaman',
       conditions: ['Mesajda “iade” geçiyorsa', 'Sayfa /siparislerim ise'],
-      actions: ['Satış departmanına yönlendir', '“İade” etiketi ekle', 'Hazır iade cevabını gönder'],
+      actions: [
+        'Satış departmanına yönlendir',
+        '“İade” etiketi ekle',
+        'Hazır iade cevabını gönder'
+      ],
       stat: 'Bu ay 128 kez çalıştı'
     },
 
@@ -969,10 +1068,34 @@ export default {
     team: {
       frame: 'Ekip',
       members: [
-        { name: 'Kerem Aslan', role: 'Destek · Yönetici', state: 'online', stateLabel: 'Çevrimiçi', load: '3 açık' },
-        { name: 'Selin Duru', role: 'Satış · Temsilci', state: 'online', stateLabel: 'Çevrimiçi', load: '2 açık' },
-        { name: 'Mert Yalın', role: 'Destek · Temsilci', state: 'busy', stateLabel: 'Meşgul', load: '5 açık' },
-        { name: 'Ayça Toprak', role: 'Muhasebe', state: 'away', stateLabel: 'Uzakta', load: '0 açık' }
+        {
+          name: 'Kerem Aslan',
+          role: 'Destek · Yönetici',
+          state: 'online',
+          stateLabel: 'Çevrimiçi',
+          load: '3 açık'
+        },
+        {
+          name: 'Selin Duru',
+          role: 'Satış · Temsilci',
+          state: 'online',
+          stateLabel: 'Çevrimiçi',
+          load: '2 açık'
+        },
+        {
+          name: 'Mert Yalın',
+          role: 'Destek · Temsilci',
+          state: 'busy',
+          stateLabel: 'Meşgul',
+          load: '5 açık'
+        },
+        {
+          name: 'Ayça Toprak',
+          role: 'Muhasebe',
+          state: 'away',
+          stateLabel: 'Uzakta',
+          load: '0 açık'
+        }
       ]
     },
 
@@ -1002,7 +1125,14 @@ export default {
     crm: {
       frame: 'Fırsat takibi',
       stages: [
-        { name: 'İlk görüşme', count: '4', cards: [{ title: 'Acme Ltd.', value: '₺24.000' }, { title: 'Nova Tekstil', value: '₺8.500' }] },
+        {
+          name: 'İlk görüşme',
+          count: '4',
+          cards: [
+            { title: 'Acme Ltd.', value: '₺24.000' },
+            { title: 'Nova Tekstil', value: '₺8.500' }
+          ]
+        },
         { name: 'Teklif', count: '3', cards: [{ title: 'Beta Yazılım', value: '₺46.000' }] },
         { name: 'Pazarlık', count: '2', cards: [{ title: 'Kaya İnşaat', value: '₺112.000' }] },
         { name: 'Kazanıldı', count: '6', cards: [{ title: 'Deniz Gıda', value: '₺31.000' }] }

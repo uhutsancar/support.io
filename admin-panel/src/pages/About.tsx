@@ -11,16 +11,11 @@
  * "sosyal kanıtı", neyi neden yaptığını açıkça yazabilmesidir.
  */
 
-import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import {
-  Mail, BookOpen, Heart, Eye, Wallet, Accessibility, Layers, ArrowRight
-} from 'lucide-react';
+import { Mail, BookOpen, Heart, Eye, Wallet, Accessibility, Layers } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
-import {
-  Button, Section, SectionHead, Card, AccentIcon, accent
-} from '../components/marketing/kit';
+import { Button, Section, SectionHead, Card, AccentIcon } from '../components/marketing/kit';
 
 const PRINCIPLES = [
   { key: 'own', icon: Wallet, tone: 'indigo' },
@@ -67,7 +62,9 @@ const About = () => {
                 key={key}
                 className={[
                   'leading-[1.75] text-gray-700 dark:text-gray-300',
-                  i === 0 ? 'text-[19px] sm:text-[21px] font-medium tracking-[-0.015em] text-gray-900 dark:text-white' : 'text-[16px]'
+                  i === 0
+                    ? 'text-[19px] sm:text-[21px] font-medium tracking-[-0.015em] text-gray-900 dark:text-white'
+                    : 'text-[16px]'
                 ].join(' ')}
               >
                 {t('aboutPage.story.' + key)}
@@ -86,7 +83,7 @@ const About = () => {
         />
 
         <div className="mt-10 grid sm:grid-cols-2 gap-4">
-          {PRINCIPLES.map((p, i) => (
+          {PRINCIPLES.map((p, _i) => (
             <div key={p.key}>
               <Card hover className="h-full p-6">
                 <AccentIcon icon={p.icon} tone={p.tone} size="lg" />
@@ -155,18 +152,26 @@ const About = () => {
               </Button>
             </div>
 
-            <div className="mt-12 rounded-2xl border border-indigo-200 dark:border-indigo-500/25
-              bg-indigo-50/70 dark:bg-indigo-500/[0.08] p-6 sm:p-8">
-              <h3 className="text-[22px] sm:text-[26px] font-semibold tracking-[-0.025em]
-                leading-snug text-gray-900 dark:text-white max-w-[22ch]">
+            <div
+              className="mt-12 rounded-2xl border border-indigo-200 dark:border-indigo-500/25
+              bg-indigo-50/70 dark:bg-indigo-500/[0.08] p-6 sm:p-8"
+            >
+              <h3
+                className="text-[22px] sm:text-[26px] font-semibold tracking-[-0.025em]
+                leading-snug text-gray-900 dark:text-white max-w-[22ch]"
+              >
                 {t('landing.home.ctaTitle')}
               </h3>
               <p className="mt-3 text-[15px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[50ch]">
                 {t('landing.home.ctaDesc')}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Button to={routes.register} arrow>{t('landing.home.ctaBtn1')}</Button>
-                <Button to={routes.pricing} variant="secondary">{t('landing.home.ctaBtn2')}</Button>
+                <Button to={routes.register} arrow>
+                  {t('landing.home.ctaBtn1')}
+                </Button>
+                <Button to={routes.pricing} variant="secondary">
+                  {t('landing.home.ctaBtn2')}
+                </Button>
               </div>
             </div>
           </div>

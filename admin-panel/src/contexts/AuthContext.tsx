@@ -1,5 +1,5 @@
 /** What every consumer of useAuth() gets. */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { hasSession, purgeLegacyStorage } from '../lib/session';
 import type { ReactNode } from 'react';
 import { authAPI } from '../services/api';
@@ -28,7 +28,6 @@ export const useAuth = (): AuthContextValue => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
   useEffect(() => {
     checkAuth();
   }, []);
@@ -47,8 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await authAPI.me();
       setUser(toCurrentUser(response.data.user));
-      setAuthChecked(true);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -57,25 +55,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     const response = await authAPI.login({ email, password });
     setUser(toCurrentUser(response.data.user));
-    setAuthChecked(true);
     return response.data;
   };
   const register = async (name: string, email: string, password: string) => {
     const response = await authAPI.register({ name, email, password });
     setUser(toCurrentUser(response.data.user));
-    setAuthChecked(true);
     return response.data;
   };
   const logout = async () => {
     try {
       await authAPI.logout();
-    } catch (error) {
+    } catch {
       // Sunucuya ulaşılamasa bile bu sekmedeki oturum durumu temizlenir;
       // çerez zaten sunucunun işi.
     }
     purgeLegacyStorage();
     setUser(null);
-    setAuthChecked(false);
   };
   /**
    * Oturumdaki kullanicinin alanlarini yerinde gunceller.
@@ -98,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     register,
     logout,
     patchUser,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

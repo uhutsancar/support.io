@@ -5,7 +5,7 @@
 // drops it into the message box for them to read, edit and send. The four
 // controls the product needs — accept, edit, regenerate, reject — are the whole
 // interaction model.
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Sparkles,
   Loader2,
@@ -18,28 +18,39 @@ import {
   Gauge
 } from 'lucide-react';
 import { aiAPI } from '../services/api';
+import { errorMessage } from '../hooks/useAsync';
+import type { Conversation } from '../types/api';
 
-const AIAssistant = ({ conversation, onAccept, disabled }: {
-  conversation: any;
+/**
+ * What the analyze task hands back, as this panel renders it.
+ *
+ * Declared at module scope. Inside the component body — where it was — a type
+ * is invisible to every other file, so nothing else could reference the shape
+ * the AI endpoint returns, and a reader looking for it had to know which
+ * function to open.
+ */
+export interface ConversationAnalysis {
+  sentiment?: string;
+  intent?: string;
+  category?: string;
+  suggestedPriority?: string | null;
+  suggestedTags?: string[];
+  reason?: string;
+}
+
+export interface AIAssistantProps {
+  conversation: Conversation | null;
   /** Hands the accepted text to the composer; sending stays the agent's action. */
   onAccept: (text: string) => void;
   disabled?: boolean;
-}) => {
-  const [available, setAvailable] = useState<boolean | null>(null); // null = not yet known
-  const [task, setTask] = useState<string | null>(null);            // which task is running
-  /** What the analyze task hands back, as the panel renders it. */
-  interface Analysis {
-    sentiment?: string;
-    intent?: string;
-    category?: string;
-    suggestedPriority?: string | null;
-    suggestedTags?: string[];
-    reason?: string;
-  }
+}
 
+const AIAssistant = ({ conversation, onAccept, disabled }: AIAssistantProps) => {
+  const [available, setAvailable] = useState<boolean | null>(null); // null = not yet known
+  const [task, setTask] = useState<string | null>(null); // which task is running
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [analysis, setAnalysis] = useState<ConversationAnalysis | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState('');
@@ -48,10 +59,17 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
   // rather than offered and then failing.
   useEffect(() => {
     let cancelled = false;
-    aiAPI.status()
-      .then(({ data }) => { if (!cancelled) setAvailable(Boolean(data.enabled)); })
-      .catch(() => { if (!cancelled) setAvailable(false); });
-    return () => { cancelled = true; };
+    aiAPI
+      .status()
+      .then(({ data }) => {
+        if (!cancelled) setAvailable(Boolean(data.enabled));
+      })
+      .catch(() => {
+        if (!cancelled) setAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Suggestions belong to the conversation they were generated from; switching
@@ -64,35 +82,51 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
     setError(null);
   }, [conversation?._id]);
 
-  const run = useCallback(async (name: string, fn: any) => {
-    setTask(name);
-    setError(null);
-    try {
-      return await fn();
-    } catch (err) {
-      const body = err.response?.data;
-      setError(body?.error || 'AI isteği başarısız oldu.');
-      return null;
-    } finally {
-      setTask(null);
-    }
-  }, []);
+  /**
+   * Runs one AI task against the open conversation.
+   *
+   * The conversation id is resolved here rather than in each task, so the three
+   * callers below cannot each forget that there may not be one. Typing the prop
+   * as `Conversation | null` is what surfaced that: while it was `any`, every
+   * `conversation._id` below was an unguarded read that would have thrown the
+   * moment the agent closed the thread mid-request.
+   */
+  const run = useCallback(
+    async (name: string, task: (conversationId: string) => Promise<void>) => {
+      const conversationId = conversation?._id;
+      if (!conversationId) return;
 
-  const handleSummarize = () => run('summary', async () => {
-    const { data } = await aiAPI.summarize(conversation._id);
-    setSummary(data.summary);
-  });
+      setTask(name);
+      setError(null);
+      try {
+        await task(conversationId);
+      } catch (err) {
+        setError(errorMessage(err, 'AI isteği başarısız oldu.'));
+      } finally {
+        setTask(null);
+      }
+    },
+    [conversation?._id]
+  );
 
-  const handleAnalyze = () => run('analyze', async () => {
-    const { data } = await aiAPI.analyze(conversation._id);
-    setAnalysis(data.analysis);
-  });
+  const handleSummarize = () =>
+    run('summary', async (id) => {
+      const { data } = await aiAPI.summarize(id);
+      setSummary(data.summary);
+    });
 
-  const handleSuggest = () => run('suggest', async () => {
-    const { data } = await aiAPI.suggestReply(conversation._id);
-    setDraft(data.reply);
-    setEditing(false);
-  });
+  const handleAnalyze = () =>
+    run('analyze', async (id) => {
+      const { data } = await aiAPI.analyze(id);
+      setAnalysis(data.analysis as ConversationAnalysis);
+    });
+
+  const handleSuggest = () =>
+    run('suggest', async (id) => {
+      const { data } = await aiAPI.suggestReply(id);
+      setDraft(data.reply);
+      setEditing(false);
+    });
 
   const handleAccept = () => {
     const text = editing ? editText : draft;
@@ -140,7 +174,11 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
           disabled={busy || disabled}
           className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {task === 'summary' ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
+          {task === 'summary' ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <FileText className="w-3 h-3" />
+          )}
           Özetle
         </button>
 
@@ -150,7 +188,11 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
           disabled={busy || disabled}
           className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {task === 'suggest' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+          {task === 'suggest' ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <Sparkles className="w-3 h-3" />
+          )}
           Yanıt öner
         </button>
 
@@ -160,7 +202,11 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
           disabled={busy || disabled}
           className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {task === 'analyze' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Gauge className="w-3 h-3" />}
+          {task === 'analyze' ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <Gauge className="w-3 h-3" />
+          )}
           Analiz
         </button>
       </div>
@@ -179,25 +225,40 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
         <div className="mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-2">
           <div className="flex items-start justify-between gap-2">
             <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Özet</span>
-            <button type="button" onClick={() => setSummary(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <button
+              type="button"
+              onClick={() => setSummary(null)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="mt-1 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{summary}</p>
+          <p className="mt-1 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+            {summary}
+          </p>
         </div>
       )}
 
       {analysis && (
         <div className="mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-2">
           <div className="flex items-start justify-between gap-2">
-            <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Analiz</span>
-            <button type="button" onClick={() => setAnalysis(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+              Analiz
+            </span>
+            <button
+              type="button"
+              onClick={() => setAnalysis(null)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <span className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${sentimentStyles[analysis.sentiment as keyof typeof sentimentStyles]}`}>
-              {sentimentLabels[analysis.sentiment as keyof typeof sentimentLabels] || analysis.sentiment}
+            <span
+              className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${sentimentStyles[analysis.sentiment as keyof typeof sentimentStyles]}`}
+            >
+              {sentimentLabels[analysis.sentiment as keyof typeof sentimentLabels] ||
+                analysis.sentiment}
             </span>
             {analysis.category && (
               <span className="px-1.5 py-0.5 rounded text-[11px] bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -207,17 +268,23 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
             {/* A suggestion only — the agent still changes priority themselves. */}
             {analysis.suggestedPriority && (
               <span className="px-1.5 py-0.5 rounded text-[11px] bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
-                Önerilen öncelik: {priorityLabels[analysis.suggestedPriority as keyof typeof priorityLabels]}
+                Önerilen öncelik:{' '}
+                {priorityLabels[analysis.suggestedPriority as keyof typeof priorityLabels]}
               </span>
             )}
             {analysis.suggestedTags?.map((tag: any) => (
-              <span key={tag} className="px-1.5 py-0.5 rounded text-[11px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
+              <span
+                key={tag}
+                className="px-1.5 py-0.5 rounded text-[11px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+              >
                 #{tag}
               </span>
             ))}
           </div>
           {analysis.reason && (
-            <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 italic">{analysis.reason}</p>
+            <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 italic">
+              {analysis.reason}
+            </p>
           )}
         </div>
       )}
@@ -236,7 +303,9 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
               className="mt-1.5 w-full text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
             />
           ) : (
-            <p className="mt-1.5 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{draft}</p>
+            <p className="mt-1.5 text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+              {draft}
+            </p>
           )}
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -266,7 +335,11 @@ const AIAssistant = ({ conversation, onAccept, disabled }: {
               disabled={busy}
               className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
             >
-              {task === 'suggest' ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              {task === 'suggest' ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
               Yeniden üret
             </button>
 

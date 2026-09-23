@@ -14,7 +14,7 @@ export default {
       customDesc: 'İhtiyacınıza göre',
       btnSales: 'Satış Ekibiyle Görüş',
       btnStart: 'Hemen Başla',
-      trustedBy: '10.000\'den fazla şirket işini büyütmek için Support.io\'ya güveniyor',
+      trustedBy: "10.000'den fazla şirket işini büyütmek için Support.io'ya güveniyor",
       faqTitle: 'Sıkça Sorulan Sorular',
       faqDesc: 'Hala sorularınız mı var? Ekibimizle iletişime geçin.',
       faq: {
@@ -58,18 +58,24 @@ export default {
     about: {
       heroTitle1: 'Müşteri İletişimini <br />',
       heroTitle2: 'Yeniden Tanımlıyoruz',
-      heroDesc: 'Support.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan modern ve kullanıcı dostu bir platform sunuyoruz.',
+      heroDesc:
+        'Support.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan modern ve kullanıcı dostu bir platform sunuyoruz.',
       whoAreWe: 'BİZ KİMİZ?',
-      story1: 'Support.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler ya çok karmaşık ya da çok pahalıydı.',
-      story2: 'Bu sorunu çözmek için yola çıktık. Amacımız, her büyüklükteki işletmenin profesyonel müşteri desteği sunabilmesini sağlayacak, kullanımı kolay ve uygun fiyatlı bir platform oluşturmaktı.',
-      story3: 'Bugün binlerce işletme Support.io ile müşterileriyle daha iyi iletişim kuruyor ve müşteri memnuniyetini artırıyor. Ve biz hızla büyümeye devam ediyoruz.',
+      story1:
+        'Support.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler ya çok karmaşık ya da çok pahalıydı.',
+      story2:
+        'Bu sorunu çözmek için yola çıktık. Amacımız, her büyüklükteki işletmenin profesyonel müşteri desteği sunabilmesini sağlayacak, kullanımı kolay ve uygun fiyatlı bir platform oluşturmaktı.',
+      story3:
+        'Bugün binlerce işletme Support.io ile müşterileriyle daha iyi iletişim kuruyor ve müşteri memnuniyetini artırıyor. Ve biz hızla büyümeye devam ediyoruz.',
       valuesTitle: 'Değerlerimiz',
       valuesDesc: 'Misyonumuzu ve bizi biz yapan temel prensiplerimiz.',
-      ctaTitle: 'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
-      ctaDesc: 'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. Sizi de aramıza görmek isteriz.',
+      ctaTitle:
+        'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
+      ctaDesc:
+        'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. Sizi de aramıza görmek isteriz.',
       ctaBtn: 'Ücretsiz Hesap Oluştur',
       backHome: 'Ana Sayfaya Dön',
-      footerCopyright: '© 2024 Support.io. Tüm hakları saklıdır.',
+      footerCopyright: '© 2024 Support.io. Tüm hakları saklıdır.'
     },
     features: {
       badge: 'YENİ NESİL DESTEK PLATFORMU',
@@ -79,9 +85,10 @@ export default {
       btnStart: 'Hemen Deneyin',
       btnDemo: 'Demoyu İzle',
       aiTitle: 'Yapay Zeka Destekli Otomasyon',
-      aiDesc: 'Müşterilerinizin sorularını %80 oranında saniyeler içinde yanıtlayan gelişmiş yapay zeka entegrasyonu.',
+      aiDesc:
+        'Müşterilerinizin sorularını %80 oranında saniyeler içinde yanıtlayan gelişmiş yapay zeka entegrasyonu.',
       aiAsk: 'Fiyatlandırma hakkında bilgi alabilir miyim?',
-      aiAns: 'Harika bir soru! Paketlerimiz aylık $29\'dan başlamaktadır...',
+      aiAns: "Harika bir soru! Paketlerimiz aylık $29'dan başlamaktadır...",
       analyticsTitle: 'Derin Analitik',
       analyticsDesc: 'Müşteri performansını ve ekipleri metriklerini gerçek zamanlı takip edin.',
       langTitle: 'Çoklu Dil',
@@ -98,15 +105,18 @@ export default {
       statsCountries: 'Ülke',
       statsUptime: 'Uptime',
       techTitle: 'Teknolojimiz',
-      techDesc: 'Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve güvenilirlik sunar.',
-      ctaTitle: 'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
-      ctaDesc: 'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. Siz de aramıza katılın.',
+      techDesc:
+        'Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve güvenilirlik sunar.',
+      ctaTitle:
+        'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
+      ctaDesc:
+        'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. Siz de aramıza katılın.',
       ctaBtn: 'Ücretsiz Hesap Oluştur',
       footerSecurity: 'Güvenlik',
       footerTerms: 'Kullanım Şartları',
       footerPrivacy: 'Gizlilik Politikası',
       footerContact: 'İletişim',
-      footerCopyright: '© 2024 Support.io A.Ş. Tüm hakları saklıdır.',
+      footerCopyright: '© 2024 Support.io A.Ş. Tüm hakları saklıdır.'
     },
     home: {
       badge: 'Tek script, her stack',
@@ -114,7 +124,8 @@ export default {
       heroTitle2: ' Hizmetlerini ',
       heroTitle3: 'Bir Üst Seviyeye',
       heroTitle4: ' Taşıyın',
-      heroDesc: 'Support.io, sitenize tek bir script etiketiyle eklenen canlı destek platformudur. Gerçek zamanlı sohbet, ekip yönetimi, otomasyon ve analitik tek panelde.',
+      heroDesc:
+        'Support.io, sitenize tek bir script etiketiyle eklenen canlı destek platformudur. Gerçek zamanlı sohbet, ekip yönetimi, otomasyon ve analitik tek panelde.',
       btnStart: 'Ücretsiz başlayın',
       btnDemo: 'Demoyu İzle',
       trustedBy: '5,000+ işletme tarafından güveniliyor',
@@ -127,7 +138,8 @@ export default {
       featuresTitle: 'Destek ekibinin ihtiyacı olan şeyler',
       featuresDesc: 'Gösterişli ama boş modüller değil; günlük işi yürüten araçlar.',
       integrateTitle: 'Saniyeler İçinde<br />Entegre Edin',
-      integrateDesc: 'Tek bir satır kod ile Support.io\'yu web sitenize ekleyin. WordPress, Shopify veya özel yazılımlar ile %100 uyumludur.',
+      integrateDesc:
+        "Tek bir satır kod ile Support.io'yu web sitenize ekleyin. WordPress, Shopify veya özel yazılımlar ile %100 uyumludur.",
       fastSetup: 'Hızlı Kurulum',
       fastSetupDesc: 'Ortalama kurulum şeması sadece 2 dakikadır. Hemen başlayın.',
       zeroLag: 'Sıfır Performans Kaybı',
@@ -176,13 +188,17 @@ export default {
         composer: 'Yanıt yazın...'
       },
       howTitle: 'Üç adımda yayında',
-      howDesc: 'Derleme adımı yok, npm paketi yok, sunucu tarafı kod yok. Site anahtarınızı alın, script etiketini sayfanıza koyun, konuşmaya başlayın.',
+      howDesc:
+        'Derleme adımı yok, npm paketi yok, sunucu tarafı kod yok. Site anahtarınızı alın, script etiketini sayfanıza koyun, konuşmaya başlayın.',
       step1Title: 'Sitenizi ekleyin',
-      step1Desc: 'Panelden sitenizi oluşturun. Her site kendi anahtarını ve kendi widget yapılandırmasını alır.',
+      step1Desc:
+        'Panelden sitenizi oluşturun. Her site kendi anahtarını ve kendi widget yapılandırmasını alır.',
       step2Title: 'Script etiketini yapıştırın',
-      step2Desc: 'Tek satır. Düz HTML, React, Next.js, WordPress — hepsinde aynı kod, aynı davranış.',
+      step2Desc:
+        'Tek satır. Düz HTML, React, Next.js, WordPress — hepsinde aynı kod, aynı davranış.',
       step3Title: 'Kurulum kendini doğrulasın',
-      step3Desc: 'Widget ilk çalıştığında kendini bildirir; paneldeki kurulum rozeti kendiliğinden yeşile döner.',
+      step3Desc:
+        'Widget ilk çalıştığında kendini bildirir; paneldeki kurulum rozeti kendiliğinden yeşile döner.',
       cap: {
         liveChat: {
           title: 'Gerçek zamanlı sohbet',
@@ -211,7 +227,8 @@ export default {
       },
       allFeatures: 'Tüm özellikler',
       securityTitle: 'Sitenize koyduğunuz kodun ne yaptığı belli',
-      securityDesc: 'Widget üçüncü parti hiçbir alan adına bağlanmaz ve sayfanızın görünümüne dokunmaz. Politikanıza eklemeniz gereken tek bir adres vardır: kendi Support.io sunucunuz.',
+      securityDesc:
+        'Widget üçüncü parti hiçbir alan adına bağlanmaz ve sayfanızın görünümüne dokunmaz. Politikanıza eklemeniz gereken tek bir adres vardır: kendi Support.io sunucunuz.',
       sec: {
         isolation: {
           title: 'Shadow DOM yalıtımı',
@@ -230,7 +247,7 @@ export default {
           body: 'tarayıcıda yalnızca ziyaretçi kimliği tutulur; kurulum doğrulamasında URL’nin sorgu dizesi saklanmaz.'
         }
       }
-    },
+    }
   },
   header: {
     features: 'Özellikler',
@@ -251,7 +268,7 @@ export default {
     openMenu: 'Menüyü aç',
     closeMenu: 'Menüyü kapat',
     mobileMenu: 'Mobil menü',
-    switchToEnglish: 'Switch to English',
+    switchToEnglish: 'Switch to English'
   },
   sidebar: {
     groups: {
@@ -279,7 +296,7 @@ export default {
     teamChat: 'Ekip Sohbet',
     faqs: 'SSS',
     settings: 'Ayarlar',
-    logout: 'Çıkış Yap',
+    logout: 'Çıkış Yap'
   },
   audit: {
     title: 'İşlem Kayıtları',
@@ -364,7 +381,7 @@ export default {
     unknownUser: 'Bilinmeyen',
     deleteTitle: 'Mesajı sil',
     deleteMessage: 'Bu mesajı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
-    deleteConfirm: 'Evet, sil',
+    deleteConfirm: 'Evet, sil'
   },
   analytics: {
     title: 'Analizler',
@@ -387,49 +404,52 @@ export default {
     hero: {
       title: 'Müşteri Hizmetlerinizi',
       titleHighlight: 'Bir Üst Seviyeye Taşıyın',
-      description: 'Support.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.',
+      description:
+        'Support.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.',
       cta: 'Ücretsiz Başlayın',
-      demo: 'Özellikleri Keşfedin',
+      demo: 'Özellikleri Keşfedin'
     },
     features: {
       title: 'Güçlü Özellikler',
       subtitle: 'Müşteri desteğinizi kolaylaştırmak için ihtiyacınız olan her şey',
       realtime: {
         title: 'Canlı Sohbet',
-        description: 'Müşterilerinizle anlık olarak iletişime geçin. Hızlı ve etkili destek sağlayın.',
+        description:
+          'Müşterilerinizle anlık olarak iletişime geçin. Hızlı ve etkili destek sağlayın.'
       },
       ai: {
         title: 'Hızlı Yanıt',
-        description: 'Otomatik yanıtlar ve hazır şablonlarla müşteri sorularını anında cevaplayın.',
+        description: 'Otomatik yanıtlar ve hazır şablonlarla müşteri sorularını anında cevaplayın.'
       },
       multisite: {
         title: 'Çoklu Operatör',
-        description: 'Ekip arkadaşlarınızla birlikte çalışın. Konuşmaları paylaşın ve verimli olun.',
+        description: 'Ekip arkadaşlarınızla birlikte çalışın. Konuşmaları paylaşın ve verimli olun.'
       },
       analytics: {
         title: 'Detaylı Raporlar',
-        description: 'Müşteri etkileşimlerinizi analiz edin. Performansınızı sürekli iyileştirin.',
+        description: 'Müşteri etkileşimlerinizi analiz edin. Performansınızı sürekli iyileştirin.'
       },
       secure: {
         title: '7/24 Erişilebilir',
-        description: 'Müşterileriniz her zaman size ulaşabilir. Kaçırılan fırsat yok.',
+        description: 'Müşterileriniz her zaman size ulaşabilir. Kaçırılan fırsat yok.'
       },
       customizable: {
         title: 'Güvenli',
-        description: 'Verileriniz şifrelenir ve güvenle saklanır. GDPR uyumlu altyapı.',
-      },
+        description: 'Verileriniz şifrelenir ve güvenle saklanır. GDPR uyumlu altyapı.'
+      }
     },
     why: {
       title: 'Neden Support.io?',
-      description: 'Web sitenize entegre edebileceğiniz en modern canlı destek sistemi. Müşterilerinizle gerçek zamanlı iletişim kurmanın en kolay yolu.',
+      description:
+        'Web sitenize entegre edebileceğiniz en modern canlı destek sistemi. Müşterilerinizle gerçek zamanlı iletişim kurmanın en kolay yolu.',
       benefits: [
         'Kolay kurulum - 5 dakikada başlayın',
         'Mobil uyumlu arayüz',
         'Sınırsız konuşma',
         'Özelleştirilebilir widget',
         'E-posta bildirimleri',
-        'Sohbet geçmişi',
-      ],
+        'Sohbet geçmişi'
+      ]
     },
     getStarted: {
       title: 'Hemen Başlayın',
@@ -437,56 +457,63 @@ export default {
       step1: 'Ücretsiz hesap oluşturun',
       step2: 'Widget kodunu sitenize ekleyin',
       step3: 'Müşterilerinizle konuşmaya başlayın',
-      cta: 'Şimdi Deneyin',
+      cta: 'Şimdi Deneyin'
     },
     cta: {
       title: 'Müşterilerinizle Daha İyi İletişim Kurmaya Hazır mısınız?',
       description: 'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor.',
-      button: 'Ücretsiz Hesap Oluştur',
+      button: 'Ücretsiz Hesap Oluştur'
     },
     footer: {
       description: 'Modern müşteri destek sistemi',
       product: 'Ürün',
       company: 'Şirket',
       support: 'Destek',
-      copyright: '© 2026 Support.io. Tüm hakları saklıdır.',
-    },
+      copyright: '© 2026 Support.io. Tüm hakları saklıdır.'
+    }
   },
   features: {
     title: 'Özellikler',
     subtitle: 'İşinizi büyütmek için ihtiyacınız olan her şey',
     chat: {
       title: 'Canlı Sohbet',
-      description: 'Müşterilerinizle gerçek zamanlı iletişim kurun. WebSocket teknolojisi ile anlık mesajlaşma deneyimi sunun.',
+      description:
+        'Müşterilerinizle gerçek zamanlı iletişim kurun. WebSocket teknolojisi ile anlık mesajlaşma deneyimi sunun.'
     },
     ai: {
       title: 'Yapay Zeka Asistan',
-      description: 'Akıllı yapay zeka asistanı, sık sorulan sorulara otomatik yanıt verir ve müşteri memnuniyetini artırır.',
+      description:
+        'Akıllı yapay zeka asistanı, sık sorulan sorulara otomatik yanıt verir ve müşteri memnuniyetini artırır.'
     },
     faq: {
       title: 'Akıllı FAQ Sistemi',
-      description: 'Sık sorulan soruları düzenleyin ve müşterilerinizin hızlıca cevap bulmasını sağlayın.',
+      description:
+        'Sık sorulan soruları düzenleyin ve müşterilerinizin hızlıca cevap bulmasını sağlayın.'
     },
     multisite: {
       title: 'Çoklu Site Desteği',
-      description: 'Birden fazla web sitenizi tek bir panelden yönetin. Her site için ayrı widget kodu ve ayarlar.',
+      description:
+        'Birden fazla web sitenizi tek bir panelden yönetin. Her site için ayrı widget kodu ve ayarlar.'
     },
     analytics: {
       title: 'Analitik ve Raporlama',
-      description: 'Detaylı analitiklerle müşteri davranışlarını izleyin ve performansınızı iyileştirin.',
+      description:
+        'Detaylı analitiklerle müşteri davranışlarını izleyin ve performansınızı iyileştirin.'
     },
     security: {
       title: 'Güvenlik',
-      description: 'End-to-end şifreleme ile müşteri verileriniz güvende. GDPR ve veri koruma standartlarına uygun.',
+      description:
+        'End-to-end şifreleme ile müşteri verileriniz güvende. GDPR ve veri koruma standartlarına uygun.'
     },
     customization: {
       title: 'Özelleştirme',
-      description: 'Widget tasarımını markanıza uygun şekilde özelleştirin. Renkler, yazı tipleri ve konumlandırma seçenekleri.',
+      description:
+        'Widget tasarımını markanıza uygun şekilde özelleştirin. Renkler, yazı tipleri ve konumlandırma seçenekleri.'
     },
     mobile: {
       title: 'Mobil Uyumlu',
-      description: 'Responsive tasarım ile tüm cihazlarda mükemmel çalışan destek sistemi.',
-    },
+      description: 'Responsive tasarım ile tüm cihazlarda mükemmel çalışan destek sistemi.'
+    }
   },
   pricing: {
     title: 'Fiyatlandırma',
@@ -504,9 +531,9 @@ export default {
         '100 konuşma/ay',
         'Temel analitik',
         'Email destek',
-        '7/24 sohbet widget',
+        '7/24 sohbet widget'
       ],
-      cta: 'Başla',
+      cta: 'Başla'
     },
     professional: {
       name: 'Profesyonel',
@@ -521,9 +548,9 @@ export default {
         'Öncelikli destek',
         'Yapay zeka asistan',
         'Özelleştirilebilir widget',
-        'API erişimi',
+        'API erişimi'
       ],
-      cta: 'Başla',
+      cta: 'Başla'
     },
     enterprise: {
       name: 'Kurumsal',
@@ -538,41 +565,43 @@ export default {
         'Özel AI eğitimi',
         'Özel entegrasyonlar',
         'SLA garantisi',
-        'Özel sunucu seçeneği',
+        'Özel sunucu seçeneği'
       ],
-      cta: 'İletişime Geç',
-    },
+      cta: 'İletişime Geç'
+    }
   },
   about: {
     title: 'Hakkımızda',
     subtitle: 'Müşteri deneyimini yeniden tasarlıyoruz',
     mission: {
       title: 'Misyonumuz',
-      description: 'Her büyüklükteki işletmenin dünya standartlarında müşteri desteği sunabilmesini sağlamak. Yapay zeka ve modern teknolojileri kullanarak müşteri hizmetlerini daha erişilebilir ve etkili hale getiriyoruz.',
+      description:
+        'Her büyüklükteki işletmenin dünya standartlarında müşteri desteği sunabilmesini sağlamak. Yapay zeka ve modern teknolojileri kullanarak müşteri hizmetlerini daha erişilebilir ve etkili hale getiriyoruz.'
     },
     vision: {
       title: 'Vizyonumuz',
-      description: 'Müşteri desteğinin geleceğini şekillendirmek. Her müşteri etkileşiminin değerli, hızlı ve kişiselleştirilmiş olduğu bir dünya hayal ediyoruz.',
+      description:
+        'Müşteri desteğinin geleceğini şekillendirmek. Her müşteri etkileşiminin değerli, hızlı ve kişiselleştirilmiş olduğu bir dünya hayal ediyoruz.'
     },
     values: {
       title: 'Değerlerimiz',
       innovation: {
         title: 'İnovasyon',
-        description: 'Sürekli gelişen teknoloji ile en iyi çözümleri sunuyoruz',
+        description: 'Sürekli gelişen teknoloji ile en iyi çözümleri sunuyoruz'
       },
       customer: {
         title: 'Müşteri Odaklılık',
-        description: 'Müşterilerimizin başarısı bizim başarımızdır',
+        description: 'Müşterilerimizin başarısı bizim başarımızdır'
       },
       security: {
         title: 'Güvenlik',
-        description: 'Veri güvenliği ve gizlilik en önceliğimiz',
-      },
+        description: 'Veri güvenliği ve gizlilik en önceliğimiz'
+      }
     },
     team: {
       title: 'Ekibimiz',
-      description: 'Deneyimli ve tutkulu profesyonellerden oluşan ekibimiz, sizin için çalışıyor.',
-    },
+      description: 'Deneyimli ve tutkulu profesyonellerden oluşan ekibimiz, sizin için çalışıyor.'
+    }
   },
   login: {
     title: 'Giriş Yap',
@@ -588,12 +617,13 @@ export default {
     errors: {
       emailRequired: 'E-posta adresi gerekli',
       passwordRequired: 'Şifre gerekli',
-      invalidCredentials: 'Geçersiz e-posta veya şifre',
+      invalidCredentials: 'Geçersiz e-posta veya şifre'
     },
     success: 'Başarıyla giriş yaptınız!',
     error: 'Giriş başarısız',
     metaTitle: 'Giriş Yap - Support.io Admin Paneli',
-    metaDescription: 'Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, raporları görüntüleyin ve destek ekibinizi yönetin.',
+    metaDescription:
+      'Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, raporları görüntüleyin ve destek ekibinizi yönetin.'
   },
   register: {
     title: 'Kayıt Ol',
@@ -615,15 +645,17 @@ export default {
       emailRequired: 'E-posta adresi gerekli',
       passwordRequired: 'Şifre gerekli',
       passwordMismatch: 'Şifreler eşleşmiyor',
-      termsRequired: 'Kullanım koşullarını kabul etmelisiniz',
+      termsRequired: 'Kullanım koşullarını kabul etmelisiniz'
     },
     success: 'Başarıyla kayıt oldunuz!',
     error: 'Kayıt başarısız',
     metaTitle: 'Hesap Oluştur - Support.io | Ücretsiz Başlayın',
-    metaDescription: 'Support.io\'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.',
-    metaKeywords: 'support.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla',
+    metaDescription:
+      "Support.io'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.",
+    metaKeywords:
+      'support.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla',
     metaOgTitle: 'Hesap Oluştur - Support.io | Ücretsiz Başlayın',
-    metaOgDescription: 'Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.',
+    metaOgDescription: 'Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.'
   },
   dashboard: {
     title: 'Gösterge Paneli',
@@ -637,15 +669,16 @@ export default {
     responseRate: 'Yanıt Oranı',
     quickActions: 'Hızlı İşlemler',
     newSite: 'Yeni Site Ekle',
-    newSiteDescription: 'Yeni bir web sitesine sohbet widget\'i ekleyin',
+    newSiteDescription: "Yeni bir web sitesine sohbet widget'i ekleyin",
     viewConversations: 'Konuşmaları Görüntüle',
     viewConversationsDescription: 'Müşterilerinizle sohbet edin',
     createFaq: 'SSS Oluştur',
     createFaqDescription: 'Otomatik yanıtlar ekleyin',
     gettingStarted: 'Başlangıç',
     step1: 'İlk web sitenizi ekleyin',
-    step1Description: 'Siteler bölümüne giderek web sitenizi ekleyin ve benzersiz bir site anahtarı alın',
-    step2: 'Widget\'i yükleyin',
+    step1Description:
+      'Siteler bölümüne giderek web sitenizi ekleyin ve benzersiz bir site anahtarı alın',
+    step2: "Widget'i yükleyin",
     step2Description: 'Widget kodunu kopyalayıp web sitenizin HTML koduna yapıştırın',
     step3: 'Sohbete başlayın!',
     step3Description: 'Widget hazır! Artık müşterilerinizle gerçek zamanlı sohbet edebilirsiniz',
@@ -687,11 +720,12 @@ export default {
     none: 'Yok',
     welcomeTitle: 'Hoş geldiniz - Support.io Admin',
     advancedReportsLocked: 'Gelişmiş Raporlar Kilitli',
-    advancedReportsDesc: 'Puanlama, ortalama yanıt süreleri ve ziyaretçi trafiğini görebilmek için organizasyonunuzu yükseltin.',
+    advancedReportsDesc:
+      'Puanlama, ortalama yanıt süreleri ve ziyaretçi trafiğini görebilmek için organizasyonunuzu yükseltin.',
     upgradeNow: 'Şimdi Yükselt'
   },
   assigned: {
-    title: 'Atanan Talepler',
+    title: 'Atanan Talepler'
   },
   conversations: {
     title: 'Konuşmalar',
@@ -720,7 +754,8 @@ export default {
     statusChangeSuccess: 'Durum başarıyla değiştirildi!',
     statusChangeError: 'Durum değiştirilemedi!',
     deleteTitle: 'Konuşmayı Sil',
-    deleteMessage: 'Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+    deleteMessage:
+      'Bu konuşmayı ve tüm mesajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
     deleteConfirm: 'Evet, Sil',
     claimError: 'Konuşma alınamadı!',
     noEmail: 'E-posta yok',
@@ -755,7 +790,8 @@ export default {
     selectDepartment: 'Departman Seçiniz',
     unassigned: 'Atanmamış',
     claimTitle: 'Talebi Üzerinize Alın',
-    claimDesc: 'Bu müşteriye yanıt verebilmek ve konuşma geçmişine erişebilmek için talebi üstlenmeniz gerekmektedir.',
+    claimDesc:
+      'Bu müşteriye yanıt verebilmek ve konuşma geçmişine erişebilmek için talebi üstlenmeniz gerekmektedir.',
     claimSummaryLabel: 'Müşteri Talebi Özeti:',
     claimButton: 'Talebi Üzerime Al',
     customerContext: 'Müşteri bilgileri',
@@ -769,7 +805,7 @@ export default {
   },
   sites: {
     title: 'Siteler',
-    subtitle: 'Web sitelerinizi ve sohbet widget\'larınızı yönetin',
+    subtitle: "Web sitelerinizi ve sohbet widget'larınızı yönetin",
     addSite: 'Site Ekle',
     noSites: 'Henüz site yok',
     noSitesDescription: 'Başlamak için ilk web sitenizi ekleyin',
@@ -793,7 +829,7 @@ export default {
       domainLabel: 'Alan Adı',
       domainPlaceholder: 'ornek.com',
       create: 'Site Ekle',
-      cancel: 'İptal',
+      cancel: 'İptal'
     },
     createSuccess: 'Site başarıyla oluşturuldu!',
     createError: 'Site oluşturulamadı',
@@ -801,8 +837,9 @@ export default {
     deleteError: 'Site silinemedi',
     copiedSuccess: 'Kopyalandı!',
     deleteTitle: 'Siteyi Sil',
-    deleteMessage: '"{{name}}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site\'ye ait tüm konuşmalar silinecektir.',
-    deleteConfirm: 'Evet, Sil',
+    deleteMessage:
+      '"{{name}}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site\'ye ait tüm konuşmalar silinecektir.',
+    deleteConfirm: 'Evet, Sil'
   },
   settings: {
     title: 'Ayarlar',
@@ -821,11 +858,13 @@ export default {
     dark: 'Koyu',
     preview: 'Önizleme',
     previewTitle: 'Örnek Başlık',
-    previewDescription: 'Bu bir örnek metin içeriğidir. Seçtiğiniz temaya göre renkler değişecektir.',
+    previewDescription:
+      'Bu bir örnek metin içeriğidir. Seçtiğiniz temaya göre renkler değişecektir.',
     previewButton: 'Örnek Buton',
     savedTitle: 'Tema Tercihiniz Kaydedildi',
-    savedDescription: 'Seçtiğiniz tema otomatik olarak kaydedilir ve bir sonraki ziyaretinizde hatırlanır.',
-    comingSoon: 'Yakında eklenecek...',
+    savedDescription:
+      'Seçtiğiniz tema otomatik olarak kaydedilir ve bir sonraki ziyaretinizde hatırlanır.',
+    comingSoon: 'Yakında eklenecek...'
   },
   faqs: {
     title: 'SSS',
@@ -840,8 +879,8 @@ export default {
     edit: 'Düzenle',
     delete: 'Sil',
     noFaqs: 'Henüz SSS yok',
-    noFaqsDescription: 'Otomatik yanıtlar sağlamak için ilk SSS\'inizi oluşturun',
-    createFirstFaq: 'İlk SSS\'inizi Oluşturun',
+    noFaqsDescription: "Otomatik yanıtlar sağlamak için ilk SSS'inizi oluşturun",
+    createFirstFaq: "İlk SSS'inizi Oluşturun",
     editFaq: 'SSS Düzenle',
     newFaq: 'Yeni SSS Ekle',
     questionLabel: 'Soru *',
@@ -859,20 +898,22 @@ export default {
     allPages: 'Tüm sayfalar',
     active: 'Aktif',
     inactive: 'Pasif',
-    confirmDelete: 'Bu SSS\'yi silmek istediğinizden emin misiniz?',
+    confirmDelete: "Bu SSS'yi silmek istediğinizden emin misiniz?",
     deleteSuccess: 'FAQ başarıyla silindi!',
     deleteError: 'FAQ silinemedi',
     createSuccess: 'FAQ başarıyla oluşturuldu!',
-    updateSuccess: 'FAQ başarıyla güncellendi!',
+    updateSuccess: 'FAQ başarıyla güncellendi!'
   },
   featuresPage: {
     meta: {
       title: 'Özellikler',
-      description: 'Canlı sohbet, universal widget, departman yönlendirme, otomasyon, proaktif mesaj, SSS, analitik ve ekip yönetimi.'
+      description:
+        'Canlı sohbet, universal widget, departman yönlendirme, otomasyon, proaktif mesaj, SSS, analitik ve ekip yönetimi.'
     },
     eyebrow: 'Ürün',
     title: 'Bir destek ekibinin günlük işini yürüten araçlar',
-    description: 'Aşağıdaki her madde bu üründe bugün çalışıyor. Yol haritası değil, yapabildikleri.',
+    description:
+      'Aşağıdaki her madde bu üründe bugün çalışıyor. Yol haritası değil, yapabildikleri.',
     devTitle: 'Geliştirici tarafı',
     devDesc: 'Entegrasyon bir gün süren bir proje değil; tek satırlık bir etiket.',
     dev: {
@@ -904,73 +945,124 @@ export default {
     items: {
       'live-chat': {
         title: 'Canlı sohbet',
-        summary: 'WebSocket üzerinden gerçek zamanlı mesajlaşma, yazıyor göstergesi ve dosya paylaşımı.',
+        summary:
+          'WebSocket üzerinden gerçek zamanlı mesajlaşma, yazıyor göstergesi ve dosya paylaşımı.',
         setup: 'Hazır gelir',
         body: 'Ziyaretçi ile temsilci arasındaki mesajlaşma Socket.IO üzerinden çift yönlü akar. Bağlantı koptuğunda widget artan aralıklarla kendiliğinden yeniden bağlanır ve durumu başlıkta gösterir; mesaj kaybolmaz. Gönderilen her mesaj iyimser olarak ekranda belirir, sunucu onayı gelince kesinleşir, gelmezse "gönderilemedi" olarak işaretlenir ve tek tıkla tekrar denenir.',
-        points: ['Mesajlar kimlik bazlı tekilleştirilir — API yanıtı ve soket olayı aynı mesajı iki kez göstermez', 'Dosya ve görsel paylaşımı, 10 MB sınırı ve MIME denetimiyle', 'Yazıyor göstergesi her iki yönde', 'Konuşma geçmişi ziyaretçi geri döndüğünde kaldığı yerden açılır']
+        points: [
+          'Mesajlar kimlik bazlı tekilleştirilir — API yanıtı ve soket olayı aynı mesajı iki kez göstermez',
+          'Dosya ve görsel paylaşımı, 10 MB sınırı ve MIME denetimiyle',
+          'Yazıyor göstergesi her iki yönde',
+          'Konuşma geçmişi ziyaretçi geri döndüğünde kaldığı yerden açılır'
+        ]
       },
       'universal-widget': {
         title: 'Universal widget',
         summary: 'Tek script etiketi; her framework’te aynı kod, aynı davranış.',
         setup: 'Tek satır',
         body: 'Widget yapılandırmasını kendi script etiketinin data-* niteliklerinden ve kendi src adresinden okur. Bu yüzden ayrı bir inline script bloğu ya da global değişken gerekmez ve katı bir Content-Security-Policy altında sorunsuz çalışır. Tüm DOM ve CSS bir Shadow Root içindedir; host sitenin global kuralları widget’ı bozamaz.',
-        points: ['Tekil çalışma zamanı: script iki kez eklense bile ikinci widget oluşmaz', 'SPA yönlendirmesi izlenir; soket ve açık konuşma korunur', 'Sürüm sabitleme: /widget/v3/widget.js değişmez olarak önbelleklenir', 'Socket.IO istemcisi dahil hiçbir üçüncü parti alan adına bağlanılmaz']
+        points: [
+          'Tekil çalışma zamanı: script iki kez eklense bile ikinci widget oluşmaz',
+          'SPA yönlendirmesi izlenir; soket ve açık konuşma korunur',
+          'Sürüm sabitleme: /widget/v3/widget.js değişmez olarak önbelleklenir',
+          'Socket.IO istemcisi dahil hiçbir üçüncü parti alan adına bağlanılmaz'
+        ]
       },
       routing: {
         title: 'Departman yönlendirme',
         summary: 'Konuşmaları departmanlara ve müsait temsilcilere kendiliğinden dağıtır.',
         setup: 'Panelden',
         body: 'Departman tanımlar, üyelerini eklersiniz. Gelen konuşma seçtiğiniz stratejiye göre atanır: sırayla, en az aktif konuşması olana ya da elle. Mesai saatleri tanımlıysa saat dışında gelen konuşmalar bilgilendirme mesajı alır. Temsilci uzakta ya da çevrimdışı olduğunda üzerindeki açık konuşmalar yeniden dağıtılır.',
-        points: ['Round-robin ve en-az-aktif atama stratejileri', 'Temsilci başına kapasite sınırı', 'Departman bazlı mesai saatleri ve mesai dışı mesajı', 'Durum değişince açık konuşmaların otomatik yeniden atanması']
+        points: [
+          'Round-robin ve en-az-aktif atama stratejileri',
+          'Temsilci başına kapasite sınırı',
+          'Departman bazlı mesai saatleri ve mesai dışı mesajı',
+          'Durum değişince açık konuşmaların otomatik yeniden atanması'
+        ]
       },
       automation: {
         title: 'Otomasyon kuralları',
         summary: 'Koşul eşleşince etiketle, ata, durum değiştir veya otomatik yanıt gönder.',
         setup: 'Panelden',
         body: 'Kural motoru mesaj içeriği, konuşma durumu, kanal ve sayfa gibi alanlara bakan koşullar kurar; AND/OR ile birleştirir. Eşleşme olduğunda etiket ekleme, departmana yönlendirme, öncelik değiştirme ve hazır yanıt gönderme eylemlerini çalıştırır. Her çalıştırma günlüğe yazılır: hangi kural, hangi konuşma, ne kadar sürede, başarılı mı.',
-        points: ['Öncelik sırasına göre değerlendirilen kurallar', 'Çalışma günlüğü ve kural başına başarı sayacı', 'Denetim kaydına düşen tetiklemeler', 'Kurallar organizasyon sınırında izole']
+        points: [
+          'Öncelik sırasına göre değerlendirilen kurallar',
+          'Çalışma günlüğü ve kural başına başarı sayacı',
+          'Denetim kaydına düşen tetiklemeler',
+          'Kurallar organizasyon sınırında izole'
+        ]
       },
       proactive: {
         title: 'Proaktif mesajlar',
         summary: 'Ziyaretçi davranışına göre kendiliğinden açılan mesajlar.',
         setup: 'Panelden',
         body: 'Widget sayfada geçirilen süre, kaydırma derinliği, hareketsizlik, çıkış niyeti ve özel olayları sunucuya bildirir. Tanımladığınız kural eşleştiğinde ziyaretçiye bir mesaj gösterilir. Sıklık kontrolü aynı kuralın aynı ziyaretçiyi rahatsız etmesini engeller.',
-        points: ['Sayfada kalma süresi, kaydırma, hareketsizlik ve çıkış niyeti tetikleyicileri', 'URL ve hedef kitle bazlı koşullar', 'Ziyaretçi başına sıklık sınırı', 'Tetikleme geçmişi kayıt altında']
+        points: [
+          'Sayfada kalma süresi, kaydırma, hareketsizlik ve çıkış niyeti tetikleyicileri',
+          'URL ve hedef kitle bazlı koşullar',
+          'Ziyaretçi başına sıklık sınırı',
+          'Tetikleme geçmişi kayıt altında'
+        ]
       },
       'knowledge-base': {
         title: 'SSS ve yardım içeriği',
         summary: 'Sık sorulan soruları widget içinde aranabilir hâle getirir.',
         setup: 'Panelden',
         body: 'Panelden eklediğiniz sorular widget’ın Yardım sekmesinde görünür ve arama kutusundan filtrelenir. Ana ekranda ilk üç başlık öne çıkar. Ziyaretçi cevabı kendisi bulduğunda konuşma hiç açılmaz; ekibinizin yükü azalır.',
-        points: ['Widget içinde anlık arama', 'Kategori ve sıralama desteği', 'Görüntülenme ve faydalı bulunma sayaçları', 'Sayfaya özel içerik gösterimi']
+        points: [
+          'Widget içinde anlık arama',
+          'Kategori ve sıralama desteği',
+          'Görüntülenme ve faydalı bulunma sayaçları',
+          'Sayfaya özel içerik gösterimi'
+        ]
       },
       analytics: {
         title: 'Analitik',
         summary: 'Yanıt süresi, çözüm oranı, SLA uyumu ve temsilci performansı.',
         setup: 'Hazır gelir',
         body: 'Rakamlar veritabanındaki gerçek satırlardan sunucu tarafında hesaplanır. Panel bunları tarayıcıda toplamaz — eski yaklaşımda sayfa başına 50 satırlık bir listeden hesaplanıyordu ve bu sınırın üzerindeki her ekip eksik grafik görüyordu.',
-        points: ['Seçilen zaman aralığı için sunucu tarafı toplama', 'İlk yanıt süresi ve çözüm süresi dağılımları', 'SLA karşılanan / ihlal edilen kırılımı', 'Temsilci bazlı kırılım ve kişisel performans ekranı']
+        points: [
+          'Seçilen zaman aralığı için sunucu tarafı toplama',
+          'İlk yanıt süresi ve çözüm süresi dağılımları',
+          'SLA karşılanan / ihlal edilen kırılımı',
+          'Temsilci bazlı kırılım ve kişisel performans ekranı'
+        ]
       },
       team: {
         title: 'Ekip yönetimi',
         summary: 'Rol bazlı yetkiler, durum yönetimi ve ekip içi sohbet.',
         setup: 'Panelden',
         body: 'Sahip, yönetici, müdür, temsilci ve izleyici rolleri her uçta sunucu tarafında doğrulanır. Her kullanıcı çevrimiçi, uzakta, meşgul veya çevrimdışı olabilir; bu durum widget’ın ziyaretçiye gösterdiği uygunluk bilgisini de belirler. Ekip içi sohbet ile temsilciler konuşmadan çıkmadan birbirine danışabilir.',
-        points: ['Beş rol, uç bazında izin denetimi', 'Dört durumlu müsaitlik ve otomatik yeniden atama', 'Bire bir ve grup ekip sohbeti', 'Tüm listeler organizasyon sınırında izole']
+        points: [
+          'Beş rol, uç bazında izin denetimi',
+          'Dört durumlu müsaitlik ve otomatik yeniden atama',
+          'Bire bir ve grup ekip sohbeti',
+          'Tüm listeler organizasyon sınırında izole'
+        ]
       },
       'ai-assist': {
         title: 'Yapay zekâ yardımcısı',
         summary: 'Konuşma özeti, yanıt önerisi, ton düzenleme ve çeviri.',
         setup: 'API anahtarı gerekir',
         body: 'Sunucuda bir sağlayıcı anahtarı tanımlıysa temsilci panelinde yardımcı görünür: konuşmayı özetler, yanıt taslağı önerir, yazdığınız metnin tonunu düzenler ve çeviri yapar. Anahtar tanımlı değilse özellik kapalı görünür — sahte bir cevap üretilmez. Anahtar yalnızca sunucuda durur, tarayıcıya hiç gönderilmez.',
-        points: ['Konuşma özeti ve duygu analizi', 'SSS içeriğine dayalı yanıt önerisi', 'Ton düzenleme ve çeviri', 'Anahtar yoksa özellik sessizce kapalı, uydurma çıktı yok']
+        points: [
+          'Konuşma özeti ve duygu analizi',
+          'SSS içeriğine dayalı yanıt önerisi',
+          'Ton düzenleme ve çeviri',
+          'Anahtar yoksa özellik sessizce kapalı, uydurma çıktı yok'
+        ]
       },
       visitors: {
         title: 'Canlı ziyaretçiler',
         summary: 'Sitede o an kimin, hangi sayfada olduğunu görün.',
         setup: 'Hazır gelir',
         body: 'Widget yüklü her sayfada ziyaretçi kaydı güncellenir: bulunduğu sayfa, tarayıcı, referans kaynağı ve son etkinlik zamanı. Panelde canlı liste olarak akar; konuşma açılmadan önce bile kimin ne yaptığını görürsünüz.',
-        points: ['Gerçek zamanlı sayfa takibi', 'SPA yönlendirmelerinde de güncellenir', 'Referans kaynağı ve tarayıcı bilgisi', 'CRM kayıtlarıyla ilişkilendirme']
+        points: [
+          'Gerçek zamanlı sayfa takibi',
+          'SPA yönlendirmelerinde de güncellenir',
+          'Referans kaynağı ve tarayıcı bilgisi',
+          'CRM kayıtlarıyla ilişkilendirme'
+        ]
       }
     }
   },
@@ -999,19 +1091,41 @@ export default {
         name: 'Ücretsiz',
         tagline: 'Tek kişilik ekipler ve ilk denemeler için.',
         cta: 'Hesap oluştur',
-        features: ['1 site', '1 kullanıcı', 'Sınırsız konuşma', 'Widget özelleştirme', 'SSS ve yardım içeriği', 'Otomasyon ve proaktif mesaj']
+        features: [
+          '1 site',
+          '1 kullanıcı',
+          'Sınırsız konuşma',
+          'Widget özelleştirme',
+          'SSS ve yardım içeriği',
+          'Otomasyon ve proaktif mesaj'
+        ]
       },
       pro: {
         name: 'Pro',
         tagline: 'Birden fazla temsilcinin çalıştığı destek ekipleri için.',
         cta: '14 gün ücretsiz dene',
-        features: ['10 siteye kadar', 'Sınırsız kullanıcı', 'Departmanlar ve otomatik atama', 'Analitik ve raporlar', 'Canlı ziyaretçiler ve CRM', 'Yapay zekâ yardımcısı', 'Veri dışa aktarma']
+        features: [
+          '10 siteye kadar',
+          'Sınırsız kullanıcı',
+          'Departmanlar ve otomatik atama',
+          'Analitik ve raporlar',
+          'Canlı ziyaretçiler ve CRM',
+          'Yapay zekâ yardımcısı',
+          'Veri dışa aktarma'
+        ]
       },
       enterprise: {
         name: 'Kurumsal',
         tagline: 'Denetim ve uyumluluk gereksinimi olan kuruluşlar için.',
         cta: 'İletişime geç',
-        features: ['Pro’daki her şey', 'Sınırsız site', 'Denetim kayıtları', 'SSO', 'Özel veri saklama süresi', 'Öncelikli destek']
+        features: [
+          'Pro’daki her şey',
+          'Sınırsız site',
+          'Denetim kayıtları',
+          'SSO',
+          'Özel veri saklama süresi',
+          'Öncelikli destek'
+        ]
       }
     },
     matrix: {
@@ -1060,7 +1174,8 @@ export default {
       description: 'Support.io nedir, hangi kararlarla kuruldu ve neyin üzerine inşa edildi.'
     },
     title: 'Kendi destek altyapınıza sahip olun',
-    description: 'Support.io, canlı desteği bir kara kutu olmaktan çıkarıp okunabilir, barındırılabilir ve denetlenebilir bir yazılıma dönüştürme denemesidir.',
+    description:
+      'Support.io, canlı desteği bir kara kutu olmaktan çıkarıp okunabilir, barındırılabilir ve denetlenebilir bir yazılıma dönüştürme denemesidir.',
     storyEyebrow: 'Neden',
     story: {
       p1: 'Canlı destek araçlarının çoğu iki uçtan birinde duruyor: ya kurulumu dakikalar süren ama içine bakamadığınız kapalı bir servis, ya da esnek ama ayağa kaldırması bir haftalık iş olan bir yığın.',
@@ -1097,7 +1212,8 @@ export default {
       widget: 'Müşteri sitesinde stil yalıtımı'
     },
     contactEyebrow: 'İletişim',
-    contactBody: 'Bir sorunuz, hata bildiriminiz veya kurumsal bir ihtiyacınız varsa yazın. Bu sitede de bir Support.io widget’ı çalışıyor; sağ alttaki butondan doğrudan ulaşabilirsiniz.'
+    contactBody:
+      'Bir sorunuz, hata bildiriminiz veya kurumsal bir ihtiyacınız varsa yazın. Bu sitede de bir Support.io widget’ı çalışıyor; sağ alttaki butondan doğrudan ulaşabilirsiniz.'
   },
   common: {
     retry: 'Tekrar dene',
@@ -1137,11 +1253,13 @@ export default {
   docs: {
     meta: {
       title: 'Dokümantasyon',
-      description: 'Support.io widget\'ını web sitenize entegre etme ve yapılandırma rehberi. Tüm detayları keşfedin.',
+      description:
+        "Support.io widget'ını web sitenize entegre etme ve yapılandırma rehberi. Tüm detayları keşfedin."
     },
     hero: {
       title: 'Geliştirici Dokümantasyonu',
-      description: 'Canlı destek sistemini dakikalar içinde platformunuza dahil edin. Güçlü API, esnek yapılandırma ayarları ve tam kontrol.',
+      description:
+        'Canlı destek sistemini dakikalar içinde platformunuza dahil edin. Güçlü API, esnek yapılandırma ayarları ve tam kontrol.',
       version: 'v1.0.0 Güncel Sürüm',
       viewGithub: 'GitHub Kod Örnekleri'
     },
@@ -1155,88 +1273,106 @@ export default {
     },
     gettingStarted: {
       title: 'Başlarken',
-      description: 'Support.io, web sitenizin HTML koduna ekleyeceğiniz ufak bir betik (script) ile çalışan modern bir canlı destek motorudur. WebSocket teknolojisi ile gecikmesiz sohbet imkanı sunar.',
+      description:
+        'Support.io, web sitenizin HTML koduna ekleyeceğiniz ufak bir betik (script) ile çalışan modern bir canlı destek motorudur. WebSocket teknolojisi ile gecikmesiz sohbet imkanı sunar.',
       whatIs: {
         title: 'Tam Olarak Nasıl Çalışır?',
-        description: 'Sistemi kurmak için herhangi bir sunucu maliyetine veya karmaşık kurulumlara ihtiyacınız yoktur. Tek yapmanız gereken size özel ayrılmış widget kodunu kopyalayıp sitenize entegre etmektir. Bütün yük ve ölçeklendirme Support.io bulut mimarisi tarafından yönetilir.',
-      },
+        description:
+          'Sistemi kurmak için herhangi bir sunucu maliyetine veya karmaşık kurulumlara ihtiyacınız yoktur. Tek yapmanız gereken size özel ayrılmış widget kodunu kopyalayıp sitenize entegre etmektir. Bütün yük ve ölçeklendirme Support.io bulut mimarisi tarafından yönetilir.'
+      }
     },
     installation: {
       title: 'Hızlı Kurulum (5 Dakika)',
       description: 'Aşağıdaki 3 adımı izleyerek platformumuzu anında canlıya alabilirsiniz.',
       step1: {
         title: 'Önkoşullar ve Güvenlik',
-        description: 'Öncelikle "Siteler" menüsünden web sitenizin domain adresini (örn: google.com) tanımlamalı ve benzersiz bir Site ID anahtarı oluşturmalısınız.',
+        description:
+          'Öncelikle "Siteler" menüsünden web sitenizin domain adresini (örn: google.com) tanımlamalı ve benzersiz bir Site ID anahtarı oluşturmalısınız.'
       },
       step2: {
         title: 'Ayar Objesinin (Config) Tanımlanması',
-        description: 'Sayfanızın `<head>` etiketi içerisinde veya body bitimine kurulum kodunun hemen öncesinde global `supportioConfig` nesnesini oluşturmanız gerekir.',
+        description:
+          'Sayfanızın `<head>` etiketi içerisinde veya body bitimine kurulum kodunun hemen öncesinde global `supportioConfig` nesnesini oluşturmanız gerekir.'
       },
       step3: {
         title: 'Uygulamanın Tetiklenmesi',
-        description: 'Aşağıdaki kodu web sitenizin `</body>` etiketinden hemen önce yapıştırarak entegrasyonu tamamlayabilirsiniz.',
+        description:
+          'Aşağıdaki kodu web sitenizin `</body>` etiketinden hemen önce yapıştırarak entegrasyonu tamamlayabilirsiniz.'
       },
       codeSnippetPrefix: '<!-- Standard HTML Entegrasyonu -->',
       copy: 'Kodu Kopyala',
       copied: 'Kopyalandı!',
       ready: {
         title: 'Bağlantı Başarılı!',
-        description: 'Script dosyası başarıyla projeye eklendiğinde sağ alt köşede destek balonu belirecektir.',
-      },
+        description:
+          'Script dosyası başarıyla projeye eklendiğinde sağ alt köşede destek balonu belirecektir.'
+      }
     },
     configuration: {
       title: 'Yapılandırma & API',
-      description: 'Widget davranışlarını ve görsel dilini `supportioConfig` nesnesi üzerinden kontrol edebilirsiniz:',
+      description:
+        'Widget davranışlarını ve görsel dilini `supportioConfig` nesnesi üzerinden kontrol edebilirsiniz:',
       required: 'Zorunlu Alan',
       optional: 'İsteğe Bağlı',
-      siteId: 'Yönetim panelinden ürettiğiniz 24 haneli benzersiz kimlik (ID). Uygulama bu kimlik olmadan sunucuya istek atamaz.',
-      position: 'Widget\'ın sayfada hangi köşeye sabitleneceğini belirler. Alabileceği değerler: bottom-right (varsayılan), bottom-left, top-right, top-left.',
+      siteId:
+        'Yönetim panelinden ürettiğiniz 24 haneli benzersiz kimlik (ID). Uygulama bu kimlik olmadan sunucuya istek atamaz.',
+      position:
+        "Widget'ın sayfada hangi köşeye sabitleneceğini belirler. Alabileceği değerler: bottom-right (varsayılan), bottom-left, top-right, top-left."
     },
     features: {
       title: 'Yeni Nesil Özellikler',
       description: 'Standart sohbet platformlarının ötesine geçin.',
       realtime: {
         title: 'WebSocket ile Gecikmesiz',
-        description: 'Veriler socket.io üzerinden akar. HTTP polling gibi yavaş ve sunucuyu yoran teknolojiler kullanılmaz.',
+        description:
+          'Veriler socket.io üzerinden akar. HTTP polling gibi yavaş ve sunucuyu yoran teknolojiler kullanılmaz.'
       },
       easy: {
         title: 'Native JavaScript, Sıfır Bağımlılık',
-        description: 'Widget kodumuz jQuery veya React gibi dev kütüphanelere bağımlı değildir. Saf Vanilla JS ile yükleme süreleriniz etkilenmez.',
+        description:
+          'Widget kodumuz jQuery veya React gibi dev kütüphanelere bağımlı değildir. Saf Vanilla JS ile yükleme süreleriniz etkilenmez.'
       },
       customizable: {
         title: 'Dinamik Tema',
-        description: 'Renkleri CSS değişkenleri yardımıyla sistem temasına (karanlık/aydınlık) göre otomatik ayarlayabilirsiniz.',
+        description:
+          'Renkleri CSS değişkenleri yardımıyla sistem temasına (karanlık/aydınlık) göre otomatik ayarlayabilirsiniz.'
       },
       analytics: {
         title: 'Güçlü Analitik ve UTM',
-        description: 'Sitenize gelen ziyaretçilerin UTM parametrelerini, ziyaret sürelerini okuyup arka plan loglarına işliyoruz.',
-      },
+        description:
+          'Sitenize gelen ziyaretçilerin UTM parametrelerini, ziyaret sürelerini okuyup arka plan loglarına işliyoruz.'
+      }
     },
     benefits: {
       title: 'Neden Bizi Seçmelisiniz?',
       satisfaction: {
         title: 'Yüksek Müşteri Memnuniyeti',
-        description: 'Müşterilerinizin problemlerini gecikme yaşamadan, saniyeler içerisinde çözün. Memnuniyet oranlarını tavana uçurun.',
+        description:
+          'Müşterilerinizin problemlerini gecikme yaşamadan, saniyeler içerisinde çözün. Memnuniyet oranlarını tavana uçurun.'
       },
       conversion: {
         title: 'Satışa Dönüştürün',
-        description: 'Canlı e-ticaret sitelerinde alışveriş sepetinde takılan müşteriye el uzatarak satış dönüşüm oranlarınızı artırın.',
+        description:
+          'Canlı e-ticaret sitelerinde alışveriş sepetinde takılan müşteriye el uzatarak satış dönüşüm oranlarınızı artırın.'
       },
       availability: {
         title: '%99.9 Uptime (SLA)',
-        description: 'Çökme problemi yaşamayın. Ölçeklenebilir mikroservis mimarisi ile trafiğinizin zirve yaptığı dönemlerde de yayında kalın.',
+        description:
+          'Çökme problemi yaşamayın. Ölçeklenebilir mikroservis mimarisi ile trafiğinizin zirve yaptığı dönemlerde de yayında kalın.'
       },
       insights: {
         title: 'Gelişmiş Ziyaretçi Profilleri',
-        description: 'Kimliğe bürünme algoritması sayesinde kullanıcıların sitenizdeki sayfa gezintilerini anlık takip edebilirsiniz.',
-      },
+        description:
+          'Kimliğe bürünme algoritması sayesinde kullanıcıların sitenizdeki sayfa gezintilerini anlık takip edebilirsiniz.'
+      }
     },
     cta: {
       title: 'Kodlamaya Zaman Kaybetmeyin',
-      description: 'Gelişmiş API entegrasyonuna bugün ücretsiz başlayın ve ekibinizi 5 dakikada sisteme adapte edin.',
+      description:
+        'Gelişmiş API entegrasyonuna bugün ücretsiz başlayın ve ekibinizi 5 dakikada sisteme adapte edin.',
       button: 'Hemen Ücretsiz Başla (Kredi Kartı Gerekmez)',
       secondaryButton: 'Paneli Keşfet'
-    },
+    }
   },
   team: {
     title: 'Ekip Yönetimi',
@@ -1291,7 +1427,8 @@ export default {
     deleteSuccess: 'Ekip üyesi başarıyla silindi!',
     deleteError: 'Ekip üyesi silinemedi!',
     deleteTitle: 'Ekip Üyesini Sil',
-    deleteMessage: '"{{name}}" kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+    deleteMessage:
+      '"{{name}}" kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
     deleteConfirm: 'Evet, Sil',
     saveError: 'Ekip üyesi kaydedilemedi!',
     createSuccess: 'Ekip üyesi başarıyla eklendi!',
@@ -1313,7 +1450,7 @@ export default {
     stats: {
       conversations: 'Konuşmalar',
       unassigned: 'Atanmamış',
-      teamMembers: 'Ekip Üyeleri',
+      teamMembers: 'Ekip Üyeleri'
     },
     members: 'Üyeler',
     moreMembers: '+{{count}} daha fazla',
@@ -1325,7 +1462,8 @@ export default {
     edit: 'Düzenle',
     delete: 'Sil',
     deleteTitle: 'Departmanı Sil',
-    deleteMessage: '"{{name}}" departmanını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+    deleteMessage:
+      '"{{name}}" departmanını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
     deleteConfirm: 'Evet, Sil',
     deleteCancel: 'İptal',
     deleteSuccess: 'Departman başarıyla silindi!',
@@ -1359,8 +1497,8 @@ export default {
       update: 'Güncelle',
       saving: 'Kaydediliyor...',
       createSuccess: 'Departman başarıyla oluşturuldu!',
-      updateSuccess: 'Departman başarıyla güncellendi!',
-    },
+      updateSuccess: 'Departman başarıyla güncellendi!'
+    }
   },
   crm: {
     title: 'CRM - Fırsatlar',
@@ -1401,7 +1539,7 @@ export default {
     enterNameError: 'Lütfen adınızı girin.',
     setupSuccess: 'Kurulum başarıyla tamamlandı!',
     setupError: 'Bir hata oluştu.',
-    step1Title: 'Support.io\'yu nasıl kullanmayı planlıyorsunuz?',
+    step1Title: "Support.io'yu nasıl kullanmayı planlıyorsunuz?",
     purposes: {
       leads: 'Daha fazla potansiyel müşteri çekmek için',
       sales: 'Mevcut müşterilerden daha fazla satış elde etmek için',
@@ -1416,20 +1554,23 @@ export default {
     previewAgency: 'Canlı Destek Sağlayıcısı Support.io',
     previewGreeting: 'Merhaba, size nasıl yardımcı olabilirim? 👋',
     step3Title: 'Akıllı Tetikleyiciler',
-    step3Desc: 'Akıllı tetikleyiciler, web sitenizdeki ziyaretçilerle sohbet başlatmanıza yardımcı olur. Hangi hoş geldiniz mesajını kullanmak istersiniz?',
+    step3Desc:
+      'Akıllı tetikleyiciler, web sitenizdeki ziyaretçilerle sohbet başlatmanıza yardımcı olur. Hangi hoş geldiniz mesajını kullanmak istersiniz?',
     triggers: {
       help: 'Biraz yardım sunun 👋',
       welcome: 'Sıcak bir karşılama yapın 🤗',
       discount: 'İndirimlerinizden bahsedin 🎁'
     },
-    step3Note: 'Akıllı tetikleyicilerin metnini ve sohbet öncesi butonları daha sonra ayarlardan değiştirebileceksiniz.',
+    step3Note:
+      'Akıllı tetikleyicilerin metnini ve sohbet öncesi butonları daha sonra ayarlardan değiştirebileceksiniz.',
     chatBtn1: 'Merhaba!',
     chatBtn2: 'Yardıma ihtiyacım var',
     step4Title: 'Sohbet pencerenizi özelleştirin',
     nameLabel: 'Adınızı girin',
     nameDesc: 'Müşterilerle sohbet ettiğinizde adınız ve ünvanınız görüntülenecek',
     themeLabel: 'Bir Renk Teması Seçin',
-    previewWidgetText: 'Sohbet pencereniz sitenizde böyle görünecek. Gerekli alanları doldurun ve ardından kuruluma devam edebiliriz 🙂',
+    previewWidgetText:
+      'Sohbet pencereniz sitenizde böyle görünecek. Gerekli alanları doldurun ve ardından kuruluma devam edebiliriz 🙂',
     back: 'Geri',
     next: 'İlerle',
     completing: 'Tamamlanıyor...',
@@ -1441,7 +1582,8 @@ export default {
     headerDesc: 'Sitenizdeki aktif ziyaretçileri anlık görüntüleyin.',
     fetchError: 'Siteler yüklenirken hata oluştu',
     noActiveVisitors: 'Henüz aktif ziyaretçi yok',
-    noActiveVisitorsDesc: 'Bu kısımda sitenizde bulunan ziyaretçileri göstereceğiz. Pencereyi açık bırakarak anlık trafiği test edebilirsiniz.',
+    noActiveVisitorsDesc:
+      'Bu kısımda sitenizde bulunan ziyaretçileri göstereceğiz. Pencereyi açık bırakarak anlık trafiği test edebilirsiniz.',
     tableTime: 'Sitede Geçen Süre',
     tableVisitor: 'Ziyaretçi',
     tablePage: 'Geçerli Sayfa',
@@ -1452,7 +1594,8 @@ export default {
     identity: 'Kimlik',
     subtitle: 'Sitenizdeki aktif ziyaretçileri anlık görüntüleyin.',
     emptyTitle: 'Henüz aktif ziyaretçi yok',
-    emptyDesc: 'Bu kısımda sitenizde bulunan ziyaretçileri göstereceğiz. Pencereyi açık bırakarak anlık trafiği test edebilirsiniz.',
+    emptyDesc:
+      'Bu kısımda sitenizde bulunan ziyaretçileri göstereceğiz. Pencereyi açık bırakarak anlık trafiği test edebilirsiniz.',
     timeOnSite: 'Sitede Geçen Süre',
     visitorColumn: 'Ziyaretçi',
     currentPage: 'Geçerli Sayfa',
@@ -1465,7 +1608,7 @@ export default {
     subtitle: 'Sohbet aracınızın görünümünü özelleştirin',
     fetchError: 'Araç yapılandırması yüklenemedi',
     saveError: 'Değişiklikler kaydedilemedi',
-    logoUploadError: 'Logo boyutu 5MB\'tan küçük olmalıdır',
+    logoUploadError: "Logo boyutu 5MB'tan küçük olmalıdır",
     logoUploadSuccess: 'Logo başarıyla yüklendi',
     logoUploadFailed: 'Logo yüklenemedi',
     logoDeleteSuccess: 'Logo silindi',
@@ -1558,9 +1701,11 @@ export default {
     },
     theme: {
       presets: 'Hazır temalar',
-      presetsHint: 'Her tema kontrast eşiklerini geçen tutarlı bir palettir. Birini seçin, sonra dilediğiniz rengi tek tek değiştirin.',
+      presetsHint:
+        'Her tema kontrast eşiklerini geçen tutarlı bir palettir. Birini seçin, sonra dilediğiniz rengi tek tek değiştirin.',
       palette: 'Renk paleti',
-      paletteHint: 'Metin renklerinin yanında WCAG kontrast oranı gösterilir. 4.5:1 altındaki değerler küçük metinlerde okunmaz.',
+      paletteHint:
+        'Metin renklerinin yanında WCAG kontrast oranı gösterilir. 4.5:1 altındaki değerler küçük metinlerde okunmaz.',
       derive: 'Ana renkten türet'
     },
     colors: {
@@ -1607,7 +1752,8 @@ export default {
     },
     messages: {
       copy: 'Metinler',
-      copyHint: 'Boş bırakılan alanlarda widget ziyaretçinin diline göre kendi varsayılanını kullanır.',
+      copyHint:
+        'Boş bırakılan alanlarda widget ziyaretçinin diline göre kendi varsayılanını kullanır.',
       welcome: 'Karşılama mesajı',
       welcomePlaceholder: 'Merhaba! Size nasıl yardımcı olabiliriz?',
       placeholder: 'Yazma alanı metni',
@@ -1640,7 +1786,8 @@ export default {
       normal: 'Normal',
       slow: 'Yavaş',
       customCss: 'Özel CSS ve z-index',
-      customCssHint: 'CSS, widget’ın Shadow DOM’u içine enjekte edilir; host sitenin stillerini etkilemez.',
+      customCssHint:
+        'CSS, widget’ın Shadow DOM’u içine enjekte edilir; host sitenin stillerini etkilemez.',
       zIndex: 'z-index'
     },
     preview: {
@@ -1660,7 +1807,8 @@ export default {
       title: 'Kurulum kodu',
       hint: 'Bu tek satır her framework’te aynıdır: HTML, React, Next.js, Vue, WordPress, Laravel…',
       verified: 'Kurulum doğrulandı — widget sitenizde çalışıyor',
-      waiting: 'Kurulum bekleniyor. Kodu sitenize ekledikten sonra burası kendiliğinden güncellenir.'
+      waiting:
+        'Kurulum bekleniyor. Kodu sitenize ekledikten sonra burası kendiliğinden güncellenir.'
     },
     toast: {
       saved: 'Widget ayarları kaydedildi',
@@ -1719,11 +1867,13 @@ export default {
   docsPage: {
     meta: {
       title: 'Geliştirici Dokümantasyonu',
-      description: 'Support.io widget’ını tek satır kodla sitenize ekleyin. React, Next.js, Vue, Nuxt, Angular, Svelte, Astro, WordPress, Laravel ve düz HTML için kurulum, JavaScript SDK, olaylar ve güvenlik.'
+      description:
+        'Support.io widget’ını tek satır kodla sitenize ekleyin. React, Next.js, Vue, Nuxt, Angular, Svelte, Astro, WordPress, Laravel ve düz HTML için kurulum, JavaScript SDK, olaylar ve güvenlik.'
     },
     hero: {
       title: 'Tek script. Her stack.',
-      description: 'Support.io widget’ı framework’ten bağımsızdır. Aynı script etiketi düz HTML’de de, React uygulamasında da, WordPress temasında da birebir aynı şekilde çalışır. Aşağıdaki her örnek bu kurulumun gerçek API’sini anlatır.'
+      description:
+        'Support.io widget’ı framework’ten bağımsızdır. Aynı script etiketi düz HTML’de de, React uygulamasında da, WordPress temasında da birebir aynı şekilde çalışır. Aşağıdaki her örnek bu kurulumun gerçek API’sini anlatır.'
     },
     nav: {
       quickstart: 'Hızlı başlangıç',
@@ -1749,7 +1899,8 @@ export default {
     },
     quickstart: {
       title: 'Hızlı başlangıç',
-      intro: 'Kurulum üç adım ve tek script etiketidir. Derleme adımı, npm paketi veya sunucu tarafı kod gerekmez.',
+      intro:
+        'Kurulum üç adım ve tek script etiketidir. Derleme adımı, npm paketi veya sunucu tarafı kod gerekmez.',
       step1: {
         title: 'Site anahtarınızı alın',
         body: 'Panel → Siteler ekranından sitenizi oluşturun. Her site kendi anahtarını alır; anahtar hangi çalışma alanına ait olduğunu belirler.'
@@ -1763,45 +1914,55 @@ export default {
         body: 'Widget bir sayfada ilk kez çalıştığında kendini sunucuya bildirir. Panel → Siteler ekranındaki “Kurulum bekleniyor” rozeti kendiliğinden yeşile döner.'
       },
       calloutTitle: 'Global değişken tanımlamanız gerekmez',
-      calloutBody: 'Widget yapılandırmayı kendi script etiketinin data-* niteliklerinden ve kendi src adresinden okur. Ayrı bir inline <script> bloğu gerekmediği için katı bir Content-Security-Policy altında da çalışır.',
+      calloutBody:
+        'Widget yapılandırmayı kendi script etiketinin data-* niteliklerinden ve kendi src adresinden okur. Ayrı bir inline <script> bloğu gerekmediği için katı bir Content-Security-Policy altında da çalışır.',
       getKey: 'Site anahtarımı al'
     },
     embed: {
       title: 'Universal embed',
-      intro: 'Tek bir çalışma zamanı vardır ve her yerde aynıdır. Framework’e göre farklı bir embed kodu üretilmez; yalnızca aynı etiketin nereye konacağı değişir.',
+      intro:
+        'Tek bir çalışma zamanı vardır ve her yerde aynıdır. Framework’e göre farklı bir embed kodu üretilmez; yalnızca aynı etiketin nereye konacağı değişir.',
       attrs: 'Script nitelikleri',
       versioning: 'Sürümleme',
-      versioningBody: '/widget.js her zaman en güncel sürümü verir ve kısa süre önbelleklenir. Sürümü sabitlemek isterseniz büyük sürüm yolunu kullanın: bu adres değişmez olarak önbelleklenir, yeni bir dağıtım sitenizdeki widget’ı değiştirmez.',
+      versioningBody:
+        '/widget.js her zaman en güncel sürümü verir ve kısa süre önbelleklenir. Sürümü sabitlemek isterseniz büyük sürüm yolunu kullanın: bu adres değişmez olarak önbelleklenir, yeni bir dağıtım sitenizdeki widget’ı değiştirmez.',
       latest: 'her zaman güncel',
       pinned: 'sürüm sabitlenmiş',
       consent: 'Çerez onayının arkasında çalıştırma',
-      consentBody: 'data-defer="true" verildiğinde script yüklenir ama hiçbir şey başlatmaz, ziyaretçi verisi toplanmaz. Onay alındıktan sonra SupportChat.init() çağırın.'
+      consentBody:
+        'data-defer="true" verildiğinde script yüklenir ama hiçbir şey başlatmaz, ziyaretçi verisi toplanmaz. Onay alındıktan sonra SupportChat.init() çağırın.'
     },
     api: {
       title: 'JavaScript API',
-      intro: 'Script yüklendiğinde tek bir global oluşur: window.SupportChat. Başka hiçbir isim global alana yazılmaz (eski window.SupportIO yalnızca geriye dönük uyumluluk için bir takma addır).'
+      intro:
+        'Script yüklendiğinde tek bir global oluşur: window.SupportChat. Başka hiçbir isim global alana yazılmaz (eski window.SupportIO yalnızca geriye dönük uyumluluk için bir takma addır).'
     },
     events: {
       title: 'Olaylar',
-      intro: 'on() bir aboneliği iptal eden fonksiyon döndürür. Bir dinleyicinin fırlattığı hata diğer dinleyicileri veya widget’ı durdurmaz.',
+      intro:
+        'on() bir aboneliği iptal eden fonksiyon döndürür. Bir dinleyicinin fırlattığı hata diğer dinleyicileri veya widget’ı durdurmaz.',
       sample: 'yeni mesaj:',
       unsub: 'aboneliği bırak',
       wildcard: 'tüm olayları tek yerden dinlemek için:'
     },
     identify: {
       title: 'Kullanıcı tanıma',
-      intro: 'Anonim ziyaretçi kendiliğinden bir ziyaretçi kimliği ve oturum kimliği alır. Kullanıcı sitenizde oturum açtığında identify() ile onu tanıtın; temsilci konuşmayı gerçek bir kişiyle eşleştirebilsin.',
+      intro:
+        'Anonim ziyaretçi kendiliğinden bir ziyaretçi kimliği ve oturum kimliği alır. Kullanıcı sitenizde oturum açtığında identify() ile onu tanıtın; temsilci konuşmayı gerçek bir kişiyle eşleştirebilsin.',
       afterLogin: 'kullanıcı oturum açtıktan sonra',
       attrs: 'temsilciye gösterilecek serbest alanlar',
       afterLogout: 'kullanıcı çıkış yaptığında',
       warnTitle: 'Bu alanlara tek başına güvenilmez',
-      warnBody: 'identify() ile gönderilen bilgiler tarayıcıdan gelir ve herkes tarafından değiştirilebilir. Sunucu bunları YALNIZCA gösterim için kullanır; hiçbir yetkilendirme kararı ziyaretçinin gönderdiği kimliğe dayandırılmaz. Doğrulanmış kimlik gerekiyorsa sunucu tarafında üretilen imzalı bir değer (HMAC) kullanılmalıdır; runtime bunun için userHash alanını taşır.',
+      warnBody:
+        'identify() ile gönderilen bilgiler tarayıcıdan gelir ve herkes tarafından değiştirilebilir. Sunucu bunları YALNIZCA gösterim için kullanır; hiçbir yetkilendirme kararı ziyaretçinin gönderdiği kimliğe dayandırılmaz. Doğrulanmış kimlik gerekiyorsa sunucu tarafında üretilen imzalı bir değer (HMAC) kullanılmalıdır; runtime bunun için userHash alanını taşır.',
       logoutTitle: 'Çıkışta logout() çağırmayı unutmayın',
-      logoutBody: 'logout() kimliği temizler ve YENİ bir ziyaretçi kimliği üretir. Çağrılmazsa ortak bir bilgisayarda oturum açan ikinci kullanıcı, birincinin sohbet geçmişini görür.'
+      logoutBody:
+        'logout() kimliği temizler ve YENİ bir ziyaretçi kimliği üretir. Çağrılmazsa ortak bir bilgisayarda oturum açan ikinci kullanıcı, birincinin sohbet geçmişini görür.'
     },
     spa: {
       title: 'SPA entegrasyonu',
-      intro: 'React, Next.js, Vue, Nuxt, Angular, Svelte ve benzeri uygulamalarda ek bir şey yapmanız gerekmez; runtime bu durumları kendisi ele alır.',
+      intro:
+        'React, Next.js, Vue, Nuxt, Angular, Svelte ve benzeri uygulamalarda ek bir şey yapmanız gerekmez; runtime bu durumları kendisi ele alır.',
       singleton: {
         title: 'Tekil çalışma zamanı',
         body: 'Script iki kez eklense, bileşen iki kez mount olsa veya React Strict Mode effect’i iki kez çalıştırsa bile ikinci bir widget oluşmaz.'
@@ -1824,16 +1985,22 @@ export default {
     },
     frameworks: {
       title: 'Framework’ler',
-      intro: 'Aşağıdaki örneklerin hepsi AYNI script etiketini kullanır. Değişen tek şey, o etiketin ilgili framework’te hangi dosyaya konduğudur.'
+      intro:
+        'Aşağıdaki örneklerin hepsi AYNI script etiketini kullanır. Değişen tek şey, o etiketin ilgili framework’te hangi dosyaya konduğudur.'
     },
     backend: {
       title: 'Backend ve Socket',
-      intro: 'Widget’ın konuştuğu yüzeyin tamamı. Bu uçlar site anahtarıyla doğrulanır, oturum gerektirmez ve organizasyon içi hiçbir alan döndürmez.',
-      bootstrap: 'Widget yapılandırması, SSS içeriği ve temsilci uygunluğu tek yanıtta. 30 saniye önbelleklenir.',
-      installed: 'Kurulum doğrulaması. Widget bir sayfada ilk çalıştığında bir kez çağırır; yalnızca origin ve yol saklanır.',
-      upload: 'Sohbet dosyası yükleme. X-Site-Key başlığı ile doğrulanır, 10 MB sınırı ve MIME denetimi vardır.',
+      intro:
+        'Widget’ın konuştuğu yüzeyin tamamı. Bu uçlar site anahtarıyla doğrulanır, oturum gerektirmez ve organizasyon içi hiçbir alan döndürmez.',
+      bootstrap:
+        'Widget yapılandırması, SSS içeriği ve temsilci uygunluğu tek yanıtta. 30 saniye önbelleklenir.',
+      installed:
+        'Kurulum doğrulaması. Widget bir sayfada ilk çalıştığında bir kez çağırır; yalnızca origin ve yol saklanır.',
+      upload:
+        'Sohbet dosyası yükleme. X-Site-Key başlığı ile doğrulanır, 10 MB sınırı ve MIME denetimi vardır.',
       track: 'Ziyaretçi davranış olayları (proaktif mesaj kuralları bu akışı dinler).',
-      socket: 'Socket.IO ad alanı. İstemci /socket.io/socket.io.js dosyasını aynı sunucudan yükler.',
+      socket:
+        'Socket.IO ad alanı. İstemci /socket.io/socket.io.js dosyasını aynı sunucudan yükler.',
       socketEvents: 'Socket olayları',
       join: 'Konuşmaya katıl veya yenisini hazırla. Site anahtarı burada doğrulanır.',
       send: 'Mesaj gönder. clientMessageId ile tekrar önlenir.',
@@ -1846,30 +2013,38 @@ export default {
     },
     theming: {
       title: 'Tema',
-      intro: 'Renkler, ölçüler ve metinler panelin Widget Studio ekranından yönetilir; kod tarafında yalnızca açık/koyu tercihini değiştirmeniz gerekir.',
+      intro:
+        'Renkler, ölçüler ve metinler panelin Widget Studio ekranından yönetilir; kod tarafında yalnızca açık/koyu tercihini değiştirmeniz gerekir.',
       auto: 'sistem tercihini izler',
       follow: 'sistem teması değişince widget’ı da çevir:',
       isolationTitle: 'Stil yalıtımı',
-      isolationBody: 'Widget’ın tüm DOM ve CSS’i bir Shadow Root içindedir. Sitenizin * { }, button { } veya input { } gibi global kuralları widget’ı bozamaz; widget’ın CSS’i de sitenize sızamaz. Widget Studio’daki özel CSS alanı da bu Shadow Root’un içine enjekte edilir.'
+      isolationBody:
+        'Widget’ın tüm DOM ve CSS’i bir Shadow Root içindedir. Sitenizin * { }, button { } veya input { } gibi global kuralları widget’ı bozamaz; widget’ın CSS’i de sitenize sızamaz. Widget Studio’daki özel CSS alanı da bu Shadow Root’un içine enjekte edilir.'
     },
     localization: {
       title: 'Yerelleştirme',
-      intro: 'Widget Türkçe ve İngilizce ile gelir. Dil sırası: açık ayar → <html lang> → tarayıcı dili. Paneldeki karşılama mesajı gibi metinler boş bırakılırsa widget kendi çevirisini kullanır.',
+      intro:
+        'Widget Türkçe ve İngilizce ile gelir. Dil sırası: açık ayar → <html lang> → tarayıcı dili. Paneldeki karşılama mesajı gibi metinler boş bırakılırsa widget kendi çevirisini kullanır.',
       viaAttr: 'script etiketiyle',
       viaApi: 'çalışma zamanında'
     },
     security: {
       title: 'Güvenlik',
       cspTitle: 'Content-Security-Policy',
-      cspBody: 'Widget hiçbir üçüncü parti alan adına bağlanmaz. Socket.IO istemcisi dahil her şey sizin Support.io sunucunuzdan gelir, bu yüzden politikanıza tek bir origin eklemeniz yeterlidir.',
+      cspBody:
+        'Widget hiçbir üçüncü parti alan adına bağlanmaz. Socket.IO istemcisi dahil her şey sizin Support.io sunucunuzdan gelir, bu yüzden politikanıza tek bir origin eklemeniz yeterlidir.',
       inlineTitle: 'unsafe-inline gerekmez',
-      inlineBody: 'Kurulum kodu bir inline <script> bloğu içermez; yapılandırma data-* niteliklerinden okunur. Yalnızca style-src için unsafe-inline gerekir, o da Shadow Root içindeki stil etiketi içindir ve sayfanızın stillerini etkilemez.',
+      inlineBody:
+        'Kurulum kodu bir inline <script> bloğu içermez; yapılandırma data-* niteliklerinden okunur. Yalnızca style-src için unsafe-inline gerekir, o da Shadow Root içindeki stil etiketi içindir ve sayfanızın stillerini etkilemez.',
       corsTitle: 'CORS',
-      corsBody: 'Sunucudaki CORS_ORIGINS değişkeni panelin hangi adreslerden açılabileceğini belirler. Widget uçları bundan bağımsızdır: widget.js her origin’e açıktır (public bir dosyadır), API uçları ise site anahtarıyla yetkilendirilir.',
+      corsBody:
+        'Sunucudaki CORS_ORIGINS değişkeni panelin hangi adreslerden açılabileceğini belirler. Widget uçları bundan bağımsızdır: widget.js her origin’e açıktır (public bir dosyadır), API uçları ise site anahtarıyla yetkilendirilir.',
       keyTitle: 'Site anahtarı gizli değildir',
-      keyBody: 'Site anahtarı tarayıcıya gönderilir; gizli bir sır değildir, yalnızca hangi çalışma alanına yazılacağını belirleyen bir tanımlayıcıdır. Konuşma okuma ve yazma izinleri sunucu tarafında ziyaretçi kimliğine göre sınırlandırılır; bir anahtarla başka bir çalışma alanının verisine erişilemez.',
+      keyBody:
+        'Site anahtarı tarayıcıya gönderilir; gizli bir sır değildir, yalnızca hangi çalışma alanına yazılacağını belirleyen bir tanımlayıcıdır. Konuşma okuma ve yazma izinleri sunucu tarafında ziyaretçi kimliğine göre sınırlandırılır; bir anahtarla başka bir çalışma alanının verisine erişilemez.',
       dataTitle: 'Saklanan veri',
-      dataBody: 'Widget tarayıcıda yalnızca ziyaretçi kimliğini ve isteğe bağlı ad/e-posta bilgisini localStorage’da tutar. localStorage kapalıysa (gizli sekme, çerez engeli) bellek içi bir yedeğe düşer ve çalışmaya devam eder. Kurulum doğrulamasında tam URL değil yalnızca origin ve yol saklanır; sorgu dizesi kişisel veri taşıyabileceği için atılır.'
+      dataBody:
+        'Widget tarayıcıda yalnızca ziyaretçi kimliğini ve isteğe bağlı ad/e-posta bilgisini localStorage’da tutar. localStorage kapalıysa (gizli sekme, çerez engeli) bellek içi bir yedeğe düşer ve çalışmaya devam eder. Kurulum doğrulamasında tam URL değil yalnızca origin ve yol saklanır; sorgu dizesi kişisel veri taşıyabileceği için atılır.'
     },
     troubleshooting: {
       title: 'Sorun giderme',

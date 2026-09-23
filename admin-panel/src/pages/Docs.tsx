@@ -11,13 +11,29 @@
  * framework'te nereye konacağını anlatır.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
-  Copy, Check, Menu, X, Rocket, Code2, Terminal, Radio, UserCheck, Route,
-  Boxes, Server, Palette, Languages, ShieldCheck, LifeBuoy, BookOpen, ArrowRight
+  Copy,
+  Check,
+  Menu,
+  X,
+  Rocket,
+  Code2,
+  Terminal,
+  Radio,
+  UserCheck,
+  Route,
+  Boxes,
+  Server,
+  Palette,
+  Languages,
+  ShieldCheck,
+  LifeBuoy,
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 import { Header, Footer } from '../components/marketing/Shell';
 import { FRAMEWORKS, API_METHODS, EVENTS, SCRIPT_ATTRS, embedSnippet } from './docs/content';
@@ -39,7 +55,22 @@ const NAV = [
 
 /* ------------------------------------------------------------------ parçalar */
 
-const CodeBlock = ({ code, filename, id, copiedId, onCopy, label }: { code?: any; filename?: any; id?: string; copiedId?: any; onCopy?: (...args: any[]) => void; label?: any; [prop: string]: any }) => (
+const CodeBlock = ({
+  code,
+  filename,
+  id,
+  copiedId,
+  onCopy,
+  label
+}: {
+  code?: any;
+  filename?: any;
+  id?: string;
+  copiedId?: any;
+  onCopy?: (...args: any[]) => void;
+  label?: any;
+  [prop: string]: any;
+}) => (
   <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950">
     <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/[0.07]">
       <span className="text-[11.5px] font-mono text-gray-400 truncate">{filename || ''}</span>
@@ -48,7 +79,11 @@ const CodeBlock = ({ code, filename, id, copiedId, onCopy, label }: { code?: any
         className="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] font-medium
           text-gray-400 hover:text-white hover:bg-white/10 transition"
       >
-        {copiedId === id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+        {copiedId === id ? (
+          <Check className="w-3.5 h-3.5 text-green-400" />
+        ) : (
+          <Copy className="w-3.5 h-3.5" />
+        )}
         {copiedId === id ? label.copied : label.copy}
       </button>
     </div>
@@ -59,7 +94,9 @@ const CodeBlock = ({ code, filename, id, copiedId, onCopy, label }: { code?: any
 );
 
 const Prose = ({ children }: { children?: any; [prop: string]: any }) => (
-  <p className="text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[65ch]">{children}</p>
+  <p className="text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[65ch]">
+    {children}
+  </p>
 );
 
 const H2 = ({ children }: { children?: any; [prop: string]: any }) => (
@@ -72,7 +109,15 @@ const H3 = ({ children }: { children?: any; [prop: string]: any }) => (
   <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white mt-8 mb-2">{children}</h3>
 );
 
-const Callout = ({ tone = 'info', title, children }: { title?: any; children?: any; [prop: string]: any }) => {
+const Callout = ({
+  tone = 'info',
+  title,
+  children
+}: {
+  title?: any;
+  children?: any;
+  [prop: string]: any;
+}) => {
   const tones = {
     info: 'border-blue-200 bg-blue-50/60 dark:border-blue-500/25 dark:bg-blue-500/[0.07]',
     warn: 'border-amber-200 bg-amber-50/60 dark:border-amber-500/25 dark:bg-amber-500/[0.07]',
@@ -80,8 +125,12 @@ const Callout = ({ tone = 'info', title, children }: { title?: any; children?: a
   };
   return (
     <div className={`rounded-xl border px-4 py-3 ${tones[tone as keyof typeof tones]}`}>
-      {title && <p className="text-[13px] font-semibold text-gray-900 dark:text-white mb-1">{title}</p>}
-      <div className="text-[13.5px] leading-relaxed text-gray-700 dark:text-gray-300 max-w-[65ch]">{children}</div>
+      {title && (
+        <p className="text-[13px] font-semibold text-gray-900 dark:text-white mb-1">{title}</p>
+      )}
+      <div className="text-[13.5px] leading-relaxed text-gray-700 dark:text-gray-300 max-w-[65ch]">
+        {children}
+      </div>
     </div>
   );
 };
@@ -92,8 +141,11 @@ const Table = ({ head, rows }: { head?: any; rows?: any; [prop: string]: any }) 
       <thead>
         <tr className="bg-gray-50 dark:bg-gray-800/60">
           {head.map((h: any) => (
-            <th key={h} className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider
-              text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+            <th
+              key={h}
+              className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider
+              text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800"
+            >
               {h}
             </th>
           ))}
@@ -103,7 +155,10 @@ const Table = ({ head, rows }: { head?: any; rows?: any; [prop: string]: any }) 
         {rows.map((row: any, i: number) => (
           <tr key={i} className="border-b border-gray-100 dark:border-gray-800/60 last:border-0">
             {row.map((cell: any, j: number) => (
-              <td key={j} className="px-4 py-2.5 text-[13px] text-gray-700 dark:text-gray-300 align-top">
+              <td
+                key={j}
+                className="px-4 py-2.5 text-[13px] text-gray-700 dark:text-gray-300 align-top"
+              >
                 {cell}
               </td>
             ))}
@@ -115,13 +170,27 @@ const Table = ({ head, rows }: { head?: any; rows?: any; [prop: string]: any }) 
 );
 
 const Mono = ({ children }: { children?: any; [prop: string]: any }) => (
-  <code className="px-1.5 py-0.5 rounded-md text-[12.5px] font-mono
-    bg-gray-100 dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 whitespace-nowrap">
+  <code
+    className="px-1.5 py-0.5 rounded-md text-[12.5px] font-mono
+    bg-gray-100 dark:bg-gray-800 text-indigo-700 dark:text-indigo-300 whitespace-nowrap"
+  >
     {children}
   </code>
 );
 
 /* --------------------------------------------------------------------- sayfa */
+
+/**
+ * The closing tag of an embed snippet, assembled rather than written whole.
+ *
+ * These snippets are text the customer copies. A literal closing script tag in
+ * a file that is ever inlined into an HTML `<script>` block would terminate
+ * that block early. It used to be written `<\/script>`, which reads as a guard
+ * but is not one — a backslash before `/` is not an escape sequence in a
+ * JavaScript string, so the character emitted was identical. Splitting it is
+ * the version that actually holds.
+ */
+const CLOSE_SCRIPT = `<${'/'}script>`;
 
 const Docs = () => {
   const { t, i18n } = useTranslation();
@@ -130,7 +199,6 @@ const Docs = () => {
   const [navOpen, setNavOpen] = useState(false);
   const [active, setActive] = useState('quickstart');
   const [framework, setFramework] = useState('html');
-  const observed = useRef(new Map());
 
   const origin = import.meta.env.VITE_API_URL || window.location.origin;
   const snippet = useMemo(() => embedSnippet(origin), [origin]);
@@ -141,7 +209,7 @@ const Docs = () => {
       await navigator.clipboard.writeText(code);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
-    } catch (e) {
+    } catch {
       // Pano izni yoksa sessiz kal: kod zaten ekranda ve seçilebilir.
     }
   };
@@ -180,9 +248,11 @@ const Docs = () => {
           onClick={() => goTo(id)}
           aria-current={active === id ? 'true' : undefined}
           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] text-left transition
-            ${active === id
-              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+            ${
+              active === id
+                ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-medium'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
         >
           <Icon className="w-4 h-4 shrink-0" />
           <span className="truncate">{t(`docsPage.nav.${id}`)}</span>
@@ -204,12 +274,16 @@ const Docs = () => {
         {/* ----------------------------------------------------------- hero */}
         <div className="border-b border-gray-200 dark:border-gray-800 pt-24 pb-10">
           <div className="max-w-7xl mx-auto px-5 sm:px-8">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px]
-              font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px]
+              font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+            >
               <BookOpen className="w-3.5 h-3.5" /> SDK v3.0.0
             </span>
-            <h1 className="mt-4 text-[34px] sm:text-[42px] font-semibold tracking-[-0.025em]
-              text-gray-900 dark:text-white leading-[1.1]">
+            <h1
+              className="mt-4 text-[34px] sm:text-[42px] font-semibold tracking-[-0.025em]
+              text-gray-900 dark:text-white leading-[1.1]"
+            >
               {t('docsPage.hero.title')}
             </h1>
             <p className="mt-3 text-[16px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[62ch]">
@@ -233,13 +307,18 @@ const Docs = () => {
           </button>
 
           {navOpen && (
-            <div className="lg:hidden fixed inset-0 z-50 bg-gray-900/50" onClick={() => setNavOpen(false)}>
+            <div
+              className="lg:hidden fixed inset-0 z-50 bg-gray-900/50"
+              onClick={() => setNavOpen(false)}
+            >
               <div
                 className="absolute inset-y-0 right-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 p-4 overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{t('docs.nav.title')}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {t('docs.nav.title')}
+                  </span>
                   <button onClick={() => setNavOpen(false)} aria-label={t('common.close')}>
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -251,7 +330,6 @@ const Docs = () => {
 
           {/* ---------------------------------------------------- içerik */}
           <main className="flex-1 min-w-0 py-10 space-y-20 pb-32">
-
             {/* ============================================ QUICK START */}
             <section id="quickstart" className="space-y-5 scroll-mt-24">
               <H2>{t('docsPage.quickstart.title')}</H2>
@@ -260,8 +338,10 @@ const Docs = () => {
               <ol className="space-y-5">
                 {['step1', 'step2', 'step3'].map((step, index) => (
                   <li key={step} className="flex gap-4">
-                    <span className="shrink-0 w-7 h-7 rounded-full bg-gray-900 dark:bg-white
-                      text-white dark:text-gray-900 text-[13px] font-semibold flex items-center justify-center">
+                    <span
+                      className="shrink-0 w-7 h-7 rounded-full bg-gray-900 dark:bg-white
+                      text-white dark:text-gray-900 text-[13px] font-semibold flex items-center justify-center"
+                    >
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1 pt-0.5">
@@ -305,7 +385,11 @@ const Docs = () => {
 
               <H3>{t('docsPage.embed.attrs')}</H3>
               <Table
-                head={[t('docsPage.table.attribute'), t('docsPage.table.required'), t('docsPage.table.description')]}
+                head={[
+                  t('docsPage.table.attribute'),
+                  t('docsPage.table.required'),
+                  t('docsPage.table.description')
+                ]}
                 rows={SCRIPT_ATTRS.map((a) => [
                   <Mono key="a">{a.attr}</Mono>,
                   a.required ? t('common.yes') : t('common.no'),
@@ -316,7 +400,7 @@ const Docs = () => {
               <H3>{t('docsPage.embed.versioning')}</H3>
               <Prose>{t('docsPage.embed.versioningBody')}</Prose>
               <CodeBlock
-                code={`<!-- ${t('docsPage.embed.latest')} -->\n<script src="${origin}/widget.js" data-site-key="YOUR_SITE_KEY" async><\/script>\n\n<!-- ${t('docsPage.embed.pinned')} -->\n<script src="${origin}/widget/v3/widget.js" data-site-key="YOUR_SITE_KEY" async><\/script>`}
+                code={`<!-- ${t('docsPage.embed.latest')} -->\n<script src="${origin}/widget.js" data-site-key="YOUR_SITE_KEY" async>${CLOSE_SCRIPT}\n\n<!-- ${t('docsPage.embed.pinned')} -->\n<script src="${origin}/widget/v3/widget.js" data-site-key="YOUR_SITE_KEY" async>${CLOSE_SCRIPT}`}
                 id="ver"
                 copiedId={copiedId}
                 onCopy={copy}
@@ -326,7 +410,7 @@ const Docs = () => {
               <H3>{t('docsPage.embed.consent')}</H3>
               <Prose>{t('docsPage.embed.consentBody')}</Prose>
               <CodeBlock
-                code={`<script src="${origin}/widget.js"\n        data-site-key="YOUR_SITE_KEY"\n        data-defer="true" async><\/script>\n\n<script>\n  cookieBanner.onAccept(function () {\n    SupportChat.init();\n  });\n<\/script>`}
+                code={`<script src="${origin}/widget.js"\n        data-site-key="YOUR_SITE_KEY"\n        data-defer="true" async>${CLOSE_SCRIPT}\n\n<script>\n  cookieBanner.onAccept(function () {\n    SupportChat.init();\n  });\n${CLOSE_SCRIPT}`}
                 id="consent"
                 copiedId={copiedId}
                 onCopy={copy}
@@ -370,7 +454,9 @@ const Docs = () => {
                 head={[t('docsPage.table.event'), 'payload', t('docsPage.table.description')]}
                 rows={EVENTS.map((e) => [
                   <Mono key="e">{e.name}</Mono>,
-                  <code key="p" className="text-[12px] font-mono text-gray-500 dark:text-gray-400">{e.payload}</code>,
+                  <code key="p" className="text-[12px] font-mono text-gray-500 dark:text-gray-400">
+                    {e.payload}
+                  </code>,
                   e[lang]
                 ])}
               />
@@ -433,9 +519,11 @@ const Docs = () => {
                     onClick={() => setFramework(f.id)}
                     aria-pressed={framework === f.id}
                     className={`px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition
-                      ${framework === f.id
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                      ${
+                        framework === f.id
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
                   >
                     {f.label}
                   </button>
@@ -459,8 +547,14 @@ const Docs = () => {
               <Table
                 head={[t('docsPage.table.endpoint'), t('docsPage.table.description')]}
                 rows={[
-                  [<Mono key="1">GET /api/widget/bootstrap?siteKey=…</Mono>, t('docsPage.backend.bootstrap')],
-                  [<Mono key="2">POST /api/widget/installed</Mono>, t('docsPage.backend.installed')],
+                  [
+                    <Mono key="1">GET /api/widget/bootstrap?siteKey=…</Mono>,
+                    t('docsPage.backend.bootstrap')
+                  ],
+                  [
+                    <Mono key="2">POST /api/widget/installed</Mono>,
+                    t('docsPage.backend.installed')
+                  ],
                   [<Mono key="3">POST /api/files/upload</Mono>, t('docsPage.backend.upload')],
                   [<Mono key="4">POST /api/events/track</Mono>, t('docsPage.backend.track')],
                   [<Mono key="5">WS /widget</Mono>, t('docsPage.backend.socket')]
@@ -468,7 +562,11 @@ const Docs = () => {
               />
               <H3>{t('docsPage.backend.socketEvents')}</H3>
               <Table
-                head={[t('docsPage.table.event'), t('docsPage.table.direction'), t('docsPage.table.description')]}
+                head={[
+                  t('docsPage.table.event'),
+                  t('docsPage.table.direction'),
+                  t('docsPage.table.description')
+                ]}
                 rows={[
                   [<Mono key="a">join-conversation</Mono>, '→', t('docsPage.backend.join')],
                   [<Mono key="b">send-message</Mono>, '→', t('docsPage.backend.send')],
@@ -503,7 +601,7 @@ const Docs = () => {
               <H2>{t('docsPage.localization.title')}</H2>
               <Prose>{t('docsPage.localization.intro')}</Prose>
               <CodeBlock
-                code={`<!-- ${t('docsPage.localization.viaAttr')} -->\n<script src="${origin}/widget.js"\n        data-site-key="YOUR_SITE_KEY"\n        data-locale="en" async><\/script>\n\n<!-- ${t('docsPage.localization.viaApi')} -->\n<script>\n  SupportChat.setLocale('tr');\n<\/script>`}
+                code={`<!-- ${t('docsPage.localization.viaAttr')} -->\n<script src="${origin}/widget.js"\n        data-site-key="YOUR_SITE_KEY"\n        data-locale="en" async>${CLOSE_SCRIPT}\n\n<!-- ${t('docsPage.localization.viaApi')} -->\n<script>\n  SupportChat.setLocale('tr');\n${CLOSE_SCRIPT}`}
                 id="locale"
                 copiedId={copiedId}
                 onCopy={copy}
@@ -552,23 +650,31 @@ const Docs = () => {
                 label={copyLabel}
               />
               <div className="space-y-3">
-                {['notShowing', 'wrongKey', 'csp', 'duplicate', 'styles', 'disconnect'].map((item) => (
-                  <details
-                    key={item}
-                    className="group rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
-                  >
-                    <summary className="px-4 py-3 text-[14px] font-medium text-gray-900 dark:text-white
+                {['notShowing', 'wrongKey', 'csp', 'duplicate', 'styles', 'disconnect'].map(
+                  (item) => (
+                    <details
+                      key={item}
+                      className="group rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
+                    >
+                      <summary
+                        className="px-4 py-3 text-[14px] font-medium text-gray-900 dark:text-white
                       cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60 transition list-none
-                      flex items-center justify-between gap-3">
-                      {t(`docsPage.troubleshooting.${item}.q`)}
-                      <span className="shrink-0 text-gray-400 group-open:rotate-45 transition-transform">+</span>
-                    </summary>
-                    <div className="px-4 pb-4 pt-1 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400
-                      border-t border-gray-100 dark:border-gray-800 max-w-[65ch]">
-                      {t(`docsPage.troubleshooting.${item}.a`)}
-                    </div>
-                  </details>
-                ))}
+                      flex items-center justify-between gap-3"
+                      >
+                        {t(`docsPage.troubleshooting.${item}.q`)}
+                        <span className="shrink-0 text-gray-400 group-open:rotate-45 transition-transform">
+                          +
+                        </span>
+                      </summary>
+                      <div
+                        className="px-4 pb-4 pt-1 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400
+                      border-t border-gray-100 dark:border-gray-800 max-w-[65ch]"
+                      >
+                        {t(`docsPage.troubleshooting.${item}.a`)}
+                      </div>
+                    </details>
+                  )
+                )}
               </div>
             </section>
           </main>

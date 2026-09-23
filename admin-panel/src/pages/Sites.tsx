@@ -8,12 +8,24 @@ import { Plus, Globe, Copy, Check, Trash2, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { Site } from '../types/api';
+import { errorMessage } from '../hooks/useAsync';
 
 interface DeleteTarget {
   isOpen: boolean;
   siteId: string | null;
   siteName: string;
 }
+
+/**
+ * The closing tag of an embed snippet, assembled rather than written whole.
+ *
+ * A literal closing script tag in a file that is ever inlined into an HTML
+ * `<script>` block would terminate that block early. It used to be written with
+ * a backslash before the slash, which reads as a guard but is not one: that is
+ * not an escape sequence in a JavaScript string, so the emitted character was
+ * identical. Splitting it is the version that actually holds.
+ */
+const CLOSE_SCRIPT = `<${'/'}script>`;
 
 const Sites = () => {
   const { t, i18n } = useTranslation();
@@ -24,7 +36,11 @@ const Sites = () => {
   const [showModal, setShowModal] = useState(false);
   const [newSite, setNewSite] = useState({ name: '', domain: '' });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<DeleteTarget>({ isOpen: false, siteId: null, siteName: '' });
+  const [confirmDialog, setConfirmDialog] = useState<DeleteTarget>({
+    isOpen: false,
+    siteId: null,
+    siteName: ''
+  });
 
   useEffect(() => {
     fetchSites();
@@ -35,7 +51,9 @@ const Sites = () => {
       const response = await sitesAPI.getAll();
       setSites(response.data.sites);
     } catch (error) {
-
+      // Reported rather than discarded: a silent failure here leaves the
+      // page showing stale data with nothing to say why.
+      console.error('[sites] request failed', error);
     } finally {
       setLoading(false);
     }
@@ -51,8 +69,7 @@ const Sites = () => {
       clearCache('/sites');
       toast.success(t('sites.createSuccess'));
     } catch (error) {
-
-      toast.error(t('sites.createError') + ': ' + (error.response?.data?.error || error.message));
+      toast.error(errorMessage(error, t('sites.createError')));
     }
   };
 
@@ -61,12 +78,11 @@ const Sites = () => {
 
     try {
       await sitesAPI.delete(siteId as string);
-      setSites(sites.filter(site => site._id !== siteId));
+      setSites(sites.filter((site) => site._id !== siteId));
       clearCache('/sites');
       toast.success(t('sites.deleteSuccess'));
     } catch (error) {
-
-      toast.error(t('sites.deleteError') + ': ' + (error.response?.data?.error || error.message));
+      toast.error(errorMessage(error, t('sites.deleteError')));
     }
   };
 
@@ -94,7 +110,7 @@ const Sites = () => {
     return `<script
   src="${origin}/widget.js"
   data-site-key="${siteKey}"
-  async><\/script>`;
+  async>${CLOSE_SCRIPT}`;
   };
 
   if (loading) {
@@ -111,7 +127,9 @@ const Sites = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('sites.title')}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {t('sites.title')}
+            </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">{t('sites.subtitle')}</p>
           </div>
           <button
@@ -126,7 +144,9 @@ const Sites = () => {
         {sites.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
             <Globe className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('sites.noSites')}</h3>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {t('sites.noSites')}
+            </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{t('sites.noSitesDescription')}</p>
             <button
               onClick={() => setShowModal(true)}
@@ -139,7 +159,10 @@ const Sites = () => {
         ) : (
           <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {sites.map((site) => (
-              <div key={site._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition">
+              <div
+                key={site._id}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition"
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
@@ -151,22 +174,32 @@ const Sites = () => {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span className={`px-2 py-1 text-xs rounded-full ${site.isActive ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${site.isActive ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}
+                    >
                       {site.isActive ? t('sites.active') : t('sites.inactive')}
                     </span>
-                    { /* Kurulum dogrulamasi: widget siteye eklendiginde kendini
+                    {/* Kurulum dogrulamasi: widget siteye eklendiginde kendini
                          bildirir (POST /api/widget/installed). Boylece "kodu
-                         koydum ama calisiyor mu?" sorusu panelden cevaplanir. */ }
-                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${site.installation?.verifiedAt ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${site.installation?.verifiedAt ? 'bg-green-500' : 'bg-gray-400 animate-pulse'}`} />
-                      {site.installation?.verifiedAt ? t('studio.embed.verified') : t('studio.embed.waiting')}
+                         koydum ama calisiyor mu?" sorusu panelden cevaplanir. */}
+                    <span
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${site.installation?.verifiedAt ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${site.installation?.verifiedAt ? 'bg-green-500' : 'bg-gray-400 animate-pulse'}`}
+                      />
+                      {site.installation?.verifiedAt
+                        ? t('studio.embed.verified')
+                        : t('studio.embed.waiting')}
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('sites.siteKey')}</label>
+                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">
+                      {t('sites.siteKey')}
+                    </label>
                     <div className="flex items-center space-x-2">
                       <code className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 dark:text-white px-3 py-2 rounded border border-gray-200 dark:border-gray-600 truncate">
                         {site.siteKey}
@@ -185,13 +218,17 @@ const Sites = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">{t('sites.installCode')}</label>
+                    <label className="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">
+                      {t('sites.installCode')}
+                    </label>
                     <div className="relative">
                       <pre className="text-xs bg-gray-50 dark:bg-gray-700 dark:text-white px-2 sm:px-3 py-2 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto max-w-full whitespace-pre-wrap sm:whitespace-pre modal-scrollbar">
                         {getInstallCode(site.siteKey)}
                       </pre>
                       <button
-                        onClick={() => copyToClipboard(getInstallCode(site.siteKey), `code-${site._id}`)}
+                        onClick={() =>
+                          copyToClipboard(getInstallCode(site.siteKey), `code-${site._id}`)
+                        }
                         className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                         {copiedKey === `code-${site._id}` ? (
@@ -204,13 +241,17 @@ const Sites = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
-                    { /* Dil oneki: /en altindayken oneksiz yol 404'e dusuyordu. */ }
+                    {/* Dil oneki: /en altindayken oneksiz yol 404'e dusuyordu. */}
                     <button
-                      onClick={() => navigate(`${langPrefix}/dashboard/widget-customization/${site._id}`)}
+                      onClick={() =>
+                        navigate(`${langPrefix}/dashboard/widget-customization/${site._id}`)
+                      }
                       className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg transition text-xs sm:text-sm"
                     >
                       <Palette className="w-4 h-4" />
-                      <span className="leading-tight text-center whitespace-normal">{t('studio.title')}</span>
+                      <span className="leading-tight text-center whitespace-normal">
+                        {t('studio.title')}
+                      </span>
                     </button>
                     <button
                       onClick={() => openDeleteConfirm(site._id, site.name)}
@@ -228,7 +269,9 @@ const Sites = () => {
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{t('sites.newSiteModal.title')}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                {t('sites.newSiteModal.title')}
+              </h2>
               <form onSubmit={handleCreateSite} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

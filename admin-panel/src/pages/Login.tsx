@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import AuthLayout, { Field } from '../components/marketing/AuthLayout';
 import { Button } from '../components/marketing/kit';
+import { errorMessage } from '../hooks/useAsync';
 
 const Login = () => {
   const { t } = useTranslation();
@@ -42,8 +43,8 @@ const Login = () => {
       const needsOnboarding = data?.user?.role === 'owner' && data?.user?.isOnboarded === false;
       navigate(needsOnboarding ? routes.onboarding : routes.dashboard);
       toast.success(t('login.success'));
-    } catch (err) {
-      toast.error(err.response?.data?.error || t('login.error'));
+    } catch (error) {
+      toast.error(errorMessage(error, t('login.error')));
     } finally {
       setLoading(false);
     }
@@ -64,7 +65,10 @@ const Login = () => {
         footer={
           <p className="text-[14px] text-gray-600 dark:text-gray-400">
             {t('login.noAccount')}{' '}
-            <Link to={routes.register} className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+            <Link
+              to={routes.register}
+              className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
               {t('login.register')}
             </Link>
           </p>

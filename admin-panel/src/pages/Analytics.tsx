@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -20,29 +20,17 @@ import {
   ResponsiveContainer,
   ComposedChart
 } from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Clock,
-  Users,
-  AlertCircle,
-  CheckCircle2,
-  BarChart3,
-  PieChart as PieChartIcon,
-  Calendar,
-  Filter
-} from 'lucide-react';
+import { TrendingUp, Clock, AlertCircle, CheckCircle2, BarChart3 } from 'lucide-react';
 import { analyticsAPI } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
-
+import { formatMinutes } from '../lib/format';
+import { errorMessage } from '../hooks/useAsync';
 const Analytics = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('7days');
-  const [selectedMetric, setSelectedMetric] = useState('all');
   const { socket } = useSocket();
   const [stats, setStats] = useState<Record<string, number>>({
     openTickets: 0,
@@ -84,9 +72,7 @@ const Analytics = () => {
     try {
       setLoading(true);
       setError(null);
-
       const { data } = await analyticsAPI.getOverview(timeRange);
-
       const figures = data.stats as unknown as Record<string, number>;
       setStats({
         openTickets: figures.openTickets,
@@ -100,25 +86,24 @@ const Analytics = () => {
         avgFirstResponseMinutes: figures.avgFirstResponseMinutes,
         avgResolutionMinutes: figures.avgResolutionMinutes
       });
-
       const locale = language === 'tr' ? 'tr-TR' : 'en-US';
       setDailyTickets(
         data.dailyTickets.map((d) => ({
           ...d,
-          date: new Date(`${d.date}T00:00:00`).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
+          date: new Date(`${d.date}T00:00:00`).toLocaleDateString(locale, {
+            day: '2-digit',
+            month: 'short'
+          })
         }))
       );
-
       // `target` is the normal-priority first response goal the SLA defaults
       // use, drawn as the reference line on the hourly chart.
       setResponseTimeData(data.responseTimeByHour.map((h) => ({ ...h, target: 15 })));
-
       setChannelDistribution(data.channelDistribution);
       // The endpoint reports met / breached / pending per clock as one object;
       // the chart reads it by name rather than as a series.
       setSlaCompliance(data.slaCompliance as any);
       setDepartmentStats(data.departmentStats);
-
       // The chart plots satisfaction on a 0-100 axis while the API reports the
       // raw 1-5 average, so it is converted here rather than server side.
       setAgentPerformance(
@@ -128,23 +113,10 @@ const Analytics = () => {
         }))
       );
     } catch (err) {
-      setError(err.response?.data?.error || 'Analitik verileri yüklenemedi.');
+      setError(errorMessage(err, 'Analitik verileri yüklenemedi.'));
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatMinutes = (minutes: number) => {
-    // Null means nothing in the window could be measured; a zero here would
-    // read as an instant reply.
-    if (minutes === null || minutes === undefined) return '—';
-    if (!minutes) return '0dk';
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}s ${mins}dk`;
-    }
-    return `${mins}dk`;
   };
   if (loading) {
     return (
@@ -169,7 +141,16 @@ const Analytics = () => {
       </div>
     );
   }
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: any; label?: any; [prop: string]: any }) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label
+  }: {
+    active?: boolean;
+    payload?: any;
+    label?: any;
+    [prop: string]: any;
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
@@ -197,9 +178,7 @@ const Analytics = () => {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('analytics.title')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              {t('analytics.subtitle')}
-            </p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">{t('analytics.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <select
@@ -224,7 +203,9 @@ const Analytics = () => {
                 +12%
               </span>
             </div>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.openTickets}</h3>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {stats.openTickets}
+            </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.openTickets')}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -238,7 +219,9 @@ const Analytics = () => {
                 </span>
               )}
             </div>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.slaBreaches}</h3>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {stats.slaBreaches}
+            </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.slaBreaches')}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -248,7 +231,9 @@ const Analytics = () => {
               </div>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.unassigned}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.unassignedTickets')}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('analytics.unassignedTickets')}
+            </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -260,8 +245,12 @@ const Analytics = () => {
                 +3%
               </span>
             </div>
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{stats.satisfaction}%</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{t('analytics.satisfaction')}</p>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {stats.satisfaction}%
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('analytics.satisfaction')}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -282,11 +271,7 @@ const Analytics = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                <XAxis
-                  dataKey="date"
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '12px' }}
-                />
+                <XAxis dataKey="date" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
@@ -316,11 +301,7 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={responseTimeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                <XAxis
-                  dataKey="hour"
-                  stroke="#9CA3AF"
-                  style={{ fontSize: '12px' }}
-                />
+                <XAxis dataKey="hour" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
@@ -375,11 +356,20 @@ const Analytics = () => {
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               {t('analytics.slaCompliance')}
             </h3>
-            {slaCompliance.length === 0 || slaCompliance.every(item => item.met === 0 && item.breached === 0 && item.pending === 0) ? (
+            {slaCompliance.length === 0 ||
+            slaCompliance.every(
+              (item) => item.met === 0 && item.breached === 0 && item.pending === 0
+            ) ? (
               <div className="h-[250px] flex items-center justify-center text-gray-500 dark:text-gray-400">
                 <div className="text-center">
-                  <p className="text-lg mb-2">{language === 'tr' ? 'Henüz SLA verisi yok' : 'No SLA data yet'}</p>
-                  <p className="text-sm">{language === 'tr' ? 'Konuşmalar yanıtlandıkça veriler burada görünecek' : 'Data will appear as conversations are responded to'}</p>
+                  <p className="text-lg mb-2">
+                    {language === 'tr' ? 'Henüz SLA verisi yok' : 'No SLA data yet'}
+                  </p>
+                  <p className="text-sm">
+                    {language === 'tr'
+                      ? 'Konuşmalar yanıtlandıkça veriler burada görünecek'
+                      : 'Data will appear as conversations are responded to'}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -390,9 +380,24 @@ const Analytics = () => {
                   <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar dataKey="met" name={language === 'tr' ? 'SLA Karşılandı' : 'SLA Met'} fill="#10B981" stackId="a" />
-                  <Bar dataKey="pending" name={language === 'tr' ? 'Beklemede' : 'Pending'} fill="#F59E0B" stackId="a" />
-                  <Bar dataKey="breached" name={language === 'tr' ? 'SLA İhlal Edildi' : 'SLA Breached'} fill="#EF4444" stackId="a" />
+                  <Bar
+                    dataKey="met"
+                    name={language === 'tr' ? 'SLA Karşılandı' : 'SLA Met'}
+                    fill="#10B981"
+                    stackId="a"
+                  />
+                  <Bar
+                    dataKey="pending"
+                    name={language === 'tr' ? 'Beklemede' : 'Pending'}
+                    fill="#F59E0B"
+                    stackId="a"
+                  />
+                  <Bar
+                    dataKey="breached"
+                    name={language === 'tr' ? 'SLA İhlal Edildi' : 'SLA Breached'}
+                    fill="#EF4444"
+                    stackId="a"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -434,21 +439,32 @@ const Analytics = () => {
                   {departmentStats.map((dept, index) => (
                     <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-6 py-4">
-                        <span className="font-medium text-gray-900 dark:text-white">{dept.name}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {dept.name}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{dept.tickets}</td>
-                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{dept.resolved}</td>
+                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                        {dept.resolved}
+                      </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          dept.sla === null ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' :
-                          dept.sla >= 95 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                          dept.sla >= 90 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                          'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            dept.sla === null
+                              ? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                              : dept.sla >= 95
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : dept.sla >= 90
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                          }`}
+                        >
                           {dept.sla === null ? '—' : `${dept.sla}%`}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{formatMinutes(dept.avgTime)}</td>
+                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
+                        {formatMinutes(dept.avgTime)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -469,7 +485,9 @@ const Analytics = () => {
               >
                 <option value="all">{language === 'tr' ? 'Tüm Temsilciler' : 'All Agents'}</option>
                 {agentPerformance.map((agent, idx) => (
-                  <option key={idx} value={agent.name}>{agent.name}</option>
+                  <option key={idx} value={agent.name}>
+                    {agent.name}
+                  </option>
                 ))}
               </select>
             )}
@@ -481,30 +499,38 @@ const Analytics = () => {
           ) : selectedAgent !== 'all' ? (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {(() => {
-                const agent = agentPerformance.find(a => a.name === selectedAgent);
+                const agent = agentPerformance.find((a) => a.name === selectedAgent);
                 if (!agent) return null;
                 return (
                   <>
                     <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{agent.resolved}</div>
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {agent.resolved}
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {language === 'tr' ? 'Çözülen Talepler' : 'Resolved Tickets'}
                       </div>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{agent.active}</div>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {agent.active}
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {language === 'tr' ? 'Aktif Konuşmalar' : 'Active Conversations'}
                       </div>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">{agent.satisfaction}%</div>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {agent.satisfaction}%
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {language === 'tr' ? 'Memnuniyet' : 'Satisfaction'}
                       </div>
                     </div>
                     <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatMinutes(agent.avgTime)}</div>
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        {formatMinutes(agent.avgTime)}
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         {language === 'tr' ? 'Ort. Yanıt Süresi' : 'Avg Response Time'}
                       </div>
@@ -521,7 +547,11 @@ const Analytics = () => {
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Bar dataKey="resolved" name={language === 'tr' ? 'Çözülen Talepler' : 'Resolved Tickets'} fill="#8B5CF6" />
+                <Bar
+                  dataKey="resolved"
+                  name={language === 'tr' ? 'Çözülen Talepler' : 'Resolved Tickets'}
+                  fill="#8B5CF6"
+                />
                 <Line
                   type="monotone"
                   dataKey="satisfaction"

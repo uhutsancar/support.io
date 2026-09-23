@@ -35,18 +35,20 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('theme', theme);
   }, [theme]);
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
   const setLightTheme = () => setTheme('light');
   const setDarkTheme = () => setTheme('dark');
   return (
-    <ThemeContext.Provider value={{ 
-      theme, 
-      toggleTheme, 
-      setLightTheme, 
-      setDarkTheme,
-      isDark: theme === 'dark' 
-    }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        toggleTheme,
+        setLightTheme,
+        setDarkTheme,
+        isDark: theme === 'dark'
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

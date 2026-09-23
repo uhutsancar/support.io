@@ -13,25 +13,61 @@
  * bir belgeye çeviriyordu.
  */
 
-import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  MessageSquare, Code2, GitBranch, Zap, Send, BookOpen, BarChart3, Users,
-  Sparkles, Eye, Briefcase, ArrowLeft, ArrowRight, Check, Plus, Terminal
+  MessageSquare,
+  Code2,
+  GitBranch,
+  Zap,
+  Send,
+  BookOpen,
+  BarChart3,
+  Users,
+  Sparkles,
+  Eye,
+  Briefcase,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Plus,
+  Terminal
 } from 'lucide-react';
 import Shell, { useMarketingRoutes } from '../components/marketing/Shell';
 import {
-  Button, TextLink, Section, Card, AccentIcon, Pill, StepNumber, AppFrame, accent
+  Button,
+  TextLink,
+  Section,
+  Card,
+  AccentIcon,
+  Pill,
+  StepNumber,
+  AppFrame,
+  accent
 } from '../components/marketing/kit';
 import { FEATURE_VISUAL, WidgetVisual } from '../components/marketing/visuals';
 import {
-  FEATURE_IDS, FEATURE_ICON, FEATURE_PLAN, FEATURE_TONE, PLAN_LABEL, FEATURE_GROUPS
+  FEATURE_IDS,
+  FEATURE_ICON,
+  FEATURE_PLAN,
+  FEATURE_TONE,
+  PLAN_LABEL,
+  FEATURE_GROUPS
 } from './marketing/features';
 
 const ICONS = {
-  MessageSquare, Code2, GitBranch, Zap, Send, BookOpen, BarChart3, Users, Sparkles, Eye, Briefcase
+  MessageSquare,
+  Code2,
+  GitBranch,
+  Zap,
+  Send,
+  BookOpen,
+  BarChart3,
+  Users,
+  Sparkles,
+  Eye,
+  Briefcase
 };
 
 /** Widget görseli kendi kabuğunu taşır; diğerleri panel penceresine girer. */
@@ -40,8 +76,10 @@ const renderVisual = (slug: string, t: any) => {
   if (!Visual) return null;
   if (Visual === WidgetVisual) {
     return (
-      <div className="flex justify-center py-6 rounded-2xl bg-gray-50 dark:bg-white/[0.03]
-        border border-gray-200 dark:border-white/[0.08]">
+      <div
+        className="flex justify-center py-6 rounded-2xl bg-gray-50 dark:bg-white/[0.03]
+        border border-gray-200 dark:border-white/[0.08]"
+      >
         <WidgetVisual />
       </div>
     );
@@ -84,7 +122,8 @@ const FeatureDetail = () => {
 
   if (!FEATURE_IDS.includes(slug)) return <NotFound t={t} routes={routes} />;
 
-  const Icon = ICONS[FEATURE_ICON[slug as keyof typeof FEATURE_ICON] as keyof typeof ICONS] || MessageSquare;
+  const Icon =
+    ICONS[FEATURE_ICON[slug as keyof typeof FEATURE_ICON] as keyof typeof ICONS] || MessageSquare;
   const tone = FEATURE_TONE[slug as keyof typeof FEATURE_TONE];
   const a = accent(tone);
   const plan = FEATURE_PLAN[slug as keyof typeof FEATURE_PLAN];
@@ -128,13 +167,15 @@ const FeatureDetail = () => {
               <div className="flex items-center gap-2.5">
                 <AccentIcon icon={Icon} tone={tone} size="lg" />
                 <div className="flex flex-wrap gap-1.5">
-                  <Pill tone={tone}>{PLAN_LABEL[plan as keyof typeof PLAN_LABEL][lang]}</Pill>
-                  <Pill tone={tone}>{t(key('setup'))}</Pill>
+                  <Pill>{PLAN_LABEL[plan as keyof typeof PLAN_LABEL][lang]}</Pill>
+                  <Pill>{t(key('setup'))}</Pill>
                 </div>
               </div>
 
-              <h1 className="mt-6 text-[34px] sm:text-[46px] font-semibold tracking-[-0.035em]
-                leading-[1.07] text-gray-900 dark:text-white max-w-[17ch]">
+              <h1
+                className="mt-6 text-[34px] sm:text-[46px] font-semibold tracking-[-0.035em]
+                leading-[1.07] text-gray-900 dark:text-white max-w-[17ch]"
+              >
                 {t(key('title'))}
               </h1>
               <p className="mt-5 text-[17.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[52ch]">
@@ -142,8 +183,12 @@ const FeatureDetail = () => {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button to={routes.register} arrow>{t('landing.home.btnStart')}</Button>
-                <Button to={routes.pricing} variant="secondary">{t('landing.home.ctaBtn2')}</Button>
+                <Button to={routes.register} arrow>
+                  {t('landing.home.btnStart')}
+                </Button>
+                <Button to={routes.pricing} variant="secondary">
+                  {t('landing.home.ctaBtn2')}
+                </Button>
               </div>
             </div>
 
@@ -163,7 +208,9 @@ const FeatureDetail = () => {
               <div key={i}>
                 <div className="flex gap-2.5">
                   <Check className={['w-4 h-4 mt-1 shrink-0', a.text].join(' ')} />
-                  <span className="text-[14.5px] leading-relaxed text-gray-700 dark:text-gray-300">{b}</span>
+                  <span className="text-[14.5px] leading-relaxed text-gray-700 dark:text-gray-300">
+                    {b}
+                  </span>
                 </div>
               </div>
             ))}
@@ -176,8 +223,10 @@ const FeatureDetail = () => {
         <Section bordered>
           <div className="grid lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)] gap-10 lg:gap-16">
             <div>
-              <h2 className="text-[27px] sm:text-[32px] font-semibold tracking-[-0.028em]
-                leading-[1.15] text-gray-900 dark:text-white max-w-[16ch]">
+              <h2
+                className="text-[27px] sm:text-[32px] font-semibold tracking-[-0.028em]
+                leading-[1.15] text-gray-900 dark:text-white max-w-[16ch]"
+              >
                 {t('featuresPage.howTitle')}
               </h2>
               <p className="mt-4 text-[15.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[44ch]">
@@ -190,7 +239,9 @@ const FeatureDetail = () => {
                 <li key={i} className="flex gap-4">
                   <StepNumber n={i + 1} tone={tone} />
                   <div className="pt-1.5">
-                    <p className="text-[15.5px] font-semibold text-gray-900 dark:text-white">{s.title}</p>
+                    <p className="text-[15.5px] font-semibold text-gray-900 dark:text-white">
+                      {s.title}
+                    </p>
                     <p className="mt-1.5 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[56ch]">
                       {s.body}
                     </p>
@@ -205,9 +256,11 @@ const FeatureDetail = () => {
       {/* --------------------------------------------------------- teknik not */}
       <Section tone="subtle" bordered size="sm">
         <details className="group max-w-4xl">
-          <summary className="flex items-center gap-2.5 cursor-pointer list-none
+          <summary
+            className="flex items-center gap-2.5 cursor-pointer list-none
             text-[14.5px] font-medium text-gray-700 dark:text-gray-300
-            hover:text-gray-900 dark:hover:text-white transition">
+            hover:text-gray-900 dark:hover:text-white transition"
+          >
             <Terminal className="w-4 h-4 text-gray-400" />
             {t('featuresPage.techTitle')}
             <Plus className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-45" />
@@ -226,7 +279,9 @@ const FeatureDetail = () => {
                 </li>
               ))}
             </ul>
-            <TextLink to={routes.docs} className="mt-6">{t('featuresPage.readDocs')}</TextLink>
+            <TextLink to={routes.docs} className="mt-6">
+              {t('featuresPage.readDocs')}
+            </TextLink>
           </div>
         </details>
       </Section>
@@ -242,11 +297,16 @@ const FeatureDetail = () => {
 
         <div className="mt-8 grid sm:grid-cols-3 gap-4">
           {siblings.map((id) => {
-            const SiblingIcon = ICONS[FEATURE_ICON[id as keyof typeof FEATURE_ICON] as keyof typeof ICONS] || MessageSquare;
+            const SiblingIcon =
+              ICONS[FEATURE_ICON[id as keyof typeof FEATURE_ICON] as keyof typeof ICONS] ||
+              MessageSquare;
             return (
               <Link key={id} to={routes.features + '/' + id} className="group block h-full">
                 <Card hover className="h-full p-5">
-                  <AccentIcon icon={SiblingIcon} tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]} />
+                  <AccentIcon
+                    icon={SiblingIcon}
+                    tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]}
+                  />
                   <h3 className="mt-4 text-[15.5px] font-semibold text-gray-900 dark:text-white">
                     {t('featuresPage.items.' + id + '.title')}
                   </h3>

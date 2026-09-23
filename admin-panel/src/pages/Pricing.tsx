@@ -13,13 +13,19 @@
  * "Gelişmiş Yapay Zeka Botları" yazıyordu; hiçbirinin karşılığı yoktu.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Check, Minus, Sparkles, Store, Rocket, Building2 } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
 import {
-  Button, Section, SectionHead, Card, AccentIcon, Accordion, accent
+  Button,
+  Section,
+  SectionHead,
+  Card,
+  AccentIcon,
+  Accordion,
+  accent
 } from '../components/marketing/kit';
 
 const PLANS = [
@@ -47,7 +53,11 @@ const MATRIX = [
   { key: 'sso', free: false, pro: false, enterprise: true }
 ];
 
-const Cell = ({ value, yesLabel, noLabel }: {
+const Cell = ({
+  value,
+  yesLabel,
+  noLabel
+}: {
   /** true / false render a tick or a dash; anything else is shown verbatim. */
   value?: boolean | string;
   yesLabel?: string;
@@ -56,7 +66,10 @@ const Cell = ({ value, yesLabel, noLabel }: {
   if (value === true) {
     return (
       <>
-        <Check className="w-[18px] h-[18px] mx-auto text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+        <Check
+          className="w-[18px] h-[18px] mx-auto text-emerald-600 dark:text-emerald-400"
+          aria-hidden="true"
+        />
         <span className="sr-only">{yesLabel}</span>
       </>
     );
@@ -64,12 +77,19 @@ const Cell = ({ value, yesLabel, noLabel }: {
   if (value === false) {
     return (
       <>
-        <Minus className="w-[18px] h-[18px] mx-auto text-gray-300 dark:text-gray-700" aria-hidden="true" />
+        <Minus
+          className="w-[18px] h-[18px] mx-auto text-gray-300 dark:text-gray-700"
+          aria-hidden="true"
+        />
         <span className="sr-only">{noLabel}</span>
       </>
     );
   }
-  return <span className="text-[14px] font-medium text-gray-900 dark:text-white tabular-nums">{value}</span>;
+  return (
+    <span className="text-[14px] font-medium text-gray-900 dark:text-white tabular-nums">
+      {value}
+    </span>
+  );
 };
 
 const Pricing = () => {
@@ -123,8 +143,10 @@ const Pricing = () => {
                 {option.label}
               </button>
             ))}
-            <span className="ml-1 mr-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold
-              bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+            <span
+              className="ml-1 mr-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold
+              bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+            >
               {t('pricingPage.discount')}
             </span>
           </div>
@@ -134,9 +156,11 @@ const Pricing = () => {
       {/* ----------------------------------------------------- plan kartları */}
       <Section size="sm">
         <div className="grid gap-5 lg:grid-cols-3">
-          {PLANS.map((plan, i) => {
+          {PLANS.map((plan, _i) => {
             const price = yearly ? plan.yearly : plan.monthly;
-            const features = t('pricingPage.plans.' + plan.id + '.features', { returnObjects: true });
+            const features = t('pricingPage.plans.' + plan.id + '.features', {
+              returnObjects: true
+            });
             const list = Array.isArray(features) ? features : [];
             const a = accent(plan.tone);
 
@@ -151,9 +175,11 @@ const Pricing = () => {
                   ].join(' ')}
                 >
                   {plan.highlight && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full
+                    <span
+                      className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full
                       text-[11px] font-semibold uppercase tracking-wider bg-indigo-600 text-white
-                      shadow-[0_6px_16px_-6px_rgba(79,70,229,.8)] whitespace-nowrap">
+                      shadow-[0_6px_16px_-6px_rgba(79,70,229,.8)] whitespace-nowrap"
+                    >
                       {t('pricingPage.popular')}
                     </span>
                   )}
@@ -176,8 +202,10 @@ const Pricing = () => {
                       </span>
                     ) : (
                       <>
-                        <span className="text-[40px] font-semibold tracking-[-0.038em]
-                          text-gray-900 dark:text-white tabular-nums">
+                        <span
+                          className="text-[40px] font-semibold tracking-[-0.038em]
+                          text-gray-900 dark:text-white tabular-nums"
+                        >
                           {currency.format(price)}
                         </span>
                         {/*
@@ -213,8 +241,10 @@ const Pricing = () => {
                     {t('pricingPage.plans.' + plan.id + '.cta')}
                   </Button>
 
-                  <p className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                    text-gray-400 dark:text-gray-500">
+                  <p
+                    className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.08em]
+                    text-gray-400 dark:text-gray-500"
+                  >
                     {t('pricingPage.plans.' + plan.id + '.includes')}
                   </p>
                   <ul className="mt-3 space-y-2.5 flex-1">
@@ -264,23 +294,34 @@ const Pricing = () => {
 
       {/* --------------------------------------------- karşılaştırma tablosu */}
       <Section bordered>
-        <SectionHead title={t('pricingPage.compareTitle')} description={t('pricingPage.compareDesc')} />
+        <SectionHead
+          title={t('pricingPage.compareTitle')}
+          description={t('pricingPage.compareDesc')}
+        />
 
         <div className="mt-10 overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
           <table className="w-full min-w-[620px] border-collapse text-left">
             <caption className="sr-only">{t('pricingPage.compareTitle')}</caption>
             <thead>
               <tr>
-                <th scope="col" className="pb-4 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                  text-gray-400 dark:text-gray-500">
+                <th
+                  scope="col"
+                  className="pb-4 text-[11.5px] font-semibold uppercase tracking-[0.08em]
+                  text-gray-400 dark:text-gray-500"
+                >
                   {t('pricingPage.feature')}
                 </th>
                 {PLANS.map((plan) => (
-                  <th key={plan.id} scope="col"
+                  <th
+                    key={plan.id}
+                    scope="col"
                     className={[
                       'pb-4 w-[130px] text-center text-[14px] font-semibold',
-                      plan.highlight ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white'
-                    ].join(' ')}>
+                      plan.highlight
+                        ? 'text-indigo-600 dark:text-indigo-400'
+                        : 'text-gray-900 dark:text-white'
+                    ].join(' ')}
+                  >
                     {t('pricingPage.plans.' + plan.id + '.name')}
                   </th>
                 ))}
@@ -288,17 +329,30 @@ const Pricing = () => {
             </thead>
             <tbody>
               {MATRIX.map((row) => (
-                <tr key={row.key} className="border-t border-gray-100 dark:border-white/[0.06]
-                  hover:bg-gray-50/70 dark:hover:bg-white/[0.02] transition-colors">
-                  <th scope="row" className="py-3.5 pr-4 text-[14px] font-normal text-gray-700 dark:text-gray-300">
+                <tr
+                  key={row.key}
+                  className="border-t border-gray-100 dark:border-white/[0.06]
+                  hover:bg-gray-50/70 dark:hover:bg-white/[0.02] transition-colors"
+                >
+                  <th
+                    scope="row"
+                    className="py-3.5 pr-4 text-[14px] font-normal text-gray-700 dark:text-gray-300"
+                  >
                     {t('pricingPage.matrix.' + row.key)}
                   </th>
                   {['free', 'pro', 'enterprise'].map((plan) => (
-                    <td key={plan} className={[
-                      'py-3.5 text-center',
-                      plan === 'pro' ? 'bg-indigo-50/40 dark:bg-indigo-500/[0.05]' : ''
-                    ].join(' ')}>
-                      <Cell value={row[plan as keyof typeof row]} yesLabel={t('common.yes')} noLabel={t('common.no')} />
+                    <td
+                      key={plan}
+                      className={[
+                        'py-3.5 text-center',
+                        plan === 'pro' ? 'bg-indigo-50/40 dark:bg-indigo-500/[0.05]' : ''
+                      ].join(' ')}
+                    >
+                      <Cell
+                        value={row[plan as keyof typeof row]}
+                        yesLabel={t('common.yes')}
+                        noLabel={t('common.no')}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -319,17 +373,26 @@ const Pricing = () => {
       {/* ------------------------------------------------------------- CTA */}
       <Section bordered>
         <div className="text-center max-w-2xl mx-auto">
-          <Sparkles className="w-7 h-7 mx-auto text-indigo-600 dark:text-indigo-400" strokeWidth={1.8} />
-          <h2 className="mt-5 text-[30px] sm:text-[36px] font-semibold tracking-[-0.03em]
-            leading-[1.12] text-gray-900 dark:text-white">
+          <Sparkles
+            className="w-7 h-7 mx-auto text-indigo-600 dark:text-indigo-400"
+            strokeWidth={1.8}
+          />
+          <h2
+            className="mt-5 text-[30px] sm:text-[36px] font-semibold tracking-[-0.03em]
+            leading-[1.12] text-gray-900 dark:text-white"
+          >
             {t('landing.home.ctaTitle')}
           </h2>
           <p className="mt-4 text-[16.5px] leading-relaxed text-gray-600 dark:text-gray-400">
             {t('landing.home.ctaDesc')}
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Button to={routes.register} size="lg" arrow>{t('landing.home.ctaBtn1')}</Button>
-            <Button to={routes.docs} variant="secondary" size="lg">{t('landing.home.btnDocs')}</Button>
+            <Button to={routes.register} size="lg" arrow>
+              {t('landing.home.ctaBtn1')}
+            </Button>
+            <Button to={routes.docs} variant="secondary" size="lg">
+              {t('landing.home.btnDocs')}
+            </Button>
           </div>
         </div>
       </Section>

@@ -6,11 +6,21 @@ import { useLanguage } from '../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 import { departmentsAPI, teamAPI, sitesAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { 
-  Folder, Plus, Edit, Trash2, Users, MessageSquare, 
-  Settings, TrendingUp, Clock, Search, Globe 
+import {
+  Folder,
+  Plus,
+  Edit,
+  Trash2,
+  Users,
+  MessageSquare,
+  Settings,
+  TrendingUp,
+  Clock,
+  Search,
+  Globe
 } from 'lucide-react';
 import type { Department, Site, TeamMember } from '../types/api';
+import { errorMessage } from '../hooks/useAsync';
 
 const Departments = () => {
   const { t } = useTranslation();
@@ -30,7 +40,11 @@ const Departments = () => {
   const [loading, setLoading] = useState(true);
   // Per-department aggregates, keyed by department id.
   const [stats, setStats] = useState<Record<string, Record<string, any>>>({});
-  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; departmentId: string | null; departmentName: string }>({
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    departmentId: string | null;
+    departmentName: string;
+  }>({
     isOpen: false,
     departmentId: null,
     departmentName: ''
@@ -54,7 +68,7 @@ const Departments = () => {
       } else {
         setLoading(false);
       }
-    } catch (error) {
+    } catch {
       setLoading(false);
     }
   };
@@ -69,10 +83,13 @@ const Departments = () => {
           const statsResponse = await departmentsAPI.getStats(dept._id);
           statsData[dept._id as keyof typeof statsData] = statsResponse.data;
         } catch (error) {
+          // Reported rather than discarded: a silent failure here leaves the
+          // page showing stale data with nothing to say why.
+          console.error('[departments] request failed', error);
         }
       }
       setStats(statsData);
-    } catch (error) {
+    } catch {
       setDepartments([]);
     } finally {
       setLoading(false);
@@ -83,6 +100,9 @@ const Departments = () => {
       const response = await teamAPI.getAll(selectedSite);
       setTeamMembers(response.data || []);
     } catch (error) {
+      // Reported rather than discarded: a silent failure here leaves the
+      // page showing stale data with nothing to say why.
+      console.error('[departments] request failed', error);
     }
   };
   const handleDeleteDepartment = async () => {
@@ -93,15 +113,16 @@ const Departments = () => {
       await fetchDepartments();
       toast.success(t('departments.deleteSuccess'));
     } catch (error) {
-      toast.error(error.response?.data?.error || error.response?.data?.message || t('departments.deleteError'));
+      toast.error(errorMessage(error, t('departments.deleteError')));
     }
   };
   const openDeleteConfirm = (departmentId: string, departmentName: any) => {
     setConfirmDialog({ isOpen: true, departmentId, departmentName });
   };
-  const filteredDepartments = departments.filter(dept =>
-    dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dept.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDepartments = departments.filter(
+    (dept) =>
+      dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dept.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
     <div className="p-6">
@@ -115,9 +136,7 @@ const Departments = () => {
               <Folder className="w-6 h-6" />
               {t('departments.title')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {t('departments.subtitle')}
-            </p>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">{t('departments.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
@@ -133,8 +152,10 @@ const Departments = () => {
             onChange={(e) => setSelectedSite(e.target.value)}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
-            {sites.map(site => (
-              <option key={site._id} value={site._id}>{site.name}</option>
+            {sites.map((site) => (
+              <option key={site._id} value={site._id}>
+                {site.name}
+              </option>
             ))}
           </select>
           <div className="flex-1 relative">
@@ -178,13 +199,16 @@ const Departments = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDepartments.map(dept => {
+          {filteredDepartments.map((dept) => {
             const deptStats = stats[dept._id as keyof typeof stats] || {};
             return (
-              <div key={dept._id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition">
+              <div
+                key={dept._id}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition"
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div 
+                    <div
                       className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
                       style={{ backgroundColor: dept.color + '20' }}
                     >
@@ -227,10 +251,15 @@ const Departments = () => {
                 </div>
                 {dept.members && dept.members.length > 0 && (
                   <div className="mb-4">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('departments.members')}:</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                      {t('departments.members')}:
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {dept.members.slice(0, 5).map((member, idx) => (
-                        <div key={idx} className="flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                        <div
+                          key={idx}
+                          className="flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded"
+                        >
                           <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs">
                             {member.userId?.name?.charAt(0).toUpperCase() || '?'}
                           </div>
@@ -244,7 +273,7 @@ const Departments = () => {
                       ))}
                       {dept.members.length > 5 && (
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {t('departments.moreMembers', { count: dept.members.length - 5 })}
+                          {t('departments.moreMembers', { count: dept.members.length - 5 })}
                         </span>
                       )}
                     </div>
@@ -254,19 +283,27 @@ const Departments = () => {
                   <div className="flex items-center gap-2">
                     <Settings className="w-3 h-3" />
                     <span>
-                      {t('departments.autoAssign')}: {dept.autoAssignRules?.enabled ? 
-                        <span className="text-green-600 dark:text-green-400">{t('departments.on')} ({dept.autoAssignRules.strategy})</span> : 
+                      {t('departments.autoAssign')}:{' '}
+                      {dept.autoAssignRules?.enabled ? (
+                        <span className="text-green-600 dark:text-green-400">
+                          {t('departments.on')} ({dept.autoAssignRules.strategy})
+                        </span>
+                      ) : (
                         <span className="text-gray-400">{t('departments.off')}</span>
-                      }
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Clock className="w-3 h-3" />
                     <span>
-                      {t('departments.businessHours')}: {dept.businessHours?.enabled ? 
-                        <span className="text-green-600 dark:text-green-400">{t('departments.on')}</span> : 
+                      {t('departments.businessHours')}:{' '}
+                      {dept.businessHours?.enabled ? (
+                        <span className="text-green-600 dark:text-green-400">
+                          {t('departments.on')}
+                        </span>
+                      ) : (
                         <span className="text-gray-400">{t('departments.off')}</span>
-                      }
+                      )}
                     </span>
                   </div>
                 </div>
@@ -299,7 +336,7 @@ const Departments = () => {
             setShowAddModal(false);
             setSelectedDepartment(null);
           }}
-          onSave={async (newDepartment: any) => {
+          onSave={async (_newDepartment: any) => {
             await fetchDepartments();
             setShowAddModal(false);
             setSelectedDepartment(null);
@@ -319,18 +356,32 @@ const Departments = () => {
     </div>
   );
 };
-const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSave }: { department?: any; siteId?: string; teamMembers?: any; onClose?: (...args: any[]) => void; onSave?: (...args: any[]) => void; [prop: string]: any }) => {
+const AddEditDepartmentModal = ({
+  department,
+  siteId,
+  teamMembers,
+  onClose,
+  onSave
+}: {
+  department?: any;
+  siteId?: string;
+  teamMembers?: any;
+  onClose?: (...args: any[]) => void;
+  onSave?: (...args: any[]) => void;
+  [prop: string]: any;
+}) => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const langPrefix = language === 'en' ? '/en' : '';
-  const initialMembers = department?.members?.map((m: any) => {
-    const memberId = m.userId?._id || m.userId;
-    const memberRole = m.role;
-    return {
-      userId: memberId,
-      role: memberRole
-    };
-  }) || [];
+  const initialMembers =
+    department?.members?.map((m: any) => {
+      const memberId = m.userId?._id || m.userId;
+      const memberRole = m.role;
+      return {
+        userId: memberId,
+        role: memberRole
+      };
+    }) || [];
   const [formData, setFormData] = useState({
     name: department?.name || '',
     description: department?.description || '',
@@ -356,9 +407,9 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
       return;
     }
     const newMember = { userId: selectedMember, role: memberRole };
-    setFormData(prevFormData => {
-      const exists = prevFormData.members.find((m: any) => 
-        (m.userId?._id || m.userId) === selectedMember
+    setFormData((prevFormData) => {
+      const exists = prevFormData.members.find(
+        (m: any) => (m.userId?._id || m.userId) === selectedMember
       );
       if (exists) {
         toast.error(t('departments.modal.memberExists'));
@@ -373,11 +424,9 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
     setMemberRole('agent');
   };
   const handleRemoveMember = (userId: string) => {
-    setFormData(prevFormData => ({
+    setFormData((prevFormData) => ({
       ...prevFormData,
-      members: prevFormData.members.filter((m: any) => 
-        (m.userId?._id || m.userId) !== userId
-      )
+      members: prevFormData.members.filter((m: any) => (m.userId?._id || m.userId) !== userId)
     }));
   };
   const handleSubmit = async (e: React.FormEvent) => {
@@ -398,15 +447,26 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
         response = await departmentsAPI.create(cleanedData);
       }
       await onSave?.(department ? null : response.data);
-      toast.success(department ? t('departments.modal.updateSuccess') : t('departments.modal.createSuccess'));
+      toast.success(
+        department ? t('departments.modal.updateSuccess') : t('departments.modal.createSuccess')
+      );
       setSaving(false);
     } catch (error) {
-      toast.error(error.response?.data?.error || error.message || t('departments.saveError'));
+      toast.error(errorMessage(error, t('departments.saveError')));
       setSaving(false);
     }
   };
   const emojiList = ['💬', '📧', '📞', '💡', '🎯', '⚡', '🚀', '🔧', '💼', '🎨', '📊', '🌟'];
-  const colorList = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
+  const colorList = [
+    '#3B82F6',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#EC4899',
+    '#14B8A6',
+    '#F97316'
+  ];
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -424,7 +484,7 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder={t('departments.modal.namePlaceholder')}
                 />
@@ -435,7 +495,9 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows={2}
                   placeholder={t('departments.modal.descriptionPlaceholder')}
@@ -446,13 +508,15 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                   {t('departments.modal.icon')}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {emojiList.map(emoji => (
+                  {emojiList.map((emoji) => (
                     <button
                       key={emoji}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, icon: emoji }))}
+                      onClick={() => setFormData((prev) => ({ ...prev, icon: emoji }))}
                       className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl ${
-                        formData.icon === emoji ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900' : 'bg-gray-100 dark:bg-gray-700'
+                        formData.icon === emoji
+                          ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900'
+                          : 'bg-gray-100 dark:bg-gray-700'
                       }`}
                     >
                       {emoji}
@@ -465,11 +529,11 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                   {t('departments.modal.color')}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {colorList.map(color => (
+                  {colorList.map((color) => (
                     <button
                       key={color}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, color }))}
+                      onClick={() => setFormData((prev) => ({ ...prev, color }))}
                       className={`w-10 h-10 rounded-lg ${
                         formData.color === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
                       }`}
@@ -480,18 +544,24 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
               </div>
             </div>
             <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('departments.modal.autoAssignRules')}</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                {t('departments.modal.autoAssignRules')}
+              </h3>
               <label className="flex items-center gap-2 mb-3">
                 <input
                   type="checkbox"
                   checked={formData.autoAssignRules.enabled}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    autoAssignRules: { ...prev.autoAssignRules, enabled: e.target.checked }
-                  }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      autoAssignRules: { ...prev.autoAssignRules, enabled: e.target.checked }
+                    }))
+                  }
                   className="rounded border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{t('departments.modal.enableAutoAssign')}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {t('departments.modal.enableAutoAssign')}
+                </span>
               </label>
               {formData.autoAssignRules.enabled && (
                 <div>
@@ -500,10 +570,12 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                   </label>
                   <select
                     value={formData.autoAssignRules.strategy}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      autoAssignRules: { ...prev.autoAssignRules, strategy: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        autoAssignRules: { ...prev.autoAssignRules, strategy: e.target.value }
+                      }))
+                    }
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="round-robin">{t('departments.modal.roundRobin')}</option>
@@ -514,7 +586,9 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
               )}
             </div>
             <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{t('departments.modal.teamMembers')}</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                {t('departments.modal.teamMembers')}
+              </h3>
               {teamMembers.length === 0 ? (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-3">
                   <div className="flex items-start gap-3">
@@ -572,9 +646,14 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
               )}
               <div className="space-y-2">
                 {formData.members.map((member: any, idx: any) => {
-                  const memberData = teamMembers.find((m: any) => m._id === (member.userId?._id || member.userId));
+                  const memberData = teamMembers.find(
+                    (m: any) => m._id === (member.userId?._id || member.userId)
+                  );
                   return (
-                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                    >
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm">
                           {memberData?.name?.charAt(0).toUpperCase() || '?'}
@@ -618,7 +697,11 @@ const AddEditDepartmentModal = ({ department, siteId, teamMembers, onClose, onSa
                 disabled={saving}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {saving ? t('departments.modal.saving') : department ? t('departments.modal.update') : t('departments.modal.create')}
+                {saving
+                  ? t('departments.modal.saving')
+                  : department
+                    ? t('departments.modal.update')
+                    : t('departments.modal.create')}
               </button>
             </div>
           </form>

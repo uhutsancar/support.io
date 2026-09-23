@@ -14,8 +14,24 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Menu, X, Moon, Sun, Languages, ChevronDown, MessageSquare, Code2, GitBranch,
-  Zap, Send, BookOpen, BarChart3, Users, Sparkles, Eye, Briefcase, ArrowRight
+  Menu,
+  X,
+  Moon,
+  Sun,
+  Languages,
+  ChevronDown,
+  MessageSquare,
+  Code2,
+  GitBranch,
+  Zap,
+  Send,
+  BookOpen,
+  BarChart3,
+  Users,
+  Sparkles,
+  Eye,
+  Briefcase,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -25,7 +41,17 @@ import { Button, AccentIcon, accent } from './kit';
 import { FEATURE_GROUPS, FEATURE_ICON, FEATURE_TONE } from '../../pages/marketing/features';
 
 const ICONS = {
-  MessageSquare, Code2, GitBranch, Zap, Send, BookOpen, BarChart3, Users, Sparkles, Eye, Briefcase
+  MessageSquare,
+  Code2,
+  GitBranch,
+  Zap,
+  Send,
+  BookOpen,
+  BarChart3,
+  Users,
+  Sparkles,
+  Eye,
+  Briefcase
 };
 
 export function useMarketingRoutes() {
@@ -46,19 +72,30 @@ export function useMarketingRoutes() {
 
 /* ------------------------------------------------------- ürün açılır menüsü */
 
-const ProductMenu = ({ routes, onNavigate }: { routes?: any; onNavigate?: (...args: any[]) => void; [prop: string]: any }) => {
+const ProductMenu = ({
+  routes,
+  onNavigate
+}: {
+  routes?: any;
+  onNavigate?: (...args: any[]) => void;
+  [prop: string]: any;
+}) => {
   const { t } = useTranslation();
   return (
     <div className="grid sm:grid-cols-3 gap-x-6 gap-y-5 p-5">
       {FEATURE_GROUPS.map((group) => (
         <div key={group.id}>
-          <p className="px-2 text-[10.5px] font-semibold uppercase tracking-[0.09em]
-            text-gray-400 dark:text-gray-500">
+          <p
+            className="px-2 text-[10.5px] font-semibold uppercase tracking-[0.09em]
+            text-gray-400 dark:text-gray-500"
+          >
             {t('nav.groups.' + group.id)}
           </p>
           <ul className="mt-2 space-y-0.5">
             {group.items.map((id) => {
-              const Icon = ICONS[FEATURE_ICON[id as keyof typeof FEATURE_ICON] as keyof typeof ICONS] || MessageSquare;
+              const Icon =
+                ICONS[FEATURE_ICON[id as keyof typeof FEATURE_ICON] as keyof typeof ICONS] ||
+                MessageSquare;
               return (
                 <li key={id}>
                   <Link
@@ -67,13 +104,19 @@ const ProductMenu = ({ routes, onNavigate }: { routes?: any; onNavigate?: (...ar
                     className="flex items-start gap-2.5 px-2 py-2 rounded-lg
                       hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors group"
                   >
-                    <AccentIcon icon={Icon} tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]} size="sm" />
+                    <AccentIcon
+                      icon={Icon}
+                      tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]}
+                      size="sm"
+                    />
                     <span className="min-w-0">
                       <span className="block text-[13px] font-medium text-gray-900 dark:text-white">
                         {t('featuresPage.items.' + id + '.title')}
                       </span>
-                      <span className="block text-[11.5px] leading-snug text-gray-500 dark:text-gray-400
-                        line-clamp-2">
+                      <span
+                        className="block text-[11.5px] leading-snug text-gray-500 dark:text-gray-400
+                        line-clamp-2"
+                      >
                         {t('featuresPage.items.' + id + '.short')}
                       </span>
                     </span>
@@ -85,8 +128,10 @@ const ProductMenu = ({ routes, onNavigate }: { routes?: any; onNavigate?: (...ar
         </div>
       ))}
 
-      <div className="sm:col-span-3 -mx-5 -mb-5 mt-1 px-5 py-3.5
-        border-t border-gray-100 dark:border-white/[0.07] bg-gray-50/70 dark:bg-white/[0.02]">
+      <div
+        className="sm:col-span-3 -mx-5 -mb-5 mt-1 px-5 py-3.5
+        border-t border-gray-100 dark:border-white/[0.07] bg-gray-50/70 dark:bg-white/[0.02]"
+      >
         <Link
           to={routes.features}
           onClick={onNavigate}
@@ -138,9 +183,12 @@ export const Header = () => {
   React.useEffect(() => {
     if (!productOpen) return;
     const onDown = (e: MouseEvent) => {
-      if (productRef.current && !productRef.current.contains(e.target as Node)) setProductOpen(false);
+      if (productRef.current && !productRef.current.contains(e.target as Node))
+        setProductOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setProductOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setProductOpen(false);
+    };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -149,9 +197,12 @@ export const Header = () => {
     };
   }, [productOpen]);
 
-  React.useEffect(() => () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-  }, []);
+  React.useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    []
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -165,12 +216,13 @@ export const Header = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
-  const navLink = (active: any) => [
-    'relative px-3 py-2 rounded-lg text-[14px] transition-colors',
-    active
-      ? 'text-gray-900 dark:text-white font-medium'
-      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/70 dark:hover:bg-white/[0.05]'
-  ].join(' ');
+  const navLink = (active: any) =>
+    [
+      'relative px-3 py-2 rounded-lg text-[14px] transition-colors',
+      active
+        ? 'text-gray-900 dark:text-white font-medium'
+        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/70 dark:hover:bg-white/[0.05]'
+    ].join(' ');
 
   return (
     <header
@@ -188,32 +240,48 @@ export const Header = () => {
             <Logo size={27} />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-0.5" aria-label={t('header.mainNavigation')}>
+          <nav
+            className="hidden lg:flex items-center gap-0.5"
+            aria-label={t('header.mainNavigation')}
+          >
             {/* ürün açılırı */}
             <div
               ref={productRef}
               className="relative"
-              onMouseEnter={() => { if (closeTimer.current) clearTimeout(closeTimer.current); setProductOpen(true); }}
-              onMouseLeave={() => { closeTimer.current = setTimeout(() => setProductOpen(false), 140); }}
+              onMouseEnter={() => {
+                if (closeTimer.current) clearTimeout(closeTimer.current);
+                setProductOpen(true);
+              }}
+              onMouseLeave={() => {
+                closeTimer.current = setTimeout(() => setProductOpen(false), 140);
+              }}
             >
               <button
                 onClick={() => setProductOpen((v) => !v)}
                 aria-expanded={productOpen}
                 aria-haspopup="true"
-                className={[navLink(location.pathname.includes('features') || location.pathname.includes('ozellik')),
-                  'inline-flex items-center gap-1'].join(' ')}
+                className={[
+                  navLink(
+                    location.pathname.includes('features') || location.pathname.includes('ozellik')
+                  ),
+                  'inline-flex items-center gap-1'
+                ].join(' ')}
               >
                 {t('header.features')}
-                <ChevronDown className={[
-                  'w-3.5 h-3.5 transition-transform duration-200',
-                  productOpen ? 'rotate-180' : ''
-                ].join(' ')} />
+                <ChevronDown
+                  className={[
+                    'w-3.5 h-3.5 transition-transform duration-200',
+                    productOpen ? 'rotate-180' : ''
+                  ].join(' ')}
+                />
               </button>
 
               {productOpen && (
                 <div className="absolute left-0 top-full pt-2.5">
-                  <div className="w-[700px] rounded-2xl border border-gray-200 dark:border-white/[0.09]
-                    bg-white dark:bg-[#12141f] shadow-panel-lg overflow-hidden animate-rise">
+                  <div
+                    className="w-[700px] rounded-2xl border border-gray-200 dark:border-white/[0.09]
+                    bg-white dark:bg-[#12141f] shadow-panel-lg overflow-hidden animate-rise"
+                  >
                     <ProductMenu routes={routes} onNavigate={() => setProductOpen(false)} />
                   </div>
                 </div>
@@ -221,8 +289,12 @@ export const Header = () => {
             </div>
 
             {links.map((link) => (
-              <Link key={link.to} to={link.to} aria-current={isActive(link.to) ? 'page' : undefined}
-                className={navLink(isActive(link.to))}>
+              <Link
+                key={link.to}
+                to={link.to}
+                aria-current={isActive(link.to) ? 'page' : undefined}
+                className={navLink(isActive(link.to))}
+              >
                 {link.label}
               </Link>
             ))}
@@ -253,19 +325,29 @@ export const Header = () => {
               aria-label={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
               title={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
             >
-              {isDark ? <Sun className="w-[17px] h-[17px]" /> : <Moon className="w-[17px] h-[17px]" />}
+              {isDark ? (
+                <Sun className="w-[17px] h-[17px]" />
+              ) : (
+                <Moon className="w-[17px] h-[17px]" />
+              )}
             </button>
 
             <span className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-2" />
 
             {isAuthenticated ? (
               <>
-                <Button to={routes.dashboard} variant="ghost" size="sm">{t('header.panel')}</Button>
-                <Button as="button" onClick={handleLogout} variant="ghost" size="sm">{t('header.logout')}</Button>
+                <Button to={routes.dashboard} variant="ghost" size="sm">
+                  {t('header.panel')}
+                </Button>
+                <Button as="button" onClick={handleLogout} variant="ghost" size="sm">
+                  {t('header.logout')}
+                </Button>
               </>
             ) : (
               <>
-                <Button to={routes.login} variant="ghost" size="sm">{t('header.login')}</Button>
+                <Button to={routes.login} variant="ghost" size="sm">
+                  {t('header.login')}
+                </Button>
                 <Button to={routes.register} variant="primary" size="sm" className="ml-1">
                   {t('header.register')}
                 </Button>
@@ -286,20 +368,33 @@ export const Header = () => {
 
       {/* ------------------------------------------------------- mobil menü */}
       {open && (
-        <div className="lg:hidden border-t border-gray-200 dark:border-white/[0.07]
-          bg-white dark:bg-surface-dark max-h-[calc(100vh-68px)] overflow-y-auto">
+        <div
+          className="lg:hidden border-t border-gray-200 dark:border-white/[0.07]
+          bg-white dark:bg-surface-dark max-h-[calc(100vh-68px)] overflow-y-auto"
+        >
           <nav className="max-w-6xl mx-auto px-5 py-4">
-            <p className="px-1 text-[10.5px] font-semibold uppercase tracking-[0.09em]
-              text-gray-400 dark:text-gray-500">
+            <p
+              className="px-1 text-[10.5px] font-semibold uppercase tracking-[0.09em]
+              text-gray-400 dark:text-gray-500"
+            >
               {t('header.features')}
             </p>
             <div className="mt-2 grid sm:grid-cols-2 gap-1">
               {FEATURE_GROUPS.flatMap((g) => g.items).map((id) => {
-                const Icon = ICONS[FEATURE_ICON[id as keyof typeof FEATURE_ICON] as keyof typeof ICONS] || MessageSquare;
+                const Icon =
+                  ICONS[FEATURE_ICON[id as keyof typeof FEATURE_ICON] as keyof typeof ICONS] ||
+                  MessageSquare;
                 return (
-                  <Link key={id} to={routes.features + '/' + id}
-                    className="flex items-center gap-2.5 px-1 py-2 rounded-lg">
-                    <AccentIcon icon={Icon} tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]} size="sm" />
+                  <Link
+                    key={id}
+                    to={routes.features + '/' + id}
+                    className="flex items-center gap-2.5 px-1 py-2 rounded-lg"
+                  >
+                    <AccentIcon
+                      icon={Icon}
+                      tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]}
+                      size="sm"
+                    />
                     <span className="text-[14px] text-gray-700 dark:text-gray-300">
                       {t('featuresPage.items.' + id + '.title')}
                     </span>
@@ -309,11 +404,18 @@ export const Header = () => {
             </div>
 
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.07] flex flex-col">
-              <Link to={routes.features} className="py-2.5 text-[15px] font-medium text-gray-900 dark:text-white">
+              <Link
+                to={routes.features}
+                className="py-2.5 text-[15px] font-medium text-gray-900 dark:text-white"
+              >
                 {t('nav.allFeatures')}
               </Link>
               {links.map((link) => (
-                <Link key={link.to} to={link.to} className="py-2.5 text-[15px] text-gray-700 dark:text-gray-300">
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="py-2.5 text-[15px] text-gray-700 dark:text-gray-300"
+                >
                   {link.label}
                 </Link>
               ))}
@@ -340,13 +442,21 @@ export const Header = () => {
             <div className="flex flex-col gap-2 pt-3 border-t border-gray-100 dark:border-white/[0.07]">
               {isAuthenticated ? (
                 <>
-                  <Button to={routes.dashboard} variant="secondary">{t('header.panel')}</Button>
-                  <Button as="button" onClick={handleLogout} variant="ghost">{t('header.logout')}</Button>
+                  <Button to={routes.dashboard} variant="secondary">
+                    {t('header.panel')}
+                  </Button>
+                  <Button as="button" onClick={handleLogout} variant="ghost">
+                    {t('header.logout')}
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Button to={routes.login} variant="secondary">{t('header.login')}</Button>
-                  <Button to={routes.register} variant="primary">{t('header.register')}</Button>
+                  <Button to={routes.login} variant="secondary">
+                    {t('header.login')}
+                  </Button>
+                  <Button to={routes.register} variant="primary">
+                    {t('header.register')}
+                  </Button>
                 </>
               )}
             </div>
@@ -398,8 +508,10 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="border-t border-gray-200 dark:border-white/[0.07]
-      bg-surface-subtle dark:bg-surface-darkSubtle px-5 sm:px-8 py-16">
+    <footer
+      className="border-t border-gray-200 dark:border-white/[0.07]
+      bg-surface-subtle dark:bg-surface-darkSubtle px-5 sm:px-8 py-16"
+    >
       <div className="max-w-6xl mx-auto">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))]">
           <div>
@@ -441,8 +553,10 @@ export const Footer = () => {
         </div>
 
         {/* Yıl sabit değildi: eski metinlerde "© 2024" gömülüydü. */}
-        <div className="mt-14 pt-6 border-t border-gray-200 dark:border-white/[0.07]
-          flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="mt-14 pt-6 border-t border-gray-200 dark:border-white/[0.07]
+          flex flex-wrap items-center justify-between gap-3"
+        >
           <p className="text-[12.5px] text-gray-500 dark:text-gray-500">
             © {new Date().getFullYear()} Support.io
           </p>
@@ -461,7 +575,10 @@ const Shell = ({ children }: { children?: any; [prop: string]: any }) => {
   const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100">
-      <a href="#main" className="skip-link px-3 py-2 rounded-lg bg-indigo-600 text-white text-[13px] font-medium">
+      <a
+        href="#main"
+        className="skip-link px-3 py-2 rounded-lg bg-indigo-600 text-white text-[13px] font-medium"
+      >
         {t('common.skipToContent')}
       </a>
       <Header />
@@ -479,7 +596,20 @@ export default Shell;
  * Alt sayfaların (Özellikler, Fiyatlandırma, Hakkımızda) giriş bloğu.
  * Ana sayfa kendi hero'sunu kurar; buradaki daha sakin ve tek sütunludur.
  */
-export const PageHero = ({ eyebrow, eyebrowTone = 'indigo', title, description, children, align = 'left' }: { eyebrow?: any; title?: any; description?: any; children?: any; [prop: string]: any }) => {
+export const PageHero = ({
+  eyebrow,
+  eyebrowTone = 'indigo',
+  title,
+  description,
+  children,
+  align = 'left'
+}: {
+  eyebrow?: any;
+  title?: any;
+  description?: any;
+  children?: any;
+  [prop: string]: any;
+}) => {
   const a = accent(eyebrowTone);
   return (
     // Zemin düz. Burada başlığın arkasında büyük, bulanık mor bir parıltı
@@ -488,24 +618,30 @@ export const PageHero = ({ eyebrow, eyebrowTone = 'indigo', title, description, 
     <section className="pt-32 pb-16 sm:pt-40 sm:pb-20 px-5 sm:px-8">
       <div className={['max-w-6xl mx-auto', align === 'center' ? 'text-center' : ''].join(' ')}>
         {eyebrow && (
-          <span className={[
-            'block text-[12px] font-semibold uppercase tracking-[0.1em]', a.text
-          ].join(' ')}>
+          <span
+            className={['block text-[12px] font-semibold uppercase tracking-[0.1em]', a.text].join(
+              ' '
+            )}
+          >
             {eyebrow}
           </span>
         )}
-        <h1 className={[
-          'mt-4 text-[36px] sm:text-[52px] font-semibold tracking-[-0.035em] leading-[1.06]',
-          'text-gray-900 dark:text-white',
-          align === 'center' ? 'mx-auto max-w-[20ch]' : 'max-w-[20ch]'
-        ].join(' ')}>
+        <h1
+          className={[
+            'mt-4 text-[36px] sm:text-[52px] font-semibold tracking-[-0.035em] leading-[1.06]',
+            'text-gray-900 dark:text-white',
+            align === 'center' ? 'mx-auto max-w-[20ch]' : 'max-w-[20ch]'
+          ].join(' ')}
+        >
           {title}
         </h1>
         {description && (
-          <p className={[
-            'mt-5 text-[17.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[58ch]',
-            align === 'center' ? 'mx-auto' : ''
-          ].join(' ')}>
+          <p
+            className={[
+              'mt-5 text-[17.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[58ch]',
+              align === 'center' ? 'mx-auto' : ''
+            ].join(' ')}
+          >
             {description}
           </p>
         )}
@@ -516,7 +652,19 @@ export const PageHero = ({ eyebrow, eyebrowTone = 'indigo', title, description, 
 };
 
 /** Eski API ile uyum: Docs ve birkaç sayfa hâlâ bu adla içe aktarıyor. */
-export const Section = ({ title, description, children, bordered = true, id }: { title?: any; description?: any; children?: any; id?: string; [prop: string]: any }) => (
+export const Section = ({
+  title,
+  description,
+  children,
+  bordered = true,
+  id
+}: {
+  title?: any;
+  description?: any;
+  children?: any;
+  id?: string;
+  [prop: string]: any;
+}) => (
   <section
     id={id}
     className={[
