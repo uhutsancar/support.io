@@ -708,3 +708,47 @@ SELECT attach_updated_at(t) FROM (VALUES
   ('deals'), ('team_chats'), ('team_messages'), ('automation_rules'),
   ('automation_logs'), ('proactive_rules'), ('proactive_trigger_logs'), ('event_logs')
 ) AS v(t);
+
+
+-- ---------------------------------------------------------------------------
+-- self-hosted AI assistant
+-- ---------------------------------------------------------------------------
+-- Site AI settings move to the shape the assistant reads. `mode` is who may
+-- answer on the site's behalf: nobody (off), agents with a copilot (copilot),
+-- or the assistant itself (auto). Sites that had AI switched on become
+-- copilot; no site becomes auto without someone choosing it. Rows already in
+-- the new shape are left alone, so this runs on every boot harmlessly.
+UPDATE sites SET ai_settings = jsonb_build_object(
+  'mode', CASE WHEN coalesce((ai_settings->>'enabled')::boolean, false) THEN 'copilot' ELSE 'off' END,
+  'answerLength', 'short', 'tone', 'professional', 'maxBotReplies', 8,
+  'blockedTerms', '[]'::jsonb, 'botName', NULL, 'handoffMessage', NULL)
+WHERE NOT (ai_settings ? 'mode');
+ALTER TABLE sites ALTER COLUMN ai_settings SET DEFAULT
+  '{"mode":"off","answerLength":"short","tone":"professional","maxBotReplies":8,"blockedTerms":[],"botName":null,"handoffMessage":null}'::jsonb;
+
+-- The shop's side of identity verification and order lookup. Both secrets are
+-- stored sealed (AES-256-GCM, see config/secretBox.ts), never in the clear.
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS integrations jsonb NOT NULL DEFAULT
+  '{"identitySecret":null,"orderLookup":{"enabled":false,"url":null,"signingSecret":null}}'::jsonb;
+
+-- Who answers the visitor right now. "Assigned" is not the same thing: a
+-- conversation can be assigned to an agent while the assistant answers it.
+-- The version increases on every change of hands, so an answer the model was
+-- still writing when an agent took over is recognised as stale and dropped.
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS response_owner text NOT NULL DEFAULT 'human';
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS ai_control_version integer NOT NULL DEFAULT 0;
+DO $$ BEGIN
+  ALTER TABLE conversations
+    ADD CONSTRAINT conversations_response_owner_check CHECK (response_owner IN ('ai', 'human'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- The widget's own id for a message it sent. A resend after a dropped
+-- connection carries the same id, and the unique index is what stops it
+-- becoming a second message and a second automatic answer.
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS client_message_id text;
+-- Why the assistant said what it said: decision, sources, prompt version,
+-- duration. Never the prompt or the model's raw output.
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS ai_metadata jsonb;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_messages_client_id
+  ON messages (conversation_id, client_message_id) WHERE client_message_id IS NOT NULL;

@@ -243,6 +243,70 @@ test('an agent restricted to one site cannot run AI on another site of the same 
   assert.notEqual(own.status, 404);
 });
 
+test('site AI settings accept only the declared keys and values', async () => {
+  const tenant = await createTenant('aisettings');
+  const put = (aiSettings: unknown) =>
+    api(`/api/sites/${tenant.site._id}`, {
+      method: 'PUT',
+      token: tenant.token,
+      body: { aiSettings }
+    });
+
+  // A new site starts with the assistant off, and never exposes integration secrets.
+  assert.equal(tenant.site.aiSettings.mode, 'off');
+  assert.deepEqual(tenant.site.integrations, {
+    identity: { configured: false },
+    orderLookup: { enabled: false, url: null, signingConfigured: false }
+  });
+
+  for (const bad of [
+    { mode: 'everything' },
+    { aiModel: 'some-other-model' },
+    { maxBotReplies: 0 },
+    { maxBotReplies: 2.5 },
+    { tone: 'rude' },
+    { blockedTerms: 'dava' },
+    { botName: 'x'.repeat(41) }
+  ]) {
+    const res = await put(bad);
+    assert.equal(res.status, 400, `accepted ${JSON.stringify(bad)}`);
+  }
+
+  const ok = await put({
+    mode: 'copilot',
+    blockedTerms: [' dava ', 'dava', ''],
+    botName: 'Asistan'
+  });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.equal(ok.body.site.aiSettings.mode, 'copilot');
+  assert.deepEqual(ok.body.site.aiSettings.blockedTerms, ['dava']);
+  // A partial update keeps the keys it did not mention.
+  assert.equal(ok.body.site.aiSettings.maxBotReplies, 8);
+  assert.equal(ok.body.site.aiSettings.answerLength, 'short');
+});
+
+test('only an account that manages sites may switch the assistant on', async () => {
+  const tenant = await createTenant('aimode');
+  const email = `mode-agent${Date.now()}${Math.floor(Math.random() * 1000)}@ai.test`;
+  const created = await api('/api/team', {
+    method: 'POST',
+    token: tenant.token,
+    body: { name: 'Agent', email, password: 'E2ePassw0rd!', role: 'agent' }
+  });
+  assert.ok([200, 201].includes(created.status));
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: 'E2ePassw0rd!' }
+  });
+
+  const res = await api(`/api/sites/${tenant.site._id}`, {
+    method: 'PUT',
+    token: sessionToken(login),
+    body: { aiSettings: { mode: 'auto' } }
+  });
+  assert.equal(res.status, 403);
+});
+
 test('a malformed conversation id is rejected, not looked up', async () => {
   const tenant = await createTenant('badid');
   const res = await api('/api/ai/conversations/not-an-id/summary', {

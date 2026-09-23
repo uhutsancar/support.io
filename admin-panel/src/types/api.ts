@@ -76,6 +76,25 @@ export interface AIStatus {
   model: string | null;
 }
 
+export type AIMode = 'off' | 'copilot' | 'auto';
+
+/** How the assistant behaves on one site; see backend src/domain/types.ts. */
+export interface SiteAiSettings {
+  mode: AIMode;
+  answerLength: 'short' | 'normal';
+  tone: 'professional' | 'friendly';
+  maxBotReplies: number;
+  blockedTerms: string[];
+  botName: string | null;
+  handoffMessage: string | null;
+}
+
+/** What the server tells the panel about a site's integrations: never a secret. */
+export interface SiteIntegrationsView {
+  identity: { configured: boolean };
+  orderLookup: { enabled: boolean; url: string | null; signingConfigured: boolean };
+}
+
 export interface Site {
   _id: string;
   name: string;
@@ -84,7 +103,8 @@ export interface Site {
   organizationId: string;
   isActive: boolean;
   widgetSettings?: Record<string, unknown>;
-  aiSettings?: Record<string, unknown>;
+  aiSettings?: SiteAiSettings;
+  integrations?: SiteIntegrationsView;
   installation?: {
     verifiedAt?: string | null;
     lastSeenAt?: string | null;
@@ -223,11 +243,23 @@ export interface Conversation {
   firstResponseAt: string | null;
   resolvedAt: string | null;
   closedAt: string | null;
+  /** Who answers the visitor right now: the assistant or a person. */
+  responseOwner?: 'ai' | 'human';
+  aiControlVersion?: number;
   createdAt: string;
   updatedAt?: string;
   /** Added by the list endpoint so the row can show a preview. */
   lastMessage?: Message | null;
   [extra: string]: unknown;
+}
+
+export interface MessageAiMetadata {
+  decision: string;
+  reason?: string | null;
+  sourceIds: string[];
+  sources?: string[];
+  promptVersion: string;
+  durationMs: number;
 }
 
 export interface MessageFile {
@@ -251,7 +283,9 @@ export interface Message {
   readAt: string | null;
   createdAt: string;
   /** Echoed back so an optimistic bubble can be reconciled. */
-  clientMessageId?: string;
+  clientMessageId?: string | null;
+  /** Present on automatic replies: what the assistant decided and from which sources. */
+  aiMetadata?: MessageAiMetadata | null;
   [extra: string]: unknown;
 }
 

@@ -157,6 +157,29 @@ export const CLIENT_MESSAGE_TYPES = [
 
 export const isClientMessageType = memberOf(CLIENT_MESSAGE_TYPES);
 
+// ------------------------------------------------------------ AI assistant
+
+/**
+ * Who may answer on a site's behalf: nobody, agents with a copilot, or the
+ * assistant itself. The FAQ keyword bot keeps running in the first two and
+ * steps aside in `auto`, so a visitor never gets two automatic answers.
+ */
+export const AI_MODES = ['off', 'copilot', 'auto'] as const;
+export type AIMode = (typeof AI_MODES)[number];
+export const isAIMode = memberOf(AI_MODES);
+
+/** Who answers a conversation right now; independent of who it is assigned to. */
+export const RESPONSE_OWNERS = ['ai', 'human'] as const;
+export type ResponseOwner = (typeof RESPONSE_OWNERS)[number];
+
+export const AI_ANSWER_LENGTHS = ['short', 'normal'] as const;
+export type AIAnswerLength = (typeof AI_ANSWER_LENGTHS)[number];
+export const isAIAnswerLength = memberOf(AI_ANSWER_LENGTHS);
+
+export const AI_TONES = ['professional', 'friendly'] as const;
+export type AITone = (typeof AI_TONES)[number];
+export const isAITone = memberOf(AI_TONES);
+
 // ----------------------------------------------------------------------- deal
 
 export const DEAL_STAGES = ['new', 'potential', 'quoted', 'negotiation', 'won', 'lost'] as const;

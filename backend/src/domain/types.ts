@@ -4,6 +4,8 @@
 // exactly what the column holds — that is where most of the accidental typos
 // used to hide.
 
+import type { AIAnswerLength, AIMode, AITone } from './constants';
+
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
 /** A target in minutes per priority. */
@@ -119,10 +121,48 @@ export interface SiteWidgetSettings {
   autoOpenDelay: number;
 }
 
+/**
+ * How the assistant behaves on one site. The model itself is chosen by the
+ * server, never by a tenant, so there is no model field here.
+ */
 export interface SiteAiSettings {
-  enabled: boolean;
-  fallbackToHuman: boolean;
-  aiModel: string;
+  mode: AIMode;
+  answerLength: AIAnswerLength;
+  tone: AITone;
+  /** Automatic replies one conversation may get before it goes to a person. */
+  maxBotReplies: number;
+  /** A visitor message containing any of these goes to a person unread by the model. */
+  blockedTerms: string[];
+  /** Null: the site's name is used. */
+  botName: string | null;
+  /** Null: the built-in handoff text is used. */
+  handoffMessage: string | null;
+}
+
+/**
+ * The shop's side of identity verification and order lookup, as stored.
+ * Both secrets are sealed with config/secretBox.ts; they never leave the
+ * server — the site's JSON form replaces this block (models/Site.ts).
+ */
+export interface SiteIntegrations {
+  identitySecret: string | null;
+  orderLookup: {
+    enabled: boolean;
+    url: string | null;
+    signingSecret: string | null;
+  };
+}
+
+/** What an automatic reply records about itself. Never the prompt or raw output. */
+export interface MessageAiMetadata {
+  decision: string;
+  /** Why the visitor was handed to a person, when they were. */
+  reason?: string | null;
+  sourceIds: string[];
+  /** The questions of the FAQ entries the answer was drawn from, for the inbox. */
+  sources?: string[];
+  promptVersion: string;
+  durationMs: number;
 }
 
 /** Proof that the widget really loaded on the customer's site. */

@@ -12,14 +12,16 @@ import {
   CONVERSATION_CHANNELS,
   CONVERSATION_STATUSES,
   DEFAULT_SLA_TARGETS,
-  PRIORITIES
+  PRIORITIES,
+  RESPONSE_OWNERS
 } from '../domain';
 import type {
   ConversationChannel,
   ConversationRating,
   ConversationSla,
   ConversationStatus,
-  Priority
+  Priority,
+  ResponseOwner
 } from '../domain';
 
 async function nextTicketNumber(): Promise<number> {
@@ -73,6 +75,10 @@ export interface ConversationDoc {
   firstResponseAt: Date | null;
   resolvedAt: Date | null;
   closedAt: Date | null;
+  /** Who answers the visitor right now: the assistant or a person. */
+  responseOwner: ResponseOwner;
+  /** Increases on every change of hands; see services/ai/autoReply.ts. */
+  aiControlVersion: number;
   internalNotes: ConversationInternalNote[];
 
   /** Virtuals: minutes elapsed, or null while the milestone has not happened. */
@@ -162,7 +168,14 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
     lastMessageAt: { column: 'last_message_at', type: 'date', default: () => new Date() },
     firstResponseAt: { column: 'first_response_at', type: 'date', default: null },
     resolvedAt: { column: 'resolved_at', type: 'date', default: null },
-    closedAt: { column: 'closed_at', type: 'date', default: null }
+    closedAt: { column: 'closed_at', type: 'date', default: null },
+    responseOwner: {
+      column: 'response_owner',
+      type: 'string',
+      enum: RESPONSE_OWNERS,
+      default: 'human'
+    },
+    aiControlVersion: { column: 'ai_control_version', type: 'number', default: 0 }
   },
   children: {
     internalNotes: {
