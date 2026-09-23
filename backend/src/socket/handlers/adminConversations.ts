@@ -10,6 +10,7 @@ import Message from '../../models/Message';
 import Team from '../../models/Team';
 import User from '../../models/User';
 import { refreshSla } from '../../services/conversationSla';
+import { setResponseOwner } from '../../services/ai/autoReply';
 import {
   recordAgentAssignment,
   recordAgentResolution,
@@ -158,6 +159,15 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         : null;
       if (needsAttachment && !verifiedFile) {
         return socket.emit('error', { message: 'Invalid or expired file upload' });
+      }
+
+      // An agent writing takes the conversation from the assistant, and does
+      // it before their message is stored: an answer the model is still
+      // writing sees the ownership change and is dropped rather than sent
+      // after the agent's reply.
+      if (conversation.responseOwner === 'ai') {
+        const changed = await setResponseOwner(ctx.io, conversation, 'human');
+        if (changed) Object.assign(conversation, changed);
       }
 
       // Answering an unclaimed conversation takes it: an agent who has started

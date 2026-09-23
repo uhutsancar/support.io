@@ -3,7 +3,18 @@ import { auth } from '../middleware/auth';
 import * as aiService from '../services/aiService';
 import { getProvider } from '../services/ai';
 import { createLimiter } from '../middleware/rateLimit';
-import { HttpError, asyncHandler, loadAccessibleConversation, requireOrganization } from '../http';
+import { checkPermission } from '../middleware/rbac';
+import Site from '../models/Site';
+import { assistantActive, setResponseOwner } from '../services/ai/autoReply';
+import { ioFrom } from '../realtime';
+import {
+  HttpError,
+  asyncHandler,
+  badRequest,
+  conflict,
+  loadAccessibleConversation,
+  requireOrganization
+} from '../http';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -76,6 +87,34 @@ router.get(
       configured: provider.isConfigured,
       state,
       model: provider.model
+    });
+  })
+);
+
+// "Take over" and "give back to AI". Who may do it is the inbox rule: anyone
+// who may answer this conversation. Handing back needs the site's assistant to
+// be on, otherwise nobody would answer the visitor.
+router.put(
+  '/conversations/:conversationId/owner',
+  auth,
+  requireOrganization,
+  checkPermission('respond'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const owner = req.body?.owner;
+    if (owner !== 'ai' && owner !== 'human') throw badRequest("owner must be 'ai' or 'human'");
+
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
+    if (owner === 'ai') {
+      const site = await Site.findById(conversation.siteId);
+      if (!site || !assistantActive(site)) {
+        throw conflict('Otomatik yanıt bu sitede açık değil.');
+      }
+    }
+
+    const changed = await setResponseOwner(ioFrom(req), conversation, owner);
+    res.json({
+      responseOwner: changed?.responseOwner ?? conversation.responseOwner,
+      aiControlVersion: changed?.aiControlVersion ?? conversation.aiControlVersion
     });
   })
 );

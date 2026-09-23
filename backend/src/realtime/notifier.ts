@@ -81,6 +81,29 @@ export class AdminNotifier {
     });
   }
 
+  /**
+   * A message the server wrote itself — an automatic reply or a handoff note.
+   * The open thread and the site's inbox both hear it, the same two rooms the
+   * FAQ bot's replies have always gone to.
+   */
+  messageAdded(conversation: ConversationLike, message: unknown): void {
+    const payload = { message: plain(message), conversation: plain(conversation) };
+    this.admin.to(conversationRoom(conversation._id)).emit('new-message', payload);
+    this.toSite(conversation.siteId, 'new-message', payload);
+  }
+
+  /** The conversation changed hands between the assistant and a person. */
+  responseOwnerChanged(
+    conversation: ConversationLike,
+    responseOwner: 'ai' | 'human',
+    aiControlVersion: number
+  ): void {
+    this.toSite(conversation.siteId, 'conversation-update', {
+      conversationId: conversation._id,
+      conversation: { responseOwner, aiControlVersion }
+    });
+  }
+
   conversationAssigned(
     conversation: ConversationLike,
     agentId: unknown,

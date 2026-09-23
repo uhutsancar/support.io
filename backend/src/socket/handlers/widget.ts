@@ -15,6 +15,7 @@ import { openConversation } from '../../services/conversationIntake';
 import { refreshSla } from '../../services/conversationSla';
 import { tryFaqAutoResponse } from '../../services/faqAutoResponse';
 import { runAutomation } from '../../services/automationTrigger';
+import { assistantActive, requestHuman, scheduleAutoReply } from '../../services/ai/autoReply';
 import { CLIENT_MESSAGE_TYPES, isAwayPresence, isClientMessageType } from '../../domain';
 import { conversationRoom } from '../../realtime/rooms';
 import type { Socket } from 'socket.io';
@@ -23,6 +24,7 @@ import type { MessageDoc } from '../../models/Message';
 import type { SocketContext } from '../context';
 import type {
   PageViewPayload,
+  RequestHumanPayload,
   SendMessagePayload,
   VisitorMetadata,
   WidgetJoinPayload,
@@ -49,6 +51,9 @@ const LIMITS = {
 
 /** Ids we will accept from a client: no separators that could change a room name. */
 const SAFE_ID = /^[a-z0-9_.:-]+$/i;
+
+/** PostgreSQL's code for a unique-index violation. */
+const UNIQUE_VIOLATION = '23505';
 
 /** How much history a joining visitor receives; the rest is fetched on demand. */
 const JOIN_HISTORY_LIMIT = 100;
@@ -217,15 +222,18 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           return socket.emit('error', { message: 'Invalid client message id' });
         }
 
+        const site = await Site.findById(socket.siteId);
+        if (!site?.organizationId) {
+          return socket.emit('error', { message: 'Site not found' });
+        }
+        // The site's assistant answers when it is on; otherwise the FAQ keyword
+        // bot below does, as before. Never both.
+        const assistant = assistantActive(site);
+
         // The first message opens the conversation. Everything that involves —
         // routing, SLA seeding, counters, auto-assignment, the out-of-hours
         // greeting — lives in services/conversationIntake.ts.
         if (!socket.conversationId) {
-          const site = await Site.findById(socket.siteId);
-          if (!site?.organizationId) {
-            return socket.emit('error', { message: 'Site not found' });
-          }
-
           const { conversation: opened, greeting } = await openConversation(
             site,
             {
@@ -235,7 +243,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
               currentPage: socket.currentPage!,
               metadata: socket.metadata
             },
-            content
+            content,
+            assistant && !socket.prefersHuman ? 'ai' : 'human'
           );
 
           await socket.join(conversationRoom(opened._id));
@@ -255,6 +264,19 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
         if (!conversation) return ctx.reject(socket);
 
+        // A resend after a dropped connection carries the id of a message we
+        // already stored. It is acknowledged to this socket only — no second
+        // message, no second broadcast, no second automatic answer.
+        if (clientMessageId) {
+          const existing = await Message.findOne({
+            conversationId: conversation._id,
+            clientMessageId
+          });
+          if (existing) {
+            return socket.emit('new-message', { message: existing.toObject() });
+          }
+        }
+
         const needsAttachment = messageType === 'file' || messageType === 'image';
         const verifiedFile = needsAttachment
           ? ctx.verifyAttachment(fileData, conversation.siteId)
@@ -270,16 +292,27 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           senderName: conversation.visitorName,
           content: content.trim(),
           messageType: messageType || 'text',
-          isRead: false
+          isRead: false,
+          clientMessageId: clientMessageId ?? null
         };
         if (verifiedFile) messageData.fileData = verifiedFile;
 
-        const message = await Message.create(messageData);
-        // Echoed back so the widget can reconcile its optimistic copy.
-        const emitted = {
-          ...message.toObject(),
-          ...(clientMessageId ? { clientMessageId } : {})
-        };
+        let message;
+        try {
+          message = await Message.create(messageData);
+        } catch (error) {
+          // Two copies raced past the check above; the unique index kept one.
+          if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId)
+            throw error;
+          const stored = await Message.findOne({
+            conversationId: conversation._id,
+            clientMessageId
+          });
+          if (stored) socket.emit('new-message', { message: stored.toObject() });
+          return;
+        }
+        // Echoed back, id included, so the widget can reconcile its optimistic copy.
+        const emitted = message.toObject();
 
         conversation.unreadCount = (conversation.unreadCount || 0) + 1;
         conversation.lastMessageAt = new Date();
@@ -312,7 +345,29 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         });
 
         runAutomation('message_received', conversation, { content, message });
-        await tryFaqAutoResponse(ctx, conversation, content);
+        if (!assistant) {
+          await tryFaqAutoResponse(ctx, conversation, content);
+        } else if (conversation.responseOwner === 'ai') {
+          // Not awaited: the answer arrives on its own, and this message has
+          // already reached the inbox. See services/ai/autoReply.ts.
+          scheduleAutoReply(ctx.io, conversation._id, message._id);
+        }
+      })
+    );
+
+    socket.on(
+      'request-human',
+      ctx.guard(socket, async (data: RequestHumanPayload | undefined) => {
+        if (!socket.siteId || !socket.visitorId) return;
+        // Before the first message there is nothing to hand over yet; the
+        // conversation that message opens simply starts with a person.
+        if (!socket.conversationId) {
+          socket.prefersHuman = true;
+          return;
+        }
+        const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+        if (!conversation) return ctx.reject(socket);
+        await requestHuman(ctx.io, conversation._id, boundedString(data?.language, 5) ?? undefined);
       })
     );
 
