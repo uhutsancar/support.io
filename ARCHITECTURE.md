@@ -84,6 +84,18 @@ to sit inside a handler:
 | `proactiveEngine.ts` | visitor-behaviour triggers |
 | `faqAutoResponse.ts` | answering from the FAQ before an agent arrives |
 | `auditService.ts` | the audit trail, generated from one table of events |
+| `identity.ts` | verifying the `userHash` a shop signs a signed-in customer with |
+| `orderLookup.ts` | the signed, SSRF-guarded call to a shop's order service |
+| `aiService.ts` | the agent copilot: summary, draft, tone, translation, analysis, knowledge answer |
+| `ai/` | the self-hosted model: `vllmProvider` (the only backend, with the per-process concurrency limit), `prompts` (every instruction, versioned), `knowledge` (FAQ retrieval), `replyPolicy` (the rules checked in code before and after the model), `autoReply` (the widget's automatic answer, handoff and take-over) |
+
+**The assistant.** A site in `auto` mode is answered by the model inside the
+process that received the visitor's message — no queue. `composeReply()` is the
+pure decision (pre-check → model → policy → optional order lookup); `answer()`
+gathers its inputs and `deliver()` writes the reply in a short transaction that
+re-checks, under a row lock, that nobody took the conversation over in the
+meantime. `conversations.response_owner` says who answers now, independent of
+who the conversation is assigned to. Setup and the shop contract: `ai/README.md`.
 
 ### `http/` — the HTTP kernel
 

@@ -14,6 +14,7 @@
 - ✅ **One-Line Integration** - Embed with a single script tag
 - ✅ **Real-time Chat** - WebSocket-powered instant messaging
 - ✅ **Smart FAQ Bot** - Automated responses with keyword matching
+- ✅ **Self-hosted AI assistant** - Answers from your FAQ and your shop's order data on your own GPU ([ai/README.md](ai/README.md))
 - ✅ **Multi-site Support** - Manage multiple websites from one dashboard
 - ✅ **WhatsApp-like Interface** - Modern, familiar chat experience
 - ✅ **Mobile Responsive** - Perfect on all devices
@@ -56,7 +57,7 @@ Public JavaScript API on `window.SupportChat`:
 
 ```js
 SupportChat.open() / close() / toggle() / show() / hide()
-SupportChat.identify({ userId, name, email })   // after sign-in
+SupportChat.identify({ userId, userHash, name, email })   // after sign-in; userHash: see ai/README.md
 SupportChat.logout()                            // after sign-out — mints a new visitor id
 SupportChat.setAttributes({ plan: 'pro' })
 SupportChat.setLocale('tr' | 'en')
@@ -116,39 +117,27 @@ support_chat_app/
 - PostgreSQL 13 or higher (local or cloud)
 - npm or yarn
 
-### Option 1: Automated Setup (Recommended)
-```powershell
-# Run the setup script
-.\start.ps1
+### Option 1: Docker (Recommended)
+```bash
+docker compose up -d
+docker compose exec backend npm run db:seed    # optional demo tenant
 ```
+Everything — database, Redis, API, panel and the Caddy proxy — comes up at
+**http://localhost**. The self-hosted AI model is optional and starts only
+with `COMPOSE_PROFILES=ai` in the root `.env`; see [ai/README.md](ai/README.md).
 
 ### Option 2: Manual Setup
 
 **Step 1: Install Dependencies**
 ```bash
-# Backend
-cd backend
-npm install
-
-# Admin Panel
-cd admin-panel
-npm install
+cd backend && npm install
+cd ../admin-panel && npm install
 ```
 
 **Step 2: Start Services**
-
-Terminal 1 - Backend:
 ```bash
-cd backend
-npm run dev
-# Runs on http://localhost:3000
-```
-
-Terminal 2 - Admin Panel:
-```bash
-cd admin-panel
-npm run dev
-# Runs on http://localhost:3002
+cd backend && npm run dev          # API
+cd admin-panel && npm run dev      # panel (separate terminal)
 ```
 
 **Step 3: First Use**
@@ -319,7 +308,7 @@ unset no ACL is sent at all.
 - [ ] Analytics dashboard
 
 ### Phase 3 (Future)
-- [ ] AI chatbot (local model)
+- [x] AI assistant on a self-hosted model
 - [ ] Mobile apps
 - [ ] Video chat
 - [ ] Advanced analytics

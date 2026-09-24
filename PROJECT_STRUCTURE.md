@@ -400,38 +400,37 @@ aksiyonlarını çalıştırır.
 
 ## 16. AI
 
+Model: **Trendyol Asure 12B**, eğitilmeden, kendi GPU'muzda tek vLLM konteynerinde
+4 bit çalışır (`llm` servisi, `ai` Compose profili). Dış bir yapay zekâ API'si
+yoktur; model yoksa konuşma temsilciye gider. Kurulum ve mağaza sözleşmesi:
+`ai/README.md`.
+
 ```
-routes/ai.js  ──►  services/aiService.js  ──►  services/ai/index.js
- (yetki, kiracı,      (görevler, prompt,          (sağlayıcı seçimi)
-  hız sınırı)          çıktı sınırlama)                 │
-                                                        ▼
-                                            VllmProvider | DisabledProvider
+routes/ai.ts ──► services/aiService.ts ──┐        (temsilci asistanı)
+socket widget ─► services/ai/autoReply.ts ┤        (otomatik yanıt)
+                                          ▼
+            prompts.ts · knowledge.ts · replyPolicy.ts
+                                          ▼
+                     services/ai/index.ts ─► VllmProvider | DisabledProvider
 ```
 
-**Görevler:** özet, yanıt önerisi, yeniden yazma, çeviri, analiz (duygu / niyet /
-kategori / önerilen öncelik / etiket), bilgi tabanından yanıt.
+**Site modları** (`sites.ai_settings.mode`): `off` (SSS botu bugünkü gibi),
+`copilot` (temsilciye özet, taslak, ton, çeviri, analiz, bilgi bankası),
+`auto` (asistan müşteriye kendisi yanıt verir; SSS botu kapanır).
 
-**Prompt akışı:** Konuşma dökümü (son 40 mesaj, mesaj başına 2000 karakter) +
-ticket bağlamı + yanıt önerisinde sitenin yayınlanmış SSS içerikleri.
+**Otomatik yanıt:** 800 ms birleştirme → kod ön kontrolü (temsilci isteği, kart/
+IBAN/TC no, uzunluk, yanıt sınırı, engelli kelime; model çağrılmaz) → SSS
+getirme → JSON şemalı model çağrısı → son kontrol (kaynakta olmayan sayı/tarih/
+link, eylem iddiası, biçim, uzunluk) → satır kilitli kısa transaction ile
+teslim. Devralma, konu kapanması, mod değişimi veya yeni mesaj varsa cevap
+atılır. Her hata hazır metinle devre dönüşür.
 
-**Bilgi akışı:** `knowledgeAnswer` yalnızca SSS içeriğine dayanır; içerik yoksa
-modele hiç gitmeden `answered: false` döner.
+**Sipariş:** yalnız `userHash` doğrulanmış müşteri için, mağazanın servisine
+imzalı, SSRF korumalı istek; ikinci model çağrısı yalnız temizlenmiş veriyle.
 
-**Güvenlik:**
-
-- API anahtarı yalnızca sunucuda; tarayıcı kendi `/api/ai` uçlarımızı çağırır.
-- Her uç noktada organizasyon sahipliği kontrol edilir.
-- Dakikada 20 istek sınırı, kullanıcı kimliğine göre.
-- Sağlayıcı yapılandırılmamışsa 503 döner; **sahte içerik üretilmez**.
-- Model çıktısı sistemin kabul ettiği değerlere kısıtlanır (bilinmeyen duygu →
-  `neutral`, bilinmeyen öncelik → öneri yok).
-
-**Danışma sınırı:** Hiçbir AI görevi müşteriye mesaj göndermez, konuşmanın
-durumunu, önceliğini veya etiketini değiştirmez. Temsilci öneriyi *kabul eder,
-düzenler, yeniden ürettirir veya reddeder*; gönderme her zaman insana aittir. Bu
-kural testle sabitlenmiştir.
-
----
+**Güvenlik:** model portu canlıda kapalı; AI uçları gelen kutusunun site/rol
+kuralını kullanır; prompt, cevap ve sipariş verisi loglanmaz; entegrasyon
+anahtarları AES-256-GCM ile mühürlü tutulur ve hiçbir yanıtta dönmez.
 
 ## 17. Bilgi Tabanı
 
@@ -622,7 +621,11 @@ Testler Node'un yerleşik koşucusunu kullanır (ek bağımlılık yok):
 | `tests/analytics.e2e.test.js` | Toplamanın 50 satır sınırını aştığı, rakamların satırlarla uyuştuğu, pencere filtresi, kiracı izolasyonu |
 | `tests/agentPerformance.e2e.test.js` | Gerçek satırlardan türeyen metrikler, veri yokken `null`, aralık doğrulaması |
 | `tests/ai.e2e.test.js` | Her AI görevinde kiracı izolasyonu, doğrulama, danışma sınırı (öneri müşteriye gitmez) |
-| `tests/ai.provider.test.js` | Sağlayıcı seçimi, hata çevirisi, JSON ayrıştırma, çıktı sınırlama (ağ gerektirmez) |
+| `tests/ai.provider.test.ts` | Hata çevirisi, JSON ayrıştırma, çıktı sınırlama, döküm penceresi, SSS getirme |
+| `tests/ai.vllm.test.ts` | vLLM sağlayıcısı, yerel sahte sunucuya karşı: hata kodları, zaman aşımı, eşzamanlılık |
+| `tests/ai.policy.test.ts` | Ön ve son kontrol kuralları |
+| `tests/ai.autoreply.e2e.test.ts` | Otomatik yanıt, devir, devralma, sipariş akışı (test sürecinde soket sunucusu) |
+| `tests/orderLookup.test.ts` | İmza, SSRF, zaman aşımı, boyut sınırı, alan temizleme |
 
 Testler gerçek bir model çağırmaz; model davranışı sahte sağlayıcı ve yerel sahte HTTP sunucusuyla sınanır.
 
