@@ -184,6 +184,17 @@ test('an unreachable model server is reported as unreachable', async () => {
   await expectCode(provider('http://127.0.0.1:9/v1').complete(REQUEST), 'ai_unreachable', 503);
 });
 
+test('once the model server is found unreachable, the next calls fail at once', async () => {
+  // A name that does not resolve can take seconds each time (Docker's DNS
+  // answered in ~4 s): a visitor must not wait for it on every message.
+  const p = provider('http://127.0.0.1:9/v1');
+  await expectCode(p.complete(REQUEST), 'ai_unreachable', 503);
+  const started = Date.now();
+  await expectCode(p.complete(REQUEST), 'ai_unreachable', 503);
+  assert.ok(Date.now() - started < 50, 'the second call went to the network again');
+  assert.equal(await p.state(), 'unavailable');
+});
+
 test('the caller can abandon a call, and the slot is given back', async (t) => {
   const server = await fakeServer(() => {
     /* never answers */

@@ -86,6 +86,22 @@ class Slots {
   }
 }
 
+const RETRYABLE_CONNECT = new Set(['ECONNREFUSED', 'ECONNRESET']);
+
+/** The system error code behind a failed fetch, e.g. ENOTFOUND. */
+function connectCode(error: unknown): string {
+  const cause = (error as { cause?: { code?: unknown } })?.cause;
+  return typeof cause?.code === 'string' ? cause.code : '';
+}
+
+function unreachableError(): AIError {
+  return new AIError('Model sunucusuna ulaşılamadı.', {
+    code: 'ai_unreachable',
+    status: 503,
+    retryable: true
+  });
+}
+
 function abortedError(): AIError {
   return new AIError('İstek iptal edildi.', { code: 'ai_aborted', status: 499 });
 }
@@ -202,6 +218,16 @@ class VllmProvider extends AIProvider {
 
   override async complete(request: AICompletionRequest): Promise<AICompletion> {
     if (request.signal?.aborted) throw abortedError();
+    // Known to be down a moment ago: say so at once. Reaching a host that does
+    // not resolve can take seconds, and a visitor waiting on a handoff should
+    // not wait for it again on every message. The reading expires with the
+    // status cache, so a model that comes back is tried again within 15 s.
+    if (
+      this.stateCache?.state === 'unavailable' &&
+      Date.now() - this.stateCache.at < STATE_CACHE_MS
+    ) {
+      throw unreachableError();
+    }
     const release = await this.slots.acquire(this.config.queueMaxWaitMs, request.signal);
     try {
       return await this.send(request);
@@ -254,10 +280,11 @@ class VllmProvider extends AIProvider {
       try {
         res = await post();
       } catch (error) {
-        // One short retry, for a refused connection only: a container that
-        // is restarting refuses for a moment. Anything that already reached
-        // the model is never sent twice.
-        if (signal.aborted) throw error;
+        // One short retry, for a refused or reset connection only: a
+        // container that is restarting refuses for a moment. A name that does
+        // not resolve will not resolve 300 ms later, and anything that already
+        // reached the model is never sent twice.
+        if (signal.aborted || !RETRYABLE_CONNECT.has(connectCode(error))) throw error;
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         res = await post();
       }
@@ -270,11 +297,8 @@ class VllmProvider extends AIProvider {
           retryable: true
         });
       }
-      throw new AIError('Model sunucusuna ulaşılamadı.', {
-        code: 'ai_unreachable',
-        status: 503,
-        retryable: true
-      });
+      this.stateCache = { state: 'unavailable', at: Date.now() };
+      throw unreachableError();
     }
 
     if (!res.ok) {
