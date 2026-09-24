@@ -146,7 +146,12 @@ const SiteAISettings = ({ site, onClose, onSaved }: SiteAISettingsProps) => {
                     name="ai-mode"
                     value={mode}
                     checked={form.mode === mode}
-                    onChange={() => update('mode', mode)}
+                    onChange={() => {
+                      update('mode', mode);
+                      // Leaving automatic replies withdraws the confirmation:
+                      // choosing it again asks again.
+                      if (mode !== 'auto') setAutoConfirmed(false);
+                    }}
                     className="mt-1"
                   />
                   <span>
