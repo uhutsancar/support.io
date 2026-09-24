@@ -6,7 +6,7 @@
 // the inbox and the panel must keep working when the model is not there.
 
 export interface AIConfig {
-  /** Base of the OpenAI-compatible API, e.g. http://llm:8000/v1. */
+  /** Base of the model server's chat API, e.g. http://llm:8000/v1. */
   baseUrl: string;
   /** Shared secret between this backend and the vLLM container. */
   apiKey: string;

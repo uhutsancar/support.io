@@ -1,6 +1,6 @@
 'use strict';
 
-// The self-hosted model, served by vLLM's OpenAI-compatible API.
+// The self-hosted model, served by vLLM's HTTP chat API.
 //
 // Plain `fetch`, no SDK: the surface used here is two endpoints, and an SDK
 // would bring retries, streaming and a client pool this backend does not want.

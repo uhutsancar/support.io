@@ -1,6 +1,6 @@
 'use strict';
 
-// The vLLM provider against a local fake of the OpenAI-compatible API.
+// The vLLM provider against a local fake of the vLLM HTTP API.
 //
 // No GPU, no model and no network beyond 127.0.0.1: a tiny node:http server
 // plays the model server and answers the way vLLM does, including the ways it
