@@ -104,6 +104,10 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   'automation.rule.created': { action: 'AUTOMATION_RULE_CREATED', entityType: 'automation_rule' },
   'automation.rule.updated': { action: 'AUTOMATION_RULE_UPDATED', entityType: 'automation_rule' },
   'automation.rule.deleted': { action: 'AUTOMATION_RULE_DELETED', entityType: 'automation_rule' },
+  // Who may answer on a site's behalf, and what the site's integrations may
+  // reach. The metadata names what changed, never a secret.
+  'site.ai.updated': { action: 'SITE_AI_SETTINGS_UPDATED', entityType: 'site' },
+  'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // A rule firing against a conversation: the actor is the rule, identified in
   // the metadata, so there is no user and no originating request.
   'automation.executed': {

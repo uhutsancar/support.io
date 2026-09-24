@@ -5,6 +5,7 @@
 // each handler remembering to filter — see src/http/guards.ts for why.
 
 import express from 'express';
+import events from '../events';
 import { randomUUID } from 'crypto';
 import Site from '../models/Site';
 import { newSecret, seal } from '../config/secretBox';
@@ -29,6 +30,7 @@ import {
   requireOrganization
 } from '../http';
 import type { Request, Response } from 'express';
+import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
 import type { SiteAiSettings } from '../domain';
 
@@ -123,6 +125,21 @@ function validateAiSettings(input: unknown): Partial<SiteAiSettings> {
   return out;
 }
 
+/** Who changed a site, for its audit row. */
+function auditContext(req: Request, site: Doc<SiteDoc>) {
+  return {
+    organizationId: orgId(req),
+    userId: req.userId,
+    entityId: site._id,
+    ip: req.ip ?? null,
+    ua: req.get('user-agent') ?? null
+  };
+}
+
+function auditIntegration(req: Request, site: Doc<SiteDoc>, change: string): void {
+  events.emit('site.integration.updated', { ...auditContext(req, site), metadata: { change } });
+}
+
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
@@ -176,6 +193,13 @@ router.put(
         : value;
     }
     await site.save();
+
+    if (updates.aiSettings) {
+      events.emit('site.ai.updated', {
+        ...auditContext(req, site),
+        metadata: { changed: Object.keys(updates.aiSettings), mode: site.aiSettings.mode }
+      });
+    }
     res.json({ site });
   })
 );
@@ -203,6 +227,7 @@ router.post(
     const secret = newSecret();
     site.integrations = { ...site.integrations, identitySecret: seal(secret) };
     await site.save();
+    auditIntegration(req, site, 'identity_key_generated');
     res.json({ site, secret });
   })
 );
@@ -243,6 +268,7 @@ router.put(
 
     site.integrations = { ...site.integrations, orderLookup: next };
     await site.save();
+    auditIntegration(req, site, next.enabled ? 'order_lookup_on' : 'order_lookup_off');
     res.json({ site });
   })
 );
@@ -259,6 +285,7 @@ router.post(
       orderLookup: { ...site.integrations.orderLookup, signingSecret: seal(secret) }
     };
     await site.save();
+    auditIntegration(req, site, 'order_signing_key_generated');
     res.json({ site, secret });
   })
 );
