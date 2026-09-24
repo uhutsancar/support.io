@@ -193,7 +193,9 @@ async function visitor(
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function until(check: () => boolean, ms = 4000): Promise<void> {
+// Generous: when the whole suite runs in parallel the database is busy and one
+// automatic answer can take seconds.
+async function until(check: () => boolean, ms = 15000): Promise<void> {
   const deadline = Date.now() + ms;
   while (!check()) {
     if (Date.now() > deadline) throw new Error('timed out waiting');
@@ -220,6 +222,8 @@ async function storedBotReplies(conversationId: string): Promise<any[]> {
 }
 
 function beforeEach(script: Script) {
+  // Work left over from the previous test must not read this one's script.
+  stopAutoReplies();
   provider.calls = [];
   provider.script = script;
 }
