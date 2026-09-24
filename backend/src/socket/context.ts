@@ -12,6 +12,7 @@ import Site from '../models/Site';
 import TeamChat from '../models/TeamChat';
 import { verifyUploadProof } from '../config/tokens';
 import { isDevelopment } from '../config/env';
+import { mayAccessSite } from '../http/guards';
 import { conversationRoom, siteRoom, teamChatRoom, userRoom } from '../realtime/rooms';
 import type { Namespace, Server, Socket } from 'socket.io';
 import type { Doc } from '../db/model';
@@ -22,9 +23,6 @@ import type { AdminSocket, UploadedFilePayload, VerifiedFile, WidgetSocket } fro
 
 /** The largest attachment a message may reference. */
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
-
-/** Roles that reach every site in their organization regardless of assignment. */
-const UNRESTRICTED_ROLES = new Set(['owner', 'admin']);
 
 /** Hosts whose plain-http attachment URLs are acceptable in development. */
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
@@ -136,17 +134,8 @@ export class SocketContext {
     });
     if (!site) return null;
 
-    // An empty allow-list means "every site in the organization"; owners and
-    // admins ignore the list entirely.
-    if (
-      !UNRESTRICTED_ROLES.has(socket.role) &&
-      socket.allowedSiteIds.size > 0 &&
-      !socket.allowedSiteIds.has(String(site._id))
-    ) {
-      return null;
-    }
-
-    return site;
+    // The inbox rule, shared with the HTTP routes: see http/guards.ts.
+    return mayAccessSite(socket.role, socket.allowedSiteIds, site._id) ? site : null;
   }
 
   /** The conversation, if this admin socket may work on it. */

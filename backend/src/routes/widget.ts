@@ -15,12 +15,20 @@ import WidgetConfig from '../models/WidgetConfig';
 import FAQ from '../models/FAQ';
 import Team from '../models/Team';
 import User from '../models/User';
+import { isProduction } from '../config/env';
+import { open } from '../config/secretBox';
+import { userHashFor } from '../services/identity';
+import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
+import { assistantActive } from '../services/ai/autoReply';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
 import type { SiteWidgetSettings } from '../domain';
 
 const router = express.Router();
+
+// Widget ve dokumantasyon bu kodu bekler; genel NOT_FOUND'u degil.
+const widgetNotFound = () => notFound('Widget', 'WIDGET_NOT_FOUND');
 
 // SDK surumu. Widget calisma zamani kendi surumunu gonderir; uyusmazlik
 // panelde "eski surum" uyarisi gostermeyi mumkun kilar.
@@ -191,7 +199,7 @@ router.get(
     const site = await Site.findOne({ siteKey, isActive: true });
     // An invalid key and a disabled site answer identically, so probing keys
     // cannot reveal "this site exists but is switched off".
-    if (!site) throw notFound('Widget');
+    if (!site) throw widgetNotFound();
 
     const [saved, faqs, availability] = await Promise.all([
       WidgetConfig.findOne({ siteId: site._id, isActive: true }),
@@ -206,6 +214,9 @@ router.get(
       serverTime: new Date().toISOString(),
       site: { name: site.name, key: site.siteKey },
       availability,
+      // True when the site's assistant answers first; the widget then says so
+      // and offers a way to a person. Nothing else about AI is public.
+      assistant: assistantActive(site),
       config: publicConfig(site, saved ? saved.toObject() : null),
       faqs: (faqs || []).map((f) => ({
         id: String(f._id),
@@ -232,7 +243,7 @@ router.post(
     if (!siteKey) throw badRequest('siteKey is required');
 
     const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) throw notFound('Widget');
+    if (!site) throw widgetNotFound();
 
     const now = new Date().toISOString();
     const previous = site.installation || {};
@@ -255,6 +266,28 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
+// GET /api/widget/demo-identity?siteKey=...  (yalnizca gelistirmede)
+//
+// Demo sayfasinin "Demo musteri olarak giris yap" dugmesi. Gercek bir magazada
+// userHash'i magazanin kendi sunucusu uretir; demo magazanin sunucusu olmadigi
+// icin bu uc onun yerine gecer. Uretimde hic baglanmaz ve yalnizca tohum
+// kiracisinin sitesi icin cevap verir.
+// ---------------------------------------------------------------------------
+if (!isProduction) {
+  router.get(
+    '/demo-identity',
+    asyncHandler(async (req: Request, res: Response) => {
+      const siteKey = plainString(req.query.siteKey, 128);
+      if (siteKey !== DEMO_SITE_KEY) throw widgetNotFound();
+      const site = await Site.findOne({ siteKey, isActive: true });
+      const secret = open(site?.integrations?.identitySecret);
+      if (!secret) throw widgetNotFound();
+      res.json({ ...DEMO_CUSTOMER, userHash: userHashFor(secret, DEMO_CUSTOMER.userId) });
+    })
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Geriye donuk uyumluluk: eski widget surumleri /api/widget/settings cagirir.
 // ---------------------------------------------------------------------------
 router.get(
@@ -263,7 +296,7 @@ router.get(
     const siteKey = plainString(req.query.siteKey, 128);
     if (!siteKey) throw badRequest('siteKey is required');
     const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) throw notFound('Widget');
+    if (!site) throw widgetNotFound();
     const saved = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
     res.json({
       site: { name: site.name, isActive: site.isActive, widgetSettings: site.widgetSettings },

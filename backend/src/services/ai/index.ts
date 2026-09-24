@@ -2,38 +2,25 @@
 
 // Provider selection.
 //
-// Which vendor is in use is decided here and nowhere else. Adding one means a
-// new file next to this and a case below; nothing upstream changes.
+// Which model backend is in use is decided here and nowhere else. There is one
+// real backend — the self-hosted model behind vLLM — and the disabled provider
+// for every server where it is switched off or misconfigured. There is no
+// fallback to any other model: without ours, conversations go to a person.
 
 import { DisabledProvider, AIError } from './provider';
-import { AnthropicProvider, DEFAULT_MODEL } from './anthropicProvider';
+import { VllmProvider } from './vllmProvider';
+import { aiConfig } from '../../config/ai';
 import type { AIProvider } from './provider';
 
 let instance: AIProvider | null = null;
 
 function build(): AIProvider {
-  // AI_PROVIDER lets a deployment pin the vendor; left unset it is inferred
-  // from whichever credential is present, so a normal install only needs the
-  // key.
-  const configured = (process.env.AI_PROVIDER || '').toLowerCase();
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-
-  // An explicit off switch, so a deployment holding a key can still disable the
-  // feature without removing the credential.
-  if (process.env.AI_ENABLED === 'false') return new DisabledProvider();
-
-  if (configured === 'anthropic' || (!configured && apiKey)) {
-    if (!apiKey) return new DisabledProvider();
-    return new AnthropicProvider({
-      apiKey,
-      model: process.env.AI_MODEL || DEFAULT_MODEL
-    });
-  }
-
-  return new DisabledProvider();
+  const config = aiConfig();
+  return config ? new VllmProvider(config) : new DisabledProvider();
 }
 
-// Built once per process and reused; the SDK client holds a connection pool.
+// Built once per process and reused; the provider owns the concurrency limit,
+// so there must be exactly one.
 function getProvider(): AIProvider {
   if (!instance) instance = build();
   return instance;

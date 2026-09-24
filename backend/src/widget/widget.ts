@@ -93,6 +93,8 @@ interface WidgetBootstrap {
   site: Record<string, any>;
   faqs: WidgetFaq[];
   availability: string;
+  /** True when the site's assistant answers first. */
+  assistant?: boolean;
   [field: string]: unknown;
 }
 
@@ -339,7 +341,9 @@ interface Window {
       uploadFailed: 'Dosya yuklenemedi.',
       loadFailed: 'Sohbet yuklenemedi. Lutfen sayfayi yenileyin.',
       offlineNotice: 'Su anda cevrimdisiyiz. Mesajinizi birakin, en kisa surede donelim.',
-      poweredBy: 'Support.io ile guclendirilmistir'
+      poweredBy: 'Support.io ile guclendirilmistir',
+      assistantLabel: 'Otomatik asistan',
+      talkToHuman: 'Temsilciye baglan'
     },
     en: {
       launcherLabel: 'Open support chat',
@@ -377,7 +381,9 @@ interface Window {
       uploadFailed: 'Upload failed.',
       loadFailed: 'Could not load the chat. Please refresh the page.',
       offlineNotice: 'We are offline right now. Leave a message and we will get back to you.',
-      poweredBy: 'Powered by Support.io'
+      poweredBy: 'Powered by Support.io',
+      assistantLabel: 'Automatic assistant',
+      talkToHuman: 'Talk to a person'
     }
   };
 
@@ -909,6 +915,11 @@ interface Window {
         self.conversationId = String(message.conversationId);
       }
       self._appendMessage(message);
+      if (message.senderType !== 'visitor') self._hideTyping();
+      // The assistant handed over: from here a person answers, so the line
+      // offering one has done its job.
+      if (message.aiMetadata && message.aiMetadata.decision === 'handoff')
+        self._hideAssistantLine();
       if (message.senderType !== 'visitor' && !self.isOpen) {
         self.unread += 1;
         self._renderBadge();
@@ -917,8 +928,10 @@ interface Window {
       self.emit('message', { message: message });
     });
 
-    this.socket.on('agent-typing', function () {
-      self._showTyping();
+    // The assistant asks for longer than a person's keystroke pause: its
+    // answer can take a few seconds to write.
+    this.socket.on('agent-typing', function (data: any) {
+      self._showTyping(data && data.durationMs);
     });
 
     this.socket.on('error', function (data: any) {
@@ -959,6 +972,10 @@ interface Window {
       visitorName:
         (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
       visitorEmail: (this.identity && this.identity.email) || store.get('sc_visitor_email') || null,
+      // The server accepts the id only when the shop's signature (userHash)
+      // checks out; an unsigned or forged pair simply leaves the visitor anonymous.
+      userId: (this.identity && this.identity.userId) || null,
+      userHash: (this.identity && this.identity.userHash) || null,
       // Query strings often contain tokens or personal data; page context does
       // not need them. Origin + path is useful to the operator and safe to keep.
       currentPage: window.location.origin + window.location.pathname,
@@ -1088,6 +1105,8 @@ interface Window {
       '.header-text{flex:1;min-width:0;}',
       '.header-title{font-size:15px;font-weight:650;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.header-status{font-size:12px;opacity:.85;display:flex;align-items:center;gap:6px;margin-top:2px;}',
+      '.assistant-line{font-size:11px;opacity:.9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.link-btn{border:0;background:none;padding:0;color:inherit;font:inherit;cursor:pointer;text-decoration:underline;}',
       '.dot{width:7px;height:7px;border-radius:50%;background:#9CA3AF;flex:0 0 auto;}',
       '.dot.online{background:#22C55E;}.dot.away{background:#F59E0B;}',
       '.dot.pulse{animation:pulse 1.4s ease-in-out infinite;}',
@@ -1378,6 +1397,15 @@ interface Window {
       '<div class="header-text">',
       showBrand ? '<div class="header-title">' + brand + '</div>' : '',
       '<div class="header-status"><span class="dot"></span><span class="status-text"></span></div>',
+      // Said plainly when a machine answers first, with the way to a person
+      // one click away.
+      this.remote.assistant
+        ? '<div class="assistant-line js-assistant">' +
+          escapeHtml(t.assistantLabel) +
+          ' · <button class="link-btn js-human">' +
+          escapeHtml(t.talkToHuman) +
+          '</button></div>'
+        : '',
       '</div>',
       c.window.showCloseButton !== false
         ? '<button class="icon-btn js-close" aria-label="' +
@@ -1494,6 +1522,7 @@ interface Window {
       statusText: q('.status-text'),
       messages: q('.js-messages'),
       typing: q('.js-typing'),
+      assistantLine: q('.js-assistant'),
       input: q('.js-input'),
       send: q('.js-send'),
       attach: q('.js-attach'),
@@ -1517,6 +1546,11 @@ interface Window {
     this._listen(this.el.launcher, 'click', function () {
       self.toggle();
     });
+    var humanBtn = q('.js-human');
+    if (humanBtn)
+      this._listen(humanBtn, 'click', function () {
+        self.requestHuman();
+      });
     var closeBtn = q('.js-close');
     if (closeBtn)
       this._listen(closeBtn, 'click', function () {
@@ -1924,15 +1958,43 @@ interface Window {
     });
   };
 
-  Widget.prototype._showTyping = function (this: WidgetInstance) {
+  Widget.prototype._showTyping = function (this: WidgetInstance, durationMs?: number) {
     if (!this.el) return;
     this.el.typing.classList.add('show');
     this._scrollToEnd();
     if (this._typingTimer) clearTimeout(this._typingTimer);
     var self = this;
+    // Never longer than 10 s: an indicator that outlives the answer it
+    // promised is worse than none.
+    var ms = Math.min(Number(durationMs) || 3000, 10000);
     this._typingTimer = setTimeout(function () {
-      if (self.el) self.el.typing.classList.remove('show');
-    }, 3000);
+      self._hideTyping();
+    }, ms);
+  };
+
+  Widget.prototype._hideTyping = function (this: WidgetInstance) {
+    if (this._typingTimer) clearTimeout(this._typingTimer);
+    this._typingTimer = null;
+    if (this.el) this.el.typing.classList.remove('show');
+  };
+
+  Widget.prototype._hideAssistantLine = function (this: WidgetInstance) {
+    if (this.el && this.el.assistantLine) this.el.assistantLine.style.display = 'none';
+  };
+
+  /**
+   * "Talk to a person". Before the first message there is nothing to hand
+   * over yet; the server then starts the conversation with a person instead.
+   */
+  Widget.prototype.requestHuman = function (this: WidgetInstance) {
+    if (!this.socket || !this.socket.connected) {
+      this._notice(this.t.connectionLost, 'error');
+      return;
+    }
+    this.socket.emit('request-human', { language: this.locale });
+    this._hideAssistantLine();
+    this._setView('messages');
+    this.emit('request-human', {});
   };
 
   Widget.prototype._emitTyping = function (this: WidgetInstance) {
@@ -2133,10 +2195,11 @@ interface Window {
   /**
    * Oturum acmis kullaniciyi tanitir.
    *
-   * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. Sunucu bunlari yalnizca
-   * gosterim icin kullanir; yetkilendirme kararlari asla ziyaretcinin gonderdigi
-   * kimlige dayandirilmaz. Imzali kimlik (HMAC) destegi eklendiginde `userHash`
-   * alani buradan gecirilecektir.
+   * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. `userId` ancak magazanin
+   * sunucusunun urettigi `userHash` = HMAC_SHA256(kimlik anahtari, userId)
+   * sunucuda dogrulanirsa kimlik sayilir (services/identity.ts); siparis
+   * sorgusu yalnizca bu dogrulanmis kimlikle yapilir. Ad ve e-posta yalnizca
+   * gosterim icindir.
    */
   Widget.prototype.identify = function (this: WidgetInstance, user: WidgetIdentity | null) {
     if (!user || typeof user !== 'object') return;

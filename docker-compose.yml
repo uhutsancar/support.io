@@ -97,7 +97,6 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_REGION
       - S3_BUCKET
-      # AI asistan. Anahtar yoksa ozellik kapali gorunur, sahte cevap uretilmez.
       # Redis: tanimliysa Socket.IO adapter'i devreye girer ve backend birden
       # fazla surec olarak calistirilabilir. Tanimsizken tek surec modunda calisir.
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -113,10 +112,18 @@ services:
       - REGISTER_RATE_MAX=${REGISTER_RATE_MAX:-100000}
       - AUTH_RATE_MAX=${AUTH_RATE_MAX:-100000}
       - API_RATE_MAX=${API_RATE_MAX:-1000000}
-      - ANTHROPIC_API_KEY
-      - AI_PROVIDER
-      - AI_ENABLED
-      - AI_MODEL
+      # Yerel model (vLLM, bkz. ai/README.md). Degerler yalnizca kok .env'den
+      # gelir: burada acikca atandiklari icin backend/.env'deki bir AI satiri
+      # etkisizdir. Eksik ya da hatali bir deger AI'yi kapatir, backend'i durdurmaz.
+      - AI_ENABLED=${AI_ENABLED:-false}
+      - AI_BASE_URL=${AI_BASE_URL:-http://llm:8000/v1}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_MODEL=${AI_MODEL:-}
+      - AI_TIMEOUT_MS=${AI_TIMEOUT_MS:-20000}
+      - AI_CONCURRENCY=${AI_CONCURRENCY:-2}
+      - AI_QUEUE_MAX_WAIT_MS=${AI_QUEUE_MAX_WAIT_MS:-8000}
+      - AI_AUTO_REPLY_ENABLED=${AI_AUTO_REPLY_ENABLED:-false}
+      - ORDER_LOOKUP_TIMEOUT_MS=${ORDER_LOOKUP_TIMEOUT_MS:-3000}
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:
@@ -166,7 +173,86 @@ services:
       - admin
       - backend
 
+  # The self-hosted model (ai/README.md). Started only with the `ai` profile —
+  # COMPOSE_PROFILES=ai in the root .env — so `docker compose up` on a machine
+  # without a GPU brings up the app exactly as before, AI off. The backend does
+  # not depend on it: chat and the inbox work while it loads or is stopped.
+  llm:
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:v0.30.0@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90}
+    profiles: [ai]
+    restart: unless-stopped
+    # vLLM starts without authentication when its key is empty. The ${:?}
+    # form cannot be used here: compose checks it even with the profile off,
+    # which would break `docker compose up` for everyone without AI.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - 'if [ $${#VLLM_API_KEY} -lt 32 ]; then echo "AI_API_KEY must be at least 32 characters" >&2; exit 1; fi; exec vllm serve "$$@"'
+      - --
+    environment:
+      VLLM_API_KEY: ${AI_API_KEY:-}
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+      VLLM_NO_USAGE_STATS: "1"
+      DO_NOT_TRACK: "1"
+    # 4-bit weights, a 4096-token context and at most four sequences keep the
+    # 12B model inside a 12–16 GB card (plan §2). Request logging is off by
+    # default in this vLLM version, so prompts and answers never reach its log.
+    command:
+      - /models/${AI_MODEL:-unset}
+      - --served-model-name
+      - ${AI_MODEL:-unset}
+      - --quantization
+      - bitsandbytes
+      - --dtype
+      - bfloat16
+      - --max-model-len
+      - "4096"
+      - --max-num-seqs
+      - "4"
+      - --gpu-memory-utilization
+      - "0.85"
+      - --limit-mm-per-prompt
+      - '{"image": 0}'
+      - --generation-config
+      - vllm
+    volumes:
+      - supportio_models:/models:ro
+    ports:
+      # Development only, and only on this machine; production has no port.
+      - "127.0.0.1:8000:8000"
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10m
+
+  # One-off: `npm run ai:download`. Same image as the server, so no Python
+  # image of our own; the only step that talks to Hugging Face.
+  model-download:
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:v0.30.0@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90}
+    profiles: [ai-tools]
+    entrypoint: ["python3", "/ai/download.py"]
+    environment:
+      AI_MODEL_REVISION: ${AI_MODEL_REVISION:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      DO_NOT_TRACK: "1"
+    volumes:
+      - supportio_models:/models
+      - ./ai/download.py:/ai/download.py:ro
+
 volumes:
+  supportio_models:
   postgres_data:
   redis_data:
   backend_node_modules:

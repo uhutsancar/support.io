@@ -6,9 +6,6 @@
 // no running server. What it pins is the logic that would otherwise only be
 // exercised on a live call: error translation, JSON handling, value clamping,
 // and transcript assembly.
-//
-// The one test that does hit Anthropic is skipped unless ANTHROPIC_API_KEY is
-// set, so a normal run never spends money.
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
@@ -16,13 +13,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AIProvider, DisabledProvider } from '../src/services/ai/provider';
 import type { AICompletion, AICompletionRequest } from '../src/services/ai/provider';
-import { getProvider, setProvider, resetProvider } from '../src/services/ai';
+import { setProvider, resetProvider } from '../src/services/ai';
 import * as aiService from '../src/services/aiService';
 import Message from '../src/models/Message';
 import FAQ from '../src/models/FAQ';
-import { AnthropicProvider } from '../src/services/ai/anthropicProvider';
-import { getPool } from '../src/db/pool';
-
+import Organization from '../src/models/Organization';
+import Site from '../src/models/Site';
+import { findSources } from '../src/services/ai/knowledge';
+import { generateId } from '../src/db/objectId';
+import { getPool, query } from '../src/db/pool';
 
 /** A scripted reply: a fixed completion, fixed text, or a function of the request. */
 type StubReply =
@@ -60,7 +59,7 @@ test('the disabled provider refuses instead of returning content', async () => {
   assert.equal(provider.isConfigured, false);
 
   await assert.rejects(
-    () => provider.complete({ prompt: 'anything' }),
+    () => provider.complete({ prompt: 'anything', maxTokens: 8, temperature: 0 }),
     (err: any) => {
       assert.equal(err.name, 'AIError');
       assert.equal(err.code, 'ai_not_configured');
@@ -73,43 +72,11 @@ test('the disabled provider refuses instead of returning content', async () => {
 test('the base provider refuses to be used directly', async () => {
   const provider = new AIProvider();
   assert.equal(provider.isConfigured, false);
-  await assert.rejects(() => provider.complete({ prompt: '' }), /must implement complete/);
+  await assert.rejects(
+    () => provider.complete({ prompt: '', maxTokens: 8, temperature: 0 }),
+    /must implement complete/
+  );
   assert.throws(() => provider.name, /must define a name/);
-});
-
-test('provider selection falls back to disabled without a key', () => {
-  const original = {
-    key: process.env.ANTHROPIC_API_KEY,
-    provider: process.env.AI_PROVIDER,
-    enabled: process.env.AI_ENABLED
-  };
-  try {
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.AI_PROVIDER;
-    delete process.env.AI_ENABLED;
-    resetProvider();
-    assert.equal(getProvider().isConfigured, false);
-    assert.equal(getProvider().name, 'disabled');
-
-    // A key alone is enough to select Anthropic; no extra configuration.
-    process.env.ANTHROPIC_API_KEY = 'sk-ant-not-a-real-key';
-    resetProvider();
-    assert.equal(getProvider().name, 'anthropic');
-    assert.equal(getProvider().isConfigured, true);
-
-    // The explicit off switch wins over a present key.
-    process.env.AI_ENABLED = 'false';
-    resetProvider();
-    assert.equal(getProvider().name, 'disabled');
-  } finally {
-    if (original.key === undefined) delete process.env.ANTHROPIC_API_KEY;
-    else process.env.ANTHROPIC_API_KEY = original.key;
-    if (original.provider === undefined) delete process.env.AI_PROVIDER;
-    else process.env.AI_PROVIDER = original.provider;
-    if (original.enabled === undefined) delete process.env.AI_ENABLED;
-    else process.env.AI_ENABLED = original.enabled;
-    resetProvider();
-  }
 });
 
 test('analyze clamps model output to values the rest of the system accepts', async (t) => {
@@ -221,13 +188,39 @@ test('a JSON reply wrapped in a code fence is still parsed', async (t) => {
   }
 });
 
+test('a knowledge answer is only "answered" when the model says true, not "false"', async (t) => {
+  // Boolean("false") is true: the previous parser reported this as answered.
+  setProvider(new StubProvider('{"answered": "false", "answer": "uydurma", "usedEntries": ["x"]}'));
+  t.after(() => resetProvider());
+
+  const originalFind = FAQ.find;
+  FAQ.find = (() => ({
+    sort: () => ({ limit: async () => [{ _id: 'f1', question: 'İade?', answer: '14 gün.' }] })
+  })) as any;
+
+  try {
+    const result = await aiService.knowledgeAnswer(
+      { _id: 'c1', siteId: 's1' },
+      { question: 'iade' }
+    );
+    assert.equal(result.answered, false);
+    assert.equal(result.answer, null);
+    assert.ok('usedEntries' in result);
+    assert.deepEqual(result.usedEntries, [], 'an id that was never a source is dropped');
+  } finally {
+    FAQ.find = originalFind;
+  }
+});
+
 test('knowledge answer reports honestly when there is nothing to answer from', async (t) => {
   const stub = new StubProvider('{"answered": true, "answer": "uydurma"}');
   setProvider(stub);
   t.after(() => resetProvider());
 
   const originalFind = FAQ.find;
+  const originalCount = FAQ.countDocuments;
   FAQ.find = (() => ({ sort: () => ({ limit: async () => [] }) })) as any;
+  FAQ.countDocuments = (async () => 0) as any;
 
   try {
     const result = await aiService.knowledgeAnswer(
@@ -239,6 +232,7 @@ test('knowledge answer reports honestly when there is nothing to answer from', a
     assert.equal(stub.calls.length, 0, 'with no knowledge base there is nothing to ask the model');
   } finally {
     FAQ.find = originalFind;
+    FAQ.countDocuments = originalCount;
   }
 });
 
@@ -313,45 +307,103 @@ test('an empty transcript is refused before the provider is called', async (t) =
   }
 });
 
-test(
-  'a live Anthropic call returns usable text',
-  { skip: !process.env.ANTHROPIC_API_KEY },
-  async () => {
-    const provider = new AnthropicProvider({ apiKey: process.env.ANTHROPIC_API_KEY });
+test('a long thread is read from its newest end', async () => {
+  // 250 messages, oldest first. The previous reader loaded the first 200 and
+  // never saw the last fifty — the ones a reply has to answer.
+  const thread = Array.from({ length: 250 }, (_, i) => ({
+    senderType: i % 2 ? 'agent' : 'visitor',
+    content: `mesaj-${i}`,
+    createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, i))
+  }));
 
-    assert.equal(provider.isConfigured, true);
-
-    const result = await provider.complete({
-      system: 'Yalnızca istenen kelimeyi yaz, başka hiçbir şey yazma.',
-      prompt: 'Sadece şu kelimeyi yaz: tamam',
-      maxTokens: 64
-    });
-
-    assert.ok(result.text.length > 0);
-    assert.match(result.text.toLowerCase(), /tamam/);
-    assert.ok(result.model, 'the response should report which model answered');
-  }
-);
-
-test(
-  'an invalid key surfaces as a typed auth error, not a crash',
-  { skip: !process.env.ANTHROPIC_API_KEY },
-  async () => {
-    const provider = new AnthropicProvider({ apiKey: 'sk-ant-definitely-invalid' });
-
-    await assert.rejects(
-      () => provider.complete({ system: 'x', prompt: 'y', maxTokens: 16 }),
-      (err: any) => {
-        assert.equal(err.name, 'AIError');
-        assert.ok(
-          ['ai_auth_failed', 'ai_bad_request'].includes(err.code),
-          `unexpected code ${err.code}`
-        );
-        return true;
+  const originalFind = Message.find;
+  // Honours the sort and limit the reader asks for, like the database would.
+  Message.find = (() => {
+    let rows = [...thread];
+    const chain = {
+      sort(spec: { createdAt: number }) {
+        rows.sort((a, b) => (a.createdAt.getTime() - b.createdAt.getTime()) * spec.createdAt);
+        return chain;
+      },
+      async limit(n: number) {
+        rows = rows.slice(0, n);
+        return rows;
       }
-    );
+    };
+    return chain;
+  }) as any;
+
+  try {
+    const result = await aiService.buildTranscript('c1');
+    const lines = result.transcript.split('\n');
+    assert.equal(lines.at(-1), 'Temsilci: mesaj-249', 'the newest message must be last');
+    assert.ok(result.transcript.includes('mesaj-248'));
+    assert.ok(!result.transcript.includes('mesaj-0\n'), 'the oldest messages are the ones dropped');
+    assert.equal(result.lastVisitorMessage, 'mesaj-248');
+    assert.equal(result.truncated, true);
+
+    const narrow = await aiService.buildTranscript('c1', { messages: 10, chars: 3000 });
+    assert.equal(narrow.messageCount, 10);
+    assert.equal(narrow.transcript.split('\n')[0], 'Müşteri: mesaj-240');
+  } finally {
+    Message.find = originalFind;
   }
-);
+});
+
+test('FAQ sources are chosen by the question, from this site only', async (t) => {
+  const org = await new Organization({ name: `ai-knowledge-${Date.now()}` }).save();
+  t.after(async () => {
+    await query('DELETE FROM organizations WHERE id = $1', [org._id]);
+  });
+  const site = await new Site({
+    name: 'Bilgi',
+    domain: 'bilgi.test',
+    siteKey: `k-${generateId()}`,
+    organizationId: org._id
+  }).save();
+  const other = await new Site({
+    name: 'Başka',
+    domain: 'baska.test',
+    siteKey: `k-${generateId()}`,
+    organizationId: org._id
+  }).save();
+
+  const entries = [
+    ['Kargo ne kadar sürede gelir?', '1-3 iş günü içinde kargoya verilir.', ['kargo']],
+    ['İade koşulları nelerdir?', '14 gün içinde iade edebilirsiniz.', ['iade']],
+    ['Ürün garantisi ne kadar?', 'Ürünler 24 ay garantilidir.', ['garanti']]
+  ] as const;
+  for (const [i, [question, answer, keywords]] of entries.entries()) {
+    await new FAQ({ siteId: site._id, question, answer, keywords: [...keywords], order: i }).save();
+  }
+  await new FAQ({
+    siteId: other._id,
+    question: 'İade ücreti var mı?',
+    answer: 'Başka sitenin iade cevabı.',
+    keywords: ['iade']
+  }).save();
+
+  // A capital dotted İ, which JavaScript's default lower-casing breaks.
+  const byQuestion = await findSources(site._id, 'İADE süresi kaç gün?');
+  assert.equal(byQuestion[0]?.question, 'İade koşulları nelerdir?');
+  assert.ok(
+    byQuestion.every((s) => !s.answer.includes('Başka sitenin')),
+    "another site's entry must never be a source"
+  );
+
+  // A typo matches nothing indexed; a small site is then given whole.
+  const fallback = await findSources(site._id, 'gnderi takp');
+  assert.equal(fallback.length, 3);
+
+  // A site with nothing published has no sources at all.
+  const empty = await new Site({
+    name: 'Boş',
+    domain: 'bos.test',
+    siteKey: `k-${generateId()}`,
+    organizationId: org._id
+  }).save();
+  assert.deepEqual(await findSources(empty._id, 'iade'), []);
+});
 
 test.after(async () => {
   await getPool().end();

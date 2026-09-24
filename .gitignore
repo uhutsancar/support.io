@@ -16,3 +16,7 @@ coverage/
 # Build output, not a source file: compiled from backend/src/widget/widget.ts by
 # `npm run build:widget`, which `npm run dev` and `npm run build` both do first.
 backend/public/widget.js
+
+# Model weights live in the supportio_models volume; reports are local only.
+ai/.artifacts/
+models/

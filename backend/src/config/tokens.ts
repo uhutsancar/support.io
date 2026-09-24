@@ -32,7 +32,7 @@ const SESSION_AUDIENCE = 'support-chat:session';
 const UPLOAD_AUDIENCE = 'support-chat:upload-proof';
 
 /** Tek kök gizli anahtardan amaca özgü bir anahtar türetir (HMAC-SHA256). */
-function derivedKey(purpose: string): Buffer {
+export function derivedKey(purpose: string): Buffer {
   return crypto.createHmac('sha256', jwtSecret()).update(`support-chat/${purpose}/v1`).digest();
 }
 

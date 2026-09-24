@@ -47,8 +47,8 @@ SSS tabanlı otomatik yanıt, analitik, denetim kaydı ve AI asistan.
 └───────────┬──────────────────────────┬───────────────┬───────┘
             │                          │               │
             ▼                          ▼               ▼
-     PostgreSQL 16              AWS S3            Anthropic API
-     (29 tablo)             (logo + dosya)      (AI asistan, ops.)
+     PostgreSQL 16              AWS S3            vLLM (llm)
+     (29 tablo)             (logo + dosya)      (yerel model, ops.)
             ▲
             │ REST + Socket.IO /admin
 ┌───────────┴──────────────────────────┐
@@ -400,38 +400,37 @@ aksiyonlarını çalıştırır.
 
 ## 16. AI
 
+Model: **Trendyol Asure 12B**, eğitilmeden, kendi GPU'muzda tek vLLM konteynerinde
+4 bit çalışır (`llm` servisi, `ai` Compose profili). Dış bir yapay zekâ API'si
+yoktur; model yoksa konuşma temsilciye gider. Kurulum ve mağaza sözleşmesi:
+`ai/README.md`.
+
 ```
-routes/ai.js  ──►  services/aiService.js  ──►  services/ai/index.js
- (yetki, kiracı,      (görevler, prompt,          (sağlayıcı seçimi)
-  hız sınırı)          çıktı sınırlama)                 │
-                                                        ▼
-                                          AnthropicProvider | DisabledProvider
+routes/ai.ts ──► services/aiService.ts ──┐        (temsilci asistanı)
+socket widget ─► services/ai/autoReply.ts ┤        (otomatik yanıt)
+                                          ▼
+            prompts.ts · knowledge.ts · replyPolicy.ts
+                                          ▼
+                     services/ai/index.ts ─► VllmProvider | DisabledProvider
 ```
 
-**Görevler:** özet, yanıt önerisi, yeniden yazma, çeviri, analiz (duygu / niyet /
-kategori / önerilen öncelik / etiket), bilgi tabanından yanıt.
+**Site modları** (`sites.ai_settings.mode`): `off` (SSS botu bugünkü gibi),
+`copilot` (temsilciye özet, taslak, ton, çeviri, analiz, bilgi bankası),
+`auto` (asistan müşteriye kendisi yanıt verir; SSS botu kapanır).
 
-**Prompt akışı:** Konuşma dökümü (son 40 mesaj, mesaj başına 2000 karakter) +
-ticket bağlamı + yanıt önerisinde sitenin yayınlanmış SSS içerikleri.
+**Otomatik yanıt:** 800 ms birleştirme → kod ön kontrolü (temsilci isteği, kart/
+IBAN/TC no, uzunluk, yanıt sınırı, engelli kelime; model çağrılmaz) → SSS
+getirme → JSON şemalı model çağrısı → son kontrol (kaynakta olmayan sayı/tarih/
+link, eylem iddiası, biçim, uzunluk) → satır kilitli kısa transaction ile
+teslim. Devralma, konu kapanması, mod değişimi veya yeni mesaj varsa cevap
+atılır. Her hata hazır metinle devre dönüşür.
 
-**Bilgi akışı:** `knowledgeAnswer` yalnızca SSS içeriğine dayanır; içerik yoksa
-modele hiç gitmeden `answered: false` döner.
+**Sipariş:** yalnız `userHash` doğrulanmış müşteri için, mağazanın servisine
+imzalı, SSRF korumalı istek; ikinci model çağrısı yalnız temizlenmiş veriyle.
 
-**Güvenlik:**
-
-- API anahtarı yalnızca sunucuda; tarayıcı kendi `/api/ai` uçlarımızı çağırır.
-- Her uç noktada organizasyon sahipliği kontrol edilir.
-- Dakikada 20 istek sınırı, kullanıcı kimliğine göre.
-- Sağlayıcı yapılandırılmamışsa 503 döner; **sahte içerik üretilmez**.
-- Model çıktısı sistemin kabul ettiği değerlere kısıtlanır (bilinmeyen duygu →
-  `neutral`, bilinmeyen öncelik → öneri yok).
-
-**Danışma sınırı:** Hiçbir AI görevi müşteriye mesaj göndermez, konuşmanın
-durumunu, önceliğini veya etiketini değiştirmez. Temsilci öneriyi *kabul eder,
-düzenler, yeniden ürettirir veya reddeder*; gönderme her zaman insana aittir. Bu
-kural testle sabitlenmiştir.
-
----
+**Güvenlik:** model portu canlıda kapalı; AI uçları gelen kutusunun site/rol
+kuralını kullanır; prompt, cevap ve sipariş verisi loglanmaz; entegrasyon
+anahtarları AES-256-GCM ile mühürlü tutulur ve hiçbir yanıtta dönmez.
 
 ## 17. Bilgi Tabanı
 
@@ -532,10 +531,7 @@ Görünüm (renk, konum, marka, karşılama metni, ön-sohbet formu) panelden
 | `DB_POOL_MAX` | hayır | Varsayılan 10 |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `S3_BUCKET` | dosya yükleme için | Logo ve sohbet eki depolama |
 | `S3_ACL` | hayır | Yalnızca ACL açık bucket'larda |
-| `ANTHROPIC_API_KEY` | AI için | Yoksa AI özellikleri kapalı görünür |
-| `AI_PROVIDER` | hayır | Boşsa anahtar varlığından çıkarılır |
-| `AI_ENABLED` | hayır | `false` ise anahtar olsa da kapatır |
-| `AI_MODEL` | hayır | Varsayılan `claude-opus-5` |
+| `AI_*` | hayır | Yerel model ayarları; kök `.env` dosyasından gelir (bkz. `ai/README.md`) |
 | `WIDGET_URL` / `ADMIN_URL` | hayır | Bilgilendirme amaçlı |
 
 \* `DATABASE_URL` **veya** `DB_*` grubundan biri zorunludur.
@@ -625,9 +621,13 @@ Testler Node'un yerleşik koşucusunu kullanır (ek bağımlılık yok):
 | `tests/analytics.e2e.test.js` | Toplamanın 50 satır sınırını aştığı, rakamların satırlarla uyuştuğu, pencere filtresi, kiracı izolasyonu |
 | `tests/agentPerformance.e2e.test.js` | Gerçek satırlardan türeyen metrikler, veri yokken `null`, aralık doğrulaması |
 | `tests/ai.e2e.test.js` | Her AI görevinde kiracı izolasyonu, doğrulama, danışma sınırı (öneri müşteriye gitmez) |
-| `tests/ai.provider.test.js` | Sağlayıcı seçimi, hata çevirisi, JSON ayrıştırma, çıktı sınırlama (ağ gerektirmez) |
+| `tests/ai.provider.test.ts` | Hata çevirisi, JSON ayrıştırma, çıktı sınırlama, döküm penceresi, SSS getirme |
+| `tests/ai.vllm.test.ts` | vLLM sağlayıcısı, yerel sahte sunucuya karşı: hata kodları, zaman aşımı, eşzamanlılık |
+| `tests/ai.policy.test.ts` | Ön ve son kontrol kuralları |
+| `tests/ai.autoreply.e2e.test.ts` | Otomatik yanıt, devir, devralma, sipariş akışı (test sürecinde soket sunucusu) |
+| `tests/orderLookup.test.ts` | İmza, SSRF, zaman aşımı, boyut sınırı, alan temizleme |
 
-`ANTHROPIC_API_KEY` tanımlı değilse iki canlı AI testi atlanır; kalan tümü koşar.
+Testler gerçek bir model çağırmaz; model davranışı sahte sağlayıcı ve yerel sahte HTTP sunucusuyla sınanır.
 
 **Son durum:** 37 test — 35 geçti, 2 atlandı, 0 hata (hem yerelde hem Docker'da).
 
@@ -712,7 +712,7 @@ Bunlar bilinçli olarak açık bırakılmıştır, gizlenmemiştir:
 | **Global arama** | Konuşma listesi içinde filtreleme var; konuşma + müşteri + ticket + makale üzerinde birleşik arama yok |
 | **Üretim Docker tanımı** | Yalnızca geliştirme yığını mevcut |
 | **Redis / kuyruk** | Kullanılmıyor. Tek sunucu için gerekmiyor; yatay ölçeklemede Socket.IO adaptörü gerekecek |
-| **AI canlı testi** | `ANTHROPIC_API_KEY` olmadan iki test atlanır |
+| **AI canlı testi** | Gerçek model yalnız GPU olan makinede `npm run ai:bench` ile sınanır |
 
 ---
 
@@ -728,7 +728,7 @@ Bunlar bilinçli olarak açık bırakılmıştır, gizlenmemiştir:
 | Docker'da `Cannot find module 'pg'` | `backend_node_modules` volume'u eski. Bölüm 26'daki volume yenileme adımlarını uygulayın |
 | Vekil üzerinden API 404 | `Caddyfile` içinde `handle_path` kullanılmış olabilir; ön eki soyar. `handle /api/*` olmalı |
 | CORS hatası | `server.js` içindeki `allowedOrigins` listesine panel adresi eklenmemiş |
-| AI düğmeleri görünmüyor | `ANTHROPIC_API_KEY` tanımsız veya `AI_ENABLED=false`. `GET /api/ai/status` durumu söyler |
+| AI düğmeleri görünmüyor | Model kapalı/yükleniyor veya `AI_ENABLED=false`. `GET /api/ai/status` durumu söyler |
 | `AccessControlListNotSupported` (S3) | Bucket "owner enforced" modunda. `S3_ACL` tanımlı olmamalı |
 | Analitikte her şey sıfır | Demo veri yok. `npm run db:seed` çalıştırın |
 | Testler `register failed` diyor | Backend çalışmıyor. Testler ayrı terminalde çalışan sunucuya karşı koşar |

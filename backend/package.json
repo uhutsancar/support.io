@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.widget.json",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
+    "demo:orders": "tsx scripts/demoOrderService.ts",
+    "ai:bench": "tsx scripts/aiBench.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:compose": "tsx scripts/test-compose.ts",
     "lint": "eslint .",
@@ -29,7 +31,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.119.0",
     "@aws-sdk/client-s3": "^3.400.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@types/cookie-parser": "^1.4.10",

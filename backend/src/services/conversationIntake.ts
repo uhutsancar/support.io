@@ -14,6 +14,7 @@
 import Conversation from '../models/Conversation';
 import Message from '../models/Message';
 import { slaTargetsFor } from '../domain';
+import type { ResponseOwner } from '../domain';
 import { routeToDepartment } from './departmentRouting';
 import {
   isWithinBusinessHours,
@@ -65,7 +66,9 @@ function nextBusinessMorning(): Date {
 export async function openConversation(
   site: Doc<SiteDoc>,
   visitor: VisitorIdentity,
-  firstMessage: string
+  firstMessage: string,
+  /** 'ai' when the site's assistant answers; the default keeps people first. */
+  responseOwner: ResponseOwner = 'human'
 ): Promise<IntakeResult> {
   const department = await routeToDepartment(site._id, firstMessage);
 
@@ -81,7 +84,8 @@ export async function openConversation(
     status: 'open',
     channel: 'web-chat',
     priority: 'normal',
-    requiredSkills: department?.requiredSkills || []
+    requiredSkills: department?.requiredSkills || [],
+    responseOwner
   });
 
   // The department's policy wins where it has one; otherwise the product
@@ -104,7 +108,10 @@ export async function openConversation(
   // an agent picks it up from the inbox.
   await autoAssignConversation(conversation._id, String(site.organizationId));
 
-  const greeting = await postBusinessHoursGreeting(conversation, department);
+  // With the assistant answering there is someone here now; the closed-hours
+  // note is given when it hands over instead (services/ai/autoReply.ts).
+  const greeting =
+    responseOwner === 'ai' ? null : await postBusinessHoursGreeting(conversation, department);
 
   return { conversation, department, greeting };
 }

@@ -38,6 +38,7 @@ import { initialize as initializeAutomationEngine } from './services/automationE
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper } from './services/slaSweeper';
 import { closeRedisAdapter } from './socket/adapter';
+import { stopAutoReplies } from './services/ai/autoReply';
 import {
   loginLimiter,
   loginAccountLimiter,
@@ -49,7 +50,6 @@ import { IMAGE_TYPES, UPLOAD_ROOT, UPLOAD_URL_PREFIX, describeStorage } from './
 import './services/auditService';
 import { attachRedisAdapter } from './socket/adapter';
 import type { Request, Response, NextFunction } from 'express';
-
 
 // --- Route Tanımları ---
 
@@ -76,7 +76,6 @@ if (process.env.NODE_ENV === 'production') {
 //
 // Köken listesi ve kuralları config/origins.ts'te; yönetici soketi de aynı
 // listeye bakıyor.
-
 
 // Socket.io CORS ayarı
 const io = new Server(server, {
@@ -395,7 +394,7 @@ connectDB()
           : `   Socket.IO tek süreç modu — ${adapterState.reason}`
       );
       console.log(`   Widget: /widget.js  (sabitlenmiş: /widget/${WIDGET_MAJOR}/widget.js)`);
-    console.log(`   Dosya depolama: ${describeStorage()}`);
+      console.log(`   Dosya depolama: ${describeStorage()}`);
     });
 
     // Süreç kapanırken açık bağlantılar düzgün kapatılır. SIGTERM'de anında
@@ -404,6 +403,9 @@ connectDB()
       console.log(`
 ${signal} alındı, kapatılıyor...`);
       server.close(() => console.log('   HTTP sunucusu kapandı'));
+      // Answers still being written are abandoned, not left holding timers
+      // and model slots while the process winds down.
+      stopAutoReplies();
       try {
         // Awaited so open sockets are actually flushed before the grace
         // timer below pulls the process down under them.

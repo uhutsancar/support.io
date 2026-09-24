@@ -33,6 +33,14 @@ export interface WidgetSocketState {
   currentPage?: string;
   conversationId?: string;
   metadata?: VisitorMetadata;
+  /**
+   * Set when the visitor asked for a person before writing anything, so the
+   * conversation their first message opens starts with a person, not the
+   * assistant.
+   */
+  prefersHuman?: boolean;
+  /** The user id the shop vouched for with a valid userHash; null when anonymous. */
+  verifiedUserId?: string | null;
 }
 
 export type WidgetSocket = Socket & WidgetSocketState;
@@ -63,6 +71,9 @@ export interface WidgetJoinPayload extends ClientPayloadBase {
   visitorName?: string;
   visitorEmail?: string;
   currentPage?: string;
+  /** From SupportChat.identify(); trusted only when userHash verifies. */
+  userId?: string;
+  userHash?: string;
   metadata?: {
     browser?: string;
     os?: string;
@@ -96,6 +107,12 @@ export interface SendMessagePayload extends ClientPayloadBase {
   fileData?: UploadedFilePayload;
   /** Echoed back so the widget can reconcile its optimistic message. */
   clientMessageId?: string;
+}
+
+/** The visitor pressed "talk to a person" in an assistant-answered chat. */
+export interface RequestHumanPayload extends ClientPayloadBase {
+  /** The widget's language, for the handoff note. */
+  language?: string;
 }
 
 export interface JoinSitePayload extends ClientPayloadBase {

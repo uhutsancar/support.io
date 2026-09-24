@@ -20,7 +20,10 @@
 import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
+import { io as connect } from 'socket.io-client';
+import { open, seal } from '../src/config/secretBox';
+import { userHashFor, verifiedIdentity } from '../src/services/identity';
+import { getPool, query } from '../src/db/pool';
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -378,4 +381,115 @@ test('a direct chat cannot be opened with someone in another organization', asyn
   });
 
   assert.equal(res.status, 404, 'a cross-tenant direct chat was created');
+});
+
+/* ------------------------------------------------- kimlik dogrulamasi */
+
+test('sealed secrets open only intact, and a userHash verifies only for its own id', () => {
+  const secret = 'a'.repeat(64);
+  const sealed = seal(secret);
+  assert.notEqual(sealed, secret);
+  assert.doesNotMatch(sealed, /aaaa/, 'the secret is readable in the stored form');
+  assert.equal(open(sealed), secret);
+  assert.equal(open(sealed.slice(0, -2) + 'xx'), null, 'a tampered value opened');
+  assert.equal(open('not-sealed'), null);
+  assert.equal(open(null), null);
+
+  const integrations = {
+    identitySecret: sealed,
+    orderLookup: { enabled: false, url: null, signingSecret: null }
+  };
+  const hash = userHashFor(secret, 'u_1');
+  assert.equal(verifiedIdentity(integrations, 'u_1', hash), 'u_1');
+  assert.equal(verifiedIdentity(integrations, 'u_2', hash), null, 'a hash reused for another id');
+  assert.equal(verifiedIdentity(integrations, 'u_1', 'f'.repeat(64)), null);
+  assert.equal(verifiedIdentity(integrations, 'u_1', 'short'), null);
+  assert.equal(verifiedIdentity({ ...integrations, identitySecret: null }, 'u_1', hash), null);
+});
+
+/** Joins the widget namespace and waits for the server's answer. */
+async function joinWidget(payload: Record<string, unknown>) {
+  const socket = connect(`${BASE}/widget`, { transports: ['websocket'], forceNew: true });
+  const joined: any = await new Promise((resolve) => {
+    socket.once('conversation-joined', resolve);
+    socket.emit('join-conversation', payload);
+  });
+  return { socket, joined };
+}
+
+async function sendAndWait(socket: ReturnType<typeof connect>, content: string) {
+  const echoed: any = await new Promise((resolve) => {
+    socket.on('new-message', (data: any) => {
+      if (data?.message?.senderType === 'visitor') resolve(data.message);
+    });
+    socket.emit('send-message', { content, clientMessageId: `c-${Date.now()}` });
+  });
+  return String(echoed.conversationId);
+}
+
+test('identify() is trusted only with the userHash the shop signed', async (t) => {
+  const tenant = await createTenant('identity');
+  const created = await api(`/api/sites/${tenant.site._id}/integrations/identity-secret`, {
+    method: 'POST',
+    token: tenant.token
+  });
+  assert.equal(created.status, 200);
+  const secret: string = created.body.secret;
+  assert.match(secret, /^[0-9a-f]{64}$/);
+  assert.equal(created.body.site.integrations.identity.configured, true);
+  assert.ok(!JSON.stringify(created.body.site).includes(secret), 'the site JSON carries the key');
+
+  // Signed: the conversation belongs to that customer.
+  const visitorId = `v-identity-${Date.now()}`;
+  const signed = await joinWidget({
+    siteKey: tenant.site.siteKey,
+    visitorId,
+    userId: 'customer-7',
+    userHash: userHashFor(secret, 'customer-7')
+  });
+  t.after(() => signed.socket.disconnect());
+  const conversationId = await sendAndWait(signed.socket, 'Merhaba');
+  const { rows } = await query(
+    `SELECT metadata->>'verifiedUserId' AS id FROM conversations WHERE id = $1`,
+    [conversationId]
+  );
+  assert.equal(rows[0].id, 'customer-7');
+
+  // Forged, in the same browser: anonymous, and the customer's conversation
+  // is not reopened for it.
+  const forged = await joinWidget({
+    siteKey: tenant.site.siteKey,
+    visitorId,
+    userId: 'customer-7',
+    userHash: 'f'.repeat(64)
+  });
+  t.after(() => forged.socket.disconnect());
+  assert.equal(forged.joined.conversation, null, "a forged identity reopened the customer's chat");
+
+  // The real customer gets it back.
+  const again = await joinWidget({
+    siteKey: tenant.site.siteKey,
+    visitorId,
+    userId: 'customer-7',
+    userHash: userHashFor(secret, 'customer-7')
+  });
+  t.after(() => again.socket.disconnect());
+  assert.equal(again.joined.conversation?._id, conversationId);
+
+  // Another visitor that is not signed at all starts anonymous.
+  const anonymous = await joinWidget({
+    siteKey: tenant.site.siteKey,
+    visitorId: `v-anon-${Date.now()}`
+  });
+  t.after(() => anonymous.socket.disconnect());
+  const anonymousId = await sendAndWait(anonymous.socket, 'Merhaba');
+  const anon = await query(
+    `SELECT metadata->>'verifiedUserId' AS id FROM conversations WHERE id = $1`,
+    [anonymousId]
+  );
+  assert.equal(anon.rows[0].id, null);
+});
+
+test.after(async () => {
+  await getPool().end();
 });

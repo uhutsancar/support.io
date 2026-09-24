@@ -2,12 +2,13 @@
 
 // Provider abstraction for the AI assistant.
 //
-// Everything above this layer (aiService, the routes, the admin panel) speaks
-// only in terms of `complete()`. Swapping or adding a vendor means adding one
-// file next to this one and a branch in index.js — no caller changes.
+// Everything above this layer (aiService, autoReply, the routes, the admin
+// panel) speaks only in terms of `complete()`. Swapping the model backend means
+// adding one file next to this one and a branch in index.ts — no caller
+// changes.
 //
-// The API key never leaves the server: the browser calls our own /api/ai
-// endpoints, and only this layer holds credentials.
+// Credentials never leave the server: the browser calls our own /api/ai
+// endpoints, and only this layer talks to the model.
 
 /** How a provider failure is reported to the routes above. */
 export interface AIErrorOptions {
@@ -35,8 +36,11 @@ class AIError extends Error {
   }
 }
 
-/** The reasoning levels the vendors accept. */
-export type AIEffort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+/** A JSON schema the model's output is constrained to, token by token. */
+export interface AIResponseSchema {
+  name: string;
+  schema: Record<string, unknown>;
+}
 
 /** One single-shot request to a model. */
 export interface AICompletionRequest {
@@ -44,12 +48,15 @@ export interface AICompletionRequest {
   system?: string;
   /** The already-assembled user turn. */
   prompt: string;
-  maxTokens?: number;
-  /** How hard the model should think, where the vendor supports it. */
-  effort?: AIEffort;
+  maxTokens: number;
+  temperature: number;
+  /** vLLM structured output: tokens that would break the schema are never produced. */
+  responseSchema?: AIResponseSchema;
+  /** Lets the caller give up on a call it no longer needs, e.g. after a takeover. */
+  signal?: AbortSignal;
 }
 
-/** Token counts, or null when the vendor did not report them. */
+/** Token counts, or null when the backend did not report them. */
 export interface AIUsage {
   inputTokens: number | null;
   outputTokens: number | null;
@@ -61,23 +68,41 @@ export interface AICompletion {
   usage: AIUsage;
 }
 
+/**
+ * Where the model is right now, as the panel shows it.
+ *
+ *   disabled     AI is switched off or not configured on this server
+ *   warming_up   the server answers but the model is not loaded yet
+ *   ready        requests will be served
+ *   unavailable  the model server cannot be reached
+ */
+export type AIState = 'disabled' | 'warming_up' | 'ready' | 'unavailable';
+
 // What every provider must implement.
 //
-//   complete({ system, prompt, maxTokens, effort }) -> { text, model, usage }
+//   complete({ system, prompt, maxTokens, temperature, ... }) -> { text, model, usage }
 //
-// `prompt` is the already-assembled user turn. Providers are deliberately
-// single-shot: the support features here (summary, suggested reply, sentiment)
-// are one request each, so no provider needs to own conversation state.
+// Providers are deliberately single-shot: every support feature here is one
+// request, so no provider needs to own conversation state.
 class AIProvider {
   get name(): string {
     throw new Error('provider must define a name');
   }
 
-  // True when the provider can actually reach a model. A provider that is
-  // configured but keyless reports false so callers can render "AI disabled"
+  // True when the provider has what it needs to reach a model. A provider that
+  // is not configured reports false so callers can render "AI disabled"
   // instead of failing at request time.
   get isConfigured(): boolean {
     return false;
+  }
+
+  /** The served model's name, or null when there is none. */
+  get model(): string | null {
+    return null;
+  }
+
+  async state(): Promise<AIState> {
+    return 'disabled';
   }
 
   async complete(_request: AICompletionRequest): Promise<AICompletion> {
@@ -85,7 +110,7 @@ class AIProvider {
   }
 }
 
-// Used when no key is configured. It never fabricates an answer — a made-up
+// Used when no model is configured. It never fabricates an answer — a made-up
 // summary is worse than no summary, because the agent cannot tell it apart from
 // a real one.
 class DisabledProvider extends AIProvider {
@@ -93,12 +118,8 @@ class DisabledProvider extends AIProvider {
     return 'disabled';
   }
 
-  override get isConfigured(): boolean {
-    return false;
-  }
-
   override async complete(_request?: AICompletionRequest): Promise<AICompletion> {
-    throw new AIError('AI asistanı yapılandırılmamış. Sunucuda ANTHROPIC_API_KEY tanımlayın.', {
+    throw new AIError('Yapay zekâ bu sunucuda etkin değil.', {
       code: 'ai_not_configured',
       status: 503
     });

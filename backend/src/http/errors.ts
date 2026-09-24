@@ -58,8 +58,8 @@ export const forbidden = (message: string, code = 'FORBIDDEN'): HttpError =>
  * confirm that the id exists, which is exactly what someone walking ids is
  * trying to find out.
  */
-export const notFound = (what = 'Resource'): HttpError =>
-  new HttpError(404, `${what} not found`, 'NOT_FOUND');
+export const notFound = (what = 'Resource', code = 'NOT_FOUND'): HttpError =>
+  new HttpError(404, `${what} not found`, code);
 
 export const conflict = (message: string): HttpError => new HttpError(409, message, 'CONFLICT');
 

@@ -7,9 +7,6 @@
 // (a suggestion is returned, never sent to the visitor), input validation, and
 // the disabled-provider path that must refuse rather than invent an answer.
 //
-// The live Anthropic call is covered separately by tests/ai.provider.test.js,
-// which is skipped unless ANTHROPIC_API_KEY is set.
-//
 // Requires a running backend. Run with: npm test
 
 // Loads .env before any module below reads it; see src/config/env.ts.
@@ -20,7 +17,6 @@ import { query } from '../src/db/pool';
 import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 import { getPool } from '../src/db/pool';
-
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -153,17 +149,16 @@ const TASKS = [
   { path: 'knowledge-answer', body: { question: 'İade süresi nedir?' } }
 ];
 
-test('AI status reports whether a provider is actually configured', async () => {
+test('AI status reports the model state and nothing about how it is reached', async () => {
   const tenant = await createTenant('status');
   const res = await api('/api/ai/status', { token: tenant.token });
 
   assert.equal(res.status, 200);
-  assert.equal(typeof res.body.enabled, 'boolean');
-  assert.ok(typeof res.body.provider === 'string' && res.body.provider.length > 0);
-
+  assert.deepEqual(Object.keys(res.body).sort(), ['configured', 'enabled', 'model', 'state']);
+  assert.ok(['disabled', 'warming_up', 'ready', 'unavailable'].includes(res.body.state));
   // The flag has to match reality, otherwise the panel shows buttons that fail.
-  const expected = Boolean(process.env.ANTHROPIC_API_KEY) && process.env.AI_ENABLED !== 'false';
-  assert.equal(res.body.enabled, expected);
+  assert.equal(res.body.enabled, res.body.configured && res.body.state === 'ready');
+  assert.equal(res.body.configured, res.body.state !== 'disabled');
 });
 
 test('every AI task refuses a conversation from another organization', async (t) => {
@@ -193,6 +188,123 @@ test('AI tasks require authentication', async () => {
   assert.equal(res.status, 401);
 
   await query('DELETE FROM conversations WHERE id = $1', [conversationId]);
+});
+
+test('an agent restricted to one site cannot run AI on another site of the same company', async (t) => {
+  const tenant = await createTenant('scoped');
+  const second = await api('/api/sites', {
+    method: 'POST',
+    token: tenant.token,
+    body: { name: 'second site', domain: `second${Date.now()}.test` }
+  });
+  assert.equal(second.status, 201);
+
+  const email = `scoped-agent${Date.now()}${Math.floor(Math.random() * 1000)}@ai.test`;
+  const created = await api('/api/team', {
+    method: 'POST',
+    token: tenant.token,
+    body: {
+      name: 'Scoped agent',
+      email,
+      password: 'E2ePassw0rd!',
+      role: 'agent',
+      assignedSites: [tenant.site._id]
+    }
+  });
+  assert.ok([200, 201].includes(created.status), `team create failed: ${JSON.stringify(created)}`);
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: 'E2ePassw0rd!' }
+  });
+  assert.equal(login.status, 200);
+  const agentToken = sessionToken(login);
+
+  const ownSite = await seedConversation(tenant.site);
+  const otherSite = await seedConversation(second.body.site);
+  t.after(async () => {
+    await query('DELETE FROM conversations WHERE id = ANY($1)', [[ownSite, otherSite]]);
+  });
+
+  for (const task of TASKS) {
+    const res = await api(`/api/ai/conversations/${otherSite}/${task.path}`, {
+      method: 'POST',
+      token: agentToken,
+      body: task.body
+    });
+    assert.equal(res.status, 404, `${task.path} reached a site the agent is not assigned to`);
+  }
+
+  // The same agent on their own site is past the access check: whatever the
+  // model's state, the answer is not "not found".
+  const own = await api(`/api/ai/conversations/${ownSite}/summary`, {
+    method: 'POST',
+    token: agentToken
+  });
+  assert.notEqual(own.status, 404);
+});
+
+test('site AI settings accept only the declared keys and values', async () => {
+  const tenant = await createTenant('aisettings');
+  const put = (aiSettings: unknown) =>
+    api(`/api/sites/${tenant.site._id}`, {
+      method: 'PUT',
+      token: tenant.token,
+      body: { aiSettings }
+    });
+
+  // A new site starts with the assistant off, and never exposes integration secrets.
+  assert.equal(tenant.site.aiSettings.mode, 'off');
+  assert.deepEqual(tenant.site.integrations, {
+    identity: { configured: false },
+    orderLookup: { enabled: false, url: null, signingConfigured: false }
+  });
+
+  for (const bad of [
+    { mode: 'everything' },
+    { aiModel: 'some-other-model' },
+    { maxBotReplies: 0 },
+    { maxBotReplies: 2.5 },
+    { tone: 'rude' },
+    { blockedTerms: 'dava' },
+    { botName: 'x'.repeat(41) }
+  ]) {
+    const res = await put(bad);
+    assert.equal(res.status, 400, `accepted ${JSON.stringify(bad)}`);
+  }
+
+  const ok = await put({
+    mode: 'copilot',
+    blockedTerms: [' dava ', 'dava', ''],
+    botName: 'Asistan'
+  });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.equal(ok.body.site.aiSettings.mode, 'copilot');
+  assert.deepEqual(ok.body.site.aiSettings.blockedTerms, ['dava']);
+  // A partial update keeps the keys it did not mention.
+  assert.equal(ok.body.site.aiSettings.maxBotReplies, 8);
+  assert.equal(ok.body.site.aiSettings.answerLength, 'short');
+});
+
+test('only an account that manages sites may switch the assistant on', async () => {
+  const tenant = await createTenant('aimode');
+  const email = `mode-agent${Date.now()}${Math.floor(Math.random() * 1000)}@ai.test`;
+  const created = await api('/api/team', {
+    method: 'POST',
+    token: tenant.token,
+    body: { name: 'Agent', email, password: 'E2ePassw0rd!', role: 'agent' }
+  });
+  assert.ok([200, 201].includes(created.status));
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: 'E2ePassw0rd!' }
+  });
+
+  const res = await api(`/api/sites/${tenant.site._id}`, {
+    method: 'PUT',
+    token: sessionToken(login),
+    body: { aiSettings: { mode: 'auto' } }
+  });
+  assert.equal(res.status, 403);
 });
 
 test('a malformed conversation id is rejected, not looked up', async () => {
@@ -249,10 +361,11 @@ test('a conversation with no messages is refused rather than summarized', async 
 });
 
 test('with no provider configured the API refuses instead of fabricating', async (t) => {
-  // Only meaningful when the server genuinely has no key; with one configured
-  // this path cannot be reached without mutating the running process.
-  if (process.env.ANTHROPIC_API_KEY && process.env.AI_ENABLED !== 'false') {
-    t.skip('a provider is configured; disabled-path covered by unit test');
+  // Only meaningful when the server genuinely has no model configured.
+  const probe = await createTenant('probe');
+  const status = await api('/api/ai/status', { token: probe.token });
+  if (status.body.configured) {
+    t.skip('a model is configured on this server; the disabled path is covered by unit tests');
     return;
   }
 

@@ -6,7 +6,8 @@
 // visitor, agent, bot — legible, and moves the `getFileIcon` helper that lived
 // in the page body next to the only markup that uses it.
 
-import { CheckCheck, File, FileText, Image as ImageIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Bot, CheckCheck, File, FileText, Image as ImageIcon } from 'lucide-react';
 import { formatFileSize, formatTime } from '../../lib/format';
 import { apiAssetUrl } from '../../lib/runtime';
 import type { Message } from '../../types/api';
@@ -40,7 +41,21 @@ const BUBBLE_STYLES: Record<string, string> = {
   agent: 'bg-indigo-600 text-white'
 };
 
+/**
+ * The locale key for why the assistant handed a visitor over. The server
+ * records a precise code ("rejected:unsupported_fact", "order_lookup_timeout",
+ * "ai_unreachable"); the inbox shows the family it belongs to.
+ */
+export function handoffReasonKey(reason: string): string {
+  if (reason.startsWith('rejected:')) return 'rejected';
+  if (reason.startsWith('order_lookup_')) return 'order';
+  if (reason.startsWith('ai_')) return 'failure';
+  return reason;
+}
+
 const MessageBubble = ({ message }: MessageBubbleProps) => {
+  const { t } = useTranslation();
+  const ai = message.aiMetadata;
   // The visitor's messages sit on the left; everything we send — an agent's
   // reply or the bot's — sits on the right.
   const fromVisitor = message.senderType === 'visitor';
@@ -58,6 +73,12 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
       >
         {!fromVisitor && (
           <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-0.5 sm:mb-1 text-right transition-colors duration-200 truncate">
+            {ai && (
+              <span className="inline-flex items-center gap-0.5 mr-1.5 px-1.5 py-px rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                <Bot className="w-3 h-3" />
+                {t('ai.autoAssistant')}
+              </span>
+            )}
             {message.senderName}
           </p>
         )}
@@ -101,6 +122,17 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
             </div>
           )}
         </div>
+
+        {ai?.sources?.length ? (
+          <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 text-right">
+            {t('ai.sources')}: {ai.sources.join(' · ')}
+          </p>
+        ) : null}
+        {ai?.decision === 'handoff' && ai.reason ? (
+          <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-300 text-right">
+            {t('ai.handoffReason')}: {t(`ai.reasons.${handoffReasonKey(ai.reason)}`, ai.reason)}
+          </p>
+        ) : null}
 
         <div className="flex items-center justify-end space-x-1 mt-1">
           <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">

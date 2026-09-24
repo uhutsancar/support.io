@@ -7,13 +7,14 @@ import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { sitesAPI, conversationsAPI, departmentsAPI, teamAPI } from '../services/api';
+import { aiAPI, sitesAPI, conversationsAPI, departmentsAPI, teamAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { API_BASE_URL } from '../lib/runtime';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AIAssistant from '../components/AIAssistant';
 import {
+  Bot,
   CheckCheck,
   Clock,
   ExternalLink,
@@ -24,6 +25,7 @@ import {
   Paperclip,
   Search,
   Send,
+  ShieldCheck,
   StickyNote,
   Tag,
   Trash2,
@@ -567,6 +569,21 @@ const Conversations = () => {
       toast.error(errorMessage(error, t('conversations.priorityChangeError')));
     }
   };
+  // "Take over" silences the assistant at once; "give back" lets it answer the
+  // visitor's next message. The server broadcasts the change to every inbox.
+  const handleSetOwner = async (owner: 'ai' | 'human') => {
+    const conversation = selectedConversation;
+    if (!conversation) return;
+    try {
+      const { data } = await aiAPI.setOwner(conversation._id, owner);
+      setSelectedConversation((current) =>
+        current && current._id === conversation._id ? { ...current, ...data } : current
+      );
+    } catch (error) {
+      toast.error(errorMessage(error, t('ai.ownerError')));
+    }
+  };
+
   const handleClaimConversation = async (conversationId: string) => {
     try {
       await conversationsAPI.claim(conversationId);
@@ -864,6 +881,36 @@ const Conversations = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
+                      {selectedConversation.metadata?.verifiedUserId ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400">
+                          <ShieldCheck className="w-3 h-3" />
+                          {t('ai.verifiedCustomer')}
+                        </span>
+                      ) : null}
+                      {selectedConversation.responseOwner === 'ai' ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                            <Bot className="w-3 h-3" />
+                            {t('ai.answeringAi')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSetOwner('human')}
+                            className="px-2 py-0.5 text-[11px] font-medium rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                          >
+                            {t('ai.takeOver')}
+                          </button>
+                        </span>
+                      ) : selectedSite?.aiSettings?.mode === 'auto' ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSetOwner('ai')}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded border border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                        >
+                          <Bot className="w-3 h-3" />
+                          {t('ai.giveBack')}
+                        </button>
+                      ) : null}
                       <div className="flex items-center gap-1">
                         <Folder className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                         <select
@@ -963,6 +1010,11 @@ const Conversations = () => {
                     conversation={selectedConversation}
                     disabled={isUnclaimed(selectedConversation)}
                     onAccept={(text: string) => setNewMessage(text)}
+                    composerText={newMessage}
+                    lastVisitorMessage={
+                      [...messages].reverse().find((m) => m.senderType === 'visitor')?.content ??
+                      null
+                    }
                   />
                   <form
                     onSubmit={handleSendMessage}
