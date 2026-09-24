@@ -1,0 +1,10 @@
+Trendyol LLM Asure 12B
+https://huggingface.co/Trendyol/Trendyol-LLM-Asure-12B
+
+This project downloads and serves the model above, unmodified. The model is a
+derivative of Gemma and is provided under and subject to the Gemma Terms of Use
+found at https://ai.google.dev/gemma/terms, including the Gemma Prohibited Use
+Policy at https://ai.google.dev/gemma/prohibited_use_policy.
+
+The weights are not part of this repository and are not redistributed by it.
+Whoever runs `npm run ai:download` accepts those terms for their own use.
