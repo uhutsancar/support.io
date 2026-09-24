@@ -15,7 +15,8 @@
     "lint": "cd backend && npm run lint && cd ../admin-panel && npm run lint",
     "format": "cd backend && npm run format && cd ../admin-panel && npm run format",
     "check": "cd backend && npm run check && cd ../admin-panel && npm run check",
-    "ai:download": "docker compose --profile ai-tools run --rm model-download"
+    "ai:download": "docker compose --profile ai-tools run --rm model-download",
+    "ai:bench": "cd backend && npm run ai:bench"
   },
   "keywords": [
     "support",

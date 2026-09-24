@@ -1,0 +1,67 @@
+{
+  "_comment": "A fictional electronics shop. Not the demo tenant and not the fictional stationery shop in the prompt examples, so the benchmark measures the model on data it was not shown.",
+  "faqs": {
+    "iade": {
+      "question": "İade süresi nedir?",
+      "answer": "Ürünü teslim aldıktan sonra 30 gün içinde, faturasıyla birlikte iade edebilirsiniz. İade talebini Hesabım > Siparişlerim sayfasından oluşturursunuz."
+    },
+    "kargo": {
+      "question": "Kargo ne kadar sürer?",
+      "answer": "Siparişler 2 iş günü içinde kargoya verilir; teslimat genellikle 1-3 iş günü sürer."
+    },
+    "kargo_ucret": {
+      "question": "Kargo ücretli mi?",
+      "answer": "500 TL ve üzeri siparişlerde kargo ücretsizdir; daha küçük siparişlerde kargo ücreti 49 TL'dir."
+    },
+    "garanti": {
+      "question": "Garanti süresi ne kadar?",
+      "answer": "Tüm ürünler 2 yıl üretici garantisi altındadır."
+    },
+    "odeme": {
+      "question": "Hangi ödeme yöntemlerini kabul ediyorsunuz?",
+      "answer": "Kredi kartı, banka kartı ve havale ile ödeme alıyoruz. Kredi kartına 6 aya kadar taksit yapılabilir."
+    },
+    "iptal": {
+      "question": "Siparişimi nasıl iptal ederim?",
+      "answer": "Kargoya verilmemiş siparişleri Hesabım > Siparişlerim sayfasından iptal edebilirsiniz."
+    },
+    "fatura": {
+      "question": "Faturamı nereden alırım?",
+      "answer": "Faturanız sipariş kargoya verildiğinde e-posta adresinize gönderilir; Hesabım > Siparişlerim sayfasında da bulunur."
+    },
+    "sifre": {
+      "question": "Şifremi unuttum, ne yapmalıyım?",
+      "answer": "Giriş sayfasındaki Şifremi unuttum bağlantısıyla e-posta adresinize sıfırlama bağlantısı gönderebilirsiniz."
+    },
+    "degisim": {
+      "question": "Ürün değişimi yapıyor musunuz?",
+      "answer": "Kullanılmamış ürünleri 30 gün içinde aynı ürünün başka bir modeliyle değiştirebilirsiniz."
+    },
+    "magaza": {
+      "question": "Fiziksel mağazanız var mı?",
+      "answer": "Yalnızca internetten satış yapıyoruz; fiziksel mağazamız yoktur."
+    }
+  },
+  "orders": [
+    {
+      "orderNumber": "55501",
+      "status": "shipped",
+      "statusText": "Kargoya verildi",
+      "placedAt": "2026-09-28",
+      "carrier": "Hızlı Kargo",
+      "trackingNumber": "HK998877",
+      "trackingUrl": "https://kargo.example.com/HK998877",
+      "estimatedDelivery": "2026-10-02"
+    },
+    {
+      "orderNumber": "55400",
+      "status": "delivered",
+      "statusText": "Teslim edildi",
+      "placedAt": "2026-09-10",
+      "carrier": "Hızlı Kargo",
+      "trackingNumber": "HK112233",
+      "trackingUrl": "https://kargo.example.com/HK112233",
+      "estimatedDelivery": "2026-09-13"
+    }
+  ]
+}

@@ -53,6 +53,8 @@ import type { Doc } from '../../db/model';
 import type { SiteDoc } from '../../models/Site';
 import type { ConversationDoc } from '../../models/Conversation';
 import type { AssistantPersona, ReplyLanguage } from './prompts';
+import type { KnowledgeSource } from './knowledge';
+import type { OrderLookupResult } from '../orderLookup';
 import type { ReplyCheck } from './replyPolicy';
 import type { MessageAiMetadata, ResponseOwner } from '../../domain';
 
@@ -315,6 +317,213 @@ async function deliver(io: Server, delivery: Delivery): Promise<boolean> {
   return true;
 }
 
+// ------------------------------------------------------------ the decision
+
+/** Everything one answer is decided from; no database, no socket. */
+export interface ReplyContext {
+  question: string;
+  transcript: string;
+  sources: KnowledgeSource[];
+  persona: AssistantPersona;
+  /** The id the shop vouched for, or null for an anonymous visitor. */
+  verifiedUserId: string | null;
+  /** Automatic replies so far, and their decisions, newest first. */
+  history: { botReplies: number; recentDecisions: string[] };
+  settings: { maxBotReplies: number; blockedTerms: string[] };
+  /** Asked only for a verified customer. */
+  lookupOrders: (userId: string, orderNumber: string | null) => Promise<OrderLookupResult>;
+  signal?: AbortSignal;
+  /** Called just before the model is asked, e.g. to show "typing". */
+  onModelCall?: () => void;
+}
+
+/**
+ * What to do with one visitor message: send a reply, or hand over. A handoff
+ * with `content: null` uses the site's own handoff text, which only the caller
+ * can resolve (it depends on the department's business hours).
+ */
+export type ReplyOutcome =
+  | {
+      handOver: false;
+      decision: string;
+      content: string;
+      reason?: string | null;
+      sourceIds?: string[];
+      sources?: string[];
+      lang: Lang;
+    }
+  | { handOver: true; reason: string; content: string | null; lang: Lang };
+
+/**
+ * Decides the answer to one visitor message: the pre-check, the model call,
+ * the reply policy and, for an order question, the shop's data and a second
+ * call. Pure apart from the model and `lookupOrders`, so the benchmark runs
+ * exactly this path. Returns null when the work was abandoned.
+ */
+export async function composeReply(ctx: ReplyContext): Promise<ReplyOutcome | null> {
+  const { question, persona, signal } = ctx;
+  let lang = guessLanguage(question);
+  const handOff = (reason: string, content: string | null = null): ReplyOutcome => ({
+    handOver: true,
+    reason,
+    content,
+    lang
+  });
+  const send = (
+    decision: string,
+    content: string,
+    extra: { reason?: string | null; sourceIds?: string[]; sources?: string[] } = {}
+  ): ReplyOutcome => ({ handOver: false, decision, content, lang, ...extra });
+
+  // Before the model: the budget and the rules that need no model.
+  const blocked = preCheck({
+    text: question,
+    botReplies: ctx.history.botReplies,
+    recentDecisions: ctx.history.recentDecisions,
+    maxBotReplies: ctx.settings.maxBotReplies,
+    blockedTerms: ctx.settings.blockedTerms
+  });
+  if (blocked) {
+    return handOff(blocked, blocked === 'sensitive_data' ? TEXT.sensitive[lang] : null);
+  }
+
+  ctx.onModelCall?.();
+  let output;
+  try {
+    const result = await getProvider().complete({
+      system: autoReplySystem(persona),
+      prompt: autoReplyPrompt({
+        transcript: ctx.transcript,
+        sources: ctx.sources,
+        question,
+        customerVerified: ctx.verifiedUserId !== null
+      }),
+      maxTokens: AUTO_REPLY_MAX_TOKENS,
+      temperature: 0,
+      responseSchema: AUTO_REPLY_SCHEMA,
+      signal
+    });
+    output = parseAutoReply(result.text);
+  } catch (error) {
+    if (signal?.aborted) return null;
+    return handOff((error as { code?: string })?.code || 'ai_error', TEXT.failure[lang]);
+  }
+  if (signal?.aborted) return null;
+
+  lang = toLang(output.language, lang);
+  if (output.language === 'other') return handOff('language');
+
+  switch (output.decision) {
+    case 'handoff':
+      return handOff('no_answer');
+
+    case 'order_lookup':
+      // Order data is only ever fetched for a customer the shop has vouched
+      // for (see services/identity.ts). Anyone else is asked to sign in.
+      if (!ctx.verifiedUserId) {
+        return send('order_lookup', TEXT.signIn[lang], { reason: 'not_signed_in' });
+      }
+      return answerOrder(ctx, ctx.verifiedUserId, output.orderNumber, lang);
+
+    case 'decline': {
+      const rejected = checkReply(limits('decline', output.answer, [], []));
+      // A refusal that fails its checks is replaced by the fixed refusal,
+      // never passed on and never escalated: there is nothing to answer.
+      return send('decline', rejected ? DECLINE_TEXT[lang] : (output.answer as string), {
+        reason: rejected ? `replaced:${rejected}` : null
+      });
+    }
+
+    default: {
+      const rejected = checkReply(
+        limits(
+          output.decision,
+          output.answer,
+          output.sourceIds,
+          ctx.sources.map((s) => s.id),
+          ctx.sources.map((s) => s.answer),
+          persona
+        )
+      );
+      if (rejected) return handOff(`rejected:${rejected}`);
+      const used = ctx.sources.filter((s) => output.sourceIds.includes(s.id));
+      return send(output.decision, output.answer as string, {
+        sourceIds: used.map((s) => s.id),
+        sources: used.map((s) => s.question)
+      });
+    }
+  }
+}
+
+/**
+ * The second model call of an order question: the shop's data in, one answer
+ * out, checked against that data like any other answer.
+ */
+async function answerOrder(
+  ctx: ReplyContext,
+  userId: string,
+  orderNumber: string | null,
+  lang: Lang
+): Promise<ReplyOutcome | null> {
+  const handOff = (reason: string, content: string | null = null): ReplyOutcome => ({
+    handOver: true,
+    reason,
+    content,
+    lang
+  });
+
+  const lookup = await ctx.lookupOrders(userId, orderNumber);
+  if (ctx.signal?.aborted) return null;
+  if (!lookup.ok) {
+    return lookup.reason === 'disabled'
+      ? handOff('order_lookup_disabled')
+      : handOff(`order_lookup_${lookup.reason}`, TEXT.orderFailure[lang]);
+  }
+  const orders = orderNumber
+    ? lookup.orders.filter((o) => o.orderNumber === orderNumber)
+    : lookup.orders;
+  if (!orders.length) {
+    return {
+      handOver: false,
+      decision: 'order_lookup',
+      content: orderNumber ? TEXT.orderNotFound[lang] : TEXT.noOrders[lang],
+      reason: 'not_found',
+      lang
+    };
+  }
+
+  const data = JSON.stringify(orders.slice(0, 3));
+  let reply;
+  try {
+    const result = await getProvider().complete({
+      system: orderReplySystem(ctx.persona),
+      prompt: orderReplyPrompt(ctx.question, data),
+      maxTokens: AUTO_REPLY_MAX_TOKENS,
+      temperature: 0,
+      responseSchema: ORDER_REPLY_SCHEMA,
+      signal: ctx.signal
+    });
+    reply = parseOrderReply(result.text);
+  } catch (error) {
+    if (ctx.signal?.aborted) return null;
+    return handOff((error as { code?: string })?.code || 'ai_error', TEXT.failure[lang]);
+  }
+  if (ctx.signal?.aborted) return null;
+  if (reply.decision === 'handoff') return handOff('no_answer');
+
+  const rejected = checkReply({
+    decision: 'order',
+    answer: reply.answer,
+    sourceIds: [],
+    allowedSourceIds: [],
+    evidence: [data],
+    maxSentences: 3,
+    maxChars: 400
+  });
+  if (rejected) return handOff(`rejected:${rejected}`);
+  return { handOver: false, decision: 'order_answer', content: reply.answer as string, lang };
+}
+
 // ------------------------------------------------------------------ answer
 
 async function answer(
@@ -338,194 +547,63 @@ async function answer(
   ]);
   if (!site || !message || !assistantActive(site)) return;
 
-  const persona = personaFor(site);
-  const version = conversation.aiControlVersion;
   const question = String(message.content || '');
-  let lang = guessLanguage(question);
-
-  const base = { conversationId, version, answering: messageId, senderName: persona.botName };
-  const metadata = (
-    decision: string,
-    extra: Partial<MessageAiMetadata> = {}
-  ): MessageAiMetadata => ({
-    decision,
-    sourceIds: [],
-    promptVersion: PROMPT_VERSION,
-    durationMs: Date.now() - started,
-    ...extra
-  });
-  const log = (decision: string, reason?: string | null) =>
-    console.log(
-      `[ai] auto-reply conversation=${conversationId} decision=${decision}${reason ? ` reason=${reason}` : ''} ms=${Date.now() - started}`
-    );
-
-  const handOff = async (reason: string, text?: string) => {
-    if (signal.aborted) return;
-    const content = text ?? (await handoffText(site, conversation, lang));
-    const sent = await deliver(io, {
-      ...base,
-      content,
-      metadata: metadata('handoff', { reason }),
-      handOver: true
-    });
-    if (sent) log('handoff', reason);
-  };
-
-  // --- before the model: the budget and the rules that need no model.
-  const recent = await Message.find({ conversationId, senderType: 'bot' })
-    .sort({ createdAt: -1 })
-    .limit(50);
-  const aiReplies = recent.filter((m) => m.aiMetadata);
-  const blocked = preCheck({
-    text: question,
-    botReplies: aiReplies.length,
-    recentDecisions: aiReplies.map((m) => m.aiMetadata?.decision ?? ''),
-    maxBotReplies: site.aiSettings.maxBotReplies || 8,
-    blockedTerms: site.aiSettings.blockedTerms || []
-  });
-  if (blocked) {
-    return handOff(blocked, blocked === 'sensitive_data' ? TEXT.sensitive[lang] : undefined);
-  }
-
-  new WidgetNotifier(io).toConversation(conversationId, 'agent-typing', {
-    conversationId,
-    durationMs: TYPING_MS
-  });
-
-  const [{ transcript }, sources] = await Promise.all([
+  const [recent, { transcript }, sources] = await Promise.all([
+    Message.find({ conversationId, senderType: 'bot' }).sort({ createdAt: -1 }).limit(50),
     buildTranscript(conversationId, AUTO_REPLY_WINDOW),
     findSources(site._id, question, conversation.currentPage)
   ]);
+  const aiReplies = recent.filter((m) => m.aiMetadata);
+  const persona = personaFor(site);
 
-  let output;
-  try {
-    const result = await getProvider().complete({
-      system: autoReplySystem(persona),
-      prompt: autoReplyPrompt({
-        transcript,
-        sources,
-        question,
-        customerVerified: verifiedUserId(conversation) !== null
-      }),
-      maxTokens: AUTO_REPLY_MAX_TOKENS,
-      temperature: 0,
-      responseSchema: AUTO_REPLY_SCHEMA,
-      signal
-    });
-    output = parseAutoReply(result.text);
-  } catch (error) {
-    if (signal.aborted) return;
-    return handOff((error as { code?: string })?.code || 'ai_error', TEXT.failure[lang]);
-  }
-  if (signal.aborted) return;
+  const outcome = await composeReply({
+    question,
+    transcript,
+    sources,
+    persona,
+    verifiedUserId: verifiedUserId(conversation),
+    history: {
+      botReplies: aiReplies.length,
+      recentDecisions: aiReplies.map((m) => m.aiMetadata?.decision ?? '')
+    },
+    settings: {
+      maxBotReplies: site.aiSettings.maxBotReplies || 8,
+      blockedTerms: site.aiSettings.blockedTerms || []
+    },
+    lookupOrders: (userId, orderNumber) => lookupOrders(site, userId, orderNumber),
+    signal,
+    onModelCall: () =>
+      new WidgetNotifier(io).toConversation(conversationId, 'agent-typing', {
+        conversationId,
+        durationMs: TYPING_MS
+      })
+  });
+  if (!outcome || signal.aborted) return;
 
-  lang = toLang(output.language, lang);
-  if (output.language === 'other') return handOff('language');
-
-  const send = async (
-    decision: string,
-    content: string,
-    extra: Partial<MessageAiMetadata> = {}
-  ) => {
-    const sent = await deliver(io, {
-      ...base,
-      content,
-      metadata: metadata(decision, extra),
-      handOver: false
-    });
-    if (sent) log(decision, extra.reason);
-  };
-
-  // The second model call of an order question: the shop's data in, one
-  // answer out, checked against that data like any other answer.
-  const answerOrder = async (userId: string, orderNumber: string | null) => {
-    const lookup = await lookupOrders(site, userId, orderNumber);
-    if (signal.aborted) return;
-    if (!lookup.ok) {
-      return lookup.reason === 'disabled'
-        ? handOff('order_lookup_disabled')
-        : handOff(`order_lookup_${lookup.reason}`, TEXT.orderFailure[lang]);
-    }
-    const orders = orderNumber
-      ? lookup.orders.filter((o) => o.orderNumber === orderNumber)
-      : lookup.orders;
-    if (!orders.length) {
-      const text = orderNumber ? TEXT.orderNotFound[lang] : TEXT.noOrders[lang];
-      return send('order_lookup', text, { reason: 'not_found' });
-    }
-
-    const data = JSON.stringify(orders.slice(0, 3));
-    let reply;
-    try {
-      const result = await getProvider().complete({
-        system: orderReplySystem(persona),
-        prompt: orderReplyPrompt(question, data),
-        maxTokens: AUTO_REPLY_MAX_TOKENS,
-        temperature: 0,
-        responseSchema: ORDER_REPLY_SCHEMA,
-        signal
-      });
-      reply = parseOrderReply(result.text);
-    } catch (error) {
-      if (signal.aborted) return;
-      return handOff((error as { code?: string })?.code || 'ai_error', TEXT.failure[lang]);
-    }
-    if (signal.aborted) return;
-    if (reply.decision === 'handoff') return handOff('no_answer');
-
-    const rejected = checkReply({
-      decision: 'order',
-      answer: reply.answer,
-      sourceIds: [],
-      allowedSourceIds: [],
-      evidence: [data],
-      maxSentences: 3,
-      maxChars: 400
-    });
-    if (rejected) return handOff(`rejected:${rejected}`);
-    return send('order_answer', reply.answer as string);
-  };
-
-  switch (output.decision) {
-    case 'handoff':
-      return handOff('no_answer');
-
-    case 'order_lookup': // Order data is only ever fetched for a customer the shop has vouched
-    // for (see services/identity.ts). Anyone else is asked to sign in.
-    {
-      const userId = verifiedUserId(conversation);
-      if (!userId) return send('order_lookup', TEXT.signIn[lang], { reason: 'not_signed_in' });
-      return answerOrder(userId, output.orderNumber);
-    }
-
-    case 'decline': {
-      const rejected = checkReply(limits('decline', output.answer, [], []));
-      // A refusal that fails its checks is replaced by the fixed refusal,
-      // never passed on and never escalated: there is nothing to answer.
-      return send('decline', rejected ? DECLINE_TEXT[lang] : (output.answer as string), {
-        reason: rejected ? `replaced:${rejected}` : null
-      });
-    }
-
-    default: {
-      const given = sources.map((s) => s.id);
-      const rejected = checkReply(
-        limits(
-          output.decision,
-          output.answer,
-          output.sourceIds,
-          given,
-          sources.map((s) => s.answer),
-          persona
-        )
-      );
-      if (rejected) return handOff(`rejected:${rejected}`);
-      const used = sources.filter((s) => output.sourceIds.includes(s.id));
-      return send(output.decision, output.answer as string, {
-        sourceIds: used.map((s) => s.id),
-        sources: used.map((s) => s.question)
-      });
-    }
+  const content = outcome.handOver
+    ? (outcome.content ?? (await handoffText(site, conversation, outcome.lang)))
+    : outcome.content;
+  const decision = outcome.handOver ? 'handoff' : outcome.decision;
+  const sent = await deliver(io, {
+    conversationId,
+    version: conversation.aiControlVersion,
+    answering: messageId,
+    senderName: persona.botName,
+    content,
+    metadata: {
+      decision,
+      reason: outcome.reason ?? null,
+      sourceIds: outcome.handOver ? [] : (outcome.sourceIds ?? []),
+      ...(outcome.handOver || !outcome.sources ? {} : { sources: outcome.sources }),
+      promptVersion: PROMPT_VERSION,
+      durationMs: Date.now() - started
+    },
+    handOver: outcome.handOver
+  });
+  if (sent) {
+    console.log(
+      `[ai] auto-reply conversation=${conversationId} decision=${decision}${outcome.reason ? ` reason=${outcome.reason}` : ''} ms=${Date.now() - started}`
+    );
   }
 }
 
