@@ -189,8 +189,13 @@ export const conversationsAPI = {
     if (!siteId || !conversationId) {
       return Promise.reject(new Error('Missing siteId or conversationId'));
     }
+    // Never cached: the page re-reads the open thread after every realtime
+    // change to it, and a 30-second-old copy would undo that change — an
+    // agent's reply taking the thread from the assistant showed the assistant
+    // still answering until the cache expired.
     return api.get<{ conversation: Conversation; messages: Message[]; hasMore: boolean }>(
-      `${CONVERSATIONS}/${siteId}/${conversationId}`
+      `${CONVERSATIONS}/${siteId}/${conversationId}`,
+      { cache: false }
     );
   },
 
