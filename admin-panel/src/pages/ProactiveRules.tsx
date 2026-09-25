@@ -3,6 +3,7 @@ import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet-async';
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { Site } from '../types/api';
 
@@ -176,6 +177,9 @@ const ProactiveRules = () => {
 
   return (
     <div className="p-6">
+      <Helmet>
+        <title>{`${t('proactive.title')} — Support.io`}</title>
+      </Helmet>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {t('proactive.title', 'Proactive Messaging Rules')}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { auditAPI } from '../services/api';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet-async';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -190,6 +191,9 @@ export default function AuditLogs() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      <Helmet>
+        <title>{`${t('audit.title')} — Support.io`}</title>
+      </Helmet>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">

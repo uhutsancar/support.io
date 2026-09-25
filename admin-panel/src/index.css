@@ -104,6 +104,46 @@ code {
 }
 
 /*
+ * Radix Accordion icerigi. Radix acilan panelin gercek yuksekligini
+ * `--radix-accordion-content-height` olarak verir; gecis bu degere yapilir,
+ * boylece "max-height: 999px" gibi tahmini bir sinir gerekmez.
+ */
+.accordion-content[data-state='open'] {
+  animation: accordion-down 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.accordion-content[data-state='closed'] {
+  animation: accordion-up 200ms ease-out;
+}
+
+@keyframes accordion-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-accordion-content-height); opacity: 1; }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accordion-content[data-state] {
+    animation: none;
+  }
+}
+
+/*
+ * Ust menunun acilir paneli (Radix NavigationMenu). Panel yuksekligi ve
+ * genisligi icerige gore degisir; Radix bunu viewport'a CSS degiskeni olarak
+ * yazar ve gecis burada yapilir.
+ */
+.nav-viewport {
+  height: var(--radix-navigation-menu-viewport-height);
+  width: var(--radix-navigation-menu-viewport-width);
+  transition: width 250ms ease, height 250ms ease;
+}
+
+/*
  * Pazarlama sayfalarinda icerige atlayan baglanti. Klavyeyle gezen biri her
  * sayfada once basligin tamamini gecmek zorunda kalmasin.
  */

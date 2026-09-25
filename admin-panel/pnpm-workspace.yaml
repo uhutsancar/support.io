@@ -1,0 +1,16 @@
+# pnpm settings for this project.
+#
+# pnpm 10 and later refuse to run a dependency's install scripts unless the
+# project names it here, and `pnpm install` exits 1 when it skipped any. That
+# non-zero exit also fails `pnpm run <script>`, because pnpm checks dependency
+# status before running one — which is why `pnpm run dev` stopped working.
+#
+# `pnpm approve-builds` answers the same question interactively, but it writes
+# to a machine-local settings file: the next developer, and CI, hit the same
+# wall. Declaring it here is what a clone gets.
+#
+# esbuild is the only dependency that needs its script. It is pulled in by tsx
+# (the TypeScript runner used by `dev`, the migrations and the tests) and by
+# vite, and its postinstall is what links the platform-specific binary.
+onlyBuiltDependencies:
+  - esbuild

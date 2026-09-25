@@ -122,7 +122,7 @@ const Sites = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('sites.title') || ''} - Support.io Admin`}</title>
+        <title>{`${t('sites.title') || ''} — Support.io`}</title>
         <meta name="description" content={t('sites.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

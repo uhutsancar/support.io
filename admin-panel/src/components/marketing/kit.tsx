@@ -1,14 +1,21 @@
 /**
  * Pazarlama sayfalarının tasarım kiti.
  *
- * Neden var: önceden her sayfa kendi butonunu, kendi başlık boyutunu ve kendi
- * bölüm dolgusunu elle yazıyordu. Aynı sitede üç farklı buton yüksekliği ve
- * dört farklı başlık ölçeği vardı; sayfaların birbirine yabancı görünme sebebi
- * tek tek "kötü" olmaları değil, ortak bir ölçeğin hiç olmamasıydı.
+ * Her sayfa aynı ölçeği kullanır: tek buton yüksekliği, tek başlık ölçeği,
+ * tek bölüm dolgusu. Etkileşimli parçalar elle yazılmaz; akordeon ve sekmeler
+ * Radix'ten, kaydırma animasyonları `motion`dan gelir. Klavye, ekran okuyucu
+ * ve "hareketi azalt" tercihi bu kütüphanelerin kendi işidir — burada
+ * yeniden kurulmaz.
  *
- * Buradaki her parça hem açık hem koyu temada tanımlıdır. Bir rengin yalnızca
- * `dark:` altında tanımlandığı tek bir yer yoktur.
+ * Buradaki her parça hem açık hem koyu temada tanımlıdır.
  */
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { ArrowRight, Plus } from 'lucide-react';
 
 /* ------------------------------------------------------------------ renkler */
 
@@ -16,10 +23,6 @@
  * Özellik ailelerinin renkleri. Panelin kendi kart renkleriyle aynıdır;
  * ziyaretçi sitede gördüğü moru panelde de mor olarak bulur.
  */
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Plus } from 'lucide-react';
-
 export const ACCENTS = {
   indigo: {
     text: 'text-indigo-600 dark:text-indigo-400',
@@ -92,34 +95,68 @@ export const accent = (name: string | undefined): (typeof ACCENTS)['indigo'] =>
 export const asList = <TItem = any,>(value: unknown): TItem[] =>
   Array.isArray(value) ? value : [];
 
+/* -------------------------------------------------------------- hareket */
+
+/**
+ * Kaydırınca görünür olan blok.
+ *
+ * Yalnızca bir kez oynar; yukarı kaydırınca içerik tekrar kaybolmaz. "Hareketi
+ * azalt" tercihi Shell'deki `MotionConfig reducedMotion="user"` ile uygulanır:
+ * o durumda blok konumsuz, yalnızca opaklıkla belirir.
+ */
+export const Reveal = ({
+  children,
+  delay = 0,
+  y = 22,
+  className = '',
+  as = 'div'
+}: {
+  children?: React.ReactNode;
+  delay?: number;
+  y?: number;
+  className?: string;
+  as?: 'div' | 'li' | 'section';
+}) => {
+  const Tag = motion[as];
+  return (
+    <Tag
+      className={className}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '0px 0px -12% 0px' }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay }}
+    >
+      {children}
+    </Tag>
+  );
+};
+
 /* ------------------------------------------------------------------ butonlar */
 
 const BUTTON_BASE =
-  'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all ' +
+  'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ' +
   'dark:focus-visible:ring-offset-gray-950 disabled:opacity-60 disabled:pointer-events-none';
 
 const BUTTON_SIZE = {
-  sm: 'px-3.5 py-2 text-[13.5px]',
+  sm: 'px-4 py-2 text-[13.5px]',
   md: 'px-5 py-2.5 text-[14.5px]',
-  lg: 'px-6 py-3.5 text-[15px]'
+  lg: 'px-7 py-3.5 text-[15px]'
 };
 
 const BUTTON_VARIANT = {
-  // Ana eylem marka rengindedir. Eskiden siyahtı: logosu indigo olan bir sitede
-  // birincil butonun nötr siyah olması markayı sayfadan siliyordu.
   primary:
     'bg-indigo-600 text-white shadow-[0_8px_20px_-8px_rgba(79,70,229,.6)] ' +
     'hover:bg-indigo-700 hover:shadow-[0_12px_28px_-8px_rgba(79,70,229,.7)] active:translate-y-px',
   secondary:
-    'bg-white dark:bg-white/[0.04] text-gray-800 dark:text-gray-200 ' +
+    'bg-white dark:bg-white/[0.04] text-gray-900 dark:text-gray-100 ' +
     'border border-gray-200 dark:border-white/10 ' +
     'hover:bg-gray-50 dark:hover:bg-white/[0.08] hover:border-gray-300 dark:hover:border-white/20 active:translate-y-px',
   ghost:
-    'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white ' +
+    'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white ' +
     'hover:bg-gray-100 dark:hover:bg-white/[0.06]',
   inverse:
-    'bg-white text-indigo-700 hover:bg-indigo-50 active:translate-y-px ' +
+    'bg-white text-gray-900 hover:bg-indigo-50 active:translate-y-px ' +
     'shadow-[0_8px_24px_-10px_rgba(0,0,0,.5)]'
 };
 
@@ -178,12 +215,14 @@ export const Button = ({
 export const TextLink = ({
   to,
   href,
+  onClick,
   children,
   tone = 'indigo',
   className = ''
 }: {
   to?: string;
   href?: string;
+  onClick?: () => void;
   children?: React.ReactNode;
   /** An accent name; anything unknown falls back to indigo (see `accent`). */
   tone?: string;
@@ -191,7 +230,7 @@ export const TextLink = ({
 }) => {
   const a = accent(tone);
   const cls = [
-    'group inline-flex items-center gap-1.5 text-[14.5px] font-medium',
+    'group inline-flex items-center gap-1.5 text-[14.5px] font-semibold',
     a.text,
     className
   ].join(' ');
@@ -201,6 +240,12 @@ export const TextLink = ({
       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
     </>
   );
+  if (onClick)
+    return (
+      <button type="button" onClick={onClick} className={cls}>
+        {inner}
+      </button>
+    );
   return href ? (
     <a href={href} className={cls}>
       {inner}
@@ -215,20 +260,20 @@ export const TextLink = ({
 /* ------------------------------------------------------------------ tipografi */
 
 /**
- * Bölüm etiketi.
+ * Bölüm etiketi: "· 02 / KİMLER İÇİN".
  *
- * Düz metin. Eskiden yuvarlak köşeli, pastel zeminli, minik büyük harfli bir
- * "çip"ti — yanında bazen nabız gibi atan renkli bir nokta da olurdu. O biçim
- * artık hazır şablon işareti olarak okunuyor: sayfa tasarlanmış değil,
- * bileşen kataloğundan dizilmiş gibi görünüyor. Renk, metnin kendisinde
- * kalıyor; kutuya ihtiyaç yok.
+ * Numara okuyana sayfanın neresinde olduğunu söyler; uzun bir ana sayfada
+ * bölümler birbirinin tekrarı gibi görünmez. Zemin yok, yalnızca metin.
  */
 export const Eyebrow = ({
   children,
+  index,
   tone = 'indigo',
   className = ''
 }: {
   children?: React.ReactNode;
+  /** Bölüm numarası; verilirse "· 02 /" önekiyle basılır. */
+  index?: number;
   tone?: string;
   className?: string;
 }) => {
@@ -236,44 +281,55 @@ export const Eyebrow = ({
   return (
     <span
       className={[
-        'block text-[12px] font-semibold uppercase tracking-[0.1em]',
+        'block text-[11.5px] font-semibold uppercase tracking-[0.16em]',
         a.text,
         className
       ].join(' ')}
     >
+      {index !== undefined && (
+        <span className="tabular-nums">· {String(index).padStart(2, '0')} / </span>
+      )}
       {children}
     </span>
   );
 };
 
-/** Bölüm başlığı. `align="center"` yalnızca kısa başlıklar için. */
+/** Bölüm başlığı. `align="center"` kısa başlıklar içindir. */
 export const SectionHead = ({
   eyebrow,
+  index,
   eyebrowTone,
   title,
   description,
   align = 'left',
-  className = ''
+  className = '',
+  children
 }: {
   eyebrow?: React.ReactNode;
+  index?: number;
   eyebrowTone?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   align?: 'left' | 'center';
   className?: string;
+  children?: React.ReactNode;
 }) => (
-  <div
+  <Reveal
     className={[align === 'center' ? 'text-center mx-auto max-w-2xl' : 'max-w-3xl', className].join(
       ' '
     )}
   >
-    {eyebrow && <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>}
+    {eyebrow && (
+      <Eyebrow index={index} tone={eyebrowTone}>
+        {eyebrow}
+      </Eyebrow>
+    )}
     {title && (
       <h2
         className={[
           eyebrow ? 'mt-4' : '',
-          'text-[30px] sm:text-[38px] font-semibold tracking-[-0.03em] leading-[1.12]',
-          'text-gray-900 dark:text-white'
+          'text-[31px] sm:text-[42px] font-bold tracking-[-0.035em] leading-[1.08]',
+          'text-gray-950 dark:text-white text-balance'
         ].join(' ')}
       >
         {title}
@@ -282,24 +338,33 @@ export const SectionHead = ({
     {description && (
       <p
         className={[
-          'mt-4 text-[16.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[60ch]',
+          'mt-4 text-[16.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[60ch] text-pretty',
           align === 'center' ? 'mx-auto' : ''
         ].join(' ')}
       >
         {description}
       </p>
     )}
-  </div>
+    {children}
+  </Reveal>
 );
 
 /* -------------------------------------------------------------------- bölüm */
 
+/**
+ * Bölüm zeminleri. `mist` ve `cream` sayfaya ritim veren çok açık iki ton:
+ * biri markanın indigo'suna, biri sıcak kırık beyaza yaslanır. Aynı zemin iki
+ * kez üst üste gelmez, böylece bölümler çizgi çekmeden ayrışır.
+ */
 const TONE_BG = {
   plain: 'bg-white dark:bg-surface-dark',
+  mist: 'bg-gradient-to-b from-[#f4f5ff] to-[#fbfaf7] dark:from-[#0f1120] dark:to-surface-dark',
+  cream: 'bg-[#faf8f4] dark:bg-surface-darkSubtle',
   subtle: 'bg-surface-subtle dark:bg-surface-darkSubtle',
-  // Koyu şerit: sayfanın ritmini kıran, dikkat toplayan bölümler için.
-  deep: 'bg-gray-950 dark:bg-black text-white'
+  deep: 'bg-[#0b0d17] text-white'
 };
+
+export type SectionTone = keyof typeof TONE_BG;
 
 export const Section = ({
   tone = 'plain',
@@ -308,18 +373,20 @@ export const Section = ({
   className = '',
   innerClassName = '',
   children,
-  size = 'md'
+  size = 'md',
+  wide = false
 }: {
-  tone?: keyof typeof TONE_BG;
+  tone?: SectionTone;
   bordered?: boolean;
   id?: string;
   className?: string;
   innerClassName?: string;
   children?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  wide?: boolean;
 }) => {
   const pad =
-    size === 'sm' ? 'py-14 sm:py-16' : size === 'lg' ? 'py-24 sm:py-32' : 'py-20 sm:py-24';
+    size === 'sm' ? 'py-14 sm:py-16' : size === 'lg' ? 'py-24 sm:py-32' : 'py-20 sm:py-28';
   return (
     <section
       id={id}
@@ -327,11 +394,13 @@ export const Section = ({
         TONE_BG[tone],
         pad,
         'px-5 sm:px-8',
-        bordered ? 'border-t border-gray-200/80 dark:border-white/[0.07]' : '',
+        bordered ? 'border-t border-gray-200/70 dark:border-white/[0.06]' : '',
         className
       ].join(' ')}
     >
-      <div className={['max-w-6xl mx-auto', innerClassName].join(' ')}>{children}</div>
+      <div className={[wide ? 'max-w-7xl' : 'max-w-6xl', 'mx-auto', innerClassName].join(' ')}>
+        {children}
+      </div>
     </section>
   );
 };
@@ -352,9 +421,10 @@ export const Card = ({
 } & Record<string, any>) => (
   <Tag
     className={[
-      'rounded-2xl border border-gray-200/90 dark:border-white/[0.08] bg-white dark:bg-white/[0.025]',
+      'rounded-3xl border border-gray-200/80 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03]',
+      'shadow-[0_1px_2px_rgba(15,18,40,.04),0_8px_24px_-12px_rgba(15,18,40,.08)]',
       hover
-        ? 'transition-all hover:border-gray-300 dark:hover:border-white/20 hover:shadow-panel'
+        ? 'transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-300 dark:hover:border-white/20 hover:shadow-panel-lg'
         : '',
       className
     ].join(' ')}
@@ -364,14 +434,7 @@ export const Card = ({
   </Tag>
 );
 
-/**
- * Özellik ikonu.
- *
- * Çıplak çizgi ikon. Eskiden her ikon pastel zeminli yuvarlak bir karonun
- * içindeydi; sayfada yirmi tane yan yana durunca tasarım değil, şablon
- * görünüyordu. Karo yalnızca panelin GERÇEKTEN karo kullandığı yerde
- * (gösterge kartları) kalır — bkz. `SolidIcon`.
- */
+/** Çıplak çizgi ikon, özellik rengiyle. */
 export const AccentIcon = ({
   icon: Icon,
   tone = 'indigo',
@@ -413,14 +476,36 @@ export const SolidIcon = ({
   );
 };
 
-/* ------------------------------------------------------------- sayı & rozet */
+/* ------------------------------------------------------------- çip & rozet */
 
 /**
- * Küçük rozet (plan adı, kurulum süresi).
- *
- * Çerçeveli ve nötr. Pastel dolgulu hâli, sayfadaki diğer pastel çiplerle
- * birlikte her şeyi aynı hazır bileşenden çıkmış gösteriyordu.
+ * Çerçeveli, büyük harfli çip — bir özelliğin kapsadığı alt başlıklar için
+ * ("FORMLAR · SOHBET · E-POSTA"). Dolgusu yok; renk yalnızca çerçevede.
  */
+export const Chip = ({
+  children,
+  className = '',
+  tone
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  tone?: string;
+}) => (
+  <span
+    className={[
+      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-semibold',
+      'uppercase tracking-[0.08em] border',
+      tone
+        ? [accent(tone).border, accent(tone).text].join(' ')
+        : 'border-gray-200 dark:border-white/15 text-gray-500 dark:text-gray-400',
+      className
+    ].join(' ')}
+  >
+    {children}
+  </span>
+);
+
+/** Küçük rozet (plan adı, kurulum süresi). */
 export const Pill = ({
   children,
   className = ''
@@ -430,13 +515,48 @@ export const Pill = ({
 }) => (
   <span
     className={[
-      'inline-flex items-center gap-1.5 px-2 py-[3px] rounded text-[11.5px] font-medium',
+      'inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-medium',
       'border border-gray-200 dark:border-white/15 text-gray-600 dark:text-gray-400',
       className
     ].join(' ')}
   >
     {children}
   </span>
+);
+
+/* -------------------------------------------------------------------- görsel */
+
+/**
+ * Fotoğraf. Genişlik/yükseklik verilir ki yüklenirken sayfa zıplamasın;
+ * ekranın altındakiler tembel yüklenir.
+ */
+export const Photo = ({
+  src,
+  alt,
+  className = '',
+  imgClassName = '',
+  eager = false,
+  children
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  imgClassName?: string;
+  eager?: boolean;
+  children?: React.ReactNode;
+}) => (
+  <div className={['relative overflow-hidden', className].join(' ')}>
+    <img
+      src={src}
+      alt={alt}
+      width={1400}
+      height={934}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      className={['absolute inset-0 w-full h-full object-cover', imgClassName].join(' ')}
+    />
+    {children}
+  </div>
 );
 
 /* -------------------------------------------------------------------- akordeon */
@@ -448,32 +568,58 @@ export interface AccordionItem {
   [field: string]: any;
 }
 
-export const Accordion = ({ items }: { items: AccordionItem[] }) => (
-  <div className="divide-y divide-gray-200 dark:divide-white/[0.07] border-y border-gray-200 dark:border-white/[0.07]">
+/**
+ * Soru-cevap listesi. Radix Accordion: ok tuşlarıyla gezilir, açılıp kapanma
+ * `aria-expanded` ile duyurulur, yükseklik geçişi `--radix-accordion-content-height`
+ * üzerinden CSS'te yapılır (bkz. index.css).
+ */
+export const Accordion = ({
+  items,
+  numbered = false
+}: {
+  items: AccordionItem[];
+  numbered?: boolean;
+}) => (
+  <AccordionPrimitive.Root
+    type="single"
+    collapsible
+    className="border-y border-gray-200 dark:border-white/[0.08] divide-y divide-gray-200 dark:divide-white/[0.08]"
+  >
     {items.map((item, i) => (
-      <details key={i} className="group">
-        <summary
-          className="flex items-start justify-between gap-6 py-5 cursor-pointer list-none
-            text-[16px] font-medium text-gray-900 dark:text-white
-            hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-        >
-          {item.q}
-          <Plus className="w-4 h-4 mt-1 shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-45" />
-        </summary>
-        <div className="pb-6 -mt-1 text-[14.5px] leading-[1.7] text-gray-600 dark:text-gray-400 max-w-[68ch]">
-          {item.a}
-        </div>
-      </details>
+      <AccordionPrimitive.Item key={i} value={'item-' + i}>
+        <AccordionPrimitive.Header>
+          <AccordionPrimitive.Trigger
+            className="group w-full flex items-start gap-5 py-5 text-left
+              text-[15.5px] font-medium text-gray-900 dark:text-white
+              hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded"
+          >
+            {numbered && (
+              <span className="w-6 pt-0.5 text-[11.5px] font-medium tabular-nums text-gray-400 shrink-0">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+            )}
+            <span className="flex-1">{item.q}</span>
+            <Plus className="w-4 h-4 mt-1 shrink-0 text-gray-400 transition-transform duration-300 group-data-[state=open]:rotate-45" />
+          </AccordionPrimitive.Trigger>
+        </AccordionPrimitive.Header>
+        <AccordionPrimitive.Content className="accordion-content overflow-hidden">
+          <div
+            className={[
+              'pb-6 text-[14.5px] leading-[1.7] text-gray-600 dark:text-gray-400 max-w-[68ch]',
+              numbered ? 'pl-11' : ''
+            ].join(' ')}
+          >
+            {item.a}
+          </div>
+        </AccordionPrimitive.Content>
+      </AccordionPrimitive.Item>
     ))}
-  </div>
+  </AccordionPrimitive.Root>
 );
 
 /* -------------------------------------------------------------------- sekmeler */
 
-/**
- * Erişilebilir sekme grubu: ok tuşlarıyla gezilir, seçili sekme `aria-selected`
- * taşır ve panel `role="tabpanel"` ile bağlanır.
- */
 /** One tab: the id it is selected by, plus what is shown on it. */
 export interface TabItem {
   id: string;
@@ -482,82 +628,66 @@ export interface TabItem {
   [field: string]: any;
 }
 
+/**
+ * Sekme şeridi. Radix Tabs kökünü sayfa kurar (içerik panelleri sayfanın
+ * düzenine göre değiştiği için); bu bileşen yalnızca listeyi çizer.
+ *
+ * `variant="pill"` ürün turundaki yuvarlak düğmeli şerit, `underline` alt
+ * çizgili klasik sekme.
+ */
 export const Tabs = ({
   items,
   active,
   onChange,
-  className = ''
+  className = '',
+  variant = 'underline',
+  children
 }: {
   items: TabItem[];
   active: string;
   onChange: (key: string) => void;
   className?: string;
-}) => {
-  const refs = React.useRef<Array<HTMLButtonElement | null>>([]);
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    const last = items.length - 1;
-    const i = items.findIndex((it) => it.id === active);
-    let next = null;
-    if (e.key === 'ArrowRight') next = i === last ? 0 : i + 1;
-    if (e.key === 'ArrowLeft') next = i === 0 ? last : i - 1;
-    if (e.key === 'Home') next = 0;
-    if (e.key === 'End') next = last;
-    if (next === null) return;
-    e.preventDefault();
-    onChange(items[next].id);
-    refs.current[next]?.focus();
-  };
-
-  return (
-    <div
-      role="tablist"
-      onKeyDown={onKeyDown}
+  variant?: 'underline' | 'pill';
+  children?: React.ReactNode;
+}) => (
+  <TabsPrimitive.Root value={active} onValueChange={onChange}>
+    <TabsPrimitive.List
       className={[
-        // Alt çizgili sekme — tarayıcıdan bilgisayara herkesin tanıdığı biçim.
-        // Eskiden seçili sekme pastel dolgulu yuvarlak bir kutuydu; sayfadaki
-        // diğer pastel çiplerle birlikte tasarımı şablona çeviriyordu.
-        'flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-white/[0.09]',
-        '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        'flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        variant === 'underline'
+          ? 'gap-6 border-b border-gray-200 dark:border-white/[0.09]'
+          : 'gap-1.5 sm:justify-center',
         className
       ].join(' ')}
     >
-      {items.map((item, i) => {
-        const selected = item.id === active;
+      {items.map((item) => {
         const Icon = item.icon;
         return (
-          <button
+          <TabsPrimitive.Trigger
             key={item.id}
-            ref={(el) => (refs.current[i] = el)}
-            role="tab"
-            id={'tab-' + item.id}
-            aria-selected={selected}
-            aria-controls={'panel-' + item.id}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => onChange(item.id)}
+            value={item.id}
             className={[
-              'shrink-0 inline-flex items-center gap-2 pb-3 -mb-px border-b-2',
-              'text-[14.5px] transition-colors whitespace-nowrap',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded',
-              selected
-                ? 'border-indigo-600 dark:border-indigo-400 text-gray-900 dark:text-white font-medium'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              'shrink-0 inline-flex items-center gap-2 whitespace-nowrap transition-colors',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+              variant === 'underline'
+                ? 'pb-3 -mb-px border-b-2 text-[14.5px] border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white data-[state=active]:border-indigo-600 dark:data-[state=active]:border-indigo-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white data-[state=active]:font-medium focus-visible:rounded'
+                : 'px-3.5 py-2 rounded-full text-[13.5px] font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-white/[0.06] data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-[0_6px_16px_-8px_rgba(79,70,229,.8)]'
             ].join(' ')}
           >
-            {Icon && <Icon className="w-[17px] h-[17px]" strokeWidth={1.75} />}
+            {Icon && <Icon className="w-4 h-4" strokeWidth={1.9} />}
             {item.label}
-          </button>
+          </TabsPrimitive.Trigger>
         );
       })}
-    </div>
-  );
-};
+    </TabsPrimitive.List>
+    {children}
+  </TabsPrimitive.Root>
+);
+
+export const TabPanel = TabsPrimitive.Content;
 
 /* -------------------------------------------------------------- numaralı adım */
 
-/**
- * Adım numarası. Sade rakam; pastel zeminli karo değil.
- */
 export const StepNumber = ({ n, tone = 'indigo' }: { n: React.ReactNode; tone?: string }) => {
   const a = accent(tone);
   return (
@@ -577,12 +707,9 @@ export const StepNumber = ({ n, tone = 'indigo' }: { n: React.ReactNode; tone?: 
 /* ----------------------------------------------------------------- çerçeveler */
 
 /**
- * Ürün görsellerinin etrafındaki uygulama penceresi.
- *
- * Görselleri ekran görüntüsü olarak koymuyoruz: panel hem açık hem koyu temada
- * çalışıyor, PNG yalnızca birinde doğru görünürdü. Bunlar panelin gerçek
- * bileşen dilini taklit eden DOM parçalarıdır; her iki temada da doğru,
- * her ekran yoğunluğunda keskin.
+ * Ürün görsellerinin etrafındaki uygulama penceresi. İçerik panelin bileşen
+ * dilini taklit eden DOM parçasıdır; iki temada da doğru, her yoğunlukta
+ * keskin. Başlık çubuğunda pencerenin adı büyük harfle ortada durur.
  */
 export const AppFrame = ({
   label,
@@ -599,22 +726,22 @@ export const AppFrame = ({
   return (
     <div
       className={[
-        'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
-        'overflow-hidden shadow-panel',
+        'rounded-2xl border border-gray-200/90 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
+        'overflow-hidden shadow-panel-lg',
         className
       ].join(' ')}
     >
       <div
-        className="flex items-center gap-2 px-3.5 h-10 border-b border-gray-200 dark:border-white/[0.07]
+        className="relative flex items-center gap-1.5 px-3.5 h-9 border-b border-gray-200/80 dark:border-white/[0.07]
         bg-gray-50/80 dark:bg-white/[0.03]"
       >
-        <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
-        <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
-        <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/80" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/80" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]/80" />
         {label && (
           <span
-            className="ml-2.5 inline-flex items-center gap-1.5 text-[11.5px] font-medium
-            text-gray-500 dark:text-gray-400"
+            className="absolute left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 text-[10px] font-semibold
+            uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500 whitespace-nowrap"
           >
             <span className={['w-1.5 h-1.5 rounded-full', a.dot].join(' ')} />
             {label}
@@ -639,12 +766,12 @@ export const BrowserFrame = ({
   <div
     className={[
       'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
-      'overflow-hidden shadow-panel',
+      'overflow-hidden shadow-panel-lg',
       className
     ].join(' ')}
   >
     <div
-      className="flex items-center gap-2 px-3.5 h-10 border-b border-gray-200 dark:border-white/[0.07]
+      className="flex items-center gap-2 px-3.5 h-9 border-b border-gray-200 dark:border-white/[0.07]
       bg-gray-50/80 dark:bg-white/[0.03]"
     >
       <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
@@ -665,8 +792,8 @@ export const BrowserFrame = ({
 /* ------------------------------------------------------------------- şerit */
 
 /**
- * Sonsuz kayan şerit. İçerik iki kez basılır ve %50 kaydırılır; böylece
- * döngü başa döndüğünde görünür bir sıçrama olmaz.
+ * Sonsuz kayan şerit. İçerik iki kez basılır ve %50 kaydırılır; döngü başa
+ * döndüğünde görünür bir sıçrama olmaz.
  */
 export const Marquee = ({
   children,

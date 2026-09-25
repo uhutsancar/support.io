@@ -168,7 +168,7 @@ const Analytics = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('analytics.title') || ''} - Support.io Admin`}</title>
+        <title>{`${t('analytics.title') || ''} — Support.io`}</title>
         <meta name="description" content={t('analytics.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

@@ -235,13 +235,27 @@ function createQuota({ name, windowMs, max }: { name: string; windowMs: number; 
 
 const minutes = (value: string | undefined, fallback: number): number => Number(value) || fallback;
 
+/**
+ * Üretim dışındaki varsayılan sınır.
+ *
+ * docker-compose.yml geliştirme yığınına zaten çok yüksek sınırlar veriyor
+ * (API_RATE_MAX=1000000). Backend Docker'sız, `npm run dev` ile
+ * çalıştırıldığında bu değişkenler yoktu ve üretimin sıkı varsayılanları
+ * geçerliydi: panelde birkaç dakika gezinip demodan mesaj atan bir geliştirici
+ * 15 dakikada 1000 isteği aşıyor, ardından giriş de widget da 429 alıyordu.
+ * Ortam değişkeni verilmişse o kazanır; üretimde hiçbir şey değişmez.
+ */
+const isProduction = process.env.NODE_ENV === 'production';
+const limit = (value: string | undefined, production: number, development: number): number =>
+  minutes(value, isProduction ? production : development);
+
 // Giris denemeleri: parola deneme saldirilarina karsi dar tutulur.
 const loginLimiter = createLimiter({
   name: 'login',
   code: 'TOO_MANY_LOGIN_ATTEMPTS',
   message: 'Too many login attempts, please try again later.',
   windowMs: minutes(process.env.AUTH_RATE_WINDOW_MS, 15 * 60 * 1000),
-  max: minutes(process.env.AUTH_RATE_MAX, 100)
+  max: limit(process.env.AUTH_RATE_MAX, 100, 100000)
 });
 
 // Hesap başına sınır. IP sınırı tek başına dağıtık bir parola denemesini
@@ -272,7 +286,7 @@ const registerLimiter = createLimiter({
   code: 'TOO_MANY_REGISTRATIONS',
   message: 'Too many registration attempts, please try again later.',
   windowMs: minutes(process.env.REGISTER_RATE_WINDOW_MS, 60 * 60 * 1000),
-  max: minutes(process.env.REGISTER_RATE_MAX, 20)
+  max: limit(process.env.REGISTER_RATE_MAX, 20, 100000)
 });
 
 // Genel API trafigi.
@@ -281,7 +295,7 @@ const apiLimiter = createLimiter({
   code: 'TOO_MANY_REQUESTS',
   message: 'Too many requests, please slow down.',
   windowMs: minutes(process.env.API_RATE_WINDOW_MS, 15 * 60 * 1000),
-  max: minutes(process.env.API_RATE_MAX, 1000)
+  max: limit(process.env.API_RATE_MAX, 1000, 1000000)
 });
 
 export {

@@ -9,7 +9,7 @@ const Settings = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('settings.title') || ''} - Support.io Admin`}</title>
+        <title>{`${t('settings.title') || ''} — Support.io`}</title>
         <meta name="description" content={t('settings.profile')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

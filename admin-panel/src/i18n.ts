@@ -3,6 +3,7 @@
  *
  *   locales/tr.js            panelin çevirisi (1800+ satır, seyrek değişir)
  *   locales/marketing.tr.js  pazarlama sayfalarının metni (sık değişir)
+ *   locales/pages.tr.js      sektör çözümleri ve yapay zekâ sayfası
  *
  * İkincisi birincinin ÜZERİNE yazılır. Böylece ana sayfa başlığını
  * değiştirmek için panelin tamamını taşıyan dosyayı açmak gerekmez ve iki
@@ -19,6 +20,8 @@ import tr from './locales/tr';
 import en from './locales/en';
 import marketingTr from './locales/marketing.tr';
 import marketingEn from './locales/marketing.en';
+import pagesTr from './locales/pages.tr';
+import pagesEn from './locales/pages.en';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -34,8 +37,8 @@ function deepMerge(base: any, override: any) {
 
 i18n.use(initReactI18next).init({
   resources: {
-    tr: { translation: deepMerge(tr, marketingTr) },
-    en: { translation: deepMerge(en, marketingEn) }
+    tr: { translation: deepMerge(deepMerge(tr, marketingTr), pagesTr) },
+    en: { translation: deepMerge(deepMerge(en, marketingEn), pagesEn) }
   },
   lng: localStorage.getItem('language') || 'tr',
   fallbackLng: 'tr',

@@ -22,6 +22,7 @@
 // The hooks below fix all three in one place.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import i18n from '../i18n';
 
 /** What a caller gets back: the data, whether it is in flight, and why it failed. */
 export interface AsyncState<T> {
@@ -45,10 +46,25 @@ export interface AsyncResource<T> extends AsyncState<T> {
  * that is preferred; the fallback is only for a network failure, where there is
  * no response at all.
  */
+/**
+ * Server error codes the panel explains in the user's language. The server's
+ * own message is English and meant for logs; a person who hit a rate limit
+ * should read what happened and when to try again, in Turkish if that is the
+ * language they chose.
+ */
+const TRANSLATED_CODES: Record<string, string> = {
+  TOO_MANY_REQUESTS: 'errors.tooManyRequests',
+  TOO_MANY_LOGIN_ATTEMPTS: 'errors.tooManyLogins',
+  TOO_MANY_REGISTRATIONS: 'errors.tooManyRegistrations'
+};
+
 export function errorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {
-    const response = (error as { response?: { data?: { error?: unknown; message?: unknown } } })
-      .response;
+    const response = (
+      error as { response?: { data?: { error?: unknown; message?: unknown; code?: unknown } } }
+    ).response;
+    const code = typeof response?.data?.code === 'string' ? response.data.code : '';
+    if (TRANSLATED_CODES[code]) return i18n.t(TRANSLATED_CODES[code]);
     const fromBody = response?.data?.error ?? response?.data?.message;
     if (typeof fromBody === 'string' && fromBody) return fromBody;
   }

@@ -243,7 +243,7 @@ const TeamChatPage = () => {
   return (
     <div className="h-[calc(100vh-3rem)] flex flex-col">
       <Helmet>
-        <title>{`${t('teamChat.title') || ''} - DestekChat`}</title>
+        <title>{`${t('teamChat.title') || ''} — Support.io`}</title>
       </Helmet>
       {}
       <div className="mb-4">

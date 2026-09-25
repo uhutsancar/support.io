@@ -25,6 +25,7 @@ import {
   Card,
   AccentIcon,
   Accordion,
+  Reveal,
   accent
 } from '../components/marketing/kit';
 
@@ -47,7 +48,7 @@ const MATRIX = [
   { key: 'analytics', free: false, pro: true, enterprise: true },
   { key: 'visitors', free: false, pro: true, enterprise: true },
   { key: 'crm', free: false, pro: true, enterprise: true },
-  { key: 'aiAssist', free: false, pro: true, enterprise: true },
+  { key: 'aiAssist', free: true, pro: true, enterprise: true },
   { key: 'export', free: false, pro: true, enterprise: true },
   { key: 'audit', free: false, pro: false, enterprise: true },
   { key: 'sso', free: false, pro: false, enterprise: true }
@@ -156,7 +157,7 @@ const Pricing = () => {
       {/* ----------------------------------------------------- plan kartları */}
       <Section size="sm">
         <div className="grid gap-5 lg:grid-cols-3">
-          {PLANS.map((plan, _i) => {
+          {PLANS.map((plan, i) => {
             const price = yearly ? plan.yearly : plan.monthly;
             const features = t('pricingPage.plans.' + plan.id + '.features', {
               returnObjects: true
@@ -165,10 +166,10 @@ const Pricing = () => {
             const a = accent(plan.tone);
 
             return (
-              <div key={plan.id}>
+              <Reveal key={plan.id} delay={i * 0.07}>
                 <div
                   className={[
-                    'relative h-full rounded-2xl border p-6 flex flex-col bg-white dark:bg-white/[0.025]',
+                    'relative h-full rounded-3xl border p-7 flex flex-col bg-white dark:bg-white/[0.025]',
                     plan.highlight
                       ? 'border-indigo-300 dark:border-indigo-500/40 ring-2 ring-indigo-500/15 shadow-panel-lg lg:-mt-3 lg:mb-[-12px]'
                       : 'border-gray-200 dark:border-white/[0.08]'
@@ -258,7 +259,7 @@ const Pricing = () => {
                     ))}
                   </ul>
                 </div>
-              </div>
+              </Reveal>
             );
           })}
         </div>
@@ -269,15 +270,17 @@ const Pricing = () => {
       </Section>
 
       {/* ------------------------------------------- hangi plan bana uygun */}
-      <Section tone="subtle" bordered>
+      <Section tone="mist">
         <SectionHead
+          index={1}
           eyebrow={t('pricingPage.chooseEyebrow')}
           title={t('pricingPage.chooseTitle')}
           align="center"
         />
         <div className="mt-10 grid sm:grid-cols-3 gap-4">
-          {PLANS.map((plan) => (
-            <Card key={plan.id} className="p-5">
+          {PLANS.map((plan, i) => (
+            <Reveal key={plan.id} delay={i * 0.06}>
+            <Card className="p-6 h-full">
               <p className={['text-[13px] font-semibold', accent(plan.tone).text].join(' ')}>
                 {t('pricingPage.plans.' + plan.id + '.name')}
               </p>
@@ -288,13 +291,16 @@ const Pricing = () => {
                 {t('pricingPage.plans.' + plan.id + '.forWhoBody')}
               </p>
             </Card>
+            </Reveal>
           ))}
         </div>
       </Section>
 
       {/* --------------------------------------------- karşılaştırma tablosu */}
-      <Section bordered>
+      <Section>
         <SectionHead
+          index={2}
+          eyebrow={t('pricingPage.feature')}
           title={t('pricingPage.compareTitle')}
           description={t('pricingPage.compareDesc')}
         />
@@ -363,38 +369,41 @@ const Pricing = () => {
       </Section>
 
       {/* ------------------------------------------------------------- SSS */}
-      <Section tone="subtle" bordered>
+      <Section tone="cream">
         <div className="grid lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] gap-10 lg:gap-16">
-          <SectionHead title={t('pricingPage.faqTitle')} description={t('pricingPage.faqDesc')} />
-          <Accordion items={Array.isArray(faq) ? faq : []} />
+          <SectionHead
+            index={3}
+            eyebrow={t('homePage.faq.eyebrow')}
+            title={t('pricingPage.faqTitle')}
+            description={t('pricingPage.faqDesc')}
+          />
+          <Reveal>
+            <Accordion items={Array.isArray(faq) ? faq : []} numbered />
+          </Reveal>
         </div>
       </Section>
 
       {/* ------------------------------------------------------------- CTA */}
-      <Section bordered>
-        <div className="text-center max-w-2xl mx-auto">
-          <Sparkles
-            className="w-7 h-7 mx-auto text-indigo-600 dark:text-indigo-400"
-            strokeWidth={1.8}
-          />
-          <h2
-            className="mt-5 text-[30px] sm:text-[36px] font-semibold tracking-[-0.03em]
-            leading-[1.12] text-gray-900 dark:text-white"
-          >
+      <Section tone="deep">
+        <Reveal className="text-center max-w-2xl mx-auto">
+          <Sparkles className="w-7 h-7 mx-auto text-indigo-300" strokeWidth={1.8} />
+          <h2 className="mt-5 text-[32px] sm:text-[44px] font-bold tracking-[-0.04em] leading-[1.06] text-white text-balance">
             {t('landing.home.ctaTitle')}
           </h2>
-          <p className="mt-4 text-[16.5px] leading-relaxed text-gray-600 dark:text-gray-400">
-            {t('landing.home.ctaDesc')}
-          </p>
+          <p className="mt-5 text-[16.5px] leading-relaxed text-gray-400">{t('landing.home.ctaDesc')}</p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Button to={routes.register} size="lg" arrow>
               {t('landing.home.ctaBtn1')}
             </Button>
-            <Button to={routes.docs} variant="secondary" size="lg">
+            <Button
+              to={routes.docs}
+              size="lg"
+              className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none"
+            >
               {t('landing.home.btnDocs')}
             </Button>
           </div>
-        </div>
+        </Reveal>
       </Section>
     </Shell>
   );

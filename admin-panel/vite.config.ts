@@ -59,7 +59,15 @@ export default defineConfig({
       'react-dom', 
       'react-router-dom',
       'axios',
-      'socket.io-client'
+      'socket.io-client',
+      // Pazarlama sayfalarinin kutuphaneleri; ilk ziyarette kesfedilince Vite
+      // sayfayi bir kez daha yukluyordu.
+      'motion/react',
+      'embla-carousel-react',
+      'embla-carousel-autoplay',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-tabs'
     ],
     exclude: []
   },

@@ -399,7 +399,15 @@ connectDB()
 
     // Süreç kapanırken açık bağlantılar düzgün kapatılır. SIGTERM'de anında
     // ölmek, o an açık olan soketlerdeki mesajların kaybolması demektir.
+    //
+    // Windows'ta tek bir Ctrl+C, npm → nodemon → tsx zinciri boyunca sürece
+    // birden fazla SIGINT olarak ulaşıyor; her biri kapatmayı baştan başlatıp
+    // "HTTP sunucusu kapandı" satırını tekrar tekrar basıyordu. İlk sinyal
+    // kapatmayı başlatır, sonrakiler yok sayılır.
+    let shuttingDown = false;
     const shutdown = async (signal: NodeJS.Signals) => {
+      if (shuttingDown) return;
+      shuttingDown = true;
       console.log(`
 ${signal} alındı, kapatılıyor...`);
       server.close(() => console.log('   HTTP sunucusu kapandı'));

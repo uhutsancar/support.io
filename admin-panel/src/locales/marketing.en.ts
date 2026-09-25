@@ -18,10 +18,191 @@ export default {
 
   nav: {
     allFeatures: 'See all features',
+    product: 'Product',
+    solutions: 'Solutions',
+    ai: 'AI',
+    resourcesLabel: 'Resources',
+    resources: {
+      docs: { title: 'Setup guide', body: 'Every step from one line to identity verification.' },
+      about: { title: 'About us', body: 'Why we exist and how we make decisions.' },
+      contact: { title: 'Write to us', body: 'The chat bubble on this site is the same product.' }
+    },
     groups: {
       talk: 'Talk to customers',
       organize: 'Organise the work',
       grow: 'Measure and grow'
+    }
+  },
+
+  homePage: {
+    hero: {
+      title: 'Every message answered,',
+      accent: 'no customer left waiting.',
+      desc: 'Visitors write from your site; your assistant answers the simple questions at once and hands the rest to your team. Every conversation on one screen, and it is always clear who is on it.',
+      tour: 'Tour the product',
+      photoAlt: 'Support agent with a headset answering a customer at a computer',
+      notifTitle: 'New conversation · /cart',
+      notifBody: 'Visitor has been on checkout for 12 seconds',
+      handoff: 'Selin took over the conversation'
+    },
+    tour: {
+      eyebrow: 'Product tour',
+      title: 'The screens your team keeps open all day',
+      desc: 'Click through. Each one is a real screen in the dashboard, there the day you open your account.'
+    },
+    industries: {
+      eyebrow: 'Who it is for',
+      title: 'For every business that talks to its customers',
+      desc: 'A shop, a SaaS, a clinic, a hotel or a school — one product, in the language of your work.',
+      explore: 'Explore',
+      prev: 'Previous industry',
+      next: 'Next industry'
+    },
+    story: {
+      eyebrow: 'The life of a conversation',
+      title: 'From the moment a message arrives to the moment it closes',
+      desc: 'Scroll down and follow one sentence from a visitor as it moves through your team.',
+      steps: [
+        {
+          title: 'Every message in one inbox',
+          body: 'Questions from the chat bubble, a proactive message or the help content all land in one list — who asked, on which page, and what, right beside it.',
+          chips: ['Chat', 'Files', 'Proactive', 'History']
+        },
+        {
+          title: 'The assistant answers first',
+          body: 'It answers common questions from your help content and looks up a signed-in customer’s order in your shop’s system. The moment it is unsure, it hands the conversation to a person.',
+          chips: ['FAQ', 'Orders', 'Handoff']
+        },
+        {
+          title: 'The rest goes to the right person',
+          body: 'Billing to accounts, returns to sales. Define departments once; each conversation goes to whoever is available right now.',
+          chips: ['Department', 'Queue', 'Hours']
+        },
+        {
+          title: 'Repeated work becomes a rule',
+          body: 'Pick rules like “if the message mentions a refund, tag it and send it to sales” from a list. No code, and every run is logged.',
+          chips: ['Tags', 'Priority', 'Saved replies']
+        },
+        {
+          title: 'At month end, you can see what happened',
+          body: 'How many questions came in, how long the first reply took, which were solved and what each agent did. Numbers instead of guesses.',
+          chips: ['First reply', 'Resolution', 'Agents']
+        }
+      ]
+    },
+    ai: {
+      eyebrow: 'AI',
+      title: 'An assistant that runs on your own server and knows when to stop',
+      desc: 'The assistant answers your customers from your own help content. The model runs on your machine; conversations and customer data are sent nowhere.',
+      points: [
+        { title: 'Your data stays home', body: 'The model runs on your server. Not a sentence goes to another company’s AI service.' },
+        { title: 'Sensitive data never reaches it', body: 'A customer who types a card, IBAN or ID number is warned and passed straight to a person.' },
+        { title: 'Unsure? It hands over', body: 'When the customer asks for a person, complains or information is missing, the conversation goes to your team.' },
+        { title: 'It does not make things up', body: 'A reply with a date, price or link that is not in your help content never reaches the customer.' }
+      ],
+      modes: [
+        { name: 'Off', body: 'No assistant; everything is with your team.' },
+        { name: 'Copilot', body: 'Suggests summaries and drafts to the agent, never sends.' },
+        { name: 'Auto reply', body: 'Answers visitors itself and hands over when needed.' }
+      ],
+      cta: 'Meet the assistant',
+      cta2: 'Feature details'
+    },
+    setup: {
+      eyebrow: 'Setup',
+      title: 'One line. Live in minutes.',
+      desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, invite your team, switch the assistant on. No developer needed.',
+      keyPlaceholder: 'YOUR_SITE_KEY',
+      comment: 'Support.io chat bubble',
+      live: 'The bubble shows up within a minute of pasting',
+      noDevs: {
+        eyebrow: 'No developers',
+        title: 'Copy, paste, done.',
+        body: 'WordPress, Shopify or a site you built yourself — the same line everywhere, pasted into the settings screen.'
+      },
+      devices: {
+        eyebrow: 'Anywhere',
+        title: 'Reply from your phone too.',
+        body: 'The dashboard runs in the browser — the same inbox at your desk or on the go. Nothing to install.',
+        desktop: 'Desktop',
+        tablet: 'Tablet',
+        phone: 'Phone'
+      },
+      board: {
+        title: 'Dashboard',
+        sample: 'Sample',
+        replies: 'Replies today',
+        online: '3 agents online'
+      },
+      stats: [
+        { label: 'Avg. first reply', value: '1m 40s' },
+        { label: 'Resolved', value: '92%' },
+        { label: 'Answered by assistant', value: '38%' }
+      ]
+    },
+    features: {
+      eyebrow: 'All in one',
+      title: 'Eleven features that work today',
+      desc: 'Not a roadmap — the screens you will see when you open your account.'
+    },
+    trustPhotoAlt: 'A small team meeting around a table',
+    faq: {
+      eyebrow: 'FAQ',
+      title: 'Frequently asked questions',
+      categories: 'Categories',
+      still: 'Still have questions?',
+      chat: 'Chat with our team',
+      contact: 'Get in touch',
+      cat: { all: 'All', pricing: 'Pricing', setup: 'Setup', ai: 'AI', security: 'Security' },
+      items: [
+        { cat: 'pricing', q: 'Is the free plan really free?', a: 'Yes — no time limit and no credit card. It is limited to one site and one user; conversations are unlimited.' },
+        { cat: 'pricing', q: 'What happens when my team grows?', a: 'Move to Pro and pay per user per month. The number of customers or conversations never changes the price.' },
+        { cat: 'setup', q: 'Do I need a developer to set it up?', a: 'Usually not. On WordPress, Shopify and similar platforms you paste one line into the settings screen. If you get stuck, write to us and we will do it together.' },
+        { cat: 'setup', q: 'Will it slow my site down?', a: 'No. The bubble starts after the rest of your page has loaded and is isolated from your site’s styles.' },
+        { cat: 'ai', q: 'What if the assistant says something wrong?', a: 'Every reply is checked before it goes out: if it contains a number, date or link that is not in your help content, it is not sent and a person takes over.' },
+        { cat: 'ai', q: 'Do we pay extra for the assistant?', a: 'No. The model runs on your server, so there is no per-question fee. What you need is a graphics card with roughly 12–16 GB of memory.' },
+        { cat: 'security', q: 'Can anyone else see our conversations?', a: 'No. Each account’s data is kept within its own boundary, and inside your team every role only sees the screens it is allowed to.' },
+        { cat: 'security', q: 'Can I export my data?', a: 'On Pro and Enterprise you can export your conversations. The data is yours.' }
+      ]
+    }
+  },
+
+  demoChat: {
+    status: 'Online · usually replies in a few minutes',
+    botName: 'Assistant',
+    hero: {
+      brand: 'Acme Store',
+      lines: [
+        { from: 'visitor', text: 'Hi, how many days do I have to return something?' },
+        { from: 'bot', text: 'You can return it free of charge within 14 days of delivery. An opened box is fine.' },
+        { from: 'visitor', text: 'Can I talk to someone?' },
+        { from: 'note', text: 'Selin joined the conversation' },
+        { from: 'agent', name: 'Selin', text: 'Hi! I’m Selin, happy to help.' }
+      ]
+    },
+    story: {
+      brand: 'Acme Store',
+      lines: [
+        { from: 'visitor', text: 'Where is my parcel? Order 10482' },
+        { from: 'order', order: { number: '10482', status: 'Shipped', carrier: 'Example Cargo', eta: 'Expected Thursday' } },
+        { from: 'bot', text: 'Your order was shipped yesterday and should arrive on Thursday.' },
+        { from: 'visitor', text: 'I need to change my address' },
+        { from: 'note', text: 'The assistant handed over to the team' },
+        { from: 'agent', name: 'Kerem', text: 'I’m updating your address with the carrier right now.' }
+      ]
+    },
+    ai: {
+      brand: 'Acme Store',
+      lines: [
+        { from: 'visitor', text: 'Hello 👋' },
+        { from: 'bot', text: 'Hi! Ask me about your order, returns or our products.' },
+        { from: 'visitor', text: 'What’s the status of my last order?' },
+        { from: 'order', order: { number: '10482', status: 'Shipped', carrier: 'Example Cargo', eta: 'Expected Thursday' } },
+        { from: 'bot', text: 'Order 10482 is on its way and should arrive on Thursday.' },
+        { from: 'visitor', text: 'Looks like my card was charged twice' },
+        { from: 'note', text: 'Payment issue · passed to an agent' },
+        { from: 'agent', name: 'Selin', text: 'Checking now — could you tell me the amount on your statement?' }
+      ]
     }
   },
 
@@ -611,26 +792,26 @@ export default {
 
       'ai-assist': {
         title: 'AI assistant',
-        short: 'Summarises long threads, drafts a reply.',
+        short: 'Answers the simple questions, hands the rest to your team.',
         plain:
-          'Taking over a long conversation, you read the summary instead of the whole thread. It drafts a reply, softens the tone, and translates.',
-        setup: 'Needs a key',
+          'The assistant answers common questions from your help content, looks up a signed-in customer’s order in your shop’s system, and leaves the conversation to your team the moment it is unsure. The model runs on your own server.',
+        setup: 'On your server',
         benefits: [
-          'Thread summary — no reading from the top when you take over',
-          'Adjusts the tone of the reply you wrote',
-          'Answer a customer writing in another language',
-          'Drafts based on your own help content'
+          'Auto reply: greetings, FAQ and order status',
+          'Hands over the moment the customer asks, or on a complaint',
+          'Summary, draft reply, tone and translation for agents',
+          'Conversations and customer data never leave your server'
         ],
         steps: [
-          {
-            title: 'Enter your provider key',
-            body: 'Set once in the dashboard; it is never sent to the browser.'
-          },
-          { title: 'Open a conversation', body: 'The assistant appears in the side panel.' },
-          {
-            title: 'Edit the draft and send',
-            body: 'The draft is always shown to you and never sends itself.'
-          }
+          { title: 'Start the model on your server', body: 'One command on a GPU server; the dashboard notices by itself when it is ready.' },
+          { title: 'Choose the mode per site', body: 'Sites → AI settings: off, copilot or automatic replies.' },
+          { title: 'Fill in your help content', body: 'The assistant only says what is written there; the better the content, the better the answer.' }
+        ],
+        body: 'The model runs in one server container that the backend reaches over the internal network only; there is no fallback to any hosted model. A visitor message is first checked in code (a request for a person, card/IBAN/ID numbers, the reply budget), then sent to the model with only the matching FAQ entries. Numbers, dates and links in the answer are checked against those sources; an answer that fails is not sent and a person takes over.',
+        points: [
+          'Automatic replies stop the moment an agent takes over',
+          'Orders are looked up only for a verified customer, with a signed request',
+          'If the model is down or busy, the conversation goes to a person without waiting'
         ]
       },
 
@@ -763,7 +944,8 @@ export default {
           'Chat bubble and appearance settings',
           'Help content (FAQ)',
           'Automatic rules',
-          'Proactive messages'
+          'Proactive messages',
+          'AI assistant (on your own server)'
         ]
       },
       pro: {
@@ -780,7 +962,6 @@ export default {
           'Reports and agent performance',
           'Live visitors',
           'Deal tracking',
-          'AI assistant',
           'Data export'
         ]
       },
@@ -812,7 +993,7 @@ export default {
       analytics: 'Reports',
       visitors: 'Live visitors',
       crm: 'Deal tracking',
-      aiAssist: 'AI assistant',
+      aiAssist: 'AI assistant (on your own server)',
       export: 'Data export',
       audit: 'Audit logs',
       sso: 'Single sign-on (SSO)'

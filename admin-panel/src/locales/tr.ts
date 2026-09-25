@@ -300,7 +300,7 @@ export default {
   },
   audit: {
     title: 'İşlem Kayıtları',
-    subtitle: 'Sistem içindeki tüm kritik işlemleri İzleyin',
+    subtitle: 'Sistem içindeki tüm kritik işlemleri izleyin',
     time: 'Zaman',
     action: 'İşlem',
     entity: 'Bölüm',
@@ -2290,5 +2290,80 @@ export default {
       saved: 'Sipariş servisi kaydedildi',
       error: 'İşlem başarısız'
     }
+  },
+
+  errors: {
+    tooManyRequests: 'Kısa sürede çok fazla istek gönderildi. Birkaç dakika sonra tekrar deneyin.',
+    tooManyLogins: 'Çok fazla giriş denemesi yapıldı. Lütfen biraz bekleyip tekrar deneyin.',
+    tooManyRegistrations: 'Çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.'
+  },
+  /* Gösterge paneli (2026-09 yeniden tasarım). */
+  dash: {
+    greeting: { morning: 'Günaydın', afternoon: 'İyi günler', evening: 'İyi akşamlar' },
+    openInbox: 'Gelen kutusu',
+    failed: 'Veriler alınamadı. Bağlantınızı kontrol edip tekrar deneyin.',
+    retry: 'Tekrar dene',
+    range: { label: 'Dönem', today: 'Bugün', '7days': '7 gün', '30days': '30 gün' },
+    hint: {
+      mine: 'Size atanmış olanlar',
+      of: '{{range}} içinde {{count}} konuşma',
+      sla: 'Hedef içinde: %{{rate}}',
+      noSla: 'Henüz ölçülen yanıt yok',
+      resolution: 'Ortalama çözüm: {{time}}',
+      noResolution: 'Henüz çözülen yok',
+      rated: '{{count}} değerlendirme'
+    },
+    flow: {
+      title: 'Konuşma akışı',
+      incoming: 'Gelen',
+      resolved: 'Çözülen',
+      empty: 'Bu dönemde konuşma yok.',
+      alt: '{{range}} boyunca günlük gelen ve çözülen konuşma sayıları'
+    },
+    locked: {
+      title: 'Raporlar Pro planda',
+      body: 'Günlük konuşma akışı, yanıt süreleri ve temsilci performansı için planınızı yükseltin.',
+      cta: 'Planları gör'
+    },
+    attention: {
+      title: 'Dikkat gerektirenler',
+      unassigned: '{{count}} konuşma kimseye atanmamış',
+      sla: '{{count}} konuşmada hedef süre aşıldı',
+      noneOnline: 'Şu anda çevrimiçi temsilci yok',
+      clear: 'Bekleyen bir şey yok. Her şey yolunda.'
+    },
+    team: { online: 'Ekip · {{online}}/{{total}} çevrimiçi' },
+    recent: {
+      title: 'Son konuşmalar',
+      ai: 'Asistan',
+      noPreview: 'Henüz mesaj yok',
+      yesterday: 'Dün'
+    },
+    ai: {
+      title: 'Yapay zekâ asistanı',
+      manage: 'Site ayarlarından yönet',
+      state: {
+        ready: 'Hazır',
+        warming_up: 'Model yükleniyor',
+        unavailable: 'Model sunucusuna ulaşılamıyor',
+        disabled: 'Kapalı'
+      },
+      body: {
+        ready: 'Otomatik yanıt ya da yardımcı modu site başına açabilirsiniz.',
+        warming_up: 'Model birkaç dakika içinde hazır olur; kontroller kendiliğinden açılır.',
+        unavailable: 'Konuşmalar beklemeden ekibinize düşüyor. Model sunucusunu kontrol edin.',
+        disabled: 'Asistan bu kurulumda çalışmıyor. Açmak için kendi sunucunuzda modeli başlatın; sohbet ve gelen kutusu onsuz da çalışır.'
+      },
+      mode: { off: 'Kapalı', copilot: 'Yardımcı', auto: 'Otomatik yanıt' }
+    },
+    setup: {
+      title: 'Kurulumu tamamlayın',
+      site: 'İlk sitenizi ekleyin',
+      install: 'Kurulum satırını sitenize yapıştırın',
+      team: 'Ekip arkadaşınızı davet edin',
+      ai: 'Asistanın modunu seçin'
+    },
+    invite: 'Ekibinize yeni birini davet edin',
+    percent: '%{{value}}'
   }
 };

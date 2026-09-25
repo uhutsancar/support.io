@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { translatePath } from '../lib/marketingPaths';
 
 export interface LanguageContextValue {
   language: 'tr' | 'en';
@@ -44,34 +45,18 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     // this at "tr" turned English table headers into TRİGGER and ACTİON.
     document.documentElement.lang = language;
   }, [language, i18n]);
-  const toggleLanguage = () => {
-    const newLang = language === 'tr' ? 'en' : 'tr';
-    const currentPath = location.pathname;
-    if (newLang === 'en') {
-      if (!currentPath.startsWith('/en')) {
-        navigate('/en' + currentPath);
-      }
-    } else {
-      if (currentPath.startsWith('/en')) {
-        navigate(currentPath.replace('/en', '') || '/');
-      }
-    }
+  // Pazarlama sayfalarının adı dile göre değiştiği için yol, önek eklenerek
+  // değil eşleme tablosundan çevrilir (bkz. lib/marketingPaths).
+  const switchTo = (next: 'tr' | 'en') => {
+    const target = translatePath(location.pathname, next);
+    if (target !== location.pathname) navigate(target + location.search + location.hash);
   };
+  const toggleLanguage = () => switchTo(language === 'tr' ? 'en' : 'tr');
   const setTurkish = () => {
-    if (language !== 'tr') {
-      const currentPath = location.pathname;
-      if (currentPath.startsWith('/en')) {
-        navigate(currentPath.replace('/en', '') || '/');
-      }
-    }
+    if (language !== 'tr') switchTo('tr');
   };
   const setEnglish = () => {
-    if (language !== 'en') {
-      const currentPath = location.pathname;
-      if (!currentPath.startsWith('/en')) {
-        navigate('/en' + currentPath);
-      }
-    }
+    if (language !== 'en') switchTo('en');
   };
   return (
     <LanguageContext.Provider

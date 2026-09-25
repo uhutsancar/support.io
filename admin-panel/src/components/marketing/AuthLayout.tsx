@@ -18,8 +18,7 @@ import { ArrowLeft, Check, Moon, Sun, Languages } from 'lucide-react';
 import Logo from '../Logo';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { InboxVisual } from './visuals';
-import { AppFrame } from './kit';
+import ChatPlayer from './ChatPlayer';
 
 const AuthLayout = ({
   title,
@@ -104,48 +103,36 @@ const AuthLayout = ({
       </div>
 
       {/* --------------------------------------------------------- yan panel */}
-      {/* Düz koyu zemin — parıltı ve ızgara dokusu yok. */}
-      <div
-        className="hidden lg:flex overflow-hidden bg-gray-950 dark:bg-black
-        flex-col justify-center px-12 xl:px-16 py-14"
-      >
-        <div>
-          <h2
-            className="text-[28px] xl:text-[34px] font-semibold tracking-[-0.03em]
-            leading-[1.15] text-white max-w-[18ch]"
-          >
-            {t('authPanel.' + side + '.title')}
-          </h2>
-
-          <ul className="mt-7 space-y-3">
-            {list.map((p, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="mt-0.5 w-5 h-5 rounded-full bg-white/[0.12] flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 text-emerald-300" strokeWidth={3} />
-                </span>
-                <span className="text-[14.5px] leading-relaxed text-gray-300">{p}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/*
-            Ürünün kendisi. Kayıt formunun yanında neye kayıt olunduğunun
-            görünmesi, soyut bir vaat listesinden daha ikna edici.
-          */}
-          {/*
-            `dark` sınıfı burada elle veriliyor: bu panel her zaman koyu
-            zeminde duruyor, dolayısıyla içindeki ürün görseli de sayfanın
-            genel temasından bağımsız olarak koyu varyantını kullanmalı.
-            Tailwind'in class stratejisinde `dark:` en yakın `.dark`
-            atasından çözülür, bu yüzden sarmalayıcı yeterli.
-          */}
-          <div className="dark mt-10 max-w-[560px]">
-            <AppFrame
-              label={t('viz.inbox.frame')}
-              className="shadow-[0_32px_80px_-24px_rgba(0,0,0,.8)]"
-            >
-              <InboxVisual compact />
-            </AppFrame>
+      {/*
+        Fotoğraf + ürünün kendisi: ekranın bir yanında cevap veren kişi, önünde
+        ziyaretçinin gördüğü balon kendi kendine konuşur. Neye kayıt olunduğu
+        soyut bir madde listesinden daha iyi anlaşılır.
+      */}
+      <div className="hidden lg:block p-3">
+        <div className="relative h-full min-h-[640px] overflow-hidden rounded-[28px]">
+          <img
+            src="/photos/agent-woman.webp"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-[60%_center]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d17] via-[#0b0d17]/55 to-[#0b0d17]/10" />
+          <div className="relative h-full flex flex-col justify-end p-10 xl:p-12">
+            <div className="dark absolute top-10 left-10 w-[290px]">
+              <ChatPlayer script="hero" height={230} />
+            </div>
+            <h2 className="text-[30px] xl:text-[36px] font-bold tracking-[-0.035em] leading-[1.1] text-white max-w-[18ch]">
+              {t('authPanel.' + side + '.title')}
+            </h2>
+            <ul className="mt-6 space-y-2.5">
+              {list.map((p, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="mt-0.5 w-5 h-5 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3 text-emerald-300" strokeWidth={3} />
+                  </span>
+                  <span className="text-[14.5px] leading-relaxed text-gray-200">{p}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
@@ -169,7 +156,7 @@ export const Field = ({
       {label}
     </span>
     <input
-      className="w-full px-3.5 py-3 rounded-xl text-[14.5px]
+      className="w-full px-3.5 py-3 rounded-xl text-[15px]
         bg-white dark:bg-white/[0.04]
         border border-gray-300 dark:border-white/10
         text-gray-900 dark:text-white placeholder:text-gray-400

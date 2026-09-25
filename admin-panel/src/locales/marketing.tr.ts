@@ -26,10 +26,267 @@ export default {
 
   nav: {
     allFeatures: 'Tüm özellikleri gör',
+    product: 'Ürün',
+    solutions: 'Çözümler',
+    ai: 'Yapay zekâ',
+    resourcesLabel: 'Kaynaklar',
+    resources: {
+      docs: { title: 'Kurulum rehberi', body: 'Tek satırdan kimlik doğrulamaya kadar her adım.' },
+      about: { title: 'Hakkımızda', body: 'Neden var olduğumuz ve neye göre karar verdiğimiz.' },
+      contact: { title: 'Bize yazın', body: 'Bu sitedeki sohbet balonu da aynı ürün.' }
+    },
     groups: {
       talk: 'Müşteriyle konuşun',
       organize: 'İşi düzenleyin',
       grow: 'Ölçün ve büyütün'
+    }
+  },
+
+  /* ------------------------------------------------------ ana sayfa (yeni) */
+
+  homePage: {
+    hero: {
+      title: 'Her mesaja cevap,',
+      accent: 'hiçbir müşteri beklemesin.',
+      desc: 'Ziyaretçiniz sitenizden yazar; asistanınız basit soruları anında yanıtlar, gerisini ekibinize devreder. Bütün konuşmalar tek ekranda, kim neye baktı belli.',
+      tour: 'Ürünü gezin',
+      photoAlt: 'Kulaklıkla bilgisayar başında müşteriye yanıt veren destek temsilcisi',
+      notifTitle: 'Yeni konuşma · /sepet',
+      notifBody: 'Ziyaretçi 12 saniyedir ödeme sayfasında',
+      handoff: 'Selin konuşmayı devraldı'
+    },
+    tour: {
+      eyebrow: 'Ürün turu',
+      title: 'Ekibinizin gün boyu açık tuttuğu ekranlar',
+      desc: 'Başlıklara tıklayın. Her biri panelde gerçekten var olan, bugün hesabınızı açınca göreceğiniz bir ekran.'
+    },
+    industries: {
+      eyebrow: 'Kimler için',
+      title: 'Müşterisiyle konuşan her işletme için',
+      desc: 'Mağaza, yazılım, klinik, otel ya da okul — aynı ürün, işinizin diliyle.',
+      explore: 'İncele',
+      prev: 'Önceki sektör',
+      next: 'Sonraki sektör'
+    },
+    story: {
+      eyebrow: 'Bir konuşmanın yolculuğu',
+      title: 'Mesaj geldiği andan kapandığı ana kadar',
+      desc: 'Aşağı kaydırın; ziyaretçinin yazdığı tek bir cümlenin ekibinizde nasıl ilerlediğini adım adım görün.',
+      steps: [
+        {
+          title: 'Her mesaj tek bir gelen kutusunda',
+          body: 'Sohbet balonundan, proaktif mesajdan ya da yardım içeriğinden gelen her soru aynı listeye düşer. Kimin, hangi sayfada, ne sorduğu yanında durur.',
+          chips: ['Sohbet', 'Dosya', 'Proaktif', 'Geçmiş']
+        },
+        {
+          title: 'Asistan ilk cevabı verir',
+          body: 'Sık sorulan soruları yardım içeriğinizden yanıtlar, giriş yapmış müşterinin siparişini mağazanızın sisteminden bakar. Emin olmadığı an konuşmayı bir kişiye bırakır.',
+          chips: ['SSS', 'Sipariş', 'Devir']
+        },
+        {
+          title: 'Kalan iş doğru kişiye gider',
+          body: 'Fatura sorusu muhasebeye, iade talebi satışa. Departmanları bir kez tanımlarsınız; konuşma o an müsait olan temsilciye dağıtılır.',
+          chips: ['Departman', 'Sıra', 'Mesai']
+        },
+        {
+          title: 'Tekrarlayan işler kurala bağlanır',
+          body: '“Mesajda iade geçiyorsa etiketle ve satışa gönder” gibi kuralları listeden seçerek kurarsınız. Kod yok, her çalışma kayıtlı.',
+          chips: ['Etiket', 'Öncelik', 'Hazır cevap']
+        },
+        {
+          title: 'Ay sonunda ne olduğunu görürsünüz',
+          body: 'Kaç soru geldi, ilk cevap kaç dakika sürdü, hangisi çözüldü, hangi temsilci ne yaptı. Tahmin yerine rakam.',
+          chips: ['İlk yanıt', 'Çözüm', 'Temsilci']
+        }
+      ]
+    },
+    ai: {
+      eyebrow: 'Yapay zekâ',
+      title: 'Kendi sunucunuzda çalışan, ne zaman susacağını bilen bir asistan',
+      desc: 'Asistan müşterilerinizin sorularını sizin yardım içeriğinizden yanıtlar. Model sizin makinenizde çalışır; konuşmalar, müşteri bilgileri hiçbir yere gönderilmez.',
+      points: [
+        {
+          title: 'Veriniz evinizde kalır',
+          body: 'Model sizin sunucunuzda çalışır. Başka bir şirketin yapay zekâ servisine tek cümle gitmez.'
+        },
+        {
+          title: 'Hassas bilgi modele hiç ulaşmaz',
+          body: 'Kart numarası, IBAN ya da kimlik numarası yazan müşteri uyarılır ve doğrudan bir kişiye aktarılır.'
+        },
+        {
+          title: 'Emin değilse devreder',
+          body: 'Müşteri “temsilci” dediğinde, şikâyette ya da bilgi eksikse konuşma ekibinize geçer.'
+        },
+        {
+          title: 'Uydurmaz',
+          body: 'Yardım içeriğinizde olmayan bir tarih, fiyat ya da bağlantı içeren cevap müşteriye gitmez.'
+        }
+      ],
+      modes: [
+        { name: 'Kapalı', body: 'Asistan yok; her şey ekibinizde.' },
+        { name: 'Yardımcı', body: 'Temsilciye özet ve taslak önerir, kendisi göndermez.' },
+        { name: 'Otomatik yanıt', body: 'Ziyaretçiye kendisi cevap verir, gerektiğinde devreder.' }
+      ],
+      cta: 'Asistanı yakından tanıyın',
+      cta2: 'Özellik ayrıntıları'
+    },
+    setup: {
+      eyebrow: 'Kurulum',
+      title: 'Tek satır. Birkaç dakikada yayında.',
+      desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, ekibinizi davet edin, asistanı açın. Yazılımcıya gerek yok.',
+      keyPlaceholder: 'SITE_ANAHTARINIZ',
+      comment: 'Support.io sohbet balonu',
+      live: 'Balon yapıştırdığınız dakika içinde görünür',
+      noDevs: {
+        eyebrow: 'Yazılımcı gerekmez',
+        title: 'Kopyala, yapıştır, bitti.',
+        body: 'WordPress, Shopify, Ticimax ya da kendi yazdığınız site — hepsinde aynı satır, ayarlar ekranına yapıştırılır.'
+      },
+      devices: {
+        eyebrow: 'Her yerden',
+        title: 'Telefondan da yanıtlayın.',
+        body: 'Panel tarayıcıda çalışır; masada da yolda da aynı gelen kutusu. Ayrı uygulama indirmeniz gerekmez.',
+        desktop: 'Masaüstü',
+        tablet: 'Tablet',
+        phone: 'Telefon'
+      },
+      board: {
+        title: 'Gösterge paneli',
+        sample: 'Örnek',
+        replies: 'Bugün verilen yanıt',
+        online: '3 temsilci çevrimiçi'
+      },
+      stats: [
+        { label: 'Ortalama ilk yanıt', value: '1 dk 40 sn' },
+        { label: 'Çözülen', value: '%92' },
+        { label: 'Asistanın yanıtladığı', value: '%38' }
+      ]
+    },
+    features: {
+      eyebrow: 'Hepsi bir arada',
+      title: 'Bugün çalışan on bir özellik',
+      desc: 'Yol haritası değil; hesabınızı açtığınızda karşınıza çıkacak ekranlar.'
+    },
+    trustPhotoAlt: 'Masa etrafında toplantı yapan küçük bir ekip',
+    faq: {
+      eyebrow: 'SSS',
+      title: 'Sık sorulan sorular',
+      categories: 'Kategoriler',
+      still: 'Başka bir sorunuz mu var?',
+      chat: 'Ekibimizle konuşun',
+      contact: 'Bize ulaşın',
+      cat: {
+        all: 'Tümü',
+        pricing: 'Fiyat',
+        setup: 'Kurulum',
+        ai: 'Yapay zekâ',
+        security: 'Güvenlik'
+      },
+      items: [
+        {
+          cat: 'pricing',
+          q: 'Ücretsiz plan gerçekten ücretsiz mi?',
+          a: 'Evet, süresi yok ve kredi kartı istemiyoruz. Tek site ve tek kullanıcıyla sınırlıdır; konuşma sayısında sınır yoktur.'
+        },
+        {
+          cat: 'pricing',
+          q: 'Ekibim büyürse ne olur?',
+          a: 'Pro plana geçersiniz; kullanıcı başına aylık ödersiniz. Müşterilerinizin ya da konuşmalarınızın sayısı ücreti etkilemez.'
+        },
+        {
+          cat: 'setup',
+          q: 'Kurulum için yazılımcıya ihtiyacım var mı?',
+          a: 'Çoğu durumda hayır. WordPress, Shopify ve benzeri altyapılarda tek satırı ayarlar ekranına yapıştırmanız yeterli. Takılırsanız bize yazın, birlikte yapalım.'
+        },
+        {
+          cat: 'setup',
+          q: 'Sitemi yavaşlatır mı?',
+          a: 'Hayır. Balon sayfanızın geri kalanı yüklendikten sonra devreye girer ve sitenizin tasarımından yalıtılmıştır.'
+        },
+        {
+          cat: 'ai',
+          q: 'Asistan yanlış bir şey söylerse?',
+          a: 'Cevap müşteriye gitmeden önce kontrol edilir: yardım içeriğinizde olmayan bir rakam, tarih ya da bağlantı varsa gönderilmez ve konuşma bir kişiye aktarılır.'
+        },
+        {
+          cat: 'ai',
+          q: 'Asistan için ayrıca ödeme yapıyor muyuz?',
+          a: 'Hayır. Model sizin sunucunuzda çalıştığı için soru başına ücret yoktur. İhtiyaç, yaklaşık 12–16 GB belleği olan bir ekran kartıdır.'
+        },
+        {
+          cat: 'security',
+          q: 'Konuşmalarımızı başkası görebilir mi?',
+          a: 'Hayır. Her hesabın verisi kendi sınırında tutulur; ekibinizde de her rol yalnızca yetkisi olan ekranı görür.'
+        },
+        {
+          cat: 'security',
+          q: 'Verilerimi dışarı alabilir miyim?',
+          a: 'Pro ve Kurumsal planlarda konuşmalarınızı dışa aktarabilirsiniz. Veriler size aittir.'
+        }
+      ]
+    }
+  },
+
+  /* --------------------------------------------- oynayan sohbet senaryoları */
+
+  demoChat: {
+    status: 'Çevrimiçi · genelde birkaç dakikada yanıtlar',
+    botName: 'Asistan',
+    hero: {
+      brand: 'Acme Mağaza',
+      lines: [
+        { from: 'visitor', text: 'Merhaba, iade süresi kaç gün?' },
+        {
+          from: 'bot',
+          text: 'Teslimattan itibaren 14 gün içinde ücretsiz iade edebilirsiniz. Kutusu açılmış olması sorun değil.'
+        },
+        { from: 'visitor', text: 'Yetkiliyle görüşebilir miyim?' },
+        { from: 'note', text: 'Selin konuşmaya katıldı' },
+        { from: 'agent', name: 'Selin', text: 'Merhaba! Ben Selin, hemen yardımcı olayım.' }
+      ]
+    },
+    story: {
+      brand: 'Acme Mağaza',
+      lines: [
+        { from: 'visitor', text: 'Kargom nerede? Sipariş no 10482' },
+        {
+          from: 'order',
+          order: {
+            number: '10482',
+            status: 'Kargoda',
+            carrier: 'Örnek Kargo',
+            eta: 'Tahmini teslim: Perşembe'
+          }
+        },
+        {
+          from: 'bot',
+          text: 'Siparişiniz dün kargoya verildi, perşembe teslim edilmesi bekleniyor.'
+        },
+        { from: 'visitor', text: 'Adresimi değiştirmem lazım' },
+        { from: 'note', text: 'Asistan konuşmayı ekibe devretti' },
+        { from: 'agent', name: 'Kerem', text: 'Hemen kargo firmasıyla adresinizi güncelliyorum.' }
+      ]
+    },
+    ai: {
+      brand: 'Acme Mağaza',
+      lines: [
+        { from: 'visitor', text: 'Merhaba 👋' },
+        { from: 'bot', text: 'Merhaba! Siparişiniz, iade ya da ürünlerimizle ilgili sorabilirsiniz.' },
+        { from: 'visitor', text: 'Son siparişim ne durumda?' },
+        {
+          from: 'order',
+          order: {
+            number: '10482',
+            status: 'Kargoda',
+            carrier: 'Örnek Kargo',
+            eta: 'Tahmini teslim: Perşembe'
+          }
+        },
+        { from: 'bot', text: '10482 numaralı siparişiniz kargoda; perşembe teslim edilmesi bekleniyor.' },
+        { from: 'visitor', text: 'Kartımdan iki kez çekilmiş gibi görünüyor' },
+        { from: 'note', text: 'Ödeme konusu · temsilciye aktarıldı' },
+        { from: 'agent', name: 'Selin', text: 'Hemen kontrol ediyorum, ekstrenizdeki tutarı yazabilir misiniz?' }
+      ]
     }
   },
 
@@ -631,27 +888,36 @@ export default {
       },
 
       'ai-assist': {
-        title: 'Yapay zekâ yardımcısı',
-        short: 'Uzun konuşmayı özetler, cevap taslağı yazar.',
+        title: 'Yapay zekâ asistanı',
+        short: 'Basit soruları kendisi yanıtlar, gerisini ekibe devreder.',
         plain:
-          'Uzayan bir konuşmayı devralırken baştan okumanız gerekmez; özetini okursunuz. Cevap taslağı önerir, tonunu yumuşatır, başka dile çevirir.',
-        setup: 'Anahtar gerekir',
+          'Asistan sık sorulan soruları yardım içeriğinizden yanıtlar, giriş yapmış müşterinin siparişini mağazanızın sisteminden bakar ve emin olmadığı an konuşmayı ekibinize bırakır. Model sizin sunucunuzda çalışır.',
+        setup: 'Kendi sunucunuzda',
         benefits: [
-          'Konuşma özeti — devralırken baştan okumazsınız',
-          'Yazdığınız yanıtın tonunu düzenler',
-          'Başka dilde yazan müşteriye çeviriyle yanıt',
-          'Yardım içeriğinize dayanarak taslak önerir'
+          'Otomatik yanıt: selamlaşma, SSS ve sipariş durumu',
+          'Müşteri istediği an ya da şikâyette bir kişiye devreder',
+          'Temsilciye özet, yanıt taslağı, ton düzeltme ve çeviri',
+          'Konuşmalar ve müşteri verisi sunucunuzdan çıkmaz'
         ],
         steps: [
           {
-            title: 'Sağlayıcı anahtarını girin',
-            body: 'Panelden bir kez tanımlanır, tarayıcıya hiç gönderilmez.'
+            title: 'Modeli sunucunuzda başlatın',
+            body: 'Ekran kartlı bir sunucuda tek komutla ayağa kalkar; hazır olunca panel kendiliğinden fark eder.'
           },
-          { title: 'Konuşmayı açın', body: 'Yardımcı yan panelde görünür.' },
           {
-            title: 'Öneriyi düzenleyip gönderin',
-            body: 'Taslak her zaman size gösterilir; siz onaylamadan gitmez.'
+            title: 'Site için modu seçin',
+            body: 'Siteler → Yapay zekâ ayarlarından kapalı, yardımcı ya da otomatik yanıt.'
+          },
+          {
+            title: 'Yardım içeriğinizi doldurun',
+            body: 'Asistan yalnızca orada yazanı söyler; içerik ne kadar iyiyse cevap o kadar iyi olur.'
           }
+        ],
+        body: 'Model tek bir sunucu kapsayıcısında çalışır ve backend ona yalnızca iç ağdan ulaşır; hiçbir barındırılan modele geri düşüş yoktur. Ziyaretçi mesajı önce kodla denetlenir (temsilci isteği, kart/IBAN/kimlik numarası, yanıt sınırı), sonra yalnızca eşleşen SSS kayıtlarıyla modele gider. Çıkan cevaptaki rakam, tarih ve bağlantılar kaynaklarla karşılaştırılır; tutmayan cevap gönderilmez ve konuşma bir kişiye aktarılır.',
+        points: [
+          'Temsilci konuşmayı devraldığı an otomatik yanıt durur',
+          'Sipariş sorgusu yalnızca kimliği doğrulanmış müşteri için, imzalı istekle yapılır',
+          'Model kapalı ya da yoğunsa konuşma bekletilmeden bir kişiye geçer'
         ]
       },
 
@@ -779,7 +1045,8 @@ export default {
           'Sohbet balonu ve görünüm ayarları',
           'Yardım içeriği (SSS)',
           'Otomatik kurallar',
-          'Proaktif mesajlar'
+          'Proaktif mesajlar',
+          'Yapay zekâ asistanı (kendi sunucunuzda)'
         ]
       },
       pro: {
@@ -797,7 +1064,6 @@ export default {
           'Raporlar ve temsilci performansı',
           'Canlı ziyaretçiler',
           'Fırsat takibi',
-          'Yapay zekâ yardımcısı',
           'Dışa aktarma'
         ]
       },
@@ -830,7 +1096,7 @@ export default {
       analytics: 'Raporlar',
       visitors: 'Canlı ziyaretçiler',
       crm: 'Fırsat takibi',
-      aiAssist: 'Yapay zekâ yardımcısı',
+      aiAssist: 'Yapay zekâ asistanı (kendi sunucunuzda)',
       export: 'Dışa aktarma',
       audit: 'Denetim kayıtları',
       sso: 'Tek oturum açma (SSO)'

@@ -50,7 +50,11 @@ export const PLAN_LABEL = {
   enterprise: { tr: 'Kurumsal', en: 'Enterprise' }
 };
 
-/** id → hangi planda açık. rbac.js içindeki planFeatures ile aynı gerçek. */
+/**
+ * id → hangi planda açık. rbac.js içindeki planFeatures ile aynı gerçek.
+ * Yapay zekâ plana bağlı değildir: model müşterinin kendi sunucusunda çalışır,
+ * backend onu plana göre kısıtlamaz.
+ */
 export const FEATURE_PLAN = {
   'live-chat': 'all',
   'universal-widget': 'all',
@@ -60,7 +64,7 @@ export const FEATURE_PLAN = {
   'knowledge-base': 'all',
   analytics: 'pro',
   team: 'pro',
-  'ai-assist': 'pro',
+  'ai-assist': 'all',
   visitors: 'pro',
   crm: 'pro'
 };
@@ -106,12 +110,70 @@ export const FEATURE_TONE = {
  */
 export const HOME_TABS = [
   'live-chat',
+  'ai-assist',
   'routing',
   'automation',
   'proactive',
   'analytics',
-  'ai-assist'
+  'visitors'
 ];
+
+/**
+ * Sektör çözümleri. Ana sayfadaki karusel, üst menüdeki "Çözümler" açılırı ve
+ * `/cozumler/:slug` sayfaları buradan beslenir. Slug her iki dilde aynıdır;
+ * dil değişince yol yalnızca önekini değiştirir (bkz. `lib/marketingPaths`).
+ *
+ * `features` o sektörde işi en çok taşıyan özelliklerdir; çözüm sayfası
+ * bunları sırasıyla anlatır ve özellik detaylarına bağlar.
+ */
+export const SOLUTIONS = [
+  {
+    id: 'ecommerce',
+    photo: '/photos/ecommerce.webp',
+    tone: 'indigo',
+    icon: 'Store',
+    features: ['ai-assist', 'live-chat', 'proactive', 'knowledge-base']
+  },
+  {
+    id: 'saas',
+    photo: '/photos/saas.webp',
+    tone: 'violet',
+    icon: 'Rocket',
+    features: ['routing', 'visitors', 'automation', 'analytics']
+  },
+  {
+    id: 'agency',
+    photo: '/photos/agency.webp',
+    tone: 'amber',
+    icon: 'Briefcase',
+    features: ['universal-widget', 'team', 'analytics', 'routing']
+  },
+  {
+    id: 'health',
+    photo: '/photos/clinic.webp',
+    tone: 'emerald',
+    icon: 'Stethoscope',
+    features: ['live-chat', 'knowledge-base', 'automation', 'team']
+  },
+  {
+    id: 'hospitality',
+    photo: '/photos/hotel.webp',
+    tone: 'rose',
+    icon: 'BedDouble',
+    features: ['proactive', 'ai-assist', 'live-chat', 'crm']
+  },
+  {
+    id: 'education',
+    photo: '/photos/education.webp',
+    tone: 'sky',
+    icon: 'GraduationCap',
+    features: ['knowledge-base', 'ai-assist', 'routing', 'analytics']
+  }
+] as const;
+
+export type SolutionId = (typeof SOLUTIONS)[number]['id'];
+
+export const SOLUTION_IDS: readonly string[] = SOLUTIONS.map((s) => s.id);
 
 /** Sektöre göre anlatım. Her biri aynı ürünü farklı bir dille anlatır. */
 export const USE_CASES = ['ecommerce', 'saas', 'agency', 'service'];

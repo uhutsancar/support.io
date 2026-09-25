@@ -154,7 +154,7 @@ const Team = () => {
   return (
     <div className="p-6">
       <Helmet>
-        <title>{`${t('team.title') || ''} - DestekChat`}</title>
+        <title>{`${t('team.title') || ''} — Support.io`}</title>
       </Helmet>
       <div className="mb-6">
         <div className="flex items-center justify-between">

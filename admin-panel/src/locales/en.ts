@@ -2284,5 +2284,80 @@ export default {
       saved: 'Order service saved',
       error: 'Something went wrong'
     }
+  },
+
+  errors: {
+    tooManyRequests: 'Too many requests in a short time. Please try again in a few minutes.',
+    tooManyLogins: 'Too many sign-in attempts. Please wait a little and try again.',
+    tooManyRegistrations: 'Too many sign-up attempts. Please try again later.'
+  },
+  /* Dashboard (2026-09 redesign). */
+  dash: {
+    greeting: { morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening' },
+    openInbox: 'Inbox',
+    failed: 'Could not load the data. Check your connection and try again.',
+    retry: 'Try again',
+    range: { label: 'Period', today: 'Today', '7days': '7 days', '30days': '30 days' },
+    hint: {
+      mine: 'Assigned to you',
+      of: '{{count}} conversations in {{range}}',
+      sla: 'Within target: {{rate}}%',
+      noSla: 'No measured replies yet',
+      resolution: 'Avg. resolution: {{time}}',
+      noResolution: 'Nothing resolved yet',
+      rated: '{{count}} ratings'
+    },
+    flow: {
+      title: 'Conversation flow',
+      incoming: 'Incoming',
+      resolved: 'Resolved',
+      empty: 'No conversations in this period.',
+      alt: 'Daily incoming and resolved conversations over {{range}}'
+    },
+    locked: {
+      title: 'Reports are on Pro',
+      body: 'Upgrade to see the daily conversation flow, response times and agent performance.',
+      cta: 'See plans'
+    },
+    attention: {
+      title: 'Needs attention',
+      unassigned: '{{count}} conversations are unassigned',
+      sla: '{{count}} conversations missed their target',
+      noneOnline: 'No agents are online right now',
+      clear: 'Nothing waiting. All clear.'
+    },
+    team: { online: 'Team · {{online}}/{{total}} online' },
+    recent: {
+      title: 'Recent conversations',
+      ai: 'Assistant',
+      noPreview: 'No messages yet',
+      yesterday: 'Yesterday'
+    },
+    ai: {
+      title: 'AI assistant',
+      manage: 'Manage in site settings',
+      state: {
+        ready: 'Ready',
+        warming_up: 'Model loading',
+        unavailable: 'Model server unreachable',
+        disabled: 'Off'
+      },
+      body: {
+        ready: 'Switch on automatic replies or copilot per site.',
+        warming_up: 'The model will be ready in a few minutes; the controls enable themselves.',
+        unavailable: 'Conversations go straight to your team. Check the model server.',
+        disabled: 'The assistant is not running on this installation. Start the model on your own server to enable it; chat and the inbox work without it.'
+      },
+      mode: { off: 'Off', copilot: 'Copilot', auto: 'Auto reply' }
+    },
+    setup: {
+      title: 'Finish setting up',
+      site: 'Add your first site',
+      install: 'Paste the install line into your site',
+      team: 'Invite a teammate',
+      ai: 'Choose the assistant mode'
+    },
+    invite: 'Invite someone new to your team',
+    percent: '{{value}}%'
   }
 };
