@@ -150,5 +150,81 @@ export default {
         ]
       }
     }
+  },
+
+  aiPage: {
+    meta: {
+      title: 'AI assistant',
+      description:
+        'An AI assistant that answers common questions in your chat bubble 24/7, in seconds. It speaks from your own FAQ and hands what it does not know to your team.'
+    },
+    eyebrow: 'AI assistant',
+    title: 'An assistant that answers your customers day and night',
+    desc: 'The Support.io AI assistant answers common questions in your chat bubble within seconds. It speaks from your own FAQ, never makes things up, and hands the conversation to your team when needed.',
+    ctaPrimary: 'Start free',
+    ctaSecondary: 'See plans',
+    heroPoints: ['No setup', 'Included in every plan', 'Switch it off any time'],
+
+    howEyebrow: 'How it works',
+    howTitle: 'Live in three steps',
+    how: [
+      { title: 'Write your FAQ', body: 'Add your most common questions and answers in the dashboard. The assistant answers only from them.' },
+      { title: 'Switch it on', body: 'Turn it on for your site on the AI Assistant screen. No code, integration or training needed.' },
+      { title: 'Give your team a break', body: 'Common questions end with the assistant; conversations that turn into sales or real problems reach your team.' }
+    ],
+
+    benefitsEyebrow: 'What you get',
+    benefitsTitle: 'Your team never types the same answer twice',
+    benefits: [
+      { title: 'Instant answers', body: 'Visitors do not wait; their answer arrives in seconds.' },
+      { title: 'Open after hours', body: 'Common questions at night or at the weekend do not wait for the morning.' },
+      { title: 'Speaks from your content', body: 'It says only what your FAQ says; no invented prices, dates or promises.' },
+      { title: 'Smart handoff', body: 'No answer, a visitor asking for a person, or a hiccup — the conversation goes to your team.' },
+      { title: 'Your team comes first', body: 'The moment an agent writes or presses “Take over”, the assistant goes quiet in that conversation.' },
+      { title: 'See what it does', body: 'Track how many questions it answered and why it handed others over.' }
+    ],
+
+    controlEyebrow: 'You are in control',
+    controlTitle: 'Answers always rest on your own knowledge',
+    controlDesc: 'Under every answer the assistant notes which FAQ entry it relied on. Your team sees this in the inbox; fixing a missing or outdated entry takes a minute.',
+    controlPoints: [
+      'An answer it cannot back up is never sent',
+      'Visitors can press “Talk to a person” at any moment',
+      'Switch it on per site, and off whenever you like'
+    ],
+
+    trustEyebrow: 'Trust',
+    trustTitle: 'Customer data comes first',
+    trust: [
+      'The visitor’s name, e-mail and earlier messages are never sent to the AI.',
+      'E-mails and phone numbers in a question are masked before it is sent.',
+      'If a card number, IBAN or ID number is shared, the question is not sent and the conversation goes to your team.',
+      'The assistant never asks visitors for personal details.'
+    ],
+
+    plansEyebrow: 'Plans',
+    plansTitle: 'Included in every plan, growing as you grow',
+    plansDesc: 'The plans differ in the number and depth of answers. When the allowance runs out the chat does not stop; new questions go straight to your team.',
+    perMonth: '{{n}} answers a month',
+    perConversation: 'Up to {{count}} answers per conversation',
+    depth: {
+      FREE: 'Short, to-the-point answers',
+      PRO: 'More detailed answers',
+      ENTERPRISE: 'The most detailed answers and the widest FAQ coverage'
+    },
+    seePricing: 'All plan details',
+
+    faqTitle: 'Questions about the assistant',
+    faq: [
+      { q: 'What if the assistant says something wrong?', a: 'It answers only from your FAQ entries and notes which entry each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.' },
+      { q: 'What does it take to set up?', a: 'Nothing technical. Add your FAQ in the dashboard and switch the assistant on for your site.' },
+      { q: 'What if a visitor wants a person?', a: 'They press “Talk to a person” in the bubble or simply say so; the conversation goes to your team at once.' },
+      { q: 'What if we use up the monthly answers?', a: 'The chat does not stop; new questions go straight to your team. The allowance resets each month, and you can upgrade for more.' },
+      { q: 'Which language does it answer in?', a: 'Turkish, in short and clear answers.' }
+    ],
+
+    ctaTitle: 'Put your assistant to work today',
+    ctaDesc: 'Open a free account, add your FAQ, switch the assistant on. No credit card required.',
+    ctaBtn: 'Start free'
   }
 };

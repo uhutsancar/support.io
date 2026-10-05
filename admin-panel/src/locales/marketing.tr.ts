@@ -28,6 +28,8 @@ export default {
     allFeatures: 'Tüm özellikleri gör',
     product: 'Ürün',
     solutions: 'Çözümler',
+    ai: 'Yapay zekâ',
+    new: 'Yeni',
     resourcesLabel: 'Kaynaklar',
     resources: {
       docs: { title: 'Kurulum rehberi', body: 'Tek satırdan kimlik doğrulamaya kadar her adım.' },
@@ -47,7 +49,7 @@ export default {
     hero: {
       title: 'Her mesaja cevap,',
       accent: 'hiçbir müşteri beklemesin.',
-      desc: 'Sitenize tek satırla bir sohbet balonu ekleyin. Ziyaretçiniz yazdığı an mesaj ekibinizin ekranına düşer; bütün konuşmalar tek gelen kutusunda, kimin hangisine baktığı her zaman belli.',
+      desc: 'Sitenize tek satırla canlı destek ekleyin. Yapay zekâ asistanı sık soruları saniyeler içinde yanıtlar; gerisini ekibiniz tek gelen kutusundan karşılar.',
       tour: 'Ürünü gezin',
       photoAlt: 'Kulaklıkla bilgisayar başında müşteriye yanıt veren destek temsilcisi',
       notifTitle: 'Yeni konuşma · /fiyatlandirma',
@@ -78,9 +80,9 @@ export default {
           chips: ['Sohbet', 'Dosya', 'Proaktif', 'Geçmiş']
         },
         {
-          title: 'Ziyaretçi cevabı önce kendisi arar',
-          body: 'Sık sorulan sorularınız balonun içinde aranabilir. Cevabı bulan ziyaretçi beklemez; bulamayan tek dokunuşla ekibinize yazar.',
-          chips: ['SSS', 'Arama', 'Yardım makalesi']
+          title: 'Yapay zekâ ilk cevabı verir',
+          body: 'Asistan sorunun cevabını sizin SSS içeriğinizde bulur ve saniyeler içinde yanıtlar. Cevap yoksa ya da ziyaretçi bir kişi isterse konuşma beklemeden ekibinize geçer.',
+          chips: ['Yapay zekâ', 'SSS', 'Devir']
         },
         {
           title: 'Kalan iş doğru kişiye gider',
@@ -99,10 +101,24 @@ export default {
         }
       ]
     },
+    ai: {
+      eyebrow: 'Yapay zekâ asistanı',
+      title: 'Sık soruları yapay zekâ yanıtlasın, ekibiniz asıl işe odaklansın',
+      desc: 'Asistan sitenizdeki sohbet balonunda ilk cevabı verir: fiyatlar, kurulum, teslimat, çalışma saatleri… Cevabı yalnızca sizin SSS içeriğinizden alır; bilmediği soruyu uydurmaz, ekibinize devreder.',
+      points: [
+        { title: '7/24 yanıt', body: 'Gece ya da hafta sonu gelen soru sabahı beklemez; asistan saniyeler içinde yanıtlar.' },
+        { title: 'Sizin bilginizle konuşur', body: 'Yalnızca SSS’nize dayanır. Her yanıtın hangi kayda dayandığını ekibiniz görür.' },
+        { title: 'Bilmediğini devreder', body: 'Cevap yoksa ya da ziyaretçi bir kişi isterse konuşma hemen ekibinize geçer.' },
+        { title: 'Müşteri verisi korunur', body: 'Kart, IBAN ya da kimlik numarası paylaşılırsa soru yapay zekâya hiç gönderilmez.' }
+      ],
+      plans: 'Her planda dâhil · ayda {{n}} yanıttan başlar',
+      cta: 'Asistanı keşfedin',
+      cta2: 'Ücretsiz deneyin'
+    },
     setup: {
       eyebrow: 'Kurulum',
       title: 'Tek satır. Birkaç dakikada yayında.',
-      desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, karşılama mesajını yazın, ekibinizi davet edin. Yazılımcıya gerek yok.',
+      desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, yapay zekâ asistanını açın, ekibinizi davet edin. Yazılımcıya gerek yok.',
       keyPlaceholder: 'SITE_ANAHTARINIZ',
       comment: 'Support.io sohbet balonu',
       noDevs: {
@@ -127,7 +143,7 @@ export default {
       stats: [
         { label: 'Ortalama ilk yanıt', value: '1 dk 40 sn' },
         { label: 'Çözülen', value: '%92' },
-        { label: 'Bekleyen', value: '3' }
+        { label: 'Yapay zekânın yanıtladığı', value: '%41' }
       ]
     },
     features: {
@@ -147,6 +163,7 @@ export default {
         all: 'Tümü',
         pricing: 'Fiyat',
         setup: 'Kurulum',
+        ai: 'Yapay zekâ',
         usage: 'Kullanım',
         security: 'Güvenlik'
       },
@@ -182,9 +199,24 @@ export default {
           a: 'Hayır. Balon sayfanızın geri kalanı yüklendikten sonra devreye girer ve sitenizin tasarımından yalıtılmıştır.'
         },
         {
+          cat: 'ai',
+          q: 'Yapay zekâ asistanı yanlış bir şey söylerse?',
+          a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
+        },
+        {
+          cat: 'ai',
+          q: 'Asistan için ayrıca ödeme yapıyor muyuz?',
+          a: 'Hayır, her planda dâhil. Planlar arasındaki fark aylık yanıt sayısı ve yanıtların derinliği: Ücretsiz’de ayda 50, Pro’da 1.000, Kurumsal’da 5.000 yanıt.'
+        },
+        {
+          cat: 'ai',
+          q: 'Müşteri bilgileri yapay zekâya gönderiliyor mu?',
+          a: 'Hayır. Ziyaretçinin adı, e-postası ve önceki mesajları gönderilmez; sorudaki e-posta ve telefon numaraları gizlenir. Kart, IBAN ya da kimlik numarası görülürse soru hiç gönderilmeden ekibinize aktarılır.'
+        },
+        {
           cat: 'usage',
           q: 'Mesai dışında gelen mesajlara ne oluyor?',
-          a: 'Kaybolmuyor. Ziyaretçiye ne zaman döneceğinizi söyleriz, mesaj gelen kutunuzda sizi bekler.'
+          a: 'Kaybolmuyor. Yapay zekâ asistanı açıksa sık soruları o an yanıtlar; gerisi için ziyaretçiye ne zaman döneceğinizi söyleriz ve mesaj gelen kutunuzda sizi bekler.'
         },
         {
           cat: 'usage',
@@ -212,17 +244,38 @@ export default {
   demoChat: {
     status: 'Çevrimiçi · genelde birkaç dakikada yanıtlar',
     articleName: 'Yardım makalesi',
+    assistantName: 'Yapay zekâ asistanı',
     hero: {
       brand: 'Support.io',
       lines: [
-        { from: 'visitor', text: 'Merhaba, sitem WordPress. Kurmak için yazılımcı gerekir mi?' },
-        { from: 'note', text: 'Selin konuşmaya katıldı' },
+        { from: 'visitor', text: 'Merhaba, sitem WordPress. Kurulum zor mu?' },
         {
-          from: 'agent',
-          name: 'Selin',
-          text: 'Gerekmez! Panelden aldığınız tek satırı sitenizin altbilgisine yapıştırmanız yeterli.'
+          from: 'assistant',
+          text: 'Hiç değil! Panelden aldığınız tek satırı sitenizin altbilgisine yapıştırmanız yeterli.',
+          source: 'Kaynak: Kurulum'
         },
-        { from: 'visitor', text: 'Süper, ücretsiz planla deneyeyim o zaman 👍' }
+        { from: 'visitor', text: 'Fiyatlar için biriyle konuşabilir miyim?' },
+        { from: 'note', text: 'Selin konuşmaya katıldı' },
+        { from: 'agent', name: 'Selin', text: 'Merhaba! Ekibiniz kaç kişi? Size en uygun planı önereyim.' }
+      ]
+    },
+    ai: {
+      brand: 'Support.io',
+      lines: [
+        { from: 'note', text: 'Pazar · 23:40' },
+        { from: 'visitor', text: 'Yıllık ödersem indirim var mı?' },
+        {
+          from: 'assistant',
+          text: 'Evet, yıllık ödemede %20 indirim var. Ödeme sıklığını plan seçerken belirlersiniz.',
+          source: 'Kaynak: Planlar ve fiyatlar'
+        },
+        { from: 'visitor', text: 'Peki ekibime sonradan kişi ekleyebilir miyim?' },
+        {
+          from: 'assistant',
+          text: 'Elbette. Ekip ekranından davet gönderirsiniz; planınızdaki kullanıcı sayısına kadar ekleyebilirsiniz.',
+          source: 'Kaynak: Ekip yönetimi'
+        },
+        { from: 'visitor', text: 'Gece yarısı bu kadar hızlı cevap, harika 👏' }
       ]
     },
     story: {
@@ -230,8 +283,9 @@ export default {
       lines: [
         { from: 'visitor', text: 'Ekibime nasıl temsilci eklerim?' },
         {
-          from: 'article',
-          text: 'Ekip → Davet et’ten e-posta adresini yazın. Davet edilen kişi e-postadaki bağlantıyla şifresini belirleyip katılır.'
+          from: 'assistant',
+          text: 'Ekip → Davet et ekranından e-posta adresini yazın; davet edilen kişi e-postadaki bağlantıyla katılır.',
+          source: 'Kaynak: Ekip yönetimi'
         },
         { from: 'visitor', text: 'Pro’da kaç kişi olabiliyor? Satıştan biriyle konuşabilir miyim?' },
         { from: 'note', text: 'Satış departmanına yönlendirildi' },
@@ -361,8 +415,9 @@ export default {
     groups: {
       talk: {
         title: 'Müşterinizle konuştuğunuz yer',
-        desc: 'Ziyaretçi sitenizden yazar, ekibiniz tek gelen kutusundan yanıtlar. Sık sorulanlara müşteri kendi de bakabilir.',
+        desc: 'Ziyaretçi sitenizden yazar, yapay zekâ sık soruları yanıtlar, ekibiniz gerisini tek gelen kutusundan karşılar.',
         points: [
+          'Yapay zekâ asistanı sık soruları 7/24 yanıtlar',
           'Mesaj yazıldığı an ekibinizin ekranında görünür',
           'Dosya, ekran görüntüsü ve bağlantı paylaşılabilir',
           'Ziyaretçi geri döndüğünde konuşma kaldığı yerden açılır',
@@ -449,6 +504,34 @@ export default {
           {
             title: 'Panelden cevaplayın',
             body: 'Gelen kutusunu açık bırakın; yeni mesajda bildirim alırsınız.'
+          }
+        ]
+      },
+
+      'ai-assistant': {
+        title: 'Yapay zekâ asistanı',
+        short: 'Sık soruları 7/24, saniyeler içinde yanıtlar.',
+        plain:
+          'Ziyaretçiniz sorusunu yazdığı an asistan cevabı sizin SSS içeriğinizde arar ve kısa, net bir yanıt verir. Cevabı bilmediğinde uydurmaz; konuşmayı hemen ekibinize aktarır.',
+        setup: 'Tek tıkla',
+        benefits: [
+          'Mesai dışında da soruları yanıtlar',
+          'Yalnızca sizin SSS içeriğinize dayanır, uydurmaz',
+          'Ziyaretçi istediği an temsilciye bağlanır',
+          'Her yanıtın hangi SSS’ye dayandığını ekibiniz görür'
+        ],
+        steps: [
+          {
+            title: 'SSS’nizi yazın',
+            body: 'En çok sorulan soruları ve cevaplarını panele ekleyin; asistan bunlardan yanıt verir.'
+          },
+          {
+            title: 'Asistanı açın',
+            body: 'Yapay Zekâ Asistanı ekranında sitenizin anahtarını açmanız yeterli.'
+          },
+          {
+            title: 'Sonuçları izleyin',
+            body: 'Kaç soruyu yanıtladığını, hangilerini neden ekibe devrettiğini görün; eksik SSS’leri tamamlayın.'
           }
         ]
       },
@@ -667,7 +750,7 @@ export default {
     eyebrow: 'Fiyatlandırma',
     title: 'Ücretsiz başlayın, ekibiniz büyüyünce geçin',
     description:
-      'Ücretsiz planın süresi yoktur ve kredi kartı istemiyoruz. Ücretli planlarda kullanıcı başına değil, plan başına sabit aylık ödersiniz.',
+      'Ücretsiz planın süresi yoktur ve kredi kartı istemiyoruz. Yapay zekâ asistanı her planda dâhil; ücretli planlarda kullanıcı başına değil, plan başına sabit aylık ödersiniz.',
 
     billing: 'Ödeme sıklığı',
     monthly: 'Aylık',
@@ -716,6 +799,10 @@ export default {
         a: 'Bir ziyaretçinin başlattığı her yeni sohbet bir konuşmadır; içindeki mesaj sayısı önemli değildir. Sınır her ayın başında yenilenir, dolduğunda açık konuşmalar sürer.'
       },
       {
+        q: '“Yapay zekâ yanıtı” ne demek?',
+        a: 'Asistanın ziyaretçiye gönderdiği her yanıt bir yanıttır; ekibe devir sayılmaz. Hak her ayın başında yenilenir, dolduğunda sorular doğrudan ekibinize gider.'
+      },
+      {
         q: '“Kullanıcı” ne demek?',
         a: 'Panele giriş yapabilen her ekip üyesi, siz de dâhil, bir kullanıcıdır; bekleyen davetler de sayılır. Müşterilerinizin sayısı ücreti etkilemez.'
       },
@@ -729,7 +816,7 @@ export default {
       },
       {
         q: 'Kurumsal planda ne farklı?',
-        a: 'Daha fazla site, kullanıcı ve konuşma, denetim kayıtları ve kurulumda birebir destek. Kapsamı ve fiyatı birlikte belirleriz.'
+        a: 'Daha fazla site, kullanıcı ve konuşma; ayda 5.000 yapay zekâ yanıtı, konuşma başına daha uzun ve ayrıntılı yanıtlar; denetim kayıtları ve kurulumda birebir destek.'
       }
     ],
 
@@ -755,13 +842,13 @@ export default {
       },
       enterprise: {
         name: 'Kurumsal',
-        tagline: 'Çok sayıda site ve sıkı erişim kuralları gerekiyorsa.',
-        cta: 'Bize yazın',
+        tagline: 'Büyüyen ekipler ve en güçlü yapay zekâ deneyimi için.',
+        cta: 'Kurumsal ile başlayın',
         includes: 'Pro’daki her şey, ayrıca',
         forWho: 'Büyük ekipler',
         forWhoBody:
-          'Çok sayıda siteyi yönetiyor, denetim ve erişim kayıtlarına ihtiyaç duyuyorsanız.',
-        extras: ['Kurulumda birebir destek']
+          'Birçok siteyi yönetiyor, yapay zekânın soruların çoğunu karşılamasını ve denetim kayıtlarını istiyorsanız.',
+        extras: ['Daha ayrıntılı yapay zekâ yanıtları, daha geniş SSS kapsamı', 'Öncelikli destek ve kurulumda birebir yardım']
       }
     },
 
@@ -771,6 +858,9 @@ export default {
       conversations: 'Aylık yeni konuşma',
       widget: 'Sohbet balonu ve görünüm ayarları',
       faq: 'Yardım içeriği (SSS)',
+      assistant: 'Yapay zekâ asistanı',
+      assistantReplies: 'Aylık yapay zekâ yanıtı',
+      assistantDepth: 'Konuşma başına yapay zekâ yanıtı',
       analytics: 'Raporlar',
       departments: 'Departmanlar ve dağıtım',
       automation: 'Otomatik kurallar',
@@ -942,6 +1032,20 @@ export default {
       agent: '14 gün, kredi kartı istemiyoruz. Kurulumda takılırsanız buradan yazın.',
       quick: ['Fiyatlar', 'Kurulum', 'Fatura'],
       composer: 'Mesajınızı yazın…'
+    },
+
+    assistant: {
+      frame: 'Yapay zekâ asistanı',
+      badge: 'Yapay zekâ yanıtladı',
+      page: '/fiyatlandirma sayfasında',
+      name: 'Yapay zekâ asistanı',
+      q1: 'Ücretsiz planda kaç site ekleyebilirim?',
+      a1: 'Ücretsiz planda 1 site ve 1 kullanıcı var; ayda 100 yeni konuşma dâhil.',
+      source: 'Kaynak: Planlar ve fiyatlar',
+      q2: 'Faturayı şirket adına kesebiliyor musunuz?',
+      handoff: 'Cevap SSS’de yok · ekibe aktarıldı',
+      agent: 'Ayça · Muhasebe',
+      a2: 'Merhaba, ben Ayça. Hemen yardımcı oluyorum; şirket unvanınızı yazar mısınız?'
     },
 
     metrics: {

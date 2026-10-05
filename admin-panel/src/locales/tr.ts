@@ -1893,6 +1893,10 @@ export default {
       title: 'Sorun giderme',
       items: [
         {
+          q: 'Yapay zekâ asistanını nasıl açarım?',
+          a: 'Panelde Yapay Zekâ Asistanı ekranından sitenizin anahtarını açın. Asistan SSS kayıtlarınızdan yanıt verir; ne kadar çok soru eklerseniz o kadar çok yanıtlar.'
+        },
+        {
           q: 'Balon görünmüyor',
           a: 'Önce sitenizin adresinin Siteler → Erişim ekranındaki listede olduğundan emin olun; www’lu ve www’suz adresler ayrı yazılır. Sonra tarayıcı konsolunda SupportChat.debug() çalıştırın: “initialized” false ise kod sayfaya eklenmemiştir, “fatal” doluysa yazan mesaj sebebi söyler.'
         },

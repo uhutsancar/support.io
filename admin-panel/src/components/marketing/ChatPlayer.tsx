@@ -11,18 +11,22 @@
  * "Hareketi azalt" seçiliyse döngü oynamaz, bütün konuşma bir kerede görünür.
  *
  * Senaryo i18n'den gelir (`demoChat.<name>`); her satır bir tür taşır:
- * visitor, agent, note (ortalanmış sistem satırı) veya article (balonun
- * yardım bölümünden gelen SSS cevabı). İçerik temsilîdir.
+ * visitor, assistant (yapay zekâ asistanının yanıtı), agent, note (ortalanmış
+ * sistem satırı) veya article (balonun yardım bölümünden gelen SSS cevabı).
+ * İçerik temsilîdir.
  */
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { BookOpen, Send, UserRound } from 'lucide-react';
+import { BookOpen, Send, Sparkles, UserRound } from 'lucide-react';
 import { asList } from './kit';
+import { LogoMark } from '../Logo';
 
 export interface ChatLine {
-  from: 'visitor' | 'agent' | 'note' | 'article';
+  from: 'visitor' | 'assistant' | 'agent' | 'note' | 'article';
+  /** Shown under an assistant answer: the FAQ entry it came from. */
+  source?: string;
   text?: string;
   name?: string;
 }
@@ -43,7 +47,15 @@ const Typing = () => (
   </div>
 );
 
-const Bubble = ({ line, articleName }: { line: ChatLine; articleName: string }) => {
+const Bubble = ({
+  line,
+  articleName,
+  assistantName
+}: {
+  line: ChatLine;
+  articleName: string;
+  assistantName: string;
+}) => {
   if (line.from === 'note') {
     return (
       <div className="flex justify-center py-0.5">
@@ -61,19 +73,27 @@ const Bubble = ({ line, articleName }: { line: ChatLine; articleName: string }) 
     );
   }
   const isArticle = line.from === 'article';
+  const isAssistant = line.from === 'assistant';
   return (
     <div className="max-w-[86%]">
       <span className="mb-1 flex items-center gap-1 text-[9.5px] font-medium text-gray-500 dark:text-gray-400">
-        {isArticle ? (
+        {isAssistant ? (
+          <Sparkles className="w-3 h-3 text-violet-500" />
+        ) : isArticle ? (
           <BookOpen className="w-3 h-3 text-sky-500" />
         ) : (
           <UserRound className="w-3 h-3 text-emerald-500" />
         )}
-        {isArticle ? articleName : line.name}
+        {isAssistant ? assistantName : isArticle ? articleName : line.name}
       </span>
       <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.07] border border-gray-200/80 dark:border-transparent text-[12px] leading-relaxed text-gray-800 dark:text-gray-100">
         {line.text}
       </div>
+      {line.source && (
+        <span className="mt-1 flex items-center gap-1 text-[9.5px] text-gray-400">
+          <BookOpen className="w-3 h-3" /> {line.source}
+        </span>
+      )}
     </div>
   );
 };
@@ -149,8 +169,13 @@ export const ChatPlayer = ({
       ].join(' ')}
     >
       <div className="px-4 py-3 bg-indigo-600 text-white flex items-center gap-2.5">
+        {/* Bizim balonumuz bizim logomuzla açılır; başka bir marka baş harfiyle. */}
         <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-[12px] font-semibold">
-          {t('demoChat.' + script + '.brand').charAt(0)}
+          {t('demoChat.' + script + '.brand') === 'Support.io' ? (
+            <LogoMark size={22} rounded={false} color="#4F46E5" />
+          ) : (
+            t('demoChat.' + script + '.brand').charAt(0)
+          )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[13px] font-semibold leading-tight truncate">
@@ -178,7 +203,11 @@ export const ChatPlayer = ({
               transition={{ duration: 0.28, ease: 'easeOut' }}
               className="flex flex-col"
             >
-              <Bubble line={line} articleName={t('demoChat.articleName')} />
+              <Bubble
+                line={line}
+                articleName={t('demoChat.articleName')}
+                assistantName={t('demoChat.assistantName')}
+              />
             </motion.div>
           ))}
           {typing && (

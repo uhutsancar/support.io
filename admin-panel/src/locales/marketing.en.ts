@@ -20,6 +20,8 @@ export default {
     allFeatures: 'See all features',
     product: 'Product',
     solutions: 'Solutions',
+    ai: 'AI',
+    new: 'New',
     resourcesLabel: 'Resources',
     resources: {
       docs: { title: 'Setup guide', body: 'Every step from one line to identity verification.' },
@@ -37,7 +39,7 @@ export default {
     hero: {
       title: 'Every message answered,',
       accent: 'no customer left waiting.',
-      desc: 'Add a chat bubble to your site with one line. The moment a visitor writes, the message is on your team’s screen — every conversation in one inbox, and it is always clear who is on it.',
+      desc: 'Add live chat to your site with one line. The AI assistant answers common questions in seconds; your team handles the rest from one inbox.',
       tour: 'Tour the product',
       photoAlt: 'Support agent with a headset answering a customer at a computer',
       notifTitle: 'New conversation · /pricing',
@@ -68,9 +70,9 @@ export default {
           chips: ['Chat', 'Files', 'Proactive', 'History']
         },
         {
-          title: 'Visitors look for the answer first',
-          body: 'Your frequently asked questions can be searched inside the bubble. A visitor who finds the answer does not wait; one who does not writes to your team with a single tap.',
-          chips: ['FAQ', 'Search', 'Help article']
+          title: 'AI gives the first answer',
+          body: 'The assistant finds the answer in your own FAQ and replies in seconds. If there is none, or the visitor asks for a person, the conversation goes to your team at once.',
+          chips: ['AI', 'FAQ', 'Handoff']
         },
         {
           title: 'The rest goes to the right person',
@@ -89,10 +91,24 @@ export default {
         }
       ]
     },
+    ai: {
+      eyebrow: 'AI assistant',
+      title: 'Let AI answer the common questions, so your team can do the real work',
+      desc: 'The assistant gives the first answer in your chat bubble: pricing, setup, delivery, opening hours… It answers only from your own FAQ; it never makes things up and hands what it does not know to your team.',
+      points: [
+        { title: 'Answers 24/7', body: 'Questions at night or at the weekend do not wait for the morning; the assistant replies in seconds.' },
+        { title: 'Speaks from your content', body: 'It relies only on your FAQ, and your team sees which entry each answer came from.' },
+        { title: 'Hands over what it does not know', body: 'No answer, or the visitor asks for a person? The conversation goes to your team at once.' },
+        { title: 'Customer data protected', body: 'If a card number, IBAN or ID number is shared, the question is never sent to the AI.' }
+      ],
+      plans: 'Included in every plan · from {{n}} answers a month',
+      cta: 'Explore the assistant',
+      cta2: 'Try it free'
+    },
     setup: {
       eyebrow: 'Setup',
       title: 'One line. Live in minutes.',
-      desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, write the greeting, invite your team. No developer needed.',
+      desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, switch on the AI assistant, invite your team. No developer needed.',
       keyPlaceholder: 'YOUR_SITE_KEY',
       comment: 'Support.io chat bubble',
       noDevs: {
@@ -117,7 +133,7 @@ export default {
       stats: [
         { label: 'Avg. first reply', value: '1m 40s' },
         { label: 'Resolved', value: '92%' },
-        { label: 'Waiting', value: '3' }
+        { label: 'Answered by AI', value: '41%' }
       ]
     },
     features: {
@@ -133,7 +149,7 @@ export default {
       still: 'Still have questions?',
       chat: 'Chat with our team',
       contact: 'Get in touch',
-      cat: { all: 'All', pricing: 'Pricing', setup: 'Setup', usage: 'Day to day', security: 'Security' },
+      cat: { all: 'All', pricing: 'Pricing', setup: 'Setup', ai: 'AI', usage: 'Day to day', security: 'Security' },
       items: [
         { cat: 'pricing', q: 'Is the free plan really free?', a: 'Yes — no time limit and no credit card. It includes one site, one user and 100 new conversations a month.' },
         { cat: 'pricing', q: 'What happens when my team grows?', a: 'Move to Pro: 3 sites, 5 users and 2,000 new conversations a month for one flat monthly price. There is no per-seat fee.' },
@@ -141,7 +157,10 @@ export default {
         { cat: 'setup', q: 'Do I need a developer to set it up?', a: 'Usually not. On WordPress, Shopify and similar platforms you paste one line into the settings screen. If you get stuck, write to us and we will do it together.' },
         { cat: 'setup', q: 'Which sites does it work on?', a: 'Any site you can add one line of HTML to: WordPress, Shopify, Wix, Webflow, or apps built with React, Vue, Angular and Next.js. The guide has copy-ready code for each.' },
         { cat: 'setup', q: 'Will it slow my site down?', a: 'No. The bubble starts after the rest of your page has loaded and is isolated from your site’s styles.' },
-        { cat: 'usage', q: 'What happens to messages sent out of hours?', a: 'Nothing is lost. We tell the visitor when you will be back and the message waits in your inbox.' },
+        { cat: 'ai', q: 'What if the AI assistant says something wrong?', a: 'It answers only from your FAQ entries and notes which entry each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.' },
+        { cat: 'ai', q: 'Do we pay extra for the assistant?', a: 'No, it is included in every plan. The plans differ in monthly answers and depth: 50 on Free, 1,000 on Pro, 5,000 on Enterprise.' },
+        { cat: 'ai', q: 'Is customer data sent to the AI?', a: 'No. The visitor’s name, e-mail and earlier messages are not sent, and e-mails and phone numbers in a question are masked. If a card number, IBAN or ID number appears, the question goes to your team without being sent.' },
+        { cat: 'usage', q: 'What happens to messages sent out of hours?', a: 'Nothing is lost. With the AI assistant on, common questions are answered at once; for the rest we tell the visitor when you will be back and the message waits in your inbox.' },
         { cat: 'usage', q: 'Can I answer from my phone?', a: 'Yes. The dashboard works in a phone browser — there is no separate app to install.' },
         { cat: 'security', q: 'Can anyone else see our conversations?', a: 'No. Each account’s data is kept within its own boundary, and inside your team every role only sees the screens it is allowed to.' },
         { cat: 'security', q: 'Can I export my data?', a: 'On Pro and Enterprise you can export your conversations. The data is yours.' }
@@ -154,20 +173,33 @@ export default {
   demoChat: {
     status: 'Online · usually replies in a few minutes',
     articleName: 'Help article',
+    assistantName: 'AI assistant',
     hero: {
       brand: 'Support.io',
       lines: [
-        { from: 'visitor', text: 'Hi, my site runs on WordPress. Do I need a developer to install this?' },
+        { from: 'visitor', text: 'Hi, my site runs on WordPress. Is setup hard?' },
+        { from: 'assistant', text: 'Not at all! Paste the one line from your dashboard into your site’s footer and you are done.', source: 'Source: Setup' },
+        { from: 'visitor', text: 'Can I talk to someone about pricing?' },
         { from: 'note', text: 'Selin joined the conversation' },
-        { from: 'agent', name: 'Selin', text: 'Not at all! Paste the one line from your dashboard into your site’s footer and you are done.' },
-        { from: 'visitor', text: 'Great, I’ll try the free plan then 👍' }
+        { from: 'agent', name: 'Selin', text: 'Hi! How big is your team? I will suggest the right plan.' }
+      ]
+    },
+    ai: {
+      brand: 'Support.io',
+      lines: [
+        { from: 'note', text: 'Sunday · 23:40' },
+        { from: 'visitor', text: 'Is there a discount if I pay yearly?' },
+        { from: 'assistant', text: 'Yes, paying yearly saves 20%. You pick the billing period when you choose your plan.', source: 'Source: Plans and pricing' },
+        { from: 'visitor', text: 'Can I add people to my team later?' },
+        { from: 'assistant', text: 'Of course. Send invitations from the Team screen, up to the users your plan includes.', source: 'Source: Team management' },
+        { from: 'visitor', text: 'Such a quick answer at midnight, great 👏' }
       ]
     },
     story: {
       brand: 'Support.io',
       lines: [
         { from: 'visitor', text: 'How do I add an agent to my team?' },
-        { from: 'article', text: 'Go to Team → Invite and enter their e-mail. They join by setting a password through the link in the invitation.' },
+        { from: 'assistant', text: 'Go to Team → Invite and enter their e-mail; they join through the link in the invitation.', source: 'Source: Team management' },
         { from: 'visitor', text: 'How many people fit on Pro? Can I talk to sales?' },
         { from: 'note', text: 'Routed to the Sales department' },
         { from: 'agent', name: 'Kerem', text: 'Hi, Kerem here. Pro takes up to 5 users; for more, let’s talk about Enterprise.' }
@@ -383,6 +415,25 @@ export default {
         ]
       },
 
+      'ai-assistant': {
+        title: 'AI assistant',
+        short: 'Answers common questions 24/7, in seconds.',
+        plain:
+          'The moment a visitor asks, the assistant looks for the answer in your own FAQ and replies briefly and clearly. When it does not know, it never makes things up; it hands the conversation to your team.',
+        setup: 'One click',
+        benefits: [
+          'Answers outside working hours too',
+          'Relies only on your FAQ, never makes things up',
+          'Visitors can reach a person whenever they want',
+          'Your team sees which FAQ entry each answer came from'
+        ],
+        steps: [
+          { title: 'Write your FAQ', body: 'Add your most common questions and answers in the dashboard; the assistant answers from them.' },
+          { title: 'Switch it on', body: 'Turn it on for your site on the AI Assistant screen.' },
+          { title: 'Watch the results', body: 'See how many questions it answered and why it handed others over; fill the gaps in your FAQ.' }
+        ]
+      },
+
       'universal-widget': {
         title: 'Chat bubble',
         short: 'One line of code, the same behaviour on every site.',
@@ -593,7 +644,7 @@ export default {
     eyebrow: 'Pricing',
     title: 'Start free, move up when your team grows',
     description:
-      'The free plan has no time limit and needs no card. Paid plans are a flat monthly price per plan, not per user.',
+      'The free plan has no time limit and needs no card. The AI assistant is included in every plan; paid plans are a flat monthly price per plan, not per user.',
 
     billing: 'Billing period',
     monthly: 'Monthly',
@@ -642,6 +693,10 @@ export default {
         a: 'Every new chat a visitor starts is one conversation, however many messages it has. The limit resets at the start of each month, and open conversations carry on when it is reached.'
       },
       {
+        q: 'What counts as an “AI answer”?',
+        a: 'Every reply the assistant sends a visitor is one answer; handing over to your team does not count. The allowance resets each month, and when it runs out questions go straight to your team.'
+      },
+      {
         q: 'What counts as a “user”?',
         a: 'Everyone on your team who can sign in, you included; open invitations count too. How many customers you have does not affect the price.'
       },
@@ -655,7 +710,7 @@ export default {
       },
       {
         q: 'What is different about Enterprise?',
-        a: 'More sites, users and conversations, audit logs and hands-on setup help. We agree the scope and price with you.'
+        a: 'More sites, users and conversations; 5,000 AI answers a month with longer, more detailed answers per conversation; audit logs and hands-on setup help.'
       }
     ],
 
@@ -680,12 +735,12 @@ export default {
       },
       enterprise: {
         name: 'Enterprise',
-        tagline: 'For many sites and stricter access rules.',
-        cta: 'Talk to us',
+        tagline: 'For growing teams and the strongest AI experience.',
+        cta: 'Start with Enterprise',
         includes: 'Everything in Pro, plus',
         forWho: 'Larger teams',
-        forWhoBody: 'You run many sites and need audit and access records.',
-        extras: ['Hands-on setup support']
+        forWhoBody: 'You run many sites and want the AI to handle most questions, with audit records.',
+        extras: ['More detailed AI answers, wider FAQ coverage', 'Priority support and hands-on setup help']
       }
     },
 
@@ -695,6 +750,9 @@ export default {
       conversations: 'New conversations a month',
       widget: 'Chat bubble and appearance',
       faq: 'Help content (FAQ)',
+      assistant: 'AI assistant',
+      assistantReplies: 'AI answers a month',
+      assistantDepth: 'AI answers per conversation',
       analytics: 'Reports',
       departments: 'Departments and routing',
       automation: 'Automatic rules',
@@ -866,6 +924,20 @@ export default {
       agent: '14 days, no card needed. If you get stuck setting up, just write here.',
       quick: ['Pricing', 'Setup', 'Invoices'],
       composer: 'Type your message…'
+    },
+
+    assistant: {
+      frame: 'AI assistant',
+      badge: 'Answered by AI',
+      page: 'on /pricing',
+      name: 'AI assistant',
+      q1: 'How many sites can I add on the free plan?',
+      a1: 'The free plan has 1 site and 1 user, with 100 new conversations a month.',
+      source: 'Source: Plans and pricing',
+      q2: 'Can the invoice be in our company’s name?',
+      handoff: 'Not in the FAQ · handed to the team',
+      agent: 'Ayça · Accounts',
+      a2: 'Hi, Ayça here. Happy to help — what is your company’s registered name?'
     },
 
     metrics: {

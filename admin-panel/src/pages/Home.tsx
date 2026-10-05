@@ -34,7 +34,11 @@ import {
   Smartphone,
   Tablet,
   UserRoundCheck,
-  Users
+  Users,
+  Sparkles,
+  Clock3,
+  BookOpenCheck,
+  UserRoundCog
 } from 'lucide-react';
 import Shell, { useMarketingRoutes, featureIcon } from '../components/marketing/Shell';
 import {
@@ -61,7 +65,8 @@ import {
   AutomationVisual,
   ProactiveVisual,
   VisitorsVisual,
-  KnowledgeVisual
+  KnowledgeVisual,
+  AssistantVisual
 } from '../components/marketing/visuals';
 import ChatPlayer from '../components/marketing/ChatPlayer';
 import { planKey, usePlans } from '../hooks/usePlans';
@@ -198,6 +203,77 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
   </section>
 );
 
+/* ------------------------------------------------------ yapay zekâ */
+
+const AI_POINT_ICONS = [Clock3, BookOpenCheck, UserRoundCog, ShieldCheck];
+
+/**
+ * The AI assistant, right under the hero: what it answers, where its
+ * answers come from and when it steps aside. The chat on the right plays an
+ * after-hours question answered from the FAQ.
+ */
+const AiBand = ({ t, routes }: { t: T; routes: Routes }) => {
+  const points = asList<{ title: string; body: string }>(t('homePage.ai.points', { returnObjects: true }));
+  const { plans } = usePlans();
+  const { i18n } = useTranslation();
+  const free = plans?.find((p) => p.type === 'FREE')?.assistant.monthlyReplies;
+  return (
+    <Section tone="mist" wide>
+      <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)] gap-12 lg:gap-16 items-center">
+        <div>
+          <SectionHead
+            eyebrow={t('homePage.ai.eyebrow')}
+            eyebrowTone="violet"
+            title={t('homePage.ai.title')}
+            description={t('homePage.ai.desc')}
+          />
+          <div className="mt-9 grid sm:grid-cols-2 gap-x-6 gap-y-6">
+            {points.map((point, i) => {
+              const Icon = AI_POINT_ICONS[i % AI_POINT_ICONS.length];
+              return (
+                <Reveal key={point.title} delay={i * 0.05}>
+                  <div className="flex gap-3">
+                    <span className="w-9 h-9 shrink-0 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center">
+                      <Icon className="w-[18px] h-[18px] text-violet-600 dark:text-violet-300" strokeWidth={1.8} />
+                    </span>
+                    <span>
+                      <span className="block text-[15px] font-semibold text-gray-950 dark:text-white">{point.title}</span>
+                      <span className="mt-1 block text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">
+                        {point.body}
+                      </span>
+                    </span>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+          <Reveal className="mt-9 flex flex-wrap items-center gap-3">
+            <Button to={routes.ai} arrow>
+              {t('homePage.ai.cta')}
+            </Button>
+            <Button to={routes.register} variant="secondary">
+              {t('homePage.ai.cta2')}
+            </Button>
+          </Reveal>
+          {free !== undefined && (
+            <p className="mt-5 flex items-center gap-1.5 text-[13px] text-gray-500 dark:text-gray-400">
+              <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+              {t('homePage.ai.plans', {
+                n: new Intl.NumberFormat(i18n.language === 'en' ? 'en-US' : 'tr-TR').format(free)
+              })}
+            </p>
+          )}
+        </div>
+        <Reveal y={30}>
+          <div className="mx-auto max-w-[400px]">
+            <ChatPlayer script="ai" height={320} />
+          </div>
+        </Reveal>
+      </div>
+    </Section>
+  );
+};
+
 /* ------------------------------------------------------------- ürün turu */
 
 const TOUR_VISUAL: Record<string, { node: () => React.ReactNode; frame: string }> = {
@@ -206,6 +282,7 @@ const TOUR_VISUAL: Record<string, { node: () => React.ReactNode; frame: string }
   automation: { node: () => <AutomationVisual />, frame: 'viz.automation.frame' },
   proactive: { node: () => <ProactiveVisual />, frame: 'viz.proactive.frame' },
   'knowledge-base': { node: () => <KnowledgeVisual />, frame: 'viz.knowledge.frame' },
+  'ai-assistant': { node: () => <AssistantVisual />, frame: 'viz.assistant.frame' },
   analytics: { node: () => <AnalyticsVisual />, frame: 'viz.analytics.frame' },
   visitors: { node: () => <VisitorsVisual />, frame: 'viz.visitors.frame' }
 };
@@ -262,7 +339,7 @@ const ProductTour = ({ t, routes }: { t: T; routes: Routes }) => {
                         </li>
                       ))}
                   </ul>
-                  <TextLink to={routes.features + '/' + tab.id} tone={tone} className="mt-6">
+                  <TextLink to={routes.feature(tab.id)} tone={tone} className="mt-6">
                     {t('landing.home.tour.detail')}
                   </TextLink>
                 </motion.div>
@@ -774,7 +851,7 @@ const FeatureGrid = ({ t, routes }: { t: T; routes: Routes }) => (
               const tone = FEATURE_TONE[id as keyof typeof FEATURE_TONE];
               return (
                 <Reveal key={id} delay={i * 0.05}>
-                  <Link to={routes.features + '/' + id} className="group block h-full">
+                  <Link to={routes.feature(id)} className="group block h-full">
                     <Card hover className="h-full p-5">
                       <span className={['inline-flex w-10 h-10 items-center justify-center rounded-xl border', accent(tone).border].join(' ')}>
                         <Icon className={['w-5 h-5', accent(tone).text].join(' ')} strokeWidth={1.8} />
@@ -1032,6 +1109,7 @@ const Home = () => {
 
       <Shell>
         <Hero t={t} routes={routes} />
+        <AiBand t={t} routes={routes} />
         <ProductTour t={t} routes={routes} />
         <Industries t={t} routes={routes} />
         <Story t={t} />

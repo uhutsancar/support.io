@@ -33,7 +33,10 @@ import {
   MousePointer2,
   Star,
   ChevronRight,
-  Filter
+  Filter,
+  Sparkles,
+  UserRound,
+  BookOpen
 } from 'lucide-react';
 import { accent, asList } from './kit';
 
@@ -1011,11 +1014,64 @@ export const CrmVisual = () => {
   );
 };
 
+/* ------------------------------------------------- 11. Yapay zekâ asistanı */
+
+/**
+ * Asistanın karşıladığı bir konuşma, ekibin gördüğü hâliyle: SSS'den gelen
+ * yanıt ve kaynağı, cevabı olmayan soruda ekibe devir, temsilcinin katılışı.
+ */
+export const AssistantVisual = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="p-5 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+          <Sparkles className="w-3.5 h-3.5" /> {t('viz.assistant.badge')}
+        </span>
+        <span className="text-[10.5px] text-gray-500 dark:text-gray-400">{t('viz.assistant.page')}</span>
+      </div>
+
+      <div className="ml-auto w-fit max-w-[80%] px-3 py-2 rounded-2xl rounded-br-md bg-indigo-600 text-white text-[12px]">
+        {t('viz.assistant.q1')}
+      </div>
+      <div className="max-w-[88%]">
+        <span className="mb-1 flex items-center gap-1 text-[10px] font-medium text-violet-600 dark:text-violet-300">
+          <Sparkles className="w-3 h-3" /> {t('viz.assistant.name')}
+        </span>
+        <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] text-[12px] text-gray-800 dark:text-gray-100">
+          {t('viz.assistant.a1')}
+        </div>
+        <span className="mt-1 inline-flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
+          <BookOpen className="w-3 h-3" /> {t('viz.assistant.source')}
+        </span>
+      </div>
+
+      <div className="ml-auto w-fit max-w-[80%] px-3 py-2 rounded-2xl rounded-br-md bg-indigo-600 text-white text-[12px]">
+        {t('viz.assistant.q2')}
+      </div>
+      <div className="flex justify-center">
+        <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-100 dark:bg-white/[0.07] text-gray-600 dark:text-gray-300">
+          {t('viz.assistant.handoff')}
+        </span>
+      </div>
+      <div className="max-w-[88%]">
+        <span className="mb-1 flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+          <UserRound className="w-3 h-3" /> {t('viz.assistant.agent')}
+        </span>
+        <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] text-[12px] text-gray-800 dark:text-gray-100">
+          {t('viz.assistant.a2')}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* --------------------------------------------------------------- eşleme */
 
 /** Özellik kimliğinden görsele. Features/FeatureDetail aynı haritayı kullanır. */
 export const FEATURE_VISUAL = {
   'live-chat': InboxVisual,
+  'ai-assistant': AssistantVisual,
   'universal-widget': WidgetVisual,
   routing: RoutingVisual,
   automation: AutomationVisual,

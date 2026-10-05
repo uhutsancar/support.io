@@ -1886,6 +1886,10 @@ export default {
       title: 'Troubleshooting',
       items: [
         {
+          q: 'How do I switch on the AI assistant?',
+          a: 'In the dashboard, open AI Assistant and turn it on for your site. It answers from your FAQ entries; the more questions you add, the more it answers.'
+        },
+        {
           q: 'The bubble does not show up',
           a: 'First make sure your site’s address is on the list under Sites → Access; addresses with and without www are listed separately. Then run SupportChat.debug() in the browser console: if “initialized” is false the code is not on the page, and if “fatal” is set its message tells you why.'
         },

@@ -1,16 +1,13 @@
 /**
  * Support.io marka kimliği.
  *
- * Mark, üst üste binmiş iki konuşma balonundan oluşur: arkadaki yarı saydam
- * balon ziyaretçiyi, öndeki dolu balon destek ekibini temsil eder. Aradaki
- * boşluk (ring) marka renginde çizilerek iki balonun 16px'te bile ayrı
- * okunması sağlanır — favicon boyutunda birleşip lekeye dönüşmemesinin sebebi
- * budur.
+ * Mark: marka renginde yuvarlatılmış kare, içinde beyaz bir konuşma balonu
+ * ve balonun içinde "yazıyor" üç noktası. Önceki işaret üst üste binmiş iki
+ * balondu; küçük boyutta karışıyor ve leke gibi duruyordu. Bu geometri
+ * header'da, panelde, favicon'da ve uygulama ikonlarında birebir aynıdır
+ * (scripts/build-icons.ts aynı ölçüleri çizer) — her yerde tek logo.
  *
- * Neden bileşen, neden .webp değil:
- * Eskiden sidebar'da `support.io_logo.webp` kullanılıyordu ve yanında
- * `dark:invert-0` yazıyordu — bu sınıf hiçbir şey yapmaz, yani logo koyu temada
- * da açık tema rengiyle duruyordu. SVG bileşeni `currentColor` üzerinden
+ * Neden bileşen, neden .webp değil: SVG bileşeni `currentColor` üzerinden
  * temayla birlikte döner ve her boyutta keskin kalır.
  */
 
@@ -38,15 +35,13 @@ export const LogoMark = ({
     aria-hidden={title ? undefined : true}
   >
     {rounded && <rect width="40" height="40" rx="11" fill={color} />}
-    {/* arka balon — ziyaretçi */}
-    <rect x="7" y="6.5" width="19" height="14" rx="5.5" fill="#fff" fillOpacity="0.45" />
-    {/* ayırıcı boşluk: öndeki balonun konturu yerine marka renginde bir kesit */}
-    <rect x="12.2" y="12.3" width="21.6" height="17" rx="7" fill={color} />
-    {/* ön balon — destek ekibi, kuyruğuyla birlikte */}
-    <path
-      d="M19 13.5h8a5.5 5.5 0 0 1 5.5 5.5v3.5a5.5 5.5 0 0 1-5.5 5.5h-4.3l-6.5 4.8a.6.6 0 0 1-.95-.6l1.2-4.35A5.5 5.5 0 0 1 13.5 22.5V19a5.5 5.5 0 0 1 5.5-5.5z"
-      fill="#fff"
-    />
+    {/* konuşma balonu ve kuyruğu */}
+    <rect x="8" y="9.5" width="24" height="17" rx="6.5" fill="#fff" />
+    <path d="M12.5 24L11.5 31.5L19 26z" fill="#fff" />
+    {/* "yazıyor" noktaları */}
+    <circle cx="14.5" cy="18" r="2.1" fill={color} />
+    <circle cx="20" cy="18" r="2.1" fill={color} />
+    <circle cx="25.5" cy="18" r="2.1" fill={color} />
   </svg>
 );
 

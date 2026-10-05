@@ -36,6 +36,7 @@ import {
   BookOpen,
   BarChart3,
   Users,
+  Sparkles,
   Eye,
   Briefcase,
   ArrowRight,
@@ -72,6 +73,7 @@ export const FEATURE_ICONS: Record<string, React.ElementType> = {
   BookOpen,
   BarChart3,
   Users,
+  Sparkles,
   Eye,
   Briefcase
 };
@@ -124,7 +126,7 @@ const ProductMenu = ({ routes }: { routes: Routes }) => {
               <li key={id}>
                 <NavigationMenu.Link asChild>
                   <Link
-                    to={routes.features + '/' + id}
+                    to={routes.feature(id)}
                     onMouseEnter={() => setHovered(id)}
                     onFocus={() => setHovered(id)}
                     className={[
@@ -380,6 +382,18 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
                 </NavigationMenu.Content>
               </NavigationMenu.Item>
 
+              <NavigationMenu.Item>
+                <NavigationMenu.Link asChild active={at(routes.ai)}>
+                  <Link to={routes.ai} className={triggerClass(at(routes.ai))}>
+                    <Sparkles className="w-3.5 h-3.5 text-violet-500" aria-hidden="true" />
+                    {t('nav.ai')}
+                    <span className="ml-0.5 px-1.5 py-[1px] rounded-full text-[10px] font-semibold bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                      {t('nav.new')}
+                    </span>
+                  </Link>
+                </NavigationMenu.Link>
+              </NavigationMenu.Item>
+
               <NavigationMenu.Item className="relative">
                 <NavigationMenu.Trigger className={triggerClass(at(routes.solutions))}>
                   {t('nav.solutions')} <Chevron />
@@ -480,7 +494,7 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
               {ALL_FEATURES.map((id) => {
                 const Icon = featureIcon(id);
                 return (
-                  <Link key={id} to={routes.features + '/' + id} className="flex items-center gap-2.5 px-1 py-2 rounded-lg">
+                  <Link key={id} to={routes.feature(id)} className="flex items-center gap-2.5 px-1 py-2 rounded-lg">
                     <AccentIcon icon={Icon} tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]} size="sm" />
                     <span className="text-[14px] text-gray-700 dark:text-gray-300">
                       {t('featuresPage.items.' + id + '.title')}
@@ -503,6 +517,7 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
 
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.07] flex flex-col">
               {[
+                { to: routes.ai, label: t('nav.ai') },
                 { to: routes.pricing, label: t('header.pricing') },
                 { to: routes.docs, label: t('header.docs') },
                 { to: routes.about, label: t('header.about') }
@@ -574,9 +589,10 @@ export const Footer = () => {
       title: t('nav.product'),
       links: [
         { label: t('landing.home.footerFeatures'), to: routes.features },
-        ...FEATURE_GROUPS[0].items.slice(0, 3).map((id) => ({
+        { label: t('featuresPage.items.ai-assistant.title'), to: routes.ai },
+        ...FEATURE_GROUPS[0].items.filter((id) => id !== 'ai-assistant').slice(0, 2).map((id) => ({
           label: t('featuresPage.items.' + id + '.title'),
-          to: routes.features + '/' + id
+          to: routes.feature(id)
         })),
         { label: t('landing.home.footerPricing'), to: routes.pricing }
       ]

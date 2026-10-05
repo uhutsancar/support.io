@@ -175,7 +175,7 @@ const Features = () => {
           <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {group.items.map((id, i) => (
               <Reveal key={id} delay={i * 0.06}>
-                <FeatureCard id={id} to={routes.features + '/' + id} t={t} />
+                <FeatureCard id={id} to={routes.feature(id)} t={t} />
               </Reveal>
             ))}
           </div>

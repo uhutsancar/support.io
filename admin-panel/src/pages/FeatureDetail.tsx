@@ -10,7 +10,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import Shell, { useMarketingRoutes, featureIcon } from '../components/marketing/Shell';
@@ -81,6 +81,8 @@ const FeatureDetail = () => {
   const lang = i18n.language === 'en' ? 'en' : 'tr';
 
   if (!FEATURE_IDS.includes(slug)) return <NotFound t={t} to={routes.features} />;
+  // The AI assistant has a page of its own.
+  if (slug === 'ai-assistant') return <Navigate to={routes.ai} replace />;
 
   const Icon = featureIcon(slug);
   const tone = FEATURE_TONE[slug as keyof typeof FEATURE_TONE];
@@ -207,7 +209,7 @@ const FeatureDetail = () => {
             const st = accent(FEATURE_TONE[id as keyof typeof FEATURE_TONE]);
             return (
               <Reveal key={id} delay={i * 0.06}>
-                <Link to={routes.features + '/' + id} className="group block h-full">
+                <Link to={routes.feature(id)} className="group block h-full">
                   <Card hover className="h-full p-6">
                     <SIcon className={['w-5 h-5', st.text].join(' ')} strokeWidth={1.8} />
                     <h3 className="mt-4 text-[16px] font-semibold text-gray-950 dark:text-white">
@@ -225,7 +227,7 @@ const FeatureDetail = () => {
 
         <div className="mt-10 pt-6 border-t border-gray-200 dark:border-white/[0.07]">
           <Link
-            to={routes.features + '/' + next}
+            to={routes.feature(next)}
             className="group inline-flex items-center gap-2 text-[14.5px] font-medium text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white transition"
           >
             {t('featuresPage.nextFeature')}: {t('featuresPage.items.' + next + '.title')}

@@ -11,6 +11,7 @@ import PlanGate from './components/billing/PlanGate';
 const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
 const Pricing = lazy(() => import('./pages/Pricing'));
+const AiAssistant = lazy(() => import('./pages/AiAssistant'));
 const About = lazy(() => import('./pages/About'));
 const Docs = lazy(() => import('./pages/Docs'));
 const Login = lazy(() => import('./pages/Login'));
@@ -157,6 +158,7 @@ function App() {
                     <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
                     <Route path="/cozumler/:slug" element={<Solution />} />
                     <Route path="/fiyatlandirma" element={<Pricing />} />
+                    <Route path="/yapay-zeka" element={<AiAssistant />} />
                     <Route path="/dokumantasyon" element={<Docs />} />
                     <Route path="/hakkimizda" element={<About />} />
                     <Route
@@ -191,6 +193,7 @@ function App() {
                     <Route path="/en/features/:slug" element={<FeatureDetail />} />
                     <Route path="/en/solutions/:slug" element={<Solution />} />
                     <Route path="/en/pricing" element={<Pricing />} />
+                    <Route path="/en/ai-assistant" element={<AiAssistant />} />
                     <Route path="/en/documentation" element={<Docs />} />
                     <Route path="/en/about" element={<About />} />
                     <Route

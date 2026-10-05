@@ -163,7 +163,7 @@ const Solution = () => {
                   <p className="mt-4 text-[16px] leading-[1.7] text-gray-600 dark:text-gray-400 max-w-[50ch]">
                     {u.body}
                   </p>
-                  <TextLink to={routes.features + '/' + id} tone={tone} className="mt-6">
+                  <TextLink to={routes.feature(id)} tone={tone} className="mt-6">
                     {t('solutions.featureLink')}
                   </TextLink>
                 </Reveal>

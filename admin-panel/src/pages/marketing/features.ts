@@ -11,11 +11,13 @@
  * İçerik kuralı: buradaki her madde bu depoda GERÇEKTEN çalışan bir şeyi
  * anlatır. Eski sayfada "50+ dilde otomatik çeviri", "100+ CRM entegrasyonu"
  * ve "soruların %80'ini yapay zeka yanıtlıyor" yazıyordu; hiçbirinin karşılığı
- * yoktu.
+ * yoktu. Yapay zekâ asistanı (ai-assistant) gerçek ve plana göre ölçülüdür:
+ * yalnızca sitenin SSS'sinden yanıtlar, emin değilse ekibe devreder.
  */
 
 export const FEATURE_IDS = [
   'live-chat',
+  'ai-assistant',
   'universal-widget',
   'routing',
   'automation',
@@ -36,7 +38,7 @@ export const FEATURE_GROUPS = [
   {
     id: 'talk',
     tone: 'indigo',
-    items: ['live-chat', 'universal-widget', 'knowledge-base', 'proactive']
+    items: ['live-chat', 'ai-assistant', 'universal-widget', 'knowledge-base', 'proactive']
   },
   { id: 'organize', tone: 'emerald', items: ['routing', 'automation', 'team'] },
   { id: 'grow', tone: 'sky', items: ['analytics', 'visitors', 'crm'] }
@@ -56,6 +58,7 @@ export const PLAN_LABEL = {
  */
 export const FEATURE_PLAN = {
   'live-chat': 'all',
+  'ai-assistant': 'all',
   'universal-widget': 'all',
   routing: 'pro',
   automation: 'pro',
@@ -70,6 +73,7 @@ export const FEATURE_PLAN = {
 /** Lucide ikon adları — bileşende eşlenir. */
 export const FEATURE_ICON = {
   'live-chat': 'MessageSquare',
+  'ai-assistant': 'Sparkles',
   'universal-widget': 'Code2',
   routing: 'GitBranch',
   automation: 'Zap',
@@ -88,6 +92,7 @@ export const FEATURE_ICON = {
  */
 export const FEATURE_TONE = {
   'live-chat': 'indigo',
+  'ai-assistant': 'violet',
   'universal-widget': 'violet',
   routing: 'emerald',
   automation: 'emerald',
@@ -106,6 +111,7 @@ export const FEATURE_TONE = {
  */
 export const HOME_TABS = [
   'live-chat',
+  'ai-assistant',
   'knowledge-base',
   'routing',
   'automation',

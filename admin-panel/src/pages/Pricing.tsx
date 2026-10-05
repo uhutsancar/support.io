@@ -49,7 +49,8 @@ function planItems(plan: PlanInfo, previous: PlanInfo | undefined, t: T, number:
   const items = [
     t('pricingPage.units.sites', { count: plan.sites }),
     t('pricingPage.units.agents', { count: plan.agents }),
-    t('pricingPage.units.conversations', { n: number.format(plan.monthlyConversations) })
+    t('pricingPage.units.conversations', { n: number.format(plan.monthlyConversations) }),
+    t('pricingPage.units.assistant', { n: number.format(plan.assistant.monthlyReplies) })
   ];
   for (const feature of PLAN_FEATURE_ORDER) {
     if (plan.features.includes(feature) && !previous?.features.includes(feature)) {
@@ -72,6 +73,12 @@ function matrixRows(number: Intl.NumberFormat) {
     { key: 'conversations', value: (p: PlanInfo) => number.format(p.monthlyConversations) },
     { key: 'widget', value: () => true },
     { key: 'faq', value: () => true },
+    { key: 'assistant', value: () => true },
+    { key: 'assistantReplies', value: (p: PlanInfo) => number.format(p.assistant.monthlyReplies) },
+    {
+      key: 'assistantDepth',
+      value: (p: PlanInfo) => number.format(p.assistant.repliesPerConversation)
+    },
     { key: 'analytics', value: () => true },
     ...PLAN_FEATURE_ORDER.map((feature) => ({
       key: feature as string,
@@ -297,7 +304,7 @@ const Pricing = () => {
                         </div>
 
                         <Button
-                          to={plan.type === 'ENTERPRISE' ? routes.about : routes.register}
+                          to={routes.register}
                           variant={highlight ? 'primary' : 'secondary'}
                           className="mt-6 w-full"
                           arrow={highlight}

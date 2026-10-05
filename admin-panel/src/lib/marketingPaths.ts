@@ -13,6 +13,7 @@ const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/ozellikler', '/en/features'],
   ['/cozumler', '/en/solutions'],
   ['/fiyatlandirma', '/en/pricing'],
+  ['/yapay-zeka', '/en/ai-assistant'],
   ['/dokumantasyon', '/en/documentation'],
   ['/hakkimizda', '/en/about']
 ];
@@ -34,12 +35,17 @@ export function translatePath(path: string, to: 'tr' | 'en'): string {
 export function marketingRoutes(language: 'tr' | 'en') {
   const en = language === 'en';
   const langPrefix = en ? '/en' : '';
+  const features = en ? '/en/features' : '/ozellikler';
+  const ai = en ? '/en/ai-assistant' : '/yapay-zeka';
   return {
     langPrefix,
     home: langPrefix || '/',
-    features: en ? '/en/features' : '/ozellikler',
+    features,
     solutions: en ? '/en/solutions' : '/cozumler',
     pricing: en ? '/en/pricing' : '/fiyatlandirma',
+    ai,
+    /** A feature's page; the AI assistant has its own page. */
+    feature: (id: string) => (id === 'ai-assistant' ? ai : `${features}/${id}`),
     docs: en ? '/en/documentation' : '/dokumantasyon',
     about: en ? '/en/about' : '/hakkimizda',
     login: langPrefix + '/login',

@@ -58,19 +58,13 @@ function shade(x: number, y: number, opaqueBackground: any) {
   let color = BRAND.slice();
   const alpha = 255;
 
-  // arka balon: %45 beyaz
-  if (sdRoundRect(x, y, 7, 6.5, 19, 14, 5.5) <= 0) {
-    color = color.map((c) => Math.round(c + (255 - c) * 0.45));
-  }
-  // ayirici bosluk: marka rengine geri doner
-  if (sdRoundRect(x, y, 12.2, 12.3, 21.6, 17, 7) <= 0) {
-    color = BRAND.slice();
-  }
-  // on balon govdesi + kuyruk: dolu beyaz
-  const body = sdRoundRect(x, y, 13.5, 13.5, 19, 14.5, 5.5) <= 0;
-  const tail = sdTriangle(x, y, [18.5, 24], [15.6, 33.2], [24.5, 26]) <= 0;
-  if (body || tail) {
-    color = [255, 255, 255];
+  // konusma balonu + kuyruk: dolu beyaz
+  const body = sdRoundRect(x, y, 8, 9.5, 24, 17, 6.5) <= 0;
+  const tail = sdTriangle(x, y, [12.5, 24], [11.5, 31.5], [19, 26]) <= 0;
+  if (body || tail) color = [255, 255, 255];
+  // "yaziyor" noktalari: marka rengi
+  for (const cx of [14.5, 20, 25.5]) {
+    if (Math.hypot(x - cx, y - 18) <= 2.1) color = BRAND.slice();
   }
 
   if (!opaqueBackground) return [color[0], color[1], color[2], alpha];
@@ -196,25 +190,29 @@ function encodeIco(entries: Array<{ size: number; png: Buffer }>) {
 
 const SVG_MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
   <rect width="40" height="40" rx="11" fill="#4F46E5"/>
-  <rect x="7" y="6.5" width="19" height="14" rx="5.5" fill="#fff" fill-opacity=".45"/>
-  <rect x="12.2" y="12.3" width="21.6" height="17" rx="7" fill="#4F46E5"/>
-  <path d="M19 13.5h8a5.5 5.5 0 0 1 5.5 5.5v3.5a5.5 5.5 0 0 1-5.5 5.5h-4.3l-6.5 4.8a.6.6 0 0 1-.95-.6l1.2-4.35A5.5 5.5 0 0 1 13.5 22.5V19a5.5 5.5 0 0 1 5.5-5.5z" fill="#fff"/>
+  <rect x="8" y="9.5" width="24" height="17" rx="6.5" fill="#fff"/>
+  <path d="M12.5 24L11.5 31.5L19 26z" fill="#fff"/>
+  <circle cx="14.5" cy="18" r="2.1" fill="#4F46E5"/>
+  <circle cx="20" cy="18" r="2.1" fill="#4F46E5"/>
+  <circle cx="25.5" cy="18" r="2.1" fill="#4F46E5"/>
 </svg>
 `;
 
 // og:image — 1200x630, marka + kelime markasi. Sosyal onizleme icin.
 const SVG_OG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <rect width="1200" height="630" fill="#0B0D17"/>
-  <g transform="translate(392 232) scale(4.4)">
+  <g transform="translate(512 120) scale(4.4)">
     <rect width="40" height="40" rx="11" fill="#4F46E5"/>
-    <rect x="7" y="6.5" width="19" height="14" rx="5.5" fill="#fff" fill-opacity=".45"/>
-    <rect x="12.2" y="12.3" width="21.6" height="17" rx="7" fill="#4F46E5"/>
-    <path d="M19 13.5h8a5.5 5.5 0 0 1 5.5 5.5v3.5a5.5 5.5 0 0 1-5.5 5.5h-4.3l-6.5 4.8a.6.6 0 0 1-.95-.6l1.2-4.35A5.5 5.5 0 0 1 13.5 22.5V19a5.5 5.5 0 0 1 5.5-5.5z" fill="#fff"/>
+    <rect x="8" y="9.5" width="24" height="17" rx="6.5" fill="#fff"/>
+    <path d="M12.5 24L11.5 31.5L19 26z" fill="#fff"/>
+    <circle cx="14.5" cy="18" r="2.1" fill="#4F46E5"/>
+    <circle cx="20" cy="18" r="2.1" fill="#4F46E5"/>
+    <circle cx="25.5" cy="18" r="2.1" fill="#4F46E5"/>
   </g>
   <text x="600" y="470" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         font-size="72" font-weight="650" letter-spacing="-2" fill="#fff">Support<tspan fill="#818CF8">.io</tspan></text>
   <text x="600" y="528" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        font-size="26" font-weight="400" fill="#9CA3AF">Canli destek, tek satir kodla</text>
+        font-size="26" font-weight="400" fill="#9CA3AF">Canlı destek ve yapay zekâ asistanı</text>
 </svg>
 `;
 

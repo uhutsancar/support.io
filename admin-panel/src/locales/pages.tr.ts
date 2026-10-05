@@ -245,5 +245,81 @@ export default {
         ]
       }
     }
+  },
+
+  aiPage: {
+    meta: {
+      title: 'Yapay zekâ asistanı',
+      description:
+        'Sitenizdeki sohbet balonunda sık soruları 7/24, saniyeler içinde yanıtlayan yapay zekâ asistanı. Sizin SSS içeriğinizden konuşur, bilmediğini ekibinize devreder.'
+    },
+    eyebrow: 'Yapay zekâ asistanı',
+    title: 'Müşterinize gece gündüz yanıt veren asistan',
+    desc: 'Support.io’nun yapay zekâ asistanı sitenizdeki sohbet balonunda sık sorulan soruları saniyeler içinde yanıtlar. Sizin SSS içeriğinizden konuşur, bilmediğini uydurmaz ve gerektiğinde konuşmayı ekibinize devreder.',
+    ctaPrimary: 'Ücretsiz başlayın',
+    ctaSecondary: 'Planları görün',
+    heroPoints: ['Kurulum gerektirmez', 'Her planda dâhil', 'İstediğiniz an kapatın'],
+
+    howEyebrow: 'Nasıl çalışır',
+    howTitle: 'Üç adımda devrede',
+    how: [
+      { title: 'SSS’nizi yazın', body: 'En çok sorulan soruları ve cevaplarını panele ekleyin. Asistan yalnızca bunlardan yanıt verir.' },
+      { title: 'Asistanı açın', body: 'Yapay Zekâ Asistanı ekranında sitenizin anahtarını açın. Kod, entegrasyon ya da eğitim gerekmez.' },
+      { title: 'Ekibiniz rahatlasın', body: 'Sık sorular asistanda biter; satışa ve gerçek sorunlara dönen konuşmalar ekibinize düşer.' }
+    ],
+
+    benefitsEyebrow: 'Neler kazandırır',
+    benefitsTitle: 'Ekibiniz aynı soruyu bir daha yazmaz',
+    benefits: [
+      { title: 'Anında yanıt', body: 'Ziyaretçi beklemez; sorusunun cevabı saniyeler içinde gelir.' },
+      { title: 'Mesai dışında da açık', body: 'Gece ya da hafta sonu gelen sık sorular sabahı beklemez.' },
+      { title: 'Sizin içeriğinizle konuşur', body: 'Yalnızca SSS’nizde yazanı söyler; fiyat, tarih ya da vaat uydurmaz.' },
+      { title: 'Akıllı devir', body: 'Cevap yoksa, ziyaretçi “temsilci” derse ya da bir aksilik olursa konuşma ekibinize geçer.' },
+      { title: 'Ekip her zaman önde', body: 'Temsilci yazdığı ya da “Devral” dediği an asistan o konuşmada susar.' },
+      { title: 'Ne yaptığını görürsünüz', body: 'Kaç soruyu yanıtladığını, hangilerini neden devrettiğini panelde izlersiniz.' }
+    ],
+
+    controlEyebrow: 'Kontrol sizde',
+    controlTitle: 'Yanıtlar her zaman sizin bilginize dayanır',
+    controlDesc: 'Asistan her yanıtın altında hangi SSS kaydına dayandığını not eder. Ekibiniz bunu gelen kutusunda görür; eksik ya da eski bir kayıt varsa düzeltmek bir dakikanızı alır.',
+    controlPoints: [
+      'Dayanak gösteremediği yanıt ziyaretçiye gönderilmez',
+      'Ziyaretçi her an “Temsilciye bağlan” düğmesine basabilir',
+      'Asistanı site başına açar, istediğiniz an kapatırsınız'
+    ],
+
+    trustEyebrow: 'Güven',
+    trustTitle: 'Müşteri verisi önce gelir',
+    trust: [
+      'Ziyaretçinin adı, e-postası ve geçmiş mesajları yapay zekâya gönderilmez.',
+      'Sorudaki e-posta ve telefon numaraları gönderilmeden önce gizlenir.',
+      'Kart, IBAN ya da kimlik numarası paylaşılırsa soru hiç gönderilmez, konuşma ekibe geçer.',
+      'Asistan ziyaretçiden kişisel bilgi istemez.'
+    ],
+
+    plansEyebrow: 'Planlar',
+    plansTitle: 'Her planda dâhil, ihtiyacınız büyüdükçe genişler',
+    plansDesc: 'Planlar arasındaki fark yanıt sayısı ve derinlik. Hak dolduğunda sohbet durmaz; yeni sorular doğrudan ekibinize gider.',
+    perMonth: 'Ayda {{n}} yanıt',
+    perConversation: 'Konuşma başına {{count}} yanıt',
+    depth: {
+      FREE: 'Kısa ve öz yanıtlar',
+      PRO: 'Daha ayrıntılı yanıtlar',
+      ENTERPRISE: 'En ayrıntılı yanıtlar, en geniş SSS kapsamı'
+    },
+    seePricing: 'Tüm plan ayrıntıları',
+
+    faqTitle: 'Asistan hakkında sorular',
+    faq: [
+      { q: 'Asistan yanlış bir şey söylerse?', a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.' },
+      { q: 'Kurmak için ne gerekiyor?', a: 'Teknik bir iş yok. SSS içeriğinizi panele ekleyin, Yapay Zekâ Asistanı ekranından sitenizde açın.' },
+      { q: 'Ziyaretçi bir insanla konuşmak isterse?', a: 'Balondaki “Temsilciye bağlan” düğmesine basar ya da bunu yazar; konuşma hemen ekibinize geçer.' },
+      { q: 'Aylık yanıt hakkım dolarsa ne olur?', a: 'Sohbet durmaz; yeni sorular doğrudan ekibinize gider. Hak her ayın başında yenilenir, daha fazlası için planınızı yükseltebilirsiniz.' },
+      { q: 'Hangi dilde yanıt verir?', a: 'Türkçe, kısa ve anlaşılır yanıtlar verir.' }
+    ],
+
+    ctaTitle: 'Asistanınız bugün işe başlasın',
+    ctaDesc: 'Ücretsiz hesap açın, SSS’nizi ekleyin, asistanı açın. Kredi kartı istemiyoruz.',
+    ctaBtn: 'Ücretsiz başlayın'
   }
 };
