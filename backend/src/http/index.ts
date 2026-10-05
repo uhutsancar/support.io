@@ -30,6 +30,7 @@ export {
   findOwnedDepartment,
   findOwnedSite,
   loadAccessibleConversation,
+  loadAccessibleSite,
   loadOwnedConversation,
   loadOwnedDepartment,
   loadOwnedSite,
@@ -40,5 +41,6 @@ export {
   pickStrict,
   requireObjectId,
   requireOrganization,
-  requireSiteOwnership
+  requireSiteOwnership,
+  restrictedSiteIds
 } from './guards';

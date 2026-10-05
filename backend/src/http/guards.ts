@@ -141,6 +141,13 @@ const UNRESTRICTED_ROLES = new Set(['owner', 'admin']);
  * sites they are assigned to, and an empty assignment list means all of them.
  * The socket layer and the HTTP routes both ask this one function, so the two
  * ways into a conversation cannot disagree about who may open it.
+ *
+ * "Empty means all" is a deliberate V1 decision for every role, agents
+ * included. Tenant isolation is the organization boundary, which is never
+ * relaxed; a site assignment only narrows inside it. Reading an empty list as
+ * "nothing" would leave every newly invited agent with an empty inbox until
+ * someone also ticked each site — and every site added later — for them.
+ * tests/tenantIsolation.e2e.test.ts pins both halves.
  */
 export function mayAccessSite(
   role: string | undefined,
@@ -150,6 +157,27 @@ export function mayAccessSite(
   if (role && UNRESTRICTED_ROLES.has(role)) return true;
   const sites = Array.from(assignedSites ?? [], String);
   return sites.length === 0 || sites.includes(String(siteId));
+}
+
+/**
+ * The site, if the caller's organization owns it *and* their role and site
+ * assignment reach it. Use this, not `loadOwnedSite`, wherever the answer
+ * carries a site's customer data — conversations, messages, visitors.
+ */
+export async function loadAccessibleSite(req: Request, siteId: unknown): Promise<Doc<SiteDoc>> {
+  const site = await loadOwnedSite(req, siteId);
+  if (!mayAccessSite(req.user?.role, req.user?.assignedSites, site._id)) throw notFound('Site');
+  return site;
+}
+
+/**
+ * The sites the caller is restricted to, or null when they reach every site of
+ * their organization. For aggregates that cannot load one site at a time.
+ */
+export function restrictedSiteIds(req: Request): Set<string> | null {
+  if (req.user?.role && UNRESTRICTED_ROLES.has(req.user.role)) return null;
+  const sites = Array.from(req.user?.assignedSites ?? [], String);
+  return sites.length ? new Set(sites) : null;
 }
 
 /**

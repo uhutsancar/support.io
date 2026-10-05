@@ -43,12 +43,13 @@ import {
   badRequest,
   conflict,
   forbidden,
-  loadOwnedConversation,
-  loadOwnedSite,
+  loadAccessibleConversation,
+  loadAccessibleSite,
   notFound,
   orgId,
   requireObjectId,
-  requireOrganization
+  requireOrganization,
+  restrictedSiteIds
 } from '../http';
 import type { Request, Response } from 'express';
 import type { Doc, UpdateSpec } from '../db/model';
@@ -113,15 +114,26 @@ const queryString = (value: unknown): string | null => (typeof value === 'string
 router.get(
   '/unread-count',
   asyncHandler(async (req: Request, res: Response) => {
-    // Summed by the database rather than by loading every conversation.
-    res.json(await unreadCountsByOrganization(orgId(req)));
+    // Summed by the database rather than by loading every conversation. A
+    // caller restricted to some sites sees only theirs, total included.
+    const counts = await unreadCountsByOrganization(orgId(req));
+    const only = restrictedSiteIds(req);
+    if (!only) {
+      res.json(counts);
+      return;
+    }
+    const unreadBySite = Object.fromEntries(
+      Object.entries(counts.unreadBySite).filter(([siteId]) => only.has(siteId))
+    );
+    const totalUnreadCount = Object.values(unreadBySite).reduce((sum, n) => sum + n, 0);
+    res.json({ totalUnreadCount, unreadBySite });
   })
 );
 
 router.get(
   '/:siteId',
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     const organizationId = orgId(req);
 
     // Search and filters run in the database. The panel used to apply them in the
@@ -207,7 +219,7 @@ router.get(
 router.get(
   '/:siteId/:conversationId',
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     const conversationId = requireObjectId(req.params.conversationId, 'conversation id');
 
     const conversation = await withRelations(
@@ -247,12 +259,16 @@ router.get(
 
 // ---------------------------------------------------------------- assignment
 
+// Every write below needs a role that may work conversations at all; a viewer
+// reads and nothing more. The finer rules (who may move work between agents)
+// follow inside each handler. The socket handlers apply the same table.
 router.put(
   '/:conversationId/assign',
+  checkPermission('respond'),
   asyncHandler(async (req: Request, res: Response) => {
     const { agentId } = req.body;
     const organizationId = orgId(req);
-    const conversation = await loadOwnedConversation(req, req.params.conversationId);
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
 
     // Assigning to somebody else, or taking somebody else's conversation, needs
     // `assign_tickets` (owner/admin/manager). An agent without it may only pick
@@ -304,10 +320,11 @@ router.put(
 
 router.put(
   '/:conversationId/claim',
+  checkPermission('respond'),
   asyncHandler(async (req: Request, res: Response) => {
     const organizationId = orgId(req);
     const agentId = req.userId;
-    const conversation = await loadOwnedConversation(req, req.params.conversationId);
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
 
     if (conversation.assignedAgent) throw conflict('Conversation is already assigned');
 
@@ -356,9 +373,10 @@ router.put(
 
 router.put(
   '/:conversationId/department',
+  checkPermission('assign_tickets'),
   asyncHandler(async (req: Request, res: Response) => {
     const { departmentId } = req.body;
-    const conversation = await loadOwnedConversation(req, req.params.conversationId);
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
 
     if (departmentId) {
       // The department has to belong to this conversation's own site, not merely
@@ -394,18 +412,15 @@ router.put(
 
 router.put(
   '/:conversationId/priority',
+  checkPermission('update_status'),
   asyncHandler(async (req: Request, res: Response) => {
     const { priority } = req.body;
     if (!isPriority(priority))
       throw badRequest(`priority must be one of: ${PRIORITIES.join(', ')}`);
 
-    const conversation = await withRelations(
-      Conversation.findOne({
-        _id: requireObjectId(req.params.conversationId, 'conversation id'),
-        organizationId: orgId(req)
-      })
-    ).populate('department');
-    if (!conversation) throw notFound('Conversation');
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
+    await conversation.populate('department');
+    await conversation.populate('assignedAgent', AGENT_FIELDS);
 
     conversation.priority = priority;
     // The department's policy wins when it has one; otherwise the product
@@ -422,13 +437,14 @@ router.put(
 
 router.post(
   '/:conversationId/notes',
+  checkPermission('respond'),
   asyncHandler(async (req: Request, res: Response) => {
     const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
     if (!note || note.length > MAX_NOTE_LENGTH) {
       throw badRequest(`Note must be between 1 and ${MAX_NOTE_LENGTH} characters`);
     }
 
-    const conversation = await loadOwnedConversation(req, req.params.conversationId);
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
     conversation.internalNotes.push({ userId: req.userId, note, createdAt: new Date() });
     await conversation.save();
     await conversation.populate('internalNotes.userId', 'name avatar');
@@ -441,18 +457,15 @@ router.post(
 
 router.put(
   '/:conversationId/status',
+  checkPermission('update_status'),
   asyncHandler(async (req: Request, res: Response) => {
     const { status } = req.body;
     if (!isConversationStatus(status)) {
       throw badRequest(`status must be one of: ${CONVERSATION_STATUSES.join(', ')}`);
     }
 
-    const organizationId = orgId(req);
-    const conversation = await Conversation.findOne({
-      _id: requireObjectId(req.params.conversationId, 'conversation id'),
-      organizationId
-    }).populate('department');
-    if (!conversation) throw notFound('Conversation');
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
+    await conversation.populate('department');
 
     const previousStatus = conversation.status;
     const wasActive = isActiveConversationStatus(previousStatus);
@@ -530,7 +543,7 @@ router.delete(
   '/:siteId/:conversationId',
   checkPermission('manage_operations'),
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     const conversationId = requireObjectId(req.params.conversationId, 'conversation id');
 
     const conversation = await Conversation.findOne({

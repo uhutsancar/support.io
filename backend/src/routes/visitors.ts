@@ -4,7 +4,7 @@ import express from 'express';
 import Visitor from '../models/Visitor';
 import { auth } from '../middleware/auth';
 import { requirePlan } from '../middleware/planCheck';
-import { asyncHandler, loadOwnedSite, orgId, requireOrganization } from '../http';
+import { asyncHandler, loadAccessibleSite, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 import type { Filter } from '../db/model';
 
@@ -22,8 +22,8 @@ router.get(
     // This handler used to read `req.user.organizationId` directly and compare
     // it with `.toString()`. For an account with no organization that threw on
     // null and came back as a 500; `requireOrganization` answers 403 before the
-    // handler runs, and `loadOwnedSite` does the ownership check.
-    const site = await loadOwnedSite(req, req.params.siteId);
+    // handler runs, and `loadAccessibleSite` does the ownership and site-assignment check.
+    const site = await loadAccessibleSite(req, req.params.siteId);
 
     const filter: Filter = { siteId: site._id, organizationId: orgId(req) };
     if (req.query.active === 'true') {

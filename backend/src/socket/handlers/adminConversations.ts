@@ -6,6 +6,7 @@
 // conversation by id on its own.
 
 import Department from '../../models/Department';
+import { hasPermission } from '../../middleware/rbac';
 import Message from '../../models/Message';
 import Team from '../../models/Team';
 import User from '../../models/User';
@@ -46,8 +47,15 @@ const MAX_MESSAGE_LENGTH = 10000;
 /** Default cap for an account whose row does not set one. */
 const DEFAULT_CAPACITY = 10;
 
-/** Roles allowed to move work between agents or between departments. */
-const ROUTING_ROLES = new Set(['owner', 'admin']);
+/**
+ * Whether this socket's role carries `permission` — the same role table the
+ * HTTP routes check (middleware/rbac.ts), so a viewer who may not close a
+ * conversation over REST cannot close it over the socket either.
+ */
+const may = (socket: AdminSocket, permission: string): boolean =>
+  hasPermission(socket.role, permission);
+
+const NOT_PERMITTED = { message: 'Insufficient role permissions' };
 
 /**
  * The agent, from whichever table holds them.
@@ -138,6 +146,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     'send-message',
     ctx.guard(socket, async (data: SendMessagePayload | undefined) => {
       const { content, messageType, fileData } = data || {};
+      if (!may(socket, 'respond')) return socket.emit('error', NOT_PERMITTED);
 
       if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
         return socket.emit('error', { message: 'Invalid message content' });
@@ -235,11 +244,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       const conversation = await ctx.conversationFor(socket, data.conversationId);
       if (!conversation) return ctx.reject(socket);
 
-      if (!ROUTING_ROLES.has(socket.role)) {
-        return socket.emit('error', {
-          message: 'Yetersiz yetki: atama işlemi için admin gerekli.'
-        });
-      }
+      if (!may(socket, 'assign_tickets')) return socket.emit('error', NOT_PERMITTED);
 
       const target = await findAgent(agentId, socket.organizationId);
       if (!target || !mayWorkOnSite(target.agent.assignedSites, conversation.siteId)) {
@@ -272,6 +277,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
   socket.on(
     'claim-conversation',
     ctx.guard(socket, async (data: ConversationPayload) => {
+      if (!may(socket, 'respond')) return socket.emit('error', NOT_PERMITTED);
       const conversation = await ctx.conversationFor(socket, data.conversationId);
       if (!conversation) return ctx.reject(socket);
 
@@ -322,11 +328,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       const conversation = await ctx.conversationFor(socket, data.conversationId);
       if (!conversation) return ctx.reject(socket);
 
-      if (!ROUTING_ROLES.has(socket.role)) {
-        return socket.emit('error', {
-          message: 'Yetersiz yetki: departman ataması için admin gerekli.'
-        });
-      }
+      if (!may(socket, 'assign_tickets')) return socket.emit('error', NOT_PERMITTED);
 
       // The department must belong to this conversation's own site, not merely
       // to the caller's organization.
@@ -365,6 +367,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     'set-priority',
     ctx.guard(socket, async (data: SetPriorityPayload) => {
       const { priority } = data;
+      if (!may(socket, 'update_status')) return socket.emit('error', NOT_PERMITTED);
       if (!isPriority(priority)) {
         return socket.emit('error', {
           message: `priority must be one of: ${PRIORITIES.join(', ')}`
@@ -394,6 +397,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
   socket.on(
     'resolve-conversation',
     ctx.guard(socket, async (data: ConversationPayload) => {
+      if (!may(socket, 'update_status')) return socket.emit('error', NOT_PERMITTED);
       const conversation = await ctx.conversationFor(socket, data.conversationId, {
         populateDepartment: true
       });

@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import Site from '../models/Site';
 import WidgetConfig from '../models/WidgetConfig';
 import { auth } from '../middleware/auth';
+import { originsFromDomain } from '../config/siteOrigins';
 import { asyncHandler, conflict, forbidden, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 
@@ -55,6 +56,9 @@ router.post(
     const site = new Site({
       name: websiteUrl || 'My Website',
       domain: hostnameOf(websiteUrl),
+      // Without this the widget would get no session anywhere: a site's
+      // allowed origins are the only pages it runs on.
+      allowedOrigins: originsFromDomain(hostnameOf(websiteUrl)),
       siteKey: crypto.randomBytes(16).toString('hex'),
       userId: req.user._id,
       organizationId,
