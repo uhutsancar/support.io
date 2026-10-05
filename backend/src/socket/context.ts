@@ -115,9 +115,16 @@ export class SocketContext {
     handler: (...args: T) => Promise<unknown> | unknown
   ): (...args: T) => void {
     return (...args: T) => {
+      // An event sent with an acknowledgement carries the callback last; a
+      // failure must answer it too, or the sender waits out its timeout.
+      const last = args[args.length - 1];
+      const ack = typeof last === 'function' ? (last as (reply: unknown) => void) : null;
       Promise.resolve()
         .then(() => handler(...args))
-        .catch((error) => this.fail(socket, error));
+        .catch((error) => {
+          this.fail(socket, error);
+          ack?.({ ok: false, code: 'SERVER_ERROR' });
+        });
     };
   }
 

@@ -20,8 +20,10 @@ import {
 } from '../../services/departmentStats';
 import {
   CLIENT_MESSAGE_TYPES,
+  MAX_MESSAGE_LENGTH,
   PRIORITIES,
   isActiveConversationStatus,
+  isClientMessageId,
   isClientMessageType,
   isPriority,
   slaTargetsFor
@@ -37,12 +39,14 @@ import type {
   AssignConversationPayload,
   ConversationPayload,
   JoinSitePayload,
+  MessageAck,
   SendMessagePayload,
   SetDepartmentPayload,
   SetPriorityPayload
 } from '../types';
 
-const MAX_MESSAGE_LENGTH = 10000;
+/** PostgreSQL's code for a unique-index violation. */
+const UNIQUE_VIOLATION = '23505';
 
 /** Default cap for an account whose row does not set one. */
 const DEFAULT_CAPACITY = 10;
@@ -144,30 +148,50 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
 
   socket.on(
     'send-message',
-    ctx.guard(socket, async (data: SendMessagePayload | undefined) => {
-      const { content, messageType, fileData } = data || {};
-      if (!may(socket, 'respond')) return socket.emit('error', NOT_PERMITTED);
+    ctx.guard(socket, async (data: SendMessagePayload | undefined, ack?: MessageAck) => {
+      const { content, messageType, fileData, clientMessageId } = data || {};
+      const refuse = (code: string, message: string) => {
+        socket.emit('error', { message, code });
+        ack?.({ ok: false, code, message });
+      };
 
+      // validate
+      if (!may(socket, 'respond')) return refuse('FORBIDDEN', NOT_PERMITTED.message);
       if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
-        return socket.emit('error', { message: 'Invalid message content' });
+        return refuse('INVALID_MESSAGE', 'Invalid message content');
       }
       if (messageType && !isClientMessageType(messageType)) {
-        return socket.emit('error', {
-          message: `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
-        });
+        return refuse(
+          'INVALID_MESSAGE',
+          `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
+        );
+      }
+      if (clientMessageId != null && !isClientMessageId(clientMessageId)) {
+        return refuse('INVALID_MESSAGE', 'Invalid client message id');
       }
 
+      // authorize
       const conversation = await ctx.conversationFor(socket, data?.conversationId, {
         populateDepartment: true
       });
-      if (!conversation) return ctx.reject(socket);
+      if (!conversation) {
+        ctx.reject(socket);
+        return ack?.({ ok: false, code: 'NOT_FOUND' });
+      }
+
+      // A resend after a dropped connection: the reply is already stored and
+      // everything it caused has happened. Acknowledged, nothing repeated.
+      if (clientMessageId) {
+        const existing = await Message.findOne({ conversationId: conversation._id, clientMessageId });
+        if (existing) return ack?.({ ok: true, message: existing.toObject(), duplicate: true });
+      }
 
       const needsAttachment = messageType === 'file' || messageType === 'image';
       const verifiedFile = needsAttachment
         ? ctx.verifyAttachment(fileData, conversation.siteId)
         : null;
       if (needsAttachment && !verifiedFile) {
-        return socket.emit('error', { message: 'Invalid or expired file upload' });
+        return refuse('INVALID_ATTACHMENT', 'Invalid or expired file upload');
       }
 
       // An agent writing takes the conversation from the assistant, and does
@@ -177,6 +201,32 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       if (conversation.responseOwner === 'ai') {
         const changed = await setResponseOwner(ctx.io, conversation, 'human');
         if (changed) Object.assign(conversation, changed);
+      }
+
+      // insert — before any of the conversation's state moves, so a reply
+      // that is refused (or a duplicate that lost the race) changes nothing
+      const messageData: CreateInput<MessageDoc> = {
+        conversationId: conversation._id,
+        senderType: 'agent',
+        senderId: socket.userId,
+        senderName: socket.userName,
+        content: content.trim(),
+        messageType: messageType || 'text',
+        isRead: true,
+        clientMessageId: clientMessageId ?? null
+      };
+      if (verifiedFile) messageData.fileData = verifiedFile;
+
+      let message;
+      try {
+        message = await Message.create(messageData);
+      } catch (error) {
+        if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId) {
+          throw error;
+        }
+        const stored = await Message.findOne({ conversationId: conversation._id, clientMessageId });
+        if (stored) return ack?.({ ok: true, message: stored.toObject(), duplicate: true });
+        throw error;
       }
 
       // Answering an unclaimed conversation takes it: an agent who has started
@@ -192,24 +242,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         conversation.firstResponseAt = new Date();
         refreshSla(conversation);
         await recordFirstResponse(socket.userId, conversation);
-        ctx.toAdminSite(conversation.siteId, 'conversation-update', {
-          conversationId: conversation._id,
-          conversation: conversation.toObject()
-        });
       }
-
-      const messageData: CreateInput<MessageDoc> = {
-        conversationId: conversation._id,
-        senderType: 'agent',
-        senderId: socket.userId,
-        senderName: socket.userName,
-        content: content.trim(),
-        messageType: messageType || 'text',
-        isRead: true
-      };
-      if (verifiedFile) messageData.fileData = verifiedFile;
-
-      const message = await Message.create(messageData);
 
       // An agent reply clears the badge: the unread count tracks what the *agent*
       // has not read, and they have just been here.
@@ -217,15 +250,27 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       conversation.lastMessageAt = new Date();
       await conversation.save();
 
-      ctx.toWidgetConversation(conversation._id, 'new-message', { message });
-      ctx.toAdminConversation(conversation._id, 'new-message', { message, conversation });
-      ctx.toAdminSite(conversation.siteId, 'new-message', { message, conversation });
+      // emit — only after both writes are committed
+      if (isFirstResponse) {
+        ctx.toAdminSite(conversation.siteId, 'conversation-update', {
+          conversationId: conversation._id,
+          conversation: conversation.toObject()
+        });
+      }
+      const emitted = message.toObject();
+      ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
+      ctx.toAdminConversation(conversation._id, 'new-message', { message: emitted, conversation });
+      ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });
+
+      // ACK
+      ack?.({ ok: true, message: emitted });
     })
   );
 
   socket.on(
     'typing',
     ctx.guard(socket, async (data: ConversationPayload | undefined) => {
+      if (!may(socket, 'respond')) return;
       const conversation = await ctx.conversationFor(socket, data?.conversationId);
       if (!conversation) return;
       ctx.toWidgetConversation(conversation._id, 'agent-typing', {

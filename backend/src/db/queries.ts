@@ -8,6 +8,7 @@
 // (conversation_id, created_at DESC) index instead of running a query per row.
 import { query } from './pool';
 import Message from '../models/Message';
+import { isValidObjectId } from './objectId';
 
 async function latestMessagesByConversation(conversationIds: string[]) {
   const result = new Map();
@@ -25,6 +26,78 @@ async function latestMessagesByConversation(conversationIds: string[]) {
     result.set(row.conversation_id, Message.$model.hydrate(row));
   }
   return result;
+}
+
+/** The most messages one page of a conversation may carry. */
+const MAX_PAGE = 100;
+const DEFAULT_PAGE = 50;
+
+/**
+ * A page of one conversation, relative to a message the caller already has.
+ *
+ *   after   the messages written since it — what a client that was offline
+ *           missed; oldest first
+ *   before  the page just older than it — scrolling back; oldest first
+ *   neither the newest page
+ *
+ * Ordered by (created_at, id), so two messages in the same millisecond are
+ * neither skipped nor repeated across pages. An anchor that is not a message
+ * of this conversation is ignored, never used to read another one.
+ */
+async function messagesPage(
+  conversationId: string,
+  { after, before, limit }: { after?: unknown; before?: unknown; limit?: unknown } = {}
+) {
+  const size = Math.min(Math.max(Number(limit) || DEFAULT_PAGE, 1), MAX_PAGE);
+  const anchorId = isValidObjectId(after) ? after : isValidObjectId(before) ? before : null;
+  const direction = isValidObjectId(after) ? 'after' : anchorId ? 'before' : 'newest';
+
+  let anchor: { created_at: Date; id: string } | null = null;
+  if (anchorId) {
+    const found = await query<{ created_at: Date; id: string }>(
+      'SELECT created_at, id FROM messages WHERE id = $1 AND conversation_id = $2',
+      [anchorId, conversationId]
+    );
+    anchor = found.rows[0] ?? null;
+  }
+
+  let rows;
+  if (direction === 'after' && anchor) {
+    ({ rows } = await query(
+      `SELECT * FROM messages
+        WHERE conversation_id = $1 AND (created_at, id) > ($2, $3)
+        ORDER BY created_at, id
+        LIMIT $4`,
+      [conversationId, anchor.created_at, anchor.id, size + 1]
+    ));
+    const hasMore = rows.length > size;
+    return { messages: rows.slice(0, size).map((r) => Message.$model.hydrate(r)), hasMore };
+  }
+
+  ({ rows } =
+    direction === 'before' && anchor
+      ? await query(
+          `SELECT * FROM messages
+            WHERE conversation_id = $1 AND (created_at, id) < ($2, $3)
+            ORDER BY created_at DESC, id DESC
+            LIMIT $4`,
+          [conversationId, anchor.created_at, anchor.id, size + 1]
+        )
+      : await query(
+          `SELECT * FROM messages
+            WHERE conversation_id = $1
+            ORDER BY created_at DESC, id DESC
+            LIMIT $2`,
+          [conversationId, size + 1]
+        ));
+  const hasMore = rows.length > size;
+  return {
+    messages: rows
+      .slice(0, size)
+      .reverse()
+      .map((r) => Message.$model.hydrate(r)),
+    hasMore
+  };
 }
 
 // Unread totals per site for one organization, aggregated by the database.
@@ -246,6 +319,7 @@ async function agentPerformance(agentId: string, days: number) {
 
 export {
   latestMessagesByConversation,
+  messagesPage,
   unreadCountsByOrganization,
   conversationCountsByAgent,
   agentConversationStats,

@@ -286,6 +286,11 @@ export interface Message {
   createdAt: string;
   /** Echoed back so an optimistic bubble can be reconciled. */
   clientMessageId?: string | null;
+  /**
+   * Only on a reply the panel is still sending: shown at once, settled by the
+   * server's acknowledgement (features/conversations/useReliableSend.ts).
+   */
+  status?: 'pending' | 'failed';
   /** Present on automatic replies: what the assistant decided and from which sources. */
   aiMetadata?: MessageAiMetadata | null;
   [extra: string]: unknown;

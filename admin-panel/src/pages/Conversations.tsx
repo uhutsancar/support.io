@@ -46,6 +46,7 @@ import {
   priorityBadge as getPriorityColor
 } from '../lib/statusStyles';
 import { useInboxNavigation, useInboxRealtime } from '../features/conversations/useInboxRealtime';
+import { settleReply, useReliableSend } from '../features/conversations/useReliableSend';
 import { errorMessage } from '../hooks/useAsync';
 import ConversationListItem from '../components/conversations/ConversationListItem';
 import MessageBubble, { attachmentIcon } from '../components/conversations/MessageBubble';
@@ -113,6 +114,24 @@ const Conversations = () => {
   const canAssignAnyone = ['owner', 'admin', 'manager'].includes(user?.role || '');
   const canDeleteConversations = ['owner', 'admin'].includes(user?.role || '');
   const selfId = String(user?._id || user?.id || '');
+
+  // The thread as last rendered, for the reconnect catch-up below.
+  const messagesRef = useRef<Message[]>(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  });
+
+  const reliable = useReliableSend({
+    socket,
+    setMessages,
+    sender: { id: selfId, name: user?.name || 'Support' },
+    onRefused: (code) =>
+      toast.error(
+        code === 'RATE_LIMITED'
+          ? t('conversations.rateLimited', 'Çok hızlı mesaj gönderiyorsunuz; biraz bekleyin.')
+          : t('conversations.sendFailed', 'Mesaj gönderilemedi')
+      )
+  });
   // The realtime handlers need the current selection but must not be
   // re-attached every time it changes, so they read it through a ref. Written
   // in an effect rather than during render; see hooks/useAsync.ts.
@@ -145,10 +164,11 @@ const Conversations = () => {
 
       // Into the open thread if it is the one on screen, de-duplicated because
       // the sender also receives its own broadcast.
+      // One of this agent's own replies settles its optimistic copy.
+      reliable.settledByBroadcast(message);
       setMessages((current) =>
-        selectedConversationRef.current?._id === conversationId &&
-        !current.some((m) => m._id === message._id)
-          ? [...current, message]
+        selectedConversationRef.current?._id === conversationId
+          ? settleReply(current, message)
           : current
       );
 
@@ -206,6 +226,56 @@ const Conversations = () => {
       void openAssignedConversation(conversationId, siteId);
     }
   });
+
+  // A reconnect is a new socket on the server: it is in no room until it asks
+  // again, and whatever was sent meanwhile never reached it. Re-join, read
+  // what the open thread missed, and send what is still owed.
+  const reliableRef = useRef(reliable);
+  useEffect(() => {
+    reliableRef.current = reliable;
+  });
+  useEffect(() => {
+    if (!socket) return undefined;
+    // Only a connect that follows a drop is a reconnect; the first one is
+    // handled by the join effects further down.
+    let dropped = false;
+    const onDisconnect = () => {
+      dropped = true;
+    };
+    const onConnect = () => {
+      if (!dropped) return;
+      dropped = false;
+      const site = selectedSiteRef.current;
+      const conversation = selectedConversationRef.current;
+      if (site) socket.emit('join-site', { siteId: siteIdOf(site) });
+      if (conversation) {
+        socket.emit('join-conversation', { conversationId: conversation._id });
+        const lastStored = [...messagesRef.current]
+          .reverse()
+          .find((m) => !String(m._id).startsWith('local-'));
+        const siteId = String(conversation.siteId || siteIdOf(site) || '');
+        if (lastStored && siteId) {
+          conversationsAPI
+            .messagesAfter(siteId, conversation._id, lastStored._id)
+            .then(({ data }) =>
+              setMessages((current) =>
+                selectedConversationRef.current?._id === conversation._id
+                  ? data.messages.reduce(settleReply, current)
+                  : current
+              )
+            )
+            .catch((error) => console.error('[inbox] catch-up after reconnect failed', error));
+        }
+      }
+      reliableRef.current.resend();
+    };
+    socket.on('disconnect', onDisconnect);
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect', onConnect);
+    };
+  }, [socket]);
 
   useInboxNavigation({
     onOpenConversation: (conversationId, siteId) => {
@@ -485,12 +555,7 @@ const Conversations = () => {
     if (selectedFile) {
       await uploadAndSendFile();
     } else {
-      socket.emit('send-message', {
-        conversationId: selectedConversation._id,
-        content: newMessage,
-        senderName: user?.name || 'Support',
-        senderId: user?.id || user?._id || 'support'
-      });
+      reliable.send({ conversationId: selectedConversation._id, content: newMessage.trim() });
       setNewMessage('');
     }
   };
@@ -501,11 +566,9 @@ const Conversations = () => {
       // site this agent may work on; the site key is not a credential.
       const { data } = await filesAPI.agentUpload(selectedSite._id, selectedFile);
       const messageType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
-      socket.emit('send-message', {
+      reliable.send({
         conversationId: selectedConversation._id,
         content: newMessage.trim() || 'File attachment',
-        senderName: user?.name || 'Support',
-        senderId: user?.id || user?._id || 'support',
         messageType,
         fileData: data.file
       });
@@ -996,7 +1059,11 @@ const Conversations = () => {
                       </div>
                     )}
                     {messages.map((message) => (
-                      <MessageBubble key={message._id} message={message} />
+                      <MessageBubble
+                        key={message.clientMessageId || message._id}
+                        message={message}
+                        onRetry={reliable.retry}
+                      />
                     ))}
                     <div ref={messagesEndRef} />
                   </div>

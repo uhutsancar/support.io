@@ -21,15 +21,22 @@ import { verifiedIdentity } from '../../services/identity';
 import {
   ACTIVE_CONVERSATION_STATUSES,
   CLIENT_MESSAGE_TYPES,
+  MAX_MESSAGE_LENGTH,
   isAwayPresence,
+  isClientMessageId,
   isClientMessageType
 } from '../../domain';
+import { messagesPage } from '../../db/queries';
+import { eventLimiter, VISITOR_BUDGET } from '../limits';
 import { conversationRoom } from '../../realtime/rooms';
 import type { Socket } from 'socket.io';
-import type { CreateInput } from '../../db/model';
+import type { CreateInput, Doc } from '../../db/model';
 import type { MessageDoc } from '../../models/Message';
+import type { SiteDoc } from '../../models/Site';
 import type { SocketContext } from '../context';
 import type {
+  LoadMessagesPayload,
+  MessageAck,
   PageViewPayload,
   RequestHumanPayload,
   SendMessagePayload,
@@ -45,17 +52,12 @@ const LIMITS = {
   visitorName: 100,
   visitorEmail: 254,
   page: 2048,
-  message: 10000,
-  clientMessageId: 100,
   metadataShort: 100,
   language: 30,
   attributeKey: 64,
   attributeValue: 500,
   attributeCount: 20
 } as const;
-
-/** Ids we will accept from a client: no separators that could change a room name. */
-const SAFE_ID = /^[a-z0-9_.:-]+$/i;
 
 /** PostgreSQL's code for a unique-index violation. */
 const UNIQUE_VIOLATION = '23505';
@@ -98,9 +100,78 @@ function sanitizeMetadata(raw: WidgetJoinPayload['metadata']): VisitorMetadata {
   };
 }
 
+/** Reports a refusal on the socket (older widgets) and in the acknowledgement. */
+function refuse(
+  socket: WidgetSocket,
+  ack: MessageAck | undefined,
+  code: string,
+  message: string
+): void {
+  socket.emit('error', { message, code });
+  ack?.({ ok: false, code, message });
+}
+
+/**
+ * A message that is already stored, acknowledged to this socket only. Older
+ * widgets reconcile on the echo; newer ones on the acknowledgement.
+ */
+function delivered(
+  socket: WidgetSocket,
+  ack: MessageAck | undefined,
+  message: Record<string, unknown>,
+  duplicate: boolean
+): void {
+  socket.emit('new-message', { message });
+  ack?.({ ok: true, message, duplicate });
+}
+
+/**
+ * Opens (or, if another tab beat this one to it, finds) the visitor's
+ * conversation and puts this socket in its room.
+ */
+async function openFirstConversation(
+  ctx: SocketContext,
+  socket: WidgetSocket,
+  site: Doc<SiteDoc>,
+  content: string,
+  assistant: boolean
+): Promise<void> {
+  const {
+    conversation: opened,
+    greeting,
+    created
+  } = await openConversation(
+    site,
+    {
+      visitorId: socket.visitorId!,
+      visitorName: socket.visitorName!,
+      visitorEmail: socket.visitorEmail ?? null,
+      currentPage: socket.currentPage!,
+      metadata: socket.metadata
+    },
+    content,
+    assistant && !socket.prefersHuman ? 'ai' : 'human'
+  );
+
+  await socket.join(conversationRoom(opened._id));
+  socket.conversationId = opened._id;
+  if (!created) return;
+
+  if (greeting) {
+    ctx.toWidgetConversation(opened._id, 'new-message', { message: greeting });
+  }
+  ctx.toAdminSite(socket.siteId, 'new-conversation', {
+    conversation: await opened.populate('department', 'name color icon')
+  });
+  runAutomation('conversation_created', opened, { content });
+}
+
 export function installWidgetHandlers(ctx: SocketContext): void {
+  const limit = eventLimiter('socket-visitor', VISITOR_BUDGET);
   ctx.widget.on('connection', (rawSocket: Socket) => {
     const socket = rawSocket as WidgetSocket;
+    // Counted per widget session, before any handler runs; see ../limits.ts.
+    limit(socket, `v:${socket.widgetSessionId}`);
 
     // ---------------------------------------------------------------- joining
 
@@ -230,67 +301,50 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
     socket.on(
       'send-message',
-      ctx.guard(socket, async (data: SendMessagePayload | undefined) => {
+      ctx.guard(socket, async (data: SendMessagePayload | undefined, ack?: MessageAck) => {
         const { content, messageType, fileData, clientMessageId } = data || {};
 
-        if (typeof content !== 'string' || !content.trim() || content.length > LIMITS.message) {
-          return socket.emit('error', { message: 'Invalid message content' });
+        // validate
+        if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
+          return refuse(socket, ack, 'INVALID_MESSAGE', 'Invalid message content');
         }
         if (messageType && !isClientMessageType(messageType)) {
-          return socket.emit('error', {
-            message: `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
-          });
+          return refuse(
+            socket,
+            ack,
+            'INVALID_MESSAGE',
+            `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
+          );
         }
-        if (
-          clientMessageId != null &&
-          (typeof clientMessageId !== 'string' ||
-            clientMessageId.length > LIMITS.clientMessageId ||
-            !SAFE_ID.test(clientMessageId))
-        ) {
-          return socket.emit('error', { message: 'Invalid client message id' });
+        if (clientMessageId != null && !isClientMessageId(clientMessageId)) {
+          return refuse(socket, ack, 'INVALID_MESSAGE', 'Invalid client message id');
         }
 
-        const site = await Site.findById(socket.siteId);
+        // authorize: the site of the signed session, still active
+        const site = await Site.findOne({ _id: socket.siteId, isActive: true });
         if (!site?.organizationId) {
-          return socket.emit('error', { message: 'Site not found' });
+          return refuse(socket, ack, 'SITE_NOT_FOUND', 'Site not found');
         }
         // The site's assistant answers when it is on; otherwise the FAQ keyword
         // bot below does, as before. Never both.
         const assistant = assistantActive(site);
 
-        // The first message opens the conversation. Everything that involves —
-        // routing, SLA seeding, counters, auto-assignment, the out-of-hours
-        // greeting — lives in services/conversationIntake.ts.
+        // The first message opens the conversation; see conversationIntake.ts.
+        // Two sends racing on one socket share the one opening.
         if (!socket.conversationId) {
-          const { conversation: opened, greeting } = await openConversation(
-            site,
-            {
-              visitorId: socket.visitorId!,
-              visitorName: socket.visitorName!,
-              visitorEmail: socket.visitorEmail ?? null,
-              currentPage: socket.currentPage!,
-              metadata: socket.metadata
-            },
-            content,
-            assistant && !socket.prefersHuman ? 'ai' : 'human'
+          socket.opening ??= openFirstConversation(ctx, socket, site, content, assistant).finally(
+            () => {
+              socket.opening = undefined;
+            }
           );
-
-          await socket.join(conversationRoom(opened._id));
-          socket.conversationId = opened._id;
-
-          if (greeting) {
-            ctx.toWidgetConversation(opened._id, 'new-message', { message: greeting });
-          }
-
-          ctx.toAdminSite(socket.siteId, 'new-conversation', {
-            conversation: await opened.populate('department', 'name color icon')
-          });
-
-          runAutomation('conversation_created', opened, { content });
+          await socket.opening;
         }
 
         const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
-        if (!conversation) return ctx.reject(socket);
+        if (!conversation) {
+          ctx.reject(socket);
+          return ack?.({ ok: false, code: 'NOT_FOUND' });
+        }
 
         // A resend after a dropped connection carries the id of a message we
         // already stored. It is acknowledged to this socket only — no second
@@ -300,9 +354,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
             conversationId: conversation._id,
             clientMessageId
           });
-          if (existing) {
-            return socket.emit('new-message', { message: existing.toObject() });
-          }
+          if (existing) return delivered(socket, ack, existing.toObject(), true);
         }
 
         const needsAttachment = messageType === 'file' || messageType === 'image';
@@ -310,9 +362,10 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           ? ctx.verifyAttachment(fileData, conversation.siteId)
           : null;
         if (needsAttachment && !verifiedFile) {
-          return socket.emit('error', { message: 'Invalid or expired file upload' });
+          return refuse(socket, ack, 'INVALID_ATTACHMENT', 'Invalid or expired file upload');
         }
 
+        // insert — the unique index is the last word on duplicates
         const messageData: CreateInput<MessageDoc> = {
           conversationId: conversation._id,
           senderType: 'visitor',
@@ -336,15 +389,23 @@ export function installWidgetHandlers(ctx: SocketContext): void {
             conversationId: conversation._id,
             clientMessageId
           });
-          if (stored) socket.emit('new-message', { message: stored.toObject() });
-          return;
+          if (stored) return delivered(socket, ack, stored.toObject(), true);
+          throw error;
         }
         // Echoed back, id included, so the widget can reconcile its optimistic copy.
         const emitted = message.toObject();
 
-        conversation.unreadCount = (conversation.unreadCount || 0) + 1;
-        conversation.lastMessageAt = new Date();
-        await conversation.save();
+        // One atomic increment: two messages landing together must not both
+        // read the old count and write it back plus one.
+        const counted = await Conversation.findByIdAndUpdate(
+          conversation._id,
+          { $inc: { unreadCount: 1 }, lastMessageAt: new Date() },
+          { new: true }
+        );
+        if (counted) {
+          conversation.unreadCount = counted.unreadCount;
+          conversation.lastMessageAt = counted.lastMessageAt;
+        }
 
         // The assigned agent has gone away since they took this: hand it on
         // rather than leaving the visitor waiting on somebody who is not there.
@@ -356,6 +417,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           }
         }
 
+        // emit — only after the row is committed
         ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
         ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });
         if (conversation.assignedAgent) {
@@ -372,6 +434,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           timestamp: new Date()
         });
 
+        // ACK
+        ack?.({ ok: true, message: emitted });
+
         runAutomation('message_received', conversation, { content, message });
         if (!assistant) {
           await tryFaqAutoResponse(ctx, conversation, content);
@@ -380,6 +445,26 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           // already reached the inbox. See services/ai/autoReply.ts.
           scheduleAutoReply(ctx.io, conversation._id, message._id);
         }
+      })
+    );
+
+    // ------------------------------------------------------------- history
+
+    // A page of the visitor's own conversation: `after` a message the widget
+    // already has (catching up after a reconnect), or `before` the oldest one
+    // on screen (scrolling back past the join's newest page).
+    socket.on(
+      'load-messages',
+      ctx.guard(socket, async (data: LoadMessagesPayload | undefined, ack?: MessageAck) => {
+        if (typeof ack !== 'function') return;
+        const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+        if (!conversation) return ack({ ok: false, code: 'NOT_FOUND' });
+        const page = await messagesPage(conversation._id, {
+          after: data?.after,
+          before: data?.before,
+          limit: data?.limit
+        });
+        ack({ ok: true, ...page });
       })
     );
 

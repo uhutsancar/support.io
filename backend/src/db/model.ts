@@ -20,6 +20,12 @@ import { generateId, toId } from './objectId';
 
 export type FieldType = 'id' | 'string' | 'number' | 'boolean' | 'date' | 'json' | 'stringArray';
 
+/** How a document is written; see `save`. */
+export interface SaveOptions {
+  /** A client inside an open transaction the write should join. */
+  client?: PoolClient;
+}
+
 export interface FieldDef {
   /** Physical column name; defaults to the field name. */
   column?: string;
@@ -769,8 +775,13 @@ export class Document {
     return this.toObject();
   }
 
-  async save(): Promise<this> {
-    return this.$model.saveDocument(this as AnyDoc) as Promise<this>;
+  /**
+   * Writes the document. With `client`, the write joins the caller's open
+   * transaction instead of starting its own — for a write that must commit or
+   * roll back together with other statements (services/conversationIntake.ts).
+   */
+  async save(options: SaveOptions = {}): Promise<this> {
+    return this.$model.saveDocument(this as AnyDoc, options) as Promise<this>;
   }
 
   async populate(path: string, select?: Projection): Promise<this> {
@@ -1384,12 +1395,16 @@ class ModelRuntime {
 
   // -- writes ---------------------------------------------------------------
 
-  async saveDocument(doc: AnyDoc): Promise<AnyDoc> {
+  async saveDocument(doc: AnyDoc, options: SaveOptions = {}): Promise<AnyDoc> {
     if (this.hooks.preSave) await this.hooks.preSave.call(doc);
     this.validate(doc);
 
+    // The caller's transaction when it passed one, otherwise a new one.
+    const inTransaction = <T>(fn: (client: PoolClient) => Promise<T>): Promise<T> =>
+      options.client ? fn(options.client) : withTransaction(fn);
+
     if (doc.$isNew) {
-      await withTransaction(async (client) => {
+      await inTransaction(async (client) => {
         const columns: string[] = ['id'];
         const values: unknown[] = [doc._id];
         for (const [name, def] of Object.entries(this.fields)) {
@@ -1427,7 +1442,7 @@ class ModelRuntime {
 
     if (!sets.length && !childrenChanged) return doc;
 
-    await withTransaction(async (client) => {
+    await inTransaction(async (client) => {
       if (sets.length) {
         values.push(doc._id);
         await client.query(

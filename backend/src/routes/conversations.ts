@@ -19,7 +19,11 @@ import Department from '../models/Department';
 import { auth } from '../middleware/auth';
 import { checkPermission, hasPermission } from '../middleware/rbac';
 import events from '../events';
-import { latestMessagesByConversation, unreadCountsByOrganization } from '../db/queries';
+import {
+  latestMessagesByConversation,
+  messagesPage,
+  unreadCountsByOrganization
+} from '../db/queries';
 import { listConversations, conversationCounts, messageMatchesForSearch } from '../db/inboxQueries';
 import { updateAgentLoad } from '../services/autoAssignment';
 import { refreshSla, refreshSlaAll } from '../services/conversationSla';
@@ -254,6 +258,33 @@ router.get(
     notifyAdmin(req)?.messagesRead(site._id, conversation._id);
 
     res.json({ conversation, messages, hasMore });
+  })
+);
+
+/**
+ * A page of one conversation around a message the panel already has:
+ * `?after=<id>` for what it missed while its socket was down, `?before=<id>`
+ * to scroll back. See db/queries.ts#messagesPage.
+ */
+router.get(
+  '/:siteId/:conversationId/messages',
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadAccessibleSite(req, req.params.siteId);
+    const conversationId = requireObjectId(req.params.conversationId, 'conversation id');
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      siteId: site._id,
+      organizationId: orgId(req)
+    });
+    if (!conversation) throw notFound('Conversation');
+
+    res.json(
+      await messagesPage(conversation._id, {
+        after: req.query.after,
+        before: req.query.before,
+        limit: req.query.limit
+      })
+    );
   })
 );
 

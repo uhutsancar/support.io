@@ -219,6 +219,16 @@ export const conversationsAPI = {
     );
   },
 
+  /**
+   * The messages written after `afterId` — what the thread missed while the
+   * socket was down. Never cached.
+   */
+  messagesAfter: (siteId: string, conversationId: string, afterId: string) =>
+    api.get<{ messages: Message[]; hasMore: boolean }>(
+      `${CONVERSATIONS}/${siteId}/${conversationId}/messages`,
+      { params: { after: afterId, limit: 100 }, cache: false }
+    ),
+
   getAssigned: () => api.get<{ conversations: Conversation[] }>(`${CONVERSATIONS}/assigned/me`),
 
   getUnreadCount: () =>

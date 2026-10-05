@@ -157,6 +157,24 @@ export const CLIENT_MESSAGE_TYPES = [
 
 export const isClientMessageType = memberOf(CLIENT_MESSAGE_TYPES);
 
+/**
+ * The longest message a visitor or an agent may send, in characters. One
+ * number for the widget socket, the admin socket and the widget's own
+ * composer; they used to be 10 000 each, written out separately.
+ */
+export const MAX_MESSAGE_LENGTH = 4000;
+
+/**
+ * A client's own id for a message it sends (`clientMessageId`). A resend
+ * after a dropped connection carries the same id, and the unique index on
+ * (conversation_id, client_message_id) keeps it one message. UUIDs from the
+ * panel and the widget's `c_…` ids both fit.
+ */
+const CLIENT_MESSAGE_ID = /^[a-z0-9_.:-]{1,100}$/i;
+
+export const isClientMessageId = (value: unknown): value is string =>
+  typeof value === 'string' && CLIENT_MESSAGE_ID.test(value);
+
 // ------------------------------------------------------------ AI assistant
 
 /**

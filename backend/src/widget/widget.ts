@@ -351,7 +351,10 @@ interface Window {
       offlineNotice: 'Şu anda çevrimdışıyız. Mesajınızı bırakın, en kısa sürede dönelim.',
       poweredBy: 'Support.io ile çalışır',
       assistantLabel: 'Otomatik asistan',
-      talkToHuman: 'Temsilciye bağlan'
+      talkToHuman: 'Temsilciye bağlan',
+      rateLimited: 'Çok hızlı mesaj gönderiyorsunuz. Lütfen biraz bekleyin.',
+      quotaExceeded: 'Şu anda mesaj alamıyoruz, lütfen daha sonra tekrar deneyin.',
+      tooLong: 'Mesaj çok uzun.'
     },
     en: {
       launcherLabel: 'Open support chat',
@@ -391,7 +394,10 @@ interface Window {
       offlineNotice: 'We are offline right now. Leave a message and we will get back to you.',
       poweredBy: 'Powered by Support.io',
       assistantLabel: 'Automatic assistant',
-      talkToHuman: 'Talk to a person'
+      talkToHuman: 'Talk to a person',
+      rateLimited: 'You are sending messages too quickly. Please wait a moment.',
+      quotaExceeded: 'We cannot take new messages right now, please try again later.',
+      tooLong: 'The message is too long.'
     }
   };
 
@@ -546,6 +552,10 @@ interface Window {
   // -------------------------------------------------------------------------
 
   var MAX_FILE_BYTES = 10 * 1024 * 1024;
+  /** The server's limit (domain/constants.ts MAX_MESSAGE_LENGTH). */
+  var MAX_MESSAGE_LENGTH = 4000;
+  /** How long a sent message waits for the server's acknowledgement. */
+  var ACK_TIMEOUT_MS = 12000;
   var ALLOWED_MIME = [
     'image/jpeg',
     'image/png',
@@ -934,6 +944,13 @@ interface Window {
     });
 
     this.socket.on('disconnect', function (reason: string) {
+      // Whatever was in flight may or may not have arrived; it goes again,
+      // under the same clientMessageId, once the socket has re-joined.
+      for (var id in self.pending) {
+        if (self.pending[id] && self.pending[id].state === 'sending') {
+          self.pending[id].state = 'waiting';
+        }
+      }
       // 'io client disconnect' bizim destroy()'umuzdur; kullaniciya
       // "baglanti koptu" demek yanlis olur.
       if (reason === 'io client disconnect') return;
@@ -967,9 +984,21 @@ interface Window {
 
     this.socket.on('conversation-joined', function (data: any) {
       if (data && data.conversation) {
+        var same = self._joinedOnce && self.conversationId === data.conversation._id;
         self.conversationId = data.conversation._id;
-        self._renderThread(data.messages || []);
+        self._joinedOnce = true;
+        if (same) {
+          // A re-join after a dropped connection: what the thread already
+          // shows stays, and only what was missed is added. Each message is
+          // matched by its id, and our own by its clientMessageId.
+          var missed = data.messages || [];
+          for (var m = 0; m < missed.length; m++) self._appendMessage(missed[m]);
+        } else {
+          self._renderThread(data.messages || []);
+        }
+        self._resendPending();
       } else {
+        self._joinedOnce = true;
         self.conversationId = null;
         self._renderThread([]);
         var welcome =
@@ -985,6 +1014,9 @@ interface Window {
           });
         }
         self._renderEmptyStateIfNeeded();
+        // A first message that never reached the server opens the
+        // conversation now.
+        self._resendPending();
       }
       self.emit('conversation:ready', { conversationId: self.conversationId });
     });
@@ -1540,7 +1572,7 @@ interface Window {
         ICONS.paperclip +
         '</button>',
       '<input type="file" class="js-file-input" hidden />',
-      '<textarea class="js-input" rows="1" aria-label="' +
+      '<textarea class="js-input" rows="1" maxlength="' + MAX_MESSAGE_LENGTH + '" aria-label="' +
         escapeHtml(t.placeholder) +
         '" placeholder="' +
         escapeHtml(c.messages.placeholderText || t.placeholder) +
@@ -2124,7 +2156,11 @@ interface Window {
     }
     var content = this.el!.input.value.trim();
     if (!content && !this.selectedFile) return;
-    if (!this.socket || !this.socket.connected) {
+    if (content.length > MAX_MESSAGE_LENGTH) {
+      this._notice(this.t.tooLong, 'error');
+      return;
+    }
+    if (!this.socket) {
       this._notice(this.t.connectionLost, 'error');
       return;
     }
@@ -2142,11 +2178,11 @@ interface Window {
       createdAt: new Date().toISOString()
     };
     var node = this._appendMessage(localMessage);
-    if (node) {
-      node.classList.add('pending');
-      node.querySelector('.meta').textContent = this.t.sending;
-      this.pending[clientMessageId] = { node: node, content: content, file: file };
-    }
+    if (!node) return;
+    node.classList.add('pending');
+    node.querySelector('.meta').textContent = this.t.sending;
+    var entry: any = { node: node, content: content, file: file, payload: null };
+    this.pending[clientMessageId] = entry;
 
     this.el!.input.value = '';
     this.el!.input.style.height = 'auto';
@@ -2174,24 +2210,69 @@ interface Window {
         if (!payload.content) payload.content = file.name;
       }
 
-      this.socket.emit('send-message', payload);
+      entry.payload = payload;
+      this._deliver(clientMessageId);
       this.emit('message:sent', { content: payload.content, clientMessageId: clientMessageId });
-
-      // Sunucu 12 saniyede yankilamazsa gonderim basarisiz sayilir. Sessizce
-      // "gonderiliyor" durumunda asili kalmak en kotu sonuctur.
-      var self = this;
-      this._timer(function () {
-        var still = self.pending[clientMessageId];
-        if (!still) return;
-        delete self.pending[clientMessageId];
-        self._markFailed(still, clientMessageId);
-      }, 12000);
     } catch (error) {
-      var entry = this.pending[clientMessageId];
       delete this.pending[clientMessageId];
-      if (entry) this._markFailed(entry, clientMessageId);
+      this._markFailed(entry, clientMessageId);
       this._notice(this.t.uploadFailed, 'error');
       this.emit('error', { code: 'SEND_FAILED', message: error.message });
+    }
+  };
+
+  /**
+   * Sends one pending message and settles it on the server's acknowledgement.
+   *
+   * The message keeps its clientMessageId for every attempt, so a resend of a
+   * message the server did store — its acknowledgement lost with the
+   * connection — comes back as that same message, never a second one. While
+   * the socket is down the message waits and goes out after the re-join.
+   */
+  Widget.prototype._deliver = function (this: WidgetInstance, clientMessageId: string) {
+    var self = this;
+    var entry = this.pending[clientMessageId];
+    if (!entry || !entry.payload) return;
+    if (!this.socket || !this.socket.connected) {
+      entry.state = 'waiting';
+      return;
+    }
+    entry.state = 'sending';
+    var attempt = (entry.attempt = (entry.attempt || 0) + 1);
+    this.socket
+      .timeout(ACK_TIMEOUT_MS)
+      .emit('send-message', entry.payload, function (err: Error | null, reply: any) {
+        var still = self.pending[clientMessageId];
+        // Settled by the echo already, or superseded by a resend after a
+        // reconnect: that attempt's answer is the one that counts.
+        if (!still || still.attempt !== attempt) return;
+        if (err) {
+          // No answer in time. Offline: wait for the re-join. Online: give the
+          // visitor the retry button rather than an endless spinner.
+          if (!self.socket || !self.socket.connected) {
+            still.state = 'waiting';
+            return;
+          }
+          delete self.pending[clientMessageId];
+          self._markFailed(still, clientMessageId);
+          return;
+        }
+        if (reply && reply.ok && reply.message) {
+          self._appendMessage(reply.message);
+          return;
+        }
+        delete self.pending[clientMessageId];
+        self._markFailed(still, clientMessageId);
+        var code = reply && reply.code;
+        if (code === 'RATE_LIMITED') self._notice(self.t.rateLimited, 'error');
+        else if (code === 'QUOTA_EXCEEDED') self._notice(self.t.quotaExceeded, 'error');
+      });
+  };
+
+  /** Sends again every message still waiting for the connection, in order. */
+  Widget.prototype._resendPending = function (this: WidgetInstance) {
+    for (var id in this.pending) {
+      if (this.pending[id] && this.pending[id].state === 'waiting') this._deliver(id);
     }
   };
 
@@ -2210,6 +2291,17 @@ interface Window {
       escapeHtml(this.t.retry) +
       '</button>';
     this._listen(meta.querySelector('.retry'), 'click', function () {
+      // The same message, the same clientMessageId: if the first attempt did
+      // reach the server after all, this one comes back as it.
+      if (entry.payload) {
+        entry.node.classList.remove('failed');
+        entry.node.classList.add('pending');
+        meta.textContent = self.t.sending;
+        self.pending[clientMessageId] = entry;
+        self._deliver(clientMessageId);
+        return;
+      }
+      // The upload itself failed: start over from the composer.
       entry.node.remove();
       delete self.seen[clientMessageId];
       self.el!.input.value = entry.content;

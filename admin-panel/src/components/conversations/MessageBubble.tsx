@@ -14,6 +14,8 @@ import type { Message } from '../../types/api';
 
 export interface MessageBubbleProps {
   message: Message;
+  /** Sends a failed reply again under the same clientMessageId. */
+  onRetry?: (clientMessageId: string) => void;
 }
 
 /**
@@ -53,7 +55,7 @@ export function handoffReasonKey(reason: string): string {
   return reason;
 }
 
-const MessageBubble = ({ message }: MessageBubbleProps) => {
+const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
   const { t } = useTranslation();
   const ai = message.aiMetadata;
   // The visitor's messages sit on the left; everything we send — an agent's
@@ -84,7 +86,7 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
         )}
 
         <div
-          className={`px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 rounded-lg transition-colors duration-200 break-words overflow-wrap-anywhere ${bubbleStyle}`}
+          className={`px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 rounded-lg transition-colors duration-200 break-words overflow-wrap-anywhere ${bubbleStyle} ${message.status === 'pending' ? 'opacity-70' : ''} ${message.status === 'failed' ? 'ring-1 ring-red-400' : ''}`}
         >
           <p className="text-xs sm:text-sm">{message.content}</p>
 
@@ -135,9 +137,28 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
         ) : null}
 
         <div className="flex items-center justify-end space-x-1 mt-1">
-          <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">
-            {formatTime(message.createdAt)}
-          </p>
+          {message.status === 'pending' && (
+            <p className="text-xs text-gray-400 dark:text-gray-500">{t('conversations.sending', 'Gönderiliyor…')}</p>
+          )}
+          {message.status === 'failed' && (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {t('conversations.notSent', 'Gönderilemedi')}
+              {onRetry && message.clientMessageId && (
+                <button
+                  type="button"
+                  onClick={() => onRetry(message.clientMessageId as string)}
+                  className="ml-2 underline font-medium"
+                >
+                  {t('conversations.retrySend', 'Tekrar dene')}
+                </button>
+              )}
+            </p>
+          )}
+          {!message.status && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors duration-200">
+              {formatTime(message.createdAt)}
+            </p>
+          )}
           {message.senderType === 'agent' && message.isRead && (
             <CheckCheck className="w-3 h-3 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
           )}

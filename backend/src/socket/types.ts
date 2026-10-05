@@ -48,6 +48,8 @@ export interface WidgetSocketState {
   prefersHuman?: boolean;
   /** The user id the shop vouched for with a valid userHash; null when anonymous. */
   verifiedUserId?: string | null;
+  /** The first message's conversation while it is being opened. */
+  opening?: Promise<void>;
 }
 
 export type WidgetSocket = Socket & WidgetSocketState;
@@ -117,6 +119,25 @@ export interface SendMessagePayload extends ClientPayloadBase {
   fileData?: UploadedFilePayload;
   /** Echoed back so the widget can reconcile its optimistic message. */
   clientMessageId?: string;
+}
+
+/**
+ * The acknowledgement a `send-message` (or `load-messages`) caller receives:
+ * the stored message, or why there is none. The `new-message` broadcast
+ * still happens; this is what tells the sender that *their* copy is safe.
+ */
+export type MessageAck = (
+  reply:
+    | { ok: true; message?: unknown; duplicate?: boolean; messages?: unknown[]; hasMore?: boolean }
+    | { ok: false; code: string; message?: string }
+) => void;
+
+/** A page of one conversation's messages, around one the client already has. */
+export interface LoadMessagesPayload extends ClientPayloadBase {
+  conversationId?: string;
+  after?: string;
+  before?: string;
+  limit?: number;
 }
 
 /** The visitor pressed "talk to a person" in an assistant-answered chat. */
