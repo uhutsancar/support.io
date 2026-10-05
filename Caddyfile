@@ -25,6 +25,16 @@ handle /health {
     reverse_proxy backend:3000
 }
 
+handle /ready {
+    reverse_proxy backend:3000
+}
+
+# Locally stored chat attachments and logos (no S3 in development). Without
+# this the URLs the backend hands out fall through to the Vite server below.
+handle /uploads/* {
+    reverse_proxy backend:3000
+}
+
 # Widget entegrasyon test sayfasi backend'in statik dosyalari arasindadir.
 # Bu blok olmadan /demo asagidaki SPA handler'ina duser ve Vite admin
 # panelinin index.html'ini dondururdu.
@@ -36,7 +46,5 @@ handle {
     reverse_proxy admin:5173
 }
 
-# Basic security headers
-header {
-    Strict-Transport-Security "max-age=31536000;"
-}
+# No Strict-Transport-Security here: this is plain http on localhost, where
+# browsers ignore the header anyway. Production sets it in Caddyfile.prod.

@@ -13,13 +13,15 @@
 // durmaz. CORS_ORIGINS virgülle ayrılmış tam origin listesidir, örneğin:
 //   CORS_ORIGINS=https://panel.ornek.com,https://www.ornek.com
 //
-// Tanımlı değilse bugünkü davranış korunur: mevcut dağıtım adresi listede
-// kalır, böylece bu değişiklik çalışan bir kurulumu bozmaz.
+// Tanımlı değilse yalnızca geliştirme kökenleri geçerlidir.
 // From config/env, which loads .env first. Computed here, it ran before the
 // environment existed and was therefore always false.
 import { isProduction } from './env';
 
-const FALLBACK_PRODUCTION_ORIGINS = ['https://main.d3gdzskzc1itkc.amplifyapp.com'];
+// Production refuses to boot without CORS_ORIGINS (config/env.ts), so this list
+// is never what production runs with. It used to name an old Amplify
+// deployment, which kept a dead origin allowed in every environment.
+const FALLBACK_PRODUCTION_ORIGINS: string[] = [];
 
 // Geliştirme portları yalnızca production dışında açılır. Üretimde localhost'a
 // izin vermek, geliştiricinin makinesindeki bir sayfanın canlı API'ye
@@ -31,7 +33,6 @@ const DEVELOPMENT_ORIGINS = [
   'http://localhost:3004',
   'http://localhost:5173' // docker compose'daki admin servisi
 ];
-
 
 const configuredOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')

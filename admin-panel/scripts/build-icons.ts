@@ -56,7 +56,7 @@ function shade(x: number, y: number, opaqueBackground: any) {
   if (!inBadge) return [0, 0, 0, 0];
 
   let color = BRAND.slice();
-  let alpha = 255;
+  const alpha = 255;
 
   // arka balon: %45 beyaz
   if (sdRoundRect(x, y, 7, 6.5, 19, 14, 5.5) <= 0) {

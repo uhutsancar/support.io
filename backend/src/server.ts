@@ -134,7 +134,11 @@ app.use(
   helmet({
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: false,
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    // Strict-Transport-Security is set once, by Caddy (Caddyfile.prod), where
+    // its lifetime is decided. Both sending it produced two headers with
+    // different max-age values.
+    strictTransportSecurity: false
   })
 );
 app.use(contentSecurityPolicy({ isProduction }));
@@ -218,14 +222,6 @@ app.get('/health', async (_req: Request, res: Response) => {
   });
 });
 
-app.get('/', (_req: Request, res: Response) => {
-  res.json({
-    name: 'DestekChat API',
-    version: '1.0.0',
-    status: 'running'
-  });
-});
-
 // --- 📦 4. STATİK DOSYALAR ---
 //
 // Yollar __dirname'e göre çözülür. Eskiden `express.static('public')` yazıyordu:
@@ -287,7 +283,11 @@ app.use(
   })
 );
 
-app.use('/demo', express.static(demoPath));
+// The widget test page is a development tool. In production it would be a
+// second, unauthenticated page on the panel's own origin, serving a demo key.
+if (!isProduction) {
+  app.use('/demo', express.static(demoPath));
+}
 
 // Locally stored uploads. With S3 configured this directory stays empty and the
 // route is simply never hit; see middleware/upload.ts.
