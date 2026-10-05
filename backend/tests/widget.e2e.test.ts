@@ -25,6 +25,7 @@ import { open, seal } from '../src/config/secretBox';
 import { userHashFor, verifiedIdentity } from '../src/services/identity';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor, widgetSession, widgetToken } from './helpers/widget';
+import { verifyEmail } from './helpers/accounts';
 
 /** How one request to the running API is made. */
 interface ApiOptions {
@@ -96,6 +97,8 @@ async function createTenant(label: string) {
     reg.status === 200 || reg.status === 201,
     `register failed: ${JSON.stringify(reg.body)}`
   );
+  // The widget goes live only for a verified owner.
+  await verifyEmail(`${label}${stamp}@widget.test`);
 
   const site = await api('/api/sites', {
     method: 'POST',

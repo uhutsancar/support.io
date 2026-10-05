@@ -605,6 +605,33 @@ export default {
       description: 'Deneyimli ve tutkulu profesyonellerden oluşan ekibimiz, sizin için çalışıyor.'
     }
   },
+  recovery: {
+    forgotTitle: 'Şifremi unuttum',
+    forgotSubtitle: 'Hesabınızın e-posta adresini yazın; şifre sıfırlama bağlantısı gönderelim.',
+    forgotSent:
+      'Bu adrese ait bir hesap varsa sıfırlama bağlantısı gönderildi. Gelen kutunuzu (ve istenmeyen klasörünü) kontrol edin.',
+    sendLink: 'Bağlantı gönder',
+    backToLogin: 'Girişe dön',
+    resetTitle: 'Yeni şifre belirleyin',
+    resetSubtitle: 'En az 8 karakter. Kaydettiğinizde tüm cihazlardaki oturumlarınız kapanır.',
+    newPassword: 'Yeni şifre',
+    confirmPassword: 'Yeni şifre (tekrar)',
+    savePassword: 'Şifreyi kaydet',
+    signsOutEverywhere: 'Güvenliğiniz için diğer tüm oturumlarınız kapatılacak.',
+    mismatch: 'Şifreler aynı değil',
+    resetDone: 'Şifreniz değişti. Yeni şifrenizle giriş yapın.',
+    invalidLink: 'Bu bağlantı geçersiz ya da süresi dolmuş.',
+    newLink: 'Yeni bağlantı iste',
+    verifyTitle: 'E-posta doğrulama',
+    verifyDone: 'E-posta adresiniz doğrulandı. Widget’ınız artık sitenizde çalışabilir.',
+    verifyFailed: 'Bu doğrulama bağlantısı geçersiz ya da süresi dolmuş. Panelden yenisini isteyebilirsiniz.',
+    toDashboard: 'Panele git',
+    banner:
+      'E-posta adresinizi ({{email}}) doğrulayın. Doğruladıktan sonra widget’ınız sitenizde çalışmaya başlar ve ödeme yapabilirsiniz.',
+    resend: 'Bağlantıyı yeniden gönder',
+    resent: 'Doğrulama bağlantısı {{email}} adresine gönderildi.',
+    error: 'İşlem tamamlanamadı'
+  },
   login: {
     title: 'Giriş Yap',
     subtitle: 'Hesabınıza giriş yapın',

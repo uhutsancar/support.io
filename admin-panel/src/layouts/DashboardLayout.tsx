@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { VerifyEmailBanner } from '../pages/AccountRecovery';
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -639,6 +640,7 @@ const DashboardLayout = () => {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <VerifyEmailBanner />
           <Outlet />
         </main>
       </div>

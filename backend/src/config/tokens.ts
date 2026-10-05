@@ -73,7 +73,23 @@ export function verifySession(token: string): AuthTokenPayload {
   ) {
     throw new Error('Session carries a malformed organization');
   }
+  if (decoded.sv !== undefined && !Number.isInteger(decoded.sv)) {
+    throw new Error('Session carries a malformed version');
+  }
   return decoded;
+}
+
+/**
+ * Whether a verified session is still current for its account: a password
+ * reset (or any future "sign out everywhere") raises the account's
+ * session_version, and every session signed with an older one ends.
+ * Sessions issued before versions existed carry none and count as 0.
+ */
+export function sessionIsCurrent(
+  decoded: AuthTokenPayload,
+  account: { sessionVersion?: number | null }
+): boolean {
+  return (decoded.sv ?? 0) === (account.sessionVersion ?? 0);
 }
 
 // ---------------------------------------------------------- yükleme kanıtı

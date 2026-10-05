@@ -10,7 +10,7 @@ import User from '../models/User';
 import Organization from '../models/Organization';
 import { SESSION_COOKIE } from '../config/session';
 import { isOriginAllowed } from '../config/origins';
-import { verifySession, verifyWidgetSession } from '../config/tokens';
+import { sessionIsCurrent, verifySession, verifyWidgetSession } from '../config/tokens';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { siteForWidgetSession, WIDGET_SESSION_INVALID } from '../middleware/widgetSession';
 import type { Namespace, Socket } from 'socket.io';
@@ -65,6 +65,7 @@ export function installAdminAuthentication(admin: Namespace): void {
       const Account = decoded.userType === 'team' ? Team : User;
       const account = await Account.findOne({ _id: decoded.userId, isActive: true });
       if (!account?.organizationId) return next(new Error(AUTH_FAILED));
+      if (!sessionIsCurrent(decoded, account)) return next(new Error(AUTH_FAILED));
 
       // The organization comes from the database, not the token: an account
       // removed from a company would otherwise keep its access until the token

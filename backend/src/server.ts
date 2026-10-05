@@ -38,6 +38,8 @@ import { initialize as initializeAutomationEngine } from './services/automationE
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper } from './services/slaSweeper';
 import { closeRedisAdapter } from './socket/adapter';
+import { mailProvider } from './services/mail';
+import { outboxFor } from './services/mail/console';
 import { stopAutoReplies } from './services/ai/autoReply';
 import {
   loginLimiter,
@@ -211,6 +213,15 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
 
 app.use('/api/audit', auditRoutes);
+
+// The development mail outbox: what the console transport "sent", so the
+// verification and reset links can be followed without a mail server. Never
+// mounted in production, nor when real SMTP is configured.
+if (!isProduction && mailProvider() === 'console') {
+  app.get('/api/dev/outbox', (req: Request, res: Response) => {
+    res.json({ mails: outboxFor(String(req.query.to || '')) });
+  });
+}
 
 // API callers always receive JSON rather than the SPA shell for an unmatched
 // path. Failures inside a route are answered by `errorHandler`, registered

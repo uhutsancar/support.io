@@ -36,6 +36,8 @@ import {
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { originRefused, requireWidgetSession } from '../middleware/widgetSession';
 import { widgetSessionLimiter } from '../middleware/rateLimit';
+import { organizationVerified } from '../services/verification';
+import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActive } from '../services/ai/autoReply';
@@ -223,6 +225,12 @@ router.post(
     // An invalid key and a disabled site answer identically, so probing keys
     // cannot reveal "this site exists but is switched off".
     if (!site) throw widgetNotFound();
+
+    // The widget goes live once the organization's owner has verified their
+    // address (plan §7.2); until then the panel works but no page does.
+    if (!(await organizationVerified(site.organizationId))) {
+      throw forbidden('The account behind this site has not verified its e-mail', 'ACCOUNT_NOT_VERIFIED');
+    }
 
     // A session is the one thing that must come from a page on the site: a
     // browser always sends Origin on this POST, so a missing one is refused.

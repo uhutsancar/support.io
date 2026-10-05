@@ -66,7 +66,19 @@ export const authAPI = {
   me: () => api.get<{ user: CurrentUser }>('/auth/me'),
   logout: () => api.post('/auth/logout'),
   updateStatus: (data: { status: string }) => api.put('/auth/status', data),
-  deleteAccount: () => api.delete('/auth/account')
+  deleteAccount: () => api.delete('/auth/account'),
+
+  // E-mail links (plan §7.2). The answers never say whether an address has
+  // an account; the locale picks the mail's language.
+  forgotPassword: (email: string, locale?: string) =>
+    api.post<{ message: string }>('/auth/forgot-password', { email, locale }),
+  resetPassword: (token: string, password: string) =>
+    api.post<{ reset: boolean }>('/auth/reset-password', { token, password }),
+  verifyEmail: (token: string) => api.post<{ verified: boolean }>('/auth/verify-email', { token }),
+  resendVerification: (locale?: string) =>
+    api.post<{ sent?: boolean; alreadyVerified?: boolean }>('/auth/resend-verification', {
+      locale
+    })
 };
 
 // --------------------------------------------------------------------- sites

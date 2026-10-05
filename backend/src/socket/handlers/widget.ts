@@ -299,154 +299,159 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
     // ---------------------------------------------------------------- talking
 
+    // One visitor's messages are handled strictly one after another: the
+    // order they were sent is the order they are stored, and the first one
+    // has opened the conversation before the second asks for it. Handled
+    // concurrently, a quick second message could overtake the first.
     socket.on(
       'send-message',
-      ctx.guard(socket, async (data: SendMessagePayload | undefined, ack?: MessageAck) => {
-        const { content, messageType, fileData, clientMessageId } = data || {};
-
-        // validate
-        if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
-          return refuse(socket, ack, 'INVALID_MESSAGE', 'Invalid message content');
-        }
-        if (messageType && !isClientMessageType(messageType)) {
-          return refuse(
-            socket,
-            ack,
-            'INVALID_MESSAGE',
-            `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
-          );
-        }
-        if (clientMessageId != null && !isClientMessageId(clientMessageId)) {
-          return refuse(socket, ack, 'INVALID_MESSAGE', 'Invalid client message id');
-        }
-
-        // authorize: the site of the signed session, still active
-        const site = await Site.findOne({ _id: socket.siteId, isActive: true });
-        if (!site?.organizationId) {
-          return refuse(socket, ack, 'SITE_NOT_FOUND', 'Site not found');
-        }
-        // The site's assistant answers when it is on; otherwise the FAQ keyword
-        // bot below does, as before. Never both.
-        const assistant = assistantActive(site);
-
-        // The first message opens the conversation; see conversationIntake.ts.
-        // Two sends racing on one socket share the one opening.
-        if (!socket.conversationId) {
-          socket.opening ??= openFirstConversation(ctx, socket, site, content, assistant).finally(
-            () => {
-              socket.opening = undefined;
-            }
-          );
-          await socket.opening;
-        }
-
-        const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
-        if (!conversation) {
-          ctx.reject(socket);
-          return ack?.({ ok: false, code: 'NOT_FOUND' });
-        }
-
-        // A resend after a dropped connection carries the id of a message we
-        // already stored. It is acknowledged to this socket only — no second
-        // message, no second broadcast, no second automatic answer.
-        if (clientMessageId) {
-          const existing = await Message.findOne({
-            conversationId: conversation._id,
-            clientMessageId
-          });
-          if (existing) return delivered(socket, ack, existing.toObject(), true);
-        }
-
-        const needsAttachment = messageType === 'file' || messageType === 'image';
-        const verifiedFile = needsAttachment
-          ? ctx.verifyAttachment(fileData, conversation.siteId)
-          : null;
-        if (needsAttachment && !verifiedFile) {
-          return refuse(socket, ack, 'INVALID_ATTACHMENT', 'Invalid or expired file upload');
-        }
-
-        // insert — the unique index is the last word on duplicates
-        const messageData: CreateInput<MessageDoc> = {
-          conversationId: conversation._id,
-          senderType: 'visitor',
-          senderId: conversation.visitorId,
-          senderName: conversation.visitorName,
-          content: content.trim(),
-          messageType: messageType || 'text',
-          isRead: false,
-          clientMessageId: clientMessageId ?? null
-        };
-        if (verifiedFile) messageData.fileData = verifiedFile;
-
-        let message;
-        try {
-          message = await Message.create(messageData);
-        } catch (error) {
-          // Two copies raced past the check above; the unique index kept one.
-          if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId)
-            throw error;
-          const stored = await Message.findOne({
-            conversationId: conversation._id,
-            clientMessageId
-          });
-          if (stored) return delivered(socket, ack, stored.toObject(), true);
-          throw error;
-        }
-        // Echoed back, id included, so the widget can reconcile its optimistic copy.
-        const emitted = message.toObject();
-
-        // One atomic increment: two messages landing together must not both
-        // read the old count and write it back plus one.
-        const counted = await Conversation.findByIdAndUpdate(
-          conversation._id,
-          { $inc: { unreadCount: 1 }, lastMessageAt: new Date() },
-          { new: true }
-        );
-        if (counted) {
-          conversation.unreadCount = counted.unreadCount;
-          conversation.lastMessageAt = counted.lastMessageAt;
-        }
-
-        // The assigned agent has gone away since they took this: hand it on
-        // rather than leaving the visitor waiting on somebody who is not there.
-        if (conversation.assignedAgent) {
-          const agent = await Team.findById(conversation.assignedAgent);
-          if (agent && isAwayPresence(agent.status) && conversation.organizationId) {
-            await checkAndReassign(conversation._id, String(conversation.organizationId));
-            await conversation.populate('assignedAgent', 'name avatar status');
-          }
-        }
-
-        // emit — only after the row is committed
-        ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
-        ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });
-        if (conversation.assignedAgent) {
-          ctx.toAdminUser(conversation.assignedAgent, 'new-message', {
-            message: emitted,
-            conversation
-          });
-        }
-        ctx.toAdminSite(conversation.siteId, 'notification', {
-          type: 'new-message',
-          message: `New message from ${conversation.visitorName}`,
-          siteId: conversation.siteId,
-          conversationId: conversation._id,
-          timestamp: new Date()
-        });
-
-        // ACK
-        ack?.({ ok: true, message: emitted });
-
-        runAutomation('message_received', conversation, { content, message });
-        if (!assistant) {
-          await tryFaqAutoResponse(ctx, conversation, content);
-        } else if (conversation.responseOwner === 'ai') {
-          // Not awaited: the answer arrives on its own, and this message has
-          // already reached the inbox. See services/ai/autoReply.ts.
-          scheduleAutoReply(ctx.io, conversation._id, message._id);
-        }
+      ctx.guard(socket, (data: SendMessagePayload | undefined, ack?: MessageAck) => {
+        const run = () => handleMessage(data, ack);
+        const done = (socket.sending ?? Promise.resolve()).then(run, run);
+        socket.sending = done.catch(() => undefined);
+        return done;
       })
     );
+
+    const handleMessage = async (data: SendMessagePayload | undefined, ack?: MessageAck) => {
+      const { content, messageType, fileData, clientMessageId } = data || {};
+
+      // validate
+      if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
+        return refuse(socket, ack, 'INVALID_MESSAGE', 'Invalid message content');
+      }
+      if (messageType && !isClientMessageType(messageType)) {
+        return refuse(
+          socket,
+          ack,
+          'INVALID_MESSAGE',
+          `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
+        );
+      }
+      if (clientMessageId != null && !isClientMessageId(clientMessageId)) {
+        return refuse(socket, ack, 'INVALID_MESSAGE', 'Invalid client message id');
+      }
+
+      // authorize: the site of the signed session, still active
+      const site = await Site.findOne({ _id: socket.siteId, isActive: true });
+      if (!site?.organizationId) {
+        return refuse(socket, ack, 'SITE_NOT_FOUND', 'Site not found');
+      }
+      // The site's assistant answers when it is on; otherwise the FAQ keyword
+      // bot below does, as before. Never both.
+      const assistant = assistantActive(site);
+
+      // The first message opens the conversation; see conversationIntake.ts.
+      if (!socket.conversationId) {
+        await openFirstConversation(ctx, socket, site, content, assistant);
+      }
+
+      const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+      if (!conversation) {
+        ctx.reject(socket);
+        return ack?.({ ok: false, code: 'NOT_FOUND' });
+      }
+
+      // A resend after a dropped connection carries the id of a message we
+      // already stored. It is acknowledged to this socket only — no second
+      // message, no second broadcast, no second automatic answer.
+      if (clientMessageId) {
+        const existing = await Message.findOne({
+          conversationId: conversation._id,
+          clientMessageId
+        });
+        if (existing) return delivered(socket, ack, existing.toObject(), true);
+      }
+
+      const needsAttachment = messageType === 'file' || messageType === 'image';
+      const verifiedFile = needsAttachment
+        ? ctx.verifyAttachment(fileData, conversation.siteId)
+        : null;
+      if (needsAttachment && !verifiedFile) {
+        return refuse(socket, ack, 'INVALID_ATTACHMENT', 'Invalid or expired file upload');
+      }
+
+      // insert — the unique index is the last word on duplicates
+      const messageData: CreateInput<MessageDoc> = {
+        conversationId: conversation._id,
+        senderType: 'visitor',
+        senderId: conversation.visitorId,
+        senderName: conversation.visitorName,
+        content: content.trim(),
+        messageType: messageType || 'text',
+        isRead: false,
+        clientMessageId: clientMessageId ?? null
+      };
+      if (verifiedFile) messageData.fileData = verifiedFile;
+
+      let message;
+      try {
+        message = await Message.create(messageData);
+      } catch (error) {
+        // Two copies raced past the check above; the unique index kept one.
+        if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId)
+          throw error;
+        const stored = await Message.findOne({
+          conversationId: conversation._id,
+          clientMessageId
+        });
+        if (stored) return delivered(socket, ack, stored.toObject(), true);
+        throw error;
+      }
+      // Echoed back, id included, so the widget can reconcile its optimistic copy.
+      const emitted = message.toObject();
+
+      // One atomic increment: two messages landing together must not both
+      // read the old count and write it back plus one.
+      const counted = await Conversation.findByIdAndUpdate(
+        conversation._id,
+        { $inc: { unreadCount: 1 }, lastMessageAt: new Date() },
+        { new: true }
+      );
+      if (counted) {
+        conversation.unreadCount = counted.unreadCount;
+        conversation.lastMessageAt = counted.lastMessageAt;
+      }
+
+      // The assigned agent has gone away since they took this: hand it on
+      // rather than leaving the visitor waiting on somebody who is not there.
+      if (conversation.assignedAgent) {
+        const agent = await Team.findById(conversation.assignedAgent);
+        if (agent && isAwayPresence(agent.status) && conversation.organizationId) {
+          await checkAndReassign(conversation._id, String(conversation.organizationId));
+          await conversation.populate('assignedAgent', 'name avatar status');
+        }
+      }
+
+      // emit — only after the row is committed
+      ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
+      ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });
+      if (conversation.assignedAgent) {
+        ctx.toAdminUser(conversation.assignedAgent, 'new-message', {
+          message: emitted,
+          conversation
+        });
+      }
+      ctx.toAdminSite(conversation.siteId, 'notification', {
+        type: 'new-message',
+        message: `New message from ${conversation.visitorName}`,
+        siteId: conversation.siteId,
+        conversationId: conversation._id,
+        timestamp: new Date()
+      });
+
+      // ACK
+      ack?.({ ok: true, message: emitted });
+
+      runAutomation('message_received', conversation, { content, message });
+      if (!assistant) {
+        await tryFaqAutoResponse(ctx, conversation, content);
+      } else if (conversation.responseOwner === 'ai') {
+        // Not awaited: the answer arrives on its own, and this message has
+        // already reached the inbox. See services/ai/autoReply.ts.
+        scheduleAutoReply(ctx.io, conversation._id, message._id);
+      }
+    };
 
     // ------------------------------------------------------------- history
 

@@ -17,7 +17,15 @@ import { startSession, endSession, SESSION_TTL_SECONDS } from '../config/session
 import { signSession } from '../config/tokens';
 import { passwordProblem, burnVerification, needsRehash } from '../config/passwords';
 import { PRESENCE_STATUSES, isPresenceStatus } from '../domain';
-import { asyncHandler, badRequest, unauthorized } from '../http';
+import { asyncHandler, badRequest, HttpError, unauthorized } from '../http';
+import { consumeAuthToken, issueAuthToken, revokeAuthTokens } from '../services/authTokens';
+import { appBaseUrl, mail } from '../services/mail';
+import {
+  forgotPasswordAccountLimiter,
+  forgotPasswordLimiter,
+  resendVerificationLimiter
+} from '../middleware/rateLimit';
+import type { MailLocale } from '../services/mail';
 import type { Request, Response } from 'express';
 import type { AuthTokenPayload, AuthenticatedUser, UserType } from '../types/auth';
 
@@ -73,6 +81,7 @@ function accountResponse(
     // Only a User account carries the onboarding flag; a Team agent is invited
     // into an organization that is already set up, so they are always done.
     isOnboarded: userType === 'team' ? true : 'isOnboarded' in user ? user.isOnboarded : false,
+    emailVerified: Boolean(user.emailVerifiedAt),
     organizationId: user.organizationId ?? null,
     userType,
     ...(organization !== undefined
@@ -84,6 +93,58 @@ function accountResponse(
       : {})
   };
 }
+
+/** The session claims for an account, its current session version included. */
+function sessionClaims(user: AuthenticatedUser, userType: UserType): AuthTokenPayload {
+  const claims: AuthTokenPayload = {
+    userId: user._id,
+    userType,
+    role: user.role,
+    sv: user.sessionVersion ?? 0
+  };
+  if (user.organizationId) claims.organizationId = user.organizationId;
+  return claims;
+}
+
+/** The language a mail goes out in: the panel's, when it says. */
+function mailLocale(req: Request): MailLocale {
+  const asked = String(req.body?.locale || req.get('accept-language') || '').toLowerCase();
+  return asked.startsWith('en') ? 'en' : 'tr';
+}
+
+/** Mails the account a fresh verification link. */
+async function sendVerification(
+  req: Request,
+  user: AuthenticatedUser,
+  userType: UserType
+): Promise<boolean> {
+  const token = await issueAuthToken({ id: user._id, type: userType }, 'verify');
+  return mail.sendVerification(user.email, {
+    name: user.name,
+    link: `${appBaseUrl()}/verify-email?token=${encodeURIComponent(token)}`,
+    locale: mailLocale(req)
+  });
+}
+
+/** The active account behind an address, in either table. */
+async function accountByEmail(
+  email: string
+): Promise<{ user: AuthenticatedUser; userType: UserType } | null> {
+  const user = await User.findOne({ email, isActive: true });
+  if (user) return { user, userType: 'user' };
+  const team = await Team.findOne({ email, isActive: true });
+  return team ? { user: team, userType: 'team' } : null;
+}
+
+/** The account a spent token belongs to. */
+async function accountById(id: string, userType: UserType): Promise<AuthenticatedUser | null> {
+  return userType === 'team'
+    ? Team.findOne({ _id: id, isActive: true })
+    : User.findOne({ _id: id, isActive: true });
+}
+
+const invalidToken = () =>
+  new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
 
 /** Every account belongs to an organization; one is created if it has none. */
 async function organizationFor(user: AuthenticatedUser): Promise<unknown> {
@@ -135,13 +196,16 @@ router.post(
     organization.ownerUserId = user._id;
     await organization.save();
 
-    const token = signSession(
-      { userId: user._id, organizationId: organization._id, role: user.role, userType: 'user' },
-      SESSION_TTL_SECONDS
-    );
+    // The account is usable at once; the widget and billing open once the
+    // address is verified (services/verification.ts). A mail that cannot be
+    // sent does not fail the sign-up — the panel offers to send it again.
+    const verificationSent = await sendVerification(req, user, 'user');
+
+    const token = signSession(sessionClaims(user, 'user'), SESSION_TTL_SECONDS);
 
     res.status(201).json({
       user: accountResponse(user, 'user'),
+      verificationSent,
       csrfToken: startSession(res, token)
     });
   })
@@ -196,8 +260,7 @@ router.post(
     user.status = 'online';
     await user.save();
 
-    const tokenPayload: AuthTokenPayload = { userId: user._id, userType, role: user.role };
-    if (user.organizationId) tokenPayload.organizationId = user.organizationId;
+    const tokenPayload = sessionClaims(user, userType);
 
     events.emit('auth.login.success', {
       organizationId: user.organizationId,
@@ -246,6 +309,120 @@ router.put(
     req.user.status = status;
     await req.user.save();
     res.json({ message: 'Status updated successfully', status: req.user.status });
+  })
+);
+
+// ------------------------------------------------------- e-mail verification
+
+router.post(
+  '/verify-email',
+  asyncHandler(async (req: Request, res: Response) => {
+    const spent = await consumeAuthToken(req.body?.token, 'verify');
+    if (!spent) throw invalidToken();
+    const user = await accountById(spent.id, spent.type);
+    if (!user) throw invalidToken();
+
+    if (!user.emailVerifiedAt) {
+      user.emailVerifiedAt = new Date();
+      await user.save();
+      events.emit('auth.email.verified', {
+        organizationId: user.organizationId,
+        userId: user._id,
+        metadata: { userType: spent.type },
+        ip: req.ip,
+        ua: req.get('user-agent')
+      });
+    }
+    res.json({ verified: true });
+  })
+);
+
+router.post(
+  '/resend-verification',
+  auth,
+  resendVerificationLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    if (req.user.emailVerifiedAt) {
+      res.json({ alreadyVerified: true });
+      return;
+    }
+    const sent = await sendVerification(req, req.user, req.userType);
+    res.json({ sent });
+  })
+);
+
+// ------------------------------------------------------------ password reset
+
+const RESET_REQUESTED = {
+  message: 'If an account exists for this address, a reset link is on its way.'
+};
+
+router.post(
+  '/forgot-password',
+  forgotPasswordLimiter,
+  forgotPasswordAccountLimiter,
+  [body('email').isEmail().normalizeEmail()],
+  asyncHandler(async (req: Request, res: Response) => {
+    // The same answer whether or not the address has an account, whether or
+    // not the mail could be sent: this endpoint must not be a way to learn
+    // who has an account.
+    if (!validationResult(req).isEmpty()) {
+      res.json(RESET_REQUESTED);
+      return;
+    }
+    const found = await accountByEmail(req.body.email);
+    if (found) {
+      const { user, userType } = found;
+      const token = await issueAuthToken({ id: user._id, type: userType }, 'reset');
+      // Not awaited: the response must not take longer for an existing
+      // account than for an unknown one.
+      void mail.sendPasswordReset(user.email, {
+        name: user.name,
+        link: `${appBaseUrl()}/reset-password?token=${encodeURIComponent(token)}`,
+        locale: mailLocale(req)
+      });
+      events.emit('auth.password.reset_requested', {
+        organizationId: user.organizationId,
+        userId: user._id,
+        metadata: { userType },
+        ip: req.ip,
+        ua: req.get('user-agent')
+      });
+    }
+    res.json(RESET_REQUESTED);
+  })
+);
+
+router.post(
+  '/reset-password',
+  forgotPasswordLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const problem = passwordProblem(req.body?.password);
+    if (problem) throw badRequest(problem);
+
+    const spent = await consumeAuthToken(req.body?.token, 'reset');
+    if (!spent) throw invalidToken();
+    const user = await accountById(spent.id, spent.type);
+    if (!user) throw invalidToken();
+
+    user.password = req.body.password;
+    // Ends every session of this account, here and on every other device:
+    // the usual reason for a reset is that someone else has the password.
+    user.sessionVersion = (user.sessionVersion ?? 0) + 1;
+    // A reset link reached this inbox, which proves the address too.
+    if (!user.emailVerifiedAt) user.emailVerifiedAt = new Date();
+    await user.save();
+    await revokeAuthTokens({ id: user._id, type: spent.type }, 'reset');
+
+    events.emit('auth.password.reset', {
+      organizationId: user.organizationId,
+      userId: user._id,
+      metadata: { userType: spent.type },
+      ip: req.ip,
+      ua: req.get('user-agent')
+    });
+    endSession(res);
+    res.json({ reset: true });
   })
 );
 

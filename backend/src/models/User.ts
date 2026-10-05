@@ -34,6 +34,10 @@ export interface UserDoc {
   permissions: UserPermissions;
   preferences: UserPreferences;
   stats: Omit<AgentStats, 'satisfactionRate'>;
+  /** When the address was proven by a link; null until then. */
+  emailVerifiedAt: Date | null;
+  /** Signed into every session; raising it ends them all (migration 0002). */
+  sessionVersion: number;
   assignedSites: Array<Ref<SiteDoc>>;
   departments: UserDepartmentMembership[];
   /** Added by the model's own methods. */
@@ -51,6 +55,8 @@ export default defineModel<UserDoc>({
     avatar: { column: 'avatar', type: 'string', default: null },
     isActive: { column: 'is_active', type: 'boolean', default: true },
     isOnboarded: { column: 'is_onboarded', type: 'boolean', default: false },
+    emailVerifiedAt: { column: 'email_verified_at', type: 'date', default: null },
+    sessionVersion: { column: 'session_version', type: 'number', default: 0 },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },
     status: { column: 'status', type: 'string', enum: PRESENCE_STATUSES, default: 'offline' },
     permissions: {

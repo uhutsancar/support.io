@@ -312,6 +312,39 @@ const widgetSessionLimiter = createLimiter({
   }
 });
 
+// Sifre sifirlama talebi: IP basina ve e-posta basina iki sayac. E-posta
+// sayaci, ayni adrese dakikada bir mail yagdirmayi engeller; kayitli olup
+// olmamasindan bagimsiz sayilir ki sinira takilmak varligi ele vermesin.
+const forgotPasswordLimiter = createLimiter({
+  name: 'forgot-password',
+  code: 'TOO_MANY_RESET_REQUESTS',
+  message: 'Too many password reset requests, please try again later.',
+  windowMs: minutes(process.env.RESET_RATE_WINDOW_MS, 15 * 60 * 1000),
+  max: limit(process.env.RESET_RATE_MAX, 10, 100000)
+});
+
+const forgotPasswordAccountLimiter = createLimiter({
+  name: 'forgot-password-account',
+  code: 'TOO_MANY_RESET_REQUESTS',
+  message: 'Too many password reset requests, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: limit(process.env.RESET_ACCOUNT_RATE_MAX, 5, 100000),
+  keyGenerator: (req: Request) => {
+    const email =
+      typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : '';
+    return email ? `acct:${email}` : `ip:${ipKeyGenerator(req.ip || '')}`;
+  }
+});
+
+// Dogrulama mailini yeniden gonderme: hesap basina.
+const resendVerificationLimiter = createLimiter({
+  name: 'resend-verification',
+  code: 'TOO_MANY_VERIFICATION_MAILS',
+  message: 'Too many verification e-mails, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: limit(process.env.VERIFY_RESEND_RATE_MAX, 5, 100000)
+});
+
 // Genel API trafigi.
 const apiLimiter = createLimiter({
   name: 'api',
@@ -326,6 +359,9 @@ export {
   loginAccountLimiter,
   registerLimiter,
   widgetSessionLimiter,
+  forgotPasswordLimiter,
+  forgotPasswordAccountLimiter,
+  resendVerificationLimiter,
   apiLimiter,
   createLimiter,
   createQuota,

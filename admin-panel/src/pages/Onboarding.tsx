@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle } from 'lucide-react';
 import api from '../services/api';
 import Logo from '../components/Logo';
 import { errorMessage } from '../hooks/useAsync';
+import { VerifyEmailBanner } from './AccountRecovery';
 
 const Onboarding = () => {
   const { t } = useTranslation();
@@ -399,6 +400,7 @@ const Onboarding = () => {
             <div className="mb-8">
               <Logo size={28} />
             </div>
+            <VerifyEmailBanner />
             {renderStepContent()}
           </div>
           {}

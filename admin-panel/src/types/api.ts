@@ -54,6 +54,8 @@ export interface CurrentUser {
   avatar: string | null;
   status: PresenceStatus;
   isOnboarded?: boolean;
+  /** False until the address is proven by the link in the verification mail. */
+  emailVerified?: boolean;
   organizationId?: string | null;
   userType?: 'user' | 'team';
   organization?: {

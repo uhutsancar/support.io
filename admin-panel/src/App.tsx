@@ -13,6 +13,15 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const About = lazy(() => import('./pages/About'));
 const Docs = lazy(() => import('./pages/Docs'));
 const Login = lazy(() => import('./pages/Login'));
+const ForgotPassword = lazy(() =>
+  import('./pages/AccountRecovery').then((m) => ({ default: m.ForgotPassword }))
+);
+const ResetPassword = lazy(() =>
+  import('./pages/AccountRecovery').then((m) => ({ default: m.ResetPassword }))
+);
+const VerifyEmail = lazy(() =>
+  import('./pages/AccountRecovery').then((m) => ({ default: m.VerifyEmail }))
+);
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Sites = lazy(() => import('./pages/Sites'));
@@ -163,6 +172,16 @@ function App() {
                         </PublicRoute>
                       }
                     />
+                    <Route
+                      path="/forgot-password"
+                      element={
+                        <PublicRoute>
+                          <ForgotPassword />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                     <Route path="/en" element={<Home />} />
                     <Route path="/en/features" element={<Features />} />
                     <Route path="/en/features/:slug" element={<FeatureDetail />} />
@@ -187,6 +206,16 @@ function App() {
                         </PublicRoute>
                       }
                     />
+                    <Route
+                      path="/en/forgot-password"
+                      element={
+                        <PublicRoute>
+                          <ForgotPassword />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route path="/en/reset-password" element={<ResetPassword />} />
+                    <Route path="/en/verify-email" element={<VerifyEmail />} />
                     <Route
                       path="/onboarding"
                       element={

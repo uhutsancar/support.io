@@ -2,7 +2,7 @@ import User from '../models/User';
 import Team from '../models/Team';
 import Organization from '../models/Organization';
 import { readToken, csrfOk } from '../config/session';
-import { verifySession } from '../config/tokens';
+import { sessionIsCurrent, verifySession } from '../config/tokens';
 import { forbidden, unauthorized } from '../http/errors';
 import { HttpError } from '../http/errors';
 import type { AuthenticatedUser } from '../types/auth';
@@ -36,6 +36,9 @@ const auth = async (req: Request, _res: Response, next: NextFunction) => {
       user = await User.findOne({ _id: decoded.userId, isActive: true });
     }
     if (!user) throw unauthorized();
+    // A password reset raised the account's session version: every session
+    // signed before it ends here, on this device and every other.
+    if (!sessionIsCurrent(decoded, user)) throw unauthorized();
     // Kimlik doğrulama burada biter; kiracılığı değiştirmek bu katmanın işi
     // değil. Eskiden organizasyonu olmayan bir hesap her istekte, atandığı
     // ilk sitenin şirketine sessizce katılıyor (o liste doğrulanmıyordu, yani

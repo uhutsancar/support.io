@@ -48,8 +48,8 @@ export interface WidgetSocketState {
   prefersHuman?: boolean;
   /** The user id the shop vouched for with a valid userHash; null when anonymous. */
   verifiedUserId?: string | null;
-  /** The first message's conversation while it is being opened. */
-  opening?: Promise<void>;
+  /** The message being handled; the next one waits for it (handlers/widget.ts). */
+  sending?: Promise<unknown>;
 }
 
 export type WidgetSocket = Socket & WidgetSocketState;
@@ -65,6 +65,8 @@ export interface AdminSocketState {
   allowedSiteIds: Set<string>;
   /** The site room this socket has joined, once it picks one. */
   siteId?: string;
+  /** The reply being handled; the next one waits for it. */
+  sending?: Promise<unknown>;
 }
 
 export type AdminSocket = Socket & AdminSocketState;

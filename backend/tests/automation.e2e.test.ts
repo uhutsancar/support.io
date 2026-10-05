@@ -22,6 +22,7 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { widgetSocket, widgetToken } from './helpers/widget';
+import { verifyEmail } from './helpers/accounts';
 import { query } from '../src/db/pool';
 import { getPool } from '../src/db/pool';
 
@@ -118,6 +119,8 @@ async function createTenant(label: string) {
   assert.ok(reg.status === 200 || reg.status === 201, `register failed: ${JSON.stringify(reg)}`);
   const token = sessionToken(reg);
   assert.ok(token, 'register returned no token');
+  // The widget goes live only for a verified owner.
+  await verifyEmail(email);
 
   const site = await api('/api/sites', {
     method: 'POST',

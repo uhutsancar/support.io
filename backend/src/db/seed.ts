@@ -105,6 +105,8 @@ async function seed() {
     role: 'owner',
     organizationId: org._id,
     isOnboarded: true,
+    // The demo widget has to work without a mail round trip.
+    emailVerifiedAt: new Date(),
     status: 'online'
   });
   await owner.save();
@@ -119,6 +121,7 @@ async function seed() {
     role: 'admin',
     organizationId: org._id,
     isOnboarded: true,
+    emailVerifiedAt: new Date(),
     status: 'online'
   });
   await admin.save();
@@ -208,6 +211,7 @@ async function seed() {
       status: spec.status,
       skills: spec.skills,
       maxCapacity: spec.capacity,
+      emailVerifiedAt: new Date(),
       assignedSites: [site._id]
     });
     await agent.save();

@@ -18,7 +18,10 @@ export type AuditAction =
   | 'AUTOMATION_RULE_DELETED'
   | 'AUTOMATION_EXECUTED'
   | 'SITE_AI_SETTINGS_UPDATED'
-  | 'SITE_INTEGRATION_UPDATED';
+  | 'SITE_INTEGRATION_UPDATED'
+  | 'EMAIL_VERIFIED'
+  | 'PASSWORD_RESET_REQUESTED'
+  | 'PASSWORD_RESET';
 
 export interface AuditLogDoc {
   organizationId: Ref<OrganizationDoc>;
@@ -60,7 +63,10 @@ export default defineModel<AuditLogDoc>({
         'AUTOMATION_RULE_DELETED',
         'AUTOMATION_EXECUTED',
         'SITE_AI_SETTINGS_UPDATED',
-        'SITE_INTEGRATION_UPDATED'
+        'SITE_INTEGRATION_UPDATED',
+        'EMAIL_VERIFIED',
+        'PASSWORD_RESET_REQUESTED',
+        'PASSWORD_RESET'
       ]
     },
     entityType: { column: 'entity_type', type: 'string' },

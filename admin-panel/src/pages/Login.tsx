@@ -93,6 +93,14 @@ const Login = () => {
             autoComplete="current-password"
             required
           />
+          <div className="flex justify-end -mt-2">
+            <Link
+              to={langPrefix + '/forgot-password'}
+              className="text-[13px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              {t('login.forgotPassword')}
+            </Link>
+          </div>
           <Button type="submit" size="lg" disabled={loading} className="w-full">
             {loading ? t('common.loading') : t('login.loginButton')}
           </Button>

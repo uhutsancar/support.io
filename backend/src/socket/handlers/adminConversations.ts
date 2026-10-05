@@ -146,126 +146,135 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
 
   // ---------------------------------------------------------------- replying
 
+  // An agent's replies are handled one after another, so they are stored in
+  // the order they were sent (see the widget handler for the same rule).
   socket.on(
     'send-message',
-    ctx.guard(socket, async (data: SendMessagePayload | undefined, ack?: MessageAck) => {
-      const { content, messageType, fileData, clientMessageId } = data || {};
-      const refuse = (code: string, message: string) => {
-        socket.emit('error', { message, code });
-        ack?.({ ok: false, code, message });
-      };
-
-      // validate
-      if (!may(socket, 'respond')) return refuse('FORBIDDEN', NOT_PERMITTED.message);
-      if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
-        return refuse('INVALID_MESSAGE', 'Invalid message content');
-      }
-      if (messageType && !isClientMessageType(messageType)) {
-        return refuse(
-          'INVALID_MESSAGE',
-          `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
-        );
-      }
-      if (clientMessageId != null && !isClientMessageId(clientMessageId)) {
-        return refuse('INVALID_MESSAGE', 'Invalid client message id');
-      }
-
-      // authorize
-      const conversation = await ctx.conversationFor(socket, data?.conversationId, {
-        populateDepartment: true
-      });
-      if (!conversation) {
-        ctx.reject(socket);
-        return ack?.({ ok: false, code: 'NOT_FOUND' });
-      }
-
-      // A resend after a dropped connection: the reply is already stored and
-      // everything it caused has happened. Acknowledged, nothing repeated.
-      if (clientMessageId) {
-        const existing = await Message.findOne({ conversationId: conversation._id, clientMessageId });
-        if (existing) return ack?.({ ok: true, message: existing.toObject(), duplicate: true });
-      }
-
-      const needsAttachment = messageType === 'file' || messageType === 'image';
-      const verifiedFile = needsAttachment
-        ? ctx.verifyAttachment(fileData, conversation.siteId)
-        : null;
-      if (needsAttachment && !verifiedFile) {
-        return refuse('INVALID_ATTACHMENT', 'Invalid or expired file upload');
-      }
-
-      // An agent writing takes the conversation from the assistant, and does
-      // it before their message is stored: an answer the model is still
-      // writing sees the ownership change and is dropped rather than sent
-      // after the agent's reply.
-      if (conversation.responseOwner === 'ai') {
-        const changed = await setResponseOwner(ctx.io, conversation, 'human');
-        if (changed) Object.assign(conversation, changed);
-      }
-
-      // insert — before any of the conversation's state moves, so a reply
-      // that is refused (or a duplicate that lost the race) changes nothing
-      const messageData: CreateInput<MessageDoc> = {
-        conversationId: conversation._id,
-        senderType: 'agent',
-        senderId: socket.userId,
-        senderName: socket.userName,
-        content: content.trim(),
-        messageType: messageType || 'text',
-        isRead: true,
-        clientMessageId: clientMessageId ?? null
-      };
-      if (verifiedFile) messageData.fileData = verifiedFile;
-
-      let message;
-      try {
-        message = await Message.create(messageData);
-      } catch (error) {
-        if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId) {
-          throw error;
-        }
-        const stored = await Message.findOne({ conversationId: conversation._id, clientMessageId });
-        if (stored) return ack?.({ ok: true, message: stored.toObject(), duplicate: true });
-        throw error;
-      }
-
-      // Answering an unclaimed conversation takes it: an agent who has started
-      // typing is the one handling it.
-      if (!conversation.assignedAgent) {
-        conversation.assignedAgent = socket.userId;
-        conversation.assignedAt = new Date();
-        conversation.status = 'assigned';
-      }
-
-      const isFirstResponse = !conversation.firstResponseAt;
-      if (isFirstResponse) {
-        conversation.firstResponseAt = new Date();
-        refreshSla(conversation);
-        await recordFirstResponse(socket.userId, conversation);
-      }
-
-      // An agent reply clears the badge: the unread count tracks what the *agent*
-      // has not read, and they have just been here.
-      conversation.unreadCount = 0;
-      conversation.lastMessageAt = new Date();
-      await conversation.save();
-
-      // emit — only after both writes are committed
-      if (isFirstResponse) {
-        ctx.toAdminSite(conversation.siteId, 'conversation-update', {
-          conversationId: conversation._id,
-          conversation: conversation.toObject()
-        });
-      }
-      const emitted = message.toObject();
-      ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
-      ctx.toAdminConversation(conversation._id, 'new-message', { message: emitted, conversation });
-      ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });
-
-      // ACK
-      ack?.({ ok: true, message: emitted });
+    ctx.guard(socket, (data: SendMessagePayload | undefined, ack?: MessageAck) => {
+      const run = () => sendReply(data, ack);
+      const done = (socket.sending ?? Promise.resolve()).then(run, run);
+      socket.sending = done.catch(() => undefined);
+      return done;
     })
   );
+
+  const sendReply = async (data: SendMessagePayload | undefined, ack?: MessageAck) => {
+    const { content, messageType, fileData, clientMessageId } = data || {};
+    const refuse = (code: string, message: string) => {
+      socket.emit('error', { message, code });
+      ack?.({ ok: false, code, message });
+    };
+
+    // validate
+    if (!may(socket, 'respond')) return refuse('FORBIDDEN', NOT_PERMITTED.message);
+    if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
+      return refuse('INVALID_MESSAGE', 'Invalid message content');
+    }
+    if (messageType && !isClientMessageType(messageType)) {
+      return refuse(
+        'INVALID_MESSAGE',
+        `messageType must be one of: ${CLIENT_MESSAGE_TYPES.join(', ')}`
+      );
+    }
+    if (clientMessageId != null && !isClientMessageId(clientMessageId)) {
+      return refuse('INVALID_MESSAGE', 'Invalid client message id');
+    }
+
+    // authorize
+    const conversation = await ctx.conversationFor(socket, data?.conversationId, {
+      populateDepartment: true
+    });
+    if (!conversation) {
+      ctx.reject(socket);
+      return ack?.({ ok: false, code: 'NOT_FOUND' });
+    }
+
+    // A resend after a dropped connection: the reply is already stored and
+    // everything it caused has happened. Acknowledged, nothing repeated.
+    if (clientMessageId) {
+      const existing = await Message.findOne({ conversationId: conversation._id, clientMessageId });
+      if (existing) return ack?.({ ok: true, message: existing.toObject(), duplicate: true });
+    }
+
+    const needsAttachment = messageType === 'file' || messageType === 'image';
+    const verifiedFile = needsAttachment
+      ? ctx.verifyAttachment(fileData, conversation.siteId)
+      : null;
+    if (needsAttachment && !verifiedFile) {
+      return refuse('INVALID_ATTACHMENT', 'Invalid or expired file upload');
+    }
+
+    // An agent writing takes the conversation from the assistant, and does
+    // it before their message is stored: an answer the model is still
+    // writing sees the ownership change and is dropped rather than sent
+    // after the agent's reply.
+    if (conversation.responseOwner === 'ai') {
+      const changed = await setResponseOwner(ctx.io, conversation, 'human');
+      if (changed) Object.assign(conversation, changed);
+    }
+
+    // insert — before any of the conversation's state moves, so a reply
+    // that is refused (or a duplicate that lost the race) changes nothing
+    const messageData: CreateInput<MessageDoc> = {
+      conversationId: conversation._id,
+      senderType: 'agent',
+      senderId: socket.userId,
+      senderName: socket.userName,
+      content: content.trim(),
+      messageType: messageType || 'text',
+      isRead: true,
+      clientMessageId: clientMessageId ?? null
+    };
+    if (verifiedFile) messageData.fileData = verifiedFile;
+
+    let message;
+    try {
+      message = await Message.create(messageData);
+    } catch (error) {
+      if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId) {
+        throw error;
+      }
+      const stored = await Message.findOne({ conversationId: conversation._id, clientMessageId });
+      if (stored) return ack?.({ ok: true, message: stored.toObject(), duplicate: true });
+      throw error;
+    }
+
+    // Answering an unclaimed conversation takes it: an agent who has started
+    // typing is the one handling it.
+    if (!conversation.assignedAgent) {
+      conversation.assignedAgent = socket.userId;
+      conversation.assignedAt = new Date();
+      conversation.status = 'assigned';
+    }
+
+    const isFirstResponse = !conversation.firstResponseAt;
+    if (isFirstResponse) {
+      conversation.firstResponseAt = new Date();
+      refreshSla(conversation);
+      await recordFirstResponse(socket.userId, conversation);
+    }
+
+    // An agent reply clears the badge: the unread count tracks what the *agent*
+    // has not read, and they have just been here.
+    conversation.unreadCount = 0;
+    conversation.lastMessageAt = new Date();
+    await conversation.save();
+
+    // emit — only after both writes are committed
+    if (isFirstResponse) {
+      ctx.toAdminSite(conversation.siteId, 'conversation-update', {
+        conversationId: conversation._id,
+        conversation: conversation.toObject()
+      });
+    }
+    const emitted = message.toObject();
+    ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
+    ctx.toAdminConversation(conversation._id, 'new-message', { message: emitted, conversation });
+    ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });
+
+    // ACK
+    ack?.({ ok: true, message: emitted });
+  };
 
   socket.on(
     'typing',

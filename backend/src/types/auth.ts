@@ -11,6 +11,8 @@ export interface AuthTokenPayload {
   userId: string;
   userType?: UserType;
   organizationId?: string | null;
+  /** The account's session_version when this session was issued. */
+  sv?: number;
   iat?: number;
   exp?: number;
   [claim: string]: unknown;

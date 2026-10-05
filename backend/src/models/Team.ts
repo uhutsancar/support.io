@@ -33,6 +33,10 @@ export interface TeamDoc {
   lastActive: Date;
   phone: string | null;
   bio: string | null;
+  /** When the address was proven by a link; null until then. */
+  emailVerifiedAt: Date | null;
+  /** Signed into every session; raising it ends them all (migration 0002). */
+  sessionVersion: number;
   assignedSites: Array<Ref<SiteDoc>>;
   departments: TeamDepartmentMembership[];
   /** Added by the model's own methods. */
@@ -85,7 +89,9 @@ export default defineModel<TeamDoc>({
     },
     lastActive: { column: 'last_active', type: 'date', default: () => new Date() },
     phone: { column: 'phone', type: 'string', default: null },
-    bio: { column: 'bio', type: 'string', default: null }
+    bio: { column: 'bio', type: 'string', default: null },
+    emailVerifiedAt: { column: 'email_verified_at', type: 'date', default: null },
+    sessionVersion: { column: 'session_version', type: 'number', default: 0 }
   },
   children: {
     assignedSites: {

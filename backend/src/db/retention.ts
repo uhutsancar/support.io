@@ -15,6 +15,13 @@ const TARGETS = [
 ];
 
 async function sweepOnce() {
+  try {
+    // Spent or expired e-mail links are kept a week for support questions
+    // ("I clicked it and nothing happened"), then dropped.
+    await query(`DELETE FROM auth_tokens WHERE expires_at < now() - interval '7 days'`);
+  } catch (error) {
+    console.error('Retention sweep failed for auth_tokens:', errorText(error));
+  }
   for (const target of TARGETS) {
     try {
       await query(

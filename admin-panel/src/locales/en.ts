@@ -605,6 +605,33 @@ export default {
       description: 'Our team of experienced and passionate professionals is working for you.'
     }
   },
+  recovery: {
+    forgotTitle: 'Forgot your password',
+    forgotSubtitle: 'Enter the e-mail address of your account and we will send a reset link.',
+    forgotSent:
+      'If an account exists for this address, a reset link is on its way. Check your inbox (and spam folder).',
+    sendLink: 'Send the link',
+    backToLogin: 'Back to sign in',
+    resetTitle: 'Choose a new password',
+    resetSubtitle: 'At least 8 characters. Saving it signs you out on every device.',
+    newPassword: 'New password',
+    confirmPassword: 'New password (again)',
+    savePassword: 'Save password',
+    signsOutEverywhere: 'For your security, every other session will be signed out.',
+    mismatch: 'The passwords do not match',
+    resetDone: 'Your password has changed. Sign in with the new one.',
+    invalidLink: 'This link is invalid or has expired.',
+    newLink: 'Ask for a new link',
+    verifyTitle: 'E-mail verification',
+    verifyDone: 'Your e-mail address is verified. Your widget can now run on your site.',
+    verifyFailed: 'This verification link is invalid or has expired. You can ask for a new one in the panel.',
+    toDashboard: 'Go to the dashboard',
+    banner:
+      'Verify your e-mail address ({{email}}). Once it is verified, your widget goes live on your site and billing opens.',
+    resend: 'Send the link again',
+    resent: 'A verification link was sent to {{email}}.',
+    error: 'That did not work'
+  },
   login: {
     title: 'Login',
     subtitle: 'Sign in to your account',

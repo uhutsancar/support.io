@@ -108,6 +108,22 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   // reach. The metadata names what changed, never a secret.
   'site.ai.updated': { action: 'SITE_AI_SETTINGS_UPDATED', entityType: 'site' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
+  // Account security. The metadata never carries a token or a password.
+  'auth.email.verified': {
+    action: 'EMAIL_VERIFIED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.password.reset_requested': {
+    action: 'PASSWORD_RESET_REQUESTED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.password.reset': {
+    action: 'PASSWORD_RESET',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
   // A rule firing against a conversation: the actor is the rule, identified in
   // the metadata, so there is no user and no originating request.
   'automation.executed': {
