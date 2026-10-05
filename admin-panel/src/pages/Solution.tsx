@@ -196,8 +196,8 @@ const Solution = () => {
           <Button to={routes.register} arrow>
             {t('landing.home.ctaBtn1')}
           </Button>
-          <Button to={routes.ai} variant="secondary">
-            {t('homePage.ai.cta')}
+          <Button to={routes.pricing} variant="secondary">
+            {t('landing.home.ctaBtn2')}
           </Button>
         </Reveal>
       </Section>

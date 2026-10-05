@@ -12,7 +12,6 @@
 const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/ozellikler', '/en/features'],
   ['/cozumler', '/en/solutions'],
-  ['/yapay-zeka', '/en/ai'],
   ['/fiyatlandirma', '/en/pricing'],
   ['/dokumantasyon', '/en/documentation'],
   ['/hakkimizda', '/en/about']
@@ -40,7 +39,6 @@ export function marketingRoutes(language: 'tr' | 'en') {
     home: langPrefix || '/',
     features: en ? '/en/features' : '/ozellikler',
     solutions: en ? '/en/solutions' : '/cozumler',
-    ai: en ? '/en/ai' : '/yapay-zeka',
     pricing: en ? '/en/pricing' : '/fiyatlandirma',
     docs: en ? '/en/documentation' : '/dokumantasyon',
     about: en ? '/en/about' : '/hakkimizda',

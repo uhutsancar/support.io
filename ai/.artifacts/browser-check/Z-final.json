@@ -1,0 +1,93 @@
+[
+  {
+    "id": "Z-login",
+    "expected": "sancaruhut@gmail.com ile giriş",
+    "observed": "http://localhost/dashboard",
+    "result": "GEÇTİ",
+    "screenshot": "Z-01-dashboard.png"
+  },
+  {
+    "id": "Z-page-conversations",
+    "expected": "Konuşmalar sayfası açılır",
+    "observed": "açıldı (200)",
+    "result": "GEÇTİ",
+    "screenshot": "Z-02-conversations.png"
+  },
+  {
+    "id": "Z-page-sites",
+    "expected": "Siteler sayfası açılır",
+    "observed": "açıldı (200)",
+    "result": "GEÇTİ",
+    "screenshot": "Z-02-sites.png"
+  },
+  {
+    "id": "Z-page-faq",
+    "expected": "SSS sayfası açılır",
+    "observed": "açıldı (200)",
+    "result": "GEÇTİ",
+    "screenshot": "Z-02-faq.png"
+  },
+  {
+    "id": "Z-page-team",
+    "expected": "Ekip sayfası açılır",
+    "observed": "açıldı (200)",
+    "result": "GEÇTİ",
+    "screenshot": "Z-02-team.png"
+  },
+  {
+    "id": "Z-page-analytics",
+    "expected": "Analitik sayfası açılır",
+    "observed": "açıldı (200)",
+    "result": "GEÇTİ",
+    "screenshot": "Z-02-analytics.png"
+  },
+  {
+    "id": "Z-page-settings",
+    "expected": "Ayarlar sayfası açılır",
+    "observed": "açıldı (200)",
+    "result": "GEÇTİ",
+    "screenshot": "Z-02-settings.png"
+  },
+  {
+    "id": "Z-ai-dialog",
+    "expected": "AI ayarları açılır ve model durumunu dürüstçe gösterir",
+    "observed": "durum: Model durumu: Kapalı",
+    "result": "GEÇTİ",
+    "screenshot": "Z-03-ai-settings.png"
+  },
+  {
+    "id": "Z-visitor-send",
+    "expected": "Ziyaretçi /demo’dan mesaj gönderir",
+    "observed": "Son kontrol 11:30:06",
+    "result": "GEÇTİ",
+    "screenshot": "Z-05-visitor-sent.png"
+  },
+  {
+    "id": "Z-inbox",
+    "expected": "Mesaj gelen kutusuna gerçek zamanlı düşer",
+    "observed": "bulundu: true",
+    "result": "GEÇTİ",
+    "screenshot": "Z-06-inbox.png"
+  },
+  {
+    "id": "Z-agent-reply",
+    "expected": "Temsilci cevabı ziyaretçinin penceresine anında düşer",
+    "observed": "ziyaretçide görünüyor: true",
+    "result": "GEÇTİ",
+    "screenshot": "Z-08-visitor-got-reply.png"
+  },
+  {
+    "id": "Z-mobile",
+    "expected": "375 px genişlikte taşma yok",
+    "observed": "yatay taşma: false",
+    "result": "GEÇTİ",
+    "screenshot": "Z-11-mobile.png"
+  },
+  {
+    "id": "Z-console",
+    "expected": "Panel konsolunda hata yok",
+    "observed": "hata yok",
+    "result": "GEÇTİ",
+    "screenshot": null
+  }
+]

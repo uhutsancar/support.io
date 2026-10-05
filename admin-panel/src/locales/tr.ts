@@ -2252,132 +2252,52 @@ export default {
     saveRule: 'Kuralı Kaydet',
     deleteMessage: '"{{name}}" kuralını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
   },
-  ai: {
-    assistant: 'AI Asistan',
-    summarize: 'Özetle',
-    suggest: 'Yanıt öner',
-    analyze: 'Analiz',
-    tone: 'Ton',
-    translate: 'Çevir',
-    askKnowledge: 'Bilgi bankasına sor',
-    toneOptions: {
-      professional: 'Profesyonel',
-      friendly: 'Samimi',
-      concise: 'Kısa',
-      apologetic: 'Özür dileyen'
-    },
-    languages: { tr: 'Türkçe', en: 'İngilizce', de: 'Almanca', ar: 'Arapça' },
-    askPlaceholder: 'Soru (ör. İade süresi kaç gün?)',
-    ask: 'Sor',
-    summary: 'Özet',
-    analysis: 'Analiz',
-    translation: 'Çeviri',
-    knowledge: 'Bilgi bankası',
-    noKnowledgeAnswer: 'Bilgi bankasında bu sorunun cevabı yok.',
-    draftTitle: 'Önerilen yanıt · gönderilmeden önce siz onaylarsınız',
-    accept: 'Mesaj kutusuna aktar',
-    edit: 'Düzenle',
-    regenerate: 'Yeniden üret',
-    reject: 'Reddet',
-    cancel: 'İptal',
-    close: 'Kapat',
-    suggestedPriority: 'Önerilen öncelik',
-    sentiments: { positive: 'Olumlu', neutral: 'Nötr', negative: 'Olumsuz' },
-    priorities: { low: 'Düşük', normal: 'Normal', high: 'Yüksek', urgent: 'Acil' },
-    requestFailed: 'AI isteği başarısız oldu.',
-    timedOut: 'AI 30 saniye içinde yanıt vermedi.',
-    needsText: 'Önce mesaj kutusuna bir metin yazın.',
-    translateSource: 'Mesaj kutusundaki metin çevrilir; kutu boşsa müşterinin son mesajı.',
-    state: {
-      ready: 'Model hazır',
-      warming_up: 'Model yükleniyor…',
-      unavailable: 'Model şu anda kullanılamıyor',
-      disabled: 'Kapalı'
-    },
-    autoAssistant: 'Otomatik asistan',
-    answeringAi: 'Asistan yanıtlıyor',
-    answeringHuman: 'Temsilci yanıtlıyor',
+  assistant: {
+    label: 'Asistan',
+    answering: 'Asistan yanıtlıyor',
     takeOver: 'Devral',
-    giveBack: "AI'ye geri ver",
-    ownerError: 'Konuşma el değiştiremedi',
+    takeOverError: 'Konuşma devralınamadı',
     verifiedCustomer: 'Doğrulanmış müşteri',
     sources: 'Kaynak',
-    handoffReason: 'Devir nedeni',
+    handoffReason: 'Temsilciye aktarma nedeni',
     reasons: {
-      human_requested: 'Müşteri temsilci istedi',
-      sensitive_data: 'Hassas bilgi paylaşıldı',
-      too_long: 'Mesaj çok uzun',
-      bot_limit: 'Otomatik yanıt sınırı doldu',
-      clarify_limit: 'Soru netleşmedi',
-      blocked_term: 'Engelli kelime',
-      no_answer: 'Bilgi yok',
-      language: 'Desteklenmeyen dil',
-      not_signed_in: 'Müşteri giriş yapmamış',
-      not_found: 'Sipariş bulunamadı',
-      order: 'Sipariş servisine ulaşılamadı',
-      rejected: 'Cevap kontrolden geçmedi',
-      failure: 'Model kullanılamadı'
+      requested: 'Ziyaretçi temsilci istedi',
+      sensitive: 'Hassas bilgi paylaşıldı',
+      limit: 'Otomatik yanıt sınırı doldu',
+      no_faq: 'Sitede SSS yok',
+      no_answer: 'SSS’de cevabı yok',
+      unsupported: 'Cevap SSS’ye dayanmıyordu',
+      api: 'Gemini’ye ulaşılamadı (kota ya da hata)'
     },
     settings: {
-      button: 'AI ayarları',
-      title: 'AI ayarları',
-      modelStatus: 'Model durumu',
-      mode: 'Mod',
-      modes: { off: 'Kapalı', copilot: 'Temsilci asistanı', auto: 'Otomatik yanıt' },
-      modeHelp: {
-        off: 'Yapay zekâ kullanılmaz; SSS botu bugünkü gibi çalışır.',
-        copilot:
-          'Temsilciler özet, taslak, ton ve çeviri alır. Müşteriye hiçbir şey kendiliğinden gitmez.',
-        auto: 'Asistan müşteriye kendisi yanıt verir; gerektiğinde temsilciye devreder.'
-      },
-      autoConfirm:
-        'Asistanın müşterilere kendi başına yanıt vereceğini ve gerektiğinde temsilciye devredeceğini anlıyorum.',
-      autoConfirmRequired: 'Otomatik yanıtı açmak için onay kutusunu işaretleyin.',
-      answerLength: 'Yanıt uzunluğu',
-      lengths: { short: 'Kısa', normal: 'Normal' },
-      tone: 'Ton',
-      tones: { professional: 'Profesyonel', friendly: 'Samimi' },
-      botName: 'Bot adı',
-      botNamePlaceholder: 'Asistan',
-      handoffMessage: 'Devir mesajı',
-      handoffPlaceholder: 'Sizi bir müşteri temsilcimize aktarıyorum…',
-      blockedTerms: 'Engelli kelimeler',
-      blockedTermsHelp:
-        'Virgülle ayırın. Bu kelimeleri içeren mesajlar modele gitmeden temsilciye aktarılır.',
-      maxBotReplies: 'Konuşma başına en fazla otomatik yanıt',
-      save: 'Kaydet',
-      saved: 'AI ayarları kaydedildi',
-      saveError: 'AI ayarları kaydedilemedi'
-    },
-    integrations: {
-      title: 'Entegrasyonlar',
-      identity: 'Müşteri kimlik doğrulaması',
-      identityHelp:
-        'Mağazanızın sunucusu giriş yapmış müşteri için userHash = HMAC-SHA256(anahtar, userId) hesaplar ve SupportChat.identify() ile gönderir. Sipariş sorgusu yalnızca doğrulanmış müşteri için yapılır.',
-      configured: 'Tanımlı',
-      notConfigured: 'Tanımlı değil',
-      generate: 'Anahtar üret',
-      regenerate: 'Anahtarı yenile',
-      regenerateConfirm:
-        'Yeni anahtar üretilince eski anahtarla imzalanan tüm userHash değerleri geçersiz olur. Devam edilsin mi?',
-      secretOnce: 'Bu anahtar yalnızca şimdi gösterilir. Mağazanızın sunucusuna kaydedin.',
-      copy: 'Kopyala',
-      copied: 'Kopyalandı',
-      example: 'Örnek',
-      orderLookup: 'Sipariş servisi',
-      orderHelp:
-        'Asistan, doğrulanmış müşterinin siparişini bu adrese imzalı bir istekle sorar. Yalnızca https; iç ağ adresleri reddedilir.',
-      enabled: 'Sipariş sorgusu açık',
-      url: 'Servis adresi',
-      signingKey: 'İmza anahtarı',
-      generateSigning: 'İmza anahtarı üret',
-      test: 'Bağlantıyı test et',
-      testOk: 'Bağlantı başarılı',
-      testFail: 'Bağlantı başarısız ({{reason}})',
-      save: 'Kaydet',
-      saved: 'Sipariş servisi kaydedildi',
-      error: 'İşlem başarısız'
+      button: 'Asistan',
+      title: 'SSS asistanı',
+      assistant: 'SSS asistanı (Gemini)',
+      assistantHelp:
+        'Açıkken ziyaretçinin sorusuna ilk cevabı sitenizin SSS içeriğinden kısa ve Türkçe olarak verir. Cevap SSS’de yoksa, ziyaretçi temsilci isterse ya da servis yanıt vermezse konuşmayı hemen ekibinize aktarır.',
+      unavailable:
+        'Bu sunucuda Gemini anahtarı tanımlı değil, asistan açılamaz. Canlı destek bundan etkilenmez.',
+      rule1: 'Yalnızca sitenizin herkese açık SSS kayıtlarını kullanır.',
+      rule2: 'Ziyaretçinin adı, e-postası ve önceki mesajları Gemini’ye gönderilmez; kart, IBAN gibi bilgiler görülürse hiç gönderilmeden temsilciye aktarılır.',
+      rule3: 'Bir temsilci yazdığı ya da “Devral” dediği anda asistan o konuşmada susar.',
+      faqAutoReply: 'Anahtar kelimeyle SSS cevabı',
+      faqAutoReplyHelp:
+        'Asistan kapalıyken, mesaj bir SSS kaydıyla güçlü biçimde eşleşirse o kaydı “Yardım makalesi” olarak gönderir.',
+      saved: 'Ayar kaydedildi',
+      saveError: 'Ayar kaydedilemedi'
     }
+  },
+  identity: {
+    title: 'Müşteri kimlik doğrulaması',
+    help: 'Sitenizin sunucusu giriş yapmış müşteri için userHash = HMAC-SHA256(anahtar, userId) hesaplar ve SupportChat.identify() ile gönderir. Böylece panelde “Doğrulanmış müşteri” rozeti görünür ve müşterinin sohbeti başka bir kullanıcıya açılmaz.',
+    configured: 'Tanımlı',
+    notConfigured: 'Tanımlı değil',
+    generate: 'Anahtar üret',
+    regenerate: 'Anahtarı yenile',
+    regenerateConfirm:
+      'Yeni anahtar üretilince eski anahtarla imzalanan tüm userHash değerleri geçersiz olur. Devam edilsin mi?',
+    secretOnce: 'Bu anahtar yalnızca şimdi gösterilir. Sitenizin sunucusuna kaydedin.',
+    error: 'İşlem başarısız'
   },
 
   errors: {
@@ -2423,33 +2343,31 @@ export default {
     team: { online: 'Ekip · {{online}}/{{total}} çevrimiçi' },
     recent: {
       title: 'Son konuşmalar',
-      ai: 'Asistan',
+      assistant: 'Asistan',
       noPreview: 'Henüz mesaj yok',
       yesterday: 'Dün'
     },
-    ai: {
-      title: 'Yapay zekâ asistanı',
-      manage: 'Site ayarlarından yönet',
+    assistant: {
+      title: 'SSS asistanı',
+      manage: 'Siteler sayfasından yönet',
+      siteOn: 'Açık',
+      siteOff: 'Kapalı',
       state: {
-        ready: 'Hazır',
-        warming_up: 'Model yükleniyor',
-        unavailable: 'Model sunucusuna ulaşılamıyor',
-        disabled: 'Kapalı'
+        on: '{{count}} sitede açık',
+        off: 'Hiçbir sitede açık değil',
+        unavailable: 'Bu sunucuda kullanılamıyor'
       },
       body: {
-        ready: 'Otomatik yanıt ya da yardımcı modu site başına açabilirsiniz.',
-        warming_up: 'Model birkaç dakika içinde hazır olur; kontroller kendiliğinden açılır.',
-        unavailable: 'Konuşmalar beklemeden ekibinize düşüyor. Model sunucusunu kontrol edin.',
-        disabled: 'Asistan bu kurulumda çalışmıyor. Açmak için kendi sunucunuzda modeli başlatın; sohbet ve gelen kutusu onsuz da çalışır.'
-      },
-      mode: { off: 'Kapalı', copilot: 'Yardımcı', auto: 'Otomatik yanıt' }
+        on: 'Sık sorulan soruları SSS içeriğinizden yanıtlar, gerisini hemen ekibinize aktarır.',
+        off: 'İsterseniz her site için açabilirsiniz; ilk cevabı SSS’nizden verir.',
+        unavailable: 'Gemini anahtarı tanımlı değil. Sohbet ve gelen kutusu onsuz da çalışır.'
+      }
     },
     setup: {
       title: 'Kurulumu tamamlayın',
       site: 'İlk sitenizi ekleyin',
       install: 'Kurulum satırını sitenize yapıştırın',
-      team: 'Ekip arkadaşınızı davet edin',
-      ai: 'Asistanın modunu seçin'
+      team: 'Ekip arkadaşınızı davet edin'
     },
     invite: 'Ekibinize yeni birini davet edin',
     percent: '%{{value}}'

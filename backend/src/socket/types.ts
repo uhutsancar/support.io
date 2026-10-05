@@ -142,12 +142,6 @@ export interface LoadMessagesPayload extends ClientPayloadBase {
   limit?: number;
 }
 
-/** The visitor pressed "talk to a person" in an assistant-answered chat. */
-export interface RequestHumanPayload extends ClientPayloadBase {
-  /** The widget's language, for the handoff note. */
-  language?: string;
-}
-
 export interface JoinSitePayload extends ClientPayloadBase {
   siteId?: string;
 }

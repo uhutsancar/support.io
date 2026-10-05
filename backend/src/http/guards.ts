@@ -185,8 +185,8 @@ export function restrictedSiteIds(req: Request): Set<string> | null {
  * site their role and assignment reach.
  *
  * `loadOwnedConversation` stops at the organization, which let an agent
- * restricted to one site open another site's thread by id. Anything that reads
- * a transcript back to the caller — the AI copilot in particular — uses this.
+ * restricted to one site open another site's thread by id. Anything that acts
+ * on a conversation for the caller uses this.
  */
 export async function loadAccessibleConversation(
   req: Request,

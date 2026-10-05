@@ -385,15 +385,6 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
               </NavigationMenu.Item>
 
               <NavigationMenu.Item>
-                <NavigationMenu.Link asChild active={at(routes.ai)}>
-                  <Link to={routes.ai} className={triggerClass(at(routes.ai))}>
-                    <Sparkles className="w-3.5 h-3.5 text-violet-500" aria-hidden="true" />
-                    {t('nav.ai')}
-                  </Link>
-                </NavigationMenu.Link>
-              </NavigationMenu.Item>
-
-              <NavigationMenu.Item>
                 <NavigationMenu.Link asChild active={at(routes.pricing)}>
                   <Link to={routes.pricing} className={triggerClass(at(routes.pricing))}>
                     {t('header.pricing')}
@@ -511,7 +502,6 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
 
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.07] flex flex-col">
               {[
-                { to: routes.ai, label: t('nav.ai') },
                 { to: routes.pricing, label: t('header.pricing') },
                 { to: routes.docs, label: t('header.docs') },
                 { to: routes.about, label: t('header.about') }
@@ -587,7 +577,6 @@ export const Footer = () => {
           label: t('featuresPage.items.' + id + '.title'),
           to: routes.features + '/' + id
         })),
-        { label: t('nav.ai'), to: routes.ai },
         { label: t('landing.home.footerPricing'), to: routes.pricing }
       ]
     },

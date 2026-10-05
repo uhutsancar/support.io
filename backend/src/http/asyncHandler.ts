@@ -9,8 +9,7 @@
 //
 // Wrapping once here removes the boilerplate and makes the behaviour uniform:
 // a handler returns a response or throws, and `errorHandler` decides what the
-// client sees. This is the same shape `routes/ai.ts` already used for its own
-// handlers; it is now available to every route.
+// client sees.
 
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 

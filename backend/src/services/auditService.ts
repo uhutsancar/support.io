@@ -104,9 +104,9 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   'automation.rule.created': { action: 'AUTOMATION_RULE_CREATED', entityType: 'automation_rule' },
   'automation.rule.updated': { action: 'AUTOMATION_RULE_UPDATED', entityType: 'automation_rule' },
   'automation.rule.deleted': { action: 'AUTOMATION_RULE_DELETED', entityType: 'automation_rule' },
-  // Who may answer on a site's behalf, and what the site's integrations may
-  // reach. The metadata names what changed, never a secret.
-  'site.ai.updated': { action: 'SITE_AI_SETTINGS_UPDATED', entityType: 'site' },
+  // Whether the FAQ assistant answers on a site, and the site's identity
+  // key. The metadata names what changed, never a secret.
+  'site.assistant.updated': { action: 'SITE_ASSISTANT_UPDATED', entityType: 'site' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // Account security. The metadata never carries a token or a password.
   'auth.email.verified': {

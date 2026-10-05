@@ -10,6 +10,7 @@
 //     persistent update happens in services/slaSweeper.ts, so opening an inbox
 //     no longer issues fifty UPDATEs.
 
+import { takeOver } from '../services/assistant';
 import express from 'express';
 import Conversation from '../models/Conversation';
 import Message from '../models/Message';
@@ -41,7 +42,7 @@ import {
   isPriority,
   slaTargetsFor
 } from '../domain';
-import { notifyAdmin } from '../realtime';
+import { ioFrom, notifyAdmin } from '../realtime';
 import {
   asyncHandler,
   badRequest,
@@ -397,6 +398,19 @@ router.put(
     notifier?.conversationUpdated(claimed, claimed);
 
     res.json({ conversation: claimed });
+  })
+);
+
+// An agent takes the conversation from the FAQ assistant: from now on a
+// person answers. Writing a reply does the same (socket handler); this is the
+// panel's "Devral" button for taking over before writing.
+router.put(
+  '/:conversationId/take-over',
+  checkPermission('respond'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
+    await takeOver(ioFrom(req), conversation);
+    res.json({ responseOwner: 'human' });
   })
 );
 

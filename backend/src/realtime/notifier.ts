@@ -92,15 +92,11 @@ export class AdminNotifier {
     this.toSite(conversation.siteId, 'new-message', payload);
   }
 
-  /** The conversation changed hands between the assistant and a person. */
-  responseOwnerChanged(
-    conversation: ConversationLike,
-    responseOwner: 'ai' | 'human',
-    aiControlVersion: number
-  ): void {
+  /** The conversation changed hands between the FAQ assistant and a person. */
+  responseOwnerChanged(conversation: ConversationLike, responseOwner: 'assistant' | 'human'): void {
     this.toSite(conversation.siteId, 'conversation-update', {
       conversationId: conversation._id,
-      conversation: { responseOwner, aiControlVersion }
+      conversation: { responseOwner }
     });
   }
 

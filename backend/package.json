@@ -14,8 +14,6 @@
     "db:migrate:prod": "node dist/db/migrate.js",
     "db:schema": "tsx scripts/build-schema.ts",
     "db:seed": "tsx src/db/seed.ts",
-    "demo:orders": "tsx scripts/demoOrderService.ts",
-    "ai:bench": "tsx scripts/aiBench.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:compose": "tsx scripts/test-compose.ts",
     "lint": "eslint .",

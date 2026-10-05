@@ -28,7 +28,6 @@ import {
   CheckCheck,
   Zap,
   ArrowRight,
-  Sparkles,
   Globe,
   Clock,
   MousePointer2,
@@ -962,61 +961,6 @@ export const VisitorsVisual = () => {
   );
 };
 
-/* ------------------------------------------------------------- 11. Yapay zekâ */
-
-/** Temsilciye yanıt önerisi. */
-export const AiVisual = () => {
-  const { t } = useTranslation();
-  return (
-    <div className="p-5">
-      <div
-        className="rounded-xl border border-gray-200 dark:border-white/[0.08]
-        bg-gray-50 dark:bg-white/[0.02] p-3"
-      >
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-          {t('viz.ai.incoming')}
-        </p>
-        <p className="mt-1.5 text-[12px] leading-relaxed text-gray-700 dark:text-gray-300">
-          {t('viz.ai.question')}
-        </p>
-      </div>
-
-      <div
-        className="mt-3 rounded-xl border border-violet-200 dark:border-violet-500/25
-        bg-violet-50/60 dark:bg-violet-500/[0.07] p-3"
-      >
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-          <span className="text-[11px] font-semibold text-violet-700 dark:text-violet-300">
-            {t('viz.ai.suggestion')}
-          </span>
-        </div>
-        <p className="mt-2 text-[12px] leading-relaxed text-gray-700 dark:text-gray-300">
-          {t('viz.ai.draft')}
-        </p>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {asList(t('viz.ai.actions', { returnObjects: true })).map((a, i) => (
-            <span
-              key={i}
-              className={[
-                'px-2 py-1 rounded-md text-[10px] font-medium',
-                i === 0
-                  ? 'bg-violet-600 text-white'
-                  : 'border border-violet-200 dark:border-violet-500/30 text-violet-700 dark:text-violet-300'
-              ].join(' ')}
-            >
-              {a}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <p className="mt-3 text-[10.5px] leading-relaxed text-gray-500 dark:text-gray-400">
-        {t('viz.ai.note')}
-      </p>
-    </div>
-  );
-};
 
 /* ---------------------------------------------------------------- 12. CRM */
 
@@ -1079,7 +1023,6 @@ export const FEATURE_VISUAL = {
   'knowledge-base': KnowledgeVisual,
   analytics: AnalyticsVisual,
   team: TeamVisual,
-  'ai-assist': AiVisual,
   visitors: VisitorsVisual,
   crm: CrmVisual
 };

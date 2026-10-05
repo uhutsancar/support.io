@@ -9,9 +9,9 @@
 // server actually returns.
 
 import { api, clearCache, mutates } from './http';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
 import type {
-  AIStatus,
+  AssistantStatus,
   AgentPerformance,
   AnalyticsOverview,
   AuditLogEntry,
@@ -101,21 +101,7 @@ export const sitesAPI = {
   // the site itself only ever says whether one is set.
   generateIdentitySecret: mutates('/sites', (siteId: string) =>
     api.post<{ site: Site; secret: string }>(`/sites/${siteId}/integrations/identity-secret`)
-  ),
-  updateOrderLookup: mutates(
-    '/sites',
-    (siteId: string, data: { enabled?: boolean; url?: string | null }) =>
-      api.put<{ site: Site }>(`/sites/${siteId}/integrations/order-lookup`, data)
-  ),
-  generateOrderSigningSecret: mutates('/sites', (siteId: string) =>
-    api.post<{ site: Site; secret: string }>(
-      `/sites/${siteId}/integrations/order-lookup/signing-secret`
-    )
-  ),
-  testOrderLookup: (siteId: string) =>
-    api.post<{ ok: boolean; orders?: number; reason?: string }>(
-      `/sites/${siteId}/integrations/order-lookup/test`
-    )
+  )
 };
 
 // --------------------------------------------------------------------- files
@@ -258,6 +244,11 @@ export const conversationsAPI = {
 
   claim: mutates(CONVERSATIONS, (conversationId: string) =>
     api.put<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/claim`)
+  ),
+
+  /** Takes the conversation from the FAQ assistant; a person answers from now on. */
+  takeOver: mutates(CONVERSATIONS, (conversationId: string) =>
+    api.put<{ responseOwner: 'human' }>(`${CONVERSATIONS}/${conversationId}/take-over`)
   ),
 
   setDepartment: mutates(CONVERSATIONS, (conversationId: string, departmentId: string | null) =>
@@ -423,83 +414,11 @@ export const widgetConfigAPI = {
   )
 };
 
-// ------------------------------------------------------------------------ AI
+// ----------------------------------------------------------------- assistant
 
-/** Every AI task reports which model answered and what it cost. */
-export interface AIAttribution {
-  model: string;
-  usage: { inputTokens: number | null; outputTokens: number | null };
-}
-
-const AI_CONVERSATIONS = '/ai/conversations';
-
-/**
- * A model call on a shared GPU can take longer than the panel's usual 15 s, so
- * AI tasks get their own ceiling. Callers pass an AbortSignal so a request the
- * agent no longer wants — they switched threads, pressed cancel — is dropped.
- */
-export const AI_REQUEST_TIMEOUT_MS = 30 * 1000;
-type AIRequest = Pick<AxiosRequestConfig, 'signal'>;
-const aiConfig = (request?: AIRequest): AxiosRequestConfig => ({
-  timeout: AI_REQUEST_TIMEOUT_MS,
-  ...request
-});
-
-export const aiAPI = {
-  // The model server and its key live only on the server; the browser never
-  // sees either. `status` lets the UI hide the controls when AI is off and
-  // show "loading" while the model warms up.
-  status: () => api.get<AIStatus>('/ai/status', { cache: false }),
-
-  summarize: (conversationId: string, request?: AIRequest) =>
-    api.post<AIAttribution & { summary: string }>(
-      `${AI_CONVERSATIONS}/${conversationId}/summary`,
-      undefined,
-      aiConfig(request)
-    ),
-
-  suggestReply: (conversationId: string, instruction?: string | null, request?: AIRequest) =>
-    api.post<AIAttribution & { reply: string }>(
-      `${AI_CONVERSATIONS}/${conversationId}/suggest-reply`,
-      { instruction },
-      aiConfig(request)
-    ),
-
-  rewrite: (conversationId: string, draft: string, tone: string, request?: AIRequest) =>
-    api.post<AIAttribution & { reply: string }>(
-      `${AI_CONVERSATIONS}/${conversationId}/rewrite`,
-      { draft, tone },
-      aiConfig(request)
-    ),
-
-  translate: (conversationId: string, text: string, targetLanguage: string, request?: AIRequest) =>
-    api.post<AIAttribution & { text: string }>(
-      `${AI_CONVERSATIONS}/${conversationId}/translate`,
-      { text, targetLanguage },
-      aiConfig(request)
-    ),
-
-  analyze: (conversationId: string, request?: AIRequest) =>
-    api.post<AIAttribution & { analysis: Record<string, unknown> }>(
-      `${AI_CONVERSATIONS}/${conversationId}/analyze`,
-      undefined,
-      aiConfig(request)
-    ),
-
-  knowledgeAnswer: (conversationId: string, question: string, request?: AIRequest) =>
-    api.post<AIAttribution & { answered: boolean; answer: string | null; reason?: string }>(
-      `${AI_CONVERSATIONS}/${conversationId}/knowledge-answer`,
-      { question },
-      aiConfig(request)
-    ),
-
-  /** "Take over" (human) and "give back to AI" (ai). */
-  setOwner: mutates(CONVERSATIONS, (conversationId: string, owner: 'ai' | 'human') =>
-    api.put<{ responseOwner: 'ai' | 'human'; aiControlVersion: number }>(
-      `${AI_CONVERSATIONS}/${conversationId}/owner`,
-      { owner }
-    )
-  )
+export const assistantAPI = {
+  /** Whether this server has a Gemini key; the site switch depends on it. */
+  status: () => api.get<AssistantStatus>('/assistant/status', { cache: false })
 };
 
 // ----------------------------------------------------------------- reporting

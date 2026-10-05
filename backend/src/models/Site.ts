@@ -2,12 +2,7 @@ import { defineModel } from '../db/model';
 import type { Ref } from '../db/model';
 import type { OrganizationDoc } from './Organization';
 import type { UserDoc } from './User';
-import type {
-  SiteAiSettings,
-  SiteInstallation,
-  SiteIntegrations,
-  SiteWidgetSettings
-} from '../domain';
+import type { SiteInstallation, SiteIntegrations, SiteWidgetSettings } from '../domain';
 
 export interface SiteDoc {
   name: string;
@@ -16,7 +11,10 @@ export interface SiteDoc {
   userId: Ref<UserDoc> | null;
   organizationId: Ref<OrganizationDoc>;
   widgetSettings: SiteWidgetSettings;
-  aiSettings: SiteAiSettings;
+  /** The FAQ assistant answers first (services/assistant). Off by default. */
+  assistantEnabled: boolean;
+  /** The keyword FAQ reply, labelled as a help article. Off by default. */
+  faqAutoReply: boolean;
   integrations: SiteIntegrations;
   installation: SiteInstallation;
   /** The exact origins the widget may run on; see config/siteOrigins.ts. */
@@ -27,31 +25,13 @@ export interface SiteDoc {
 /** What the panel may know about the integrations: whether, never what. */
 export interface PublicSiteIntegrations {
   identity: { configured: boolean };
-  orderLookup: { enabled: boolean; url: string | null; signingConfigured: boolean };
 }
 
 export function publicIntegrations(
   integrations: SiteIntegrations | undefined
 ): PublicSiteIntegrations {
-  return {
-    identity: { configured: Boolean(integrations?.identitySecret) },
-    orderLookup: {
-      enabled: Boolean(integrations?.orderLookup?.enabled),
-      url: integrations?.orderLookup?.url ?? null,
-      signingConfigured: Boolean(integrations?.orderLookup?.signingSecret)
-    }
-  };
+  return { identity: { configured: Boolean(integrations?.identitySecret) } };
 }
-
-export const DEFAULT_AI_SETTINGS: SiteAiSettings = {
-  mode: 'off',
-  answerLength: 'short',
-  tone: 'professional',
-  maxBotReplies: 8,
-  blockedTerms: [],
-  botName: null,
-  handoffMessage: null
-};
 
 export default defineModel<SiteDoc>({
   name: 'Site',
@@ -75,18 +55,12 @@ export default defineModel<SiteDoc>({
         autoOpenDelay: 5000
       })
     },
-    aiSettings: {
-      column: 'ai_settings',
-      type: 'json',
-      default: () => ({ ...DEFAULT_AI_SETTINGS, blockedTerms: [] })
-    },
+    assistantEnabled: { column: 'assistant_enabled', type: 'boolean', default: false },
+    faqAutoReply: { column: 'faq_auto_reply', type: 'boolean', default: false },
     integrations: {
       column: 'integrations',
       type: 'json',
-      default: () => ({
-        identitySecret: null,
-        orderLookup: { enabled: false, url: null, signingSecret: null }
-      })
+      default: () => ({ identitySecret: null })
     },
     // Widget'ın müşteri sitesinde gerçekten çalıştığına dair kanıt. Panelde
     // "Kurulum bekleniyor" / "Kurulu" rozetini besler.

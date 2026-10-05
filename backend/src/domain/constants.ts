@@ -175,28 +175,15 @@ const CLIENT_MESSAGE_ID = /^[a-z0-9_.:-]{1,100}$/i;
 export const isClientMessageId = (value: unknown): value is string =>
   typeof value === 'string' && CLIENT_MESSAGE_ID.test(value);
 
-// ------------------------------------------------------------ AI assistant
+// ------------------------------------------------------------ FAQ assistant
 
 /**
- * Who may answer on a site's behalf: nobody, agents with a copilot, or the
- * assistant itself. The FAQ keyword bot keeps running in the first two and
- * steps aside in `auto`, so a visitor never gets two automatic answers.
+ * Who answers a conversation right now: the FAQ assistant (on a site that
+ * switched it on, until it hands over) or a person. Independent of who the
+ * conversation is assigned to. See services/assistant.
  */
-export const AI_MODES = ['off', 'copilot', 'auto'] as const;
-export type AIMode = (typeof AI_MODES)[number];
-export const isAIMode = memberOf(AI_MODES);
-
-/** Who answers a conversation right now; independent of who it is assigned to. */
-export const RESPONSE_OWNERS = ['ai', 'human'] as const;
+export const RESPONSE_OWNERS = ['assistant', 'human'] as const;
 export type ResponseOwner = (typeof RESPONSE_OWNERS)[number];
-
-export const AI_ANSWER_LENGTHS = ['short', 'normal'] as const;
-export type AIAnswerLength = (typeof AI_ANSWER_LENGTHS)[number];
-export const isAIAnswerLength = memberOf(AI_ANSWER_LENGTHS);
-
-export const AI_TONES = ['professional', 'friendly'] as const;
-export type AITone = (typeof AI_TONES)[number];
-export const isAITone = memberOf(AI_TONES);
 
 // ----------------------------------------------------------------------- deal
 

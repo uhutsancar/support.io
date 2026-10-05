@@ -12,6 +12,7 @@ import { X, RefreshCw } from 'lucide-react';
 import { sitesAPI } from '../../services/api';
 import { errorMessage } from '../../hooks/useAsync';
 import { formatDateTime } from '../../lib/format';
+import SiteIntegrations from './SiteIntegrations';
 import type { Site } from '../../types/api';
 
 /** A widget heard from within this window counts as connected. */
@@ -180,6 +181,10 @@ const SiteAccess = ({ site, onClose, onSaved }: SiteAccessProps) => {
             {`script-src ${apiOrigin};\nconnect-src ${apiOrigin} ${apiOrigin.replace(/^http/, 'ws')};\nimg-src ${apiOrigin} data:;`}
           </pre>
         </section>
+
+        <div className="mb-5 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <SiteIntegrations site={site} onChanged={onSaved} />
+        </div>
 
         <section className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">

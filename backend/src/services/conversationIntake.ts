@@ -76,7 +76,7 @@ export async function openConversation(
   site: Doc<SiteDoc>,
   visitor: VisitorIdentity,
   firstMessage: string,
-  /** 'ai' when the site's assistant answers; the default keeps people first. */
+  /** 'assistant' when the site's FAQ assistant answers; the default keeps people first. */
   responseOwner: ResponseOwner = 'human'
 ): Promise<IntakeResult> {
   const department = await routeToDepartment(site._id, firstMessage);
@@ -140,9 +140,11 @@ export async function openConversation(
   await autoAssignConversation(conversation._id, String(site.organizationId));
 
   // With the assistant answering there is someone here now; the closed-hours
-  // note is given when it hands over instead (services/ai/autoReply.ts).
+  // note is given when it hands over instead (services/assistant).
   const greeting =
-    responseOwner === 'ai' ? null : await postBusinessHoursGreeting(conversation, department);
+    responseOwner === 'assistant'
+      ? null
+      : await postBusinessHoursGreeting(conversation, department);
 
   return { conversation, department, greeting, created: true };
 }

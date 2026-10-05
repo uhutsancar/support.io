@@ -41,7 +41,7 @@ import { limitsFor } from '../services/entitlements';
 import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
-import { assistantActive } from '../services/ai/autoReply';
+import { assistantActive } from '../services/assistant';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
@@ -270,8 +270,8 @@ router.post(
       serverTime: new Date().toISOString(),
       site: { name: site.name, key: site.siteKey },
       availability,
-      // True when the site's assistant answers first; the widget then says so
-      // and offers a way to a person. Nothing else about AI is public.
+      // True when the site's FAQ assistant answers first; the widget then says
+      // so and offers a way to a person. Nothing else about it is public.
       assistant: assistantActive(site),
       config: publicConfig(site, saved ? saved.toObject() : null),
       faqs: (faqs || []).map((f) => ({

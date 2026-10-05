@@ -23,7 +23,6 @@ export const FEATURE_IDS = [
   'knowledge-base',
   'analytics',
   'team',
-  'ai-assist',
   'visitors',
   'crm'
 ];
@@ -40,7 +39,7 @@ export const FEATURE_GROUPS = [
     items: ['live-chat', 'universal-widget', 'knowledge-base', 'proactive']
   },
   { id: 'organize', tone: 'emerald', items: ['routing', 'automation', 'team'] },
-  { id: 'grow', tone: 'sky', items: ['analytics', 'visitors', 'crm', 'ai-assist'] }
+  { id: 'grow', tone: 'sky', items: ['analytics', 'visitors', 'crm'] }
 ];
 
 /** Detay sayfasında hangi planların kapsadığını göstermek için. */
@@ -51,20 +50,19 @@ export const PLAN_LABEL = {
 };
 
 /**
- * id → hangi planda açık. rbac.js içindeki planFeatures ile aynı gerçek.
- * Yapay zekâ plana bağlı değildir: model müşterinin kendi sunucusunda çalışır,
- * backend onu plana göre kısıtlamaz.
+ * id → hangi planda açık. Backend'deki plan tablosuyla (domain/plans.ts) aynı
+ * gerçek: departmanlar, otomasyon, proaktif mesajlar, ziyaretçiler ve CRM
+ * ücretli planlarda; ücretsiz planda tek kullanıcı vardır.
  */
 export const FEATURE_PLAN = {
   'live-chat': 'all',
   'universal-widget': 'all',
-  routing: 'all',
-  automation: 'all',
-  proactive: 'all',
+  routing: 'pro',
+  automation: 'pro',
+  proactive: 'pro',
   'knowledge-base': 'all',
-  analytics: 'pro',
+  analytics: 'all',
   team: 'pro',
-  'ai-assist': 'all',
   visitors: 'pro',
   crm: 'pro'
 };
@@ -79,7 +77,6 @@ export const FEATURE_ICON = {
   'knowledge-base': 'BookOpen',
   analytics: 'BarChart3',
   team: 'Users',
-  'ai-assist': 'Sparkles',
   visitors: 'Eye',
   crm: 'Briefcase'
 };
@@ -98,7 +95,6 @@ export const FEATURE_TONE = {
   'knowledge-base': 'amber',
   analytics: 'sky',
   team: 'violet',
-  'ai-assist': 'violet',
   visitors: 'sky',
   crm: 'sky'
 };
@@ -110,7 +106,7 @@ export const FEATURE_TONE = {
  */
 export const HOME_TABS = [
   'live-chat',
-  'ai-assist',
+  'universal-widget',
   'routing',
   'automation',
   'proactive',
@@ -132,7 +128,7 @@ export const SOLUTIONS = [
     photo: '/photos/ecommerce.webp',
     tone: 'indigo',
     icon: 'Store',
-    features: ['ai-assist', 'live-chat', 'proactive', 'knowledge-base']
+    features: ['live-chat', 'proactive', 'knowledge-base', 'routing']
   },
   {
     id: 'saas',
@@ -160,14 +156,14 @@ export const SOLUTIONS = [
     photo: '/photos/hotel.webp',
     tone: 'rose',
     icon: 'BedDouble',
-    features: ['proactive', 'ai-assist', 'live-chat', 'crm']
+    features: ['proactive', 'live-chat', 'knowledge-base', 'crm']
   },
   {
     id: 'education',
     photo: '/photos/education.webp',
     tone: 'sky',
     icon: 'GraduationCap',
-    features: ['knowledge-base', 'ai-assist', 'routing', 'analytics']
+    features: ['knowledge-base', 'live-chat', 'routing', 'analytics']
   }
 ] as const;
 

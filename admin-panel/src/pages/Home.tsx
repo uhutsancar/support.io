@@ -30,7 +30,6 @@ import {
   Globe,
   Laptop,
   LockKeyhole,
-  ServerCog,
   ShieldCheck,
   Smartphone,
   Tablet,
@@ -61,7 +60,6 @@ import {
   RoutingVisual,
   AutomationVisual,
   ProactiveVisual,
-  AiVisual,
   VisitorsVisual
 } from '../components/marketing/visuals';
 import ChatPlayer from '../components/marketing/ChatPlayer';
@@ -201,7 +199,6 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
 
 const TOUR_VISUAL: Record<string, { node: () => React.ReactNode; frame: string }> = {
   'live-chat': { node: () => <InboxVisual />, frame: 'viz.inbox.frame' },
-  'ai-assist': { node: () => <AiVisual />, frame: 'viz.ai.frame' },
   routing: { node: () => <RoutingVisual />, frame: 'viz.routing.frame' },
   automation: { node: () => <AutomationVisual />, frame: 'viz.automation.frame' },
   proactive: { node: () => <ProactiveVisual />, frame: 'viz.proactive.frame' },
@@ -560,83 +557,6 @@ const Story = ({ t }: { t: T }) => {
   );
 };
 
-/* ---------------------------------------------------------- yapay zekâ */
-
-const AiBand = ({ t, routes }: { t: T; routes: Routes }) => {
-  const points = asList<{ title: string; body: string }>(
-    t('homePage.ai.points', { returnObjects: true })
-  );
-  const modes = asList<{ name: string; body: string }>(t('homePage.ai.modes', { returnObjects: true }));
-  const icons = [ServerCog, LockKeyhole, UserRoundCheck, ShieldCheck];
-
-  return (
-    <Section tone="deep" wide className="overflow-hidden">
-      <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)] gap-14 lg:gap-16 items-center">
-        <div>
-          <Reveal>
-            <Eyebrow index={4} tone="violet" className="!text-violet-300">
-              {t('homePage.ai.eyebrow')}
-            </Eyebrow>
-            <h2 className="mt-4 text-[31px] sm:text-[44px] font-bold tracking-[-0.035em] leading-[1.06] text-white text-balance">
-              {t('homePage.ai.title')}
-            </h2>
-            <p className="mt-5 text-[16.5px] leading-[1.65] text-gray-400 max-w-[56ch]">
-              {t('homePage.ai.desc')}
-            </p>
-          </Reveal>
-
-          <div className="mt-10 grid sm:grid-cols-2 gap-x-8 gap-y-7">
-            {points.map((p, i) => {
-              const Icon = icons[i % icons.length];
-              return (
-                <Reveal key={i} delay={i * 0.06}>
-                  <Icon className="w-5 h-5 text-violet-300" strokeWidth={1.8} />
-                  <h3 className="mt-3 text-[15.5px] font-semibold text-white">{p.title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-gray-400">{p.body}</p>
-                </Reveal>
-              );
-            })}
-          </div>
-
-          <Reveal className="mt-10 grid sm:grid-cols-3 gap-2.5">
-            {modes.map((m, i) => (
-              <div
-                key={i}
-                className={[
-                  'rounded-2xl p-4 border',
-                  i === 2 ? 'border-violet-400/40 bg-violet-500/[0.12]' : 'border-white/10 bg-white/[0.03]'
-                ].join(' ')}
-              >
-                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-violet-200">
-                  {m.name}
-                </p>
-                <p className="mt-1.5 text-[12.5px] leading-relaxed text-gray-400">{m.body}</p>
-              </div>
-            ))}
-          </Reveal>
-
-          <Reveal className="mt-9 flex flex-wrap gap-3">
-            <Button to={routes.ai} variant="inverse" arrow>
-              {t('homePage.ai.cta')}
-            </Button>
-            <Button
-              to={routes.features + '/ai-assist'}
-              className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none"
-            >
-              {t('homePage.ai.cta2')}
-            </Button>
-          </Reveal>
-        </div>
-
-        <Reveal y={40} className="relative">
-          <div className="dark mx-auto max-w-[380px]">
-            <ChatPlayer script="ai" height={400} />
-          </div>
-        </Reveal>
-      </div>
-    </Section>
-  );
-};
 
 /* -------------------------------------------------------- kurulum bento */
 
@@ -1092,7 +1012,6 @@ const Home = () => {
         <ProductTour t={t} routes={routes} />
         <Industries t={t} routes={routes} />
         <Story t={t} />
-        <AiBand t={t} routes={routes} />
         <SetupBento t={t} routes={routes} />
         <FeatureGrid t={t} routes={routes} />
         <Trust t={t} />

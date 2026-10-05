@@ -417,10 +417,7 @@ test('sealed secrets open only intact, and a userHash verifies only for its own 
   assert.equal(open('not-sealed'), null);
   assert.equal(open(null), null);
 
-  const integrations = {
-    identitySecret: sealed,
-    orderLookup: { enabled: false, url: null, signingSecret: null }
-  };
+  const integrations = { identitySecret: sealed };
   const hash = userHashFor(secret, 'u_1');
   assert.equal(verifiedIdentity(integrations, 'u_1', hash), 'u_1');
   assert.equal(verifiedIdentity(integrations, 'u_2', hash), null, 'a hash reused for another id');

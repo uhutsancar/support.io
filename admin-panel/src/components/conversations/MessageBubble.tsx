@@ -44,20 +44,16 @@ const BUBBLE_STYLES: Record<string, string> = {
 };
 
 /**
- * The locale key for why the assistant handed a visitor over. The server
- * records a precise code ("rejected:unsupported_fact", "order_lookup_timeout",
- * "ai_unreachable"); the inbox shows the family it belongs to.
+ * The locale key for why the FAQ assistant handed a visitor over. Every
+ * Gemini failure ("api_quota", "api_timeout"…) reads as one family.
  */
 export function handoffReasonKey(reason: string): string {
-  if (reason.startsWith('rejected:')) return 'rejected';
-  if (reason.startsWith('order_lookup_')) return 'order';
-  if (reason.startsWith('ai_')) return 'failure';
-  return reason;
+  return reason.startsWith('api_') ? 'api' : reason;
 }
 
 const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
   const { t } = useTranslation();
-  const ai = message.aiMetadata;
+  const note = message.assistant;
   // The visitor's messages sit on the left; everything we send — an agent's
   // reply or the bot's — sits on the right.
   const fromVisitor = message.senderType === 'visitor';
@@ -75,10 +71,10 @@ const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
       >
         {!fromVisitor && (
           <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-0.5 sm:mb-1 text-right transition-colors duration-200 truncate">
-            {ai && (
+            {note && (
               <span className="inline-flex items-center gap-0.5 mr-1.5 px-1.5 py-px rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
                 <Bot className="w-3 h-3" />
-                {t('ai.autoAssistant')}
+                {t('assistant.label')}
               </span>
             )}
             {message.senderName}
@@ -125,14 +121,15 @@ const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
           )}
         </div>
 
-        {ai?.sources?.length ? (
+        {note?.sources?.length ? (
           <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 text-right">
-            {t('ai.sources')}: {ai.sources.join(' · ')}
+            {t('assistant.sources')}: {note.sources.join(' · ')}
           </p>
         ) : null}
-        {ai?.decision === 'handoff' && ai.reason ? (
+        {note?.handoff ? (
           <p className="mt-1 text-[10px] text-amber-700 dark:text-amber-300 text-right">
-            {t('ai.handoffReason')}: {t(`ai.reasons.${handoffReasonKey(ai.reason)}`, ai.reason)}
+            {t('assistant.handoffReason')}:{' '}
+            {t(`assistant.reasons.${handoffReasonKey(note.handoff)}`, note.handoff)}
           </p>
         ) : null}
 

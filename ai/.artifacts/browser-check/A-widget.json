@@ -1,0 +1,58 @@
+[
+  {
+    "id": "A-W1",
+    "expected": "\"Otomatik asistan · Temsilciye bağlan\" satırı",
+    "observed": "Otomatik asistan · Temsilciye baglan",
+    "result": "GEÇTİ",
+    "screenshot": "A-W1-assistant-line.png"
+  },
+  {
+    "id": "A-F1",
+    "expected": "Model kapalı: 10 sn içinde devir mesajı; sohbet çalışır",
+    "observed": "4981 ms · \"Şu anda otomatik yanıt veremiyorum; sizi bir müşteri temsilcimize aktarıyorum.\"",
+    "result": "GEÇTİ",
+    "screenshot": "A-F1-model-down-handoff.png"
+  },
+  {
+    "id": "A-W16",
+    "expected": "Widget ve API istekleri yalnız localhost’a gider",
+    "observed": "hostlar: localhost, fonts.googleapis.com, fonts.gstatic.com (Google Fonts demo sayfasının kendi yazı tipi)",
+    "result": "GEÇTİ",
+    "screenshot": null
+  },
+  {
+    "id": "A-W15",
+    "expected": "Sayfa yenilenince geçmiş aynı; çift mesaj yok",
+    "observed": "karşılama dışı balon: önce 2, sonra 2",
+    "result": "GEÇTİ",
+    "screenshot": "A-W15-reload.png"
+  },
+  {
+    "id": "A-W12",
+    "expected": "Numarayı tekrarlamaz; devreder",
+    "observed": "\"Güvenliğiniz için kart, IBAN veya kimlik bilgilerinizi sohbette paylaşmayın. Sizi bir müşteri temsilcimize aktarıyorum.\"",
+    "result": "GEÇTİ",
+    "screenshot": "A-W12-card.png"
+  },
+  {
+    "id": "A-W13",
+    "expected": "Anında devir",
+    "observed": "1257 ms · \"Sizi bir müşteri temsilcimize aktarıyorum. Şu anda mesai saatleri dışındayız; ekibimiz mesai başladığında buradan yanıt verecek.\"",
+    "result": "GEÇTİ",
+    "screenshot": "A-W13-human.png"
+  },
+  {
+    "id": "A-W-human-link",
+    "expected": "\"Temsilciye bağlan\" sonrası asistan yanıt vermez",
+    "observed": "satır gizlendi: true; yeni bot mesajı: 1 (Thank you for contacting us. Our business hours are 09:00 - 18:00 on thursday. We'll respond during business hours.)",
+    "result": "GEÇTİ",
+    "screenshot": "A-W-request-human.png"
+  },
+  {
+    "id": "A-F4",
+    "expected": "Mobil (375 px) ve koyu temada widget düzgün",
+    "observed": "yatay taşma: false",
+    "result": "GEÇTİ",
+    "screenshot": "A-F4-mobile-dark.png"
+  }
+]

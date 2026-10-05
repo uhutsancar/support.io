@@ -12,7 +12,7 @@ import Message from '../../models/Message';
 import Team from '../../models/Team';
 import User from '../../models/User';
 import { refreshSla } from '../../services/conversationSla';
-import { setResponseOwner } from '../../services/ai/autoReply';
+import { takeOver } from '../../services/assistant';
 import {
   recordAgentAssignment,
   recordAgentResolution,
@@ -209,9 +209,8 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     // it before their message is stored: an answer the model is still
     // writing sees the ownership change and is dropped rather than sent
     // after the agent's reply.
-    if (conversation.responseOwner === 'ai') {
-      const changed = await setResponseOwner(ctx.io, conversation, 'human');
-      if (changed) Object.assign(conversation, changed);
+    if (conversation.responseOwner === 'assistant') {
+      if (await takeOver(ctx.io, conversation)) conversation.responseOwner = 'human';
     }
 
     // insert — before any of the conversation's state moves, so a reply

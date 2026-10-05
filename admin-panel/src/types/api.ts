@@ -67,34 +67,15 @@ export interface CurrentUser {
   [extra: string]: unknown;
 }
 
-/** Where the self-hosted model is, as /ai/status reports it. */
-export type AIState = 'disabled' | 'warming_up' | 'ready' | 'unavailable';
-
-export interface AIStatus {
-  /** True only when the model is configured and ready to answer. */
-  enabled: boolean;
-  configured: boolean;
-  state: AIState;
+/** GET /api/assistant/status: whether this server can run the FAQ assistant. */
+export interface AssistantStatus {
+  available: boolean;
   model: string | null;
 }
 
-export type AIMode = 'off' | 'copilot' | 'auto';
-
-/** How the assistant behaves on one site; see backend src/domain/types.ts. */
-export interface SiteAiSettings {
-  mode: AIMode;
-  answerLength: 'short' | 'normal';
-  tone: 'professional' | 'friendly';
-  maxBotReplies: number;
-  blockedTerms: string[];
-  botName: string | null;
-  handoffMessage: string | null;
-}
-
-/** What the server tells the panel about a site's integrations: never a secret. */
+/** What the panel may know about a site's integrations: whether, never what. */
 export interface SiteIntegrationsView {
   identity: { configured: boolean };
-  orderLookup: { enabled: boolean; url: string | null; signingConfigured: boolean };
 }
 
 export interface Site {
@@ -107,7 +88,10 @@ export interface Site {
   allowedOrigins?: string[];
   isActive: boolean;
   widgetSettings?: Record<string, unknown>;
-  aiSettings?: SiteAiSettings;
+  /** The FAQ assistant answers first on this site. */
+  assistantEnabled?: boolean;
+  /** The keyword FAQ reply, sent as a help article. */
+  faqAutoReply?: boolean;
   integrations?: SiteIntegrationsView;
   installation?: {
     verifiedAt?: string | null;
@@ -272,7 +256,8 @@ export interface Conversation {
   resolvedAt: string | null;
   closedAt: string | null;
   /** Who answers the visitor right now: the assistant or a person. */
-  responseOwner?: 'ai' | 'human';
+  /** Who answers right now: the FAQ assistant or a person. */
+  responseOwner?: 'assistant' | 'human';
   aiControlVersion?: number;
   createdAt: string;
   updatedAt?: string;
@@ -281,13 +266,12 @@ export interface Conversation {
   [extra: string]: unknown;
 }
 
-export interface MessageAiMetadata {
-  decision: string;
-  reason?: string | null;
-  sourceIds: string[];
-  sources?: string[];
-  promptVersion: string;
-  durationMs: number;
+/** What the FAQ assistant notes on its own messages. */
+export interface MessageAssistantNote {
+  /** The questions of the FAQ entries the answer was drawn from. */
+  sources: string[];
+  /** Why it handed the conversation to a person; null on an answer. */
+  handoff: string | null;
 }
 
 export interface MessageFile {
@@ -317,8 +301,8 @@ export interface Message {
    * server's acknowledgement (features/conversations/useReliableSend.ts).
    */
   status?: 'pending' | 'failed';
-  /** Present on automatic replies: what the assistant decided and from which sources. */
-  aiMetadata?: MessageAiMetadata | null;
+  /** Present on the FAQ assistant's messages. */
+  assistant?: MessageAssistantNote | null;
   [extra: string]: unknown;
 }
 

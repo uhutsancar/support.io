@@ -48,7 +48,6 @@ const MATRIX = [
   { key: 'analytics', free: false, pro: true, enterprise: true },
   { key: 'visitors', free: false, pro: true, enterprise: true },
   { key: 'crm', free: false, pro: true, enterprise: true },
-  { key: 'aiAssist', free: true, pro: true, enterprise: true },
   { key: 'export', free: false, pro: true, enterprise: true },
   { key: 'audit', free: false, pro: false, enterprise: true },
   { key: 'sso', free: false, pro: false, enterprise: true }

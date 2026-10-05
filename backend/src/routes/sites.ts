@@ -12,17 +12,9 @@ import { newSecret, seal } from '../config/secretBox';
 import { normalizeOriginList, originsFromDomain } from '../config/siteOrigins';
 import { withTransaction } from '../db/pool';
 import { assertCanCreateSite, lockOrganization } from '../services/entitlements';
-import { checkOrderUrl, testOrderService } from '../services/orderLookup';
+import { assistantAvailable } from '../services/assistant';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
-import {
-  AI_ANSWER_LENGTHS,
-  AI_MODES,
-  AI_TONES,
-  isAIAnswerLength,
-  isAIMode,
-  isAITone
-} from '../domain';
 import {
   asyncHandler,
   badRequest,
@@ -35,7 +27,6 @@ import {
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
-import type { SiteAiSettings } from '../domain';
 
 const router = express.Router();
 
@@ -49,7 +40,8 @@ const WRITABLE_FIELDS = [
   'domain',
   'allowedOrigins',
   'widgetSettings',
-  'aiSettings',
+  'assistantEnabled',
+  'faqAutoReply',
   'isActive'
 ] as const;
 
@@ -79,85 +71,7 @@ function validateAllowedOrigins(input: unknown): string[] {
 
 /** Nested settings are merged rather than replaced, so a partial update of one
  *  key does not blank out the rest of the object. */
-const MERGED_FIELDS = new Set<string>(['widgetSettings', 'aiSettings']);
-
-const AI_SETTING_KEYS = [
-  'mode',
-  'answerLength',
-  'tone',
-  'maxBotReplies',
-  'blockedTerms',
-  'botName',
-  'handoffMessage'
-] as const;
-
-const MAX_BLOCKED_TERMS = 50;
-
-/** A trimmed string of at most `max` characters, null for empty; anything else is a 400. */
-function optionalText(value: unknown, max: number, label: string): string | null {
-  if (value === null) return null;
-  if (typeof value !== 'string' || value.length > max) {
-    throw badRequest(`aiSettings.${label} must be a string of at most ${max} characters`);
-  }
-  return value.trim() || null;
-}
-
-/**
- * The AI settings a client sent, checked key by key.
- *
- * This used to be merged into the row as it arrived, so any key and any value
- * a client sent — including a model name — was stored and later read back by
- * the assistant. Only the declared keys, with values of the declared type and
- * range, get through; everything else is a 400 naming the problem.
- */
-function validateAiSettings(input: unknown): Partial<SiteAiSettings> {
-  const body = pickStrict<SiteAiSettings>(input, AI_SETTING_KEYS);
-  const out: Partial<SiteAiSettings> = {};
-
-  if (body.mode !== undefined) {
-    if (!isAIMode(body.mode)) {
-      throw badRequest(`aiSettings.mode must be one of: ${AI_MODES.join(', ')}`);
-    }
-    out.mode = body.mode;
-  }
-  if (body.answerLength !== undefined) {
-    if (!isAIAnswerLength(body.answerLength)) {
-      throw badRequest(`aiSettings.answerLength must be one of: ${AI_ANSWER_LENGTHS.join(', ')}`);
-    }
-    out.answerLength = body.answerLength;
-  }
-  if (body.tone !== undefined) {
-    if (!isAITone(body.tone)) {
-      throw badRequest(`aiSettings.tone must be one of: ${AI_TONES.join(', ')}`);
-    }
-    out.tone = body.tone;
-  }
-  if (body.maxBotReplies !== undefined) {
-    const n = body.maxBotReplies;
-    if (!Number.isInteger(n) || n < 1 || n > 20) {
-      throw badRequest('aiSettings.maxBotReplies must be an integer between 1 and 20');
-    }
-    out.maxBotReplies = n;
-  }
-  if (body.blockedTerms !== undefined) {
-    const terms: unknown = body.blockedTerms;
-    if (
-      !Array.isArray(terms) ||
-      terms.length > MAX_BLOCKED_TERMS ||
-      !terms.every((t) => typeof t === 'string' && t.length <= 60)
-    ) {
-      throw badRequest(
-        `aiSettings.blockedTerms must be at most ${MAX_BLOCKED_TERMS} strings of up to 60 characters`
-      );
-    }
-    out.blockedTerms = [...new Set(terms.map((t: string) => t.trim()).filter(Boolean))];
-  }
-  if (body.botName !== undefined) out.botName = optionalText(body.botName, 40, 'botName');
-  if (body.handoffMessage !== undefined) {
-    out.handoffMessage = optionalText(body.handoffMessage, 300, 'handoffMessage');
-  }
-  return out;
-}
+const MERGED_FIELDS = new Set<string>(['widgetSettings']);
 
 /** Who changed a site, for its audit row. */
 function auditContext(req: Request, site: Doc<SiteDoc>) {
@@ -238,11 +152,19 @@ router.put(
     if (updates.isActive !== undefined && typeof updates.isActive !== 'boolean') {
       throw badRequest('isActive must be a boolean');
     }
-    if (updates.aiSettings !== undefined) {
-      updates.aiSettings = validateAiSettings(updates.aiSettings) as SiteAiSettings;
+    for (const flag of ['assistantEnabled', 'faqAutoReply'] as const) {
+      if (updates[flag] !== undefined && typeof updates[flag] !== 'boolean') {
+        throw badRequest(`${flag} must be a boolean`);
+      }
+    }
+    // The assistant needs a Gemini key on this server; switching it on
+    // without one would promise visitors answers that never come.
+    if (updates.assistantEnabled === true && !assistantAvailable()) {
+      throw badRequest('The assistant is not available on this server (GEMINI_API_KEY is not set)');
     }
 
     const site = await loadOwnedSite(req, req.params.siteId);
+    const assistantBefore = site.assistantEnabled;
     const writable = site as unknown as Record<string, unknown>;
     for (const [key, value] of Object.entries(updates)) {
       writable[key] = MERGED_FIELDS.has(key)
@@ -251,10 +173,10 @@ router.put(
     }
     await site.save();
 
-    if (updates.aiSettings) {
-      events.emit('site.ai.updated', {
+    if (updates.assistantEnabled !== undefined && updates.assistantEnabled !== assistantBefore) {
+      events.emit('site.assistant.updated', {
         ...auditContext(req, site),
-        metadata: { changed: Object.keys(updates.aiSettings), mode: site.aiSettings.mode }
+        metadata: { enabled: site.assistantEnabled }
       });
     }
     res.json({ site });
@@ -286,74 +208,6 @@ router.post(
     await site.save();
     auditIntegration(req, site, 'identity_key_generated');
     res.json({ site, secret });
-  })
-);
-
-// The shop's order service: where it is and whether the assistant may ask it.
-// The URL is checked when it is saved (https, public addresses only) and again
-// on every call, since DNS can change in between.
-router.put(
-  '/:siteId/integrations/order-lookup',
-  checkPermission('manage_sites'),
-  asyncHandler(async (req: Request, res: Response) => {
-    const { enabled, url } = pickStrict<{ enabled: boolean; url: string | null }>(req.body, [
-      'enabled',
-      'url'
-    ]);
-    const site = await loadOwnedSite(req, req.params.siteId);
-    const current = site.integrations.orderLookup;
-    const next = { ...current };
-
-    if (url !== undefined) {
-      if (url === null || url === '') {
-        next.url = null;
-      } else {
-        const checked = await checkOrderUrl(url);
-        if (!checked) {
-          throw badRequest('The order service URL must be https and resolve to a public address');
-        }
-        next.url = checked.toString();
-      }
-    }
-    if (enabled !== undefined) {
-      if (typeof enabled !== 'boolean') throw badRequest('enabled must be a boolean');
-      next.enabled = enabled;
-    }
-    if (next.enabled && (!next.url || !next.signingSecret)) {
-      throw badRequest('Set the URL and generate a signing key before switching the lookup on');
-    }
-
-    site.integrations = { ...site.integrations, orderLookup: next };
-    await site.save();
-    auditIntegration(req, site, next.enabled ? 'order_lookup_on' : 'order_lookup_off');
-    res.json({ site });
-  })
-);
-
-// A new signing key for requests to the order service; shown this once.
-router.post(
-  '/:siteId/integrations/order-lookup/signing-secret',
-  checkPermission('manage_sites'),
-  asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
-    const secret = newSecret();
-    site.integrations = {
-      ...site.integrations,
-      orderLookup: { ...site.integrations.orderLookup, signingSecret: seal(secret) }
-    };
-    await site.save();
-    auditIntegration(req, site, 'order_signing_key_generated');
-    res.json({ site, secret });
-  })
-);
-
-router.post(
-  '/:siteId/integrations/order-lookup/test',
-  checkPermission('manage_sites'),
-  asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
-    const result = await testOrderService(site);
-    res.json(result.ok ? { ok: true, orders: result.orders.length } : result);
   })
 );
 

@@ -143,15 +143,9 @@ const FeatureDetail = () => {
                 <Button to={routes.register} size="lg" arrow>
                   {t('landing.home.btnStart')}
                 </Button>
-                {slug === 'ai-assist' ? (
-                  <Button to={routes.ai} variant="secondary" size="lg">
-                    {t('homePage.ai.cta')}
-                  </Button>
-                ) : (
-                  <Button to={routes.pricing} variant="secondary" size="lg">
-                    {t('landing.home.ctaBtn2')}
-                  </Button>
-                )}
+                <Button to={routes.pricing} variant="secondary" size="lg">
+                  {t('landing.home.ctaBtn2')}
+                </Button>
               </div>
             </Reveal>
             <Reveal y={30} delay={0.08}>

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "A-INBOX-1",
+    "expected": "Bot mesajında \"Otomatik asistan\" etiketi ve devir nedeni",
+    "observed": "etiket: true; devir nedeni: Hassas bilgi paylaşıldı",
+    "result": "GEÇTİ",
+    "screenshot": "A-INBOX-bot-message.png"
+  },
+  {
+    "id": "A-H3",
+    "expected": "\"AI'ye geri ver\" → asistan yanıtlıyor rozeti ve Devral düğmesi",
+    "observed": "geri ver düğmesi: true; \"Asistan yanıtlıyor\": true",
+    "result": "GEÇTİ",
+    "screenshot": "A-H3-give-back.png"
+  },
+  {
+    "id": "A-H1-button",
+    "expected": "\"Devral\" → temsilci yanıtlar",
+    "observed": "yeniden \"AI'ye geri ver\" görünüyor: true",
+    "result": "GEÇTİ",
+    "screenshot": "A-H1-take-over.png"
+  },
+  {
+    "id": "A-P4-state",
+    "expected": "Asistan paneli model durumunu gösterir",
+    "observed": "AI Asistan Model şu anda kullanılamıyor Özetle Yanıt öner Analiz Profesyonel Samimi Kısa Özür dileyen Ton Türkçe İngilizce Almanca Arapça Çevir Bilgi bankasına ",
+    "result": "GEÇTİ",
+    "screenshot": "A-P4-copilot-state.png"
+  },
+  {
+    "id": "A-INBOX-console",
+    "expected": "Konsolda hata yok",
+    "observed": "hata yok",
+    "result": "GEÇTİ",
+    "screenshot": null
+  }
+]

@@ -49,7 +49,6 @@ import {
   RefreshCw,
   ShieldCheck,
   Smile,
-  Sparkles,
   UserPlus,
   Users
 } from 'lucide-react';
@@ -57,7 +56,7 @@ import {
   sitesAPI,
   conversationsAPI,
   analyticsAPI,
-  aiAPI,
+  assistantAPI,
   teamAPI,
   clearCache
 } from '../services/api';
@@ -66,7 +65,7 @@ import { useSocket } from '../contexts/SocketContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { formatMinutes, formatChatTimestamp } from '../lib/format';
 import { conversationStatusBadge, priorityBadge } from '../lib/statusStyles';
-import type { AIStatus, Conversation, Site, TeamMember } from '../types/api';
+import type { AssistantStatus, Conversation, Site, TeamMember } from '../types/api';
 
 type Range = 'today' | '7days' | '30days';
 const RANGES: Range[] = ['today', '7days', '30days'];
@@ -213,7 +212,7 @@ const Dashboard = () => {
   const [recent, setRecent] = useState<Conversation[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [team, setTeam] = useState<TeamMember[]>([]);
-  const [ai, setAi] = useState<AIStatus | null>(null);
+  const [assistant, setAssistant] = useState<AssistantStatus | null>(null);
 
   const load = useCallback(
     async (silent = false) => {
@@ -226,7 +225,10 @@ const Dashboard = () => {
         setSites(siteList);
 
         // Asistan durumu ve ekip kritik değil; biri düşerse sayfa yine açılır.
-        aiAPI.status().then((r) => setAi(r.data)).catch(() => setAi(null));
+        assistantAPI
+          .status()
+          .then(({ data }) => setAssistant(data))
+          .catch(() => setAssistant(null));
         if (canManage)
           teamAPI.getAll().then((r) => setTeam(Array.isArray(r.data) ? r.data : [])).catch(() => setTeam([]));
 
@@ -327,12 +329,10 @@ const Dashboard = () => {
   /* ------------------------------------------------------- kurulum listesi */
 
   const installed = sites.some((s) => s.installation?.verifiedAt || s.installation?.lastSeenAt);
-  const aiModeSet = sites.some((s) => s.aiSettings?.mode && s.aiSettings.mode !== 'off');
   const checklist = [
     { key: 'site', done: sites.length > 0, to: `${base}/sites` },
     { key: 'install', done: installed, to: `${base}/sites` },
-    { key: 'team', done: team.length > 1, to: `${base}/team` },
-    { key: 'ai', done: aiModeSet, to: `${base}/sites` }
+    { key: 'team', done: team.length > 1, to: `${base}/team` }
   ];
   const doneCount = checklist.filter((i) => i.done).length;
 
@@ -365,14 +365,18 @@ const Dashboard = () => {
       }
   ].filter(Boolean) as Array<{ key: string; icon: React.ElementType; tone: string; text: string; to: string }>;
 
-  /* --------------------------------------------------------------- AI */
+  /* -------------------------------------------------------- SSS asistanı */
 
-  const aiState = ai?.state || 'disabled';
-  const aiStateTone: Record<string, string> = {
-    ready: 'bg-emerald-500',
-    warming_up: 'bg-amber-500',
-    unavailable: 'bg-rose-500',
-    disabled: 'bg-gray-400'
+  const assistantSites = sites.filter((s) => s.assistantEnabled);
+  const assistantState = !assistant?.available
+    ? 'unavailable'
+    : assistantSites.length
+      ? 'on'
+      : 'off';
+  const assistantTone: Record<string, string> = {
+    on: 'bg-emerald-500',
+    off: 'bg-gray-400',
+    unavailable: 'bg-gray-400'
   };
 
   if (loading) {
@@ -696,9 +700,9 @@ const Dashboard = () => {
                           <span className="text-[11.5px] text-gray-400 tabular-nums">
                             {c.ticketId || (c.ticketNumber ? `#${c.ticketNumber}` : '')}
                           </span>
-                          {c.responseOwner === 'ai' && (
+                          {c.responseOwner === 'assistant' && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-[1px] rounded text-[10.5px] font-medium bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
-                              <Bot className="w-3 h-3" /> {t('dash.recent.ai')}
+                              <Bot className="w-3 h-3" /> {t('dash.recent.assistant')}
                             </span>
                           )}
                         </span>
@@ -725,27 +729,29 @@ const Dashboard = () => {
           </Panel>
 
           <div className="space-y-4">
-            {/* ---- asistan ---- */}
+            {/* ---- SSS asistanı ---- */}
             <Panel
               title={
                 <span className="inline-flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                  {t('dash.ai.title')}
+                  <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  {t('dash.assistant.title')}
                 </span>
               }
             >
               <div className="px-5 pb-5">
                 <p className="flex items-center gap-2 text-[13px] text-gray-700 dark:text-gray-300">
-                  <span className={['w-2 h-2 rounded-full', aiStateTone[aiState] || 'bg-gray-400'].join(' ')} />
-                  {t('dash.ai.state.' + aiState)}
-                  {ai?.model && aiState === 'ready' && (
-                    <span className="text-[11.5px] text-gray-400 truncate">· {ai.model}</span>
-                  )}
+                  <span
+                    className={[
+                      'w-2 h-2 rounded-full',
+                      assistantTone[assistantState] || 'bg-gray-400'
+                    ].join(' ')}
+                  />
+                  {t('dash.assistant.state.' + assistantState, { count: assistantSites.length })}
                 </p>
                 <p className="mt-2 text-[12.5px] leading-relaxed text-gray-500 dark:text-gray-400">
-                  {t('dash.ai.body.' + aiState)}
+                  {t('dash.assistant.body.' + assistantState)}
                 </p>
-                {sites.length > 0 && (
+                {assistant?.available && sites.length > 0 && (
                   <ul className="mt-4 space-y-1.5">
                     {sites.slice(0, 4).map((s) => (
                       <li key={s._id} className="flex items-center justify-between gap-2 text-[12.5px]">
@@ -754,7 +760,7 @@ const Dashboard = () => {
                           <span className="truncate">{s.name}</span>
                         </span>
                         <span className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                          {t('dash.ai.mode.' + (s.aiSettings?.mode || 'off'))}
+                          {s.assistantEnabled ? t('dash.assistant.siteOn') : t('dash.assistant.siteOff')}
                         </span>
                       </li>
                     ))}
@@ -765,7 +771,7 @@ const Dashboard = () => {
                     to={`${base}/sites`}
                     className="mt-4 inline-flex items-center gap-1 text-[12.5px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
-                    {t('dash.ai.manage')} <ArrowRight className="w-3.5 h-3.5" />
+                    {t('dash.assistant.manage')} <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 )}
               </div>

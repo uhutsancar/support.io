@@ -35,14 +35,14 @@ import automationRulesRoutes from './routes/automationRules';
 import proactiveRulesRoutes from './routes/proactiveRules';
 import eventsRoutes from './routes/events';
 import analyticsRoutes from './routes/analytics';
-import aiRoutes from './routes/ai';
+import assistantRoutes from './routes/assistant';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper } from './services/slaSweeper';
 import { closeRedisAdapter } from './socket/adapter';
 import { mailProvider } from './services/mail';
 import { outboxFor } from './services/mail/console';
-import { stopAutoReplies } from './services/ai/autoReply';
+import { stopAssistant } from './services/assistant';
 import {
   loginLimiter,
   loginAccountLimiter,
@@ -214,7 +214,7 @@ app.use('/api/proactive-rules', proactiveRulesRoutes);
 // site key inside the route rather than by a bearer token.
 app.use('/api/events', eventsRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/ai', aiRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 app.use('/api/audit', auditRoutes);
 
@@ -439,8 +439,8 @@ connectDB()
 ${signal} alındı, kapatılıyor...`);
       server.close(() => console.log('   HTTP sunucusu kapandı'));
       // Answers still being written are abandoned, not left holding timers
-      // and model slots while the process winds down.
-      stopAutoReplies();
+      // while the process winds down.
+      stopAssistant();
       try {
         // Awaited so open sockets are actually flushed before the grace
         // timer below pulls the process down under them.

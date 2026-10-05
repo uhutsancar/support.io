@@ -1,0 +1,37 @@
+[
+  {
+    "id": "B-INBOX-source",
+    "expected": "Panelde kaynak: İade koşulları",
+    "observed": "Kaynak: İade koşulları nelerdir?",
+    "result": "GEÇTİ",
+    "screenshot": "B-INBOX-source.png"
+  },
+  {
+    "id": "B-O1",
+    "expected": "Panelde \"doğrulanmış müşteri\" rozeti",
+    "observed": "rozet: true",
+    "result": "GEÇTİ",
+    "screenshot": "B-O1-verified.png"
+  },
+  {
+    "id": "B-H2",
+    "expected": "Temsilci yazdıktan sonra bot cevap vermez; mesaj temsilciye düşer",
+    "observed": "sahiplik insan: true; ziyaretçiye yeni bot mesajı: 0",
+    "result": "GEÇTİ",
+    "screenshot": "B-H2-visitor.png"
+  },
+  {
+    "id": "B-O5",
+    "expected": "Kısa arıza metni + devir; sohbet çalışmaya devam eder",
+    "observed": "\"Sipariş bilgilerinize şu anda ulaşamıyorum; sizi bir müşteri temsilcimize aktarıyorum.\" · sonraki mesaj gönderildi: true",
+    "result": "GEÇTİ",
+    "screenshot": "B-O5-order-service-down.png"
+  },
+  {
+    "id": "B-INBOX-console",
+    "expected": "Konsolda hata yok",
+    "observed": "hata yok",
+    "result": "GEÇTİ",
+    "screenshot": null
+  }
+]

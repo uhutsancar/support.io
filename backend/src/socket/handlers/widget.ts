@@ -16,7 +16,11 @@ import { openConversation } from '../../services/conversationIntake';
 import { refreshSla } from '../../services/conversationSla';
 import { tryFaqAutoResponse } from '../../services/faqAutoResponse';
 import { runAutomation } from '../../services/automationTrigger';
-import { assistantActive, requestHuman, scheduleAutoReply } from '../../services/ai/autoReply';
+import {
+  assistantActive,
+  requestHuman,
+  scheduleAssistantReply
+} from '../../services/assistant';
 import { verifiedIdentity } from '../../services/identity';
 import {
   ACTIVE_CONVERSATION_STATUSES,
@@ -39,7 +43,6 @@ import type {
   LoadMessagesPayload,
   MessageAck,
   PageViewPayload,
-  RequestHumanPayload,
   SendMessagePayload,
   VisitorMetadata,
   WidgetJoinPayload,
@@ -151,7 +154,7 @@ async function openFirstConversation(
       metadata: socket.metadata
     },
     content,
-    assistant && !socket.prefersHuman ? 'ai' : 'human'
+    assistant && !socket.prefersHuman ? 'assistant' : 'human'
   );
 
   await socket.join(conversationRoom(opened._id));
@@ -453,12 +456,15 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       ack?.({ ok: true, message: emitted });
 
       runAutomation('message_received', conversation, { content, message });
-      if (!assistant) {
+      if (assistant) {
+        if (conversation.responseOwner === 'assistant') {
+          // Not awaited: the answer arrives on its own, and this message has
+          // already reached the inbox. See services/assistant.
+          scheduleAssistantReply(ctx.io, conversation._id, message._id);
+        }
+      } else if (site.faqAutoReply) {
+        // The keyword FAQ reply, only on a site that chose it (plan §3.4).
         await tryFaqAutoResponse(ctx, conversation, content);
-      } else if (conversation.responseOwner === 'ai') {
-        // Not awaited: the answer arrives on its own, and this message has
-        // already reached the inbox. See services/ai/autoReply.ts.
-        scheduleAutoReply(ctx.io, conversation._id, message._id);
       }
     };
 
@@ -484,7 +490,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
     socket.on(
       'request-human',
-      ctx.guard(socket, async (data: RequestHumanPayload | undefined) => {
+      ctx.guard(socket, async () => {
         if (!socket.siteId || !socket.visitorId) return;
         // Before the first message there is nothing to hand over yet; the
         // conversation that message opens simply starts with a person.
@@ -494,7 +500,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         }
         const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
         if (!conversation) return ctx.reject(socket);
-        await requestHuman(ctx.io, conversation._id, boundedString(data?.language, 5) ?? undefined);
+        await requestHuman(ctx.io, conversation._id);
       })
     );
 

@@ -8,8 +8,9 @@
 //     userHash = HMAC_SHA256(identityKey, userId)   (hex)
 //
 // — and we accept the id only when that signature checks out. An identity that
-// fails is not an error: the visitor simply stays anonymous. Only a verified id
-// is ever used to fetch orders (services/orderLookup.ts).
+// fails is not an error: the visitor simply stays anonymous, and a
+// conversation a verified customer had is never reopened for anyone else in
+// the same browser (socket/handlers/widget.ts).
 
 import crypto from 'crypto';
 import { open } from '../config/secretBox';

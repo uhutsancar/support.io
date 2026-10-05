@@ -75,10 +75,8 @@ export interface ConversationDoc {
   firstResponseAt: Date | null;
   resolvedAt: Date | null;
   closedAt: Date | null;
-  /** Who answers the visitor right now: the assistant or a person. */
+  /** Who answers the visitor right now: the FAQ assistant or a person. */
   responseOwner: ResponseOwner;
-  /** Increases on every change of hands; see services/ai/autoReply.ts. */
-  aiControlVersion: number;
   internalNotes: ConversationInternalNote[];
 
   /** Virtuals: minutes elapsed, or null while the milestone has not happened. */
@@ -174,8 +172,7 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
       type: 'string',
       enum: RESPONSE_OWNERS,
       default: 'human'
-    },
-    aiControlVersion: { column: 'ai_control_version', type: 'number', default: 0 }
+    }
   },
   children: {
     internalNotes: {

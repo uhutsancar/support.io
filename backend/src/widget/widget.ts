@@ -98,7 +98,7 @@ interface WidgetBootstrap {
   site: Record<string, any>;
   faqs: WidgetFaq[];
   availability: string;
-  /** True when the site's assistant answers first. */
+  /** True when the site's FAQ assistant answers first. */
   assistant?: boolean;
   [field: string]: unknown;
 }
@@ -1034,10 +1034,9 @@ interface Window {
       }
       self._appendMessage(message);
       if (message.senderType !== 'visitor') self._hideTyping();
-      // The assistant handed over: from here a person answers, so the line
-      // offering one has done its job.
-      if (message.aiMetadata && message.aiMetadata.decision === 'handoff')
-        self._hideAssistantLine();
+      // The FAQ assistant handed over: from here a person answers, so the
+      // line offering one has done its job.
+      if (message.assistant && message.assistant.handoff) self._hideAssistantLine();
       if (message.senderType !== 'visitor' && !self.isOpen) {
         self.unread += 1;
         self._renderBadge();
@@ -2123,7 +2122,7 @@ interface Window {
       this._notice(this.t.connectionLost, 'error');
       return;
     }
-    this.socket.emit('request-human', { language: this.locale });
+    this.socket.emit('request-human');
     this._hideAssistantLine();
     this._setView('messages');
     this.emit('request-human', {});

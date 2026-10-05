@@ -7,7 +7,7 @@ import { sitesAPI, clearCache } from '../services/api';
 import { Plus, Globe, Copy, Check, Trash2, Palette, Bot, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
-import SiteAISettings from '../components/sites/SiteAISettings';
+import SiteAssistant from '../components/sites/SiteAssistant';
 import SiteAccess, { InstallBadge } from '../components/sites/SiteAccess';
 import type { Site } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
@@ -38,7 +38,7 @@ const Sites = () => {
   const [showModal, setShowModal] = useState(false);
   const [newSite, setNewSite] = useState({ name: '', domain: '' });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [aiSite, setAiSite] = useState<Site | null>(null);
+  const [assistantSite, setAssistantSite] = useState<Site | null>(null);
   const [accessSite, setAccessSite] = useState<Site | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<DeleteTarget>({
     isOpen: false,
@@ -258,12 +258,12 @@ const Sites = () => {
                       </span>
                     </button>
                     <button
-                      onClick={() => setAiSite(site)}
+                      onClick={() => setAssistantSite(site)}
                       className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-xs sm:text-sm"
                     >
                       <Bot className="w-4 h-4" />
                       <span className="leading-tight text-center whitespace-normal">
-                        {t('ai.settings.button')}
+                        {t('assistant.settings.button')}
                       </span>
                     </button>
                     <button
@@ -343,13 +343,14 @@ const Sites = () => {
           />
         )}
 
-        {aiSite && (
-          <SiteAISettings
-            site={aiSite}
-            onClose={() => setAiSite(null)}
-            onSaved={(updated) =>
-              setSites((current) => current.map((s) => (s._id === updated._id ? updated : s)))
-            }
+        {assistantSite && (
+          <SiteAssistant
+            site={assistantSite}
+            onClose={() => setAssistantSite(null)}
+            onSaved={(updated: Site) => {
+              setAssistantSite(updated);
+              setSites((current) => current.map((s) => (s._id === updated._id ? updated : s)));
+            }}
           />
         )}
 

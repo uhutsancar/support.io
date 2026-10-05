@@ -45,7 +45,6 @@ const AutomationRules = lazy(() => import('./pages/AutomationRules'));
 const ProactiveRules = lazy(() => import('./pages/ProactiveRules'));
 const FeatureDetail = lazy(() => import('./pages/FeatureDetail'));
 const Solution = lazy(() => import('./pages/Solution'));
-const AiAssistant = lazy(() => import('./pages/AiAssistant'));
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -153,7 +152,6 @@ function App() {
                     <Route path="/ozellikler" element={<Features />} />
                     <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
                     <Route path="/cozumler/:slug" element={<Solution />} />
-                    <Route path="/yapay-zeka" element={<AiAssistant />} />
                     <Route path="/fiyatlandirma" element={<Pricing />} />
                     <Route path="/dokumantasyon" element={<Docs />} />
                     <Route path="/hakkimizda" element={<About />} />
@@ -188,7 +186,6 @@ function App() {
                     <Route path="/en/features" element={<Features />} />
                     <Route path="/en/features/:slug" element={<FeatureDetail />} />
                     <Route path="/en/solutions/:slug" element={<Solution />} />
-                    <Route path="/en/ai" element={<AiAssistant />} />
                     <Route path="/en/pricing" element={<Pricing />} />
                     <Route path="/en/documentation" element={<Docs />} />
                     <Route path="/en/about" element={<About />} />

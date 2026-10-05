@@ -1,8 +1,11 @@
 // Answering a visitor from the site's FAQ before an agent gets there.
 //
-// A deliberately conservative feature: one full-text search, and the answer is
-// only sent when the match is confident. A wrong automatic answer is worse than
-// none — the visitor reads it, believes it came from support, and leaves.
+// Off unless the site switches it on (sites.faq_auto_reply, plan §3.4), and
+// never together with the FAQ assistant. A deliberately conservative feature:
+// one full-text search, and the answer is only sent when the match is
+// confident. A wrong automatic answer is worse than none — the visitor reads
+// it, believes it came from support, and leaves. It is sent as what it is, a
+// help article, not as a person or a bot.
 
 import FAQ from '../models/FAQ';
 import Message from '../models/Message';
@@ -45,7 +48,7 @@ export async function tryFaqAutoResponse(
       conversationId: conversation._id,
       senderType: 'bot',
       senderId: 'auto-faq',
-      senderName: 'Support Bot',
+      senderName: 'Yardım makalesi',
       content: best.answer
     });
 
