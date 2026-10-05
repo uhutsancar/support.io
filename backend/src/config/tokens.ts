@@ -240,7 +240,10 @@ export function renewableWidgetSession(token: unknown): VerifiedWidgetSession | 
     }) as VerifiedWidgetSession;
     checkWidgetClaims(decoded);
     const nowSeconds = Math.floor(Date.now() / 1000);
-    if (typeof decoded.exp !== 'number' || decoded.exp + WIDGET_SESSION_RENEW_SECONDS < nowSeconds) {
+    if (
+      typeof decoded.exp !== 'number' ||
+      decoded.exp + WIDGET_SESSION_RENEW_SECONDS < nowSeconds
+    ) {
       return null;
     }
     return decoded;

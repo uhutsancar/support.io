@@ -11,7 +11,11 @@ import { Helmet } from 'react-helmet-async';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ArrowRight, Check } from 'lucide-react';
-import Shell, { useMarketingRoutes, featureIcon, SOLUTION_ICONS } from '../components/marketing/Shell';
+import Shell, {
+  useMarketingRoutes,
+  featureIcon,
+  SOLUTION_ICONS
+} from '../components/marketing/Shell';
 import {
   AppFrame,
   Button,
@@ -47,7 +51,10 @@ const FeatureVisual = ({ id, t }: { id: string; t: (k: string) => string }) => {
       </div>
     );
   return (
-    <AppFrame label={t('featuresPage.items.' + id + '.title')} tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]}>
+    <AppFrame
+      label={t('featuresPage.items.' + id + '.title')}
+      tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]}
+    >
       <Visual />
     </AppFrame>
   );
@@ -124,14 +131,23 @@ const Solution = () => {
 
       {/* ------------------------------------------------------- dertler */}
       <Section tone="plain" wide>
-        <SectionHead index={1} eyebrow={t(key('name'))} eyebrowTone="rose" title={t('solutions.painsTitle')} />
+        <SectionHead
+          index={1}
+          eyebrow={t(key('name'))}
+          eyebrowTone="rose"
+          title={t('solutions.painsTitle')}
+        />
         <div className="mt-10 grid md:grid-cols-3 gap-4">
           {pains.map((p, i) => (
             <Reveal key={i} delay={i * 0.06}>
               <Card className="p-6 h-full">
                 <AlertCircle className="w-5 h-5 text-rose-500" strokeWidth={1.8} />
-                <h3 className="mt-4 text-[16.5px] font-semibold text-gray-950 dark:text-white">{p.title}</h3>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">{p.body}</p>
+                <h3 className="mt-4 text-[16.5px] font-semibold text-gray-950 dark:text-white">
+                  {p.title}
+                </h3>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {p.body}
+                </p>
               </Card>
             </Reveal>
           ))}
@@ -152,8 +168,16 @@ const Solution = () => {
               <div key={id} className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
                 <Reveal className={flip ? 'lg:order-2' : ''}>
                   <span className="inline-flex items-center gap-2">
-                    <span className={['inline-flex w-9 h-9 items-center justify-center rounded-xl border bg-white dark:bg-transparent', accent(tone).border].join(' ')}>
-                      <FIcon className={['w-[18px] h-[18px]', accent(tone).text].join(' ')} strokeWidth={1.8} />
+                    <span
+                      className={[
+                        'inline-flex w-9 h-9 items-center justify-center rounded-xl border bg-white dark:bg-transparent',
+                        accent(tone).border
+                      ].join(' ')}
+                    >
+                      <FIcon
+                        className={['w-[18px] h-[18px]', accent(tone).text].join(' ')}
+                        strokeWidth={1.8}
+                      />
                     </span>
                     <Eyebrow tone={tone}>{t('featuresPage.items.' + id + '.title')}</Eyebrow>
                   </span>
@@ -178,16 +202,28 @@ const Solution = () => {
 
       {/* --------------------------------------------------- kazanımlar */}
       <Section tone="plain" wide>
-        <SectionHead index={3} eyebrow={t('solutions.winsTitle')} eyebrowTone="emerald" title={t('landing.home.ctaTitle')} />
+        <SectionHead
+          index={3}
+          eyebrow={t('solutions.winsTitle')}
+          eyebrowTone="emerald"
+          title={t('landing.home.ctaTitle')}
+        />
         <div className="mt-10 grid md:grid-cols-3 gap-4">
           {wins.map((w, i) => (
             <Reveal key={i} delay={i * 0.06}>
               <Card className="p-6 h-full">
                 <span className="inline-flex w-8 h-8 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-500/10">
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2.4} />
+                  <Check
+                    className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                    strokeWidth={2.4}
+                  />
                 </span>
-                <h3 className="mt-4 text-[17px] font-semibold text-gray-950 dark:text-white">{w.label}</h3>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">{w.body}</p>
+                <h3 className="mt-4 text-[17px] font-semibold text-gray-950 dark:text-white">
+                  {w.label}
+                </h3>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {w.body}
+                </p>
               </Card>
             </Reveal>
           ))}

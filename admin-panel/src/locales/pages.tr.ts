@@ -56,8 +56,14 @@ export default {
         ],
         wins: [
           { label: 'Ekip satışa odaklanır', body: 'Tekrarlayan soruları yapay zekâ karşılar.' },
-          { label: 'Daha az terk edilen sepet', body: 'Takılan ziyaretçi sessizce gitmeden yardım alır.' },
-          { label: 'Kampanya haftası panik yok', body: 'Konuşmalar departmanlara dağılır, kuyruk tek kişide birikmez.' }
+          {
+            label: 'Daha az terk edilen sepet',
+            body: 'Takılan ziyaretçi sessizce gitmeden yardım alır.'
+          },
+          {
+            label: 'Kampanya haftası panik yok',
+            body: 'Konuşmalar departmanlara dağılır, kuyruk tek kişide birikmez.'
+          }
         ]
       },
       saas: {
@@ -99,7 +105,10 @@ export default {
           }
         ],
         wins: [
-          { label: 'Takılan kullanıcı kaybolmaz', body: 'Uzun süre aynı ekranda kalana siz yazarsınız.' },
+          {
+            label: 'Takılan kullanıcı kaybolmaz',
+            body: 'Uzun süre aynı ekranda kalana siz yazarsınız.'
+          },
           { label: 'Aktarma yok', body: 'Soru ilk seferde doğru ekibe düşer.' },
           { label: 'Bağlam hazır', body: 'Kullanıcı kim, nerede, ne sormuştu — yanınızda.' }
         ]
@@ -111,9 +120,18 @@ export default {
         headline: 'Tek panelden onlarca siteyi yönetin, veriler karışmasın',
         desc: 'Yönettiğiniz her site kendi kurulum satırını, kendi görünümünü ve kendi raporunu alır. Hangi ekip üyesinin hangi siteyi göreceğini siz seçersiniz.',
         pains: [
-          { title: 'Her site ayrı panel', body: 'Müşteri başına ayrı araç, ayrı şifre, ayrı fatura.' },
-          { title: 'Karışan veriler', body: 'Bir müşterinin konuşması diğerinin raporunda görünmemeli.' },
-          { title: 'Müşteriye rapor', body: 'Ay sonunda her müşteri için ayrı ayrı rakam toplamak saatler alıyor.' }
+          {
+            title: 'Her site ayrı panel',
+            body: 'Müşteri başına ayrı araç, ayrı şifre, ayrı fatura.'
+          },
+          {
+            title: 'Karışan veriler',
+            body: 'Bir müşterinin konuşması diğerinin raporunda görünmemeli.'
+          },
+          {
+            title: 'Müşteriye rapor',
+            body: 'Ay sonunda her müşteri için ayrı ayrı rakam toplamak saatler alıyor.'
+          }
         ],
         uses: [
           {
@@ -146,9 +164,18 @@ export default {
         headline: 'Telefonla sorulan her şeyi yazıyla, mesai dışında da alın',
         desc: 'Randevu, fiyat ve adres soruları telefonu meşgul eder. Aynı sorular sohbetten geldiğinde ekibiniz aynı anda birkaç kişiyle ilgilenebilir.',
         pains: [
-          { title: 'Hat hep meşgul', body: 'Resepsiyon aynı anda hem hastayla hem telefonla ilgileniyor.' },
-          { title: 'Mesai dışı sessizlik', body: 'Akşam gelen soru cevapsız kalıyor, hasta başka yere yazıyor.' },
-          { title: 'Aynı bilgiler', body: 'Çalışma saati, otopark, fiyat — günde onlarca kez aynı cevap.' }
+          {
+            title: 'Hat hep meşgul',
+            body: 'Resepsiyon aynı anda hem hastayla hem telefonla ilgileniyor.'
+          },
+          {
+            title: 'Mesai dışı sessizlik',
+            body: 'Akşam gelen soru cevapsız kalıyor, hasta başka yere yazıyor.'
+          },
+          {
+            title: 'Aynı bilgiler',
+            body: 'Çalışma saati, otopark, fiyat — günde onlarca kez aynı cevap.'
+          }
         ],
         uses: [
           {
@@ -181,9 +208,18 @@ export default {
         headline: 'Rezervasyon sayfasındaki misafir sorusunu anında yanıtlayın',
         desc: 'Oda tipi, erken giriş, otopark, alerjen… Rezervasyon yapmak üzere olan misafir cevabı bulamazsa başka sekmeye geçer.',
         pains: [
-          { title: 'Rezervasyon yarıda kalıyor', body: 'Soru soran misafir cevap beklerken başka otele bakıyor.' },
-          { title: 'Farklı dillerde misafir', body: 'İngilizce, Almanca, Rusça gelen sorulara aynı hızda dönmek zor.' },
-          { title: 'Tekrarlayan talepler', body: 'Havaalanı transferi ve erken giriş talebi her gün yeniden yazılıyor.' }
+          {
+            title: 'Rezervasyon yarıda kalıyor',
+            body: 'Soru soran misafir cevap beklerken başka otele bakıyor.'
+          },
+          {
+            title: 'Farklı dillerde misafir',
+            body: 'İngilizce, Almanca, Rusça gelen sorulara aynı hızda dönmek zor.'
+          },
+          {
+            title: 'Tekrarlayan talepler',
+            body: 'Havaalanı transferi ve erken giriş talebi her gün yeniden yazılıyor.'
+          }
         ],
         uses: [
           {
@@ -205,7 +241,10 @@ export default {
         ],
         wins: [
           { label: 'Rezervasyon yarıda kalmaz', body: 'Soru cevapsız kalmadan yanıtlanır.' },
-          { label: 'Tekrar yazmak yok', body: 'Transfer ve erken giriş cevapları kurala bağlı hazır mesajla gider.' },
+          {
+            label: 'Tekrar yazmak yok',
+            body: 'Transfer ve erken giriş cevapları kurala bağlı hazır mesajla gider.'
+          },
           { label: 'Grup satışı kaybolmaz', body: 'Büyük talepler ayrı bir hatta izlenir.' }
         ]
       },
@@ -216,9 +255,18 @@ export default {
         headline: 'Kayıt döneminde gelen soruların altında kalmayın',
         desc: 'Kayıt tarihleri, ders programı, ödeme seçenekleri… Dönem başında gelen yüzlerce soru ekibi boğar. Cevabı belli olanı yapay zekâ asistanı karşılasın, gerisi doğru birime gitsin.',
         pains: [
-          { title: 'Dönem başı yığılması', body: 'İki hafta boyunca gelen kutusu kayıt sorularıyla dolu.' },
-          { title: 'Yanlış birime giden soru', body: 'Ödeme sorusu akademik birime, ders sorusu muhasebeye gidiyor.' },
-          { title: 'Görünmeyen yük', body: 'Hangi dönemde hangi konuda yoğunluk olduğunu bilmiyorsunuz.' }
+          {
+            title: 'Dönem başı yığılması',
+            body: 'İki hafta boyunca gelen kutusu kayıt sorularıyla dolu.'
+          },
+          {
+            title: 'Yanlış birime giden soru',
+            body: 'Ödeme sorusu akademik birime, ders sorusu muhasebeye gidiyor.'
+          },
+          {
+            title: 'Görünmeyen yük',
+            body: 'Hangi dönemde hangi konuda yoğunluk olduğunu bilmiyorsunuz.'
+          }
         ],
         uses: [
           {
@@ -263,25 +311,53 @@ export default {
     howEyebrow: 'Nasıl çalışır',
     howTitle: 'Üç adımda devrede',
     how: [
-      { title: 'SSS’nizi yazın', body: 'En çok sorulan soruları ve cevaplarını panele ekleyin. Asistan yalnızca bunlardan yanıt verir.' },
-      { title: 'Asistanı açın', body: 'Yapay Zekâ Asistanı ekranında sitenizin anahtarını açın. Kod, entegrasyon ya da eğitim gerekmez.' },
-      { title: 'Ekibiniz rahatlasın', body: 'Sık sorular asistanda biter; satışa ve gerçek sorunlara dönen konuşmalar ekibinize düşer.' }
+      {
+        title: 'SSS’nizi yazın',
+        body: 'En çok sorulan soruları ve cevaplarını panele ekleyin. Asistan yalnızca bunlardan yanıt verir.'
+      },
+      {
+        title: 'Asistanı açın',
+        body: 'Yapay Zekâ Asistanı ekranında sitenizin anahtarını açın. Kod, entegrasyon ya da eğitim gerekmez.'
+      },
+      {
+        title: 'Ekibiniz rahatlasın',
+        body: 'Sık sorular asistanda biter; satışa ve gerçek sorunlara dönen konuşmalar ekibinize düşer.'
+      }
     ],
 
     benefitsEyebrow: 'Neler kazandırır',
     benefitsTitle: 'Ekibiniz aynı soruyu bir daha yazmaz',
     benefits: [
-      { title: 'Anında yanıt', body: 'Ziyaretçi beklemez; sorusunun cevabı saniyeler içinde gelir.' },
-      { title: 'Mesai dışında da açık', body: 'Gece ya da hafta sonu gelen sık sorular sabahı beklemez.' },
-      { title: 'Sizin içeriğinizle konuşur', body: 'Yalnızca SSS’nizde yazanı söyler; fiyat, tarih ya da vaat uydurmaz.' },
-      { title: 'Akıllı devir', body: 'Cevap yoksa, ziyaretçi “temsilci” derse ya da bir aksilik olursa konuşma ekibinize geçer.' },
-      { title: 'Ekip her zaman önde', body: 'Temsilci yazdığı ya da “Devral” dediği an asistan o konuşmada susar.' },
-      { title: 'Ne yaptığını görürsünüz', body: 'Kaç soruyu yanıtladığını, hangilerini neden devrettiğini panelde izlersiniz.' }
+      {
+        title: 'Anında yanıt',
+        body: 'Ziyaretçi beklemez; sorusunun cevabı saniyeler içinde gelir.'
+      },
+      {
+        title: 'Mesai dışında da açık',
+        body: 'Gece ya da hafta sonu gelen sık sorular sabahı beklemez.'
+      },
+      {
+        title: 'Sizin içeriğinizle konuşur',
+        body: 'Yalnızca SSS’nizde yazanı söyler; fiyat, tarih ya da vaat uydurmaz.'
+      },
+      {
+        title: 'Akıllı devir',
+        body: 'Cevap yoksa, ziyaretçi “temsilci” derse ya da bir aksilik olursa konuşma ekibinize geçer.'
+      },
+      {
+        title: 'Ekip her zaman önde',
+        body: 'Temsilci yazdığı ya da “Devral” dediği an asistan o konuşmada susar.'
+      },
+      {
+        title: 'Ne yaptığını görürsünüz',
+        body: 'Kaç soruyu yanıtladığını, hangilerini neden devrettiğini panelde izlersiniz.'
+      }
     ],
 
     controlEyebrow: 'Kontrol sizde',
     controlTitle: 'Yanıtlar her zaman sizin bilginize dayanır',
-    controlDesc: 'Asistan her yanıtın altında hangi SSS kaydına dayandığını not eder. Ekibiniz bunu gelen kutusunda görür; eksik ya da eski bir kayıt varsa düzeltmek bir dakikanızı alır.',
+    controlDesc:
+      'Asistan her yanıtın altında hangi SSS kaydına dayandığını not eder. Ekibiniz bunu gelen kutusunda görür; eksik ya da eski bir kayıt varsa düzeltmek bir dakikanızı alır.',
     controlPoints: [
       'Dayanak gösteremediği yanıt ziyaretçiye gönderilmez',
       'Ziyaretçi her an “Temsilciye bağlan” düğmesine basabilir',
@@ -299,7 +375,8 @@ export default {
 
     plansEyebrow: 'Planlar',
     plansTitle: 'Her planda dâhil, ihtiyacınız büyüdükçe genişler',
-    plansDesc: 'Planlar arasındaki fark yanıt sayısı ve derinlik. Hak dolduğunda sohbet durmaz; yeni sorular doğrudan ekibinize gider.',
+    plansDesc:
+      'Planlar arasındaki fark yanıt sayısı ve derinlik. Hak dolduğunda sohbet durmaz; yeni sorular doğrudan ekibinize gider.',
     perMonth: 'Ayda {{n}} yanıt',
     perConversation: 'Konuşma başına {{count}} yanıt',
     depth: {
@@ -311,10 +388,22 @@ export default {
 
     faqTitle: 'Asistan hakkında sorular',
     faq: [
-      { q: 'Asistan yanlış bir şey söylerse?', a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.' },
-      { q: 'Kurmak için ne gerekiyor?', a: 'Teknik bir iş yok. SSS içeriğinizi panele ekleyin, Yapay Zekâ Asistanı ekranından sitenizde açın.' },
-      { q: 'Ziyaretçi bir insanla konuşmak isterse?', a: 'Balondaki “Temsilciye bağlan” düğmesine basar ya da bunu yazar; konuşma hemen ekibinize geçer.' },
-      { q: 'Aylık yanıt hakkım dolarsa ne olur?', a: 'Sohbet durmaz; yeni sorular doğrudan ekibinize gider. Hak her ayın başında yenilenir, daha fazlası için planınızı yükseltebilirsiniz.' },
+      {
+        q: 'Asistan yanlış bir şey söylerse?',
+        a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
+      },
+      {
+        q: 'Kurmak için ne gerekiyor?',
+        a: 'Teknik bir iş yok. SSS içeriğinizi panele ekleyin, Yapay Zekâ Asistanı ekranından sitenizde açın.'
+      },
+      {
+        q: 'Ziyaretçi bir insanla konuşmak isterse?',
+        a: 'Balondaki “Temsilciye bağlan” düğmesine basar ya da bunu yazar; konuşma hemen ekibinize geçer.'
+      },
+      {
+        q: 'Aylık yanıt hakkım dolarsa ne olur?',
+        a: 'Sohbet durmaz; yeni sorular doğrudan ekibinize gider. Hak her ayın başında yenilenir, daha fazlası için planınızı yükseltebilirsiniz.'
+      },
       { q: 'Hangi dilde yanıt verir?', a: 'Türkçe, kısa ve anlaşılır yanıtlar verir.' }
     ],
 

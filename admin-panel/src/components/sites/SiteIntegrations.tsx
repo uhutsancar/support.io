@@ -66,7 +66,9 @@ const SiteIntegrations = ({ site, onChanged }: SiteIntegrationsProps) => {
       </button>
       {secret && (
         <div className="mt-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-          <p className="text-xs text-amber-800 dark:text-amber-300 mb-2">{t('identity.secretOnce')}</p>
+          <p className="text-xs text-amber-800 dark:text-amber-300 mb-2">
+            {t('identity.secretOnce')}
+          </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 text-xs break-all text-gray-900 dark:text-white">{secret}</code>
             <button

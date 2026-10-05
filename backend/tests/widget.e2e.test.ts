@@ -426,7 +426,10 @@ test('sealed secrets open only intact, and a userHash verifies only for its own 
   assert.equal(verifiedIdentity({ ...integrations, identitySecret: null }, 'u_1', hash), null);
 });
 
-async function sendAndWait(socket: Awaited<ReturnType<typeof joinAsVisitor>>['socket'], content: string) {
+async function sendAndWait(
+  socket: Awaited<ReturnType<typeof joinAsVisitor>>['socket'],
+  content: string
+) {
   const echoed: any = await new Promise((resolve) => {
     socket.on('new-message', (data: any) => {
       if (data?.message?.senderType === 'visitor') resolve(data.message);

@@ -51,8 +51,8 @@
     "icons": "tsx scripts/build-icons.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "prettier --write . --ignore-path ../.prettierignore",
+    "format:check": "prettier --check . --ignore-path ../.prettierignore",
     "check": "npm run typecheck && npm run lint"
   }
 }

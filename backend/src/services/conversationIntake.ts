@@ -156,7 +156,6 @@ function buildConversation(
   department: Doc<DepartmentDoc> | null,
   responseOwner: ResponseOwner
 ): Doc<ConversationDoc> {
-
   const conversation = new Conversation({
     siteId: site._id,
     organizationId: site.organizationId,

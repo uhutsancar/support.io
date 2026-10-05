@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2023"
-    ],
+    "lib": ["ES2023"],
     "module": "CommonJS",
     "moduleResolution": "node",
     "rootDir": ".",
@@ -22,22 +20,11 @@
     "declaration": false,
     "sourceMap": true,
     "removeComments": false,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true
   },
-  "include": [
-    "src/**/*.ts",
-    "scripts/**/*.ts",
-    "tests/**/*.ts",
-    "types/**/*.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/widget"
-  ]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "src/widget"]
 }

@@ -185,10 +185,17 @@ test('a reset ends every session and the old password, and works once', async ()
   });
   assert.equal(reset.status, 200, JSON.stringify(reset.body));
 
-  assert.equal((await api('/api/auth/me', { token: owner.token })).status, 401, 'old session lives');
+  assert.equal(
+    (await api('/api/auth/me', { token: owner.token })).status,
+    401,
+    'old session lives'
+  );
   assert.equal((await api('/api/auth/me', { token: secondDevice })).status, 401);
 
-  const oldLogin = await api('/api/auth/login', { method: 'POST', body: { email, password: PASSWORD } });
+  const oldLogin = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: PASSWORD }
+  });
   assert.equal(oldLogin.status, 401);
   const newLogin = await api('/api/auth/login', {
     method: 'POST',

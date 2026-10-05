@@ -65,7 +65,11 @@ const CodeBlock = ({ code, filename }: { code: string; filename?: string }) => {
           className="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] font-medium
             text-gray-300 hover:text-white hover:bg-white/10 transition"
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? (
+            <Check className="w-3.5 h-3.5 text-green-400" />
+          ) : (
+            <Copy className="w-3.5 h-3.5" />
+          )}
           {copied ? t('common.copied') : t('common.copy')}
         </button>
       </div>
@@ -195,7 +199,10 @@ const Docs = () => {
               </ol>
 
               <div className="mt-8">
-                <CodeBlock code={embedSnippet(origin, key)} filename={t('docsPage.install.codeTitle')} />
+                <CodeBlock
+                  code={embedSnippet(origin, key)}
+                  filename={t('docsPage.install.codeTitle')}
+                />
               </div>
               <p className="mt-4 text-[13.5px] leading-relaxed text-gray-500 dark:text-gray-400 max-w-[70ch]">
                 {t('docsPage.install.note')}
@@ -243,10 +250,16 @@ const Docs = () => {
                               filename={t('docsPage.install.codeTitle')}
                             />
                           )}
-                          <CodeBlock code={current.code(origin, key, lang)} filename={current.file} />
+                          <CodeBlock
+                            code={current.code(origin, key, lang)}
+                            filename={current.file}
+                          />
                         </>
                       ) : (
-                        <CodeBlock code={embedSnippet(origin, key)} filename={t('docsPage.install.codeTitle')} />
+                        <CodeBlock
+                          code={embedSnippet(origin, key)}
+                          filename={t('docsPage.install.codeTitle')}
+                        />
                       )}
                     </div>
                   </TabPanel>
@@ -291,7 +304,10 @@ const Docs = () => {
                   </thead>
                   <tbody>
                     {COMMANDS.map((c) => (
-                      <tr key={c.call} className="border-t border-gray-100 dark:border-white/[0.06]">
+                      <tr
+                        key={c.call}
+                        className="border-t border-gray-100 dark:border-white/[0.06]"
+                      >
                         <td className="px-4 py-3 align-top">
                           <Mono>{c.call}</Mono>
                         </td>
@@ -321,7 +337,10 @@ const Docs = () => {
                   </thead>
                   <tbody>
                     {OPTIONS.map((o) => (
-                      <tr key={o.attr} className="border-t border-gray-100 dark:border-white/[0.06]">
+                      <tr
+                        key={o.attr}
+                        className="border-t border-gray-100 dark:border-white/[0.06]"
+                      >
                         <td className="px-4 py-3 align-top">
                           <Mono>{o.attr}</Mono>
                         </td>

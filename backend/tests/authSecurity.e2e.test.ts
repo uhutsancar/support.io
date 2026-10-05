@@ -21,7 +21,6 @@ import jwt from 'jsonwebtoken';
 import { signUploadProof } from '../src/config/tokens';
 import User from '../src/models/User';
 
-
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 const PASSWORD = 'E2ePassw0rd!';
 

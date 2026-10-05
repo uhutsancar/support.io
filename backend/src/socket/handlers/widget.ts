@@ -16,11 +16,7 @@ import { openConversation } from '../../services/conversationIntake';
 import { refreshSla } from '../../services/conversationSla';
 import { tryFaqAutoResponse } from '../../services/faqAutoResponse';
 import { runAutomation } from '../../services/automationTrigger';
-import {
-  assistantActive,
-  requestHuman,
-  scheduleAssistantReply
-} from '../../services/assistant';
+import { assistantActive, requestHuman, scheduleAssistantReply } from '../../services/assistant';
 import { verifiedIdentity } from '../../services/identity';
 import {
   ACTIVE_CONVERSATION_STATUSES,

@@ -12,14 +12,11 @@
  */
 export default {
   darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
       },
       colors: {
         primary: {
@@ -27,7 +24,7 @@ export default {
           100: '#e0e7ff',
           500: '#6366f1',
           600: '#4f46e5',
-          700: '#4338ca',
+          700: '#4338ca'
         },
         brand: {
           50: '#eef2ff',
@@ -66,47 +63,47 @@ export default {
         glow: '0 0 0 1px rgba(79,70,229,.12), 0 18px 40px -12px rgba(79,70,229,.35)'
       },
       animation: {
-        'float': 'float 6s ease-in-out infinite',
-        'blob': 'blob 7s infinite',
+        float: 'float 6s ease-in-out infinite',
+        blob: 'blob 7s infinite',
         'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
-        'rise': 'rise .6s cubic-bezier(.16,1,.3,1) both',
-        'marquee': 'marquee 38s linear infinite',
+        rise: 'rise .6s cubic-bezier(.16,1,.3,1) both',
+        marquee: 'marquee 38s linear infinite',
         'pulse-dot': 'pulseDot 2s ease-in-out infinite',
-        'typing': 'typing 1.4s ease-in-out infinite',
+        typing: 'typing 1.4s ease-in-out infinite'
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-20px)' },
+          '50%': { transform: 'translateY(-20px)' }
         },
         blob: {
           '0%': { transform: 'translate(0px, 0px) scale(1)' },
           '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
           '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-          '100%': { transform: 'translate(0px, 0px) scale(1)' },
+          '100%': { transform: 'translate(0px, 0px) scale(1)' }
         },
         fadeInUp: {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         },
         rise: {
           '0%': { opacity: '0', transform: 'translateY(14px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         },
         marquee: {
           '0%': { transform: 'translateX(0)' },
-          '100%': { transform: 'translateX(-50%)' },
+          '100%': { transform: 'translateX(-50%)' }
         },
         pulseDot: {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },
-          '50%': { opacity: '.45', transform: 'scale(.82)' },
+          '50%': { opacity: '.45', transform: 'scale(.82)' }
         },
         typing: {
           '0%, 60%, 100%': { opacity: '.25', transform: 'translateY(0)' },
-          '30%': { opacity: '1', transform: 'translateY(-3px)' },
-        },
+          '30%': { opacity: '1', transform: 'translateY(-3px)' }
+        }
       }
-    },
+    }
   },
-  plugins: [],
-}
+  plugins: []
+};

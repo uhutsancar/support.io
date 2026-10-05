@@ -54,7 +54,9 @@ const PlanGate = ({ feature, children }: { feature: string; children: React.Reac
             plan: planName
           })}
         </h1>
-        <p className="mt-3 text-gray-600 dark:text-gray-300">{t(`upgrade.features.${feature}.benefit`)}</p>
+        <p className="mt-3 text-gray-600 dark:text-gray-300">
+          {t(`upgrade.features.${feature}.benefit`)}
+        </p>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           {isOwner ? t('upgrade.gate.body') : t('upgrade.askOwner')}
         </p>

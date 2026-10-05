@@ -28,7 +28,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
 
-
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 const PASSWORD = 'E2ePassw0rd!';
 

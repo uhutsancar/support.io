@@ -42,7 +42,14 @@ export async function issueAuthToken(
   await query(
     `INSERT INTO auth_tokens (id, account_id, account_type, purpose, token_hash, expires_at)
      VALUES ($1, $2, $3, $4, $5, now() + make_interval(secs => $6))`,
-    [generateId(), account.id, account.type, purpose, hashOf(token), AUTH_TOKEN_TTL_SECONDS[purpose]]
+    [
+      generateId(),
+      account.id,
+      account.type,
+      purpose,
+      hashOf(token),
+      AUTH_TOKEN_TTL_SECONDS[purpose]
+    ]
   );
   return token;
 }

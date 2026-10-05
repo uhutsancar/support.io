@@ -48,7 +48,10 @@ const renderVisual = (slug: string, t: (k: string) => string) => {
     );
   }
   return (
-    <AppFrame label={t('featuresPage.items.' + slug + '.title')} tone={FEATURE_TONE[slug as keyof typeof FEATURE_TONE]}>
+    <AppFrame
+      label={t('featuresPage.items.' + slug + '.title')}
+      tone={FEATURE_TONE[slug as keyof typeof FEATURE_TONE]}
+    >
       <Visual />
     </AppFrame>
   );
@@ -62,7 +65,9 @@ const NotFound = ({ t, to }: { t: (k: string) => string; to: string }) => (
     </Helmet>
     <div className="pt-44 pb-28 px-5 sm:px-8">
       <div className="max-w-md mx-auto text-center">
-        <h1 className="text-[28px] font-bold text-gray-950 dark:text-white">{t('featuresPage.notFound.title')}</h1>
+        <h1 className="text-[28px] font-bold text-gray-950 dark:text-white">
+          {t('featuresPage.notFound.title')}
+        </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
           {t('featuresPage.notFound.body')}
         </p>
@@ -118,7 +123,12 @@ const FeatureDetail = () => {
           <div className="mt-8 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-12 lg:gap-16 items-center">
             <Reveal>
               <div className="flex items-center gap-3">
-                <span className={['inline-flex w-11 h-11 items-center justify-center rounded-2xl border bg-white dark:bg-transparent', a.border].join(' ')}>
+                <span
+                  className={[
+                    'inline-flex w-11 h-11 items-center justify-center rounded-2xl border bg-white dark:bg-transparent',
+                    a.border
+                  ].join(' ')}
+                >
                   <Icon className={['w-[22px] h-[22px]', a.text].join(' ')} strokeWidth={1.8} />
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -151,15 +161,27 @@ const FeatureDetail = () => {
       {/* --------------------------------------------------------- kazanımlar */}
       {benefits.length > 0 && (
         <Section tone="plain" wide>
-          <SectionHead index={1} eyebrow={t('featuresPage.benefitsTitle')} eyebrowTone={tone} title={t(key('short'))} />
+          <SectionHead
+            index={1}
+            eyebrow={t('featuresPage.benefitsTitle')}
+            eyebrowTone={tone}
+            title={t(key('short'))}
+          />
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {benefits.map((b, i) => (
               <Reveal key={i} delay={i * 0.06}>
                 <Card className="h-full p-6">
-                  <span className={['inline-flex w-8 h-8 items-center justify-center rounded-full', a.soft].join(' ')}>
+                  <span
+                    className={[
+                      'inline-flex w-8 h-8 items-center justify-center rounded-full',
+                      a.soft
+                    ].join(' ')}
+                  >
                     <Check className={['w-4 h-4', a.text].join(' ')} strokeWidth={2.4} />
                   </span>
-                  <p className="mt-4 text-[15px] leading-relaxed font-medium text-gray-800 dark:text-gray-200">{b}</p>
+                  <p className="mt-4 text-[15px] leading-relaxed font-medium text-gray-800 dark:text-gray-200">
+                    {b}
+                  </p>
                 </Card>
               </Reveal>
             ))}
@@ -171,17 +193,32 @@ const FeatureDetail = () => {
       {steps.length > 0 && (
         <Section tone="mist" wide>
           <div className="grid lg:grid-cols-[minmax(0,.85fr)_minmax(0,1.15fr)] gap-10 lg:gap-16">
-            <SectionHead index={2} eyebrow={t(key('title'))} eyebrowTone={tone} title={t('featuresPage.howTitle')} description={t('featuresPage.howDesc')} />
+            <SectionHead
+              index={2}
+              eyebrow={t(key('title'))}
+              eyebrowTone={tone}
+              title={t('featuresPage.howTitle')}
+              description={t('featuresPage.howDesc')}
+            />
             <ol className="relative space-y-4">
               {steps.map((s, i) => (
                 <Reveal as="li" key={i} delay={i * 0.08}>
                   <Card className="p-6 flex gap-5">
-                    <span className={['text-[28px] font-bold tabular-nums leading-none tracking-[-0.04em]', a.text].join(' ')}>
+                    <span
+                      className={[
+                        'text-[28px] font-bold tabular-nums leading-none tracking-[-0.04em]',
+                        a.text
+                      ].join(' ')}
+                    >
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span>
-                      <span className="block text-[16px] font-semibold text-gray-950 dark:text-white">{s.title}</span>
-                      <span className="block mt-1.5 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">{s.body}</span>
+                      <span className="block text-[16px] font-semibold text-gray-950 dark:text-white">
+                        {s.title}
+                      </span>
+                      <span className="block mt-1.5 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                        {s.body}
+                      </span>
                     </span>
                   </Card>
                 </Reveal>

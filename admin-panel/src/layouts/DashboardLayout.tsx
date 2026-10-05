@@ -418,7 +418,9 @@ const DashboardLayout = () => {
                   </span>
                   {item.locked && (
                     <span className="shrink-0 px-1.5 py-[1px] rounded text-[9.5px] font-bold tracking-wide bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
-                      {item.locked === 'ENTERPRISE' ? t('upgrade.badgeEnterprise') : t('upgrade.badge')}
+                      {item.locked === 'ENTERPRISE'
+                        ? t('upgrade.badgeEnterprise')
+                        : t('upgrade.badge')}
                     </span>
                   )}
                   {item.badge === 'unread' && unreadCount > 0 && (

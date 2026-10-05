@@ -26,7 +26,6 @@ import { setPlan, verifyEmail } from './helpers/accounts';
 import { query } from '../src/db/pool';
 import { getPool } from '../src/db/pool';
 
-
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
 // Poll until `check` returns something truthy or the budget runs out. The

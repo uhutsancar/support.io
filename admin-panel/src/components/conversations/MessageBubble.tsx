@@ -135,7 +135,9 @@ const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
 
         <div className="flex items-center justify-end space-x-1 mt-1">
           {message.status === 'pending' && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">{t('conversations.sending', 'Gönderiliyor…')}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              {t('conversations.sending', 'Gönderiliyor…')}
+            </p>
           )}
           {message.status === 'failed' && (
             <p className="text-xs text-red-600 dark:text-red-400">

@@ -964,7 +964,6 @@ export const VisitorsVisual = () => {
   );
 };
 
-
 /* ---------------------------------------------------------------- 12. CRM */
 
 /** Konuşmadan doğan fırsatların hattı. */
@@ -1028,7 +1027,9 @@ export const AssistantVisual = () => {
         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
           <Sparkles className="w-3.5 h-3.5" /> {t('viz.assistant.badge')}
         </span>
-        <span className="text-[10.5px] text-gray-500 dark:text-gray-400">{t('viz.assistant.page')}</span>
+        <span className="text-[10.5px] text-gray-500 dark:text-gray-400">
+          {t('viz.assistant.page')}
+        </span>
       </div>
 
       <div className="ml-auto w-fit max-w-[80%] px-3 py-2 rounded-2xl rounded-br-md bg-indigo-600 text-white text-[12px]">

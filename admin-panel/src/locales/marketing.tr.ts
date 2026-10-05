@@ -106,10 +106,22 @@ export default {
       title: 'Sık soruları yapay zekâ yanıtlasın, ekibiniz asıl işe odaklansın',
       desc: 'Asistan sitenizdeki sohbet balonunda ilk cevabı verir: fiyatlar, kurulum, teslimat, çalışma saatleri… Cevabı yalnızca sizin SSS içeriğinizden alır; bilmediği soruyu uydurmaz, ekibinize devreder.',
       points: [
-        { title: '7/24 yanıt', body: 'Gece ya da hafta sonu gelen soru sabahı beklemez; asistan saniyeler içinde yanıtlar.' },
-        { title: 'Sizin bilginizle konuşur', body: 'Yalnızca SSS’nize dayanır. Her yanıtın hangi kayda dayandığını ekibiniz görür.' },
-        { title: 'Bilmediğini devreder', body: 'Cevap yoksa ya da ziyaretçi bir kişi isterse konuşma hemen ekibinize geçer.' },
-        { title: 'Müşteri verisi korunur', body: 'Kart, IBAN ya da kimlik numarası paylaşılırsa soru yapay zekâya hiç gönderilmez.' }
+        {
+          title: '7/24 yanıt',
+          body: 'Gece ya da hafta sonu gelen soru sabahı beklemez; asistan saniyeler içinde yanıtlar.'
+        },
+        {
+          title: 'Sizin bilginizle konuşur',
+          body: 'Yalnızca SSS’nize dayanır. Her yanıtın hangi kayda dayandığını ekibiniz görür.'
+        },
+        {
+          title: 'Bilmediğini devreder',
+          body: 'Cevap yoksa ya da ziyaretçi bir kişi isterse konuşma hemen ekibinize geçer.'
+        },
+        {
+          title: 'Müşteri verisi korunur',
+          body: 'Kart, IBAN ya da kimlik numarası paylaşılırsa soru yapay zekâya hiç gönderilmez.'
+        }
       ],
       plans: 'Her planda dâhil · ayda {{n}} yanıttan başlar',
       cta: 'Asistanı keşfedin',
@@ -256,7 +268,11 @@ export default {
         },
         { from: 'visitor', text: 'Fiyatlar için biriyle konuşabilir miyim?' },
         { from: 'note', text: 'Selin konuşmaya katıldı' },
-        { from: 'agent', name: 'Selin', text: 'Merhaba! Ekibiniz kaç kişi? Size en uygun planı önereyim.' }
+        {
+          from: 'agent',
+          name: 'Selin',
+          text: 'Merhaba! Ekibiniz kaç kişi? Size en uygun planı önereyim.'
+        }
       ]
     },
     ai: {
@@ -287,7 +303,10 @@ export default {
           text: 'Ekip → Davet et ekranından e-posta adresini yazın; davet edilen kişi e-postadaki bağlantıyla katılır.',
           source: 'Kaynak: Ekip yönetimi'
         },
-        { from: 'visitor', text: 'Pro’da kaç kişi olabiliyor? Satıştan biriyle konuşabilir miyim?' },
+        {
+          from: 'visitor',
+          text: 'Pro’da kaç kişi olabiliyor? Satıştan biriyle konuşabilir miyim?'
+        },
         { from: 'note', text: 'Satış departmanına yönlendirildi' },
         {
           from: 'agent',
@@ -456,8 +475,7 @@ export default {
 
     devEyebrow: 'Kurulum',
     devTitle: 'Kurmak dakikalar sürer',
-    devDesc:
-      'Yazılımcınız olmasa da olur. Takılırsanız bize yazın, kurulumu birlikte yapalım.',
+    devDesc: 'Yazılımcınız olmasa da olur. Takılırsanız bize yazın, kurulumu birlikte yapalım.',
     dev: {
       embed: {
         title: 'Kopyala, yapıştır',
@@ -848,7 +866,10 @@ export default {
         forWho: 'Büyük ekipler',
         forWhoBody:
           'Birçok siteyi yönetiyor, yapay zekânın soruların çoğunu karşılamasını ve denetim kayıtlarını istiyorsanız.',
-        extras: ['Daha ayrıntılı yapay zekâ yanıtları, daha geniş SSS kapsamı', 'Öncelikli destek ve kurulumda birebir yardım']
+        extras: [
+          'Daha ayrıntılı yapay zekâ yanıtları, daha geniş SSS kapsamı',
+          'Öncelikli destek ve kurulumda birebir yardım'
+        ]
       }
     },
 

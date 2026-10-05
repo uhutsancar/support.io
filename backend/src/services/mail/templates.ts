@@ -22,15 +22,19 @@ function escapeHtml(value: string): string {
 }
 
 /** One paragraph-and-button mail, the only layout these need. */
-function layout(
-  { title, lines, action, link, footer }: {
-    title: string;
-    lines: string[];
-    action: string;
-    link: string;
-    footer: string;
-  }
-): { text: string; html: string } {
+function layout({
+  title,
+  lines,
+  action,
+  link,
+  footer
+}: {
+  title: string;
+  lines: string[];
+  action: string;
+  link: string;
+  footer: string;
+}): { text: string; html: string } {
   const text = [title, '', ...lines, '', `${action}: ${link}`, '', footer].join('\n');
   const html = `<!doctype html>
 <html><body style="margin:0;padding:24px;background:#f6f7f9;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111827">

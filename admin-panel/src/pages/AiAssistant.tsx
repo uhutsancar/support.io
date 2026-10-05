@@ -52,7 +52,9 @@ const AiAssistant = () => {
 
   const heroPoints = asList<string>(t('aiPage.heroPoints', { returnObjects: true }));
   const how = asList<{ title: string; body: string }>(t('aiPage.how', { returnObjects: true }));
-  const benefits = asList<{ title: string; body: string }>(t('aiPage.benefits', { returnObjects: true }));
+  const benefits = asList<{ title: string; body: string }>(
+    t('aiPage.benefits', { returnObjects: true })
+  );
   const control = asList<string>(t('aiPage.controlPoints', { returnObjects: true }));
   const trust = asList<string>(t('aiPage.trust', { returnObjects: true }));
   const faq = asList<{ q: string; a: string }>(t('aiPage.faq', { returnObjects: true }));
@@ -87,8 +89,12 @@ const AiAssistant = () => {
             </div>
             <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2">
               {heroPoints.map((point) => (
-                <li key={point} className="flex items-center gap-1.5 text-[13.5px] text-gray-600 dark:text-gray-400">
-                  <Check className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" /> {point}
+                <li
+                  key={point}
+                  className="flex items-center gap-1.5 text-[13.5px] text-gray-600 dark:text-gray-400"
+                >
+                  <Check className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />{' '}
+                  {point}
                 </li>
               ))}
             </ul>
@@ -103,14 +109,23 @@ const AiAssistant = () => {
 
       {/* ---------------------------------------------------- nasıl çalışır */}
       <Section tone="plain">
-        <SectionHead eyebrow={t('aiPage.howEyebrow')} eyebrowTone="violet" title={t('aiPage.howTitle')} align="center" />
+        <SectionHead
+          eyebrow={t('aiPage.howEyebrow')}
+          eyebrowTone="violet"
+          title={t('aiPage.howTitle')}
+          align="center"
+        />
         <ol className="mt-12 grid md:grid-cols-3 gap-4">
           {how.map((step, i) => (
             <Reveal key={step.title} delay={i * 0.06} as="li">
               <Card className="p-6 h-full">
                 <StepNumber n={i + 1} tone="violet" />
-                <h3 className="mt-5 text-[17px] font-semibold text-gray-950 dark:text-white">{step.title}</h3>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">{step.body}</p>
+                <h3 className="mt-5 text-[17px] font-semibold text-gray-950 dark:text-white">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {step.body}
+                </p>
               </Card>
             </Reveal>
           ))}
@@ -119,7 +134,11 @@ const AiAssistant = () => {
 
       {/* ------------------------------------------------------- kazanımlar */}
       <Section tone="mist">
-        <SectionHead eyebrow={t('aiPage.benefitsEyebrow')} eyebrowTone="violet" title={t('aiPage.benefitsTitle')} />
+        <SectionHead
+          eyebrow={t('aiPage.benefitsEyebrow')}
+          eyebrowTone="violet"
+          title={t('aiPage.benefitsTitle')}
+        />
         <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {benefits.map((benefit, i) => {
             const Icon = BENEFIT_ICONS[i % BENEFIT_ICONS.length];
@@ -127,10 +146,17 @@ const AiAssistant = () => {
               <Reveal key={benefit.title} delay={i * 0.04}>
                 <Card className="p-6 h-full">
                   <span className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-violet-600 dark:text-violet-300" strokeWidth={1.8} />
+                    <Icon
+                      className="w-5 h-5 text-violet-600 dark:text-violet-300"
+                      strokeWidth={1.8}
+                    />
                   </span>
-                  <h3 className="mt-4 text-[16px] font-semibold text-gray-950 dark:text-white">{benefit.title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">{benefit.body}</p>
+                  <h3 className="mt-4 text-[16px] font-semibold text-gray-950 dark:text-white">
+                    {benefit.title}
+                  </h3>
+                  <p className="mt-1.5 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">
+                    {benefit.body}
+                  </p>
                 </Card>
               </Reveal>
             );
@@ -150,8 +176,12 @@ const AiAssistant = () => {
             />
             <ul className="mt-8 space-y-3">
               {control.map((point) => (
-                <li key={point} className="flex gap-2.5 text-[15px] text-gray-700 dark:text-gray-300">
-                  <Check className="w-5 h-5 mt-0.5 shrink-0 text-violet-600 dark:text-violet-400" /> {point}
+                <li
+                  key={point}
+                  className="flex gap-2.5 text-[15px] text-gray-700 dark:text-gray-300"
+                >
+                  <Check className="w-5 h-5 mt-0.5 shrink-0 text-violet-600 dark:text-violet-400" />{' '}
+                  {point}
                 </li>
               ))}
             </ul>
@@ -205,11 +235,16 @@ const AiAssistant = () => {
                 <Card
                   className={[
                     'p-6 h-full',
-                    plan.type === 'ENTERPRISE' ? 'ring-2 ring-violet-500 border-transparent dark:border-transparent' : ''
+                    plan.type === 'ENTERPRISE'
+                      ? 'ring-2 ring-violet-500 border-transparent dark:border-transparent'
+                      : ''
                   ].join(' ')}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className="w-5 h-5 text-violet-600 dark:text-violet-400" strokeWidth={1.8} />
+                    <Icon
+                      className="w-5 h-5 text-violet-600 dark:text-violet-400"
+                      strokeWidth={1.8}
+                    />
                     <span className="text-[15px] font-semibold text-gray-950 dark:text-white">
                       {t('pricingPage.plans.' + plan.type.toLowerCase() + '.name')}
                     </span>

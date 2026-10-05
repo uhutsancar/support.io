@@ -176,10 +176,16 @@ const Sites = () => {
                     <Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white truncate" title={site.name}>
+                    <h3
+                      className="font-semibold text-gray-900 dark:text-white truncate"
+                      title={site.name}
+                    >
                       {site.name}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate" title={site.domain}>
+                    <p
+                      className="text-sm text-gray-500 dark:text-gray-400 truncate"
+                      title={site.domain}
+                    >
                       {site.domain}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">

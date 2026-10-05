@@ -611,7 +611,8 @@ export default {
   acceptInvite: {
     title: 'Ekibe katılın',
     subtitle: '{{organization}} sizi {{role}} olarak davet etti. Adınızı ve şifrenizi belirleyin.',
-    invalid: 'Bu davet geçersiz, süresi dolmuş ya da daha önce kullanılmış. Sizi davet eden kişiden yenisini isteyin.',
+    invalid:
+      'Bu davet geçersiz, süresi dolmuş ya da daha önce kullanılmış. Sizi davet eden kişiden yenisini isteyin.',
     name: 'Adınız',
     password: 'Şifreniz (en az 8 karakter)',
     join: 'Daveti kabul et',
@@ -637,7 +638,8 @@ export default {
     newLink: 'Yeni bağlantı iste',
     verifyTitle: 'E-posta doğrulama',
     verifyDone: 'E-posta adresiniz doğrulandı. Widget’ınız artık sitenizde çalışabilir.',
-    verifyFailed: 'Bu doğrulama bağlantısı geçersiz ya da süresi dolmuş. Panelden yenisini isteyebilirsiniz.',
+    verifyFailed:
+      'Bu doğrulama bağlantısı geçersiz ya da süresi dolmuş. Panelden yenisini isteyebilirsiniz.',
     toDashboard: 'Panele git',
     banner:
       'E-posta adresinizi ({{email}}) doğrulayın. Doğruladıktan sonra widget’ınız sitenizde çalışmaya başlar ve ödeme yapabilirsiniz.',
@@ -1336,9 +1338,11 @@ export default {
       howItWorks:
         'Davet edilen kişiye bir e-posta gider; bağlantıyı açıp kendi şifresini belirler. Davet 7 gün geçerlidir.',
       sent: 'Davet {{email}} adresine gönderildi.',
-      savedNotSent: 'Davet oluşturuldu ama e-posta gönderilemedi; listeden yeniden gönderebilirsiniz.',
+      savedNotSent:
+        'Davet oluşturuldu ama e-posta gönderilemedi; listeden yeniden gönderebilirsiniz.',
       error: 'Davet gönderilemedi',
-      limitReached: 'Planınızın kullanıcı sınırına ulaştınız. Daha fazla kişi için planınızı yükseltin.',
+      limitReached:
+        'Planınızın kullanıcı sınırına ulaştınız. Daha fazla kişi için planınızı yükseltin.',
       pending: 'Bekleyen davetler',
       expired: 'Süresi doldu',
       until: '{{when}} tarihine kadar geçerli',
@@ -1914,7 +1918,7 @@ export default {
         },
         {
           q: 'Balonu bazı sayfalarda gizlemek istiyorum',
-          a: 'Widget Studio’daki “yalnızca şu sayfalarda göster” ayarını kullanın ya da o sayfada SupportChat.q.push([\'hide\']) çağırın.'
+          a: "Widget Studio’daki “yalnızca şu sayfalarda göster” ayarını kullanın ya da o sayfada SupportChat.q.push(['hide']) çağırın."
         },
         {
           q: 'Bir güncelleme sitemi etkiler mi?',
@@ -2019,7 +2023,8 @@ export default {
     limitReached: 'Planınızın sınırına ulaştınız.',
     limit: {
       sites: 'Planınızdaki site sayısının tamamını kullanıyorsunuz.',
-      agents: 'Planınızdaki kullanıcı sayısının tamamını kullanıyorsunuz (bekleyen davetler dâhil).',
+      agents:
+        'Planınızdaki kullanıcı sayısının tamamını kullanıyorsunuz (bekleyen davetler dâhil).',
       conversations: 'Bu ayın yeni konuşma hakkı doldu.'
     },
     body: 'Daha yüksek bir plana geçince hemen açılır; verileriniz olduğu gibi kalır.',
@@ -2033,13 +2038,28 @@ export default {
       compare: 'Planları karşılaştır'
     },
     features: {
-      departments: { name: 'Departmanlar', benefit: 'Soruları doğru ekibe ve müsait temsilciye kendiliğinden dağıtın.' },
-      automation: { name: 'Otomasyon', benefit: 'Etiketleme, yönlendirme ve hazır cevapları kurala bağlayın.' },
-      proactive: { name: 'Proaktif mesajlar', benefit: 'Kararsız kalan ziyaretçiye siz sormadan yazın.' },
-      visitors: { name: 'Canlı ziyaretçiler', benefit: 'Şu an sitede kim var, hangi sayfada — canlı görün.' },
+      departments: {
+        name: 'Departmanlar',
+        benefit: 'Soruları doğru ekibe ve müsait temsilciye kendiliğinden dağıtın.'
+      },
+      automation: {
+        name: 'Otomasyon',
+        benefit: 'Etiketleme, yönlendirme ve hazır cevapları kurala bağlayın.'
+      },
+      proactive: {
+        name: 'Proaktif mesajlar',
+        benefit: 'Kararsız kalan ziyaretçiye siz sormadan yazın.'
+      },
+      visitors: {
+        name: 'Canlı ziyaretçiler',
+        benefit: 'Şu an sitede kim var, hangi sayfada — canlı görün.'
+      },
       crm: { name: 'Fırsat takibi', benefit: 'Satışa dönen konuşmaları aşama aşama takip edin.' },
       export: { name: 'Dışa aktarma', benefit: 'Konuşmalarınızı dosya olarak indirin.' },
-      audit: { name: 'Denetim kayıtları', benefit: 'Ekibinizde kimin neyi ne zaman değiştirdiğini görün.' }
+      audit: {
+        name: 'Denetim kayıtları',
+        benefit: 'Ekibinizde kimin neyi ne zaman değiştirdiğini görün.'
+      }
     }
   },
   billing: {
@@ -2058,7 +2078,8 @@ export default {
     },
     renews: 'Sonraki yenileme: {{date}}',
     endsAt: 'Plan {{date}} tarihinde sona erecek',
-    graceUntil: 'Ödeme bilgilerinizi {{date}} tarihine kadar güncelleyin; aksi hâlde plan Ücretsiz’e döner.',
+    graceUntil:
+      'Ödeme bilgilerinizi {{date}} tarihine kadar güncelleyin; aksi hâlde plan Ücretsiz’e döner.',
     manage: 'Aboneliği yönet',
     manageHelp: 'Ödeme yöntemi, faturalar ve iptal Paddle müşteri portalında.',
     portalError: 'Müşteri portalı açılamadı',
@@ -2091,13 +2112,16 @@ export default {
     perYear: '/ yıl',
     includes: 'Neler dâhil',
     pay: 'Ödemeye geç',
-    secure: 'Ödemeler Paddle güvencesiyle alınır; kart bilgileriniz bizde saklanmaz. Faturanız e-postanıza gelir.',
+    secure:
+      'Ödemeler Paddle güvencesiyle alınır; kart bilgileriniz bizde saklanmaz. Faturanız e-postanıza gelir.',
     cancelAnytime: 'İstediğiniz zaman iptal edebilirsiniz.',
     current: 'Mevcut planınız',
     alreadyOn: 'Bu plandasınız.',
-    hasSubscription: 'Aktif bir aboneliğiniz var; plan değişikliğini müşteri portalından yapabilirsiniz.',
+    hasSubscription:
+      'Aktif bir aboneliğiniz var; plan değişikliğini müşteri portalından yapabilirsiniz.',
     verifyFirst: 'Ödeme yapmadan önce e-posta adresinizi doğrulayın.',
-    closed: 'Çevrim içi ödeme çok yakında açılıyor. Şimdi geçmek isterseniz bize yazın, planınızı hemen açalım.',
+    closed:
+      'Çevrim içi ödeme çok yakında açılıyor. Şimdi geçmek isterseniz bize yazın, planınızı hemen açalım.',
     contact: 'Bize yazın',
     opening: 'Ödeme ekranı açılıyor…',
     waiting: 'Ödemeniz alındı, planınız etkinleştiriliyor…',
@@ -2142,7 +2166,8 @@ export default {
         sitesOn: 'Açık olduğu site'
       },
       sitesTitle: 'Siteler',
-      sitesHelp: 'Asistanı site başına açıp kapatırsınız. Yalnızca o sitenin herkese açık SSS kayıtlarını kullanır.',
+      sitesHelp:
+        'Asistanı site başına açıp kapatırsınız. Yalnızca o sitenin herkese açık SSS kayıtlarını kullanır.',
       faqCount_one: '{{count}} SSS kaydı',
       faqCount_other: '{{count}} SSS kaydı',
       noFaq: 'SSS kaydı yok — asistan yanıt veremez',
@@ -2168,7 +2193,8 @@ export default {
         no_answer: 'Sık gelen bu soruları SSS’ye eklerseniz asistan bir dahakine yanıtlar.',
         no_faq: 'Asistanın yanıt verebilmesi için siteye SSS kaydı ekleyin.',
         api: 'Asistan o an yanıt veremedi; konuşma beklemeden ekibinize geçti.',
-        plan_quota: 'Planınızdaki aylık yanıt hakkı dolduğunda konuşmalar ekibinize geçer. Daha fazlası için planınızı yükseltin.'
+        plan_quota:
+          'Planınızdaki aylık yanıt hakkı dolduğunda konuşmalar ekibinize geçer. Daha fazlası için planınızı yükseltin.'
       },
       previewTitle: 'Ziyaretçi ne görür',
       previewHeader: 'Otomatik asistan · Temsilciye bağlan',
@@ -2189,10 +2215,10 @@ export default {
       assistant: 'Yapay zekâ asistanı',
       assistantHelp:
         'Açıkken ziyaretçinin sorusuna ilk cevabı sitenizin SSS içeriğinden kısa ve Türkçe olarak verir. Cevap SSS’de yoksa, ziyaretçi temsilci isterse ya da servis yanıt vermezse konuşmayı hemen ekibinize aktarır.',
-      unavailable:
-        'Yapay zekâ asistanı şu an kullanılamıyor. Canlı destek bundan etkilenmez.',
+      unavailable: 'Yapay zekâ asistanı şu an kullanılamıyor. Canlı destek bundan etkilenmez.',
       rule1: 'Yalnızca sitenizin herkese açık SSS kayıtlarını kullanır.',
-      rule2: 'Ziyaretçinin adı, e-postası ve önceki mesajları yapay zekâya gönderilmez; kart, IBAN gibi bilgiler görülürse soru hiç gönderilmeden temsilciye aktarılır.',
+      rule2:
+        'Ziyaretçinin adı, e-postası ve önceki mesajları yapay zekâya gönderilmez; kart, IBAN gibi bilgiler görülürse soru hiç gönderilmeden temsilciye aktarılır.',
       rule3: 'Bir temsilci yazdığı ya da “Devral” dediği anda asistan o konuşmada susar.',
       faqAutoReply: 'Anahtar kelimeyle SSS cevabı',
       faqAutoReplyHelp:

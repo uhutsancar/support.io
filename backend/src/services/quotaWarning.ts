@@ -8,7 +8,11 @@
 import { query } from '../db/pool';
 import { appBaseUrl, mail } from './mail';
 
-export async function warnQuota(organizationId: string, used: number, limit: number): Promise<void> {
+export async function warnQuota(
+  organizationId: string,
+  used: number,
+  limit: number
+): Promise<void> {
   try {
     const { rows } = await query<{ name: string; email: string }>(
       `SELECT o.name, u.email
@@ -24,6 +28,9 @@ export async function warnQuota(organizationId: string, used: number, limit: num
       link: `${appBaseUrl()}/dashboard/billing`
     });
   } catch (error) {
-    console.error('[quota] could not send the warning', error instanceof Error ? error.message : error);
+    console.error(
+      '[quota] could not send the warning',
+      error instanceof Error ? error.message : error
+    );
   }
 }

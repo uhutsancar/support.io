@@ -18,8 +18,7 @@ const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/hakkimizda', '/en/about']
 ];
 
-const matches = (path: string, prefix: string) =>
-  path === prefix || path.startsWith(prefix + '/');
+const matches = (path: string, prefix: string) => path === prefix || path.startsWith(prefix + '/');
 
 /** The same page in the other language; unknown paths only swap the `/en` prefix. */
 export function translatePath(path: string, to: 'tr' | 'en'): string {

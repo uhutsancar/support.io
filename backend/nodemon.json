@@ -1,16 +1,8 @@
 {
-  "watch": [
-    "src"
-  ],
+  "watch": ["src"],
   "ext": "ts,json",
   "exec": "tsx src/server.ts",
-  "ignore": [
-    "node_modules/**",
-    "dist/**",
-    "../admin-panel/**",
-    "../uploads/**",
-    "**/*.log"
-  ],
+  "ignore": ["node_modules/**", "dist/**", "../admin-panel/**", "../uploads/**", "**/*.log"],
   "legacyWatch": true,
   "signal": "SIGTERM",
   "delay": 500

@@ -11,7 +11,16 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Check, Loader2, Lock, Rocket, Building2, PartyPopper, Mail } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  Loader2,
+  Lock,
+  Rocket,
+  Building2,
+  PartyPopper,
+  Mail
+} from 'lucide-react';
 import { billingAPI } from '../services/api';
 import { errorMessage, useAsync } from '../hooks/useAsync';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,7 +44,9 @@ const Upgrade = () => {
   const base = `${language === 'en' ? '/en' : ''}/dashboard`;
   const [params] = useSearchParams();
   const { plans } = usePlans();
-  const [plan, setPlan] = useState<Paid>(params.get('plan') === 'ENTERPRISE' ? 'ENTERPRISE' : 'PRO');
+  const [plan, setPlan] = useState<Paid>(
+    params.get('plan') === 'ENTERPRISE' ? 'ENTERPRISE' : 'PRO'
+  );
   const [cycle, setCycle] = useState<Cycle>('monthly');
   const [phase, setPhase] = useState<Phase>('idle');
   const polling = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -63,10 +74,14 @@ const Upgrade = () => {
   const selected = paid.find((p) => p.type === plan);
   const fmt = new Intl.NumberFormat(locale);
   const money = (amount: number, currency = 'TRY') =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0 }).format(
+      amount
+    );
   const perMonth = (p: PlanInfo) => (cycle === 'yearly' ? p.price.yearly : p.price.monthly) ?? 0;
   const saving = (p: PlanInfo) =>
-    p.price.monthly && p.price.yearly ? Math.round((1 - p.price.yearly / p.price.monthly) * 100) : 0;
+    p.price.monthly && p.price.yearly
+      ? Math.round((1 - p.price.yearly / p.price.monthly) * 100)
+      : 0;
 
   const bullets = (p: PlanInfo) => [
     t('pricingPage.units.sites', { count: p.sites }),
@@ -74,7 +89,9 @@ const Upgrade = () => {
     t('pricingPage.units.conversations', { n: fmt.format(p.monthlyConversations) }),
     t('pricingPage.units.assistant', { n: fmt.format(p.assistant.monthlyReplies) }),
     t('pricingPage.units.assistantDepth', { count: p.assistant.repliesPerConversation }),
-    ...PLAN_FEATURE_ORDER.filter((f) => p.features.includes(f)).map((f) => t('pricingPage.matrix.' + f))
+    ...PLAN_FEATURE_ORDER.filter((f) => p.features.includes(f)).map((f) =>
+      t('pricingPage.matrix.' + f)
+    )
   ];
 
   const purchasable = data?.billing.purchasable[plan]?.[cycle] ?? false;
@@ -153,7 +170,11 @@ const Upgrade = () => {
           {phase === 'done' ? t('checkout.success') : t('checkout.waiting')}
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-300">
-          {phase === 'done' ? t('checkout.successBody') : phase === 'slow' ? t('checkout.slow') : ''}
+          {phase === 'done'
+            ? t('checkout.successBody')
+            : phase === 'slow'
+              ? t('checkout.slow')
+              : ''}
         </p>
         <Link
           to={base}
@@ -178,14 +199,18 @@ const Upgrade = () => {
         >
           <ArrowLeft className="w-4 h-4" /> {t('checkout.back')}
         </Link>
-        <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('checkout.title')}</h1>
+        <h1 className="mt-3 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          {t('checkout.title')}
+        </h1>
         <p className="mt-2 mb-8 text-gray-600 dark:text-gray-400">{t('checkout.subtitle')}</p>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] items-start">
           {/* ------------------------------------------------ seçim */}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('checkout.choosePlan')}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {t('checkout.choosePlan')}
+              </p>
               <div
                 role="radiogroup"
                 aria-label={t('checkout.cycle')}
@@ -215,7 +240,11 @@ const Upgrade = () => {
               </div>
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2" role="radiogroup" aria-label={t('checkout.choosePlan')}>
+            <div
+              className="mt-4 grid gap-4 sm:grid-cols-2"
+              role="radiogroup"
+              aria-label={t('checkout.choosePlan')}
+            >
               {paid.map((p) => {
                 const Icon = ICON[p.type];
                 const active = p.type === plan;
@@ -241,12 +270,16 @@ const Upgrade = () => {
                           {t('pricingPage.plans.' + p.type.toLowerCase() + '.name')}
                         </p>
                         {data?.plan === p.type && (
-                          <p className="text-xs text-indigo-600 dark:text-indigo-400">{t('checkout.current')}</p>
+                          <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                            {t('checkout.current')}
+                          </p>
                         )}
                       </div>
                       <span
                         className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          active ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300 dark:border-gray-600'
+                          active
+                            ? 'border-indigo-600 bg-indigo-600'
+                            : 'border-gray-300 dark:border-gray-600'
                         }`}
                       >
                         {active && <Check className="w-3 h-3 text-white" />}
@@ -254,11 +287,16 @@ const Upgrade = () => {
                     </div>
                     <p className="mt-4 text-2xl font-bold text-gray-900 dark:text-white tabular-nums">
                       {money(perMonth(p), p.price.currency)}
-                      <span className="ml-1 text-sm font-medium text-gray-500">{t('checkout.perMonth')}</span>
+                      <span className="ml-1 text-sm font-medium text-gray-500">
+                        {t('checkout.perMonth')}
+                      </span>
                     </p>
                     <ul className="mt-4 space-y-2">
                       {bullets(p).map((item) => (
-                        <li key={item} className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <li
+                          key={item}
+                          className="flex gap-2 text-sm text-gray-600 dark:text-gray-300"
+                        >
                           <Check className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                           {item}
                         </li>
@@ -272,12 +310,16 @@ const Upgrade = () => {
 
           {/* ------------------------------------------------ özet */}
           <aside className="lg:sticky lg:top-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('checkout.summary')}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              {t('checkout.summary')}
+            </p>
             {selected && (
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between gap-3">
                   <dt className="text-gray-600 dark:text-gray-300">
-                    {t('checkout.plan', { plan: t('pricingPage.plans.' + plan.toLowerCase() + '.name') })}
+                    {t('checkout.plan', {
+                      plan: t('pricingPage.plans.' + plan.toLowerCase() + '.name')
+                    })}
                   </dt>
                   <dd className="font-medium text-gray-900 dark:text-white tabular-nums">
                     {money(perMonth(selected), selected.price.currency)} {t('checkout.perMonth')}
@@ -290,7 +332,9 @@ const Upgrade = () => {
                   </dd>
                 </div>
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between gap-3">
-                  <dt className="font-semibold text-gray-900 dark:text-white">{t('checkout.total')}</dt>
+                  <dt className="font-semibold text-gray-900 dark:text-white">
+                    {t('checkout.total')}
+                  </dt>
                   <dd className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
                     {cycle === 'yearly'
                       ? `${money(perMonth(selected) * 12, selected.price.currency)} ${t('checkout.perYear')}`
@@ -325,13 +369,21 @@ const Upgrade = () => {
                   disabled={!data || Boolean(blocker) || phase === 'opening'}
                   className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {phase === 'opening' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                  {phase === 'opening' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Lock className="w-4 h-4" />
+                  )}
                   {phase === 'opening' ? t('checkout.opening') : t('checkout.pay')}
                 </button>
               </>
             )}
-            <p className="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">{t('checkout.secure')}</p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('checkout.cancelAnytime')}</p>
+            <p className="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              {t('checkout.secure')}
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('checkout.cancelAnytime')}
+            </p>
           </aside>
         </div>
       </div>

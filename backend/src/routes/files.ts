@@ -78,7 +78,13 @@ const storeAndProve = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-router.post('/upload', uploadLimiter, requireWidgetSession, uploadFile.single('file'), storeAndProve);
+router.post(
+  '/upload',
+  uploadLimiter,
+  requireWidgetSession,
+  uploadFile.single('file'),
+  storeAndProve
+);
 
 /**
  * The site an agent uploads for, checked before multer touches the body: the

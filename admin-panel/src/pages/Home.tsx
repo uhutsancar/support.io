@@ -72,12 +72,7 @@ import ChatPlayer from '../components/marketing/ChatPlayer';
 import { planKey, usePlans } from '../hooks/usePlans';
 import { publicOrigin } from '../lib/publicOrigin';
 import { openSiteChat, siteChatAvailable } from '../components/marketing/siteChat';
-import {
-  FEATURE_GROUPS,
-  FEATURE_TONE,
-  HOME_TABS,
-  SOLUTIONS
-} from './marketing/features';
+import { FEATURE_GROUPS, FEATURE_TONE, HOME_TABS, SOLUTIONS } from './marketing/features';
 
 type T = ReturnType<typeof useTranslation>['t'];
 type Routes = ReturnType<typeof useMarketingRoutes>;
@@ -102,9 +97,7 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
           className="text-[42px] sm:text-[64px] font-bold tracking-[-0.045em] leading-[1.0] text-gray-950 dark:text-white text-balance"
         >
           {t('homePage.hero.title')}{' '}
-          <span className="text-indigo-600 dark:text-indigo-400">
-            {t('homePage.hero.accent')}
-          </span>
+          <span className="text-indigo-600 dark:text-indigo-400">{t('homePage.hero.accent')}</span>
         </motion.h1>
 
         <motion.p
@@ -132,7 +125,10 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
 
         <ul className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2">
           {['free', 'card', 'setup'].map((k) => (
-            <li key={k} className="flex items-center gap-1.5 text-[13.5px] text-gray-600 dark:text-gray-400">
+            <li
+              key={k}
+              className="flex items-center gap-1.5 text-[13.5px] text-gray-600 dark:text-gray-400"
+            >
               <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
               {t('landing.home.trust.' + k)}
             </li>
@@ -213,7 +209,9 @@ const AI_POINT_ICONS = [Clock3, BookOpenCheck, UserRoundCog, ShieldCheck];
  * after-hours question answered from the FAQ.
  */
 const AiBand = ({ t, routes }: { t: T; routes: Routes }) => {
-  const points = asList<{ title: string; body: string }>(t('homePage.ai.points', { returnObjects: true }));
+  const points = asList<{ title: string; body: string }>(
+    t('homePage.ai.points', { returnObjects: true })
+  );
   const { plans } = usePlans();
   const { i18n } = useTranslation();
   const free = plans?.find((p) => p.type === 'FREE')?.assistant.monthlyReplies;
@@ -234,10 +232,15 @@ const AiBand = ({ t, routes }: { t: T; routes: Routes }) => {
                 <Reveal key={point.title} delay={i * 0.05}>
                   <div className="flex gap-3">
                     <span className="w-9 h-9 shrink-0 rounded-xl bg-violet-100 dark:bg-violet-500/15 flex items-center justify-center">
-                      <Icon className="w-[18px] h-[18px] text-violet-600 dark:text-violet-300" strokeWidth={1.8} />
+                      <Icon
+                        className="w-[18px] h-[18px] text-violet-600 dark:text-violet-300"
+                        strokeWidth={1.8}
+                      />
                     </span>
                     <span>
-                      <span className="block text-[15px] font-semibold text-gray-950 dark:text-white">{point.title}</span>
+                      <span className="block text-[15px] font-semibold text-gray-950 dark:text-white">
+                        {point.title}
+                      </span>
                       <span className="mt-1 block text-[14px] leading-relaxed text-gray-600 dark:text-gray-400">
                         {point.body}
                       </span>
@@ -332,7 +335,9 @@ const ProductTour = ({ t, routes }: { t: T; routes: Routes }) => {
                       .slice(0, 3)
                       .map((b, i) => (
                         <li key={i} className="flex gap-2.5">
-                          <Check className={['w-4 h-4 mt-1 shrink-0', accent(tone).text].join(' ')} />
+                          <Check
+                            className={['w-4 h-4 mt-1 shrink-0', accent(tone).text].join(' ')}
+                          />
                           <span className="text-[14.5px] leading-relaxed text-gray-700 dark:text-gray-300">
                             {b}
                           </span>
@@ -557,7 +562,12 @@ const StoryStepBlock = ({
       >
         {active && <span className="absolute inset-[3px] rounded-full bg-indigo-600" />}
       </span>
-      <div className={['transition-opacity duration-500', active ? 'opacity-100' : 'lg:opacity-35'].join(' ')}>
+      <div
+        className={[
+          'transition-opacity duration-500',
+          active ? 'opacity-100' : 'lg:opacity-35'
+        ].join(' ')}
+      >
         <Eyebrow tone={tone}>· {String(i + 1).padStart(2, '0')}</Eyebrow>
         <h3 className="mt-2 text-[24px] sm:text-[28px] font-bold tracking-[-0.03em] leading-[1.15] text-gray-950 dark:text-white">
           {step.title}
@@ -584,7 +594,10 @@ const Story = ({ t }: { t: T }) => {
   const [active, setActive] = React.useState(0);
   const onActive = React.useCallback((i: number) => setActive(i), []);
   const listRef = React.useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress } = useScroll({ target: listRef, offset: ['start center', 'end center'] });
+  const { scrollYProgress } = useScroll({
+    target: listRef,
+    offset: ['start center', 'end center']
+  });
 
   return (
     <Section tone="plain" wide>
@@ -598,7 +611,10 @@ const Story = ({ t }: { t: T }) => {
       <div className="mt-12 lg:mt-4 grid lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)] gap-10 lg:gap-16">
         <div ref={listRef} className="relative space-y-14 lg:space-y-0">
           {/* ilerleme çizgisi: gri ray + kaydırmayla dolan indigo çizgi */}
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200 dark:bg-white/10" aria-hidden="true" />
+          <div
+            className="absolute left-4 top-0 bottom-0 w-px bg-gray-200 dark:bg-white/10"
+            aria-hidden="true"
+          />
           <motion.div
             className="absolute left-4 top-0 bottom-0 w-px bg-indigo-600 origin-top"
             style={{ scaleY: scrollYProgress }}
@@ -639,7 +655,6 @@ const Story = ({ t }: { t: T }) => {
   );
 };
 
-
 /* -------------------------------------------------------- kurulum bento */
 
 const DEMO_BARS = [38, 52, 44, 61, 57, 72, 66];
@@ -662,7 +677,9 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
   };
 
   const platforms = asList<string>(t('landing.home.setup.platforms', { returnObjects: true }));
-  const stats = asList<{ label: string; value: string }>(t('homePage.setup.stats', { returnObjects: true }));
+  const stats = asList<{ label: string; value: string }>(
+    t('homePage.setup.stats', { returnObjects: true })
+  );
   const days = asList<string>(t('viz.analytics.days', { returnObjects: true }));
 
   return (
@@ -693,13 +710,19 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
                   onClick={copy}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
                   {copied ? t('common.copied') : t('common.copy')}
                 </button>
               </div>
               <pre className="mt-4 overflow-x-auto rounded-xl bg-gray-950 p-5 text-[13px] leading-[1.8] text-gray-200">
                 <code>
-                  <span className="text-gray-500">{'<!-- ' + t('homePage.setup.comment') + ' -->'}</span>
+                  <span className="text-gray-500">
+                    {'<!-- ' + t('homePage.setup.comment') + ' -->'}
+                  </span>
                   {'\n'}
                   {snippet}
                 </code>
@@ -749,7 +772,10 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
                       key={d.key}
                       className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent"
                     >
-                      <d.icon className="w-5 h-5 text-gray-700 dark:text-gray-300" strokeWidth={1.7} />
+                      <d.icon
+                        className="w-5 h-5 text-gray-700 dark:text-gray-300"
+                        strokeWidth={1.7}
+                      />
                       <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-500">
                         {t('homePage.setup.devices.' + d.key)}
                       </span>
@@ -778,7 +804,10 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
             </p>
             <div ref={barsRef} className="mt-4 h-28 flex items-end gap-2" aria-hidden="true">
               {DEMO_BARS.map((v, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                <div
+                  key={i}
+                  className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end"
+                >
                   <motion.div
                     className="w-full rounded-md bg-gradient-to-t from-indigo-600 to-indigo-400"
                     initial={{ height: 0 }}
@@ -792,16 +821,28 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
             <dl className="mt-6 divide-y divide-gray-100 dark:divide-white/[0.07] border-t border-gray-100 dark:border-white/[0.07]">
               {stats.map((s) => (
                 <div key={s.label} className="flex items-center justify-between py-3">
-                  <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-500">{s.label}</dt>
-                  <dd className="text-[13.5px] font-semibold text-gray-900 dark:text-white tabular-nums">{s.value}</dd>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-500">
+                    {s.label}
+                  </dt>
+                  <dd className="text-[13.5px] font-semibold text-gray-900 dark:text-white tabular-nums">
+                    {s.value}
+                  </dd>
                 </div>
               ))}
             </dl>
             <div className="mt-auto pt-4 flex items-center gap-2">
               <div className="flex -space-x-2">
-                {['/photos/agent-woman.webp', '/photos/reception.webp', '/photos/shopper.webp'].map((src) => (
-                  <img key={src} src={src} alt="" loading="lazy" className="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-[#12141f]" />
-                ))}
+                {['/photos/agent-woman.webp', '/photos/reception.webp', '/photos/shopper.webp'].map(
+                  (src) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-[#12141f]"
+                    />
+                  )
+                )}
               </div>
               <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400">
                 {t('homePage.setup.board.online')}
@@ -853,8 +894,16 @@ const FeatureGrid = ({ t, routes }: { t: T; routes: Routes }) => (
                 <Reveal key={id} delay={i * 0.05}>
                   <Link to={routes.feature(id)} className="group block h-full">
                     <Card hover className="h-full p-5">
-                      <span className={['inline-flex w-10 h-10 items-center justify-center rounded-xl border', accent(tone).border].join(' ')}>
-                        <Icon className={['w-5 h-5', accent(tone).text].join(' ')} strokeWidth={1.8} />
+                      <span
+                        className={[
+                          'inline-flex w-10 h-10 items-center justify-center rounded-xl border',
+                          accent(tone).border
+                        ].join(' ')}
+                      >
+                        <Icon
+                          className={['w-5 h-5', accent(tone).text].join(' ')}
+                          strokeWidth={1.8}
+                        />
                       </span>
                       <h3 className="mt-4 flex items-center gap-1.5 text-[15.5px] font-semibold text-gray-950 dark:text-white">
                         {t('featuresPage.items.' + id + '.title')}
@@ -899,9 +948,16 @@ const Trust = ({ t }: { t: T }) => {
               return (
                 <Reveal key={i} delay={i * 0.05}>
                   <Card className="p-5 h-full">
-                    <Icon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.8} />
-                    <h3 className="mt-3 text-[14.5px] font-semibold text-gray-950 dark:text-white">{item.title}</h3>
-                    <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">{item.body}</p>
+                    <Icon
+                      className="w-5 h-5 text-emerald-600 dark:text-emerald-400"
+                      strokeWidth={1.8}
+                    />
+                    <h3 className="mt-3 text-[14.5px] font-semibold text-gray-950 dark:text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                      {item.body}
+                    </p>
                   </Card>
                 </Reveal>
               );
@@ -1003,7 +1059,11 @@ const Faq = ({ t, routes }: { t: T; routes: Routes }) => {
     <Section tone="mist" wide>
       <div className="grid lg:grid-cols-[minmax(0,.75fr)_minmax(0,1.25fr)] gap-10 lg:gap-16 items-start">
         <div className="lg:sticky lg:top-28">
-          <SectionHead index={9} eyebrow={t('homePage.faq.eyebrow')} title={t('homePage.faq.title')} />
+          <SectionHead
+            index={9}
+            eyebrow={t('homePage.faq.eyebrow')}
+            title={t('homePage.faq.title')}
+          />
           <Reveal className="mt-8">
             <p className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-gray-400">
               {t('homePage.faq.categories')}
@@ -1034,7 +1094,9 @@ const Faq = ({ t, routes }: { t: T; routes: Routes }) => {
               })}
             </ul>
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10">
-              <p className="text-[13.5px] text-gray-600 dark:text-gray-400">{t('homePage.faq.still')}</p>
+              <p className="text-[13.5px] text-gray-600 dark:text-gray-400">
+                {t('homePage.faq.still')}
+              </p>
               {siteChatAvailable ? (
                 <TextLink onClick={() => openSiteChat()} className="mt-1.5">
                   {t('homePage.faq.chat')}

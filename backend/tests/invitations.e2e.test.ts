@@ -108,7 +108,10 @@ test('an invited agent chooses their own password and is signed in', async () =>
   assert.equal(me.body.user.role, 'agent');
 
   // The password is theirs: it signs them in.
-  const login = await api('/api/auth/login', { method: 'POST', body: { email, password: PASSWORD } });
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: PASSWORD }
+  });
   assert.equal(login.status, 200);
 
   // The site restriction travelled with the invitation.
@@ -134,7 +137,11 @@ test('a link accepted twice at once makes one account', async () => {
   const token = await tokenFromMail(email, '/invite/accept');
 
   const results = await Promise.all([accept(token), accept(token), accept(token)]);
-  assert.equal(results.filter((r) => r.status === 201).length, 1, JSON.stringify(results.map((r) => r.status)));
+  assert.equal(
+    results.filter((r) => r.status === 201).length,
+    1,
+    JSON.stringify(results.map((r) => r.status))
+  );
   const { rows } = await query('SELECT count(*)::int AS n FROM teams WHERE email = $1', [email]);
   assert.equal(rows[0].n, 1);
 });
@@ -191,7 +198,9 @@ test('who may invite whom', async () => {
   // An agent cannot invite anyone.
   const agentEmail = unique('agentx');
   await invite(org.token, { email: agentEmail, role: 'agent' });
-  const agentSession = sessionCookie(await accept(await tokenFromMail(agentEmail, '/invite/accept')));
+  const agentSession = sessionCookie(
+    await accept(await tokenFromMail(agentEmail, '/invite/accept'))
+  );
   assert.equal((await invite(agentSession, { email: unique('nope'), role: 'agent' })).status, 403);
 
   // Nobody invites an address that already has an account.
@@ -215,7 +224,10 @@ test("an organization cannot see or revoke another's invitations", async () => {
 
   const list = await api('/api/invitations', { token: b.token });
   assert.ok(!JSON.stringify(list.body).includes(id));
-  assert.equal((await api(`/api/invitations/${id}`, { method: 'DELETE', token: b.token })).status, 404);
+  assert.equal(
+    (await api(`/api/invitations/${id}`, { method: 'DELETE', token: b.token })).status,
+    404
+  );
   assert.equal(
     (await api(`/api/invitations/${id}/resend`, { method: 'POST', token: b.token })).status,
     404

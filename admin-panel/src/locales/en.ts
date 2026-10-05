@@ -611,7 +611,8 @@ export default {
   acceptInvite: {
     title: 'Join the team',
     subtitle: '{{organization}} invited you as {{role}}. Choose your name and password.',
-    invalid: 'This invitation is invalid, expired or already used. Ask the person who invited you for a new one.',
+    invalid:
+      'This invitation is invalid, expired or already used. Ask the person who invited you for a new one.',
     name: 'Your name',
     password: 'Your password (at least 8 characters)',
     join: 'Accept the invitation',
@@ -637,7 +638,8 @@ export default {
     newLink: 'Ask for a new link',
     verifyTitle: 'E-mail verification',
     verifyDone: 'Your e-mail address is verified. Your widget can now run on your site.',
-    verifyFailed: 'This verification link is invalid or has expired. You can ask for a new one in the panel.',
+    verifyFailed:
+      'This verification link is invalid or has expired. You can ask for a new one in the panel.',
     toDashboard: 'Go to the dashboard',
     banner:
       'Verify your e-mail address ({{email}}). Once it is verified, your widget goes live on your site and billing opens.',
@@ -1332,9 +1334,11 @@ export default {
       howItWorks:
         'The person receives an e-mail, opens the link and chooses their own password. The invitation is valid for 7 days.',
       sent: 'Invitation sent to {{email}}.',
-      savedNotSent: 'The invitation was created but the e-mail could not be sent; resend it from the list.',
+      savedNotSent:
+        'The invitation was created but the e-mail could not be sent; resend it from the list.',
       error: 'The invitation could not be sent',
-      limitReached: 'You have reached your plan’s user limit. Upgrade your plan to add more people.',
+      limitReached:
+        'You have reached your plan’s user limit. Upgrade your plan to add more people.',
       pending: 'Pending invitations',
       expired: 'Expired',
       until: 'Valid until {{when}}',
@@ -1907,7 +1911,7 @@ export default {
         },
         {
           q: 'I want to hide the bubble on some pages',
-          a: 'Use the “show only on these pages” setting in Widget Studio, or call SupportChat.q.push([\'hide\']) on that page.'
+          a: "Use the “show only on these pages” setting in Widget Studio, or call SupportChat.q.push(['hide']) on that page."
         },
         {
           q: 'Will an update change my site?',
@@ -2028,11 +2032,26 @@ export default {
       compare: 'Compare plans'
     },
     features: {
-      departments: { name: 'Departments', benefit: 'Send each question to the right team and to whoever is free.' },
-      automation: { name: 'Automation', benefit: 'Turn tagging, routing and saved replies into rules.' },
-      proactive: { name: 'Proactive messages', benefit: 'Reach out to hesitating visitors before they ask.' },
-      visitors: { name: 'Live visitors', benefit: 'See who is on your site right now, and on which page.' },
-      crm: { name: 'Deal tracking', benefit: 'Follow conversations that turn into sales, stage by stage.' },
+      departments: {
+        name: 'Departments',
+        benefit: 'Send each question to the right team and to whoever is free.'
+      },
+      automation: {
+        name: 'Automation',
+        benefit: 'Turn tagging, routing and saved replies into rules.'
+      },
+      proactive: {
+        name: 'Proactive messages',
+        benefit: 'Reach out to hesitating visitors before they ask.'
+      },
+      visitors: {
+        name: 'Live visitors',
+        benefit: 'See who is on your site right now, and on which page.'
+      },
+      crm: {
+        name: 'Deal tracking',
+        benefit: 'Follow conversations that turn into sales, stage by stage.'
+      },
       export: { name: 'Data export', benefit: 'Download your conversations as a file.' },
       audit: { name: 'Audit logs', benefit: 'See who on your team changed what, and when.' }
     }
@@ -2086,13 +2105,15 @@ export default {
     perYear: '/ year',
     includes: 'What is included',
     pay: 'Continue to payment',
-    secure: 'Payments are handled securely by Paddle; we never store your card. Your invoice arrives by e-mail.',
+    secure:
+      'Payments are handled securely by Paddle; we never store your card. Your invoice arrives by e-mail.',
     cancelAnytime: 'Cancel any time.',
     current: 'Your current plan',
     alreadyOn: 'You are on this plan.',
     hasSubscription: 'You already have a subscription; change it from the customer portal.',
     verifyFirst: 'Verify your e-mail address before paying.',
-    closed: 'Online payment opens very soon. If you want to upgrade now, write to us and we will switch your plan right away.',
+    closed:
+      'Online payment opens very soon. If you want to upgrade now, write to us and we will switch your plan right away.',
     contact: 'Write to us',
     opening: 'Opening the payment screen…',
     waiting: 'Payment received, activating your plan…',
@@ -2160,10 +2181,12 @@ export default {
       reasonsTitle: 'Why conversations were handed over',
       reasonsEmpty: 'Nothing was handed over in this period.',
       reasonHints: {
-        no_answer: 'Add these frequent questions to your FAQ and the assistant answers them next time.',
+        no_answer:
+          'Add these frequent questions to your FAQ and the assistant answers them next time.',
         no_faq: 'Add FAQ entries to the site so the assistant can answer.',
         api: 'The assistant could not answer at that moment; the conversation went to your team at once.',
-        plan_quota: 'When the plan’s monthly answers are used up, conversations go to your team. Upgrade for more.'
+        plan_quota:
+          'When the plan’s monthly answers are used up, conversations go to your team. Upgrade for more.'
       },
       previewTitle: 'What the visitor sees',
       previewHeader: 'Automatic assistant · Talk to a person',
@@ -2184,11 +2207,12 @@ export default {
       assistant: 'AI assistant',
       assistantHelp:
         'When on, it gives the first answer from your site’s FAQ, short and in Turkish. If the FAQ has no answer, the visitor asks for a person or the service does not respond, it hands the conversation to your team at once.',
-      unavailable:
-        'The AI assistant is not available right now. Live chat is not affected.',
+      unavailable: 'The AI assistant is not available right now. Live chat is not affected.',
       rule1: 'It uses only your site’s public FAQ entries.',
-      rule2: 'The visitor’s name, e-mail and earlier messages are never sent to the AI; a card number or IBAN is handed to a person without sending the question.',
-      rule3: 'The moment an agent writes or presses “Take over”, the assistant stays silent in that conversation.',
+      rule2:
+        'The visitor’s name, e-mail and earlier messages are never sent to the AI; a card number or IBAN is handed to a person without sending the question.',
+      rule3:
+        'The moment an agent writes or presses “Take over”, the assistant stays silent in that conversation.',
       faqAutoReply: 'Keyword FAQ reply',
       faqAutoReplyHelp:
         'While the assistant is off, a message that strongly matches an FAQ entry gets that entry back as a “help article”.',
@@ -2203,8 +2227,7 @@ export default {
     notConfigured: 'Not set',
     generate: 'Generate key',
     regenerate: 'Regenerate key',
-    regenerateConfirm:
-      'A new key invalidates every userHash signed with the old one. Continue?',
+    regenerateConfirm: 'A new key invalidates every userHash signed with the old one. Continue?',
     secretOnce: 'This key is shown only now. Store it on your site’s server.',
     error: 'That did not work'
   },

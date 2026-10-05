@@ -76,8 +76,14 @@ const rolePermissions: Record<string, string[]> = {
  * callers that read it; the source of truth is PLAN_LIMITS.
  */
 const planFeatures: Record<PlanType, Record<string, boolean>> = {
-  FREE: { multiUser: PLAN_LIMITS.FREE.agents > 1, export: PLAN_LIMITS.FREE.features.includes('export') },
-  PRO: { multiUser: PLAN_LIMITS.PRO.agents > 1, export: PLAN_LIMITS.PRO.features.includes('export') },
+  FREE: {
+    multiUser: PLAN_LIMITS.FREE.agents > 1,
+    export: PLAN_LIMITS.FREE.features.includes('export')
+  },
+  PRO: {
+    multiUser: PLAN_LIMITS.PRO.agents > 1,
+    export: PLAN_LIMITS.PRO.features.includes('export')
+  },
   ENTERPRISE: {
     multiUser: PLAN_LIMITS.ENTERPRISE.agents > 1,
     export: PLAN_LIMITS.ENTERPRISE.features.includes('export')

@@ -306,8 +306,7 @@ const widgetSessionLimiter = createLimiter({
   windowMs: minutes(process.env.WIDGET_SESSION_RATE_WINDOW_MS, 15 * 60 * 1000),
   max: limit(process.env.WIDGET_SESSION_RATE_MAX, 300, 100000),
   keyGenerator: (req: Request) => {
-    const siteKey =
-      typeof req.body?.siteKey === 'string' ? req.body.siteKey.slice(0, 128) : 'none';
+    const siteKey = typeof req.body?.siteKey === 'string' ? req.body.siteKey.slice(0, 128) : 'none';
     return `ws:${siteKey}:${ipKeyGenerator(req.ip || '')}`;
   }
 });

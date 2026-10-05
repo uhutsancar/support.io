@@ -16,7 +16,6 @@
 import '../src/config/env';
 import { io } from 'socket.io-client';
 
-
 const BASE = process.env.E2E_BASE_URL || `http://127.0.0.1:${process.env.PORT || 5000}`;
 const DEMO_OWNER = { email: 'owner@demo.support.io', password: 'Demo1234!' };
 

@@ -341,7 +341,9 @@ export const identifySnippet = () => `<script>
 ${CLOSE_SCRIPT}`;
 
 /** Sunucuda imza: panelde "doğrulanmış müşteri" rozeti için. */
-export const userHashSnippet = (lang: Lang) => `// Node.js — ${lang === 'tr' ? 'sitenizin sunucusunda; anahtar tarayıcıya asla gönderilmez' : 'on your own server; the key never reaches the browser'}
+export const userHashSnippet = (
+  lang: Lang
+) => `// Node.js — ${lang === 'tr' ? 'sitenizin sunucusunda; anahtar tarayıcıya asla gönderilmez' : 'on your own server; the key never reaches the browser'}
 import { createHmac } from 'node:crypto';
 
 const userHash = createHmac('sha256', process.env.SUPPORT_IDENTITY_SECRET)
@@ -374,7 +376,10 @@ export const COMMANDS: Array<{ call: string; text: Text }> = [
   },
   {
     call: "['setLocale', 'en']",
-    text: { tr: 'Balonun dilini değiştirir: tr veya en.', en: 'Switches the bubble language: tr or en.' }
+    text: {
+      tr: 'Balonun dilini değiştirir: tr veya en.',
+      en: 'Switches the bubble language: tr or en.'
+    }
   },
   {
     call: "['hide']  ·  ['show']",

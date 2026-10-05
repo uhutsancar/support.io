@@ -177,7 +177,12 @@ test('a session used from a page off the list is refused', async () => {
 
 test('allowed origins are validated: no paths, no wildcards', async () => {
   const tenant = await createTenant('validate');
-  for (const bad of [['https://shop.example.com/checkout'], ['*'], ['https://*.example.com'], ['ftp://x.example']]) {
+  for (const bad of [
+    ['https://shop.example.com/checkout'],
+    ['*'],
+    ['https://*.example.com'],
+    ['ftp://x.example']
+  ]) {
     // eslint-disable-next-line no-await-in-loop
     const res = await api(`/api/sites/${tenant.site._id}`, {
       method: 'PUT',
@@ -189,7 +194,9 @@ test('allowed origins are validated: no paths, no wildcards', async () => {
   const ok = await api(`/api/sites/${tenant.site._id}`, {
     method: 'PUT',
     token: tenant.token,
-    body: { allowedOrigins: ['HTTPS://Shop.Example.com:443/', 'shop.example.com', 'http://localhost:8080'] }
+    body: {
+      allowedOrigins: ['HTTPS://Shop.Example.com:443/', 'shop.example.com', 'http://localhost:8080']
+    }
   });
   assert.equal(ok.status, 200, JSON.stringify(ok.body));
   assert.deepEqual(ok.body.site.allowedOrigins, [SHOP, 'http://localhost:8080']);

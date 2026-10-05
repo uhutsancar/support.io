@@ -1578,7 +1578,9 @@ interface Window {
         ICONS.paperclip +
         '</button>',
       '<input type="file" class="js-file-input" hidden />',
-      '<textarea class="js-input" rows="1" maxlength="' + MAX_MESSAGE_LENGTH + '" aria-label="' +
+      '<textarea class="js-input" rows="1" maxlength="' +
+        MAX_MESSAGE_LENGTH +
+        '" aria-label="' +
         escapeHtml(t.placeholder) +
         '" placeholder="' +
         escapeHtml(c.messages.placeholderText || t.placeholder) +

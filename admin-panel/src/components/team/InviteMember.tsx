@@ -184,7 +184,9 @@ export const PendingInvitations = ({ refreshKey }: { refreshKey: number }) => {
     invitationsAPI
       .list()
       .then(({ data }) =>
-        setInvitations(data.invitations.filter((i) => i.status === 'pending' || i.status === 'expired'))
+        setInvitations(
+          data.invitations.filter((i) => i.status === 'pending' || i.status === 'expired')
+        )
       )
       .catch(() => setInvitations([]));
 

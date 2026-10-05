@@ -449,7 +449,11 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
               aria-label={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
               title={isDark ? t('theme.switchToLight') : t('theme.switchToDark')}
             >
-              {isDark ? <Sun className="w-[17px] h-[17px]" /> : <Moon className="w-[17px] h-[17px]" />}
+              {isDark ? (
+                <Sun className="w-[17px] h-[17px]" />
+              ) : (
+                <Moon className="w-[17px] h-[17px]" />
+              )}
             </button>
 
             <span className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-2" />
@@ -494,8 +498,16 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
               {ALL_FEATURES.map((id) => {
                 const Icon = featureIcon(id);
                 return (
-                  <Link key={id} to={routes.feature(id)} className="flex items-center gap-2.5 px-1 py-2 rounded-lg">
-                    <AccentIcon icon={Icon} tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]} size="sm" />
+                  <Link
+                    key={id}
+                    to={routes.feature(id)}
+                    className="flex items-center gap-2.5 px-1 py-2 rounded-lg"
+                  >
+                    <AccentIcon
+                      icon={Icon}
+                      tone={FEATURE_TONE[id as keyof typeof FEATURE_TONE]}
+                      size="sm"
+                    />
                     <span className="text-[14px] text-gray-700 dark:text-gray-300">
                       {t('featuresPage.items.' + id + '.title')}
                     </span>
@@ -506,7 +518,11 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
 
             <MobileGroup title={t('nav.solutions')}>
               {SOLUTIONS.map((s) => (
-                <Link key={s.id} to={routes.solutions + '/' + s.id} className="flex items-center gap-2.5 px-1 py-2 rounded-lg">
+                <Link
+                  key={s.id}
+                  to={routes.solutions + '/' + s.id}
+                  className="flex items-center gap-2.5 px-1 py-2 rounded-lg"
+                >
                   <img src={s.photo} alt="" className="w-9 h-7 rounded-md object-cover" />
                   <span className="text-[14px] text-gray-700 dark:text-gray-300">
                     {t('solutions.items.' + s.id + '.name')}
@@ -522,7 +538,11 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
                 { to: routes.docs, label: t('header.docs') },
                 { to: routes.about, label: t('header.about') }
               ].map((link) => (
-                <Link key={link.to} to={link.to} className="py-2.5 text-[15px] font-medium text-gray-800 dark:text-gray-200">
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="py-2.5 text-[15px] font-medium text-gray-800 dark:text-gray-200"
+                >
                   {link.label}
                 </Link>
               ))}
@@ -590,10 +610,13 @@ export const Footer = () => {
       links: [
         { label: t('landing.home.footerFeatures'), to: routes.features },
         { label: t('featuresPage.items.ai-assistant.title'), to: routes.ai },
-        ...FEATURE_GROUPS[0].items.filter((id) => id !== 'ai-assistant').slice(0, 2).map((id) => ({
-          label: t('featuresPage.items.' + id + '.title'),
-          to: routes.feature(id)
-        })),
+        ...FEATURE_GROUPS[0].items
+          .filter((id) => id !== 'ai-assistant')
+          .slice(0, 2)
+          .map((id) => ({
+            label: t('featuresPage.items.' + id + '.title'),
+            to: routes.feature(id)
+          })),
         { label: t('landing.home.footerPricing'), to: routes.pricing }
       ]
     },
@@ -752,7 +775,10 @@ export const PageHero = ({
       <div className={['max-w-6xl mx-auto', align === 'center' ? 'text-center' : ''].join(' ')}>
         {eyebrow && (
           <span
-            className={['block text-[11.5px] font-semibold uppercase tracking-[0.16em]', a.text].join(' ')}
+            className={[
+              'block text-[11.5px] font-semibold uppercase tracking-[0.16em]',
+              a.text
+            ].join(' ')}
           >
             {eyebrow}
           </span>

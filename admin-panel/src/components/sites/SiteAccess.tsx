@@ -108,10 +108,7 @@ const SiteAccess = ({ site, onClose, onSaved }: SiteAccessProps) => {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h2
-              id="site-access-title"
-              className="text-xl font-bold text-gray-900 dark:text-white"
-            >
+            <h2 id="site-access-title" className="text-xl font-bold text-gray-900 dark:text-white">
               {t('sites.access.title')}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">{site.name}</p>

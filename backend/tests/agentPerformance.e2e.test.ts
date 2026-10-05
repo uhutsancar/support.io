@@ -18,7 +18,6 @@ import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
 import { getPool } from '../src/db/pool';
 
-
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
 /** How one request to the running API is made. */

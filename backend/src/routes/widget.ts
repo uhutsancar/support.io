@@ -230,7 +230,10 @@ router.post(
     // The widget goes live once the organization's owner has verified their
     // address (plan §7.2); until then the panel works but no page does.
     if (!(await organizationVerified(site.organizationId))) {
-      throw forbidden('The account behind this site has not verified its e-mail', 'ACCOUNT_NOT_VERIFIED');
+      throw forbidden(
+        'The account behind this site has not verified its e-mail',
+        'ACCOUNT_NOT_VERIFIED'
+      );
     }
 
     // A session is the one thing that must come from a page on the site: a

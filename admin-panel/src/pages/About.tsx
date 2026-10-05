@@ -13,7 +13,15 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Mail, BookOpen, Heart, Eye, Wallet, Accessibility, MessageCircle } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
-import { Button, Section, SectionHead, Card, Eyebrow, Photo, Reveal } from '../components/marketing/kit';
+import {
+  Button,
+  Section,
+  SectionHead,
+  Card,
+  Eyebrow,
+  Photo,
+  Reveal
+} from '../components/marketing/kit';
 import { openSiteChat, siteChatAvailable } from '../components/marketing/siteChat';
 
 const PRINCIPLES = [
@@ -22,7 +30,6 @@ const PRINCIPLES = [
   { key: 'honest', icon: Heart, tone: 'text-rose-600 dark:text-rose-400' },
   { key: 'accessible', icon: Accessibility, tone: 'text-violet-600 dark:text-violet-400' }
 ];
-
 
 const About = () => {
   const { t } = useTranslation();
@@ -35,7 +42,11 @@ const About = () => {
         <meta name="description" content={t('aboutPage.meta.description')} />
       </Helmet>
 
-      <PageHero eyebrow={t('aboutPage.eyebrow')} title={t('aboutPage.title')} description={t('aboutPage.description')} />
+      <PageHero
+        eyebrow={t('aboutPage.eyebrow')}
+        title={t('aboutPage.title')}
+        description={t('aboutPage.description')}
+      />
 
       <section className="px-5 sm:px-8 -mt-4">
         <Reveal className="max-w-6xl mx-auto">
@@ -113,10 +124,16 @@ const About = () => {
                   <MessageCircle className="w-4 h-4" /> {t('homePage.faq.chat')}
                 </Button>
               )}
-              <Button href="mailto:destek@support.io" className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none">
+              <Button
+                href="mailto:destek@support.io"
+                className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none"
+              >
                 <Mail className="w-4 h-4" /> destek@support.io
               </Button>
-              <Button to={routes.docs} className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none">
+              <Button
+                to={routes.docs}
+                className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none"
+              >
                 <BookOpen className="w-4 h-4" /> {t('landing.home.btnDocs')}
               </Button>
             </div>

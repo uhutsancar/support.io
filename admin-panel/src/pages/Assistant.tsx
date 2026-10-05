@@ -255,7 +255,10 @@ const Assistant = () => {
                 {data.sites.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t('assistant.page.noSites')}{' '}
-                    <Link to={`${base}/sites`} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                    <Link
+                      to={`${base}/sites`}
+                      className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
                       {t('sidebar.sites')}
                     </Link>
                   </div>
@@ -268,8 +271,12 @@ const Assistant = () => {
                       >
                         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-gray-900 dark:text-white truncate">{site.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{site.domain}</p>
+                            <p className="font-semibold text-gray-900 dark:text-white truncate">
+                              {site.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {site.domain}
+                            </p>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                               {site.faqCount > 0 ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
@@ -290,7 +297,9 @@ const Assistant = () => {
                                 to={`${base}/faqs`}
                                 className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                               >
-                                {site.faqCount > 0 ? t('assistant.page.faqLink') : t('assistant.page.addFaq')}
+                                {site.faqCount > 0
+                                  ? t('assistant.page.faqLink')
+                                  : t('assistant.page.addFaq')}
                               </Link>
                             </div>
                           </div>
@@ -298,7 +307,9 @@ const Assistant = () => {
                             <Toggle
                               id={`assistant-${site._id}`}
                               checked={site.assistantEnabled}
-                              disabled={busy === site._id || (!data.available && !site.assistantEnabled)}
+                              disabled={
+                                busy === site._id || (!data.available && !site.assistantEnabled)
+                              }
                               onChange={(value) => update(site, { assistantEnabled: value })}
                               label={t('assistant.page.assistantSwitch')}
                               help={t('assistant.page.assistantHelp')}

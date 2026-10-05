@@ -98,7 +98,8 @@ function mailLocale(req: Request): MailLocale {
 /** Whether an address already belongs to an active account anywhere. */
 async function addressTaken(email: string): Promise<boolean> {
   return Boolean(
-    (await User.findOne({ email, isActive: true })) || (await Team.findOne({ email, isActive: true }))
+    (await User.findOne({ email, isActive: true })) ||
+    (await Team.findOne({ email, isActive: true }))
   );
 }
 

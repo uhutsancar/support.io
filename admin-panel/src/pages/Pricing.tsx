@@ -45,7 +45,12 @@ const PLAN_IDS = ['free', 'pro', 'enterprise'];
  * Bir kartın maddeleri: sınırlar, bir önceki planda olmayan özellikler ve
  * çeviride duran ek maddeler ("kurulumda birebir destek" gibi hizmetler).
  */
-function planItems(plan: PlanInfo, previous: PlanInfo | undefined, t: T, number: Intl.NumberFormat) {
+function planItems(
+  plan: PlanInfo,
+  previous: PlanInfo | undefined,
+  t: T,
+  number: Intl.NumberFormat
+) {
   const items = [
     t('pricingPage.units.sites', { count: plan.sites }),
     t('pricingPage.units.agents', { count: plan.agents }),
@@ -334,7 +339,6 @@ const Pricing = () => {
                 })}
           </div>
         )}
-
       </Section>
 
       {/* ------------------------------------------- hangi plan bana uygun */}
@@ -349,7 +353,12 @@ const Pricing = () => {
           {PLAN_IDS.map((id, i) => (
             <Reveal key={id} delay={i * 0.06}>
               <Card className="p-6 h-full">
-                <p className={['text-[13px] font-semibold', accent(PLAN_LOOK[id.toUpperCase()].tone).text].join(' ')}>
+                <p
+                  className={[
+                    'text-[13px] font-semibold',
+                    accent(PLAN_LOOK[id.toUpperCase()].tone).text
+                  ].join(' ')}
+                >
                   {t('pricingPage.plans.' + id + '.name')}
                 </p>
                 <p className="mt-2.5 text-[15px] font-medium leading-snug text-gray-900 dark:text-white">
@@ -460,7 +469,9 @@ const Pricing = () => {
           <h2 className="mt-5 text-[32px] sm:text-[44px] font-bold tracking-[-0.04em] leading-[1.06] text-white text-balance">
             {t('landing.home.ctaTitle')}
           </h2>
-          <p className="mt-5 text-[16.5px] leading-relaxed text-gray-400">{t('landing.home.ctaDesc')}</p>
+          <p className="mt-5 text-[16.5px] leading-relaxed text-gray-400">
+            {t('landing.home.ctaDesc')}
+          </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Button to={routes.register} size="lg" arrow>
               {t('landing.home.ctaBtn1')}

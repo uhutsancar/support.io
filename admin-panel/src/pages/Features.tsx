@@ -31,7 +31,11 @@ import {
 import { InboxVisual, AnalyticsVisual, AutomationVisual } from '../components/marketing/visuals';
 import { FEATURE_GROUPS, FEATURE_PLAN, FEATURE_TONE } from './marketing/features';
 
-const PLAN_BADGE: Record<string, string | null> = { all: null, pro: 'Pro', enterprise: 'Enterprise' };
+const PLAN_BADGE: Record<string, string | null> = {
+  all: null,
+  pro: 'Pro',
+  enterprise: 'Enterprise'
+};
 
 /** Grup başına tanıtım görseli. */
 const GROUP_VISUAL: Record<string, (t: (k: string) => string) => React.ReactNode> = {
@@ -73,7 +77,12 @@ const FeatureCard = ({ id, to, t }: { id: string; to: string; t: (k: string) => 
     >
       <Card hover className="h-full p-6 flex flex-col">
         <div className="flex items-start justify-between gap-3">
-          <span className={['inline-flex w-10 h-10 items-center justify-center rounded-xl border', a.border].join(' ')}>
+          <span
+            className={[
+              'inline-flex w-10 h-10 items-center justify-center rounded-xl border',
+              a.border
+            ].join(' ')}
+          >
             <Icon className={['w-5 h-5', a.text].join(' ')} strokeWidth={1.8} />
           </span>
           {badge && <Chip>{badge}</Chip>}
@@ -85,7 +94,11 @@ const FeatureCard = ({ id, to, t }: { id: string; to: string; t: (k: string) => 
         <p className="mt-2 text-[14px] leading-[1.6] text-gray-600 dark:text-gray-400 flex-1">
           {t('featuresPage.items.' + id + '.plain')}
         </p>
-        <p className={['mt-5 text-[11px] font-semibold uppercase tracking-[0.12em]', a.text].join(' ')}>
+        <p
+          className={['mt-5 text-[11px] font-semibold uppercase tracking-[0.12em]', a.text].join(
+            ' '
+          )}
+        >
           {t('featuresPage.items.' + id + '.setup')}
         </p>
       </Card>
@@ -157,14 +170,18 @@ const Features = () => {
                 description={t('featuresPage.groups.' + group.id + '.desc')}
               />
               <ul className="mt-7 space-y-3">
-                {asList<string>(t('featuresPage.groups.' + group.id + '.points', { returnObjects: true })).map(
-                  (p, i) => (
-                    <Reveal as="li" key={i} delay={i * 0.05} className="flex gap-2.5">
-                      <Check className={['w-4 h-4 mt-1 shrink-0', accent(group.tone).text].join(' ')} />
-                      <span className="text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">{p}</span>
-                    </Reveal>
-                  )
-                )}
+                {asList<string>(
+                  t('featuresPage.groups.' + group.id + '.points', { returnObjects: true })
+                ).map((p, i) => (
+                  <Reveal as="li" key={i} delay={i * 0.05} className="flex gap-2.5">
+                    <Check
+                      className={['w-4 h-4 mt-1 shrink-0', accent(group.tone).text].join(' ')}
+                    />
+                    <span className="text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
+                      {p}
+                    </span>
+                  </Reveal>
+                ))}
               </ul>
             </div>
             <Reveal y={30} className={gi % 2 === 1 ? 'lg:order-1' : ''}>
@@ -199,7 +216,10 @@ const Features = () => {
                 return (
                   <Reveal key={item} delay={i * 0.05}>
                     <Card className="p-5 h-full">
-                      <Icon className="w-5 h-5 text-violet-600 dark:text-violet-400" strokeWidth={1.8} />
+                      <Icon
+                        className="w-5 h-5 text-violet-600 dark:text-violet-400"
+                        strokeWidth={1.8}
+                      />
                       <h3 className="mt-3 text-[15px] font-semibold text-gray-950 dark:text-white">
                         {t('featuresPage.dev.' + item + '.title')}
                       </h3>
@@ -233,7 +253,9 @@ const Features = () => {
           <h2 className="text-[32px] sm:text-[44px] font-bold tracking-[-0.04em] leading-[1.06] text-white text-balance">
             {t('landing.home.ctaTitle')}
           </h2>
-          <p className="mt-5 text-[16.5px] leading-relaxed text-gray-400">{t('landing.home.ctaDesc')}</p>
+          <p className="mt-5 text-[16.5px] leading-relaxed text-gray-400">
+            {t('landing.home.ctaDesc')}
+          </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Button to={routes.register} size="lg" arrow>
               {t('landing.home.ctaBtn1')}

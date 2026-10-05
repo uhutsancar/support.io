@@ -334,17 +334,16 @@ test('a site-restricted agent reaches only its sites; an unrestricted one reache
     404
   );
   assert.equal(
-    (await api(`/api/conversations/${a.conv2}/notes`, {
-      method: 'POST',
-      token: restricted,
-      body: { note: 'not mine' }
-    })).status,
+    (
+      await api(`/api/conversations/${a.conv2}/notes`, {
+        method: 'POST',
+        token: restricted,
+        body: { note: 'not mine' }
+      })
+    ).status,
     404
   );
-  assert.equal(
-    (await api(`/api/visitors/site/${a.site2._id}`, { token: restricted })).status,
-    404
-  );
+  assert.equal((await api(`/api/visitors/site/${a.site2._id}`, { token: restricted })).status, 404);
   const unread = await api('/api/conversations/unread-count', { token: restricted });
   assert.ok(!(a.site2._id in unread.body.unreadBySite), 'the restricted agent counts site A2');
 
@@ -392,7 +391,12 @@ function adminSocket(token: string): Promise<Socket> {
 }
 
 /** Emits and resolves with the first `error` the server answers, or null. */
-function refused(socket: Socket, event: string, payload: unknown, ms = 1500): Promise<string | null> {
+function refused(
+  socket: Socket,
+  event: string,
+  payload: unknown,
+  ms = 1500
+): Promise<string | null> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       socket.off('error', onError);

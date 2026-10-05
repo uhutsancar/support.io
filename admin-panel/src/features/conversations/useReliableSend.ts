@@ -58,10 +58,17 @@ export function settleReply(current: Message[], stored: Message): Message[] {
   return next;
 }
 
-export function useReliableSend({ socket, setMessages, sender, onRefused }: UseReliableSendOptions) {
+export function useReliableSend({
+  socket,
+  setMessages,
+  sender,
+  onRefused
+}: UseReliableSendOptions) {
   // What is still owed to the server, by clientMessageId. Kept in a ref: it
   // is bookkeeping, not something the page renders.
-  const outbox = useRef(new Map<string, { payload: ReplyFields & { clientMessageId: string }; attempt: number }>());
+  const outbox = useRef(
+    new Map<string, { payload: ReplyFields & { clientMessageId: string }; attempt: number }>()
+  );
 
   const mark = useCallback(
     (clientMessageId: string, status: OutgoingStatus) =>

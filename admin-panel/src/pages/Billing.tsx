@@ -21,7 +21,17 @@ import type { BillingOverview } from '../types/api';
 
 const PLAN_ICON = { FREE: Store, PRO: Rocket, ENTERPRISE: Building2 } as const;
 
-const Meter = ({ label, used, limit, locale }: { label: string; used: number; limit: number; locale: string }) => {
+const Meter = ({
+  label,
+  used,
+  limit,
+  locale
+}: {
+  label: string;
+  used: number;
+  limit: number;
+  locale: string;
+}) => {
   const { t } = useTranslation();
   const share = limit > 0 ? Math.min(1, used / limit) : 0;
   const fmt = new Intl.NumberFormat(locale);
@@ -84,7 +94,9 @@ const Billing = () => {
   const Icon = PLAN_ICON[data?.plan ?? 'FREE'];
   const price = planInfo?.price.monthly ?? null;
   const money = (amount: number, currency: string) =>
-    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
+    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0 }).format(
+      amount
+    );
   const sub = data?.subscription;
   const date = (value: string | null) => (value ? formatDateTime(value).split(' ')[0] : '');
 
@@ -95,7 +107,9 @@ const Billing = () => {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('billing.title')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          {t('billing.title')}
+        </h1>
         <p className="mt-2 mb-8 text-gray-600 dark:text-gray-400">{t('billing.subtitle')}</p>
 
         {overview.error && (
@@ -113,7 +127,9 @@ const Billing = () => {
           <div className="grid gap-6 md:grid-cols-2">
             {/* ------------------------------------------------ mevcut plan */}
             <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t('billing.currentPlan')}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {t('billing.currentPlan')}
+              </p>
               <div className="mt-3 flex items-center gap-3">
                 <span className="w-11 h-11 rounded-xl bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center">
                   <Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -123,7 +139,9 @@ const Billing = () => {
                     {t('pricingPage.plans.' + data.plan.toLowerCase() + '.name')}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {price === null || price === 0 ? t('billing.free') : `${money(price, planInfo!.price.currency)} ${t('billing.perMonth')}`}
+                    {price === null || price === 0
+                      ? t('billing.free')
+                      : `${money(price, planInfo!.price.currency)} ${t('billing.perMonth')}`}
                   </p>
                 </div>
                 {sub && (
@@ -174,16 +192,30 @@ const Billing = () => {
                 )}
               </div>
               {sub?.manageable && (
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t('billing.manageHelp')}</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {t('billing.manageHelp')}
+                </p>
               )}
             </section>
 
             {/* ------------------------------------------------- kullanım */}
             <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t('billing.usageTitle')}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                {t('billing.usageTitle')}
+              </p>
               <div className="mt-4 space-y-4">
-                <Meter label={t('billing.usage.sites')} used={data.usage.sites} limit={data.limits.sites} locale={locale} />
-                <Meter label={t('billing.usage.seats')} used={data.usage.seats} limit={data.limits.agents} locale={locale} />
+                <Meter
+                  label={t('billing.usage.sites')}
+                  used={data.usage.sites}
+                  limit={data.limits.sites}
+                  locale={locale}
+                />
+                <Meter
+                  label={t('billing.usage.seats')}
+                  used={data.usage.seats}
+                  limit={data.limits.agents}
+                  locale={locale}
+                />
                 <Meter
                   label={t('billing.usage.conversations')}
                   used={data.usage.conversations}

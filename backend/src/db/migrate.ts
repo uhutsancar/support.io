@@ -120,9 +120,9 @@ async function withLock<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
  * Returns the versions it applied. A failure rolls back that one migration
  * and stops: the ones before it stay applied, nothing after it runs.
  */
-export async function runMigrations(
-  { log = console.log }: { log?: (line: string) => void } = {}
-): Promise<string[]> {
+export async function runMigrations({
+  log = console.log
+}: { log?: (line: string) => void } = {}): Promise<string[]> {
   const migrations = loadMigrations();
   return withLock(async (client) => {
     await ensureLedger(client);

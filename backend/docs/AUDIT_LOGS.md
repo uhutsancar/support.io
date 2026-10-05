@@ -8,6 +8,7 @@ This document describes the centralized audit logging added to the backend.
 - Indexes: compound index on `{ organizationId: 1, createdAt: -1 }`, index on `action`.
 
 Archive strategy (recommended)
+
 - Use a time-based archiving approach (monthly/quarterly): move older records older than N months (e.g., 12 months) to a separate archival database/collection (e.g., `audit_logs_archive_YYYY_MM`).
 - Archival process should be run as a separate background job or cron process, which:
   - Exports selected documents into archive storage (compressed JSON/Parquet) or a separate MongoDB collection.
@@ -16,16 +17,20 @@ Archive strategy (recommended)
 - Consider TTL indexes for archived collections if you want automatic removal after an even longer retention period.
 
 Security and multi-tenancy
+
 - All audit queries are scoped by `organizationId` to prevent cross-tenant access.
 - The API enforces organization isolation by reading `req.organization` or `req.user.organizationId` and rejecting queries without an organization context.
 
 Operational notes
+
 - Do not log message bodies or user content. Only log high-level actions and metadata (old/new values).
 - Ensure backups and monitoring on the `audit_logs` collection.
 
 API
+
 - `GET /api/audit` supports filters: `action`, `start` (ISO date), `end` (ISO date), `page`, `limit`.
 - Pagination is required; default `limit=25`, max `limit=100`.
 
-***
+---
+
 When ready, I can add a front-end admin-panel component to view logs and filter them.

@@ -7,13 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import {
-  sitesAPI,
-  conversationsAPI,
-  departmentsAPI,
-  filesAPI,
-  teamAPI
-} from '../services/api';
+import { sitesAPI, conversationsAPI, departmentsAPI, filesAPI, teamAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -1043,7 +1037,10 @@ const Conversations = () => {
                     className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-5 space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0 modal-scrollbar relative"
                   >
                     {threadLoading && messages.length === 0 && (
-                      <div className="space-y-3 animate-pulse motion-reduce:animate-none" aria-hidden="true">
+                      <div
+                        className="space-y-3 animate-pulse motion-reduce:animate-none"
+                        aria-hidden="true"
+                      >
                         <div className="h-9 w-48 rounded-2xl bg-gray-200/80 dark:bg-gray-800" />
                         <div className="ml-auto h-9 w-56 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40" />
                         <div className="h-9 w-40 rounded-2xl bg-gray-200/80 dark:bg-gray-800" />

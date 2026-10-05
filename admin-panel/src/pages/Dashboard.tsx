@@ -230,7 +230,10 @@ const Dashboard = () => {
           .then(({ data }) => setAssistant(data))
           .catch(() => setAssistant(null));
         if (canManage)
-          teamAPI.getAll().then((r) => setTeam(Array.isArray(r.data) ? r.data : [])).catch(() => setTeam([]));
+          teamAPI
+            .getAll()
+            .then((r) => setTeam(Array.isArray(r.data) ? r.data : []))
+            .catch(() => setTeam([]));
 
         if (isAgent) {
           // Temsilci kendi kuyruğunu görür; organizasyon raporu yetkisi yok.
@@ -240,7 +243,8 @@ const Dashboard = () => {
             : ((assigned as { conversations?: Conversation[] })?.conversations ?? []);
           setSummary({
             ...EMPTY,
-            openTickets: list.filter((c) => ['open', 'assigned', 'pending'].includes(c.status)).length,
+            openTickets: list.filter((c) => ['open', 'assigned', 'pending'].includes(c.status))
+              .length,
             totalConversations: list.length
           });
           setDaily([]);
@@ -363,7 +367,13 @@ const Dashboard = () => {
         text: t('dash.attention.noneOnline'),
         to: `${base}/team`
       }
-  ].filter(Boolean) as Array<{ key: string; icon: React.ElementType; tone: string; text: string; to: string }>;
+  ].filter(Boolean) as Array<{
+    key: string;
+    icon: React.ElementType;
+    tone: string;
+    text: string;
+    to: string;
+  }>;
 
   /* -------------------------------------------------------- SSS asistanı */
 
@@ -408,7 +418,11 @@ const Dashboard = () => {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[13px] text-gray-500 dark:text-gray-400">
-              {new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date().toLocaleDateString(locale, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long'
+              })}
             </p>
             <h1 className="mt-1 text-[26px] font-semibold tracking-tight text-gray-900 dark:text-white">
               {greeting}
@@ -478,14 +492,22 @@ const Dashboard = () => {
             icon={MessageSquare}
             label={t('dashboard.openTickets')}
             value={summary.openTickets}
-            hint={isAgent ? t('dash.hint.mine') : t('dash.hint.of', { count: summary.totalConversations, range: rangeLabel })}
+            hint={
+              isAgent
+                ? t('dash.hint.mine')
+                : t('dash.hint.of', { count: summary.totalConversations, range: rangeLabel })
+            }
             tone="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
             spark={<Spark data={daily} dataKey="tickets" />}
           />
           <Kpi
             icon={Clock}
             label={t('dashboard.avgFirstResponse')}
-            value={summary.avgFirstResponseMinutes == null ? '—' : formatMinutes(summary.avgFirstResponseMinutes)}
+            value={
+              summary.avgFirstResponseMinutes == null
+                ? '—'
+                : formatMinutes(summary.avgFirstResponseMinutes)
+            }
             hint={
               summary.slaComplianceRate == null
                 ? t('dash.hint.noSla')
@@ -509,7 +531,11 @@ const Dashboard = () => {
           <Kpi
             icon={Smile}
             label={t('dashboard.customerSatisfaction')}
-            value={summary.satisfaction == null ? '—' : t('dash.percent', { value: summary.satisfaction })}
+            value={
+              summary.satisfaction == null
+                ? '—'
+                : t('dash.percent', { value: summary.satisfaction })
+            }
             hint={t('dash.hint.rated', { count: summary.ratedCount })}
             tone="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
           />
@@ -523,11 +549,17 @@ const Dashboard = () => {
               !reportsLocked && chartData.length > 0 ? (
                 <ul className="flex items-center gap-4 text-[12px] text-gray-600 dark:text-gray-400">
                   <li className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--viz-s1)' }} />
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm"
+                      style={{ background: 'var(--viz-s1)' }}
+                    />
                     {t('dash.flow.incoming')}
                   </li>
                   <li className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm" style={{ background: 'var(--viz-s2)' }} />
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm"
+                      style={{ background: 'var(--viz-s2)' }}
+                    />
                     {t('dash.flow.resolved')}
                   </li>
                 </ul>
@@ -551,9 +583,15 @@ const Dashboard = () => {
                 </Link>
               </div>
             ) : chartData.length === 0 ? (
-              <p className="px-5 pb-10 pt-6 text-center text-[13px] text-gray-500">{t('dash.flow.empty')}</p>
+              <p className="px-5 pb-10 pt-6 text-center text-[13px] text-gray-500">
+                {t('dash.flow.empty')}
+              </p>
             ) : (
-              <div className="viz h-[260px] px-2 pb-3" role="img" aria-label={t('dash.flow.alt', { range: rangeLabel })}>
+              <div
+                className="viz h-[260px] px-2 pb-3"
+                role="img"
+                aria-label={t('dash.flow.alt', { range: rangeLabel })}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 8, right: 16, left: -12, bottom: 0 }}>
                     <defs>
@@ -562,7 +600,11 @@ const Dashboard = () => {
                         <stop offset="100%" stopColor="var(--viz-s1)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid vertical={false} strokeDasharray="0" className="stroke-gray-100 dark:stroke-gray-800" />
+                    <CartesianGrid
+                      vertical={false}
+                      strokeDasharray="0"
+                      className="stroke-gray-100 dark:stroke-gray-800"
+                    />
                     <XAxis
                       dataKey="label"
                       tickLine={false}
@@ -616,7 +658,9 @@ const Dashboard = () => {
               {attention.length === 0 ? (
                 <div className="flex items-center gap-3 py-4">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                  <p className="text-[13.5px] text-gray-600 dark:text-gray-400">{t('dash.attention.clear')}</p>
+                  <p className="text-[13.5px] text-gray-600 dark:text-gray-400">
+                    {t('dash.attention.clear')}
+                  </p>
                 </div>
               ) : (
                 <ul className="space-y-2">
@@ -627,7 +671,9 @@ const Dashboard = () => {
                         className="group flex items-center gap-3 px-3 py-3 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition"
                       >
                         <a.icon className={['w-4 h-4 shrink-0', a.tone].join(' ')} />
-                        <span className="flex-1 text-[13.5px] text-gray-800 dark:text-gray-200">{a.text}</span>
+                        <span className="flex-1 text-[13.5px] text-gray-800 dark:text-gray-200">
+                          {a.text}
+                        </span>
                         <ArrowRight className="w-3.5 h-3.5 text-gray-400 transition-transform group-hover:translate-x-0.5" />
                       </Link>
                     </li>
@@ -651,7 +697,13 @@ const Dashboard = () => {
                         <span
                           className={[
                             'absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-gray-900',
-                            m.status === 'online' ? 'bg-emerald-500' : m.status === 'away' ? 'bg-amber-500' : m.status === 'busy' ? 'bg-rose-500' : 'bg-gray-400'
+                            m.status === 'online'
+                              ? 'bg-emerald-500'
+                              : m.status === 'away'
+                                ? 'bg-amber-500'
+                                : m.status === 'busy'
+                                  ? 'bg-rose-500'
+                                  : 'bg-gray-400'
                           ].join(' ')}
                         />
                       </span>
@@ -679,7 +731,9 @@ const Dashboard = () => {
             {recent.length === 0 ? (
               <div className="px-5 pb-10 pt-4 text-center">
                 <Inbox className="w-6 h-6 mx-auto text-gray-300 dark:text-gray-600" />
-                <p className="mt-2 text-[13px] text-gray-500 dark:text-gray-400">{t('dashboard.noTickets')}</p>
+                <p className="mt-2 text-[13px] text-gray-500 dark:text-gray-400">
+                  {t('dashboard.noTickets')}
+                </p>
               </div>
             ) : (
               <ul className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -711,10 +765,20 @@ const Dashboard = () => {
                         </span>
                       </span>
                       <span className="hidden sm:flex items-center gap-1.5 shrink-0">
-                        <span className={['px-2 py-0.5 rounded-full text-[11px] font-medium', priorityBadge(c.priority)].join(' ')}>
+                        <span
+                          className={[
+                            'px-2 py-0.5 rounded-full text-[11px] font-medium',
+                            priorityBadge(c.priority)
+                          ].join(' ')}
+                        >
                           {t('dashboard.' + (c.priority === 'normal' ? 'medium' : c.priority))}
                         </span>
-                        <span className={['px-2 py-0.5 rounded-full text-[11px] font-medium', conversationStatusBadge(c.status)].join(' ')}>
+                        <span
+                          className={[
+                            'px-2 py-0.5 rounded-full text-[11px] font-medium',
+                            conversationStatusBadge(c.status)
+                          ].join(' ')}
+                        >
                           {t('dashboard.' + (c.status === 'unassigned' ? 'open' : c.status))}
                         </span>
                       </span>
@@ -754,13 +818,18 @@ const Dashboard = () => {
                 {assistant?.available && sites.length > 0 && (
                   <ul className="mt-4 space-y-1.5">
                     {sites.slice(0, 4).map((s) => (
-                      <li key={s._id} className="flex items-center justify-between gap-2 text-[12.5px]">
+                      <li
+                        key={s._id}
+                        className="flex items-center justify-between gap-2 text-[12.5px]"
+                      >
                         <span className="flex items-center gap-1.5 min-w-0 text-gray-700 dark:text-gray-300">
                           <Globe className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                           <span className="truncate">{s.name}</span>
                         </span>
                         <span className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                          {s.assistantEnabled ? t('dash.assistant.siteOn') : t('dash.assistant.siteOff')}
+                          {s.assistantEnabled
+                            ? t('dash.assistant.siteOn')
+                            : t('dash.assistant.siteOff')}
                         </span>
                       </li>
                     ))}
@@ -810,7 +879,9 @@ const Dashboard = () => {
                         <span
                           className={[
                             'text-[13px]',
-                            item.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'
+                            item.done
+                              ? 'text-gray-400 line-through'
+                              : 'text-gray-800 dark:text-gray-200'
                           ].join(' ')}
                         >
                           {t('dash.setup.' + item.key)}
