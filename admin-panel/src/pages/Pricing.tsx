@@ -328,9 +328,6 @@ const Pricing = () => {
           </div>
         )}
 
-        <p className="mt-8 text-center text-[13.5px] text-gray-500 dark:text-gray-400">
-          {t('pricingPage.vatNote')}
-        </p>
       </Section>
 
       {/* ------------------------------------------- hangi plan bana uygun */}

@@ -4,6 +4,8 @@ import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-do
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
+  Sparkles,
+  CreditCard,
   LayoutDashboard,
   Globe,
   MessageCircle,
@@ -37,6 +39,9 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSocket } from '../contexts/SocketContext';
 import { conversationsAPI, authAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
+import UpgradeDialog from '../components/billing/UpgradeDialog';
+import { planWith } from '../components/billing/PlanGate';
+import { usePlans } from '../hooks/usePlans';
 import Logo, { LogoMark } from '../components/Logo';
 
 interface NavItem {
@@ -47,6 +52,8 @@ interface NavItem {
   end?: boolean;
   /** Names a counter to render as a badge, e.g. 'unread'. */
   badge?: string;
+  /** The plan that unlocks this screen, when the current plan does not. */
+  locked?: 'PRO' | 'ENTERPRISE';
 }
 
 interface NavGroup {
@@ -94,6 +101,7 @@ const STATUS_COLOR = {
 const DashboardLayout = () => {
   const { user, logout, patchUser } = useAuth();
   const { t } = useTranslation();
+  const { plans } = usePlans();
   const { language, toggleLanguage } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -257,6 +265,14 @@ const DashboardLayout = () => {
     const role = user?.role || 'agent';
     const plan = user?.organization?.planType || 'FREE';
     const p = (path: string) => `${langPrefix}/dashboard${path}`;
+    // Paid screens stay in the menu on every plan, marked with the plan that
+    // opens them; opening one explains what it does (components/billing/PlanGate).
+    const current = plans?.find((x) => x.type === plan);
+    const locked = (feature: string) => {
+      if (!plans || !current || current.features.includes(feature)) return undefined;
+      const needed = planWith(plans, feature);
+      return needed === 'PRO' || needed === 'ENTERPRISE' ? needed : undefined;
+    };
 
     const inbox: NavGroup = { label: t('sidebar.groups.inbox'), items: [] };
     const workspace: NavGroup = { label: t('sidebar.groups.workspace'), items: [] };
@@ -287,27 +303,43 @@ const DashboardLayout = () => {
 
     if (['owner', 'admin'].includes(role)) {
       workspace.items.push({ path: p('/sites'), icon: Globe, label: t('sidebar.sites') });
+      workspace.items.push({
+        path: p('/assistant'),
+        icon: Sparkles,
+        label: t('sidebar.assistant')
+      });
       workspace.items.push({ path: p('/team'), icon: Users, label: t('sidebar.team') });
       workspace.items.push({
         path: p('/departments'),
         icon: Folder,
-        label: t('sidebar.departments')
+        label: t('sidebar.departments'),
+        locked: locked('departments')
       });
       workspace.items.push({ path: p('/faqs'), icon: HelpCircle, label: t('sidebar.faqs') });
       workspace.items.push({
         path: p('/automation-rules'),
         icon: Zap,
-        label: t('sidebar.automationRules')
+        label: t('sidebar.automationRules'),
+        locked: locked('automation')
       });
       workspace.items.push({
         path: p('/proactive-rules'),
         icon: Send,
-        label: t('sidebar.proactiveRules')
+        label: t('sidebar.proactiveRules'),
+        locked: locked('proactive')
       });
-      if (plan === 'PRO' || plan === 'ENTERPRISE') {
-        workspace.items.push({ path: p('/visitors'), icon: Eye, label: t('sidebar.visitors') });
-        workspace.items.push({ path: p('/crm'), icon: Briefcase, label: t('sidebar.crm') });
-      }
+      workspace.items.push({
+        path: p('/visitors'),
+        icon: Eye,
+        label: t('sidebar.visitors'),
+        locked: locked('visitors')
+      });
+      workspace.items.push({
+        path: p('/crm'),
+        icon: Briefcase,
+        label: t('sidebar.crm'),
+        locked: locked('crm')
+      });
     }
 
     if (['owner', 'admin', 'viewer'].includes(role)) {
@@ -324,16 +356,24 @@ const DashboardLayout = () => {
         label: t('sidebar.myPerformance')
       });
     }
-    if (['owner', 'admin'].includes(role) && plan === 'ENTERPRISE') {
-      insights.items.push({ path: p('/audit-logs'), icon: Shield, label: t('sidebar.auditLogs') });
+    if (['owner', 'admin'].includes(role)) {
+      insights.items.push({
+        path: p('/audit-logs'),
+        icon: Shield,
+        label: t('sidebar.auditLogs'),
+        locked: locked('audit')
+      });
     }
 
     // Ayarlar sayfasının rotası vardı ama menüde girişi YOKTU; adresi elle
     // yazmadan ulaşılamıyordu.
+    if (role === 'owner') {
+      account.items.push({ path: p('/billing'), icon: CreditCard, label: t('sidebar.billing') });
+    }
     account.items.push({ path: p('/settings'), icon: Settings, label: t('sidebar.settings') });
 
     return [inbox, workspace, insights, account].filter((group) => group.items.length > 0);
-  }, [user, langPrefix, t]);
+  }, [user, langPrefix, t, plans]);
 
   const status = user?.status || 'offline';
   const initial = (user?.name || '?').charAt(0).toUpperCase();
@@ -376,6 +416,11 @@ const DashboardLayout = () => {
                     <item.icon className="w-[18px] h-[18px] shrink-0" />
                     <span className="truncate">{item.label}</span>
                   </span>
+                  {item.locked && (
+                    <span className="shrink-0 px-1.5 py-[1px] rounded text-[9.5px] font-bold tracking-wide bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+                      {item.locked === 'ENTERPRISE' ? t('upgrade.badgeEnterprise') : t('upgrade.badge')}
+                    </span>
+                  )}
                   {item.badge === 'unread' && unreadCount > 0 && (
                     <span
                       className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white
@@ -645,6 +690,7 @@ const DashboardLayout = () => {
         </main>
       </div>
 
+      <UpgradeDialog base={`${langPrefix}/dashboard`} />
       <ConfirmDialog
         isOpen={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}

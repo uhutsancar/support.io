@@ -33,6 +33,7 @@ import { GeminiError, generateJson } from './gemini';
 import { faqSources } from './knowledge';
 import { carriesSensitiveData, redact } from './privacy';
 import { MAX_ANSWER_CHARS, MAX_ASSISTANT_REPLIES, TEXT, wantsHuman } from './policy';
+import { assistantAllowance, limitsFor, tryConsumeAssistantReply } from '../entitlements';
 import type { Server } from 'socket.io';
 import type { Doc } from '../../db/model';
 import type { SiteDoc } from '../../models/Site';
@@ -84,7 +85,11 @@ export function stopAssistant(): void {
  * Queues an answer to a visitor message and returns at once: the message and
  * its broadcast to the inbox are never held up by the model.
  */
-export function scheduleAssistantReply(io: Server, conversationId: unknown, messageId: unknown): void {
+export function scheduleAssistantReply(
+  io: Server,
+  conversationId: unknown,
+  messageId: unknown
+): void {
   const id = String(conversationId);
   cancelAssistant(id);
   pending.set(
@@ -122,12 +127,12 @@ const ANSWER_SCHEMA = {
   required: ['answer', 'handoff', 'sources']
 };
 
-function systemPrompt(siteName: string): string {
+function systemPrompt(siteName: string, sentences: number): string {
   return [
     `Sen "${siteName}" sitesinin müşteri destek asistanısın.`,
     'Kurallar:',
     '- YALNIZCA verilen SSS kaynaklarındaki bilgilere dayanarak cevap ver. Kaynakta olmayan hiçbir şeyi söyleme, tahmin etme, uydurma.',
-    '- Cevap Türkçe, nazik ve kısa olsun: en fazla 2-3 cümle.',
+    `- Cevap Türkçe, nazik ve kısa olsun: en fazla ${sentences} cümle.`,
     '- Kaynaklar soruyu cevaplamıyorsa, soru belirsizse, kişisel hesap/sipariş durumu gerektiriyorsa veya ziyaretçi bir insanla görüşmek istiyorsa handoff=true, answer="" ver.',
     '- Ziyaretçiden kişisel bilgi (e-posta, telefon, kart, adres) isteme.',
     '- sources alanına kullandığın kaynakların kimliklerini yaz.',
@@ -136,9 +141,7 @@ function systemPrompt(siteName: string): string {
 }
 
 function userPrompt(sources: FaqSource[], question: string): string {
-  const faq = sources
-    .map((s) => `[${s.ref}] Soru: ${s.question}\nCevap: ${s.answer}`)
-    .join('\n\n');
+  const faq = sources.map((s) => `[${s.ref}] Soru: ${s.question}\nCevap: ${s.answer}`).join('\n\n');
   return `SSS KAYNAKLARI:\n${faq}\n\nZİYARETÇİNİN MESAJI:\n${question}`;
 }
 
@@ -166,6 +169,8 @@ export interface ComposeInput {
   question: string;
   repliesSoFar: number;
   sources: FaqSource[];
+  /** The plan's assistant limits; the defaults in policy.ts when absent. */
+  limits?: { repliesPerConversation: number; answerChars: number; sentences: number };
   signal?: AbortSignal;
 }
 
@@ -176,7 +181,14 @@ export async function compose(input: ComposeInput): Promise<Outcome | null> {
   if (carriesSensitiveData(question)) {
     return { kind: 'handoff', reason: 'sensitive', text: TEXT.sensitive };
   }
-  if (input.repliesSoFar >= MAX_ASSISTANT_REPLIES) return { kind: 'handoff', reason: 'limit' };
+  const limits = input.limits ?? {
+    repliesPerConversation: MAX_ASSISTANT_REPLIES,
+    answerChars: MAX_ANSWER_CHARS,
+    sentences: 3
+  };
+  if (input.repliesSoFar >= limits.repliesPerConversation) {
+    return { kind: 'handoff', reason: 'limit' };
+  }
   if (!input.sources.length) return { kind: 'handoff', reason: 'no_faq' };
 
   const config = assistantConfig();
@@ -186,10 +198,10 @@ export async function compose(input: ComposeInput): Promise<Outcome | null> {
   try {
     parsed = parseAnswer(
       await generateJson(config, {
-        system: systemPrompt(input.siteName),
+        system: systemPrompt(input.siteName, limits.sentences),
         prompt: userPrompt(input.sources, redact(question)),
         schema: ANSWER_SCHEMA,
-        maxOutputTokens: 400,
+        maxOutputTokens: Math.max(400, Math.ceil(limits.answerChars / 2)),
         signal: input.signal
       })
     );
@@ -205,7 +217,7 @@ export async function compose(input: ComposeInput): Promise<Outcome | null> {
   // An answer must stand on the entries it was given: no citation, or one
   // that names no entry we sent, and it is not sent.
   const cited = input.sources.filter((s) => parsed!.sources.includes(s.ref));
-  if (!cited.length || parsed.answer.length > MAX_ANSWER_CHARS) {
+  if (!cited.length || parsed.answer.length > limits.answerChars) {
     return { kind: 'handoff', reason: 'unsupported' };
   }
   return { kind: 'answer', text: parsed.answer, sources: cited.map((s) => s.question) };
@@ -236,6 +248,17 @@ async function answer(
     return;
   }
 
+  const organizationId = String(site.organizationId);
+  const [{ limits }, allowance] = await Promise.all([
+    limitsFor(organizationId),
+    assistantAllowance(organizationId)
+  ]);
+  if (allowance.used >= allowance.limit) {
+    // The plan's answers for this month are used up: a person answers.
+    await handOver(io, conversation, 'plan_quota', undefined, messageId);
+    return;
+  }
+
   const question = String(message.content || '');
   const [{ rows }, sources] = await Promise.all([
     query<{ n: number }>(
@@ -243,7 +266,7 @@ async function answer(
         WHERE conversation_id = $1 AND sender_id = $2 AND assistant ->> 'handoff' IS NULL`,
       [conversationId, ASSISTANT_SENDER_ID]
     ),
-    faqSources(String(site._id), question)
+    faqSources(String(site._id), question, limits.assistant.sources)
   ]);
 
   new WidgetNotifier(io).toConversation(conversationId, 'agent-typing', {
@@ -256,12 +279,23 @@ async function answer(
     question,
     repliesSoFar: rows[0]?.n ?? 0,
     sources,
+    limits: {
+      repliesPerConversation: limits.assistant.repliesPerConversation,
+      answerChars: limits.assistant.answerChars,
+      sentences: limits.assistant.sentences
+    },
     signal
   });
   if (!outcome || signal.aborted) return;
 
   if (outcome.kind === 'handoff') {
     await handOver(io, conversation, outcome.reason, outcome.text, messageId);
+    return;
+  }
+  // Counted when an answer is about to go out, atomically: two answers at the
+  // same moment cannot both take the month's last one.
+  if (!(await tryConsumeAssistantReply(organizationId))) {
+    await handOver(io, conversation, 'plan_quota', undefined, messageId);
     return;
   }
   await deliver(io, conversationId, {

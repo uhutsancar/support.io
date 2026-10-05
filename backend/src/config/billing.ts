@@ -7,8 +7,9 @@
 //   PADDLE_API_KEY           server only — customer portal sessions
 //   PADDLE_WEBHOOK_SECRET    server only — verifies Paddle-Signature
 //   PADDLE_CLIENT_TOKEN      the one Paddle value that reaches the browser
-//   PADDLE_PRICE_PRO         price id (pri_…) that buys PRO
-//   PADDLE_PRICE_ENTERPRISE  optional; ENTERPRISE is usually agreed by hand
+//   PADDLE_PRICE_PRO         price id (pri_…) that buys PRO, billed monthly
+//   PADDLE_PRICE_PRO_YEARLY  the same plan billed yearly (optional)
+//   PADDLE_PRICE_ENTERPRISE, PADDLE_PRICE_ENTERPRISE_YEARLY  likewise
 //   BILLING_PAST_DUE_GRACE_DAYS  how long a failed payment keeps the plan (7)
 //
 // A webhook is processed whenever its secret is set, even with checkout off:
@@ -18,13 +19,17 @@ import type { PlanType } from '../domain';
 
 export type PaddleEnvironment = 'sandbox' | 'production';
 
+export type BillingCycle = 'monthly' | 'yearly';
+export type PaidPlan = 'PRO' | 'ENTERPRISE';
+type Prices = Record<BillingCycle, string | null>;
+
 export interface BillingConfig {
   enabled: boolean;
   environment: PaddleEnvironment;
   apiKey: string | null;
   webhookSecret: string | null;
   clientToken: string | null;
-  prices: { PRO: string | null; ENTERPRISE: string | null };
+  prices: Record<PaidPlan, Prices>;
   pastDueGraceDays: number;
 }
 
@@ -41,7 +46,13 @@ export function billingConfig(): BillingConfig {
     apiKey: value('PADDLE_API_KEY'),
     webhookSecret: value('PADDLE_WEBHOOK_SECRET'),
     clientToken: value('PADDLE_CLIENT_TOKEN'),
-    prices: { PRO: value('PADDLE_PRICE_PRO'), ENTERPRISE: value('PADDLE_PRICE_ENTERPRISE') },
+    prices: {
+      PRO: { monthly: value('PADDLE_PRICE_PRO'), yearly: value('PADDLE_PRICE_PRO_YEARLY') },
+      ENTERPRISE: {
+        monthly: value('PADDLE_PRICE_ENTERPRISE'),
+        yearly: value('PADDLE_PRICE_ENTERPRISE_YEARLY')
+      }
+    },
     pastDueGraceDays: Number.isFinite(grace) && grace >= 0 ? grace : 7
   };
 }
@@ -49,8 +60,10 @@ export function billingConfig(): BillingConfig {
 /** The plan a Paddle price id buys, or null for a price we do not sell. */
 export function planForPrice(priceId: unknown, config = billingConfig()): PlanType | null {
   if (typeof priceId !== 'string' || !priceId) return null;
-  if (priceId === config.prices.PRO) return 'PRO';
-  if (priceId === config.prices.ENTERPRISE) return 'ENTERPRISE';
+  for (const plan of ['PRO', 'ENTERPRISE'] as const) {
+    const { monthly, yearly } = config.prices[plan];
+    if (priceId === monthly || priceId === yearly) return plan;
+  }
   return null;
 }
 
@@ -65,6 +78,6 @@ export function billingConfigProblems(config = billingConfig()): string[] {
   if (!config.apiKey) problems.push('PADDLE_API_KEY');
   if (!config.webhookSecret) problems.push('PADDLE_WEBHOOK_SECRET');
   if (!config.clientToken) problems.push('PADDLE_CLIENT_TOKEN');
-  if (!config.prices.PRO) problems.push('PADDLE_PRICE_PRO');
+  if (!config.prices.PRO.monthly) problems.push('PADDLE_PRICE_PRO');
   return problems;
 }

@@ -70,7 +70,28 @@ export interface CurrentUser {
 /** GET /api/assistant/status: whether this server can run the FAQ assistant. */
 export interface AssistantStatus {
   available: boolean;
-  model: string | null;
+}
+
+/** One site in the assistant overview, with the last window's activity. */
+export interface AssistantSiteOverview {
+  _id: string;
+  name: string;
+  domain: string;
+  assistantEnabled: boolean;
+  faqAutoReply: boolean;
+  faqCount: number;
+  answered: number;
+  handedOver: number;
+  conversations: number;
+}
+
+export interface AssistantOverview extends AssistantStatus {
+  days: number;
+  plan: PlanType;
+  usage: { used: number; limit: number; repliesPerConversation: number };
+  sites: AssistantSiteOverview[];
+  /** Handover reason → count; Gemini errors are folded into "api". */
+  reasons: Record<string, number>;
 }
 
 /** What the panel may know about a site's integrations: whether, never what. */
@@ -125,7 +146,55 @@ export interface PlanInfo {
   monthlyConversations: number;
   branding: boolean;
   features: string[];
+  assistant: { monthlyReplies: number; repliesPerConversation: number };
   price: { monthly: number | null; yearly: number | null; currency: string };
+}
+
+/** GET /api/billing — the owner's billing page. */
+export interface BillingOverview {
+  plan: PlanType;
+  limits: {
+    sites: number;
+    agents: number;
+    monthlyConversations: number;
+    branding: boolean;
+    features: string[];
+    assistant: { monthlyReplies: number; repliesPerConversation: number };
+  };
+  usage: {
+    period: string;
+    sites: number;
+    seats: number;
+    members: number;
+    invitations: number;
+    conversations: number;
+    messages: number;
+    assistantReplies: number;
+  };
+  subscription: {
+    planType: PlanType;
+    status: 'active' | 'trialing' | 'past_due' | 'paused' | 'canceled';
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+    graceEndsAt: string | null;
+    manageable: boolean;
+  } | null;
+  billing: {
+    enabled: boolean;
+    environment: 'sandbox' | 'production';
+    clientToken: string | null;
+    purchasable: Record<'PRO' | 'ENTERPRISE', { monthly: boolean; yearly: boolean }>;
+  };
+  emailVerified: boolean;
+}
+
+/** POST /api/billing/checkout — what Paddle.js opens with. */
+export interface CheckoutSession {
+  environment: 'sandbox' | 'production';
+  clientToken: string;
+  priceId: string;
+  customerEmail: string;
+  customData: { organizationId: string; ref: string };
 }
 
 /** An agent row from /team. Both tables (users, teams) render the same way. */

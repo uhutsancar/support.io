@@ -20,6 +20,9 @@ const cache = new Map<string, CacheEntry>();
 const CACHE_DURATION_MS = 30 * 1000;
 const REQUEST_TIMEOUT_MS = 15 * 1000;
 
+/** Dispatched on window when a request is refused for the plan. */
+export const PLAN_REQUIRED_EVENT = 'supportio:plan-required';
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: REQUEST_TIMEOUT_MS,
@@ -67,6 +70,15 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // A plan gate or limit: the panel offers the upgrade (components/UpgradeDialog).
+    const code = error.response?.data?.code;
+    if (code === 'PLAN_UPGRADE_REQUIRED' || code === 'PLAN_LIMIT_REACHED') {
+      window.dispatchEvent(
+        new CustomEvent(PLAN_REQUIRED_EVENT, {
+          detail: { code, details: error.response?.data?.details ?? null }
+        })
+      );
+    }
     if (error.response?.status === 401) {
       // The session is gone: drop everything held for it before leaving, or the
       // login page would be served this tenant's cached data on the way back.

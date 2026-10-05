@@ -95,7 +95,6 @@ export default {
       desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, write the greeting, invite your team. No developer needed.',
       keyPlaceholder: 'YOUR_SITE_KEY',
       comment: 'Support.io chat bubble',
-      live: 'The bubble shows up within a minute of pasting',
       noDevs: {
         eyebrow: 'No developers',
         title: 'Copy, paste, done.',
@@ -325,32 +324,31 @@ export default {
     benefitsTitle: 'What you get',
     howTitle: 'How to set it up',
     howDesc: 'All from the dashboard, no code. Stuck during setup? Ask us in the chat.',
-    techTitle: 'Technical note — for those who want to know how it works',
     nextFeature: 'Next',
     moreTitle: 'Often used together with',
     backToList: 'All features',
     readDocs: 'Read the setup guide',
 
-    devEyebrow: 'For developers',
-    devTitle: 'If you do have a developer, it gets easier still',
+    devEyebrow: 'Setup',
+    devTitle: 'Up and running in minutes',
     devDesc:
-      'Integration is one line, not a project. And there is an interface for teams that want more.',
+      'No developer needed. If you get stuck, write to us and we will set it up together.',
     dev: {
       embed: {
-        title: 'The same single line everywhere',
-        body: 'Plain HTML, React, Next.js, Vue, WordPress, Laravel — the same code on all of them. No platform-specific install.'
+        title: 'Copy, paste',
+        body: 'Add the one line from your dashboard to your site and the bubble appears.'
       },
       sdk: {
-        title: 'Control it from code',
-        body: 'Open and close the bubble, identify the signed-in user, switch language or theme — all from your own code.'
+        title: 'On any platform',
+        body: 'WordPress, Shopify, Wix, Webflow or React, Vue, Angular — the guide has ready steps for each.'
       },
       isolation: {
-        title: 'It will not break your styling',
-        body: 'The bubble runs in its own isolated area. Your CSS cannot reach it and its CSS cannot reach your site.'
+        title: 'Never slows your site',
+        body: 'The bubble starts after your page has loaded and stays out of your design.'
       },
       control: {
-        title: 'You can pin the version',
-        body: 'Choose to stay on a specific version so a future update cannot change your live site.'
+        title: 'In your brand colours',
+        body: 'Pick the colour, greeting and position in the dashboard and see it in the preview at once.'
       }
     },
 
@@ -580,12 +578,6 @@ export default {
             body: 'One click from the chat that turned into a sale.'
           },
           { title: 'Watch the pipeline', body: 'See how much work is waiting at each stage.' }
-        ],
-        body: 'Deal records are kept within the same organisation boundary as conversations and stay linked to the conversation they were opened from. Stage, value and owner are edited from the dashboard, and every change is written to the audit log.',
-        points: [
-          'Deals stay linked to the conversation they came from',
-          'Stage and value changes are recorded',
-          'Records are isolated to the organisation'
         ]
       }
     }
@@ -614,7 +606,6 @@ export default {
     custom: 'Custom',
     freeNote: 'Free forever, nothing to bill',
     contactNote: 'Set to fit your needs',
-    vatNote: 'Prices exclude VAT. Change plan or leave whenever you like.',
     loadError: 'The plans could not be loaded just now. Refresh the page to try again.',
 
     units: {
@@ -622,7 +613,9 @@ export default {
       sites_other: '{{count}} sites',
       agents_one: '{{count}} user',
       agents_other: '{{count}} users',
-      conversations: '{{n}} new conversations a month'
+      conversations: '{{n}} new conversations a month',
+      assistant: '{{n}} AI answers a month',
+      assistantDepth: 'Up to {{count}} AI answers per conversation'
     },
 
     chooseEyebrow: 'Deciding',
@@ -744,7 +737,7 @@ export default {
       },
       plain: {
         title: 'Plain words',
-        body: 'You will not find “AI-powered omnichannel solution” on this site. We describe what the product does in everyday words, and put the technical wording where the people who want it will look.'
+        body: 'We describe what the product does in everyday words. No jargon, no big words, no promises we do not keep.'
       },
       honest: {
         title: 'Nothing we cannot back up',

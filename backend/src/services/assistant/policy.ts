@@ -25,10 +25,12 @@ export function wantsHuman(text: string): boolean {
   return WANTS_HUMAN.test(text);
 }
 
-/** Answers the assistant gives in one conversation before it hands over anyway. */
+/**
+ * Answers the assistant gives in one conversation before it hands over
+ * anyway, and the longest answer it may send — the defaults. The plan in force
+ * sets the real values (domain/plans.ts, PlanLimits.assistant).
+ */
 export const MAX_ASSISTANT_REPLIES = 6;
-
-/** The longest answer it may send; anything longer is not "short". */
 export const MAX_ANSWER_CHARS = 600;
 
 /** The fixed texts, all Turkish (plan: short Turkish answers). */
@@ -45,6 +47,7 @@ export type HandoffReason =
   | 'requested'
   | 'sensitive'
   | 'limit'
+  | 'plan_quota'
   | 'no_faq'
   | 'no_answer'
   | 'unsupported'

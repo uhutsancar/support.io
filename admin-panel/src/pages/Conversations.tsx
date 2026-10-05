@@ -141,6 +141,11 @@ const Conversations = () => {
   });
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  /** The scrolling thread; scrolled directly so the page around it never moves. */
+  const threadRef = useRef<HTMLDivElement | null>(null);
+  /** The conversation whose transcript is on screen; a new one jumps, not glides, to the end. */
+  const shownThreadRef = useRef<string | null>(null);
+  const [threadLoading, setThreadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
@@ -329,25 +334,39 @@ const Conversations = () => {
       }
     }
   }, [searchParams, conversations]);
+  // Keyed on the id, not the object: loading the transcript replaces the
+  // conversation object with the server's copy, and depending on the object
+  // re-ran this effect after every load — the thread was fetched over and over
+  // and the screen kept redrawing while a conversation was open.
+  const selectedConversationId = selectedConversation?._id;
   useEffect(() => {
-    if (selectedConversation && socket) {
-      socket.emit('join-conversation', {
-        conversationId: selectedConversation._id
-      });
-      const derivedSiteId =
-        selectedConversation.siteId ||
-        (selectedConversation.site as Site | undefined)?._id ||
-        siteIdOf(selectedSite);
-      fetchConversationMessages(derivedSiteId, selectedConversation._id);
-    }
-  }, [selectedConversation, socket]);
+    const conversation = selectedConversationRef.current;
+    if (!selectedConversationId || !conversation || !socket) return;
+    socket.emit('join-conversation', { conversationId: selectedConversationId });
+    const derivedSiteId =
+      conversation.siteId ||
+      (conversation.site as Site | undefined)?._id ||
+      siteIdOf(selectedSiteRef.current);
+    setMessages([]);
+    setThreadLoading(true);
+    fetchConversationMessages(derivedSiteId, selectedConversationId).finally(() =>
+      setThreadLoading(false)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConversationId, socket]);
   useEffect(() => {
     setNote('');
   }, [selectedConversation?._id]);
   useEffect(() => {
-    const id = setTimeout(() => scrollToBottom(), 50);
+    const id = setTimeout(() => {
+      // A conversation just opened jumps to its end; new messages in the one
+      // already open glide there.
+      const fresh = shownThreadRef.current !== selectedConversationId;
+      scrollToBottom(fresh ? 'auto' : 'smooth');
+      if (messages.length) shownThreadRef.current = selectedConversationId ?? null;
+    }, 30);
     return () => clearTimeout(id);
-  }, [messages]);
+  }, [messages, selectedConversationId]);
   const fetchSites = async () => {
     try {
       const response = await sitesAPI.getAll();
@@ -591,8 +610,11 @@ const Conversations = () => {
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // scrollIntoView would also scroll every scrollable ancestor — the panel's
+  // main area included — which made the whole page jump on every message.
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    const thread = threadRef.current;
+    if (thread) thread.scrollTo({ top: thread.scrollHeight, behavior });
   };
   const handleStatusChange = async (newStatus: any) => {
     if (!selectedConversation) return;
@@ -715,8 +737,11 @@ const Conversations = () => {
         <meta name="description" content={t('conversations.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
+      {/* The page fills the panel's main area instead of the screen: h-screen
+          plus the panel's own header made the main area scroll, so the title
+          slid out of view. */}
       <div className="w-full h-full max-w-full overflow-hidden">
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 h-screen max-h-screen overflow-hidden flex flex-col py-2 sm:py-4">
+        <div className="w-full h-full min-h-[560px] overflow-hidden flex flex-col">
           {sites.length === 0 && (
             <div className="p-4 mb-4 border border-yellow-400 bg-yellow-50 text-yellow-600 rounded">
               {t('conversations.noSitesNotice') ||
@@ -1013,10 +1038,20 @@ const Conversations = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 sm:p-2.5 lg:p-3 xl:p-4 space-y-2 sm:space-y-2.5 lg:space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0 modal-scrollbar pr-2 relative">
+                  <div
+                    ref={threadRef}
+                    className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-5 space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 min-h-0 modal-scrollbar relative"
+                  >
+                    {threadLoading && messages.length === 0 && (
+                      <div className="space-y-3 animate-pulse motion-reduce:animate-none" aria-hidden="true">
+                        <div className="h-9 w-48 rounded-2xl bg-gray-200/80 dark:bg-gray-800" />
+                        <div className="ml-auto h-9 w-56 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40" />
+                        <div className="h-9 w-40 rounded-2xl bg-gray-200/80 dark:bg-gray-800" />
+                      </div>
+                    )}
                     {isUnclaimed(selectedConversation) && (
                       <div className="absolute inset-0 z-20 bg-gray-50/90 dark:bg-gray-900/90 backdrop-blur-sm flex flex-col items-center justify-center p-6">
-                        <div className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-8 max-w-sm text-center transform transition-all hover:scale-[1.02]">
+                        <div className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded-2xl p-8 max-w-sm text-center">
                           <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
                             <UserCheck className="w-8 h-8" />
                           </div>

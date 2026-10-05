@@ -895,14 +895,9 @@ const WidgetCustomization = () => {
             {/* ------------------------------------------------ embed kodu */}
             <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
               <div className="flex items-start justify-between gap-4 mb-3">
-                <div>
-                  <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-                    <Code2 className="w-4 h-4" /> {t('studio.embed.title')}
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {t('studio.embed.hint')}
-                  </p>
-                </div>
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+                  <Code2 className="w-4 h-4" /> {t('studio.embed.title')}
+                </h3>
                 <button
                   onClick={copyEmbed}
                   className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium

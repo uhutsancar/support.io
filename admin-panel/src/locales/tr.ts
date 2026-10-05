@@ -283,6 +283,8 @@ export default {
     proactiveRules: 'Proaktif Mesajlar',
     openMenu: 'Menüyü aç',
     dashboard: 'Gösterge Paneli',
+    billing: 'Plan ve faturalandırma',
+    assistant: 'Yapay Zekâ Asistanı',
     sites: 'Siteler',
     auditLogs: 'Denetim Kayıtları',
     conversations: 'Konuşmalar',
@@ -355,6 +357,7 @@ export default {
     copySuccess: 'Kopyalandı'
   },
   teamChat: {
+    noOtherMembers: 'Ekipte henüz başka kimse yok. Ekip sayfasından davet edebilirsiniz.',
     title: 'Ekip İçi Sohbet',
     subtitle: 'Ekip arkadaşlarınızla iletişim kurun',
     searchChats: 'Sohbet ara...',
@@ -1771,7 +1774,6 @@ export default {
     },
     embed: {
       title: 'Kurulum kodu',
-      hint: 'Bu tek satır her framework’te aynıdır: HTML, React, Next.js, Vue, WordPress, Laravel…',
       verified: 'Kurulum doğrulandı — widget sitenizde çalışıyor',
       waiting:
         'Kurulum bekleniyor. Kodu sitenize ekledikten sonra burası kendiliğinden güncellenir.'
@@ -2005,6 +2007,103 @@ export default {
     saveRule: 'Kuralı Kaydet',
     deleteMessage: '"{{name}}" kuralını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
   },
+  upgrade: {
+    badge: 'PRO',
+    badgeEnterprise: 'KURUMSAL',
+    dialogTitle: 'Planınızı yükseltin',
+    featureLocked: 'Bu özellik mevcut planınızda yok.',
+    limitReached: 'Planınızın sınırına ulaştınız.',
+    limit: {
+      sites: 'Planınızdaki site sayısının tamamını kullanıyorsunuz.',
+      agents: 'Planınızdaki kullanıcı sayısının tamamını kullanıyorsunuz (bekleyen davetler dâhil).',
+      conversations: 'Bu ayın yeni konuşma hakkı doldu.'
+    },
+    body: 'Daha yüksek bir plana geçince hemen açılır; verileriniz olduğu gibi kalır.',
+    askOwner: 'Planı yalnızca hesap sahibi değiştirebilir. Hesap sahibinden yükseltmesini isteyin.',
+    seePlans: 'Planları gör',
+    notNow: 'Şimdi değil',
+    gate: {
+      title: '{{feature}} {{plan}} planında',
+      body: 'Bu ekran ücretli planlarda açık. Plana geçtiğiniz an kullanmaya başlarsınız; kurulum gerekmez.',
+      cta: '{{plan}} planına geç',
+      compare: 'Planları karşılaştır'
+    },
+    features: {
+      departments: { name: 'Departmanlar', benefit: 'Soruları doğru ekibe ve müsait temsilciye kendiliğinden dağıtın.' },
+      automation: { name: 'Otomasyon', benefit: 'Etiketleme, yönlendirme ve hazır cevapları kurala bağlayın.' },
+      proactive: { name: 'Proaktif mesajlar', benefit: 'Kararsız kalan ziyaretçiye siz sormadan yazın.' },
+      visitors: { name: 'Canlı ziyaretçiler', benefit: 'Şu an sitede kim var, hangi sayfada — canlı görün.' },
+      crm: { name: 'Fırsat takibi', benefit: 'Satışa dönen konuşmaları aşama aşama takip edin.' },
+      export: { name: 'Dışa aktarma', benefit: 'Konuşmalarınızı dosya olarak indirin.' },
+      audit: { name: 'Denetim kayıtları', benefit: 'Ekibinizde kimin neyi ne zaman değiştirdiğini görün.' }
+    }
+  },
+  billing: {
+    title: 'Plan ve faturalandırma',
+    subtitle: 'Planınız, bu ayki kullanımınız ve aboneliğiniz.',
+    ownerOnly: 'Bu sayfayı yalnızca hesap sahibi görebilir.',
+    currentPlan: 'Mevcut plan',
+    perMonth: '/ ay',
+    free: 'Ücretsiz',
+    status: {
+      active: 'Etkin',
+      trialing: 'Deneme süresinde',
+      past_due: 'Ödeme alınamadı',
+      paused: 'Duraklatıldı',
+      canceled: 'İptal edildi'
+    },
+    renews: 'Sonraki yenileme: {{date}}',
+    endsAt: 'Plan {{date}} tarihinde sona erecek',
+    graceUntil: 'Ödeme bilgilerinizi {{date}} tarihine kadar güncelleyin; aksi hâlde plan Ücretsiz’e döner.',
+    manage: 'Aboneliği yönet',
+    manageHelp: 'Ödeme yöntemi, faturalar ve iptal Paddle müşteri portalında.',
+    portalError: 'Müşteri portalı açılamadı',
+    upgrade: 'Planı yükselt',
+    changePlan: 'Plan değiştir',
+    usageTitle: 'Bu ayki kullanım',
+    usage: {
+      sites: 'Siteler',
+      seats: 'Kullanıcılar',
+      conversations: 'Yeni konuşmalar',
+      assistant: 'Yapay zekâ yanıtları'
+    },
+    resets: 'Konuşma ve yapay zekâ hakları her ayın 1’inde yenilenir.',
+    ofLimit: '{{used}} / {{limit}}'
+  },
+  checkout: {
+    title: 'Planınızı yükseltin',
+    subtitle: 'Planı seçin, ödeme sıklığını belirleyin, güvenli ödeme ekranında tamamlayın.',
+    choosePlan: 'Plan',
+    cycle: 'Ödeme sıklığı',
+    monthly: 'Aylık',
+    yearly: 'Yıllık',
+    save: '%{{percent}} tasarruf',
+    summary: 'Sipariş özeti',
+    plan: '{{plan}} planı',
+    billedMonthly: 'Her ay faturalandırılır',
+    billedYearly: 'Yılda bir faturalandırılır',
+    total: 'Bugün ödenecek',
+    perMonth: '/ ay',
+    perYear: '/ yıl',
+    includes: 'Neler dâhil',
+    pay: 'Ödemeye geç',
+    secure: 'Ödemeler Paddle güvencesiyle alınır; kart bilgileriniz bizde saklanmaz. Faturanız e-postanıza gelir.',
+    cancelAnytime: 'İstediğiniz zaman iptal edebilirsiniz.',
+    current: 'Mevcut planınız',
+    alreadyOn: 'Bu plandasınız.',
+    hasSubscription: 'Aktif bir aboneliğiniz var; plan değişikliğini müşteri portalından yapabilirsiniz.',
+    verifyFirst: 'Ödeme yapmadan önce e-posta adresinizi doğrulayın.',
+    closed: 'Çevrim içi ödeme çok yakında açılıyor. Şimdi geçmek isterseniz bize yazın, planınızı hemen açalım.',
+    contact: 'Bize yazın',
+    opening: 'Ödeme ekranı açılıyor…',
+    waiting: 'Ödemeniz alındı, planınız etkinleştiriliyor…',
+    success: 'Planınız etkin. Teşekkürler!',
+    successBody: 'Yeni planınızın bütün özellikleri şimdi açık.',
+    slow: 'Ödeme onayı biraz gecikti. Birkaç dakika içinde planınız kendiliğinden güncellenecek.',
+    goDashboard: 'Panele dön',
+    error: 'Ödeme ekranı açılamadı',
+    back: 'Faturalandırmaya dön'
+  },
   assistant: {
     label: 'Asistan',
     answering: 'Asistan yanıtlıyor',
@@ -2016,22 +2115,80 @@ export default {
     reasons: {
       requested: 'Ziyaretçi temsilci istedi',
       sensitive: 'Hassas bilgi paylaşıldı',
-      limit: 'Otomatik yanıt sınırı doldu',
+      limit: 'Konuşma başına yanıt sınırı doldu',
+      plan_quota: 'Aylık yapay zekâ yanıt hakkı doldu',
       no_faq: 'Sitede SSS yok',
       no_answer: 'SSS’de cevabı yok',
       unsupported: 'Cevap SSS’ye dayanmıyordu',
-      api: 'Gemini’ye ulaşılamadı (kota ya da hata)'
+      api: 'Yapay zekâ o an yanıt veremedi'
+    },
+    page: {
+      title: 'Yapay Zekâ Asistanı',
+      subtitle:
+        'Ziyaretçinin sorusuna ilk cevabı sitenizin SSS içeriğinden verir. Cevabı bulamadığında, ziyaretçi bir kişi istediğinde ya da servis yoğun olduğunda konuşmayı hemen ekibinize aktarır.',
+      connected: 'Bağlı',
+      notConnected: 'Bu sunucuda kapalı',
+      unavailable:
+        'Yapay zekâ asistanı şu an bu hesapta kullanılamıyor. Canlı destek ve gelen kutusu aynen çalışır; sorunuz varsa bize yazın.',
+      window: 'Son {{days}} gün',
+      stats: {
+        answered: 'Asistanın yanıtladığı',
+        handedOver: 'Ekibe aktarılan',
+        conversations: 'Asistanın karşıladığı konuşma',
+        sitesOn: 'Açık olduğu site'
+      },
+      sitesTitle: 'Siteler',
+      sitesHelp: 'Asistanı site başına açıp kapatırsınız. Yalnızca o sitenin herkese açık SSS kayıtlarını kullanır.',
+      faqCount_one: '{{count}} SSS kaydı',
+      faqCount_other: '{{count}} SSS kaydı',
+      noFaq: 'SSS kaydı yok — asistan yanıt veremez',
+      addFaq: 'SSS ekle',
+      answeredShort: '{{count}} yanıt',
+      handedShort: '{{count}} devir',
+      assistantSwitch: 'Asistan',
+      assistantHelp: 'Ziyaretçinin sorusuna SSS’nizden ilk yanıtı verir.',
+      keywordSwitch: 'Anahtar kelime cevabı',
+      keywordHelp: 'Asistan kapalıyken güçlü eşleşen SSS kaydını gönderir.',
+      noSites: 'Henüz siteniz yok. Önce bir site ekleyin.',
+      howTitle: 'Nasıl çalışır',
+      how: [
+        'Ziyaretçi balondan sorusunu yazar.',
+        'Asistan sorunun cevabını sitenizin SSS kayıtlarında arar ve kısa, Türkçe bir yanıt verir.',
+        'Cevap SSS’de yoksa, ziyaretçi “temsilci” derse ya da servis yanıt vermezse konuşma beklemeden ekibinize geçer.',
+        'Bir temsilci yazdığı ya da “Devral” dediği an asistan o konuşmada susar.'
+      ],
+      privacyTitle: 'Gizlilik',
+      reasonsTitle: 'Neden ekibe aktarıldı',
+      reasonsEmpty: 'Bu dönemde aktarılan konuşma yok.',
+      reasonHints: {
+        no_answer: 'Sık gelen bu soruları SSS’ye eklerseniz asistan bir dahakine yanıtlar.',
+        no_faq: 'Asistanın yanıt verebilmesi için siteye SSS kaydı ekleyin.',
+        api: 'Asistan o an yanıt veremedi; konuşma beklemeden ekibinize geçti.',
+        plan_quota: 'Planınızdaki aylık yanıt hakkı dolduğunda konuşmalar ekibinize geçer. Daha fazlası için planınızı yükseltin.'
+      },
+      previewTitle: 'Ziyaretçi ne görür',
+      previewHeader: 'Otomatik asistan · Temsilciye bağlan',
+      previewQuestion: 'İade süresi kaç gün?',
+      previewAnswer: 'Teslimattan itibaren 14 gün içinde ücretsiz iade edebilirsiniz.',
+      previewSource: 'Kaynak: İade koşulları',
+      faqLink: 'SSS’leri yönet',
+      usageTitle: 'Bu ayki yapay zekâ yanıtları',
+      usageOf: '{{used}} / {{limit}} yanıt',
+      usagePlan: '{{plan}} planı · konuşma başına en fazla {{per}} yanıt',
+      usageFull: 'Bu ayın yanıt hakkı doldu; yeni sorular doğrudan ekibinize gidiyor.',
+      usageNear: 'Bu ayın yanıt hakkının çoğu kullanıldı.',
+      upgrade: 'Daha fazla yanıt için planı yükseltin'
     },
     settings: {
       button: 'Asistan',
       title: 'SSS asistanı',
-      assistant: 'SSS asistanı (Gemini)',
+      assistant: 'Yapay zekâ asistanı',
       assistantHelp:
         'Açıkken ziyaretçinin sorusuna ilk cevabı sitenizin SSS içeriğinden kısa ve Türkçe olarak verir. Cevap SSS’de yoksa, ziyaretçi temsilci isterse ya da servis yanıt vermezse konuşmayı hemen ekibinize aktarır.',
       unavailable:
-        'Bu sunucuda Gemini anahtarı tanımlı değil, asistan açılamaz. Canlı destek bundan etkilenmez.',
+        'Yapay zekâ asistanı şu an kullanılamıyor. Canlı destek bundan etkilenmez.',
       rule1: 'Yalnızca sitenizin herkese açık SSS kayıtlarını kullanır.',
-      rule2: 'Ziyaretçinin adı, e-postası ve önceki mesajları Gemini’ye gönderilmez; kart, IBAN gibi bilgiler görülürse hiç gönderilmeden temsilciye aktarılır.',
+      rule2: 'Ziyaretçinin adı, e-postası ve önceki mesajları yapay zekâya gönderilmez; kart, IBAN gibi bilgiler görülürse soru hiç gönderilmeden temsilciye aktarılır.',
       rule3: 'Bir temsilci yazdığı ya da “Devral” dediği anda asistan o konuşmada susar.',
       faqAutoReply: 'Anahtar kelimeyle SSS cevabı',
       faqAutoReplyHelp:
@@ -2113,7 +2270,7 @@ export default {
       body: {
         on: 'Sık sorulan soruları SSS içeriğinizden yanıtlar, gerisini hemen ekibinize aktarır.',
         off: 'İsterseniz her site için açabilirsiniz; ilk cevabı SSS’nizden verir.',
-        unavailable: 'Gemini anahtarı tanımlı değil. Sohbet ve gelen kutusu onsuz da çalışır.'
+        unavailable: 'Asistan şu an kullanılamıyor. Sohbet ve gelen kutusu onsuz da çalışır.'
       }
     },
     setup: {

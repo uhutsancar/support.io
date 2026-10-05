@@ -20,12 +20,7 @@ import { createQuota } from '../../middleware/rateLimit';
 import type { AssistantConfig } from '../../config/assistant';
 
 export type GeminiErrorCode =
-  | 'quota'
-  | 'auth'
-  | 'unavailable'
-  | 'timeout'
-  | 'blocked'
-  | 'bad_response';
+  'quota' | 'auth' | 'unavailable' | 'timeout' | 'blocked' | 'bad_response';
 
 export class GeminiError extends Error {
   readonly code: GeminiErrorCode;
@@ -59,8 +54,10 @@ export function resetBreaker(): void {
   openUntil = 0;
 }
 
-let budgets: { minute: ReturnType<typeof createQuota>; day: ReturnType<typeof createQuota> } | null =
-  null;
+let budgets: {
+  minute: ReturnType<typeof createQuota>;
+  day: ReturnType<typeof createQuota>;
+} | null = null;
 let budgetKey = '';
 
 function budgetsFor(config: AssistantConfig) {
@@ -101,21 +98,24 @@ export async function generateJson(
 
   let res: Response;
   try {
-    res = await fetch(`${config.baseUrl}/models/${encodeURIComponent(config.model)}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: request.system }] },
-        contents: [{ role: 'user', parts: [{ text: request.prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: request.maxOutputTokens ?? 400,
-          responseMimeType: 'application/json',
-          responseSchema: request.schema
-        }
-      }),
-      signal
-    });
+    res = await fetch(
+      `${config.baseUrl}/models/${encodeURIComponent(config.model)}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: request.system }] },
+          contents: [{ role: 'user', parts: [{ text: request.prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: request.maxOutputTokens ?? 400,
+            responseMimeType: 'application/json',
+            responseSchema: request.schema
+          }
+        }),
+        signal
+      }
+    );
   } catch (error) {
     if (request.signal?.aborted) throw error;
     const code: GeminiErrorCode = timeout.aborted ? 'timeout' : 'unavailable';
@@ -130,12 +130,16 @@ export async function generateJson(
     const reason = body?.error?.details?.map((d) => d.reason).find(Boolean);
     let code: GeminiErrorCode;
     if (res.status === 429) code = 'quota';
-    else if (res.status === 401 || res.status === 403 || reason === 'API_KEY_INVALID') code = 'auth';
+    else if (res.status === 401 || res.status === 403 || reason === 'API_KEY_INVALID')
+      code = 'auth';
     else if (res.status >= 500) code = 'unavailable';
     else code = 'bad_response';
     trip(code);
     // The status only: Google's error text can echo parts of the request.
-    throw new GeminiError(code, `HTTP ${res.status}${body?.error?.status ? ` ${body.error.status}` : ''}`);
+    throw new GeminiError(
+      code,
+      `HTTP ${res.status}${body?.error?.status ? ` ${body.error.status}` : ''}`
+    );
   }
 
   const data = (await res.json().catch(() => null)) as {

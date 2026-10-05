@@ -17,6 +17,7 @@ import { Environment, Paddle } from '@paddle/paddle-node-sdk';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import { billingConfig } from '../config/billing';
+import type { PaidPlan } from '../config/billing';
 import { getUsage } from '../services/entitlements';
 import {
   InvalidWebhookError,
@@ -99,9 +100,16 @@ router.get(
         // The Paddle client token is the only Paddle value meant for a browser.
         environment: config.environment,
         clientToken: config.enabled ? config.clientToken : null,
+        // Which plan and billing period can be bought online right now.
         purchasable: {
-          PRO: config.enabled && Boolean(config.prices.PRO),
-          ENTERPRISE: config.enabled && Boolean(config.prices.ENTERPRISE)
+          PRO: {
+            monthly: config.enabled && Boolean(config.prices.PRO.monthly),
+            yearly: config.enabled && Boolean(config.prices.PRO.yearly)
+          },
+          ENTERPRISE: {
+            monthly: config.enabled && Boolean(config.prices.ENTERPRISE.monthly),
+            yearly: config.enabled && Boolean(config.prices.ENTERPRISE.yearly)
+          }
         }
       },
       emailVerified: Boolean(req.user.emailVerifiedAt)
@@ -115,9 +123,12 @@ router.post(
     const config = billingConfig();
     if (!config.enabled || !config.clientToken) throw unavailable('Online payment is not open yet');
     const plan = String(req.body?.plan || '').toUpperCase();
-    const priceId = plan === 'PRO' || plan === 'ENTERPRISE' ? config.prices[plan] : null;
-    if (!priceId)
+    const cycle = req.body?.cycle === 'yearly' ? 'yearly' : 'monthly';
+    const priceId =
+      plan === 'PRO' || plan === 'ENTERPRISE' ? config.prices[plan as PaidPlan][cycle] : null;
+    if (!priceId) {
       throw new HttpError(400, 'This plan cannot be bought online', 'PLAN_NOT_PURCHASABLE');
+    }
     if (!req.user.emailVerifiedAt) {
       throw new HttpError(403, 'Verify your e-mail address first', 'EMAIL_NOT_VERIFIED');
     }

@@ -21,6 +21,24 @@ export const FEATURES = [
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 
+/**
+ * What the AI assistant does on a plan. Higher plans answer more, go on for
+ * longer in one conversation, read more of the site's FAQ for each question
+ * and may answer in more detail.
+ */
+export interface AssistantLimits {
+  /** Answers per calendar month (UTC), counted per organization. */
+  monthlyReplies: number;
+  /** Answers in one conversation before it hands over to a person anyway. */
+  repliesPerConversation: number;
+  /** FAQ entries it reads for each question. */
+  sources: number;
+  /** The longest answer it may send, in characters. */
+  answerChars: number;
+  /** How long its answers are asked to be, in sentences. */
+  sentences: number;
+}
+
 export interface PlanLimits {
   /** Sites (widget installs) the organization may have. */
   sites: number;
@@ -30,6 +48,7 @@ export interface PlanLimits {
   monthlyConversations: number;
   /** Whether the widget must show "Powered by Support.io". */
   branding: boolean;
+  assistant: AssistantLimits;
   features: readonly Feature[];
   /** Display prices; what is charged is the Paddle price behind the plan. */
   price: { monthly: number | null; yearly: number | null; currency: string };
@@ -41,6 +60,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 1,
     monthlyConversations: 100,
     branding: true,
+    assistant: {
+      monthlyReplies: 50,
+      repliesPerConversation: 3,
+      sources: 5,
+      answerChars: 400,
+      sentences: 2
+    },
     features: [],
     price: { monthly: 0, yearly: 0, currency: 'TRY' }
   },
@@ -49,6 +75,13 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 5,
     monthlyConversations: 2_000,
     branding: false,
+    assistant: {
+      monthlyReplies: 1_000,
+      repliesPerConversation: 6,
+      sources: 8,
+      answerChars: 600,
+      sentences: 3
+    },
     features: ['departments', 'automation', 'proactive', 'visitors', 'crm', 'export'],
     price: { monthly: 490, yearly: 392, currency: 'TRY' }
   },
@@ -57,8 +90,15 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 20,
     monthlyConversations: 20_000,
     branding: false,
+    assistant: {
+      monthlyReplies: 5_000,
+      repliesPerConversation: 12,
+      sources: 15,
+      answerChars: 900,
+      sentences: 5
+    },
     features: [...FEATURES],
-    price: { monthly: null, yearly: null, currency: 'TRY' }
+    price: { monthly: 1_449, yearly: 1_159, currency: 'TRY' }
   }
 };
 

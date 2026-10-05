@@ -21,6 +21,10 @@ router.get('/', (_req: Request, res: Response) => {
       agents: PLAN_LIMITS[type].agents,
       monthlyConversations: PLAN_LIMITS[type].monthlyConversations,
       branding: PLAN_LIMITS[type].branding,
+      assistant: {
+        monthlyReplies: PLAN_LIMITS[type].assistant.monthlyReplies,
+        repliesPerConversation: PLAN_LIMITS[type].assistant.repliesPerConversation
+      },
       features: PLAN_LIMITS[type].features,
       price: PLAN_LIMITS[type].price
     }))

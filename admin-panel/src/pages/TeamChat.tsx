@@ -301,38 +301,43 @@ const TeamChatPage = () => {
               </button>
             </div>
           </div>
-          {}
           {showNewChat && (
-            <div className="border-b border-gray-700 bg-gray-800 p-3 space-y-3 rounded-md shadow-sm">
+            <div className="mx-3 mt-3 mb-1 p-3 space-y-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-100">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
                   {t('teamChat.selectMember')}
                 </span>
                 <button
                   onClick={() => setShowNewChat(false)}
-                  className="text-gray-400 hover:text-gray-200"
+                  aria-label={t('common.close')}
+                  className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="max-h-48 overflow-y-auto space-y-1 modal-scrollbar pr-2">
+                {otherMembers.length === 0 && (
+                  <p className="px-2.5 py-2 text-xs text-gray-500 dark:text-gray-400">
+                    {t('teamChat.noOtherMembers')}
+                  </p>
+                )}
                 {otherMembers.map((m) => (
                   <button
                     key={m._id}
                     onClick={() => startDirectChat(m)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-700 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors text-left"
                   >
                     <div className="relative">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-semibold text-white">
                         {m.name.charAt(0).toUpperCase()}
                       </div>
                       <div
-                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-gray-800 ${statusColor(m.status)}`}
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${statusColor(m.status)}`}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-100 truncate">{m.name}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{m.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {m.role} · {statusText(m.status)}
                       </p>
                     </div>
@@ -341,11 +346,10 @@ const TeamChatPage = () => {
               </div>
             </div>
           )}
-          {}
           {showNewGroup && (
-            <div className="border-b border-gray-700 bg-gray-800 p-3 space-y-3 rounded-md shadow-sm">
+            <div className="mx-3 mt-3 mb-1 p-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-100">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
                   {t('teamChat.createGroup')}
                 </span>
                 <button
@@ -354,7 +358,8 @@ const TeamChatPage = () => {
                     setSelectedMembers([]);
                     setGroupName('');
                   }}
-                  className="text-gray-400 hover:text-gray-200"
+                  aria-label={t('common.close')}
+                  className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -364,13 +369,18 @@ const TeamChatPage = () => {
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder={t('teamChat.groupNamePlaceholder')}
-                className="w-full px-3 py-2 text-sm rounded-md border border-gray-700 bg-gray-900 text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <div className="max-h-36 overflow-y-auto space-y-1 modal-scrollbar pr-2">
+                {otherMembers.length === 0 && (
+                  <p className="px-2.5 py-2 text-xs text-gray-500 dark:text-gray-400">
+                    {t('teamChat.noOtherMembers')}
+                  </p>
+                )}
                 {otherMembers.map((m) => (
                   <label
                     key={m._id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-700 cursor-pointer"
+                    className="flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/60 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -379,11 +389,11 @@ const TeamChatPage = () => {
                         if (e.target.checked) setSelectedMembers((prev) => [...prev, m._id]);
                         else setSelectedMembers((prev) => prev.filter((id) => id !== m._id));
                       }}
-                      className="rounded border-gray-600 text-indigo-400 focus:ring-indigo-500"
+                      className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-100">{m.name}</p>
-                      <p className="text-xs text-gray-400">{m.role}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 dark:text-white truncate">{m.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{m.role}</p>
                     </div>
                   </label>
                 ))}
@@ -391,13 +401,12 @@ const TeamChatPage = () => {
               <button
                 onClick={createGroupChat}
                 disabled={!groupName.trim() || selectedMembers.length === 0}
-                className="w-full py-2 text-sm rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="w-full py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {t('teamChat.createGroupBtn')} ({selectedMembers.length})
               </button>
             </div>
           )}
-          {}
           <div className="flex-1 overflow-y-auto modal-scrollbar pr-2">
             {filteredChats.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400 p-6">

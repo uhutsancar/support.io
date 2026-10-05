@@ -20,22 +20,27 @@ const MAX_SOURCES = 8;
 const MAX_ANSWER_CHARS = 800;
 
 /** The FAQ entries an answer to `question` may be drawn from. */
-export async function faqSources(siteId: string, question: string): Promise<FaqSource[]> {
+export async function faqSources(
+  siteId: string,
+  question: string,
+  maxSources = MAX_SOURCES
+): Promise<FaqSource[]> {
   const scope = { siteId, isActive: true, pageSpecific: '*' };
   const matched = question.trim()
     ? await FAQ.find({ ...scope, $text: { $search: question } }, { score: { $meta: 'textScore' } })
         .sort({ score: { $meta: 'textScore' } })
-        .limit(MATCHES)
+        // A larger window keeps the same share of best matches.
+        .limit(Math.min(maxSources, Math.max(MATCHES, Math.round(maxSources * 0.6))))
     : [];
   const seen = new Set(matched.map((f) => String(f._id)));
   const filler =
-    matched.length < MAX_SOURCES
-      ? (await FAQ.find(scope).sort({ createdAt: -1 }).limit(MAX_SOURCES)).filter(
+    matched.length < maxSources
+      ? (await FAQ.find(scope).sort({ createdAt: -1 }).limit(maxSources)).filter(
           (f) => !seen.has(String(f._id))
         )
       : [];
 
-  return [...matched, ...filler].slice(0, MAX_SOURCES).map((faq, i) => ({
+  return [...matched, ...filler].slice(0, maxSources).map((faq, i) => ({
     ref: `s${i + 1}`,
     faqId: String(faq._id),
     question: String(faq.question).slice(0, 300),

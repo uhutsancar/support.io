@@ -223,6 +223,44 @@ export async function tryConsumeConversation(
   return { ok: false, count: limits.monthlyConversations, limit: limits.monthlyConversations };
 }
 
+// --------------------------------------------------------- AI assistant
+
+/** Answers the assistant has given this month, and the plan's allowance. */
+export async function assistantAllowance(
+  organizationId: string
+): Promise<{ used: number; limit: number }> {
+  const { limits } = await limitsFor(organizationId);
+  const [row] = await rows<{ assistant_replies: number }>(
+    null,
+    `SELECT assistant_replies FROM organization_usage_monthly
+      WHERE organization_id = $1 AND period = $2`,
+    [organizationId, currentPeriod()]
+  );
+  return { used: row?.assistant_replies ?? 0, limit: limits.assistant.monthlyReplies };
+}
+
+/**
+ * Counts one assistant answer against the month's allowance, atomically (the
+ * same conditional UPSERT as tryConsumeConversation). False when the
+ * allowance is used up: the conversation then goes to a person instead.
+ */
+export async function tryConsumeAssistantReply(organizationId: string): Promise<boolean> {
+  const { limits } = await limitsFor(organizationId);
+  const limit = limits.assistant.monthlyReplies;
+  if (limit <= 0) return false;
+  const [row] = await rows<{ assistant_replies: number }>(
+    null,
+    `INSERT INTO organization_usage_monthly (organization_id, period, assistant_replies)
+     VALUES ($1, $2, 1)
+     ON CONFLICT (organization_id, period) DO UPDATE
+       SET assistant_replies = organization_usage_monthly.assistant_replies + 1, updated_at = now()
+       WHERE organization_usage_monthly.assistant_replies < $3
+     RETURNING assistant_replies`,
+    [organizationId, currentPeriod(), limit]
+  );
+  return Boolean(row);
+}
+
 /** Counts a stored message; informational, never refused. */
 export async function countMessage(organizationId: unknown): Promise<void> {
   if (!organizationId) return;
@@ -263,9 +301,9 @@ export async function getUsage(organizationId: string) {
   const [sites, seats, monthly] = await Promise.all([
     siteCount(organizationId),
     seatsUsed(organizationId),
-    rows<{ conversations: number; messages: number }>(
+    rows<{ conversations: number; messages: number; assistant_replies: number }>(
       null,
-      `SELECT conversations, messages FROM organization_usage_monthly
+      `SELECT conversations, messages, assistant_replies FROM organization_usage_monthly
         WHERE organization_id = $1 AND period = $2`,
       [organizationId, period]
     )
@@ -277,7 +315,11 @@ export async function getUsage(organizationId: string) {
       agents: limits.agents,
       monthlyConversations: limits.monthlyConversations,
       branding: limits.branding,
-      features: limits.features
+      features: limits.features,
+      assistant: {
+        monthlyReplies: limits.assistant.monthlyReplies,
+        repliesPerConversation: limits.assistant.repliesPerConversation
+      }
     },
     usage: {
       period,
@@ -286,7 +328,8 @@ export async function getUsage(organizationId: string) {
       members: seats.members,
       invitations: seats.invitations,
       conversations: monthly[0]?.conversations ?? 0,
-      messages: monthly[0]?.messages ?? 0
+      messages: monthly[0]?.messages ?? 0,
+      assistantReplies: monthly[0]?.assistant_replies ?? 0
     }
   };
 }

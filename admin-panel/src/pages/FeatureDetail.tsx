@@ -12,7 +12,7 @@
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, Check, Plus, Terminal } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import Shell, { useMarketingRoutes, featureIcon } from '../components/marketing/Shell';
 import {
   Button,
@@ -90,7 +90,6 @@ const FeatureDetail = () => {
   const key = (suffix: string) => 'featuresPage.items.' + slug + '.' + suffix;
   const benefits = asList<string>(t(key('benefits'), { returnObjects: true }));
   const steps = asList<{ title: string; body: string }>(t(key('steps'), { returnObjects: true }));
-  const points = asList<string>(t(key('points'), { returnObjects: true }));
 
   // Aynı gruptaki diğer özellikler — sayfa çıkmaz sokak olmasın.
   const group = FEATURE_GROUPS.find((g) => g.items.includes(slug));
@@ -189,33 +188,6 @@ const FeatureDetail = () => {
           </div>
         </Section>
       )}
-
-      {/* --------------------------------------------------------- teknik not */}
-      <Section tone="plain" size="sm" wide>
-        <details className="group max-w-4xl rounded-2xl border border-gray-200 dark:border-white/[0.08] px-6 py-5">
-          <summary className="flex items-center gap-2.5 cursor-pointer list-none text-[14.5px] font-medium text-gray-700 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white transition">
-            <Terminal className="w-4 h-4 text-gray-400" />
-            {t('featuresPage.techTitle')}
-            <Plus className="ml-auto w-4 h-4 text-gray-400 transition-transform group-open:rotate-45" />
-          </summary>
-          <div className="mt-5 pl-6">
-            <p className="text-[14.5px] leading-[1.75] text-gray-600 dark:text-gray-400 max-w-[70ch]">{t(key('body'))}</p>
-            {points.length > 0 && (
-              <ul className="mt-5 space-y-2.5">
-                {points.map((p, i) => (
-                  <li key={i} className="flex gap-2.5">
-                    <span className="w-1 h-1 mt-2.5 rounded-full bg-gray-400 shrink-0" />
-                    <span className="text-[14px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[66ch]">{p}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <TextLink to={routes.docs} className="mt-6">
-              {t('featuresPage.readDocs')}
-            </TextLink>
-          </div>
-        </details>
-      </Section>
 
       {/* ------------------------------------------------------- ilgili olanlar */}
       <Section tone="cream" wide>

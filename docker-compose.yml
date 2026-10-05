@@ -126,6 +126,8 @@ services:
       - PADDLE_WEBHOOK_SECRET=${PADDLE_WEBHOOK_SECRET:-local-dev-paddle-webhook-secret}
       - PADDLE_PRICE_PRO=${PADDLE_PRICE_PRO:-pri_local_pro}
       - PADDLE_PRICE_ENTERPRISE=${PADDLE_PRICE_ENTERPRISE:-pri_local_enterprise}
+      - PADDLE_PRICE_PRO_YEARLY
+      - PADDLE_PRICE_ENTERPRISE_YEARLY
       - PADDLE_API_KEY
       - PADDLE_CLIENT_TOKEN
     ports:

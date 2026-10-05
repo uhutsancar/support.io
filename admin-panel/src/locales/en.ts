@@ -284,6 +284,8 @@ export default {
     proactiveRules: 'Proactive messages',
     openMenu: 'Open menu',
     dashboard: 'Dashboard',
+    billing: 'Plan and billing',
+    assistant: 'AI Assistant',
     sites: 'Sites',
     auditLogs: 'Audit Logs',
     conversations: 'Conversations',
@@ -356,6 +358,7 @@ export default {
     copySuccess: 'Copied'
   },
   teamChat: {
+    noOtherMembers: 'Nobody else is on the team yet. Invite people from the Team page.',
     title: 'Team Chat',
     subtitle: 'Communicate with your team members',
     searchChats: 'Search chats...',
@@ -1765,7 +1768,6 @@ export default {
     },
     embed: {
       title: 'Installation code',
-      hint: 'This one line is identical for every stack: HTML, React, Next.js, Vue, WordPress, Laravel…',
       verified: 'Installation verified — the widget is live on your site',
       waiting: 'Waiting for installation. This updates on its own once the snippet is on your site.'
     },
@@ -2000,6 +2002,103 @@ export default {
     deleteMessage:
       'Are you sure you want to delete the "{{name}}" rule? This action cannot be undone.'
   },
+  upgrade: {
+    badge: 'PRO',
+    badgeEnterprise: 'ENTERPRISE',
+    dialogTitle: 'Upgrade your plan',
+    featureLocked: 'This feature is not part of your plan.',
+    limitReached: 'You have reached your plan’s limit.',
+    limit: {
+      sites: 'You are using every site your plan includes.',
+      agents: 'You are using every seat your plan includes (open invitations count).',
+      conversations: 'This month’s new conversations are used up.'
+    },
+    body: 'Move to a higher plan and it opens at once; your data stays exactly as it is.',
+    askOwner: 'Only the account owner can change the plan. Ask them to upgrade.',
+    seePlans: 'See plans',
+    notNow: 'Not now',
+    gate: {
+      title: '{{feature}} is on the {{plan}} plan',
+      body: 'This screen is part of the paid plans. It opens the moment you upgrade; nothing to set up.',
+      cta: 'Move to {{plan}}',
+      compare: 'Compare plans'
+    },
+    features: {
+      departments: { name: 'Departments', benefit: 'Send each question to the right team and to whoever is free.' },
+      automation: { name: 'Automation', benefit: 'Turn tagging, routing and saved replies into rules.' },
+      proactive: { name: 'Proactive messages', benefit: 'Reach out to hesitating visitors before they ask.' },
+      visitors: { name: 'Live visitors', benefit: 'See who is on your site right now, and on which page.' },
+      crm: { name: 'Deal tracking', benefit: 'Follow conversations that turn into sales, stage by stage.' },
+      export: { name: 'Data export', benefit: 'Download your conversations as a file.' },
+      audit: { name: 'Audit logs', benefit: 'See who on your team changed what, and when.' }
+    }
+  },
+  billing: {
+    title: 'Plan and billing',
+    subtitle: 'Your plan, this month’s usage and your subscription.',
+    ownerOnly: 'Only the account owner can see this page.',
+    currentPlan: 'Current plan',
+    perMonth: '/ month',
+    free: 'Free',
+    status: {
+      active: 'Active',
+      trialing: 'Trial',
+      past_due: 'Payment failed',
+      paused: 'Paused',
+      canceled: 'Canceled'
+    },
+    renews: 'Renews on {{date}}',
+    endsAt: 'The plan ends on {{date}}',
+    graceUntil: 'Update your payment details by {{date}}, or the plan returns to Free.',
+    manage: 'Manage subscription',
+    manageHelp: 'Payment method, invoices and cancellation are in the Paddle customer portal.',
+    portalError: 'The customer portal could not be opened',
+    upgrade: 'Upgrade plan',
+    changePlan: 'Change plan',
+    usageTitle: 'Usage this month',
+    usage: {
+      sites: 'Sites',
+      seats: 'Users',
+      conversations: 'New conversations',
+      assistant: 'AI answers'
+    },
+    resets: 'Conversations and AI answers reset on the 1st of each month.',
+    ofLimit: '{{used}} / {{limit}}'
+  },
+  checkout: {
+    title: 'Upgrade your plan',
+    subtitle: 'Pick a plan and billing period, then finish on the secure payment screen.',
+    choosePlan: 'Plan',
+    cycle: 'Billing period',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    save: 'Save {{percent}}%',
+    summary: 'Order summary',
+    plan: '{{plan}} plan',
+    billedMonthly: 'Billed every month',
+    billedYearly: 'Billed once a year',
+    total: 'Due today',
+    perMonth: '/ month',
+    perYear: '/ year',
+    includes: 'What is included',
+    pay: 'Continue to payment',
+    secure: 'Payments are handled securely by Paddle; we never store your card. Your invoice arrives by e-mail.',
+    cancelAnytime: 'Cancel any time.',
+    current: 'Your current plan',
+    alreadyOn: 'You are on this plan.',
+    hasSubscription: 'You already have a subscription; change it from the customer portal.',
+    verifyFirst: 'Verify your e-mail address before paying.',
+    closed: 'Online payment opens very soon. If you want to upgrade now, write to us and we will switch your plan right away.',
+    contact: 'Write to us',
+    opening: 'Opening the payment screen…',
+    waiting: 'Payment received, activating your plan…',
+    success: 'Your plan is active. Thank you!',
+    successBody: 'Every feature of your new plan is open now.',
+    slow: 'The payment confirmation is taking a little longer. Your plan will update by itself in a few minutes.',
+    goDashboard: 'Back to the dashboard',
+    error: 'The payment screen could not be opened',
+    back: 'Back to billing'
+  },
   assistant: {
     label: 'Assistant',
     answering: 'Assistant is answering',
@@ -2011,22 +2110,80 @@ export default {
     reasons: {
       requested: 'The visitor asked for a person',
       sensitive: 'Sensitive data was shared',
-      limit: 'Automatic reply limit reached',
+      limit: 'Per-conversation answer limit reached',
+      plan_quota: 'Monthly AI answers used up',
       no_faq: 'The site has no FAQ',
       no_answer: 'Not answered by the FAQ',
       unsupported: 'The answer was not backed by the FAQ',
-      api: 'Gemini was unreachable (quota or error)'
+      api: 'The AI could not answer at that moment'
+    },
+    page: {
+      title: 'AI Assistant',
+      subtitle:
+        'It gives the first answer to a visitor’s question from your site’s FAQ. When it cannot find one, when the visitor asks for a person or when the service is busy, it hands the conversation to your team at once.',
+      connected: 'Connected',
+      notConnected: 'Off on this server',
+      unavailable:
+        'The AI assistant is not available on this account right now. Live chat and the inbox work as usual; write to us if you have questions.',
+      window: 'Last {{days}} days',
+      stats: {
+        answered: 'Answered by the assistant',
+        handedOver: 'Handed to your team',
+        conversations: 'Conversations it greeted',
+        sitesOn: 'Sites it is on'
+      },
+      sitesTitle: 'Sites',
+      sitesHelp: 'Switch the assistant on per site. It uses only that site’s public FAQ entries.',
+      faqCount_one: '{{count}} FAQ entry',
+      faqCount_other: '{{count}} FAQ entries',
+      noFaq: 'No FAQ entries — the assistant cannot answer',
+      addFaq: 'Add FAQ',
+      answeredShort: '{{count}} answered',
+      handedShort: '{{count}} handed over',
+      assistantSwitch: 'Assistant',
+      assistantHelp: 'Gives the first answer from your FAQ.',
+      keywordSwitch: 'Keyword reply',
+      keywordHelp: 'While the assistant is off, sends an FAQ entry that strongly matches.',
+      noSites: 'You have no sites yet. Add one first.',
+      howTitle: 'How it works',
+      how: [
+        'The visitor types a question in the bubble.',
+        'The assistant looks for the answer in your site’s FAQ and replies briefly, in Turkish.',
+        'If the FAQ has no answer, the visitor asks for a person or the service does not respond, the conversation goes to your team at once.',
+        'The moment an agent writes or presses “Take over”, the assistant stays silent in that conversation.'
+      ],
+      privacyTitle: 'Privacy',
+      reasonsTitle: 'Why conversations were handed over',
+      reasonsEmpty: 'Nothing was handed over in this period.',
+      reasonHints: {
+        no_answer: 'Add these frequent questions to your FAQ and the assistant answers them next time.',
+        no_faq: 'Add FAQ entries to the site so the assistant can answer.',
+        api: 'The assistant could not answer at that moment; the conversation went to your team at once.',
+        plan_quota: 'When the plan’s monthly answers are used up, conversations go to your team. Upgrade for more.'
+      },
+      previewTitle: 'What the visitor sees',
+      previewHeader: 'Automatic assistant · Talk to a person',
+      previewQuestion: 'How many days do I have to return an item?',
+      previewAnswer: 'You can return it free of charge within 14 days of delivery.',
+      previewSource: 'Source: Returns policy',
+      faqLink: 'Manage FAQs',
+      usageTitle: 'AI answers this month',
+      usageOf: '{{used}} / {{limit}} answers',
+      usagePlan: '{{plan}} plan · up to {{per}} answers per conversation',
+      usageFull: 'This month’s answers are used up; new questions go straight to your team.',
+      usageNear: 'Most of this month’s answers have been used.',
+      upgrade: 'Upgrade for more answers'
     },
     settings: {
       button: 'Assistant',
       title: 'FAQ assistant',
-      assistant: 'FAQ assistant (Gemini)',
+      assistant: 'AI assistant',
       assistantHelp:
         'When on, it gives the first answer from your site’s FAQ, short and in Turkish. If the FAQ has no answer, the visitor asks for a person or the service does not respond, it hands the conversation to your team at once.',
       unavailable:
-        'No Gemini key is configured on this server, so the assistant cannot be switched on. Live chat is not affected.',
+        'The AI assistant is not available right now. Live chat is not affected.',
       rule1: 'It uses only your site’s public FAQ entries.',
-      rule2: 'The visitor’s name, e-mail and earlier messages are never sent to Gemini; a card number or IBAN is handed to a person without sending anything.',
+      rule2: 'The visitor’s name, e-mail and earlier messages are never sent to the AI; a card number or IBAN is handed to a person without sending the question.',
       rule3: 'The moment an agent writes or presses “Take over”, the assistant stays silent in that conversation.',
       faqAutoReply: 'Keyword FAQ reply',
       faqAutoReplyHelp:
@@ -2108,7 +2265,7 @@ export default {
       body: {
         on: 'It answers common questions from your FAQ and hands the rest to your team at once.',
         off: 'You can switch it on per site; it gives the first answer from your FAQ.',
-        unavailable: 'No Gemini key is configured. Chat and the inbox work without it.'
+        unavailable: 'The assistant is not available right now. Chat and the inbox work without it.'
       }
     },
     setup: {

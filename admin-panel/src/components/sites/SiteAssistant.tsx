@@ -20,7 +20,7 @@ export interface SiteAssistantProps {
   onSaved: (site: Site) => void;
 }
 
-const Toggle = ({
+export const Toggle = ({
   id,
   checked,
   disabled,
@@ -65,7 +65,7 @@ const SiteAssistant = ({ site, onClose, onSaved }: SiteAssistantProps) => {
     assistantAPI
       .status()
       .then(({ data }) => setStatus(data))
-      .catch(() => setStatus({ available: false, model: null }));
+      .catch(() => setStatus({ available: false }));
   }, []);
 
   const save = async (fields: Partial<Pick<Site, 'assistantEnabled' | 'faqAutoReply'>>) => {

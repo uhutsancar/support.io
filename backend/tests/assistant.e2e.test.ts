@@ -51,7 +51,9 @@ let script: Script = () => ({ json: reply({ answer: '', handoff: true, sources: 
 const calls: Call[] = [];
 
 function reply(obj: unknown) {
-  return { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(obj) }] } }] };
+  return {
+    candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(obj) }] } }]
+  };
 }
 
 const gemini = http.createServer((req, res) => {
@@ -80,7 +82,14 @@ const sockets: ClientSocket[] = [];
 test.before(async () => {
   await new Promise<void>((resolve) => gemini.listen(0, '127.0.0.1', resolve));
   const mockUrl = `http://127.0.0.1:${(gemini.address() as AddressInfo).port}/v1beta`;
-  for (const key of ['GEMINI_API_KEY', 'GEMINI_BASE_URL', 'GEMINI_RPM', 'GEMINI_RPD', 'GEMINI_TIMEOUT_MS', 'ASSISTANT_ENABLED']) {
+  for (const key of [
+    'GEMINI_API_KEY',
+    'GEMINI_BASE_URL',
+    'GEMINI_RPM',
+    'GEMINI_RPD',
+    'GEMINI_TIMEOUT_MS',
+    'ASSISTANT_ENABLED'
+  ]) {
     saved[key] = process.env[key];
   }
   Object.assign(process.env, {
@@ -167,12 +176,19 @@ async function visitor(site: { _id: string; siteKey: string }): Promise<Visitor>
     sid: newWidgetSessionId(),
     kv: siteKeyVersion(site.siteKey)
   });
-  const socket = connect(`${base}/widget`, { transports: ['websocket'], forceNew: true, auth: { token } });
+  const socket = connect(`${base}/widget`, {
+    transports: ['websocket'],
+    forceNew: true,
+    auth: { token }
+  });
   sockets.push(socket);
   const messages: any[] = [];
   socket.on('new-message', (data: { message: any }) => messages.push(data.message));
   const joined = new Promise((resolve) => socket.once('conversation-joined', resolve));
-  socket.emit('join-conversation', { visitorName: 'Ayşe Yılmaz', visitorEmail: 'ayse@example.com' });
+  socket.emit('join-conversation', {
+    visitorName: 'Ayşe Yılmaz',
+    visitorEmail: 'ayse@example.com'
+  });
   await joined;
   return {
     socket,
@@ -186,11 +202,14 @@ async function visitor(site: { _id: string; siteKey: string }): Promise<Visitor>
 const fromAssistant = (v: Visitor) => v.messages.filter((m) => m.senderId === 'assistant');
 
 async function ownerOf(conversationId: string): Promise<string> {
-  const { rows } = await query('SELECT response_owner FROM conversations WHERE id = $1', [conversationId]);
+  const { rows } = await query('SELECT response_owner FROM conversations WHERE id = $1', [
+    conversationId
+  ]);
   return rows[0]?.response_owner;
 }
 
-const conversationOf = (v: Visitor) => String(v.messages.find((m) => m.senderType === 'visitor').conversationId);
+const conversationOf = (v: Visitor) =>
+  String(v.messages.find((m) => m.senderType === 'visitor').conversationId);
 
 // ------------------------------------------------------------ unit
 
@@ -205,7 +224,13 @@ test('card numbers, IBANs and ID numbers are recognised; contact details are mas
 });
 
 test('a request for a person is recognised in Turkish and English', () => {
-  for (const text of ['Temsilciyle görüşmek istiyorum', 'canlı destek lütfen', 'gerçek bir insanla konuşabilir miyim', 'can I talk to a person', 'human please']) {
+  for (const text of [
+    'Temsilciyle görüşmek istiyorum',
+    'canlı destek lütfen',
+    'gerçek bir insanla konuşabilir miyim',
+    'can I talk to a person',
+    'human please'
+  ]) {
     assert.equal(wantsHuman(text), true, text);
   }
   assert.equal(wantsHuman('iade süresi kaç gün?'), false);
@@ -217,7 +242,13 @@ test('the assistant answers from the FAQ, citing it, and sends nothing personal'
   script = (call) => {
     const prompt = call.body.contents[0].parts[0].text as string;
     const ref = /\[(s\d+)\] Soru: İade/.exec(prompt)?.[1] ?? 's1';
-    return { json: reply({ answer: 'Teslimattan sonra 14 gün içinde iade edebilirsiniz.', handoff: false, sources: [ref] }) };
+    return {
+      json: reply({
+        answer: 'Teslimattan sonra 14 gün içinde iade edebilirsiniz.',
+        handoff: false,
+        sources: [ref]
+      })
+    };
   };
   const site = await createSite();
   const v = await visitor(site);
@@ -259,7 +290,9 @@ test('no answer in the FAQ hands the visitor to a person', async () => {
 });
 
 test('an answer that cites nothing it was given is not sent', async () => {
-  script = () => ({ json: reply({ answer: 'Her zaman ücretsiz kargo!', handoff: false, sources: ['s99'] }) });
+  script = () => ({
+    json: reply({ answer: 'Her zaman ücretsiz kargo!', handoff: false, sources: ['s99'] })
+  });
   const site = await createSite();
   const v = await visitor(site);
   v.send('Kargo ücretli mi?');
@@ -310,7 +343,10 @@ test('quota, outage and timeout all hand over at once, and the breaker spares th
   assert.equal(fromAssistant(down)[0].assistant.handoff, 'api_unavailable');
 
   resetBreaker();
-  script = () => ({ delayMs: 2000, json: reply({ answer: 'geç', handoff: false, sources: ['s1'] }) });
+  script = () => ({
+    delayMs: 2000,
+    json: reply({ answer: 'geç', handoff: false, sources: ['s1'] })
+  });
   const slow = await visitor(site);
   slow.send('İade?');
   await until(() => fromAssistant(slow).length === 1);
@@ -328,7 +364,10 @@ test('a card number is never sent to the model', async () => {
 });
 
 test('an agent taking over silences an answer still being written', async () => {
-  script = () => ({ delayMs: 500, json: reply({ answer: '14 gün.', handoff: false, sources: ['s1'] }) });
+  script = () => ({
+    delayMs: 500,
+    json: reply({ answer: '14 gün.', handoff: false, sources: ['s1'] })
+  });
   const site = await createSite();
   const v = await visitor(site);
   v.send('İade süresi?');
@@ -347,4 +386,33 @@ test('a site that has not switched it on gets no assistant', async () => {
   assert.equal(fromAssistant(v).length, 0);
   assert.equal(calls.length, 0);
   assert.equal(await ownerOf(conversationOf(v)), 'human');
+});
+
+test('the plan decides how many answers a month; when they are used up a person answers', async () => {
+  script = () => ({
+    json: reply({ answer: '14 gün içinde iade edebilirsiniz.', handoff: false, sources: ['s1'] })
+  });
+  const site = await createSite();
+  const { currentPeriod } = await import('../src/services/entitlements');
+  const { PLAN_LIMITS } = await import('../src/domain/plans');
+  const limit = PLAN_LIMITS.FREE.assistant.monthlyReplies;
+  await query(
+    `INSERT INTO organization_usage_monthly (organization_id, period, assistant_replies)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (organization_id, period) DO UPDATE SET assistant_replies = $3`,
+    [orgId, currentPeriod(), limit]
+  );
+  try {
+    const v = await visitor(site);
+    v.send('İade süresi kaç gün?');
+    await until(() => fromAssistant(v).length === 1);
+    assert.equal(fromAssistant(v)[0].assistant.handoff, 'plan_quota');
+    assert.equal(await ownerOf(conversationOf(v)), 'human');
+  } finally {
+    await query(
+      `UPDATE organization_usage_monthly SET assistant_replies = 0
+        WHERE organization_id = $1 AND period = $2`,
+      [orgId, currentPeriod()]
+    );
+  }
 });

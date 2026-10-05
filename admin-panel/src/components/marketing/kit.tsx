@@ -260,19 +260,19 @@ export const TextLink = ({
 /* ------------------------------------------------------------------ tipografi */
 
 /**
- * Bölüm etiketi: "· 02 / KİMLER İÇİN".
+ * Bölüm etiketi: "KİMLER İÇİN". Zemin yok, yalnızca metin.
  *
- * Numara okuyana sayfanın neresinde olduğunu söyler; uzun bir ana sayfada
- * bölümler birbirinin tekrarı gibi görünmez. Zemin yok, yalnızca metin.
+ * Eskiden başına "· 02 /" gibi bir bölüm numarası basılıyordu; şablon
+ * işi gibi duruyordu ve kaldırıldı. `index` çağıranlar bozulmasın diye
+ * kabul edilir ama gösterilmez.
  */
 export const Eyebrow = ({
   children,
-  index,
   tone = 'indigo',
   className = ''
 }: {
   children?: React.ReactNode;
-  /** Bölüm numarası; verilirse "· 02 /" önekiyle basılır. */
+  /** Kullanılmıyor; eski çağrılar için. */
   index?: number;
   tone?: string;
   className?: string;
@@ -286,9 +286,6 @@ export const Eyebrow = ({
         className
       ].join(' ')}
     >
-      {index !== undefined && (
-        <span className="tabular-nums">· {String(index).padStart(2, '0')} / </span>
-      )}
       {children}
     </span>
   );

@@ -11,6 +11,9 @@
 import { api, clearCache, mutates } from './http';
 import type { AxiosResponse } from 'axios';
 import type {
+  AssistantOverview,
+  BillingOverview,
+  CheckoutSession,
   AssistantStatus,
   AgentPerformance,
   AnalyticsOverview,
@@ -362,6 +365,16 @@ export const plansAPI = {
   list: () => api.get<{ plans: PlanInfo[] }>('/plans')
 };
 
+export const billingAPI = {
+  /** Plan, usage and subscription; the owner only. Never cached. */
+  overview: () => api.get<BillingOverview>('/billing', { cache: false }),
+  /** What Paddle.js needs to open checkout; the server signs the reference. */
+  checkout: (plan: 'PRO' | 'ENTERPRISE', cycle: 'monthly' | 'yearly') =>
+    api.post<CheckoutSession>('/billing/checkout', { plan, cycle }),
+  /** A one-off link to Paddle's customer portal. */
+  portal: () => api.post<{ url: string }>('/billing/portal')
+};
+
 // ----------------------------------------------------------------- team chat
 
 const TEAM_CHAT = '/team-chat';
@@ -418,7 +431,9 @@ export const widgetConfigAPI = {
 
 export const assistantAPI = {
   /** Whether this server has a Gemini key; the site switch depends on it. */
-  status: () => api.get<AssistantStatus>('/assistant/status', { cache: false })
+  status: () => api.get<AssistantStatus>('/assistant/status', { cache: false }),
+  /** Every site's switch, FAQ count and the last 30 days of activity. */
+  overview: () => api.get<AssistantOverview>('/assistant/overview', { cache: false })
 };
 
 // ----------------------------------------------------------------- reporting

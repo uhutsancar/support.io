@@ -55,7 +55,9 @@ export interface AsyncResource<T> extends AsyncState<T> {
 const TRANSLATED_CODES: Record<string, string> = {
   TOO_MANY_REQUESTS: 'errors.tooManyRequests',
   TOO_MANY_LOGIN_ATTEMPTS: 'errors.tooManyLogins',
-  TOO_MANY_REGISTRATIONS: 'errors.tooManyRegistrations'
+  TOO_MANY_REGISTRATIONS: 'errors.tooManyRegistrations',
+  PLAN_UPGRADE_REQUIRED: 'upgrade.featureLocked',
+  PLAN_LIMIT_REACHED: 'upgrade.limitReached'
 };
 
 export function errorMessage(error: unknown, fallback: string): string {

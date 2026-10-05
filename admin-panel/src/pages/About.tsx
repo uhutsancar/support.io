@@ -11,7 +11,7 @@
 
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Mail, BookOpen, Heart, Eye, Wallet, Accessibility, Layers, MessageCircle } from 'lucide-react';
+import { Mail, BookOpen, Heart, Eye, Wallet, Accessibility, MessageCircle } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
 import { Button, Section, SectionHead, Card, Eyebrow, Photo, Reveal } from '../components/marketing/kit';
 import { openSiteChat, siteChatAvailable } from '../components/marketing/siteChat';
@@ -23,14 +23,6 @@ const PRINCIPLES = [
   { key: 'accessible', icon: Accessibility, tone: 'text-violet-600 dark:text-violet-400' }
 ];
 
-const STACK = [
-  { name: 'React + Vite', role: 'aboutPage.stack.frontend' },
-  { name: 'Node.js + Express', role: 'aboutPage.stack.backend' },
-  { name: 'PostgreSQL', role: 'aboutPage.stack.db' },
-  { name: 'Socket.IO + Redis', role: 'aboutPage.stack.realtime' },
-  { name: 'Amazon S3', role: 'aboutPage.stack.storage' },
-  { name: 'Shadow DOM', role: 'aboutPage.stack.widget' }
-];
 
 const About = () => {
   const { t } = useTranslation();
@@ -102,33 +94,6 @@ const About = () => {
               </Card>
             </Reveal>
           ))}
-        </div>
-      </Section>
-
-      {/* ------------------------------------------------------------ teknik */}
-      <Section tone="plain">
-        <div className="grid lg:grid-cols-[minmax(0,.7fr)_minmax(0,1.3fr)] gap-10 lg:gap-16">
-          <Reveal>
-            <Eyebrow index={3}>{t('aboutPage.stackEyebrow')}</Eyebrow>
-            <p className="mt-4 text-[14.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[36ch]">
-              {t('aboutPage.stackNote')}
-            </p>
-          </Reveal>
-          <ul className="grid sm:grid-cols-2 gap-3">
-            {STACK.map((item, i) => (
-              <Reveal as="li" key={item.name} delay={i * 0.04}>
-                <Card className="p-5 h-full flex items-start gap-3">
-                  <Layers className="w-[18px] h-[18px] mt-0.5 text-sky-600 dark:text-sky-400 shrink-0" strokeWidth={1.8} />
-                  <span className="min-w-0">
-                    <span className="block text-[14.5px] font-semibold text-gray-950 dark:text-white">{item.name}</span>
-                    <span className="block mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-400">
-                      {t(item.role)}
-                    </span>
-                  </span>
-                </Card>
-              </Reveal>
-            ))}
-          </ul>
         </div>
       </Section>
 

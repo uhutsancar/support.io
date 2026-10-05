@@ -627,10 +627,6 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
                   {snippet}
                 </code>
               </pre>
-              <p className="mt-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                {t('homePage.setup.live')}
-              </p>
             </Card>
           </Reveal>
 

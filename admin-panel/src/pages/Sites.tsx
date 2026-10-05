@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
-import { Plus, Globe, Copy, Check, Trash2, Palette, Bot, ShieldCheck } from 'lucide-react';
+import { Plus, Globe, Copy, Check, Trash2, Palette, Sparkles, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SiteAssistant from '../components/sites/SiteAssistant';
@@ -166,29 +166,42 @@ const Sites = () => {
             {sites.map((site) => (
               <div
                 key={site._id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition"
+                // min-w-0: a grid item is as wide as its longest line by
+                // default, so the install code used to push the card (and its
+                // badges) past the column.
+                className="min-w-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-5 hover:shadow-md transition"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-                      <Globe className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{site.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{site.domain}</p>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-11 h-11 shrink-0 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate" title={site.name}>
+                      {site.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate" title={site.domain}>
+                      {site.domain}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span
+                        className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${site.isActive ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}
+                      >
+                        {site.isActive ? t('sites.active') : t('sites.inactive')}
+                      </span>
+                      {/* Kurulum dogrulamasi: widget her sayfa acilisinda kendini
+                           bildirir (POST /api/widget/installed). Boylece "kodu
+                           koydum ama calisiyor mu?" sorusu panelden cevaplanir. */}
+                      <InstallBadge site={site} />
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${site.isActive ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}
-                    >
-                      {site.isActive ? t('sites.active') : t('sites.inactive')}
-                    </span>
-                    {/* Kurulum dogrulamasi: widget her sayfa acilisinda kendini
-                         bildirir (POST /api/widget/installed). Boylece "kodu
-                         koydum ama calisiyor mu?" sorusu panelden cevaplanir. */}
-                    <InstallBadge site={site} />
-                  </div>
+                  <button
+                    onClick={() => openDeleteConfirm(site._id, site.name)}
+                    title={t('common.delete')}
+                    aria-label={t('common.delete')}
+                    className="shrink-0 p-2 -mr-1 -mt-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
 
                 <div className="space-y-3">
@@ -218,7 +231,7 @@ const Sites = () => {
                       {t('sites.installCode')}
                     </label>
                     <div className="relative">
-                      <pre className="text-xs bg-gray-50 dark:bg-gray-700 dark:text-white px-2 sm:px-3 py-2 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto max-w-full whitespace-pre-wrap sm:whitespace-pre modal-scrollbar">
+                      <pre className="text-xs bg-gray-50 dark:bg-gray-700 dark:text-white pl-3 pr-9 py-2 rounded border border-gray-200 dark:border-gray-600 whitespace-pre-wrap break-all">
                         {getInstallCode(site.siteKey)}
                       </pre>
                       <button
@@ -236,42 +249,30 @@ const Sites = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
+                  <div className="grid grid-cols-2 gap-2 pt-2">
                     {/* Dil oneki: /en altindayken oneksiz yol 404'e dusuyordu. */}
                     <button
                       onClick={() =>
                         navigate(`${langPrefix}/dashboard/widget-customization/${site._id}`)
                       }
-                      className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg transition text-xs sm:text-sm"
+                      className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg transition text-sm font-medium"
                     >
-                      <Palette className="w-4 h-4" />
-                      <span className="leading-tight text-center whitespace-normal">
-                        {t('studio.title')}
-                      </span>
+                      <Palette className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{t('studio.title')}</span>
                     </button>
                     <button
                       onClick={() => setAccessSite(site)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-xs sm:text-sm"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm"
                     >
-                      <ShieldCheck className="w-4 h-4" />
-                      <span className="leading-tight text-center whitespace-normal">
-                        {t('sites.access.button')}
-                      </span>
+                      <ShieldCheck className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{t('sites.access.button')}</span>
                     </button>
                     <button
                       onClick={() => setAssistantSite(site)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-xs sm:text-sm"
+                      className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm"
                     >
-                      <Bot className="w-4 h-4" />
-                      <span className="leading-tight text-center whitespace-normal">
-                        {t('assistant.settings.button')}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => openDeleteConfirm(site._id, site.name)}
-                      className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition flex items-center justify-center"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 shrink-0 text-violet-500" />
+                      <span className="truncate">{t('assistant.settings.button')}</span>
                     </button>
                   </div>
                 </div>

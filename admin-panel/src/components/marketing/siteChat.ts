@@ -6,17 +6,21 @@
  * verdiğimiz aynı tek satır (`/widget.js` + `data-site-key`) burada da
  * yüklenir; gelen mesajlar o sitenin panelindeki gelen kutusuna düşer.
  *
- * Panel de aynı SPA'nın içinde olduğu için balon panele geçince gizlenir,
- * siteye dönünce yeniden görünür. Script bir kez yüklenir; ikinci kez
- * eklemek ikinci bir soket bağlantısı açardı.
+ * Panel de aynı SPA'nın içinde. Balon panele geçince yalnızca gizlenmiyor,
+ * tamamen kapatılıyor (destroy): gizli bir balon soketini açık tutuyor, panel
+ * kullanıcısını sitenin ziyaretçisi gibi sayıyor ve gelen bir mesajla panelin
+ * üstünde yeniden açılabiliyordu. Siteye dönünce aynı script'ten yeniden
+ * başlatılır (init); script bir kez yüklenir, ikinci kez eklemek ikinci bir
+ * kopya çalıştırırdı.
  */
 import { useEffect } from 'react';
 
 interface SupportChatApi {
   __runtime?: unknown;
+  init(): void;
+  destroy(): void;
   open(): void;
   show(): void;
-  hide(): void;
   setLocale(locale: string): void;
 }
 
@@ -25,6 +29,15 @@ const siteKey = import.meta.env.VITE_SUPPORT_SITE_KEY as string | undefined;
 
 /** Kaç pazarlama kabuğu açık — yükleme bitene kadar kabuk kapanmış olabilir. */
 let mounted = 0;
+
+/**
+ * Sayfadan sayfaya geçerken eski kabuk kapanır, yenisi hemen ardından açılır
+ * (yavaş bir sayfa parçası yüklenirken biraz sonra). Kapatma bu yüzden
+ * kısa bir süre bekler: yeni bir pazarlama sayfası gelirse iptal edilir ve
+ * açık sohbet kopmaz; panele geçildiyse balon kapanır.
+ */
+const DESTROY_DELAY_MS = 1500;
+let destroyTimer: ReturnType<typeof setTimeout> | null = null;
 
 const api = (): SupportChatApi | undefined =>
   (window as unknown as { SupportChat?: SupportChatApi }).SupportChat;
@@ -40,21 +53,30 @@ function load(language: string) {
   script.dataset.locale = language;
   // Yükleme sürerken ziyaretçi panele geçtiyse balon orada açılmasın.
   script.onload = () => {
-    if (mounted === 0) api()?.hide();
+    if (mounted === 0) api()?.destroy();
   };
   document.body.appendChild(script);
 }
 
-/** Balonu pazarlama kabuğu açıkken gösterir. */
+/** Balon yalnızca pazarlama kabuğu açıkken vardır. */
 export function useSiteChat(language: string) {
   useEffect(() => {
     if (!siteKey) return undefined;
     mounted += 1;
-    if (api()?.__runtime) api()?.show();
-    else load(language);
+    if (destroyTimer) {
+      clearTimeout(destroyTimer);
+      destroyTimer = null;
+    }
+    const chat = api();
+    if (!document.getElementById(SCRIPT_ID)) load(language);
+    else if (chat && !chat.__runtime) chat.init();
     return () => {
       mounted -= 1;
-      if (mounted === 0) api()?.hide();
+      if (mounted > 0) return;
+      destroyTimer = setTimeout(() => {
+        destroyTimer = null;
+        if (mounted === 0) api()?.destroy();
+      }, DESTROY_DELAY_MS);
     };
     // Dil aşağıdaki efektte izlenir; burada yalnızca ilk yüklemenin dili lazım.
     // eslint-disable-next-line react-hooks/exhaustive-deps

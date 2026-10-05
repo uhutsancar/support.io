@@ -105,7 +105,6 @@ export default {
       desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, karşılama mesajını yazın, ekibinizi davet edin. Yazılımcıya gerek yok.',
       keyPlaceholder: 'SITE_ANAHTARINIZ',
       comment: 'Support.io sohbet balonu',
-      live: 'Balon yapıştırdığınız dakika içinde görünür',
       noDevs: {
         eyebrow: 'Yazılımcı gerekmez',
         title: 'Kopyala, yapıştır, bitti.',
@@ -395,32 +394,31 @@ export default {
     benefitsTitle: 'Ne kazandırır',
     howTitle: 'Nasıl kurulur',
     howDesc: 'Hepsi panelden, kod yazmadan. Kurulum sırasında takılırsanız sohbetten yazın.',
-    techTitle: 'Teknik not — nasıl çalıştığını merak edenler için',
     nextFeature: 'Sıradaki',
     moreTitle: 'Bunlarla birlikte kullanılır',
     backToList: 'Tüm özellikler',
     readDocs: 'Kurulum rehberini oku',
 
-    devEyebrow: 'Geliştiriciler için',
-    devTitle: 'Yazılımcınız varsa işi daha da kolay',
+    devEyebrow: 'Kurulum',
+    devTitle: 'Kurmak dakikalar sürer',
     devDesc:
-      'Entegrasyon bir proje değil, tek satır. Daha fazlasını isteyen ekipler için de bir arayüz var.',
+      'Yazılımcınız olmasa da olur. Takılırsanız bize yazın, kurulumu birlikte yapalım.',
     dev: {
       embed: {
-        title: 'Her yerde aynı tek satır',
-        body: 'Düz HTML, React, Next.js, Vue, WordPress, Laravel — hepsinde aynı kod. Altyapıya özel kurulum yok.'
+        title: 'Kopyala, yapıştır',
+        body: 'Panelden aldığınız tek satırı sitenize eklersiniz; balon hemen görünür.'
       },
       sdk: {
-        title: 'Koddan kontrol',
-        body: 'Balonu açma/kapama, kullanıcıyı tanıtma, dil ve tema değiştirme gibi işlemler kendi kodunuzdan yapılabilir.'
+        title: 'Her altyapıda',
+        body: 'WordPress, Shopify, Wix, Webflow ya da React, Vue, Angular — rehberde hepsi için hazır adımlar var.'
       },
       isolation: {
-        title: 'Sitenizin tasarımını bozmaz',
-        body: 'Balon kendi yalıtılmış alanında çalışır. Sitenizin stilleri balona, balonunki sitenize karışmaz.'
+        title: 'Sitenizi yavaşlatmaz',
+        body: 'Balon sayfanız yüklendikten sonra devreye girer ve tasarımınıza karışmaz.'
       },
       control: {
-        title: 'Sürümü sabitleyebilirsiniz',
-        body: 'İsterseniz belirli bir sürümü kullanmayı seçersiniz; ilerideki bir güncelleme canlı sitenizi etkilemez.'
+        title: 'Markanızın renginde',
+        body: 'Rengi, karşılama mesajını ve konumu panelden seçersiniz; önizlemede anında görürsünüz.'
       }
     },
 
@@ -653,12 +651,6 @@ export default {
           { title: 'Aşamaları belirleyin', body: 'Örneğin ilk görüşme, teklif, kapanış.' },
           { title: 'Konuşmadan fırsat açın', body: 'Satışa dönen sohbetin üzerinden tek tıkla.' },
           { title: 'Hattı izleyin', body: 'Hangi aşamada ne kadar iş beklediğini görün.' }
-        ],
-        body: 'Fırsat kayıtları konuşmalarla aynı organizasyon sınırında tutulur ve açıldıkları konuşmaya bağlı kalır. Aşama, tutar ve sorumlu temsilci alanları panelden düzenlenir; her değişiklik denetim kaydına yazılır.',
-        points: [
-          'Fırsatlar açıldıkları konuşmayla ilişkili kalır',
-          'Aşama ve tutar değişiklikleri kayda geçer',
-          'Kayıtlar organizasyon sınırında izole edilir'
         ]
       }
     }
@@ -688,8 +680,6 @@ export default {
     custom: 'Size özel',
     freeNote: 'Süresiz ücretsiz, faturalandırma yok',
     contactNote: 'İhtiyacınıza göre belirlenir',
-    vatNote:
-      'Fiyatlara KDV dâhil değildir. İstediğiniz zaman plan değiştirebilir veya bırakabilirsiniz.',
     loadError: 'Plan bilgileri şu an yüklenemedi. Sayfayı yenileyip tekrar deneyin.',
 
     units: {
@@ -697,7 +687,9 @@ export default {
       sites_other: '{{count}} site',
       agents_one: '{{count}} kullanıcı',
       agents_other: '{{count}} kullanıcı',
-      conversations: 'Ayda {{n}} yeni konuşma'
+      conversations: 'Ayda {{n}} yeni konuşma',
+      assistant: 'Ayda {{n}} yapay zekâ yanıtı',
+      assistantDepth: 'Konuşma başına {{count}} yapay zekâ yanıtı'
     },
 
     chooseEyebrow: 'Karar verirken',
@@ -821,7 +813,7 @@ export default {
       },
       plain: {
         title: 'Düz konuşalım',
-        body: 'Bu sitede “yapay zekâ destekli omnichannel çözüm” yazmıyor. Ürünün ne yaptığını gündelik kelimelerle anlatıyoruz; teknik karşılıkları merak edene ayrıca veriyoruz.'
+        body: 'Ürünün ne yaptığını gündelik kelimelerle anlatıyoruz. Jargon, büyük laflar ve yerine getirmediğimiz vaatler yok.'
       },
       honest: {
         title: 'Olmayan şeyi yazmayalım',

@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { SocketProvider } from './contexts/SocketContext';
+import PlanGate from './components/billing/PlanGate';
 
 const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
@@ -26,6 +27,9 @@ const VerifyEmail = lazy(() =>
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Sites = lazy(() => import('./pages/Sites'));
+const Assistant = lazy(() => import('./pages/Assistant'));
+const Billing = lazy(() => import('./pages/Billing'));
+const Upgrade = lazy(() => import('./pages/Upgrade'));
 const Conversations = lazy(() => import('./pages/Conversations'));
 const Assigned = lazy(() => import('./pages/Assigned'));
 const FAQs = lazy(() => import('./pages/FAQs'));
@@ -242,6 +246,9 @@ function App() {
                     >
                       <Route index element={<Dashboard />} />
                       <Route path="sites" element={<Sites />} />
+                      <Route path="assistant" element={<Assistant />} />
+                      <Route path="billing" element={<Billing />} />
+                      <Route path="upgrade" element={<Upgrade />} />
                       <Route path="conversations" element={<Conversations />} />
                       <Route path="assigned" element={<Assigned />} />
                       <Route
@@ -255,12 +262,21 @@ function App() {
                       <Route path="faqs" element={<FAQs />} />
                       <Route path="team" element={<Team />} />
                       <Route path="team-chat" element={<TeamChat />} />
-                      <Route path="departments" element={<Departments />} />
+                      <Route
+                        path="departments"
+                        element={
+                          <PlanGate feature="departments">
+                            <Departments />
+                          </PlanGate>
+                        }
+                      />
                       <Route
                         path="audit-logs"
                         element={
                           <AdminRoute>
-                            <AuditLogs />
+                            <PlanGate feature="audit">
+                              <AuditLogs />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -273,7 +289,9 @@ function App() {
                         path="visitors"
                         element={
                           <AdminRoute>
-                            <Visitors />
+                            <PlanGate feature="visitors">
+                              <Visitors />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -281,7 +299,9 @@ function App() {
                         path="crm"
                         element={
                           <AdminRoute>
-                            <CRM />
+                            <PlanGate feature="crm">
+                              <CRM />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -297,7 +317,9 @@ function App() {
                         path="automation-rules"
                         element={
                           <AdminRoute>
-                            <AutomationRules />
+                            <PlanGate feature="automation">
+                              <AutomationRules />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -305,7 +327,9 @@ function App() {
                         path="proactive-rules"
                         element={
                           <AdminRoute>
-                            <ProactiveRules />
+                            <PlanGate feature="proactive">
+                              <ProactiveRules />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -320,6 +344,9 @@ function App() {
                     >
                       <Route index element={<Dashboard />} />
                       <Route path="sites" element={<Sites />} />
+                      <Route path="assistant" element={<Assistant />} />
+                      <Route path="billing" element={<Billing />} />
+                      <Route path="upgrade" element={<Upgrade />} />
                       <Route path="conversations" element={<Conversations />} />
                       <Route path="assigned" element={<Assigned />} />
                       <Route
@@ -333,12 +360,21 @@ function App() {
                       <Route path="faqs" element={<FAQs />} />
                       <Route path="team" element={<Team />} />
                       <Route path="team-chat" element={<TeamChat />} />
-                      <Route path="departments" element={<Departments />} />
+                      <Route
+                        path="departments"
+                        element={
+                          <PlanGate feature="departments">
+                            <Departments />
+                          </PlanGate>
+                        }
+                      />
                       <Route
                         path="audit-logs"
                         element={
                           <AdminRoute>
-                            <AuditLogs />
+                            <PlanGate feature="audit">
+                              <AuditLogs />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -351,7 +387,9 @@ function App() {
                         path="visitors"
                         element={
                           <AdminRoute>
-                            <Visitors />
+                            <PlanGate feature="visitors">
+                              <Visitors />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -359,7 +397,9 @@ function App() {
                         path="crm"
                         element={
                           <AdminRoute>
-                            <CRM />
+                            <PlanGate feature="crm">
+                              <CRM />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -375,7 +415,9 @@ function App() {
                         path="automation-rules"
                         element={
                           <AdminRoute>
-                            <AutomationRules />
+                            <PlanGate feature="automation">
+                              <AutomationRules />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
@@ -383,7 +425,9 @@ function App() {
                         path="proactive-rules"
                         element={
                           <AdminRoute>
-                            <ProactiveRules />
+                            <PlanGate feature="proactive">
+                              <ProactiveRules />
+                            </PlanGate>
                           </AdminRoute>
                         }
                       />
