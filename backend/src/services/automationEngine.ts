@@ -1,4 +1,5 @@
 import AutomationRule from '../models/AutomationRule';
+import { hasFeature } from './entitlements';
 import AutomationLog from '../models/AutomationLog';
 import events from '../events';
 import Conversation from '../models/Conversation';
@@ -22,6 +23,12 @@ class AutomationEngine {
   async evaluateEvent(data: AutomationEvent): Promise<boolean> {
     try {
       const { siteId, triggerType, payload } = data;
+
+      // Rules keep running only while the plan includes them; a downgraded
+      // organization's rules stay saved but stop acting.
+      if (data.organizationId && !(await hasFeature(String(data.organizationId), 'automation'))) {
+        return false;
+      }
 
       // 1. Fetch active rules for this trigger, ordered by priority desc
       const rules = await AutomationRule.find({

@@ -192,3 +192,47 @@ export function missedChatMail({
     })
   };
 }
+
+export function quotaWarningMail({
+  organization,
+  used,
+  limit,
+  link,
+  locale
+}: {
+  organization: string;
+  used: number;
+  limit: number;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(
+    locale,
+    `${organization}: aylık konuşma kotanızın %80'i doldu`,
+    `${organization}: 80% of this month's conversations used`
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Bu ay ${limit} yeni konuşmanın ${used} tanesi kullanıldı.`,
+          'Kota dolduğunda açık konuşmalar sürer, ancak yeni ziyaretçiler ay sonuna kadar sohbet başlatamaz. Kesinti yaşamamak için planınızı yükseltebilirsiniz.'
+        ],
+        [
+          `${used} of this month's ${limit} new conversations are used.`,
+          'When the quota is reached, open conversations continue but new visitors cannot start one until the month ends. Upgrade to avoid the interruption.'
+        ]
+      ),
+      action: pick(locale, 'Planı görüntüle', 'View your plan'),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-posta her ay en fazla bir kez gönderilir.',
+        'This e-mail is sent at most once a month.'
+      )
+    })
+  };
+}

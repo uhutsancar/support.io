@@ -19,6 +19,7 @@ import {
   invitationMail,
   missedChatMail,
   passwordResetMail,
+  quotaWarningMail,
   verificationMail
 } from './templates';
 import type { MailLocale } from './templates';
@@ -97,6 +98,12 @@ export const mail = {
     args: { organization: string; inviter: string; link: string; locale?: MailLocale }
   ) {
     return sendMail({ to, ...invitationMail(args) });
+  },
+  sendQuotaWarning(
+    to: string,
+    args: { organization: string; used: number; limit: number; link: string; locale?: MailLocale }
+  ) {
+    return sendMail({ to, ...quotaWarningMail(args) });
   },
   sendMissedChat(
     to: string,

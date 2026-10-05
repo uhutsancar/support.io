@@ -605,6 +605,16 @@ export default {
       description: 'Deneyimli ve tutkulu profesyonellerden oluşan ekibimiz, sizin için çalışıyor.'
     }
   },
+  acceptInvite: {
+    title: 'Ekibe katılın',
+    subtitle: '{{organization}} sizi {{role}} olarak davet etti. Adınızı ve şifrenizi belirleyin.',
+    invalid: 'Bu davet geçersiz, süresi dolmuş ya da daha önce kullanılmış. Sizi davet eden kişiden yenisini isteyin.',
+    name: 'Adınız',
+    password: 'Şifreniz (en az 8 karakter)',
+    join: 'Daveti kabul et',
+    welcome: 'Hoş geldiniz!',
+    error: 'Davet kabul edilemedi'
+  },
   recovery: {
     forgotTitle: 'Şifremi unuttum',
     forgotSubtitle: 'Hesabınızın e-posta adresini yazın; şifre sıfırlama bağlantısı gönderelim.',
@@ -1438,6 +1448,26 @@ export default {
     title: 'Ekip Yönetimi',
     subtitle: 'Destek ekip üyelerinizi ve yetkilerini yönetin',
     addMember: 'Üye Ekle',
+    invite: {
+      button: 'Üye davet et',
+      title: 'Ekibe davet et',
+      send: 'Daveti gönder',
+      sites: 'Siteler',
+      sitesHelp: 'Hiçbirini seçmezseniz tüm sitelere erişir.',
+      howItWorks:
+        'Davet edilen kişiye bir e-posta gider; bağlantıyı açıp kendi şifresini belirler. Davet 7 gün geçerlidir.',
+      sent: 'Davet {{email}} adresine gönderildi.',
+      savedNotSent: 'Davet oluşturuldu ama e-posta gönderilemedi; listeden yeniden gönderebilirsiniz.',
+      error: 'Davet gönderilemedi',
+      limitReached: 'Planınızın kullanıcı sınırına ulaştınız. Daha fazla kişi için planınızı yükseltin.',
+      pending: 'Bekleyen davetler',
+      expired: 'Süresi doldu',
+      until: '{{when}} tarihine kadar geçerli',
+      resend: 'Yeniden gönder',
+      resent: 'Davet yeniden gönderildi',
+      revoke: 'İptal et',
+      revoked: 'Davet iptal edildi'
+    },
     allSites: 'Tüm Siteler',
     searchPlaceholder: 'İsim veya e-posta ile ara...',
     filters: {

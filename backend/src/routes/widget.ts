@@ -37,6 +37,7 @@ import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { originRefused, requireWidgetSession } from '../middleware/widgetSession';
 import { widgetSessionLimiter } from '../middleware/rateLimit';
 import { organizationVerified } from '../services/verification';
+import { limitsFor } from '../services/entitlements';
 import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
@@ -250,14 +251,17 @@ router.post(
       kv: keyVersion
     });
 
-    const [saved, faqs, availability] = await Promise.all([
+    const [saved, faqs, availability, plan] = await Promise.all([
       WidgetConfig.findOne({ siteId: site._id, isActive: true }),
       FAQ.find({ siteId: site._id, isActive: true }).sort({ order: 1 }).limit(50).lean(),
-      resolveAvailability(site)
+      resolveAvailability(site),
+      limitsFor(String(site.organizationId))
     ]);
 
     res.json({
       token,
+      // The free plan's widget shows "Powered by Support.io".
+      branding: plan.limits.branding,
       expiresAt: expiresAt.toISOString(),
       visitorId,
       renewed: continues,

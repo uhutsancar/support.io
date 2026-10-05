@@ -120,6 +120,30 @@ export interface Site {
   updatedAt?: string;
 }
 
+/** An invitation to join the team (GET /api/invitations). */
+export interface Invitation {
+  _id: string;
+  email: string;
+  role: 'admin' | 'manager' | 'agent';
+  assignedSites: string[];
+  expiresAt: string;
+  acceptedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  status: 'pending' | 'accepted' | 'revoked' | 'expired';
+}
+
+/** One plan as GET /api/plans describes it — the table the server enforces. */
+export interface PlanInfo {
+  type: PlanType;
+  sites: number;
+  agents: number;
+  monthlyConversations: number;
+  branding: boolean;
+  features: string[];
+  price: { monthly: number | null; yearly: number | null; currency: string };
+}
+
 /** An agent row from /team. Both tables (users, teams) render the same way. */
 export interface TeamMember {
   _id: string;

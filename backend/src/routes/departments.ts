@@ -7,6 +7,7 @@
 // how `GET /:id/stats` ended up doing it in a different order from the others.
 // `loadOwnedDepartment` does the whole thing in one call; see src/http/guards.ts.
 
+import { requireFeature } from '../services/entitlements';
 import express from 'express';
 import Department from '../models/Department';
 import Team from '../models/Team';
@@ -30,7 +31,11 @@ import type { DepartmentDoc } from '../models/Department';
 
 const router = express.Router();
 
-router.use(auth, requireOrganization);
+// Departments and routing are a paid feature (domain/plans.ts). Reading
+// stays open, so a downgraded organization still sees what it had.
+router.use(auth, requireOrganization, (req, res, next) =>
+  req.method === 'GET' ? next() : requireFeature('departments')(req, res, next)
+);
 
 /** The projection the panel renders a member row from. */
 const MEMBER_FIELDS = 'name email avatar status';

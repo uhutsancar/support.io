@@ -18,6 +18,7 @@
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
+import { setPlan } from './helpers/accounts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { io as connect } from 'socket.io-client';
@@ -153,6 +154,8 @@ let world: World;
 test.before(async () => {
   // ---------------------------------------------------------------- org B
   const ownerB = await register('orgb');
+  // B needs a seat for its team member and the departments/rules below.
+  await setPlan(ownerB.organizationId, 'PRO');
   const siteB = await site(ownerB.token, 'b');
   const convB = await conversationOn(siteB);
   const faq = await new FAQ({ siteId: siteB._id, question: 'B?', answer: 'B.' }).save();

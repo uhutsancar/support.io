@@ -13,6 +13,7 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const About = lazy(() => import('./pages/About'));
 const Docs = lazy(() => import('./pages/Docs'));
 const Login = lazy(() => import('./pages/Login'));
+const AcceptInvitation = lazy(() => import('./pages/AcceptInvitation'));
 const ForgotPassword = lazy(() =>
   import('./pages/AccountRecovery').then((m) => ({ default: m.ForgotPassword }))
 );
@@ -182,6 +183,7 @@ function App() {
                     />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/invite/accept" element={<AcceptInvitation />} />
                     <Route path="/en" element={<Home />} />
                     <Route path="/en/features" element={<Features />} />
                     <Route path="/en/features/:slug" element={<FeatureDetail />} />
@@ -216,6 +218,7 @@ function App() {
                     />
                     <Route path="/en/reset-password" element={<ResetPassword />} />
                     <Route path="/en/verify-email" element={<VerifyEmail />} />
+                    <Route path="/en/invite/accept" element={<AcceptInvitation />} />
                     <Route
                       path="/onboarding"
                       element={

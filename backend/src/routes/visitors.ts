@@ -3,7 +3,7 @@
 import express from 'express';
 import Visitor from '../models/Visitor';
 import { auth } from '../middleware/auth';
-import { requirePlan } from '../middleware/planCheck';
+import { requireFeature } from '../services/entitlements';
 import { asyncHandler, loadAccessibleSite, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 import type { Filter } from '../db/model';
@@ -17,7 +17,7 @@ router.get(
   '/site/:siteId',
   auth,
   requireOrganization,
-  requirePlan(['PRO', 'ENTERPRISE']),
+  requireFeature('visitors'),
   asyncHandler(async (req: Request, res: Response) => {
     // This handler used to read `req.user.organizationId` directly and compare
     // it with `.toString()`. For an account with no organization that threw on

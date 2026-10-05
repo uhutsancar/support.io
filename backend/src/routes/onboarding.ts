@@ -7,6 +7,8 @@ import Site from '../models/Site';
 import WidgetConfig from '../models/WidgetConfig';
 import { auth } from '../middleware/auth';
 import { originsFromDomain } from '../config/siteOrigins';
+import { withTransaction } from '../db/pool';
+import { assertCanCreateSite, lockOrganization } from '../services/entitlements';
 import { asyncHandler, conflict, forbidden, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 
@@ -68,7 +70,11 @@ router.post(
         position: 'bottom-right'
       }
     });
-    await site.save();
+    await withTransaction(async (client) => {
+      await lockOrganization(client, organizationId);
+      await assertCanCreateSite(organizationId, client);
+      await site.save({ client });
+    });
 
     // The colour, title and welcome text are written to the widget config's real
     // fields. An earlier version wrote them to `theme` and `content`, which the

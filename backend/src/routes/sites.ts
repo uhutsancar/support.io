@@ -10,6 +10,8 @@ import { randomUUID } from 'crypto';
 import Site from '../models/Site';
 import { newSecret, seal } from '../config/secretBox';
 import { normalizeOriginList, originsFromDomain } from '../config/siteOrigins';
+import { withTransaction } from '../db/pool';
+import { assertCanCreateSite, lockOrganization } from '../services/entitlements';
 import { checkOrderUrl, testOrderService } from '../services/orderLookup';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
@@ -192,15 +194,22 @@ router.post(
       req.body?.allowedOrigins !== undefined
         ? validateAllowedOrigins(req.body.allowedOrigins)
         : originsFromDomain(domain);
+    const organizationId = orgId(req);
     const site = new Site({
       name,
       domain,
       allowedOrigins,
       siteKey: randomUUID(),
       userId: req.user._id,
-      organizationId: orgId(req)
+      organizationId
     });
-    await site.save();
+    // Counted and inserted under the organization's lock: two creations at
+    // once cannot both take the plan's last site.
+    await withTransaction(async (client) => {
+      await lockOrganization(client, organizationId);
+      await assertCanCreateSite(organizationId, client);
+      await site.save({ client });
+    });
     res.status(201).json({ site });
   })
 );

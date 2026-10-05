@@ -21,7 +21,10 @@ export type AuditAction =
   | 'SITE_INTEGRATION_UPDATED'
   | 'EMAIL_VERIFIED'
   | 'PASSWORD_RESET_REQUESTED'
-  | 'PASSWORD_RESET';
+  | 'PASSWORD_RESET'
+  | 'INVITATION_SENT'
+  | 'INVITATION_REVOKED'
+  | 'INVITATION_ACCEPTED';
 
 export interface AuditLogDoc {
   organizationId: Ref<OrganizationDoc>;
@@ -66,7 +69,10 @@ export default defineModel<AuditLogDoc>({
         'SITE_INTEGRATION_UPDATED',
         'EMAIL_VERIFIED',
         'PASSWORD_RESET_REQUESTED',
-        'PASSWORD_RESET'
+        'PASSWORD_RESET',
+        'INVITATION_SENT',
+        'INVITATION_REVOKED',
+        'INVITATION_ACCEPTED'
       ]
     },
     entityType: { column: 'entity_type', type: 'string' },

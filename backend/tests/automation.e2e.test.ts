@@ -22,7 +22,7 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { widgetSocket, widgetToken } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { setPlan, verifyEmail } from './helpers/accounts';
 import { query } from '../src/db/pool';
 import { getPool } from '../src/db/pool';
 
@@ -121,6 +121,9 @@ async function createTenant(label: string) {
   assert.ok(token, 'register returned no token');
   // The widget goes live only for a verified owner.
   await verifyEmail(email);
+  // This suite exercises paid features (members, departments, rules), not the
+  // plan limits themselves; tests/planLimits.e2e.test.ts covers those.
+  await setPlan(reg.body.user.organizationId, 'PRO');
 
   const site = await api('/api/sites', {
     method: 'POST',

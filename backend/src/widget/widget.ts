@@ -1377,6 +1377,13 @@ interface Window {
         colors.textSecondary +
         ';font-size:13.5px;padding:24px;line-height:1.6;}',
 
+      '.powered{display:block;text-align:center;font-size:11px;padding:4px 0 6px;color:' +
+        colors.textSecondary +
+        ';text-decoration:none;background:' +
+        colors.background +
+        ';}',
+      '.powered:hover{text-decoration:underline;}',
+
       /* composer */
       '.composer{flex:0 0 auto;border-top:1px solid ' + colors.border + ';padding:10px 12px;',
       'display:flex;align-items:flex-end;gap:8px;background:' + colors.background + ';',
@@ -1614,6 +1621,13 @@ interface Window {
           '</span></button>'
         : '',
       '</nav>',
+      // The free plan's widget says where it comes from (plan limits,
+      // `branding`); paid plans can leave it out.
+      this.remote.branding
+        ? '<a class="powered" href="https://support.io" target="_blank" rel="noopener">' +
+          escapeHtml(t.poweredBy) +
+          '</a>'
+        : '',
       '</div>',
       '<button class="launcher js-launcher" aria-label="' +
         escapeHtml(t.launcherLabel) +

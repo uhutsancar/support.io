@@ -25,7 +25,7 @@ import { open, seal } from '../src/config/secretBox';
 import { userHashFor, verifiedIdentity } from '../src/services/identity';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor, widgetSession, widgetToken } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { setPlan, verifyEmail } from './helpers/accounts';
 
 /** How one request to the running API is made. */
 interface ApiOptions {
@@ -99,6 +99,9 @@ async function createTenant(label: string) {
   );
   // The widget goes live only for a verified owner.
   await verifyEmail(`${label}${stamp}@widget.test`);
+  // This suite exercises paid features (members, departments, rules), not the
+  // plan limits themselves; tests/planLimits.e2e.test.ts covers those.
+  await setPlan(reg.body.user.organizationId, 'PRO');
 
   const site = await api('/api/sites', {
     method: 'POST',

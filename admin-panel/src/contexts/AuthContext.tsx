@@ -14,6 +14,8 @@ export interface AuthContextValue {
   logout(): Promise<void>;
   /** Updates fields on the signed-in user without reloading the app. */
   patchUser(updates: Partial<CurrentUser>): void;
+  /** Re-reads the session from the server, e.g. after accepting an invitation. */
+  refresh(): Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -93,6 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     register,
     logout,
     patchUser,
+    refresh: checkAuth,
     isAuthenticated: !!user
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

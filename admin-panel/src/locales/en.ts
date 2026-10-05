@@ -605,6 +605,16 @@ export default {
       description: 'Our team of experienced and passionate professionals is working for you.'
     }
   },
+  acceptInvite: {
+    title: 'Join the team',
+    subtitle: '{{organization}} invited you as {{role}}. Choose your name and password.',
+    invalid: 'This invitation is invalid, expired or already used. Ask the person who invited you for a new one.',
+    name: 'Your name',
+    password: 'Your password (at least 8 characters)',
+    join: 'Accept the invitation',
+    welcome: 'Welcome aboard!',
+    error: 'The invitation could not be accepted'
+  },
   recovery: {
     forgotTitle: 'Forgot your password',
     forgotSubtitle: 'Enter the e-mail address of your account and we will send a reset link.',
@@ -1434,6 +1444,26 @@ export default {
     title: 'Team Management',
     subtitle: 'Manage your support team members and their permissions',
     addMember: 'Add Member',
+    invite: {
+      button: 'Invite a member',
+      title: 'Invite to the team',
+      send: 'Send the invitation',
+      sites: 'Sites',
+      sitesHelp: 'Leave all unticked to give access to every site.',
+      howItWorks:
+        'The person receives an e-mail, opens the link and chooses their own password. The invitation is valid for 7 days.',
+      sent: 'Invitation sent to {{email}}.',
+      savedNotSent: 'The invitation was created but the e-mail could not be sent; resend it from the list.',
+      error: 'The invitation could not be sent',
+      limitReached: 'You have reached your plan’s user limit. Upgrade your plan to add more people.',
+      pending: 'Pending invitations',
+      expired: 'Expired',
+      until: 'Valid until {{when}}',
+      resend: 'Resend',
+      resent: 'Invitation sent again',
+      revoke: 'Revoke',
+      revoked: 'Invitation revoked'
+    },
     allSites: 'All Sites',
     searchPlaceholder: 'Search by name or email...',
     filters: {

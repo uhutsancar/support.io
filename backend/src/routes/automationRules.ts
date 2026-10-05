@@ -1,4 +1,5 @@
 import express from 'express';
+import { requireFeature } from '../services/entitlements';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import {
@@ -159,6 +160,7 @@ router.post(
   auth,
   requireOrganization,
   checkPermission('manage_sites'),
+  requireFeature('automation'),
   asyncHandler(async (req: Request, res: Response) => {
     const {
       siteId,
@@ -204,6 +206,7 @@ router.put(
   auth,
   requireOrganization,
   checkPermission('manage_sites'),
+  requireFeature('automation'),
   asyncHandler(async (req: Request, res: Response) => {
     const rule = await loadOwnedRule(req, req.params.id);
 
@@ -246,6 +249,7 @@ router.delete(
   auth,
   requireOrganization,
   checkPermission('manage_sites'),
+  requireFeature('automation'),
   asyncHandler(async (req: Request, res: Response) => {
     const rule = await loadOwnedRule(req, req.params.id);
 

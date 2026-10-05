@@ -29,7 +29,9 @@ import type {
   TeamChatParticipant,
   TeamMember,
   Visitor,
-  WidgetConfig
+  WidgetConfig,
+  Invitation,
+  PlanInfo
 } from '../types/api';
 
 export { clearCache };
@@ -338,6 +340,35 @@ export const teamAPI = {
       `${TEAM}/me/performance`,
       { params: { range }, cache: false }
     )
+};
+
+// --------------------------------------------------------------- invitations
+
+const INVITATIONS = '/invitations';
+
+export const invitationsAPI = {
+  list: () => api.get<{ invitations: Invitation[] }>(INVITATIONS, { cache: false }),
+  create: (data: { email: string; role: string; assignedSites?: string[]; locale?: string }) =>
+    api.post<{ invitation: Invitation; sent: boolean }>(INVITATIONS, data),
+  resend: (id: string, locale?: string) =>
+    api.post<{ invitation: Invitation; sent: boolean }>(`${INVITATIONS}/${id}/resend`, { locale }),
+  revoke: (id: string) => api.delete(`${INVITATIONS}/${id}`),
+  /** What an invitation link is for; needs no account. */
+  preview: (token: string) =>
+    api.get<{ email: string; role: string; organization: string | null; expiresAt: string }>(
+      `${INVITATIONS}/accept`,
+      { params: { token }, cache: false }
+    ),
+  /** Accepting creates the account and signs it in (the session cookie is set). */
+  accept: (token: string, name: string, password: string) =>
+    api.post(`${INVITATIONS}/accept`, { token, name, password })
+};
+
+// --------------------------------------------------------------------- plans
+
+export const plansAPI = {
+  /** The plan table the server enforces; the pricing page renders it. */
+  list: () => api.get<{ plans: PlanInfo[] }>('/plans')
 };
 
 // ----------------------------------------------------------------- team chat

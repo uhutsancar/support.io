@@ -1,4 +1,6 @@
 /** What the widget reports, and what a rule is matched against. */
+import { hasFeature } from './entitlements';
+import Site from '../models/Site';
 import ProactiveRule from '../models/ProactiveRule';
 import ProactiveTriggerLog from '../models/ProactiveTriggerLog';
 import EventLog from '../models/EventLog';
@@ -62,6 +64,11 @@ class ProactiveEngine {
 
       // Log the event asynchronously
       this.logEvent(eventData).catch((err) => console.error('Failed to log event', err));
+
+      // Proactive messages are a paid feature; the site's organization must
+      // still have it.
+      const owner = await Site.findById(siteId).select('organizationId');
+      if (!owner || !(await hasFeature(String(owner.organizationId), 'proactive'))) return false;
 
       // 1. Fetch active rules for this site and eventType
       const rules = await ProactiveRule.find({

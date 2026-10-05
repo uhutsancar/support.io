@@ -7,6 +7,7 @@
 
 import Department from '../../models/Department';
 import { hasPermission } from '../../middleware/rbac';
+import { countMessage } from '../../services/entitlements';
 import Message from '../../models/Message';
 import Team from '../../models/Team';
 import User from '../../models/User';
@@ -268,6 +269,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       });
     }
     const emitted = message.toObject();
+    countMessage(conversation.organizationId).catch(() => undefined);
     ctx.toWidgetConversation(conversation._id, 'new-message', { message: emitted });
     ctx.toAdminConversation(conversation._id, 'new-message', { message: emitted, conversation });
     ctx.toAdminSite(conversation.siteId, 'new-message', { message: emitted, conversation });

@@ -28,6 +28,7 @@ import {
 } from '../../domain';
 import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
+import { ConversationQuotaError, countMessage } from '../../services/entitlements';
 import { conversationRoom } from '../../realtime/rooms';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
@@ -343,7 +344,14 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       // The first message opens the conversation; see conversationIntake.ts.
       if (!socket.conversationId) {
-        await openFirstConversation(ctx, socket, site, content, assistant);
+        try {
+          await openFirstConversation(ctx, socket, site, content, assistant);
+        } catch (error) {
+          if (error instanceof ConversationQuotaError) {
+            return refuse(socket, ack, error.code, error.message);
+          }
+          throw error;
+        }
       }
 
       const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
@@ -400,6 +408,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       }
       // Echoed back, id included, so the widget can reconcile its optimistic copy.
       const emitted = message.toObject();
+      countMessage(site.organizationId).catch(() => undefined);
 
       // One atomic increment: two messages landing together must not both
       // read the old count and write it back plus one.

@@ -49,3 +49,16 @@ export async function verifyEmail(address: string): Promise<void> {
   });
   assert.equal(res.status, 200, `verification failed for ${address}`);
 }
+
+/**
+ * Puts an organization on a plan, as billing would. For suites that test
+ * paid features (members, departments, rules) rather than the limits
+ * themselves — tests/planLimits.e2e.test.ts covers those.
+ */
+export async function setPlan(
+  organizationId: string,
+  plan: 'FREE' | 'PRO' | 'ENTERPRISE'
+): Promise<void> {
+  const { query } = await import('../../src/db/pool');
+  await query('UPDATE organizations SET plan_type = $2 WHERE id = $1', [organizationId, plan]);
+}

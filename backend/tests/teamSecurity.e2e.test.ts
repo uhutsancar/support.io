@@ -23,6 +23,7 @@
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
+import { setPlan } from './helpers/accounts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
@@ -80,6 +81,9 @@ async function createTenant(label: string) {
   );
   const token = sessionToken(reg);
   assert.ok(token, 'register must set the session cookie');
+  // This suite exercises paid features (members, departments, rules), not the
+  // plan limits themselves; tests/planLimits.e2e.test.ts covers those.
+  await setPlan(reg.body.user.organizationId, 'PRO');
 
   const site = await api('/api/sites', {
     method: 'POST',

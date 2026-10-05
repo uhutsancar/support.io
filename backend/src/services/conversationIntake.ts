@@ -23,6 +23,8 @@ import {
   shouldCalculateSLA
 } from './businessHours';
 import { autoAssignConversation } from './autoAssignment';
+import { ConversationQuotaError, crossesWarning, tryConsumeConversation } from './entitlements';
+import { warnQuota } from './quotaWarning';
 import { recordNewConversation } from './departmentStats';
 import { refreshSla } from './conversationSla';
 import type { Doc } from '../db/model';
@@ -98,7 +100,12 @@ export async function openConversation(
         LIMIT 1`,
       [site._id, visitor.visitorId, [...ACTIVE_CONVERSATION_STATUSES], verifiedUserId ?? '']
     );
-    if (rows[0]) return { existingId: rows[0].id, conversation: null };
+    if (rows[0]) return { existingId: rows[0].id, conversation: null, quota: null };
+
+    // Counted in this transaction: if the insert below fails, the slot is
+    // given back with it. Over the quota, nothing is created.
+    const quota = await tryConsumeConversation(String(site.organizationId), client);
+    if (!quota.ok) throw new ConversationQuotaError();
 
     const conversation = buildConversation(site, visitor, department, responseOwner);
     // Numbered on this same connection: the model's save hook would otherwise
@@ -112,7 +119,7 @@ export async function openConversation(
     conversation.ticketNumber = Number(ticket.rows[0].seq);
     conversation.ticketId = `#${String(conversation.ticketNumber).padStart(4, '0')}`;
     await conversation.save({ client });
-    return { existingId: null, conversation };
+    return { existingId: null, conversation, quota };
   });
 
   if (opened.existingId) {
@@ -120,6 +127,11 @@ export async function openConversation(
     if (existing) return { conversation: existing, department, greeting: null, created: false };
   }
   const conversation = opened.conversation as Doc<ConversationDoc>;
+
+  if (opened.quota && crossesWarning(opened.quota.count, opened.quota.limit)) {
+    // Once a month, to the owner; never on the visitor's path.
+    void warnQuota(String(site.organizationId), opened.quota.count, opened.quota.limit);
+  }
 
   await recordNewConversation(department);
 

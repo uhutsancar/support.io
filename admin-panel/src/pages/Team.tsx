@@ -7,11 +7,13 @@ import toast from 'react-hot-toast';
 import { teamAPI, sitesAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useSocket } from '../contexts/SocketContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Users, Plus, Edit, Trash2, Activity, MessageSquare, Search, Globe } from 'lucide-react';
 import type { Site, TeamMember } from '../types/api';
 import { presenceDot as getStatusColor } from '../lib/statusStyles';
 import { errorMessage } from '../hooks/useAsync';
 
+import { InviteModal, PendingInvitations } from '../components/team/InviteMember';
 const Team = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -20,6 +22,7 @@ const Team = () => {
   const routes = {
     sites: `${langPrefix}/dashboard/sites`
   };
+  const { user } = useAuth();
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<string | null>(null);
@@ -27,6 +30,8 @@ const Team = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  // Bumped after an invitation is sent, so the pending list reloads.
+  const [invitesVersion, setInvitesVersion] = useState(0);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -170,7 +175,7 @@ const Team = () => {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <Plus className="w-4 h-4" />
-            {t('team.addMember')}
+            {t('team.invite.button')}
           </button>
         </div>
         <div className="mt-4">
@@ -224,6 +229,7 @@ const Team = () => {
           <option value="agent">{t('team.filters.agent')}</option>
         </select>
       </div>
+      <PendingInvitations refreshKey={invitesVersion} />
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -349,7 +355,18 @@ const Team = () => {
           ))}
         </div>
       )}
-      {(showAddModal || selectedMember) && (
+      {showAddModal && (
+        <InviteModal
+          sites={sites}
+          callerRole={user?.role}
+          onClose={() => setShowAddModal(false)}
+          onSent={() => {
+            setShowAddModal(false);
+            setInvitesVersion((v) => v + 1);
+          }}
+        />
+      )}
+      {selectedMember && (
         <AddEditMemberModal
           member={selectedMember}
           sites={sites}
@@ -384,6 +401,7 @@ const Team = () => {
 };
 const AddEditMemberModal = ({
   member,
+  sites,
   selectedSite,
   onClose,
   onSave
@@ -396,34 +414,29 @@ const AddEditMemberModal = ({
   [prop: string]: any;
 }) => {
   const { t } = useTranslation();
+  // Editing only: new members are invited (components/team/InviteMember).
+  // The permission checkboxes that used to be here sent the users-table keys
+  // to the teams endpoint, which refused them; what a member may do follows
+  // from their role.
   const [formData, setFormData] = useState({
     name: member?.name || '',
     email: member?.email || '',
-    password: '',
     role: member?.role || 'agent',
     assignedSites:
-      member?.assignedSites?.map((s: any) => s._id || s) || (selectedSite ? [selectedSite] : []),
-    permissions: member?.permissions || {
-      canManageTeam: false,
-      canManageDepartments: false,
-      canViewAllConversations: true,
-      canAssignConversations: true,
-      canDeleteConversations: false
-    }
+      member?.assignedSites?.map((s: any) => s._id || s) || (selectedSite ? [selectedSite] : [])
   });
   const [saving, setSaving] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      let response;
-      if (member) {
-        response = await teamAPI.update(member._id, formData);
-      } else {
-        response = await teamAPI.create(formData);
-      }
-      await onSave?.(member ? null : response.data);
-      toast.success(member ? t('team.updateSuccess') : t('team.createSuccess'));
+      await teamAPI.update(member._id, {
+        name: formData.name,
+        role: formData.role,
+        assignedSites: formData.assignedSites
+      });
+      await onSave?.(null);
+      toast.success(t('team.updateSuccess'));
       setSaving(false);
     } catch (error) {
       toast.error(errorMessage(error, t('team.saveError')));
@@ -435,7 +448,7 @@ const AddEditMemberModal = ({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-            {member ? t('team.modal.editTitle') : t('team.modal.addTitle')}
+            {t('team.modal.editTitle')}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -456,26 +469,11 @@ const AddEditMemberModal = ({
               </label>
               <input
                 type="email"
-                required
+                disabled
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
               />
             </div>
-            {!member && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t('team.modal.password')} *
-                </label>
-                <input
-                  type="password"
-                  required={!member}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('team.modal.role')}
@@ -490,32 +488,36 @@ const AddEditMemberModal = ({
                 <option value="admin">{t('team.filters.admin')}</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('team.modal.permissions')}
-              </label>
-              <div className="space-y-2">
-                {Object.keys(formData.permissions).map((key) => (
+            {sites?.length > 1 && (
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('team.invite.sites')}
+                </legend>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  {t('team.invite.sitesHelp')}
+                </p>
+                {sites.map((site: Site) => (
                   <label
-                    key={key}
+                    key={site._id}
                     className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
                   >
                     <input
                       type="checkbox"
-                      checked={formData.permissions[key]}
+                      checked={formData.assignedSites.includes(site._id)}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          permissions: { ...formData.permissions, [key]: e.target.checked }
+                          assignedSites: e.target.checked
+                            ? [...formData.assignedSites, site._id]
+                            : formData.assignedSites.filter((id: string) => id !== site._id)
                         })
                       }
-                      className="rounded border-gray-300 dark:border-gray-600"
                     />
-                    {t(`team.modal.${key}`)}
+                    {site.name}
                   </label>
                 ))}
-              </div>
-            </div>
+              </fieldset>
+            )}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
@@ -529,11 +531,7 @@ const AddEditMemberModal = ({
                 disabled={saving}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                {saving
-                  ? t('team.modal.saving')
-                  : member
-                    ? t('team.modal.update')
-                    : t('team.modal.create')}
+                {saving ? t('team.modal.saving') : t('team.modal.update')}
               </button>
             </div>
           </form>

@@ -23,6 +23,8 @@ import widgetRoutes from './routes/widget';
 import filesRoutes from './routes/files';
 import departmentRoutes from './routes/departments';
 import teamRoutes from './routes/team';
+import invitationRoutes from './routes/invitations';
+import planRoutes from './routes/plans';
 import teamChatRoutes from './routes/teamChat';
 import auditRoutes from './routes/audit';
 import onboardingRoutes from './routes/onboarding';
@@ -165,7 +167,7 @@ app.use(
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.url.includes('/widget.js')) {
     res.set('Cache-Control', 'public, max-age=3600');
-  } else if (req.url.startsWith('/api')) {
+  } else if (req.url.startsWith('/api') && !req.url.startsWith('/api/plans')) {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
@@ -199,6 +201,8 @@ app.use('/api/widget', widgetRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/team', teamRoutes);
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/plans', planRoutes);
 app.use('/api/team-chat', teamChatRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/widget-config', widgetConfigRoutes);

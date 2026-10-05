@@ -9,7 +9,7 @@ import express from 'express';
 import AuditLog from '../models/AuditLog';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
-import { requirePlan } from '../middleware/planCheck';
+import { requireFeature } from '../services/entitlements';
 import { asyncHandler, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
 import type { Filter } from '../db/model';
@@ -31,7 +31,7 @@ router.get(
   auth,
   requireOrganization,
   checkPermission('manage_operations'),
-  requirePlan(['ENTERPRISE']),
+  requireFeature('audit'),
   asyncHandler(async (req: Request, res: Response) => {
     const { action, start, end } = req.query;
 

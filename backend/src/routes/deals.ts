@@ -3,7 +3,7 @@
 import express from 'express';
 import Deal from '../models/Deal';
 import { auth } from '../middleware/auth';
-import { requirePlan } from '../middleware/planCheck';
+import { requireFeature } from '../services/entitlements';
 import { DEAL_STAGES, isDealStage } from '../domain';
 import { asyncHandler, badRequest, notFound, orgId, pick, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
@@ -16,7 +16,7 @@ const router = express.Router();
 // `req.user.organizationId` straight from the request without checking it,
 // which for an account with no organization produced a filter the model
 // rejects — a 500 where a 403 was meant.
-router.use(auth, requireOrganization, requirePlan(['PRO', 'ENTERPRISE']));
+router.use(auth, requireOrganization, requireFeature('crm'));
 
 const WRITABLE_FIELDS = [
   'title',

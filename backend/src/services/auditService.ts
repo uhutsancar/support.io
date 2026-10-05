@@ -124,6 +124,9 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
     entityType: 'user',
     entityId: (p) => p.userId
   },
+  'invitation.sent': { action: 'INVITATION_SENT', entityType: 'invitation' },
+  'invitation.revoked': { action: 'INVITATION_REVOKED', entityType: 'invitation' },
+  'invitation.accepted': { action: 'INVITATION_ACCEPTED', entityType: 'invitation' },
   // A rule firing against a conversation: the actor is the rule, identified in
   // the metadata, so there is no user and no originating request.
   'automation.executed': {

@@ -24,6 +24,8 @@ import {
   ownedDepartments
 } from '../middleware/teamPolicy';
 import events from '../events';
+import { withTransaction } from '../db/pool';
+import { assertCanAddAgent, lockOrganization } from '../services/entitlements';
 import { passwordProblem } from '../config/passwords';
 import { ACTIVE_CONVERSATION_STATUSES, PRESENCE_STATUSES, isPresenceStatus } from '../domain';
 import { notifyAdmin } from '../realtime';
@@ -167,10 +169,17 @@ router.get(
 
 // -------------------------------------------------------------------- creating
 
+// Creating an agent with a password typed by someone else is the owner's
+// alone, kept for direct provisioning; everyone else — and the panel — sends
+// an invitation instead (routes/invitations.ts), so the agent chooses their
+// own password. Either way the seat is checked against the plan.
 router.post(
   '/',
   checkPermission('manage_users'),
   asyncHandler(async (req: Request, res: Response) => {
+    if (req.user.role !== 'owner') {
+      throw forbidden('Invite team members instead (POST /api/invitations)');
+    }
     const organizationId = orgId(req);
     const {
       email,
@@ -228,7 +237,11 @@ router.post(
       isActive: true,
       status: 'offline'
     });
-    await teamMember.save();
+    await withTransaction(async (client) => {
+      await lockOrganization(client, organizationId);
+      await assertCanAddAgent(organizationId, client);
+      await teamMember.save({ client });
+    });
 
     // The ids were matched against this organization above, so these writes stay
     // inside the tenant.

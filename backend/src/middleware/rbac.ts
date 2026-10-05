@@ -1,10 +1,11 @@
 // Yetki kataloğu. Bir izni yalnızca burada tanımlayın; rol listeleri buradan
 // türetilir, böylece yeni bir izin eklendiğinde owner'a elle eklemeyi unutmak
 // mümkün olmaz.
-import Organization from '../models/Organization';
 import { asyncMiddleware } from '../http/asyncHandler';
 import { forbidden } from '../http/errors';
-import { PLAN_TYPES } from '../domain';
+import { PLAN_LIMITS } from '../domain/plans';
+import { hasFeature } from '../services/entitlements';
+import type { Feature } from '../domain/plans';
 import type { PlanType } from '../domain';
 import type { NextFunction, Request, Response } from 'express';
 
@@ -70,27 +71,26 @@ const rolePermissions: Record<string, string[]> = {
   viewer: ['read_only', 'view_assigned']
 };
 
-/** What each plan unlocks. Roles say who may act; plans say what is available. */
+/**
+ * What each plan unlocks, derived from domain/plans.ts. Kept as an export for
+ * callers that read it; the source of truth is PLAN_LIMITS.
+ */
 const planFeatures: Record<PlanType, Record<string, boolean>> = {
-  FREE: { multiUser: false, advancedAnalytics: false, export: false, apiAccess: false },
-  PRO: { multiUser: true, advancedAnalytics: true, export: true, apiAccess: true },
-  ENTERPRISE: { multiUser: true, advancedAnalytics: true, export: true, apiAccess: true }
+  FREE: { multiUser: PLAN_LIMITS.FREE.agents > 1, export: PLAN_LIMITS.FREE.features.includes('export') },
+  PRO: { multiUser: PLAN_LIMITS.PRO.agents > 1, export: PLAN_LIMITS.PRO.features.includes('export') },
+  ENTERPRISE: {
+    multiUser: PLAN_LIMITS.ENTERPRISE.agents > 1,
+    export: PLAN_LIMITS.ENTERPRISE.features.includes('export')
+  }
 };
 
 /** Permissions that a plan can withhold even from a role that carries them. */
-const PLAN_GATED_PERMISSIONS: Record<string, keyof (typeof planFeatures)['FREE']> = {
+const PLAN_GATED_PERMISSIONS: Record<string, Feature> = {
   export: 'export'
 };
 
 function hasPermission(role: string, permission: string): boolean {
   return (rolePermissions[role] || []).includes(permission);
-}
-
-/** The plan an organization is on, defaulting to FREE for anything unknown. */
-function planOf(planType: unknown): PlanType {
-  return (PLAN_TYPES as readonly string[]).includes(planType as string)
-    ? (planType as PlanType)
-    : 'FREE';
 }
 
 /**
@@ -113,8 +113,9 @@ const checkPermission = (permission: string) =>
 
     const gatedFeature = PLAN_GATED_PERMISSIONS[permission];
     if (gatedFeature && req.organization) {
-      const org = await Organization.findById(req.organization._id);
-      if (!planFeatures[planOf(org?.planType)][gatedFeature]) {
+      // The plan table in domain/plans.ts decides, through the entitlement
+      // service, like every other plan gate.
+      if (!(await hasFeature(String(req.organization._id), gatedFeature))) {
         throw forbidden('Feature not available on your plan', 'PLAN_UPGRADE_REQUIRED');
       }
     }
