@@ -1,26 +1,39 @@
-FROM node:22-alpine AS admin-build
+# The production image: the API, the widget runtime and the built panel and
+# marketing site, served from one origin (plan §13.3).
+#
+# Node is pinned to a minor version so a rebuild cannot silently change the
+# runtime; move it on purpose (and pin by digest once the registry is fixed).
+
+FROM node:22.23-alpine AS admin-build
 WORKDIR /build/admin-panel
 COPY admin-panel/package.json admin-panel/package-lock.json ./
 RUN npm ci
 COPY admin-panel/ ./
+# The panel talks to its own origin, so the API address stays empty.
 ARG VITE_API_URL=""
-ENV VITE_API_URL=${VITE_API_URL}
+# The marketing site's own chat bubble (a site key, which is not a secret).
+ARG VITE_SUPPORT_SITE_KEY=""
+# Shown in install snippets; empty means "the page's own origin".
+ARG VITE_PUBLIC_APP_ORIGIN=""
+ENV VITE_API_URL=${VITE_API_URL} \
+    VITE_SUPPORT_SITE_KEY=${VITE_SUPPORT_SITE_KEY} \
+    VITE_PUBLIC_APP_ORIGIN=${VITE_PUBLIC_APP_ORIGIN}
 RUN npm run build
 
-FROM node:22-alpine AS backend-build
+FROM node:22.23-alpine AS backend-build
 WORKDIR /build/backend
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci
 COPY backend/ ./
-# Compiles src/ to dist/ and the widget runtime to public/widget.js.
+# Compiles src/ to dist/ (migrations included) and the widget to public/widget.js.
 RUN npm run build
 
-FROM node:22-alpine AS backend-deps
+FROM node:22.23-alpine AS backend-deps
 WORKDIR /build/backend
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-FROM node:22-alpine AS runtime
+FROM node:22.23-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app/backend
 COPY --chown=node:node backend/package.json ./
@@ -28,6 +41,9 @@ COPY --from=backend-build --chown=node:node /build/backend/dist ./dist
 COPY --from=backend-build --chown=node:node /build/backend/public ./public
 COPY --from=backend-deps --chown=node:node /build/backend/node_modules ./node_modules
 COPY --from=admin-build --chown=node:node /build/admin-panel/dist /app/admin-panel/dist
+# Owned by node so a named volume mounted here starts writable
+# (UPLOAD_STORAGE=local only).
+RUN mkdir -p /app/backend/uploads && chown node:node /app/backend/uploads
 USER node
 EXPOSE 3000
 CMD ["node", "dist/server.js"]

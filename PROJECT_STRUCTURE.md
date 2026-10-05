@@ -40,15 +40,15 @@ SSS tabanlı otomatik yanıt, analitik, denetim kaydı ve AI asistan.
 │  ├ auth             ├ /widget  (ziyaretçi)  ├ autoAssignment │
 │  ├ conversations    └ /admin   (temsilci)   ├ businessHours  │
 │  ├ analytics                                ├ escalation     │
-│  ├ ai                                       ├ automationEngine│
+│  ├ assistant, billing                       ├ automationEngine│
 │  └ … (82 uç nokta)                          ├ proactiveEngine│
 │                                             ├ auditService   │
-│                                             └ aiService      │
+│                                             └ assistant/     │
 └───────────┬──────────────────────────┬───────────────┬───────┘
             │                          │               │
             ▼                          ▼               ▼
-     PostgreSQL 16              AWS S3            vLLM (llm)
-     (29 tablo)             (logo + dosya)      (yerel model, ops.)
+     PostgreSQL 16 + Redis 7    S3 uyumlu depo     Google Gemini
+     (veri + yayın)         (logo + dosya)      (yapay zekâ asistanı, ops.)
             ▲
             │ REST + Socket.IO /admin
 ┌───────────┴──────────────────────────┐
@@ -56,7 +56,9 @@ SSS tabanlı otomatik yanıt, analitik, denetim kaydı ve AI asistan.
 └──────────────────────────────────────┘
 ```
 
-**Cache:** Projede Redis yoktur. Kısa ömürlü GET önbelleği tarayıcı tarafında
+**Redis:** Socket.IO'nun süreçler arası yayını, hız sınırları, varlık bilgisi ve
+asistanın dakika/gün bütçeleri Redis'te tutulur; kalıcı veri yoktur (mesajlar
+PostgreSQL'de). **Cache:** kısa ömürlü GET önbelleği tarayıcı tarafında
 `admin-panel/src/services/api.js` içindeki `Map` ile tutulur. Source of truth her
 zaman PostgreSQL'dir.
 
@@ -83,16 +85,17 @@ support_chat_app/
 │
 ├── backend/                    Express API + Socket.IO
 │   ├── src/
-│   │   ├── config/database.js  Bağlantı açma + şema uygulama
+│   │   ├── config/database.ts  Bağlantı açma + migration'lar
 │   │   ├── db/                 Şema, ORM çalışma zamanı, elle yazılmış SQL
 │   │   ├── events/             Süreç içi olay yayını (EventEmitter)
 │   │   ├── middleware/         Kimlik, yetki, dosya yükleme
 │   │   ├── models/             19 model tanımı
 │   │   ├── routes/             REST uç noktaları
 │   │   ├── services/           İş mantığı ve motorlar
-│   │   │   └── ai/             AI sağlayıcı soyutlaması
+│   │   │   ├── assistant/      Yapay zekâ asistanı (Gemini)
+│   │   │   └── mail/           E-posta servisi ve şablonları
 │   │   ├── socket/             Gerçek zamanlı olay işleyicileri
-│   │   └── server.js           Uygulama girişi
+│   │   └── server.ts           Uygulama girişi
 │   ├── public/widget.js        Gömülebilir widget
 │   ├── tests/                  Uçtan uca ve birim testler
 │   └── Dockerfile
@@ -116,8 +119,8 @@ support_chat_app/
 | `backend/src/db/` | Şema (`schema.sql`), Mongoose benzeri ORM (`model.js`), bağlantı havuzu, elle yazılmış toplama sorguları, demo veri üreteci |
 | `backend/src/models/` | Her dosya bir tabloyu ORM'e tanıtır: alan → kolon eşlemesi, enum, varsayılan, ilişki, alt tablo |
 | `backend/src/routes/` | HTTP uç noktaları. Her biri kimlik doğrulama + kiracı kapsamı + doğrulama yapar |
-| `backend/src/services/` | Rotalardan bağımsız iş mantığı: atama, SLA, kural motorları, denetim, AI |
-| `backend/src/services/ai/` | Sağlayıcı soyutlaması. API anahtarı yalnızca burada bulunur |
+| `backend/src/services/` | Rotalardan bağımsız iş mantığı: atama, SLA, kural motorları, denetim, plan limitleri, faturalandırma |
+| `backend/src/services/assistant/` | Yapay zekâ asistanı. Gemini anahtarı yalnızca sunucu ortamındadır; panele, widget'a ve loglara gitmez |
 | `backend/src/socket/` | Widget ve admin namespace'lerinin tüm gerçek zamanlı akışı |
 | `backend/tests/` | Çalışan sunucuya ve gerçek veritabanına karşı koşan testler |
 | `admin-panel/src/pages/` | Her dosya bir rotaya bağlıdır; bağlı olmayan sayfa yoktur |
@@ -129,7 +132,7 @@ support_chat_app/
 
 | Dosya | Görevi |
 | --- | --- |
-| `backend/src/server.js` | Express kurulumu, CORS, güvenlik başlıkları, hız sınırı, rota bağlama, Socket.IO ve kural motorlarının başlatılması |
+| `backend/src/server.ts` | Express kurulumu, CORS, güvenlik başlıkları, hız sınırı, rota bağlama, Socket.IO ve kural motorlarının başlatılması |
 | `backend/src/db/model.js` | Model tanımlarını gerçek SQL'e çeviren çalışma zamanı (1441 satır): filtre → WHERE, alt dizi → JOIN, `populate` → toplu sorgu |
 | `backend/src/db/schema.sql` | Tüm DDL. Her ifade tekrar çalıştırılabilir (idempotent) |
 | `backend/src/db/queries.js` | Satır başına sorgu üretecek erişimlerin tek geçişe indirildiği elle yazılmış SQL |
@@ -398,39 +401,35 @@ aksiyonlarını çalıştırır.
 
 ---
 
-## 16. AI
+## 16. Yapay zekâ asistanı
 
-Model: **Trendyol Asure 12B**, eğitilmeden, kendi GPU'muzda tek vLLM konteynerinde
-4 bit çalışır (`llm` servisi, `ai` Compose profili). Dış bir yapay zekâ API'si
-yoktur; model yoksa konuşma temsilciye gider. Kurulum ve mağaza sözleşmesi:
-`ai/README.md`.
+Sağlayıcı yalnızca **Google Gemini** (`gemini-3.5-flash-lite`, ücretsiz katman).
+Anahtar backend ortamında `GEMINI_API_KEY` olarak durur; panele, widget'a,
+Git'e ve loglara yazılmaz. Anahtar yoksa asistan kapalıdır, canlı destek aynen
+çalışır. Müşteriye sağlayıcı ya da model adı gösterilmez.
 
 ```
-routes/ai.ts ──► services/aiService.ts ──┐        (temsilci asistanı)
-socket widget ─► services/ai/autoReply.ts ┤        (otomatik yanıt)
-                                          ▼
-            prompts.ts · knowledge.ts · replyPolicy.ts
-                                          ▼
-                     services/ai/index.ts ─► VllmProvider | DisabledProvider
+socket widget ─► services/assistant/index.ts ─► policy.ts (devir kuralları)
+                                              ├► privacy.ts (maskeleme, kart/IBAN/TC)
+                                              ├► knowledge.ts (sitenin herkese açık SSS'si)
+                                              └► gemini.ts (çağrı, bütçe, devre kesici)
 ```
 
-**Site modları** (`sites.ai_settings.mode`): `off` (SSS botu bugünkü gibi),
-`copilot` (temsilciye özet, taslak, ton, çeviri, analiz, bilgi bankası),
-`auto` (asistan müşteriye kendisi yanıt verir; SSS botu kapanır).
+**Akış:** 800 ms birleştirme → kod ön kontrolü (temsilci isteği, hassas veri,
+konuşma başına yanıt sınırı, SSS yokluğu; model çağrılmaz) → planın aylık
+yanıt hakkı → JSON şemalı model çağrısı → cevap verilen SSS kayıtlarından
+birini kaynak göstermiyorsa gönderilmez → satır kilitli kısa transaction ile
+teslim. Temsilci yazdığında ya da "Devral" dediğinde asistan susar. Her hata
+ve kota durumunda konuşma beklemeden ekibe geçer.
 
-**Otomatik yanıt:** 800 ms birleştirme → kod ön kontrolü (temsilci isteği, kart/
-IBAN/TC no, uzunluk, yanıt sınırı, engelli kelime; model çağrılmaz) → SSS
-getirme → JSON şemalı model çağrısı → son kontrol (kaynakta olmayan sayı/tarih/
-link, eylem iddiası, biçim, uzunluk) → satır kilitli kısa transaction ile
-teslim. Devralma, konu kapanması, mod değişimi veya yeni mesaj varsa cevap
-atılır. Her hata hazır metinle devre dönüşür.
+**Planlar** (`domain/plans.ts`): aylık yanıt (50 / 1.000 / 5.000), konuşma
+başına yanıt (3 / 6 / 12), soru başına okunan SSS ve yanıt uzunluğu.
+Yanıt sayısı `organization_usage_monthly.assistant_replies` ile atomik sayılır.
 
-**Sipariş:** yalnız `userHash` doğrulanmış müşteri için, mağazanın servisine
-imzalı, SSRF korumalı istek; ikinci model çağrısı yalnız temizlenmiş veriyle.
-
-**Güvenlik:** model portu canlıda kapalı; AI uçları gelen kutusunun site/rol
-kuralını kullanır; prompt, cevap ve sipariş verisi loglanmaz; entegrasyon
-anahtarları AES-256-GCM ile mühürlü tutulur ve hiçbir yanıtta dönmez.
+**Gizlilik:** Gemini'ye yalnızca maskelenmiş soru ve sitenin herkese açık SSS
+kayıtları gider; ziyaretçinin adı, e-postası ve geçmiş mesajları gitmez.
+Panel: **Yapay Zekâ Asistanı** sayfası (site başına aç/kapat, son 30 gün,
+devir nedenleri).
 
 ## 17. Bilgi Tabanı
 
@@ -440,7 +439,7 @@ sayacı.
 
 Arama, PostgreSQL `tsvector` üretilmiş kolonu üzerinden yapılır (`simple`
 sözlüğü — içerik Türkçedir ve İngilizce köklerle bozulmamalıdır). Aynı içerik
-hem widget'ın otomatik yanıtını hem AI'ın `knowledgeAnswer` görevini besler.
+hem widget'ın anahtar kelime yanıtını hem yapay zekâ asistanının kaynaklarını besler.
 
 ---
 
@@ -531,7 +530,9 @@ Görünüm (renk, konum, marka, karşılama metni, ön-sohbet formu) panelden
 | `DB_POOL_MAX` | hayır | Varsayılan 10 |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `S3_BUCKET` | dosya yükleme için | Logo ve sohbet eki depolama |
 | `S3_ACL` | hayır | Yalnızca ACL açık bucket'larda |
-| `AI_*` | hayır | Yerel model ayarları; kök `.env` dosyasından gelir (bkz. `ai/README.md`) |
+| `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_RPM`, `GEMINI_RPD` | hayır | Yapay zekâ asistanı; anahtar yoksa asistan kapalı |
+| `BILLING_ENABLED`, `PADDLE_*` | hayır | Paddle faturalandırma; `BILLING_ENABLED=true` ise diğerleri zorunlu |
+| `MAIL_PROVIDER`, `MAIL_FROM`, `SMTP_*` | canlıda evet | E-posta; geliştirmede `console` |
 | `WIDGET_URL` / `ADMIN_URL` | hayır | Bilgilendirme amaçlı |
 
 \* `DATABASE_URL` **veya** `DB_*` grubundan biri zorunludur.
@@ -622,7 +623,9 @@ Testler Node'un yerleşik koşucusunu kullanır (ek bağımlılık yok):
 | `tests/agentPerformance.e2e.test.js` | Gerçek satırlardan türeyen metrikler, veri yokken `null`, aralık doğrulaması |
 | `tests/ai.e2e.test.js` | Her AI görevinde kiracı izolasyonu, doğrulama, danışma sınırı (öneri müşteriye gitmez) |
 | `tests/ai.provider.test.ts` | Hata çevirisi, JSON ayrıştırma, çıktı sınırlama, döküm penceresi, SSS getirme |
-| `tests/ai.vllm.test.ts` | vLLM sağlayıcısı, yerel sahte sunucuya karşı: hata kodları, zaman aşımı, eşzamanlılık |
+| `tests/assistant.e2e.test.ts` | Yapay zekâ asistanı, sahte Gemini sunucusuna karşı: gizlilik, devir yolları, kota, plan hakkı |
+| `tests/billing.e2e.test.ts` | Paddle webhook: imza, tekrar, sıra, sahte referans, iptal/past_due |
+| `tests/operations.e2e.test.ts` | `/health`, `/ready`, canlı ortam açılış denetimi |
 | `tests/ai.policy.test.ts` | Ön ve son kontrol kuralları |
 | `tests/ai.autoreply.e2e.test.ts` | Otomatik yanıt, devir, devralma, sipariş akışı (test sürecinde soket sunucusu) |
 | `tests/orderLookup.test.ts` | İmza, SSRF, zaman aşımı, boyut sınırı, alan temizleme |
@@ -689,11 +692,11 @@ tanım gerekir; bugünkü depo bunu içermez (bkz. bölüm 28).
 Üretim yaklaşımı:
 
 1. `cd admin-panel && npm run build` → statik `dist/`
-2. Backend `dist/`i zaten servis eder (`server.js` içinde `express.static`) ve
+2. Backend `dist/`i zaten servis eder (`server.ts` içinde `express.static`) ve
    SPA geri dönüşü yapar
 3. `NODE_ENV=production`, `npm start` (nodemon değil)
 4. `JWT_SECRET` ve veritabanı bilgileri ortamdan; `.env` imaja konulmaz
-5. `server.js` içindeki `allowedOrigins` listesine üretim alan adı eklenmelidir
+5. `CORS_ORIGINS` değişkenine üretim alan adı yazılmalıdır
 6. `app.set('trust proxy', 1)` zaten ayarlı (Cloudflare/ters vekil arkasında
    gerçek IP için)
 
@@ -712,7 +715,7 @@ Bunlar bilinçli olarak açık bırakılmıştır, gizlenmemiştir:
 | **Global arama** | Konuşma listesi içinde filtreleme var; konuşma + müşteri + ticket + makale üzerinde birleşik arama yok |
 | **Üretim Docker tanımı** | Yalnızca geliştirme yığını mevcut |
 | **Redis / kuyruk** | Kullanılmıyor. Tek sunucu için gerekmiyor; yatay ölçeklemede Socket.IO adaptörü gerekecek |
-| **AI canlı testi** | Gerçek model yalnız GPU olan makinede `npm run ai:bench` ile sınanır |
+| **Asistan canlı testi** | Gerçek Gemini anahtarıyla elle; testler sahte sunucu kullanır, ücretli katman açılmaz |
 
 ---
 
@@ -727,8 +730,8 @@ Bunlar bilinçli olarak açık bırakılmıştır, gizlenmemiştir:
 | `EADDRINUSE :::5000` | Port kullanımda. `PORT` değiştirin veya `BACKEND_PORT` ile Docker portunu kaydırın |
 | Docker'da `Cannot find module 'pg'` | `backend_node_modules` volume'u eski. Bölüm 26'daki volume yenileme adımlarını uygulayın |
 | Vekil üzerinden API 404 | `Caddyfile` içinde `handle_path` kullanılmış olabilir; ön eki soyar. `handle /api/*` olmalı |
-| CORS hatası | `server.js` içindeki `allowedOrigins` listesine panel adresi eklenmemiş |
-| AI düğmeleri görünmüyor | Model kapalı/yükleniyor veya `AI_ENABLED=false`. `GET /api/ai/status` durumu söyler |
+| CORS hatası | `CORS_ORIGINS` değişkeninde panel adresi yok |
+| Asistan açılamıyor | Sunucuda `GEMINI_API_KEY` yok. `GET /api/assistant/status` durumu söyler |
 | `AccessControlListNotSupported` (S3) | Bucket "owner enforced" modunda. `S3_ACL` tanımlı olmamalı |
 | Analitikte her şey sıfır | Demo veri yok. `npm run db:seed` çalıştırın |
 | Testler `register failed` diyor | Backend çalışmıyor. Testler ayrı terminalde çalışan sunucuya karşı koşar |

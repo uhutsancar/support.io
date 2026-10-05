@@ -85,17 +85,30 @@ to sit inside a handler:
 | `faqAutoResponse.ts` | answering from the FAQ before an agent arrives |
 | `auditService.ts` | the audit trail, generated from one table of events |
 | `identity.ts` | verifying the `userHash` a shop signs a signed-in customer with |
-| `orderLookup.ts` | the signed, SSRF-guarded call to a shop's order service |
-| `aiService.ts` | the agent copilot: summary, draft, tone, translation, analysis, knowledge answer |
-| `ai/` | the self-hosted model: `vllmProvider` (the only backend, with the per-process concurrency limit), `prompts` (every instruction, versioned), `knowledge` (FAQ retrieval), `replyPolicy` (the rules checked in code before and after the model), `autoReply` (the widget's automatic answer, handoff and take-over) |
+| `entitlements.ts` | what the plan allows: sites, seats, the monthly conversation quota and the assistant's monthly answers, each checked under a lock or by a conditional UPSERT so concurrent requests cannot pass a limit |
+| `billing.ts` | Paddle: verifying a webhook, applying each event exactly once and in order, and writing the plan the subscription gives to `organizations.plan_type` (with a PLAN_CHANGED audit row) |
+| `mail/` | e-mail (SMTP or the development console outbox) and its templates: verification, password reset, invitations, quota warning |
+| `assistant/` | the AI assistant (Google Gemini): `gemini` (the API call, budgets and circuit breaker), `knowledge` (the site's public FAQ entries for a question), `privacy` (masking, and refusing card/IBAN/ID numbers), `policy` (handoff rules), `index` (debounce, compose, deliver, hand over, take over) |
 
-**The assistant.** A site in `auto` mode is answered by the model inside the
-process that received the visitor's message — no queue. `composeReply()` is the
-pure decision (pre-check → model → policy → optional order lookup); `answer()`
-gathers its inputs and `deliver()` writes the reply in a short transaction that
-re-checks, under a row lock, that nobody took the conversation over in the
-meantime. `conversations.response_owner` says who answers now, independent of
-who the conversation is assigned to. Setup and the shop contract: `ai/README.md`.
+**The assistant.** A site with the assistant on is answered in the process
+that received the visitor's message — no queue. `compose()` is the decision:
+a request for a person, sensitive data, the per-conversation limit or no FAQ
+hand over at once; otherwise Gemini is asked for a short Turkish answer that
+must cite one of the FAQ entries it was given, or it is not sent. The plan in
+force sets how many answers a month, per conversation, and how much FAQ it
+reads (`domain/plans.ts`). `deliver()` writes the reply in a short
+transaction that re-checks, under a row lock, that nobody took the
+conversation over meanwhile. `conversations.response_owner` says who answers
+now, independent of who the conversation is assigned to. Only the question
+(masked) and the FAQ entries leave the server — never the visitor's name,
+e-mail or earlier messages.
+
+**Plans and billing.** `domain/plans.ts` is the only place the plan numbers
+are written; the server enforces them and the pricing page reads them from
+`GET /api/plans`. With a Paddle subscription, the plan in force is derived
+from it and the clock (`domain/subscription.ts`: canceled keeps the plan
+until the paid period ends, past_due for a grace period); an hourly sweep
+writes time-driven changes back.
 
 ### `http/` — the HTTP kernel
 

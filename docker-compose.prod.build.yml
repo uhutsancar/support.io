@@ -1,0 +1,14 @@
+# Local production simulation: builds the image here instead of pulling it.
+#
+#   APP_IMAGE=supportio:local docker compose --env-file .env.production \
+#     -f docker-compose.prod.yml -f docker-compose.prod.build.yml up -d --build
+#
+# Never on the production server (plan §23: no `build:` on the VPS).
+services:
+  backend:
+    image: ${APP_IMAGE:-supportio:local}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.prod
+      args:
+        VITE_SUPPORT_SITE_KEY: ${VITE_SUPPORT_SITE_KEY:-}

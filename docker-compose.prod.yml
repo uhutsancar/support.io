@@ -1,3 +1,20 @@
+# Production stack (plan §13.4): Cloudflare -> Caddy :443 -> backend:3000,
+# PostgreSQL and Redis reachable only on the Docker network.
+#
+# The backend runs a prebuilt image named by APP_IMAGE
+# (ghcr.io/<owner>/supportio:sha-xxxxxxx, built by .github/workflows/release.yml).
+# Nothing is built on the server; scripts/deploy.sh switches APP_IMAGE,
+# runs the migrations once and restarts. For a local production simulation
+# add docker-compose.prod.build.yml, which builds the image here.
+#
+# Never add `ports:` to postgres or redis: published ports bypass UFW.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -13,29 +30,35 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    logging: *logging
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory ${REDIS_MAXMEMORY:-512mb} --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_prod_data:/data
+    # Redis carries only the Socket.IO adapter, rate limits, presence and short
+    # budgets; every message lives in PostgreSQL. Nothing here needs to
+    # survive a restart, so persistence is off and there is no volume. If
+    # durable data is ever put in Redis, revisit this (and the runbook).
+    command: >-
+      redis-server --appendonly no --save ""
+      --maxmemory ${REDIS_MAXMEMORY:-256mb} --maxmemory-policy volatile-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 10
+    logging: *logging
 
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile.prod
-      args:
-        VITE_API_URL: ""
+    image: ${APP_IMAGE:?APP_IMAGE is required, e.g. ghcr.io/uhutsancar/supportio:sha-0000000}
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
+      # Migrations run once per deploy (scripts/deploy.sh), not on every boot.
+      MIGRATE_ON_BOOT: "false"
+      APP_BASE_URL: https://${APP_DOMAIN:?APP_DOMAIN is required}
+      CORS_ORIGINS: https://${APP_DOMAIN}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-supportchat}
@@ -46,37 +69,49 @@ services:
       DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-15000}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      CORS_ORIGINS: https://${APP_DOMAIN:?APP_DOMAIN is required}
-      # Oturum httpOnly cerezde. Panel ile API ayni alan adinda (Caddy) oldugu
-      # icin varsayilanlar dogru: SameSite=Lax, uretimde Secure. Panel baska
-      # bir alan adindan sunulursa COOKIE_SAMESITE=none verin (Secure zorunlu
-      # olur) ve CSRF cift gonderimi yine korumaya devam eder.
+      # Session cookie: panel and API share the origin, so Lax + Secure.
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
       SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}
-      # Hesap basina basarisiz giris siniri (15 dakikalik pencere).
       ACCOUNT_LOCK_MAX: ${ACCOUNT_LOCK_MAX:-10}
+      API_RATE_MAX: ${API_RATE_MAX:-3000}
+      AUTH_RATE_MAX: ${AUTH_RATE_MAX:-100}
+      SHUTDOWN_GRACE_MS: ${SHUTDOWN_GRACE_MS:-10000}
+      # E-mail (verification, password reset, invitations, quota warnings).
+      MAIL_PROVIDER: ${MAIL_PROVIDER:-smtp}
+      MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      # File uploads: S3-compatible storage (AWS S3, Cloudflare R2, Hetzner).
+      UPLOAD_STORAGE: ${UPLOAD_STORAGE:-s3}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+      S3_ACL: ${S3_ACL:-}
+      AWS_REGION: ${AWS_REGION:-}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_REGION: ${AWS_REGION:-}
-      S3_BUCKET: ${S3_BUCKET:-}
-      S3_ACL: ${S3_ACL:-}
-      # FAQ assistant (Gemini). Empty key: the assistant is off, chat is not.
+      # AI assistant. Empty key: the assistant is off, live chat is not.
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
       GEMINI_RPM: ${GEMINI_RPM:-10}
       GEMINI_RPD: ${GEMINI_RPD:-900}
+      # Paddle. The boot check refuses BILLING_ENABLED=true without the rest.
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       PADDLE_ENV: ${PADDLE_ENV:-sandbox}
       PADDLE_API_KEY: ${PADDLE_API_KEY:-}
       PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET:-}
       PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN:-}
       PADDLE_PRICE_PRO: ${PADDLE_PRICE_PRO:-}
-      PADDLE_PRICE_ENTERPRISE: ${PADDLE_PRICE_ENTERPRISE:-}
       PADDLE_PRICE_PRO_YEARLY: ${PADDLE_PRICE_PRO_YEARLY:-}
+      PADDLE_PRICE_ENTERPRISE: ${PADDLE_PRICE_ENTERPRISE:-}
       PADDLE_PRICE_ENTERPRISE_YEARLY: ${PADDLE_PRICE_ENTERPRISE_YEARLY:-}
       BILLING_PAST_DUE_GRACE_DAYS: ${BILLING_PAST_DUE_GRACE_DAYS:-7}
-      API_RATE_MAX: ${API_RATE_MAX:-3000}
-      AUTH_RATE_MAX: ${AUTH_RATE_MAX:-100}
+    volumes:
+      # Used only with UPLOAD_STORAGE=local (plan §12, decision B); then it
+      # must be in the backups too.
+      - uploads_data:/app/backend/uploads
     expose:
       - "3000"
     depends_on:
@@ -90,6 +125,8 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    stop_grace_period: 15s
+    logging: *logging
 
   proxy:
     image: caddy:2-alpine
@@ -107,9 +144,10 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    logging: *logging
 
 volumes:
   postgres_prod_data:
-  redis_prod_data:
+  uploads_data:
   caddy_data:
   caddy_config:
