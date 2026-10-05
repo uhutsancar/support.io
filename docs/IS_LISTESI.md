@@ -6,7 +6,7 @@ hangi commit'te yapıldığı yazılır. `[ ]` bekliyor · `[~]` yarım · `[x]`
 `[!]` kullanıcı adımı gerekiyor (sunucu, DNS, ödeme hesabı gibi dış dünya).
 
 Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
-`feat/production-saas` dalında.
+`feat/production-saas` dalında. Push ve main'e birleştirme sizin onayınızla yapılır.
 
 ## A. Plan (8) — production SaaS
 
@@ -24,13 +24,13 @@ Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
 | 10 | Plan limitleri + aylık konuşma kotası | [x] | eee0d93 |
 | 11 | Paddle sandbox: webhook, abonelik, plan geçişleri (backend) | [x] | d66ad81 |
 | 11b | Paddle: panelde Faturalandırma + ödeme sayfası | [x] | 18a6de7 |
-| 12 | `/health` + `/ready`, env fail-fast, graceful shutdown, upload kararı | [ ] | |
-| 13 | CI (GitHub Actions) + release (GHCR) | [ ] | |
-| 14 | Prod compose, Caddy, deploy/rollback/backup/restore script'leri | [ ] | |
-| 15 | VPS + Cloudflare kurulum adımları (runbook) | [!] | |
-| 16 | Staging + kabul testleri | [!] | |
+| 12 | `/health` + `/ready`, env fail-fast, graceful shutdown, upload kararı (A: S3 uyumlu depo) | [x] | a763cd5 |
+| 13 | CI (GitHub Actions) + release (GHCR) — dosyalar hazır, ilk çalıştırma push sonrası | [x] | 424bc92, dce2f92 |
+| 14 | Prod compose, Caddy, deploy/rollback/backup/restore script'leri | [x] | 0d584de |
+| 15 | VPS + Cloudflare kurulum adımları — runbook yazıldı (docs/production-runbook.md); sunucu, alan adı, Cloudflare hesabı sizde | [!] | 0d584de |
+| 16 | Staging + kabul testleri — runbook'ta adımlar var; sunucu gerekiyor | [!] | |
 | 17–18 | Kapalı beta, ücretli lansman | [!] | |
-| P2 | Yapılandırılmış log, KVKK dışa aktarma/silme, IP saklama süresi, Gizlilik/Şartlar sayfaları | [ ] | |
+| P2 | Yapılandırılmış log, KVKK dışa aktarma, IP saklama süresi (90 gün), Gizlilik/Şartlar sayfaları | [x] | 342b942 |
 
 ## B. Plan (9) — Yapay zekâ asistanı (Gemini)
 
@@ -65,3 +65,20 @@ Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
 | Özellik sayfalarındaki "Teknik not" bölümleri ve teknik anlatımlar kalksın | [x] | 09a0508 |
 | Logo her yerde aynı ve düzgün olsun | [x] | 09a0508 |
 | Tüm sayfalar gözden geçirilsin: gereksiz bilgi yok, rakipler gibi satışa yönelik metin | [x] | 09a0508 ve sonrası |
+
+## D. Sizin yapmanız gerekenler (dış dünya)
+
+Kod tarafı hazır; aşağıdakiler hesap, ödeme veya karar gerektirdiği için
+yapılmadı ve "bitti" sayılmadı. Ayrıntılı adımlar: `docs/production-runbook.md`.
+
+1. Dalı GitHub'a push edip CI'ın yeşil yandığını görmek; `main`'e birleştirmek
+   (release iş akışı imajı GHCR'a o zaman koyar).
+2. VPS kiralamak (Ubuntu 24.04, 2 vCPU / 4 GB), alan adını Cloudflare'e almak.
+3. `.env.production` doldurmak: SMTP sağlayıcısı, S3/R2 bucket, güçlü
+   `JWT_SECRET` ve `DB_PASSWORD`, (isterseniz) `GEMINI_API_KEY`.
+4. Yedekler için off-site bucket + `rclone` + `age` anahtarı; ayda bir geri
+   yükleme testi.
+5. Paddle sandbox hesabı: ürün/fiyatlar (Pro 490 TL, Kurumsal 1.449 TL; aylık
+   ve yıllık), API anahtarı, client token, webhook adresi; sandbox kabul testi.
+6. Gizlilik Politikası ve Kullanım Şartları metinlerini bir hukukçuya
+   kontrol ettirmek (alt işleyenlerin adlarının yazılması gerekebilir).
