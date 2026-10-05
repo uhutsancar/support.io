@@ -36,6 +36,7 @@ import proactiveRulesRoutes from './routes/proactiveRules';
 import eventsRoutes from './routes/events';
 import analyticsRoutes from './routes/analytics';
 import assistantRoutes from './routes/assistant';
+import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper } from './services/slaSweeper';
@@ -180,6 +181,10 @@ app.set('io', io);
 // Hiz sinirlari surec disinda (Redis) tutulur ve kimligi dogrulanmis
 // istekleri kullaniciya gore sayar; ayrintilar icin middleware/rateLimit.js.
 
+// Paddle's webhook is signed over the exact bytes it sent, so it is mounted
+// before the JSON parser, the sanitizer and the API rate limit (routes/billing.ts).
+app.use('/api/billing/paddle/webhook', billingWebhookRoutes);
+
 // Oturum httpOnly cerezde tasinir; auth ara katmani onu buradan okur.
 app.use(cookieParser());
 app.use(express.json({ limit: process.env.REQUEST_BODY_LIMIT || '2mb' }));
@@ -215,6 +220,7 @@ app.use('/api/proactive-rules', proactiveRulesRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/billing', billingRoutes);
 
 app.use('/api/audit', auditRoutes);
 

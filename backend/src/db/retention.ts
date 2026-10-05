@@ -5,6 +5,7 @@
 // periodic sweep.
 import { query } from './pool';
 import { errorText } from '../http/errors';
+import { reconcileSubscriptions } from '../services/billing';
 
 const RETENTION_DAYS = 30;
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
@@ -21,6 +22,13 @@ async function sweepOnce() {
     await query(`DELETE FROM auth_tokens WHERE expires_at < now() - interval '7 days'`);
   } catch (error) {
     console.error('Retention sweep failed for auth_tokens:', errorText(error));
+  }
+  try {
+    // A paid period that ended after cancellation, or a payment grace period
+    // that ran out, changes the plan with no webhook; write it down.
+    await reconcileSubscriptions();
+  } catch (error) {
+    console.error('Subscription reconciliation failed:', errorText(error));
   }
   for (const target of TARGETS) {
     try {

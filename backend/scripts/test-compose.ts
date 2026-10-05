@@ -13,23 +13,29 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 
-// Compose yayinlanan portu .env'deki BACKEND_PORT'tan alir; burada da ayni
-// dosyayi okuyoruz, yoksa testler yigin baska bir porttaysa bos adrese gider.
-function backendPort(): string {
-  if (process.env.BACKEND_PORT) return process.env.BACKEND_PORT;
+// Compose yayinlanan portu ve Paddle degerlerini kok .env'den alir; burada da
+// ayni dosyayi okuyoruz, yoksa testler yigin baska bir porttaysa bos adrese
+// gider ya da webhook'lari backend'in bilmedigi bir anahtarla imzalar.
+function rootEnv(name: string): string | undefined {
+  if (process.env[name]) return process.env[name];
   const envFile = path.join(__dirname, '../../.env');
   const line = fs.existsSync(envFile)
     ? fs
         .readFileSync(envFile, 'utf8')
         .split(/\r?\n/)
-        .find((l) => l.startsWith('BACKEND_PORT='))
+        .find((l) => l.startsWith(`${name}=`))
     : undefined;
-  return line ? line.slice('BACKEND_PORT='.length).trim() : '5000';
+  return line ? line.slice(name.length + 1).trim() : undefined;
 }
 
+// The Paddle defaults are the ones docker-compose.yml gives the backend when
+// the root .env sets none.
 const defaults = {
   DATABASE_URL: 'postgresql://support_user:supportchat@localhost:5433/supportchat',
-  E2E_BASE_URL: `http://localhost:${backendPort()}`
+  E2E_BASE_URL: `http://localhost:${rootEnv('BACKEND_PORT') || '5000'}`,
+  PADDLE_WEBHOOK_SECRET: rootEnv('PADDLE_WEBHOOK_SECRET') || 'local-dev-paddle-webhook-secret',
+  PADDLE_PRICE_PRO: rootEnv('PADDLE_PRICE_PRO') || 'pri_local_pro',
+  PADDLE_PRICE_ENTERPRISE: rootEnv('PADDLE_PRICE_ENTERPRISE') || 'pri_local_enterprise'
 };
 
 for (const [key, value] of Object.entries(defaults)) {

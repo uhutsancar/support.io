@@ -1030,7 +1030,7 @@ export default {
         points: [
           'Singleton runtime: adding the script twice never creates a second widget',
           'SPA navigation is tracked; the socket and open conversation survive',
-          'Version pinning: /widget/v3/widget.js is cached as immutable',
+          'Version pinning: /widget/v4/widget.js is cached as immutable',
           'No third-party domain is contacted, not even for the Socket.IO client'
         ]
       },
@@ -1905,7 +1905,7 @@ export default {
         },
         {
           q: 'Will an update change my site?',
-          a: '/widget.js always serves the latest release. To pin the version, change the address to /widget/v3/widget.js.'
+          a: '/widget.js always serves the latest release. To pin the version, change the address to /widget/v4/widget.js.'
         }
       ],
       still: 'Stuck? Write to us from the bubble in the corner and we will set it up together.'

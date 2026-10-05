@@ -2,11 +2,11 @@
 //   npx tsx scripts/updatePlan.ts <email> [FREE|PRO|ENTERPRISE]
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
-import { pool } from '../src/db/pool';
+import { pool, query } from '../src/db/pool';
+import { generateId } from '../src/db/objectId';
 import User from '../src/models/User';
 import Organization from '../src/models/Organization';
 import { PLAN_TYPES, isPlanType } from '../src/domain';
-
 
 async function updatePlan() {
   const email = (process.argv[2] || '').toLowerCase().trim();
@@ -44,9 +44,41 @@ async function updatePlan() {
     return;
   }
 
+  // A Paddle subscription decides the plan while it exists
+  // (services/entitlements.ts#getPlan); a hand-set value would not hold.
+  const { rows } = await query<{ status: string }>(
+    'SELECT status FROM subscriptions WHERE organization_id = $1',
+    [org._id]
+  );
+  if (rows[0]) {
+    console.warn(
+      `Warning: this organization has a Paddle subscription (${rows[0].status}); it takes precedence over this change.`
+    );
+  }
+
+  const from = org.planType;
+  if (from === plan) {
+    console.log(`Organization "${org.name}" is already on ${plan}`);
+    return;
+  }
   org.planType = plan;
   await org.save();
-  console.log(`Organization "${org.name}" set to ${plan} for ${email}`);
+  // The same audit row billing writes, so the trail shows hand changes too.
+  await query(
+    `INSERT INTO audit_logs (id, organization_id, user_id, action, entity_type, entity_id, metadata)
+     VALUES ($1, $2, NULL, 'PLAN_CHANGED', 'organization', $2, $3)`,
+    [
+      generateId(),
+      org._id,
+      JSON.stringify({
+        from,
+        to: plan,
+        source: 'script',
+        operator: process.env.USER || process.env.USERNAME || null
+      })
+    ]
+  );
+  console.log(`Organization "${org.name}" set to ${plan} for ${email} (was ${from})`);
 }
 
 updatePlan()

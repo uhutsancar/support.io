@@ -8,6 +8,8 @@
 
 import { getPool, query } from '../db/pool';
 import { PLAN_LIMITS, planIncludes } from '../domain/plans';
+import { effectivePlan, isSubscriptionStatus } from '../domain/subscription';
+import { billingConfig } from '../config/billing';
 import { isPlanType } from '../domain';
 import { asyncMiddleware } from '../http/asyncHandler';
 import { HttpError, forbidden } from '../http/errors';
@@ -33,12 +35,11 @@ async function rows<R extends QueryResultRow>(
 /** A limit of the plan was reached; the panel shows the upgrade path. */
 export class PlanLimitError extends HttpError {
   constructor(resource: 'sites' | 'agents' | 'conversations', limit: number, used: number) {
-    super(
-      403,
-      `Your plan allows ${limit} ${resource}; upgrade to add more`,
-      'PLAN_LIMIT_REACHED',
-      { resource, limit, used }
-    );
+    super(403, `Your plan allows ${limit} ${resource}; upgrade to add more`, 'PLAN_LIMIT_REACHED', {
+      resource,
+      limit,
+      used
+    });
   }
 }
 
@@ -49,11 +50,7 @@ export class PlanLimitError extends HttpError {
  */
 export class ConversationQuotaError extends HttpError {
   constructor() {
-    super(
-      403,
-      'We cannot take new messages right now, please try again later',
-      'QUOTA_EXCEEDED'
-    );
+    super(403, 'We cannot take new messages right now, please try again later', 'QUOTA_EXCEEDED');
   }
 }
 
@@ -71,17 +68,44 @@ export function currentPeriod(at: Date = new Date()): string {
 }
 
 /**
- * The plan in force for an organization. Billing writes it to
- * organizations.plan_type (services/billing.ts), and so does the beta
- * script (scripts/updatePlan.ts); an unknown value counts as FREE.
+ * The plan in force for an organization.
+ *
+ * With a Paddle subscription, the subscription decides — and it decides by
+ * the clock as well as by webhooks: a cancelled plan lasts until its paid
+ * period ends, a failed payment keeps it for the grace period
+ * (domain/subscription.ts). Without one, organizations.plan_type does: the
+ * free default, or a plan set by scripts/updatePlan.ts during the beta.
+ * An unknown value counts as FREE.
  */
 export async function getPlan(organizationId: string, client?: Runner | null): Promise<PlanType> {
-  const [row] = await rows<{ plan_type: string }>(
+  const [row] = await rows<{
+    plan_type: string;
+    sub_plan: string | null;
+    status: string | null;
+    current_period_end: Date | null;
+    past_due_since: Date | null;
+  }>(
     client,
-    'SELECT plan_type FROM organizations WHERE id = $1',
+    `SELECT o.plan_type, s.plan_type AS sub_plan, s.status, s.current_period_end, s.past_due_since
+       FROM organizations o
+       LEFT JOIN subscriptions s ON s.organization_id = o.id
+      WHERE o.id = $1`,
     [organizationId]
   );
-  return row && isPlanType(row.plan_type) ? row.plan_type : 'FREE';
+  if (!row) return 'FREE';
+  if (isPlanType(row.sub_plan) && isSubscriptionStatus(row.status)) {
+    return effectivePlan(
+      {
+        planType: row.sub_plan,
+        status: row.status,
+        currentPeriodEnd: row.current_period_end ? new Date(row.current_period_end) : null,
+        pastDueSince: row.past_due_since ? new Date(row.past_due_since) : null
+      },
+      new Date(),
+      billingConfig().pastDueGraceDays
+    );
+  }
+  return isPlanType(row.plan_type) ? row.plan_type : 'FREE';
 }
 
 export async function limitsFor(organizationId: string, client?: Runner | null) {

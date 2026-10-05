@@ -1034,7 +1034,7 @@ export default {
         points: [
           'Tekil çalışma zamanı: script iki kez eklense bile ikinci widget oluşmaz',
           'SPA yönlendirmesi izlenir; soket ve açık konuşma korunur',
-          'Sürüm sabitleme: /widget/v3/widget.js değişmez olarak önbelleklenir',
+          'Sürüm sabitleme: /widget/v4/widget.js değişmez olarak önbelleklenir',
           'Socket.IO istemcisi dahil hiçbir üçüncü parti alan adına bağlanılmaz'
         ]
       },
@@ -1912,7 +1912,7 @@ export default {
         },
         {
           q: 'Bir güncelleme sitemi etkiler mi?',
-          a: '/widget.js her zaman en güncel sürümü verir. Sürümü sabitlemek isterseniz adresi /widget/v3/widget.js olarak değiştirin.'
+          a: '/widget.js her zaman en güncel sürümü verir. Sürümü sabitlemek isterseniz adresi /widget/v4/widget.js olarak değiştirin.'
         }
       ],
       still: 'Takıldınız mı? Sağ alttaki balondan yazın, kurulumu birlikte yapalım.'

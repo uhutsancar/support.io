@@ -54,23 +54,41 @@ function connectHosts(): string[] {
   return hosts;
 }
 
-const STRICT_BASE = (nonce: string): string[] => [
-  "default-src 'self'",
-  `script-src 'self' 'nonce-${nonce}'`,
-  // Inline style attributes are everywhere in a React tree (style={{…}}), and
-  // they cannot carry a nonce. Styles cannot read localStorage, so this is the
-  // one relaxation worth making.
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
-  `img-src 'self' data: blob: ${mediaHosts().join(' ')}`.trim(),
-  `connect-src 'self' ${connectHosts().join(' ')}`.trim(),
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "worker-src 'self' blob:",
-  'upgrade-insecure-requests'
-];
+/**
+ * Paddle.js and its checkout frame, on the panel only and only while online
+ * payment is switched on (BILLING_ENABLED). Paddle documents these hosts for
+ * its overlay checkout.
+ */
+function paddleHosts(): { script: string; frame: string; connect: string } | null {
+  if (String(process.env.BILLING_ENABLED || '').toLowerCase() !== 'true') return null;
+  return {
+    script: 'https://cdn.paddle.com',
+    frame: 'https://buy.paddle.com https://sandbox-buy.paddle.com',
+    connect: 'https://*.paddle.com'
+  };
+}
+
+const STRICT_BASE = (nonce: string): string[] => {
+  const paddle = paddleHosts();
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}'${paddle ? ' ' + paddle.script : ''}`,
+    // Inline style attributes are everywhere in a React tree (style={{…}}), and
+    // they cannot carry a nonce. Styles cannot read localStorage, so this is the
+    // one relaxation worth making.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    `img-src 'self' data: blob: ${mediaHosts().join(' ')}`.trim(),
+    `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}`.trim(),
+    ...(paddle ? [`frame-src ${paddle.frame}`] : []),
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "worker-src 'self' blob:",
+    'upgrade-insecure-requests'
+  ];
+};
 
 // The playground is served from our origin but carries no session. Its inline
 // handlers would each need a nonce, which buys nothing here.
