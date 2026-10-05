@@ -7,10 +7,14 @@
 
 import type { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { describeError } from './errors';
+import { logger } from '../config/logger';
 
-/** Logs the cause once, with the request that produced it. */
+/** Logs the cause once, with the request that produced it (path without its query). */
 function logUnexpected(req: Request, error: unknown): void {
-  console.error(`[http] ${req.method} ${req.originalUrl}`, error);
+  logger.error(
+    { requestId: req.id, method: req.method, path: req.path, err: error },
+    'unexpected error'
+  );
 }
 
 export const errorHandler: ErrorRequestHandler = (
@@ -27,7 +31,8 @@ export const errorHandler: ErrorRequestHandler = (
   const { status, body, unexpected } = describeError(error);
   if (unexpected) logUnexpected(req, error);
 
-  res.status(status).json(body);
+  // The request id lets a reported failure be found in the log.
+  res.status(status).json(unexpected && req.id ? { ...body, requestId: req.id } : body);
 };
 
 /** Answers an unmatched /api path as JSON rather than the SPA shell. */

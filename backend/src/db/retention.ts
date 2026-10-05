@@ -8,6 +8,8 @@ import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
 
 const RETENTION_DAYS = 30;
+/** How long a visitor's IP and device details are kept after their last visit. */
+const PERSONAL_DATA_DAYS = 90;
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
 
 const TARGETS = [
@@ -22,6 +24,23 @@ async function sweepOnce() {
     await query(`DELETE FROM auth_tokens WHERE expires_at < now() - interval '7 days'`);
   } catch (error) {
     console.error('Retention sweep failed for auth_tokens:', errorText(error));
+  }
+  try {
+    // Data minimisation (plan §16): a visitor's IP address and device details
+    // are kept while they matter for support and dropped 90 days after they
+    // were last seen; the same for the IP and browser in the audit trail.
+    await query(
+      `UPDATE visitors SET ip = NULL, browser = NULL, os = NULL, referrer = NULL
+        WHERE last_active_at < now() - interval '${PERSONAL_DATA_DAYS} days'
+          AND (ip IS NOT NULL OR browser IS NOT NULL OR os IS NOT NULL OR referrer IS NOT NULL)`
+    );
+    await query(
+      `UPDATE audit_logs SET ip_address = NULL, user_agent = NULL
+        WHERE created_at < now() - interval '${PERSONAL_DATA_DAYS} days'
+          AND (ip_address IS NOT NULL OR user_agent IS NOT NULL)`
+    );
+  } catch (error) {
+    console.error('Retention sweep failed for personal data:', errorText(error));
   }
   try {
     // A paid period that ended after cancellation, or a payment grace period
@@ -58,4 +77,4 @@ function stopRetentionSweeps() {
   timer = null;
 }
 
-export { startRetentionSweeps, stopRetentionSweeps, sweepOnce, RETENTION_DAYS };
+export { startRetentionSweeps, stopRetentionSweeps, sweepOnce, RETENTION_DAYS, PERSONAL_DATA_DAYS };

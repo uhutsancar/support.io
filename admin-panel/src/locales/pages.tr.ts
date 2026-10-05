@@ -410,5 +410,142 @@ export default {
     ctaTitle: 'Asistanınız bugün işe başlasın',
     ctaDesc: 'Ücretsiz hesap açın, SSS’nizi ekleyin, asistanı açın. Kredi kartı istemiyoruz.',
     ctaBtn: 'Ücretsiz başlayın'
+  },
+
+  legal: {
+    updated: 'Son güncelleme: 6 Ekim 2026',
+    contact: 'Sorularınız için: destek@support.io',
+    privacy: {
+      meta: 'Support.io’nun hangi verileri neden işlediği, ne kadar sakladığı ve haklarınız.',
+      title: 'Gizlilik Politikası',
+      intro:
+        'Support.io, işletmelerin sitelerine canlı destek ve yapay zekâ asistanı eklemesini sağlayan bir hizmettir. Bu metin hem Support.io hesabı açan işletmeler hem de bu işletmelerin sitelerinde sohbet balonunu kullanan ziyaretçiler için geçerlidir.',
+      sections: [
+        {
+          h: 'Roller',
+          p: [
+            'Hesap bilgileriniz için veri sorumlusu Support.io’dur.',
+            'Bir sitenin ziyaretçilerinin sohbet verilerinde veri sorumlusu, sohbet balonunu sitesine ekleyen işletmedir; Support.io bu verileri onun adına ve talimatıyla işler.'
+          ]
+        },
+        {
+          h: 'İşlediğimiz veriler',
+          p: [
+            'Hesap: ad, e-posta, rol, şifrenin geri döndürülemez özeti, oturum ve işlem kayıtları.',
+            'Ziyaretçi: sohbet mesajları ve gönderilen dosyalar; ziyaretçinin kendisi yazarsa adı ve e-postası; bulunduğu sayfa, tarayıcı ve işletim sistemi, IP adresi ve ülke.',
+            'Ödeme: kart bilgileri bize ulaşmaz. Ödemeleri satıcı olarak Paddle alır ve faturalar.'
+          ]
+        },
+        {
+          h: 'Ne için kullanıyoruz',
+          p: [
+            'Hizmeti sunmak: mesajları iletmek, saklamak ve ekibinize göstermek.',
+            'Güvenlik: kötüye kullanımı ve yetkisiz erişimi önlemek, hız sınırları uygulamak.',
+            'Hesap e-postaları: adres doğrulama, şifre sıfırlama, ekip daveti ve kullanım uyarıları. Pazarlama e-postası göndermeyiz.',
+            'Faturalandırma ve yasal yükümlülükler.'
+          ]
+        },
+        {
+          h: 'Yapay zekâ asistanı',
+          p: [
+            'İşletme asistanı açarsa, ziyaretçinin sorusu ve sitenin herkese açık SSS kayıtları yanıt üretmek için yapay zekâ hizmet sağlayıcımıza gönderilir. Sorudaki e-posta adresleri ve telefon numaraları gönderilmeden önce gizlenir.',
+            'Ziyaretçinin adı, e-postası ve önceki mesajları gönderilmez. Kart, IBAN ya da kimlik numarası içeren bir soru hiç gönderilmez; konuşma doğrudan ekibe geçer.'
+          ]
+        },
+        {
+          h: 'Saklama süreleri',
+          p: [
+            'Sohbetler, hesap açık kaldığı sürece ya da işletme silene kadar saklanır.',
+            'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretten 90 gün sonra; işlem kayıtlarındaki IP adresleri 90 gün sonra silinir.',
+            'Hesap silindiğinde tüm verileri silinir; şifreli yedeklerden en geç üç ay içinde düşer.'
+          ]
+        },
+        {
+          h: 'Kimlerle paylaşıyoruz',
+          p: [
+            'Verileri satmayız. Yalnızca hizmeti sunmak için gereken altyapı sağlayıcılarıyla, gerektiği kadar paylaşırız: barındırma, dosya depolama, e-posta gönderimi, ödeme ve yapay zekâ hizmeti.'
+          ]
+        },
+        {
+          h: 'Çerezler ve tarayıcı deposu',
+          p: [
+            'Panelde oturumunuz için zorunlu bir çerez (sc_session) ve bir güvenlik çerezi (sc_csrf) kullanılır.',
+            'Sohbet balonu, sayfa değişse de konuşmanın sürmesi için tarayıcının yerel deposunda imzalı bir ziyaretçi oturumu (sc_widget_session) ve ziyaretçi yazdıysa adını ve e-postasını (sc_visitor_name, sc_visitor_email) tutar. Reklam ya da izleme çerezi kullanılmaz.'
+          ]
+        },
+        {
+          h: 'Haklarınız',
+          p: [
+            'KVKK ve GDPR kapsamında verilerinize erişme, düzeltilmesini, silinmesini ve aktarılmasını isteme, işlenmesine itiraz etme haklarınız vardır.',
+            'Hesap sahipleri tüm veriyi panelde Ayarlar → Veri ve gizlilik bölümünden indirebilir ve hesabı silebilir. Ziyaretçiler taleplerini ilgili işletmeye ya da bize iletebilir.'
+          ]
+        }
+      ]
+    },
+    terms: {
+      meta: 'Support.io hizmetinin kullanım şartları.',
+      title: 'Kullanım Şartları',
+      intro: 'Support.io’yu kullanarak bu şartları kabul etmiş olursunuz. Kısa tutmaya çalıştık.',
+      sections: [
+        {
+          h: 'Hizmet',
+          p: ['Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.']
+        },
+        {
+          h: 'Hesap',
+          p: [
+            'Hesap açarken doğru bilgi verirsiniz ve şifrenizin güvenliğinden siz sorumlusunuz.',
+            'Ekibinize davet ettiğiniz kişilerin hesabınızdaki işlemlerinden de siz sorumlusunuz.'
+          ]
+        },
+        {
+          h: 'Planlar ve ödeme',
+          p: [
+            'Ücretsiz plan süresizdir. Ücretli planlar aylık ya da yıllık olarak peşin faturalandırılır; ödemeleri satıcı olarak Paddle alır.',
+            'Aboneliği istediğiniz zaman iptal edebilirsiniz; ödenmiş dönem bitene kadar planınız sürer. Ödeme alınamazsa planınız 7 gün sonra Ücretsiz plana döner.',
+            'Planlardaki site, kullanıcı, konuşma ve yapay zekâ yanıtı sınırları sunucuda uygulanır.'
+          ]
+        },
+        {
+          h: 'Kabul edilebilir kullanım',
+          p: [
+            'Hizmeti yasa dışı içerik, istenmeyen toplu mesaj, kötü amaçlı yazılım ya da başkalarının verisini izinsiz toplamak için kullanamazsınız.',
+            'Bu kurallara aykırı kullanımda hesabı askıya alabiliriz.'
+          ]
+        },
+        {
+          h: 'Ziyaretçi verileri',
+          p: [
+            'Sitenizin ziyaretçilerinin verilerinde veri sorumlusu sizsiniz. Sitenizin gizlilik metninde canlı destek için Support.io kullandığınızı belirtin.'
+          ]
+        },
+        {
+          h: 'Yapay zekâ asistanı',
+          p: [
+            'Asistan yanıtlarını sizin SSS içeriğinize dayandırır; bu içeriğin doğruluğundan siz sorumlusunuz.',
+            'Yapay zekâ hata yapabilir. Asistan emin olmadığında konuşmayı ekibinize devreder ve ekibiniz her an devralabilir.'
+          ]
+        },
+        {
+          h: 'Hizmetin sürekliliği',
+          p: [
+            'Hizmeti kesintisiz sunmak için makul özeni gösteririz ve verileri düzenli olarak yedekleriz; ancak hiçbir kesinti olmayacağını garanti etmeyiz.'
+          ]
+        },
+        {
+          h: 'Sorumluluğun sınırı',
+          p: [
+            'Yasaların izin verdiği ölçüde, dolaylı zararlardan sorumlu değiliz; doğrudan zararlardaki sorumluluğumuz son 12 ayda bize ödediğiniz tutarla sınırlıdır.'
+          ]
+        },
+        {
+          h: 'Değişiklikler ve hukuk',
+          p: [
+            'Şartları değiştirirsek önemli değişiklikleri e-postayla bildiririz.',
+            'Bu şartlara Türkiye Cumhuriyeti kanunları uygulanır.'
+          ]
+        }
+      ]
+    }
   }
 };

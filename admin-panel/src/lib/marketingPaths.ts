@@ -14,6 +14,8 @@ const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/cozumler', '/en/solutions'],
   ['/fiyatlandirma', '/en/pricing'],
   ['/yapay-zeka', '/en/ai-assistant'],
+  ['/gizlilik', '/en/privacy'],
+  ['/kullanim-sartlari', '/en/terms'],
   ['/dokumantasyon', '/en/documentation'],
   ['/hakkimizda', '/en/about']
 ];
@@ -43,6 +45,8 @@ export function marketingRoutes(language: 'tr' | 'en') {
     solutions: en ? '/en/solutions' : '/cozumler',
     pricing: en ? '/en/pricing' : '/fiyatlandirma',
     ai,
+    privacy: en ? '/en/privacy' : '/gizlilik',
+    terms: en ? '/en/terms' : '/kullanim-sartlari',
     /** A feature's page; the AI assistant has its own page. */
     feature: (id: string) => (id === 'ai-assistant' ? ai : `${features}/${id}`),
     docs: en ? '/en/documentation' : '/dokumantasyon',

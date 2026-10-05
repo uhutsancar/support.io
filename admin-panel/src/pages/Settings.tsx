@@ -1,11 +1,14 @@
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, ShieldCheck, Download } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../lib/runtime';
 
 const Settings = () => {
   const { t } = useTranslation();
   const { theme, setLightTheme, setDarkTheme } = useTheme();
+  const { user } = useAuth();
   return (
     <>
       <Helmet>
@@ -98,17 +101,28 @@ const Settings = () => {
               </div>
             </div>
           </div>
-          {}
+          {/* Veri ve gizlilik: KVKK/GDPR veri taşınabilirliği (plan §16). */}
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {t('settings.notifications')}
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              {t('settings.privacy.title')}
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              {t('settings.notificationsDescription')}
+            <p className="text-sm text-gray-600 dark:text-gray-400">{t('settings.privacy.body')}</p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              {t('settings.privacy.retention')}
             </p>
-            <div className="text-sm text-gray-500 dark:text-gray-500 italic">
-              {t('settings.comingSoon')}
-            </div>
+            {user?.role === 'owner' ? (
+              <a
+                href={`${API_BASE_URL}/account/export`}
+                className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+              >
+                <Download className="w-4 h-4" /> {t('settings.privacy.export')}
+              </a>
+            ) : (
+              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                {t('settings.privacy.ownerOnly')}
+              </p>
+            )}
           </div>
         </div>
       </div>

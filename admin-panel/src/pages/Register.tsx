@@ -13,11 +13,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useMarketingRoutes } from '../components/marketing/Shell';
 import AuthLayout, { Field } from '../components/marketing/AuthLayout';
 import { Button } from '../components/marketing/kit';
 import { errorMessage } from '../hooks/useAsync';
 
 const Register = () => {
+  const marketing = useMarketingRoutes();
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [name, setName] = useState('');
@@ -112,7 +114,20 @@ const Register = () => {
             {loading ? t('common.loading') : t('register.registerButton')}
           </Button>
           <p className="text-[12.5px] leading-relaxed text-gray-500 dark:text-gray-400 text-center">
-            {t('register.noCard')}
+            {t('register.noCard')}{' '}
+            <Link
+              to={marketing.terms}
+              className="underline hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              {t('legal.terms.title')}
+            </Link>
+            {' · '}
+            <Link
+              to={marketing.privacy}
+              className="underline hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              {t('legal.privacy.title')}
+            </Link>
           </p>
         </form>
       </AuthLayout>

@@ -699,7 +699,15 @@ export const Footer = () => {
 
         <div className="mt-16 pt-6 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
           <p className="text-[12.5px] text-gray-500">© {new Date().getFullYear()} Support.io</p>
-          <p className="text-[12.5px] text-gray-500">{t('landing.home.footerMade')}</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-gray-500">
+            <Link to={routes.privacy} className="hover:text-gray-300 transition-colors">
+              {t('legal.privacy.title')}
+            </Link>
+            <Link to={routes.terms} className="hover:text-gray-300 transition-colors">
+              {t('legal.terms.title')}
+            </Link>
+            <span>{t('landing.home.footerMade')}</span>
+          </div>
         </div>
       </div>
     </footer>

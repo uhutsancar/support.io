@@ -917,6 +917,13 @@ export default {
     }
   },
   settings: {
+    privacy: {
+      title: 'Veri ve gizlilik',
+      body: 'Hesabınızdaki tüm veriyi (siteler, konuşmalar, mesajlar, ziyaretçiler, SSS, ekip) tek bir dosya olarak indirebilirsiniz. Şifreler ve gizli anahtarlar dosyaya girmez.',
+      retention: 'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir.',
+      export: 'Verilerimi indir',
+      ownerOnly: 'Verileri yalnızca hesap sahibi indirebilir.'
+    },
     title: 'Ayarlar',
     profile: 'Uygulama tercihlerinizi yönetin',
     account: 'Hesap',
@@ -1896,6 +1903,10 @@ export default {
     help: {
       title: 'Sorun giderme',
       items: [
+        {
+          q: 'Sitemin gizlilik metnine ne yazmalıyım?',
+          a: 'Canlı destek için Support.io kullandığınızı belirtin. Balon, sayfa değişse de konuşmanın sürmesi için tarayıcının yerel deposunda sc_widget_session anahtarını, ziyaretçi yazdıysa sc_visitor_name ve sc_visitor_email anahtarlarını tutar. Reklam ya da izleme çerezi kullanmaz.'
+        },
         {
           q: 'Yapay zekâ asistanını nasıl açarım?',
           a: 'Panelde Yapay Zekâ Asistanı ekranından sitenizin anahtarını açın. Asistan SSS kayıtlarınızdan yanıt verir; ne kadar çok soru eklerseniz o kadar çok yanıtlar.'

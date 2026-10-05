@@ -37,11 +37,13 @@ import eventsRoutes from './routes/events';
 import analyticsRoutes from './routes/analytics';
 import assistantRoutes from './routes/assistant';
 import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
+import dataExportRoutes from './routes/dataExport';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
 import { stopRetentionSweeps } from './db/retention';
 import { assertProductionConfig } from './config/productionChecks';
+import { logger, requestLogging } from './config/logger';
 import { closeRedisClient, getRedisClient, isEnabled as redisEnabled } from './config/redis';
 import { pool } from './db/pool';
 import { closeRedisAdapter } from './socket/adapter';
@@ -181,6 +183,9 @@ app.set('io', io);
 // Hiz sinirlari surec disinda (Redis) tutulur ve kimligi dogrulanmis
 // istekleri kullaniciya gore sayar; ayrintilar icin middleware/rateLimit.js.
 
+// Every request gets an id (X-Request-Id) and one log line when answered.
+app.use(requestLogging);
+
 // Paddle's webhook is signed over the exact bytes it sent, so it is mounted
 // before the JSON parser, the sanitizer and the API rate limit (routes/billing.ts).
 app.use('/api/billing/paddle/webhook', billingWebhookRoutes);
@@ -221,6 +226,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/account/export', dataExportRoutes);
 
 app.use('/api/audit', auditRoutes);
 
@@ -439,6 +445,7 @@ connectDB()
     }
 
     server.listen(PORT, () => {
+      logger.info({ port: Number(PORT) }, 'server listening');
       console.log(`🚀 Sunucu ${PORT} portunda ve bulutlarda uçuyor!`);
       console.log(
         adapterState.enabled

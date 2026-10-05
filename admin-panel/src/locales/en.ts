@@ -915,6 +915,13 @@ export default {
     }
   },
   settings: {
+    privacy: {
+      title: 'Data and privacy',
+      body: 'Download everything in your account (sites, conversations, messages, visitors, FAQ, team) as one file. Passwords and secret keys are left out.',
+      retention: 'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit.',
+      export: 'Download my data',
+      ownerOnly: 'Only the account owner can download the data.'
+    },
     title: 'Settings',
     profile: 'Manage your application preferences',
     account: 'Account',
@@ -1889,6 +1896,10 @@ export default {
     help: {
       title: 'Troubleshooting',
       items: [
+        {
+          q: 'What should my privacy notice say?',
+          a: 'State that you use Support.io for live chat. So a conversation survives page changes, the bubble keeps sc_widget_session in the browser’s local storage, plus sc_visitor_name and sc_visitor_email if the visitor typed them. No advertising or tracking cookies.'
+        },
         {
           q: 'How do I switch on the AI assistant?',
           a: 'In the dashboard, open AI Assistant and turn it on for your site. It answers from your FAQ entries; the more questions you add, the more it answers.'

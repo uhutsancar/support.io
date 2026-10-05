@@ -28,6 +28,7 @@ import {
 } from '../services/billing';
 import { HttpError, asyncHandler, orgId, requireOrganization, unavailable } from '../http';
 import { errorText } from '../http/errors';
+import { logger } from '../config/logger';
 import type { Request, Response } from 'express';
 
 // ------------------------------------------------------------------ webhook
@@ -61,11 +62,11 @@ webhookRouter.post(
     try {
       const outcome = await handleEvent(event, rawBody);
       // The event id and its outcome only; never the payload.
-      console.log(`[billing] ${event.event_type} ${event.event_id}: ${outcome}`);
+      logger.info({ event: event.event_type, eventId: event.event_id, outcome }, 'paddle webhook');
       res.status(200).json({ received: true });
     } catch (error) {
       // A 5xx makes Paddle retry, which is what a failed write needs.
-      console.error(`[billing] ${event.event_id} could not be applied:`, errorText(error));
+      logger.error({ eventId: event.event_id, err: errorText(error) }, 'paddle webhook failed');
       res.status(500).json({ error: 'Could not process the event' });
     }
   }
