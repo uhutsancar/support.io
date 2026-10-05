@@ -86,7 +86,18 @@ function storedName(file: Express.Multer.File, namePrefix: string): string {
 // ------------------------------------------------------------------------- S3
 
 const BUCKET = process.env.S3_BUCKET || process.env.AWS_BUCKET_NAME;
-const REGION = process.env.AWS_REGION;
+/**
+ * Any S3-compatible store: Amazon S3 by default, or Cloudflare R2 / Hetzner
+ * Object Storage / MinIO through S3_ENDPOINT (plan §12, decision A). Those use
+ * path-style addresses and a region of "auto" unless told otherwise.
+ */
+const ENDPOINT = process.env.S3_ENDPOINT || undefined;
+const REGION = process.env.AWS_REGION || process.env.S3_REGION || (ENDPOINT ? 'auto' : undefined);
+/**
+ * The public address files are served from, when it is not the bucket's own
+ * (an R2 public bucket, a CDN in front of the bucket).
+ */
+const PUBLIC_URL = (process.env.S3_PUBLIC_URL || '').replace(/\/+$/, '');
 
 export const S3_CONFIGURED = Boolean(
   BUCKET && REGION && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
@@ -98,7 +109,10 @@ export const s3 = S3_CONFIGURED
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-      }
+      },
+      ...(ENDPOINT
+        ? { endpoint: ENDPOINT, forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false' }
+        : {})
     })
   : null;
 
@@ -155,7 +169,12 @@ function diskStorage(prefix: string, namePrefix: string) {
 
 // --------------------------------------------------------------- the uploaders
 
-function uploader(prefix: string, namePrefix: string, maxBytes: number, filter: typeof chatFileFilter) {
+function uploader(
+  prefix: string,
+  namePrefix: string,
+  maxBytes: number,
+  filter: typeof chatFileFilter
+) {
   return multer({
     storage: S3_CONFIGURED ? s3Storage(prefix, namePrefix) : diskStorage(prefix, namePrefix),
     limits: { fileSize: maxBytes, files: 1 },
@@ -190,7 +209,7 @@ export function describeUpload(req: Request, file: Express.Multer.File): StoredF
   const s3File = file as Express.Multer.File & { key?: string; location?: string };
   if (S3_CONFIGURED) {
     if (!s3File.key || !s3File.location) return null;
-    return { key: s3File.key, url: s3File.location };
+    return { key: s3File.key, url: PUBLIC_URL ? `${PUBLIC_URL}/${s3File.key}` : s3File.location };
   }
 
   if (!file.filename) return null;
@@ -216,7 +235,7 @@ export function publicOrigin(req: Request): string {
 /** Reported at boot so the chosen backend is never a surprise. */
 export function describeStorage(): string {
   return S3_CONFIGURED
-    ? `S3 (${BUCKET} @ ${REGION})`
+    ? `S3 (${BUCKET} @ ${ENDPOINT ? new URL(ENDPOINT).host : REGION})`
     : `local disk (${UPLOAD_ROOT}, served at ${UPLOAD_URL_PREFIX})`;
 }
 
@@ -224,8 +243,8 @@ if (!S3_CONFIGURED && isProduction) {
   // Local disk does not survive a container restart and is not shared between
   // instances, so in production it is a misconfiguration rather than a choice.
   console.warn(
-    '[upload] S3 is not configured; falling back to local disk. '
-      + 'In production set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_REGION / S3_BUCKET.'
+    '[upload] S3 is not configured; falling back to local disk. ' +
+      'In production set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / S3_BUCKET and AWS_REGION or S3_ENDPOINT.'
   );
 }
 

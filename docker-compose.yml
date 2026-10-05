@@ -140,7 +140,7 @@ services:
     healthcheck:
       # The endpoint also reports database connectivity, so a backend that is
       # listening but cannot reach postgres is correctly reported unhealthy.
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 15s
       timeout: 5s
       retries: 5

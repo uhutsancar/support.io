@@ -39,7 +39,11 @@ import assistantRoutes from './routes/assistant';
 import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
-import { startSlaSweeper } from './services/slaSweeper';
+import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
+import { stopRetentionSweeps } from './db/retention';
+import { assertProductionConfig } from './config/productionChecks';
+import { closeRedisClient, getRedisClient, isEnabled as redisEnabled } from './config/redis';
+import { pool } from './db/pool';
 import { closeRedisAdapter } from './socket/adapter';
 import { mailProvider } from './services/mail';
 import { outboxFor } from './services/mail/console';
@@ -68,14 +72,10 @@ app.set('trust proxy', 1);
 app.set('query parser', 'simple'); // Cloudflare üzerinden gelen gerçek IP'leri tanıması için ŞART
 const server = http.createServer(app);
 
-if (process.env.NODE_ENV === 'production') {
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    throw new Error('JWT_SECRET must contain at least 32 characters in production');
-  }
-  if (!process.env.CORS_ORIGINS) {
-    throw new Error('CORS_ORIGINS must be explicitly configured in production');
-  }
-}
+// A production deployment with a missing or example secret, no mail, a
+// half-configured checkout or no file storage refuses to start, and says
+// everything that is wrong at once (config/productionChecks.ts).
+if (isProduction) assertProductionConfig();
 
 // --- 🛡️ 1. CORS VE GÜVENLİK AYARLARI ---
 //
@@ -238,15 +238,33 @@ if (!isProduction && mailProvider() === 'console') {
 // after the static handlers at the bottom of this file.
 app.use('/api', apiNotFound);
 
-// Sağlık Kontrolü
-app.get('/health', async (_req: Request, res: Response) => {
-  const databaseConnected = await isConnected();
-  res.status(databaseConnected ? 200 : 503).json({
-    status: databaseConnected ? 'ok' : 'degraded',
-    message: 'DestekChat API çalışıyor',
-    timestamp: new Date().toISOString(),
-    database: databaseConnected ? 'connected' : 'disconnected'
-  });
+// Liveness and readiness (plan §11.1).
+//
+//   /health  the process is up. It asks nothing of the database, so a slow
+//            database does not get a healthy process restarted.
+//   /ready   it can serve: PostgreSQL answers, and it is not shutting down.
+//            Docker's healthcheck and the deploy script wait on this one.
+//
+// Redis is not a condition: without it REST and message storage keep working
+// and only cross-process broadcast and shared rate limits degrade, which is
+// logged rather than reported as unready. Neither response carries a host
+// name, a version or an error message.
+let draining = false;
+app.get('/health', (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store').json({ status: 'ok' });
+});
+app.get('/ready', async (_req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store');
+  if (draining || !(await isConnected())) {
+    res.status(503).json({ status: 'not_ready' });
+    return;
+  }
+  if (redisEnabled()) {
+    const redis = await getRedisClient().catch(() => null);
+    const pong = redis ? await redis.ping().catch(() => null) : null;
+    if (pong !== 'PONG') console.warn('[ready] Redis is not answering; running degraded');
+  }
+  res.json({ status: 'ready' });
 });
 
 // --- 📦 4. STATİK DOSYALAR ---
@@ -393,8 +411,9 @@ app.use(errorHandler);
 // --- 💾 5. VERİTABANI VE BAŞLATMA ---
 const PORT = process.env.PORT || 3000;
 
-// How long open connections are given to finish before the process exits.
-const SHUTDOWN_GRACE_MS = 3000;
+// How long a shutdown may take before the process exits anyway. Compose
+// gives the container stop_grace_period: 15s, so the default stays under it.
+const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS) || 10_000;
 
 connectDB()
   .then(async () => {
@@ -441,23 +460,32 @@ connectDB()
     const shutdown = async (signal: NodeJS.Signals) => {
       if (shuttingDown) return;
       shuttingDown = true;
+      draining = true; // /ready answers 503 from now on
       console.log(`
 ${signal} alındı, kapatılıyor...`);
+      // Whatever happens below, the process is gone after the grace period.
+      setTimeout(() => process.exit(1), SHUTDOWN_GRACE_MS).unref();
       server.close(() => console.log('   HTTP sunucusu kapandı'));
-      // Answers still being written are abandoned, not left holding timers
-      // while the process winds down.
+      // Timers first, so nothing new starts while connections drain. Answers
+      // still being written are abandoned rather than left holding timers.
       stopAssistant();
+      stopSlaSweeper();
+      stopRetentionSweeps();
       try {
-        // Awaited so open sockets are actually flushed before the grace
-        // timer below pulls the process down under them.
+        // Awaited so open sockets are actually flushed before the pools close
+        // under them.
         await io.close();
         await closeRedisAdapter();
+        await closeRedisClient();
+        await pool.end();
+        console.log('   Bağlantılar kapandı');
+        process.exit(0);
       } catch (error) {
         // Already shutting down: a failure to close cleanly is worth seeing in
-        // the log but must not stop the process from exiting.
-        console.error('[shutdown] could not close sockets cleanly', error);
+        // the log but must not keep the process alive.
+        console.error('[shutdown] could not close cleanly', error);
+        process.exit(1);
       }
-      setTimeout(() => process.exit(0), SHUTDOWN_GRACE_MS).unref();
     };
     // `void`: the process is on its way out, and there is nobody left to
     // report a failed shutdown to beyond the log inside `shutdown`.

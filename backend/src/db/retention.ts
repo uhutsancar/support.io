@@ -53,4 +53,9 @@ function startRetentionSweeps() {
   return timer;
 }
 
-export { startRetentionSweeps, sweepOnce, RETENTION_DAYS };
+function stopRetentionSweeps() {
+  if (timer) clearInterval(timer);
+  timer = null;
+}
+
+export { startRetentionSweeps, stopRetentionSweeps, sweepOnce, RETENTION_DAYS };

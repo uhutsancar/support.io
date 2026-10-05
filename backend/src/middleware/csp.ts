@@ -40,6 +40,7 @@ function mediaHosts(): string[] {
   };
   add(process.env.S3_PUBLIC_URL);
   add(process.env.CDN_URL);
+  add(process.env.S3_ENDPOINT);
   if (process.env.S3_BUCKET && process.env.AWS_REGION) {
     add(`https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`);
   }
