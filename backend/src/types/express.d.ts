@@ -1,13 +1,14 @@
 // What the auth middleware attaches to a request.
 //
 // These are declared non-optional even though they are only present after
-// `auth` (or `verifySiteKey`) has run: every route that reads them is mounted
+// `auth` (or `requireWidgetSession`) has run: every route that reads them is mounted
 // behind that middleware, and making them optional would mean a non-null
 // assertion on essentially every handler in the codebase without catching a
 // single real mistake. A route that is genuinely public simply never reads them.
 import type { RateLimitInfo } from 'express-rate-limit';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
+import type { VerifiedWidgetSession } from '../config/tokens';
 import type {
   AuthTokenPayload,
   AuthenticatedOrganization,
@@ -30,8 +31,10 @@ declare global {
       token: string;
       /** The verified claims. Set by `auth`. */
       tokenPayload: AuthTokenPayload;
-      /** The site behind an X-Site-Key. Set by `verifySiteKey`. */
+      /** The site behind a widget session. Set by `requireWidgetSession`. */
       site: Doc<SiteDoc>;
+      /** The verified widget session. Set by `requireWidgetSession`. */
+      widget: VerifiedWidgetSession;
       /** Set by express-rate-limit, but only on a route it guards. */
       rateLimit?: RateLimitInfo;
     }

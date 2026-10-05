@@ -535,14 +535,18 @@
     document.head.appendChild(tag);
   }
 
-  // Anahtari once dogrula. Aksi halde tanimsiz bir anahtarda widget hic
-  // gorunmez ve sayfada sebebini soyleyen bir sey olmaz.
   // Anahtari once dogrula: tanimsiz bir anahtarda widget hic gorunmez ve
   // sayfada sebebini soyleyen hicbir sey olmazdi. Acik olarak verilmediyse
-  // varsayilan hesap yoksa tohum kiracisina geri dusulur.
+  // varsayilan hesap yoksa tohum kiracisina geri dusulur. Widget'in kendisi
+  // de ayni ucu (POST /api/widget/session) cagirir; bu deneme oturumu
+  // saklanmaz.
   function tryKey(key, isLastAttempt) {
     log('site anahtarı deneniyor: ' + key);
-    return fetch(BACKEND + '/api/widget/bootstrap?siteKey=' + encodeURIComponent(key))
+    return fetch(BACKEND + '/api/widget/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ siteKey: key })
+    })
       .then(function (res) {
         if (res.ok) {
           SITE_KEY = key;
@@ -556,7 +560,12 @@
           log('ya da örnek kiracı için backend dizininde:  npm run db:seed', 'bad');
           return;
         }
-        log('bootstrap yanıtı HTTP ' + res.status, 'bad');
+        if (res.status === 403) {
+          log('Bu sayfanın adresi (' + location.origin + ') sitenin izinli adresleri arasında değil.', 'bad');
+          log('Panelde Siteler → Erişim bölümünden ekleyin.', 'bad');
+          return;
+        }
+        log('oturum yanıtı HTTP ' + res.status, 'bad');
       })
       .catch(function () {
         log('backend ' + BACKEND + ' adresine erişilemedi — çalışıyor mu?', 'bad');

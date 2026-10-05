@@ -87,8 +87,13 @@ interface WidgetFaq {
   [field: string]: unknown;
 }
 
-/** Everything /api/widget/bootstrap hands back. */
+/** Everything POST /api/widget/session hands back. */
 interface WidgetBootstrap {
+  /** The signed widget session; the only credential the widget holds. */
+  token: string;
+  expiresAt: string;
+  /** Minted by the server and carried inside the token. */
+  visitorId: string;
   config: Record<string, any>;
   site: Record<string, any>;
   faqs: WidgetFaq[];
@@ -117,7 +122,10 @@ interface WidgetInstance extends EmitterInstance {
   /** The resolved colour scheme: 'light' or 'dark'. */
   theme: string;
 
-  visitorId: string;
+  /** The server's id for this visitor; null until the first session lands. */
+  visitorId: string | null;
+  /** The signed widget session, kept in localStorage per site key. */
+  token: string | null;
   sessionId: string;
   identity: WidgetIdentity | null;
   attributes: Record<string, unknown>;
@@ -193,7 +201,7 @@ interface Window {
 (function () {
   'use strict';
 
-  var SDK_VERSION = '3.0.0';
+  var SDK_VERSION = '4.0.0';
   var NAMESPACE = 'SupportChat';
   var LEGACY_NAMESPACE = 'SupportIO';
 
@@ -559,11 +567,13 @@ interface Window {
     this.locale = pickLocale(config.locale);
     this.t = STRINGS[this.locale as keyof typeof STRINGS];
 
-    this.visitorId = store.get('sc_visitor_id') as string;
-    if (!this.visitorId) {
-      this.visitorId = uid('v');
-      store.set('sc_visitor_id', this.visitorId);
-    }
+    // The visitor id is the server's: it arrives inside the signed session and
+    // is never generated here. Only the token is stored, one per site key.
+    // Before v4 the widget made its own id up and the server believed it, so
+    // anyone who learned an id could open that visitor's conversation.
+    this.visitorId = null;
+    this.token = store.get(this._tokenKey());
+    store.remove('sc_visitor_id');
     // Oturum id'si sekme omurludur: proaktif kurallarin "bu ziyarette" mantigi
     // buna dayanir.
     this.sessionId = uid('s');
@@ -622,6 +632,33 @@ interface Window {
     return this.config.apiUrl + path;
   };
 
+  Widget.prototype._tokenKey = function (this: WidgetInstance) {
+    return 'sc_widget_session:' + String(this.config.siteKey);
+  };
+
+  /**
+   * A widget API call carrying the session. A 401 means the session expired
+   * or the site key was regenerated: one fresh session is fetched and the call
+   * repeated once.
+   */
+  Widget.prototype._authFetch = async function (
+    this: WidgetInstance,
+    path: string,
+    init: RequestInit,
+    retried?: boolean
+  ): Promise<Response> {
+    var headers: Record<string, string> = Object.assign({}, (init.headers as any) || {});
+    headers.Authorization = 'Bearer ' + this.token;
+    var res = await fetch(
+      this._api(path),
+      Object.assign({}, init, { headers: headers, credentials: 'omit' })
+    );
+    if (res.status === 401 && !retried && (await this._session())) {
+      return this._authFetch(path, init, true);
+    }
+    return res;
+  };
+
   // --- baslangic ------------------------------------------------------------
 
   Widget.prototype.init = async function (this: WidgetInstance) {
@@ -634,7 +671,7 @@ interface Window {
       return;
     }
 
-    var ok = await this._bootstrap();
+    var ok = await this._session();
     if (!ok) return;
 
     if (!this._shouldShowOnThisPage()) {
@@ -667,37 +704,65 @@ interface Window {
     this.emit('error', { code: code, message: message });
   };
 
-  Widget.prototype._bootstrap = async function (this: WidgetInstance) {
-    try {
-      var res = await fetch(
-        this._api(
-          '/api/widget/bootstrap?siteKey=' + encodeURIComponent(String(this.config.siteKey))
-        ),
-        {
+  /**
+   * Obtains (or renews) the widget session and, with it, everything the widget
+   * needs to draw itself. The stored token is offered so a returning visitor
+   * keeps their id and their open conversation; the server decides whether it
+   * still counts. Returns false when there is no usable session.
+   */
+  Widget.prototype._session = async function (this: WidgetInstance) {
+    if (this._sessionPromise) return this._sessionPromise;
+    var self = this;
+    this._sessionPromise = (async function () {
+      try {
+        var res = await fetch(self._api('/api/widget/session'), {
+          method: 'POST',
           credentials: 'omit',
-          headers: { Accept: 'application/json' }
-        }
-      );
-      if (!res.ok) {
-        var body = await res.json().catch(function () {
-          return {};
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ siteKey: self.config.siteKey, token: self.token || undefined })
         });
-        this._fail(
-          body.code || 'WIDGET_NOT_FOUND',
-          body.error || 'Bootstrap failed with HTTP ' + res.status
-        );
+        if (!res.ok) {
+          var body = await res.json().catch(function () {
+            return {};
+          });
+          if (body.code === 'ORIGIN_NOT_ALLOWED') {
+            self._fail(
+              'ORIGIN_NOT_ALLOWED',
+              window.location.origin +
+                ' is not an allowed origin for this site. Add it under Sites in the Support.io panel.'
+            );
+          } else {
+            self._fail(
+              body.code || 'WIDGET_NOT_FOUND',
+              body.error || 'Session failed with HTTP ' + res.status
+            );
+          }
+          return false;
+        }
+        var data = await res.json();
+        self.token = data.token;
+        self.visitorId = data.visitorId;
+        store.set(self._tokenKey(), data.token);
+        // The first session also carries the widget's look; a renewal keeps
+        // the one already drawn.
+        if (!self.remote) {
+          self.remote = data;
+          self.faqs = data.faqs || [];
+          self.availability = data.availability || 'offline';
+          // Sunucu bir dil onerisi vermez; ama config'te bir locale varsa o kazanir.
+          if (self.config.locale) self.setLocale(self.config.locale, true);
+        } else {
+          self.availability = data.availability || self.availability;
+        }
+        return true;
+      } catch (error) {
+        self._fail('NETWORK_ERROR', error.message);
         return false;
+      } finally {
+        self._sessionPromise = null;
       }
-      this.remote = await res.json();
-      this.faqs = this.remote.faqs || [];
-      this.availability = this.remote.availability || 'offline';
-      // Sunucu bir dil onerisi vermez; ama config'te bir locale varsa o kazanir.
-      if (this.config.locale) this.setLocale(this.config.locale, true);
-      return true;
-    } catch (error) {
-      this._fail('NETWORK_ERROR', error.message);
-      return false;
-    }
+    })();
+    return this._sessionPromise;
   };
 
   // showOnPages / hideOnPages kurallari. Kurallar basit glob desenleridir.
@@ -727,16 +792,14 @@ interface Window {
     // Panelde "Kurulum bekleniyor" rozetini kapatir. Basarisiz olursa sessiz
     // gecilir: kurulum dogrulamasi sohbetin calismasi icin gerekli degildir.
     var payload = JSON.stringify({
-      siteKey: this.config.siteKey,
       url: window.location.href,
       sdkVersion: SDK_VERSION
     });
     try {
-      fetch(this._api('/api/widget/installed'), {
+      this._authFetch('/api/widget/installed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload,
-        credentials: 'omit',
         keepalive: true
       }).catch(function () {
         // Analytics delivery is best effort; a dropped beacon changes nothing
@@ -847,6 +910,10 @@ interface Window {
     if (this.destroyed) return;
 
     this.socket = io(this.config.socketUrl + '/widget', {
+      // Read on every (re)connect, so a renewed session is what reconnects.
+      auth: function (cb: (data: Record<string, unknown>) => void) {
+        cb({ token: self.token });
+      },
       transports: ['websocket', 'polling'],
       // Kendi baglantimizi yonetiriz; host sitenin baska bir socket.io
       // baglantisiyla paylasmayiz.
@@ -859,6 +926,7 @@ interface Window {
     });
 
     this.socket.on('connect', function () {
+      refusals = 0;
       var wasDown = self.connection === 'reconnecting' || self.connection === 'disconnected';
       self._setConnection('connected');
       self._join();
@@ -874,6 +942,24 @@ interface Window {
 
     this.socket.io.on('reconnect_attempt', function () {
       self._setConnection('reconnecting');
+    });
+
+    // The handshake refused the session: it expired while the page was open,
+    // or the site key was regenerated. A refusal by the server is not retried
+    // by Socket.IO itself, so a fresh session is fetched and the socket
+    // reconnects with it — a bounded number of times, so a site that keeps
+    // refusing does not turn into a request loop.
+    var refusals = 0;
+    this.socket.on('connect_error', function (err: Error) {
+      if (!err || err.message !== 'WIDGET_SESSION_INVALID') return;
+      if (++refusals > 3) {
+        self._setConnection('error', err.message);
+        return;
+      }
+      self._setConnection('reconnecting');
+      self._session().then(function (ok: boolean) {
+        if (ok && self.socket && !self.destroyed) self.socket.connect();
+      });
     });
     this.socket.io.on('error', function (err: Error) {
       self._setConnection('error', err && err.message);
@@ -966,9 +1052,9 @@ interface Window {
             : /Linux/i.test(ua)
               ? 'Linux'
               : 'Other';
+    // The site and the visitor are not sent: the server reads both from the
+    // signed session the socket connected with.
     this.socket.emit('join-conversation', {
-      siteKey: this.config.siteKey,
-      visitorId: this.visitorId,
       visitorName:
         (this.identity && this.identity.name) || store.get('sc_visitor_name') || 'Visitor',
       visitorEmail: (this.identity && this.identity.email) || store.get('sc_visitor_email') || null,
@@ -2136,11 +2222,7 @@ interface Window {
   Widget.prototype._upload = async function (this: WidgetInstance, file: File) {
     var form = new FormData();
     form.append('file', file);
-    var res = await fetch(this._api('/api/files/upload'), {
-      method: 'POST',
-      headers: { 'X-Site-Key': String(this.config.siteKey) },
-      body: form
-    });
+    var res = await this._authFetch('/api/files/upload', { method: 'POST', body: form });
     if (!res.ok) throw new Error('Upload failed with HTTP ' + res.status);
     var data = await res.json();
     return data.file;
@@ -2219,24 +2301,29 @@ interface Window {
   };
 
   /**
-   * Kullanici cikis yaptiginda cagrilir. YENI bir ziyaretci kimligi uretilir:
-   * aksi halde ortak bir bilgisayarda ikinci kullanici, birincinin sohbet
-   * gecmisini gorurdu.
+   * Kullanici cikis yaptiginda cagrilir. Oturum birakilir ve sunucudan YENI
+   * bir ziyaretci kimligi alinir: aksi halde ortak bir bilgisayarda ikinci
+   * kullanici, birincinin sohbet gecmisini gorurdu.
    */
-  Widget.prototype.logout = function (this: WidgetInstance) {
+  Widget.prototype.logout = async function (this: WidgetInstance) {
     this.identity = null;
     this.attributes = {};
     this.conversationId = null;
     store.remove('sc_visitor_name');
     store.remove('sc_visitor_email');
-    this.visitorId = uid('v');
-    store.set('sc_visitor_id', this.visitorId);
+    store.remove(this._tokenKey());
+    this.token = null;
+    this.visitorId = null;
     this.sessionId = uid('s');
     this.unread = 0;
     this._renderBadge();
     if (this.el) this._renderThread([]);
-    if (this.socket && this.socket.connected) this._join();
     this.emit('logout', {});
+    // A new session means a new visitor; the socket reconnects as them.
+    if ((await this._session()) && this.socket) {
+      this.socket.disconnect();
+      this.socket.connect();
+    }
   };
 
   Widget.prototype.setAttributes = function (

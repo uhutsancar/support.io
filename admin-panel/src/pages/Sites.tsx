@@ -4,10 +4,11 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
-import { Plus, Globe, Copy, Check, Trash2, Palette, Bot } from 'lucide-react';
+import { Plus, Globe, Copy, Check, Trash2, Palette, Bot, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SiteAISettings from '../components/sites/SiteAISettings';
+import SiteAccess, { InstallBadge } from '../components/sites/SiteAccess';
 import type { Site } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
 
@@ -38,6 +39,7 @@ const Sites = () => {
   const [newSite, setNewSite] = useState({ name: '', domain: '' });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [aiSite, setAiSite] = useState<Site | null>(null);
+  const [accessSite, setAccessSite] = useState<Site | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<DeleteTarget>({
     isOpen: false,
     siteId: null,
@@ -181,19 +183,10 @@ const Sites = () => {
                     >
                       {site.isActive ? t('sites.active') : t('sites.inactive')}
                     </span>
-                    {/* Kurulum dogrulamasi: widget siteye eklendiginde kendini
+                    {/* Kurulum dogrulamasi: widget her sayfa acilisinda kendini
                          bildirir (POST /api/widget/installed). Boylece "kodu
                          koydum ama calisiyor mu?" sorusu panelden cevaplanir. */}
-                    <span
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium ${site.installation?.verifiedAt ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${site.installation?.verifiedAt ? 'bg-green-500' : 'bg-gray-400 animate-pulse'}`}
-                      />
-                      {site.installation?.verifiedAt
-                        ? t('studio.embed.verified')
-                        : t('studio.embed.waiting')}
-                    </span>
+                    <InstallBadge site={site} />
                   </div>
                 </div>
 
@@ -253,6 +246,15 @@ const Sites = () => {
                       <Palette className="w-4 h-4" />
                       <span className="leading-tight text-center whitespace-normal">
                         {t('studio.title')}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setAccessSite(site)}
+                      className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-xs sm:text-sm"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span className="leading-tight text-center whitespace-normal">
+                        {t('sites.access.button')}
                       </span>
                     </button>
                     <button
@@ -328,6 +330,17 @@ const Sites = () => {
               </form>
             </div>
           </div>
+        )}
+
+        {accessSite && (
+          <SiteAccess
+            site={accessSite}
+            onClose={() => setAccessSite(null)}
+            onSaved={(updated) => {
+              setAccessSite(updated);
+              setSites((current) => current.map((s) => (s._id === updated._id ? updated : s)));
+            }}
+          />
         )}
 
         {aiSite && (

@@ -1,9 +1,10 @@
 // The visitor's side of the chat.
 //
-// Everything a customer's page can send. Nothing here is trusted: the site key
-// is looked up, every string is bounded, an attachment must carry the signed
-// proof our upload endpoint issued, and a conversation id is only accepted when
-// it belongs to this visitor on this site.
+// Everything a customer's page can send. Nothing here is trusted: the site and
+// the visitor come from the signed widget session the handshake verified
+// (socket/auth.ts), every string is bounded, an attachment must carry the
+// signed proof our upload endpoint issued, and a conversation id is only
+// accepted when it belongs to this visitor on this site.
 
 import Conversation from '../../models/Conversation';
 import Message from '../../models/Message';
@@ -41,8 +42,6 @@ import type {
 // is truncated rather than rejected: a visitor should not lose their message
 // because their browser reported a 3 KB user-agent string.
 const LIMITS = {
-  siteKey: 128,
-  visitorId: 100,
   visitorName: 100,
   visitorEmail: 254,
   page: 2048,
@@ -108,22 +107,15 @@ export function installWidgetHandlers(ctx: SocketContext): void {
     socket.on(
       'join-conversation',
       ctx.guard(socket, async (data: WidgetJoinPayload | undefined) => {
-        const { siteKey, visitorId, visitorName, visitorEmail, currentPage, metadata } = data || {};
+        // Any siteKey or visitorId in the payload is ignored: the handshake
+        // already pinned both from the signed session.
+        const { visitorName, visitorEmail, currentPage, metadata } = data || {};
+        const visitorId = socket.visitorId!;
 
-        if (
-          typeof siteKey !== 'string' ||
-          siteKey.length > LIMITS.siteKey ||
-          typeof visitorId !== 'string' ||
-          visitorId.length > LIMITS.visitorId ||
-          !SAFE_ID.test(visitorId)
-        ) {
-          socket.emit('error', { message: 'Invalid widget session' });
-          return;
-        }
-
-        const site = await Site.findOne({ siteKey, isActive: true });
+        const site = await Site.findOne({ _id: socket.siteId, isActive: true });
         if (!site) {
-          socket.emit('error', { message: 'Invalid site key' });
+          // Switched off since the handshake.
+          socket.emit('error', { message: 'Invalid widget session' });
           return;
         }
 
@@ -131,8 +123,6 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         // the socket and the conversation, never taken from the client as-is.
         const verifiedUserId = verifiedIdentity(site.integrations, data?.userId, data?.userHash);
 
-        socket.siteId = site._id;
-        socket.visitorId = visitorId;
         socket.visitorName = boundedString(visitorName, LIMITS.visitorName)?.trim() || 'Visitor';
         socket.visitorEmail = boundedString(visitorEmail, LIMITS.visitorEmail)?.trim() ?? null;
         socket.currentPage = boundedString(currentPage, LIMITS.page) ?? '/';

@@ -1,8 +1,13 @@
-// Opens the PostgreSQL connection, makes sure the relational schema is present
-// and starts the log retention sweeps. Connection details are read from the
-// environment only.
+// Opens the PostgreSQL connection, makes sure the schema is current and starts
+// the log retention sweeps. Connection details are read from the environment
+// only.
+//
+// Development migrates on boot. Production boots with MIGRATE_ON_BOOT=false:
+// the deploy runs the migrations once, before the new containers start, and a
+// server that finds one still pending refuses to start rather than run against
+// a schema it was not written for.
 import { pool, query } from '../db/pool';
-import { applySchema } from '../db/migrate';
+import { migrateOnBoot, pendingMigrations, runMigrations } from '../db/migrate';
 import { startRetentionSweeps } from '../db/retention';
 
 /** The SQLSTATE and message behind whatever the driver threw. */
@@ -22,7 +27,18 @@ const connectDB = async () => {
     }
 
     await query('SELECT 1');
-    await applySchema();
+    if (migrateOnBoot()) {
+      await runMigrations();
+    } else {
+      const pending = await pendingMigrations();
+      if (pending.length) {
+        console.error(
+          `Pending migrations: ${pending.join(', ')}. ` +
+            'Run `npm run db:migrate:prod` before starting this release.'
+        );
+        process.exit(1);
+      }
+    }
     startRetentionSweeps();
 
     pool.on('error', (err) => {
@@ -48,7 +64,7 @@ const connectDB = async () => {
   }
 };
 
-// Mirrors the readiness check the health endpoint used to perform.
+// The database half of the readiness probe (GET /ready).
 const isConnected = async () => {
   try {
     await query('SELECT 1');

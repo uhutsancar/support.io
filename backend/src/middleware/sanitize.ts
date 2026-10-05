@@ -8,7 +8,7 @@
 //
 //   GET  /api/widget/settings?siteKey[$ne]=x   rastgele bir şirketin ayarları
 //   POST /api/widget/installed {siteKey:{$ne}} başka bir şirketin site kaydına yazma
-//   verifySiteKey (dosya yükleme, SSS arama)   rastgele bir sitenin kimliğiyle geçme
+//   POST /api/widget/session                    rastgele bir sitenin kimliğiyle geçme
 //
 // Üç katman:
 //   - Sorgu dizesi düz ayrıştırılır (server.ts: 'query parser' = 'simple');

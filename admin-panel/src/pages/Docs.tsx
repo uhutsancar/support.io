@@ -548,7 +548,7 @@ const Docs = () => {
                 head={[t('docsPage.table.endpoint'), t('docsPage.table.description')]}
                 rows={[
                   [
-                    <Mono key="1">GET /api/widget/bootstrap?siteKey=…</Mono>,
+                    <Mono key="1">POST /api/widget/session</Mono>,
                     t('docsPage.backend.bootstrap')
                   ],
                   [
@@ -642,7 +642,7 @@ const Docs = () => {
               <H2>{t('docsPage.troubleshooting.title')}</H2>
               <Prose>{t('docsPage.troubleshooting.intro')}</Prose>
               <CodeBlock
-                code={`SupportChat.debug()\n// → {\n//     version: '3.0.0',\n//     initialized: true,\n//     siteKey: '…',\n//     apiUrl: '${origin}',\n//     connection: 'connected',\n//     availability: 'online',\n//     conversationId: '…',\n//     visitorId: 'v_…',\n//     locale: 'tr',\n//     hidden: false,\n//     fatal: null\n//   }`}
+                code={`SupportChat.debug()\n// → {\n//     version: '4.0.0',\n//     initialized: true,\n//     siteKey: '…',\n//     apiUrl: '${origin}',\n//     connection: 'connected',\n//     availability: 'online',\n//     conversationId: '…',\n//     visitorId: 'v_…',\n//     locale: 'tr',\n//     hidden: false,\n//     fatal: null\n//   }`}
                 filename="DevTools console"
                 id="debug"
                 copiedId={copiedId}

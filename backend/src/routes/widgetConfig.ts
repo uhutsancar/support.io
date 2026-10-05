@@ -6,8 +6,8 @@
 
 import express from 'express';
 import WidgetConfig from '../models/WidgetConfig';
-import Site from '../models/Site';
 import { auth } from '../middleware/auth';
+import { requireWidgetSession } from '../middleware/widgetSession';
 import { checkPermission } from '../middleware/rbac';
 import { describeUpload, uploadLogo } from '../middleware/upload';
 import { publicConfig } from './widget';
@@ -152,18 +152,21 @@ router.delete(
 
 // --------------------------------------------------------------------- widget
 
-/** Public: read by the widget on a customer's page, keyed by the site key alone. */
+/**
+ * The widget's public look, for a page holding a widget session. The widget
+ * itself receives this inside POST /api/widget/session; this is for
+ * integrations that re-read it later.
+ */
 router.get(
-  '/public/:siteKey',
+  '/public',
+  requireWidgetSession,
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await Site.findOne({ siteKey: req.params.siteKey, isActive: true });
-    if (!site) throw notFound('Site');
+    const site = req.site;
 
     // A site that has never saved a config still gets a usable widget:
     // `publicConfig` fills every section from its own defaults.
     const saved = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
 
-    res.set('Cache-Control', 'public, max-age=30');
     res.json({ config: publicConfig(site, saved ? saved.toObject() : null) });
   })
 );

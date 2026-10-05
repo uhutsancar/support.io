@@ -103,3 +103,132 @@ export function verifyUploadProof(token: string): UploadProofClaims {
   if (decoded.kind !== 'chat-upload') throw new Error('Not an upload proof');
   return decoded;
 }
+
+// ----------------------------------------------------------- widget session
+
+const WIDGET_AUDIENCE = 'support-chat:widget';
+
+/**
+ * What a visitor's widget carries instead of an id it made up itself.
+ *
+ * The widget used to send `siteKey` + a `visitorId` it generated and kept in
+ * localStorage, and the server believed both: anyone who learned another
+ * visitor's id (it is in that browser's storage and in every page the widget
+ * runs on) could join that visitor's conversation and read it. Now the server
+ * mints the visitor id, signs it into this token together with the site, and
+ * reads both back from the signature only. A payload that names a site or a
+ * visitor is ignored.
+ */
+export interface WidgetSessionClaims {
+  purpose: 'widget';
+  siteId: string;
+  /** Server-generated, crypto-random. */
+  visitorId: string;
+  /** One per issued session chain; keys the per-session limits. */
+  sid: string;
+  /**
+   * A fingerprint of the site key the session was issued under. Regenerating
+   * the key changes it, so every session issued before is refused at once.
+   */
+  kv: string;
+}
+
+export interface VerifiedWidgetSession extends WidgetSessionClaims {
+  iat: number;
+  exp: number;
+}
+
+/** How long a widget token is accepted for API and socket use. */
+export const WIDGET_SESSION_TTL_SECONDS =
+  Number(process.env.WIDGET_SESSION_TTL_SECONDS) || 24 * 60 * 60;
+
+/**
+ * How long after expiry a token may still be traded for a fresh one. A visitor
+ * who returns within this window keeps their visitor id — and with it their
+ * open conversation; after it they start as a new visitor.
+ */
+export const WIDGET_SESSION_RENEW_SECONDS =
+  Number(process.env.WIDGET_SESSION_RENEW_SECONDS) || 30 * 24 * 60 * 60;
+
+/** Visitor ids the server mints: `v_` and 32 hex characters. */
+export const WIDGET_VISITOR_ID = /^v_[0-9a-f]{32}$/;
+
+export function newVisitorId(): string {
+  return `v_${crypto.randomBytes(16).toString('hex')}`;
+}
+
+export function newWidgetSessionId(): string {
+  return crypto.randomBytes(12).toString('hex');
+}
+
+/** The site-key fingerprint a widget token is bound to. */
+export function siteKeyVersion(siteKey: string): string {
+  return crypto
+    .createHmac('sha256', derivedKey('widget-site-key'))
+    .update(siteKey)
+    .digest('hex')
+    .slice(0, 16);
+}
+
+export function signWidgetSession(claims: Omit<WidgetSessionClaims, 'purpose'>): {
+  token: string;
+  expiresAt: Date;
+} {
+  const token = jwt.sign({ ...claims, purpose: 'widget' }, derivedKey('widget-session'), {
+    algorithm: 'HS256',
+    audience: WIDGET_AUDIENCE,
+    expiresIn: WIDGET_SESSION_TTL_SECONDS
+  });
+  return { token, expiresAt: new Date(Date.now() + WIDGET_SESSION_TTL_SECONDS * 1000) };
+}
+
+function checkWidgetClaims(decoded: VerifiedWidgetSession): VerifiedWidgetSession {
+  if (decoded.purpose !== 'widget') throw new Error('Not a widget session');
+  if (!isValidObjectId(decoded.siteId)) throw new Error('Widget session carries no site');
+  if (typeof decoded.visitorId !== 'string' || !WIDGET_VISITOR_ID.test(decoded.visitorId)) {
+    throw new Error('Widget session carries no visitor');
+  }
+  if (typeof decoded.sid !== 'string' || !/^[0-9a-f]{24}$/.test(decoded.sid)) {
+    throw new Error('Widget session carries no session id');
+  }
+  if (typeof decoded.kv !== 'string' || !decoded.kv) {
+    throw new Error('Widget session carries no key version');
+  }
+  return decoded;
+}
+
+/**
+ * A widget token that is valid right now. Signed with its own derived key, so
+ * an admin session (or an upload proof) can never pass as one, and the reverse.
+ */
+export function verifyWidgetSession(token: string): VerifiedWidgetSession {
+  const decoded = jwt.verify(token, derivedKey('widget-session'), {
+    algorithms: ['HS256'],
+    audience: WIDGET_AUDIENCE
+  }) as VerifiedWidgetSession;
+  return checkWidgetClaims(decoded);
+}
+
+/**
+ * A widget token that may be renewed: signature, purpose and claims must all
+ * hold, but it may have expired up to WIDGET_SESSION_RENEW_SECONDS ago.
+ * Returns null for anything else — the caller then starts a new visitor.
+ */
+export function renewableWidgetSession(token: unknown): VerifiedWidgetSession | null {
+  if (typeof token !== 'string' || !token || token.length > 2048) return null;
+  try {
+    const decoded = jwt.verify(token, derivedKey('widget-session'), {
+      algorithms: ['HS256'],
+      audience: WIDGET_AUDIENCE,
+      ignoreExpiration: true
+    }) as VerifiedWidgetSession;
+    checkWidgetClaims(decoded);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (typeof decoded.exp !== 'number' || decoded.exp + WIDGET_SESSION_RENEW_SECONDS < nowSeconds) {
+      return null;
+    }
+    return decoded;
+  } catch {
+    return null;
+  }
+}

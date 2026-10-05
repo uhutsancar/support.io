@@ -104,6 +104,26 @@ export const sitesAPI = {
     )
 };
 
+// --------------------------------------------------------------------- files
+
+export const filesAPI = {
+  /**
+   * An attachment an agent sends from the inbox. Goes through the panel's own
+   * session (cookie + CSRF), for a site the agent may work on; the widget's
+   * public upload takes a visitor's widget session instead.
+   */
+  agentUpload: (siteId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<{ file: Record<string, unknown> }>('/files/agent-upload', form, {
+      params: { siteId },
+      // axios drops the JSON content type for FormData in the browser, so the
+      // browser writes the multipart boundary itself.
+      timeout: 60 * 1000
+    });
+  }
+};
+
 // ------------------------------------------------------------------ visitors
 
 export const visitorsAPI = {

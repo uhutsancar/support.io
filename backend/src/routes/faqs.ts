@@ -2,13 +2,13 @@
 //
 // Two audiences in one file, with deliberately different authentication:
 //   /admin/*   the dashboard, behind a session and the caller's organization
-//   /search    the widget, on a customer's page, behind a site key only
+//   /search    the widget, on a customer's page, behind its widget session
 
 import express from 'express';
 import FAQ from '../models/FAQ';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
-import { verifySiteKey } from '../middleware/siteAuth';
+import { requireWidgetSession } from '../middleware/widgetSession';
 import {
   asyncHandler,
   badRequest,
@@ -102,10 +102,10 @@ router.delete(
 
 // --------------------------------------------------------------------- widget
 
-/** Public: called from the customer's page, authenticated by site key alone. */
+/** Called from the customer's page; the site is the widget session's. */
 router.get(
   '/search',
-  verifySiteKey,
+  requireWidgetSession,
   asyncHandler(async (req: Request, res: Response) => {
     const { query, page } = req.query;
 

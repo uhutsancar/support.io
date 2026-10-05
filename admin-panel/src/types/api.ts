@@ -101,6 +101,8 @@ export interface Site {
   domain: string;
   siteKey: string;
   organizationId: string;
+  /** Origins (scheme://host[:port]) the widget may run on. */
+  allowedOrigins?: string[];
   isActive: boolean;
   widgetSettings?: Record<string, unknown>;
   aiSettings?: SiteAiSettings;

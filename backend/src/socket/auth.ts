@@ -1,17 +1,20 @@
-// Who is on the other end of an admin socket.
+// Who is on the other end of a socket: an agent on /admin, a visitor's widget
+// on /widget.
 //
-// Every failure below answers with the same message. A handshake either
-// authenticates or it does not; telling the caller which step failed would let
-// them probe for valid account ids.
+// Every failure below answers with the same message per namespace. A
+// handshake either authenticates or it does not; telling the caller which step
+// failed would let them probe for valid account ids or site keys.
 
 import Team from '../models/Team';
 import User from '../models/User';
 import Organization from '../models/Organization';
 import { SESSION_COOKIE } from '../config/session';
 import { isOriginAllowed } from '../config/origins';
-import { verifySession } from '../config/tokens';
+import { verifySession, verifyWidgetSession } from '../config/tokens';
+import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
+import { siteForWidgetSession, WIDGET_SESSION_INVALID } from '../middleware/widgetSession';
 import type { Namespace, Socket } from 'socket.io';
-import type { AdminSocket } from './types';
+import type { AdminSocket, WidgetSocket } from './types';
 
 const AUTH_FAILED = 'Authentication required';
 
@@ -90,6 +93,50 @@ export function installAdminAuthentication(admin: Namespace): void {
       next();
     } catch {
       next(new Error(AUTH_FAILED));
+    }
+  });
+}
+
+/**
+ * Authenticates the widget namespace.
+ *
+ * The handshake carries the widget session the page obtained from
+ * POST /api/widget/session (`auth: { token }`). The site, its organization and
+ * the visitor are read from that signature and pinned on the socket before any
+ * event runs; nothing an event payload says can change them. A browser
+ * handshake must also come from one of the site's allowed origins, so a token
+ * lifted from one site cannot be replayed from another site's page.
+ *
+ * The refusal is always the same code, which the widget answers by fetching a
+ * fresh session and reconnecting.
+ */
+export function installWidgetAuthentication(widget: Namespace): void {
+  widget.use(async (rawSocket: Socket, next) => {
+    const socket = rawSocket as WidgetSocket;
+    try {
+      const token = socket.handshake.auth?.token;
+      if (typeof token !== 'string' || !token) return next(new Error(WIDGET_SESSION_INVALID));
+
+      const claims = verifyWidgetSession(token);
+      const site = await siteForWidgetSession(claims);
+      if (!site) return next(new Error(WIDGET_SESSION_INVALID));
+
+      const origin = requestOrigin(socket.handshake.headers as Record<string, unknown>);
+      if (origin !== null && !siteAcceptsOrigin(site, origin)) {
+        return next(new Error(WIDGET_SESSION_INVALID));
+      }
+
+      socket.siteId = String(site._id);
+      socket.organizationId = String(site.organizationId);
+      socket.visitorId = claims.visitorId;
+      socket.widgetSessionId = claims.sid;
+      // Defaults until the widget joins and says who the visitor is.
+      socket.visitorName = 'Visitor';
+      socket.visitorEmail = null;
+      socket.currentPage = '/';
+      next();
+    } catch {
+      next(new Error(WIDGET_SESSION_INVALID));
     }
   });
 }

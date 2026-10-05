@@ -191,25 +191,27 @@ test('logout clears the session cookie', async () => {
 // gelen `{ $ne: … }` ulaştığında sorgu "herhangi bir site" anlamına geliyordu.
 
 test('a query-string operator cannot pick an arbitrary site', async () => {
-  const res = await call('/api/widget/settings?siteKey[$ne]=no-such-key');
-  assert.notEqual(
-    res.status,
-    200,
-    `settings answered for an operator: ${JSON.stringify(res.body).slice(0, 120)}`
-  );
-
+  // A site key no longer authenticates anything by itself; the widget
+  // endpoints want a signed session, whatever the query string says.
   const search = await call('/api/faqs/search?siteKey[$ne]=no-such-key&q=a');
-  assert.equal(search.status, 401, 'verifySiteKey must not authenticate an operator');
+  assert.equal(search.status, 401, 'a query-string operator authenticated a widget call');
 });
 
 test('a JSON-body operator cannot write to an arbitrary site', async () => {
   const marker = `https://operator-${Date.now()}.example/path`;
-  const res = await call('/api/widget/installed', {
+  const res = await call('/api/widget/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3001' },
+    body: JSON.stringify({ siteKey: { $ne: 'no-such-key' }, url: marker })
+  });
+  assert.equal(res.status, 400, `a session was issued for an operator, got ${res.status}`);
+
+  const installed = await call('/api/widget/installed', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ siteKey: { $ne: 'no-such-key' }, url: marker })
   });
-  assert.equal(res.status, 400, `installed accepted an operator, got ${res.status}`);
+  assert.equal(installed.status, 401, `installed accepted an operator, got ${installed.status}`);
 
   const { query } = await import('../src/db/pool');
   const { rows } = await query(

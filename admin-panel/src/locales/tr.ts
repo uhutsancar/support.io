@@ -841,7 +841,33 @@ export default {
     deleteTitle: 'Siteyi Sil',
     deleteMessage:
       '"{{name}}" sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve site\'ye ait tüm konuşmalar silinecektir.',
-    deleteConfirm: 'Evet, Sil'
+    deleteConfirm: 'Evet, Sil',
+    access: {
+      button: 'Erişim',
+      title: 'Erişim ve kurulum',
+      installation: 'Kurulum durumu',
+      notInstalled: 'Kurulu değil',
+      connected: 'Bağlı',
+      lastSeen: 'Son görülme: {{when}}',
+      seenOn: 'Son görüldüğü sayfa: {{origin}}{{path}}',
+      originsLabel: 'İzinli adresler (origin)',
+      originsHelp:
+        'Widget yalnızca bu adreslerdeki sayfalarda açılır. Her satıra bir adres yazın: https://www.ornek.com gibi; yol, sorgu veya * kullanılamaz. Listede olmayan bir sitede kod çalışmaz.',
+      save: 'Adresleri kaydet',
+      saved: 'İzinli adresler kaydedildi',
+      saveError: 'Adresler kaydedilemedi',
+      cspTitle: 'Sitenizde Content-Security-Policy varsa',
+      cspHelp:
+        'Widget betiği, bağlantısı ve görselleri bu adresten gelir. Politikanıza şu kaynakları ekleyin:',
+      rekeyTitle: 'Site anahtarını yenile',
+      rekeyHelp:
+        'Yeni bir anahtar üretilir; eski anahtar ve onunla açılmış tüm widget oturumları ANINDA geçersiz olur. Sitenizdeki kurulum kodunu yeni anahtarla güncellemeniz gerekir.',
+      rekey: 'Anahtarı yenile',
+      rekeyConfirm:
+        'Eski anahtar şu an çalışan tüm widget’larla birlikte hemen devre dışı kalacak. Sitenizdeki kodu güncelleyene kadar ziyaretçiler sohbet açamaz. Devam edilsin mi?',
+      rekeyed: 'Yeni site anahtarı oluşturuldu. Kurulum kodunu güncelleyin.',
+      rekeyError: 'Anahtar yenilenemedi'
+    }
   },
   settings: {
     title: 'Ayarlar',
@@ -1993,18 +2019,18 @@ export default {
     backend: {
       title: 'Backend ve Socket',
       intro:
-        'Widget’ın konuştuğu yüzeyin tamamı. Bu uçlar site anahtarıyla doğrulanır, oturum gerektirmez ve organizasyon içi hiçbir alan döndürmez.',
+        'Widget’ın konuştuğu yüzeyin tamamı. Site anahtarı tek başına yetki değildir: widget önce imzalı bir oturum alır ve diğer her uç bu oturumu ister. Oturum yalnızca sitenin izinli adreslerindeki (Siteler → Erişim) sayfalara verilir. Hiçbir uç organizasyon içi bir alan döndürmez.',
       bootstrap:
-        'Widget yapılandırması, SSS içeriği ve temsilci uygunluğu tek yanıtta. 30 saniye önbelleklenir.',
+        'İmzalı widget oturumu (sunucunun ürettiği ziyaretçi kimliğiyle) + yapılandırma, SSS ve temsilci uygunluğu tek yanıtta. Yalnızca izinli bir origin’den.',
       installed:
-        'Kurulum doğrulaması. Widget bir sayfada ilk çalıştığında bir kez çağırır; yalnızca origin ve yol saklanır.',
+        'Kurulum doğrulaması. Widget her sayfa açılışında çağırır; yalnızca origin ve yol saklanır.',
       upload:
-        'Sohbet dosyası yükleme. X-Site-Key başlığı ile doğrulanır, 10 MB sınırı ve MIME denetimi vardır.',
+        'Sohbet dosyası yükleme. Widget oturumu (Authorization: Bearer) ister, 10 MB sınırı ve MIME denetimi vardır.',
       track: 'Ziyaretçi davranış olayları (proaktif mesaj kuralları bu akışı dinler).',
       socket:
         'Socket.IO ad alanı. İstemci /socket.io/socket.io.js dosyasını aynı sunucudan yükler.',
       socketEvents: 'Socket olayları',
-      join: 'Konuşmaya katıl veya yenisini hazırla. Site anahtarı burada doğrulanır.',
+      join: 'Konuşmaya katıl veya yenisini hazırla. Site ve ziyaretçi bağlantının oturumundan okunur.',
       send: 'Mesaj gönder. clientMessageId ile tekrar önlenir.',
       typing: 'Ziyaretçi yazıyor bildirimi.',
       pageview: 'SPA yönlendirmesinde geçerli sayfayı bildir.',

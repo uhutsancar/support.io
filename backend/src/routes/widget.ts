@@ -2,10 +2,19 @@
 
 // Widget'in public API'si.
 //
-// Bu rotalar musteri sitesinden, tarayicidan, oturum acmadan cagrilir. Tek
-// kimlik dogrulama site anahtaridir; bu yuzden buradan donen hicbir alan
-// organizasyon ici bilgi icermemelidir (id'ler, e-postalar, plan, ic ayarlar).
-// Asagidaki `publicConfig` fonksiyonu bunun tek gecis noktasidir.
+// Bu rotalar musteri sitesinden, tarayicidan, hesap oturumu olmadan cagrilir.
+// Akis:
+//
+//   POST /session   site anahtari + (varsa) onceki token -> imzali widget
+//                   oturumu, sunucunun urettigi visitorId ve widget'in
+//                   acilista ihtiyac duydugu her sey (config, SSS, durum)
+//   diger uclar     yalnizca o token ile (middleware/widgetSession.ts)
+//
+// Site anahtari tek basina yetki DEGILDIR: sayfa kaynaginda durur. Oturum
+// yalnizca sitenin izinli origin'lerinden birindeki sayfaya verilir.
+//
+// Buradan donen hicbir alan organizasyon ici bilgi icermemelidir (id'ler,
+// e-postalar, plan, ic ayarlar). `publicConfig` bunun tek gecis noktasidir.
 
 import express from 'express';
 import { plainString } from '../middleware/sanitize';
@@ -17,6 +26,16 @@ import Team from '../models/Team';
 import User from '../models/User';
 import { isProduction } from '../config/env';
 import { open } from '../config/secretBox';
+import {
+  newVisitorId,
+  newWidgetSessionId,
+  renewableWidgetSession,
+  signWidgetSession,
+  siteKeyVersion
+} from '../config/tokens';
+import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
+import { originRefused, requireWidgetSession } from '../middleware/widgetSession';
+import { widgetSessionLimiter } from '../middleware/rateLimit';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActive } from '../services/ai/autoReply';
@@ -32,7 +51,7 @@ const widgetNotFound = () => notFound('Widget', 'WIDGET_NOT_FOUND');
 
 // SDK surumu. Widget calisma zamani kendi surumunu gonderir; uyusmazlik
 // panelde "eski surum" uyarisi gostermeyi mumkun kilar.
-const WIDGET_VERSION = '3.0.0';
+const WIDGET_VERSION = '4.0.0';
 const API_VERSION = '1';
 
 const DEFAULTS = {
@@ -184,16 +203,20 @@ function safeUrlPart(
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/widget/bootstrap?siteKey=...
+// POST /api/widget/session   { siteKey, token? }
 //
-// Widget'in acilista ihtiyac duydugu HER SEY tek yanitta doner. Eski widget uc
-// ayri istek atiyordu (config + settings + faqs); ucu de ayri gecikme ekliyor,
-// ikisi de ayni siteyi yeniden okuyordu.
+// Widget'in acilista ihtiyac duydugu HER SEY tek yanitta doner: imzali oturum
+// ve eskiden GET /bootstrap'in dondurdugu config + SSS + musaitlik.
+//
+// Gecerli (ya da yenileme penceresi icinde suresi dolmus) bir token
+// gonderilirse ayni ziyaretci devam eder; aksi halde sunucu yeni bir visitorId
+// uretir. Istemcinin onerdigi bir visitorId yoktur.
 // ---------------------------------------------------------------------------
-router.get(
-  '/bootstrap',
+router.post(
+  '/session',
+  widgetSessionLimiter,
   asyncHandler(async (req: Request, res: Response) => {
-    const siteKey = String(req.query.siteKey || '').trim();
+    const siteKey = plainString(req.body?.siteKey, 128);
     if (!siteKey) throw badRequest('siteKey is required');
 
     const site = await Site.findOne({ siteKey, isActive: true });
@@ -201,14 +224,35 @@ router.get(
     // cannot reveal "this site exists but is switched off".
     if (!site) throw widgetNotFound();
 
+    // A session is the one thing that must come from a page on the site: a
+    // browser always sends Origin on this POST, so a missing one is refused.
+    const origin = requestOrigin(req.headers);
+    if (!origin || !siteAcceptsOrigin(site, origin)) throw originRefused();
+
+    const keyVersion = siteKeyVersion(site.siteKey);
+    const previous = renewableWidgetSession(req.body?.token);
+    const continues =
+      previous !== null && previous.siteId === String(site._id) && previous.kv === keyVersion;
+
+    const visitorId = continues ? previous.visitorId : newVisitorId();
+    const { token, expiresAt } = signWidgetSession({
+      siteId: String(site._id),
+      visitorId,
+      sid: continues ? previous.sid : newWidgetSessionId(),
+      kv: keyVersion
+    });
+
     const [saved, faqs, availability] = await Promise.all([
       WidgetConfig.findOne({ siteId: site._id, isActive: true }),
       FAQ.find({ siteId: site._id, isActive: true }).sort({ order: 1 }).limit(50).lean(),
       resolveAvailability(site)
     ]);
 
-    res.set('Cache-Control', 'public, max-age=30');
     res.json({
+      token,
+      expiresAt: expiresAt.toISOString(),
+      visitorId,
+      renewed: continues,
       version: WIDGET_VERSION,
       apiVersion: API_VERSION,
       serverTime: new Date().toISOString(),
@@ -231,19 +275,17 @@ router.get(
 // ---------------------------------------------------------------------------
 // POST /api/widget/installed
 //
-// Kurulum dogrulamasi. Widget bir sayfada ilk kez calistiginda bir kez cagirir.
-// Yalnizca site anahtari + sayfanin origin'i kaydedilir; ziyaretciye ait
-// hicbir kimlik bilgisi burada tutulmaz.
+// Kurulum dogrulamasi. Widget her sayfa acilisinda bir kez cagirir; panel
+// "Kurulu degil / Bagli / Son gorulme" durumunu buradan okur. Yalnizca
+// sayfanin origin'i ve yolu kaydedilir; ziyaretciye ait hicbir kimlik bilgisi
+// burada tutulmaz.
 // ---------------------------------------------------------------------------
 router.post(
   '/installed',
+  requireWidgetSession,
   asyncHandler(async (req: Request, res: Response) => {
     const { url, sdkVersion } = req.body || {};
-    const siteKey = plainString(req.body?.siteKey, 128);
-    if (!siteKey) throw badRequest('siteKey is required');
-
-    const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) throw widgetNotFound();
+    const site = req.site;
 
     const now = new Date().toISOString();
     const previous = site.installation || {};
@@ -253,7 +295,9 @@ router.post(
       // heartbeat'te sifirlanmamali.
       verifiedAt: previous.verifiedAt || now,
       lastSeenAt: now,
-      origin: safeUrlPart(url, 'origin'),
+      // The origin the request actually came from (already checked against the
+      // site's list), not the one the body claims.
+      origin: requestOrigin(req.headers) ?? safeUrlPart(url, 'origin'),
       // Tam URL yerine yalnizca yol saklanir; query string kisisel veri
       // tasiyabilir.
       path: safeUrlPart(url, 'pathname'),
@@ -286,24 +330,6 @@ if (!isProduction) {
     })
   );
 }
-
-// ---------------------------------------------------------------------------
-// Geriye donuk uyumluluk: eski widget surumleri /api/widget/settings cagirir.
-// ---------------------------------------------------------------------------
-router.get(
-  '/settings',
-  asyncHandler(async (req: Request, res: Response) => {
-    const siteKey = plainString(req.query.siteKey, 128);
-    if (!siteKey) throw badRequest('siteKey is required');
-    const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) throw widgetNotFound();
-    const saved = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
-    res.json({
-      site: { name: site.name, isActive: site.isActive, widgetSettings: site.widgetSettings },
-      config: publicConfig(site, saved ? saved.toObject() : null)
-    });
-  })
-);
 
 export { WIDGET_VERSION, publicConfig };
 export default router;

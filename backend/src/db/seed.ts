@@ -25,7 +25,7 @@ import type { AutomationTrigger } from '../models/AutomationRule';
 import type { DealStage } from '../models/Deal';
 import type { AuditAction } from '../models/AuditLog';
 import type { Priority } from '../domain';
-import { applySchema } from './migrate';
+import { runMigrations } from './migrate';
 import Organization from '../models/Organization';
 import User from '../models/User';
 import Team from '../models/Team';
@@ -1046,7 +1046,7 @@ async function main() {
   const reset = process.argv.includes('--reset');
 
   await query('SELECT 1');
-  await applySchema();
+  await runMigrations();
 
   if (reset) {
     const removed = await resetDemo();

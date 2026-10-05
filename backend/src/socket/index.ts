@@ -9,7 +9,7 @@
 //
 // What is left here is wiring:
 //
-//   auth.ts                      who is on an admin socket
+//   auth.ts                      who is on an admin or a widget socket
 //   context.ts                   the authorised lookups every handler shares
 //   handlers/widget.ts           the visitor's side
 //   handlers/adminConversations  the agent's side of a conversation
@@ -21,7 +21,7 @@
 // automationTrigger, conversationSla.
 
 import { SocketContext } from './context';
-import { installAdminAuthentication } from './auth';
+import { installAdminAuthentication, installWidgetAuthentication } from './auth';
 import { installWidgetHandlers } from './handlers/widget';
 import { installAdminConversationHandlers } from './handlers/adminConversations';
 import { installAdminPresenceHandlers } from './handlers/adminPresence';
@@ -40,6 +40,7 @@ export class SocketHandler {
     this.ctx = new SocketContext(io);
 
     installAdminAuthentication(this.ctx.admin);
+    installWidgetAuthentication(this.ctx.widget);
     installWidgetHandlers(this.ctx);
     this.installAdminHandlers();
   }

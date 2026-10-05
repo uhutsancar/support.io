@@ -1,7 +1,10 @@
+// Visitor behaviour from the widget's tracking SDK, fed to the proactive
+// engine. The site and the visitor come from the widget session
+// (middleware/widgetSession.ts); a body that names either is ignored.
 import express from 'express';
 import { getEngine as getProactiveEngine } from '../services/proactiveEngine';
-import Site from '../models/Site';
-import { asyncHandler, badRequest, notFound } from '../http';
+import { requireWidgetSession } from '../middleware/widgetSession';
+import { asyncHandler, badRequest } from '../http';
 import type { Request, Response } from 'express';
 
 const router = express.Router();
@@ -29,16 +32,13 @@ function boundedPayload(value: unknown) {
 // Batch ingestion endpoint for the tracking SDK
 router.post(
   '/track',
+  requireWidgetSession,
   asyncHandler(async (req: Request, res: Response) => {
-    const { siteKey, visitorId, sessionId, events, context } = req.body;
+    const { sessionId, events, context } = req.body;
+    const site = req.site;
+    const visitorId = req.widget.visitorId;
 
     if (
-      typeof siteKey !== 'string' ||
-      !siteKey ||
-      siteKey.length > 128 ||
-      typeof visitorId !== 'string' ||
-      !visitorId ||
-      visitorId.length > 100 ||
       (sessionId != null && (typeof sessionId !== 'string' || sessionId.length > 100)) ||
       !Array.isArray(events) ||
       events.length === 0 ||
@@ -46,9 +46,6 @@ router.post(
     ) {
       throw badRequest('Invalid payload');
     }
-
-    const site = await Site.findOne({ siteKey, isActive: true });
-    if (!site) throw notFound('Site');
 
     const proactiveEngine = getProactiveEngine();
 

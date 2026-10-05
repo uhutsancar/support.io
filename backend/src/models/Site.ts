@@ -19,6 +19,8 @@ export interface SiteDoc {
   aiSettings: SiteAiSettings;
   integrations: SiteIntegrations;
   installation: SiteInstallation;
+  /** The exact origins the widget may run on; see config/siteOrigins.ts. */
+  allowedOrigins: string[];
   isActive: boolean;
 }
 
@@ -90,6 +92,7 @@ export default defineModel<SiteDoc>({
     // "Kurulum bekleniyor" / "Kurulu" rozetini besler.
     //   { verifiedAt, lastSeenAt, url, origin, sdkVersion, userAgent }
     installation: { column: 'installation', type: 'json', default: () => ({}) },
+    allowedOrigins: { column: 'allowed_origins', type: 'stringArray', default: () => [] },
     isActive: { column: 'is_active', type: 'boolean', default: true }
   },
   methods: {

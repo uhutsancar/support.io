@@ -41,6 +41,12 @@ import { getPool, query } from '../src/db/pool';
 import { closeRedisClient } from '../src/config/redis';
 import { seal } from '../src/config/secretBox';
 import { userHashFor } from '../src/services/identity';
+import {
+  newVisitorId,
+  newWidgetSessionId,
+  signWidgetSession,
+  siteKeyVersion
+} from '../src/config/tokens';
 
 // ------------------------------------------------------------------ harness
 
@@ -167,12 +173,26 @@ async function visitor(
   siteKey: string,
   identity: { userId: string; userHash: string } | null = null
 ): Promise<Visitor> {
-  const socket = connect(`${base}/widget`, { transports: ['websocket'], forceNew: true });
+  // This suite runs the socket layer in-process, without the HTTP routes, so
+  // the widget session is signed here exactly as POST /api/widget/session does.
+  const site = await Site.findOne({ siteKey });
+  assert.ok(site, 'no site for the key');
+  const { token } = signWidgetSession({
+    siteId: String(site._id),
+    visitorId: newVisitorId(),
+    sid: newWidgetSessionId(),
+    kv: siteKeyVersion(site.siteKey)
+  });
+  const socket = connect(`${base}/widget`, {
+    transports: ['websocket'],
+    forceNew: true,
+    auth: { token }
+  });
   sockets.push(socket);
   const messages: any[] = [];
   socket.on('new-message', (data: { message: any }) => messages.push(data.message));
   const joined = new Promise((resolve) => socket.once('conversation-joined', resolve));
-  socket.emit('join-conversation', { siteKey, visitorId: `v-${generateId()}`, ...identity });
+  socket.emit('join-conversation', { ...identity });
   await joined;
   return {
     socket,

@@ -6,8 +6,9 @@
 //
 //  - /widget.js gercekten servis ediliyor, dogru MIME ve CORS ile; surumlenmis
 //    yol degismez (immutable) olarak onbelleklenebiliyor.
-//  - /api/widget/bootstrap widget'in ihtiyaci olan HER SEYI tek yanitta
-//    donduruyor ve HICBIR ic alan sizdirmiyor (organizationId, siteId, _id).
+//  - POST /api/widget/session widget'in ihtiyaci olan HER SEYI (imzali oturum
+//    + config) tek yanitta donduruyor ve HICBIR ic alan sizdirmiyor
+//    (organizationId, siteId, _id).
 //  - Gecersiz anahtar ile pasif site ayni yaniti aliyor (anahtar denemesiyle
 //    varlik cikarimi yapilamasin diye).
 //  - Kurulum dogrulamasi calisiyor ve URL'nin sorgu dizesini SAKLAMIYOR.
@@ -20,12 +21,10 @@
 import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { io as connect } from 'socket.io-client';
 import { open, seal } from '../src/config/secretBox';
 import { userHashFor, verifiedIdentity } from '../src/services/identity';
 import { getPool, query } from '../src/db/pool';
-
-const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+import { BASE, joinAsVisitor, widgetSession, widgetToken } from './helpers/widget';
 
 /** How one request to the running API is made. */
 interface ApiOptions {
@@ -149,9 +148,15 @@ test('widget.js is served with the right type, CORS and cache headers', async ()
 });
 
 test('the pinned widget path is cacheable as immutable', async () => {
-  const res = await fetch(`${BASE}/widget/v3/widget.js`);
+  const res = await fetch(`${BASE}/widget/v4/widget.js`);
   assert.equal(res.status, 200);
   assert.match(res.headers.get('cache-control') || '', /immutable/);
+
+  // v3 spoke a protocol the server no longer accepts; its pinned path now
+  // serves the current runtime with a short cache instead of a 404.
+  const legacy = await fetch(`${BASE}/widget/v3/widget.js`);
+  assert.equal(legacy.status, 200);
+  assert.doesNotMatch(legacy.headers.get('cache-control') || '', /immutable/);
 });
 
 test('the socket.io client is served from our own origin', async () => {
@@ -162,15 +167,18 @@ test('the socket.io client is served from our own origin', async () => {
   assert.match(res.headers.get('content-type') || '', /javascript/);
 });
 
-/* ----------------------------------------------------------- bootstrap */
+/* ------------------------------------------------------------- oturum */
 
-test('bootstrap returns everything the widget needs in one response', async () => {
+test('a widget session returns everything the widget needs in one response', async () => {
   const tenant = await createTenant('boot');
 
-  const res = await api(`/api/widget/bootstrap?siteKey=${tenant.site.siteKey}`);
+  const res = await widgetSession(tenant.site.siteKey);
   assert.equal(res.status, 200, JSON.stringify(res.body));
 
   const payload = res.body;
+  assert.ok(payload.token, 'no session token');
+  assert.match(payload.visitorId, /^v_[0-9a-f]{32}$/, 'the visitor id is not server-minted');
+  assert.ok(Date.parse(payload.expiresAt) > Date.now(), 'the session is already expired');
   assert.ok(payload.version, 'no SDK version');
   assert.ok(payload.config, 'no config');
   assert.ok(Array.isArray(payload.faqs), 'faqs is not an array');
@@ -196,15 +204,17 @@ test('bootstrap returns everything the widget needs in one response', async () =
   assert.match(payload.config.colors.primary, /^#[0-9A-Fa-f]{6}$/);
 });
 
-test('bootstrap leaks no internal identifiers', async () => {
+test('a widget session leaks no internal identifiers', async () => {
   const tenant = await createTenant('leak');
-  const res = await api(`/api/widget/bootstrap?siteKey=${tenant.site.siteKey}`);
+  const res = await widgetSession(tenant.site.siteKey);
   assert.equal(res.status, 200);
 
-  // Bu uc kimlik dogrulamasizdir ve herkese aciktir. Beyaz liste yaklasiminin
-  // amaci tam olarak budur: modele yeni bir alan eklendiginde kazara
-  // yayinlanmasin.
-  const serialized = JSON.stringify(res.body);
+  // Bu uc hesap oturumu olmadan cagrilir. Beyaz liste yaklasiminin amaci
+  // tam olarak budur: modele yeni bir alan eklendiginde kazara yayinlanmasin.
+  // The token is a signature over ids by design; it is opaque to the page.
+  const { token: _token, ...rest } = res.body;
+  void _token;
+  const serialized = JSON.stringify(rest);
   for (const forbidden of [
     'organizationId',
     'organization_id',
@@ -213,12 +223,12 @@ test('bootstrap leaks no internal identifiers', async () => {
     '_id',
     'userId'
   ]) {
-    assert.ok(!serialized.includes(forbidden), `bootstrap response leaks ${forbidden}`);
+    assert.ok(!serialized.includes(forbidden), `session response leaks ${forbidden}`);
   }
 });
 
 test('an unknown key and an inactive site are indistinguishable', async () => {
-  const missing = await api('/api/widget/bootstrap?siteKey=definitely-not-a-real-key');
+  const missing = await widgetSession('definitely-not-a-real-key');
   assert.equal(missing.status, 404);
   assert.equal(missing.body.code, 'WIDGET_NOT_FOUND');
 
@@ -230,13 +240,13 @@ test('an unknown key and an inactive site are indistinguishable', async () => {
   });
   assert.ok(deactivated.status < 400, JSON.stringify(deactivated.body));
 
-  const inactive = await api(`/api/widget/bootstrap?siteKey=${tenant.site.siteKey}`);
+  const inactive = await widgetSession(tenant.site.siteKey);
   assert.equal(inactive.status, missing.status);
   assert.deepEqual(inactive.body, missing.body);
 });
 
-test('bootstrap validates its input', async () => {
-  const res = await api('/api/widget/bootstrap');
+test('a widget session validates its input', async () => {
+  const res = await widgetSession(undefined);
   assert.equal(res.status, 400);
   assert.equal(res.body.code, 'VALIDATION_ERROR');
 });
@@ -245,17 +255,24 @@ test('bootstrap validates its input', async () => {
 
 test('installation verification records the origin but drops the query string', async () => {
   const tenant = await createTenant('install');
+  await api(`/api/sites/${tenant.site._id}`, {
+    method: 'PUT',
+    token: tenant.token,
+    body: { allowedOrigins: ['https://shop.example.com'] }
+  });
+  const { token } = await widgetToken(tenant.site.siteKey, { origin: 'https://shop.example.com' });
 
   const before = await api(`/api/sites/${tenant.site._id}`, { token: tenant.token });
   assert.ok(!before.body.site.installation?.verifiedAt, 'site starts out already verified');
 
   const ping = await api('/api/widget/installed', {
     method: 'POST',
+    token,
+    headers: { Origin: 'https://shop.example.com' },
     body: {
-      siteKey: tenant.site.siteKey,
       // Sorgu dizesi kisisel veri tasiyabilir; saklanmamali.
       url: 'https://shop.example.com/checkout?email=someone%40example.com&token=secret',
-      sdkVersion: '3.0.0'
+      sdkVersion: '4.0.0'
     }
   });
   assert.equal(ping.status, 200, JSON.stringify(ping.body));
@@ -266,7 +283,7 @@ test('installation verification records the origin but drops the query string', 
   assert.ok(installation.verifiedAt, 'installation was not recorded');
   assert.equal(installation.origin, 'https://shop.example.com');
   assert.equal(installation.path, '/checkout');
-  assert.equal(installation.sdkVersion, '3.0.0');
+  assert.equal(installation.sdkVersion, '4.0.0');
 
   const serialized = JSON.stringify(installation);
   assert.ok(!serialized.includes('someone'), 'the query string was stored');
@@ -275,10 +292,12 @@ test('installation verification records the origin but drops the query string', 
 
 test('the first verification timestamp survives later heartbeats', async () => {
   const tenant = await createTenant('heartbeat');
+  const { token } = await widgetToken(tenant.site.siteKey);
 
   const first = await api('/api/widget/installed', {
     method: 'POST',
-    body: { siteKey: tenant.site.siteKey, url: 'https://a.example.com/', sdkVersion: '3.0.0' }
+    token,
+    body: { url: 'https://a.example.com/', sdkVersion: '4.0.0' }
   });
   assert.equal(first.status, 200);
 
@@ -286,11 +305,8 @@ test('the first verification timestamp survives later heartbeats', async () => {
 
   const second = await api('/api/widget/installed', {
     method: 'POST',
-    body: {
-      siteKey: tenant.site.siteKey,
-      url: 'https://a.example.com/pricing',
-      sdkVersion: '3.0.0'
-    }
+    token,
+    body: { url: 'https://a.example.com/pricing', sdkVersion: '4.0.0' }
   });
   assert.equal(second.status, 200);
 
@@ -301,13 +317,13 @@ test('the first verification timestamp survives later heartbeats', async () => {
   assert.notEqual(site.body.site.installation.lastSeenAt, site.body.site.installation.verifiedAt);
 });
 
-test('installation verification rejects an unknown key', async () => {
+test('installation verification requires a widget session', async () => {
   const res = await api('/api/widget/installed', {
     method: 'POST',
     body: { siteKey: 'nope', url: 'https://a.example.com/' }
   });
-  assert.equal(res.status, 404);
-  assert.equal(res.body.code, 'WIDGET_NOT_FOUND');
+  assert.equal(res.status, 401);
+  assert.equal(res.body.code, 'WIDGET_SESSION_INVALID');
 });
 
 /* ------------------------------------------------------------- yetki */
@@ -347,8 +363,8 @@ test('widget config cannot be written across a tenant boundary', async () => {
   assert.equal(write.status, 404, 'a foreign widget config was writable');
 
   // Kurbanin yapilandirmasi degismemis olmali.
-  const bootstrap = await api(`/api/widget/bootstrap?siteKey=${victim.site.siteKey}`);
-  assert.notEqual(bootstrap.body.config.colors.primary, '#FF0000');
+  const session = await widgetSession(victim.site.siteKey);
+  assert.notEqual(session.body.config.colors.primary, '#FF0000');
 });
 
 test('the team chat member list stays inside the organization', async () => {
@@ -407,17 +423,7 @@ test('sealed secrets open only intact, and a userHash verifies only for its own 
   assert.equal(verifiedIdentity({ ...integrations, identitySecret: null }, 'u_1', hash), null);
 });
 
-/** Joins the widget namespace and waits for the server's answer. */
-async function joinWidget(payload: Record<string, unknown>) {
-  const socket = connect(`${BASE}/widget`, { transports: ['websocket'], forceNew: true });
-  const joined: any = await new Promise((resolve) => {
-    socket.once('conversation-joined', resolve);
-    socket.emit('join-conversation', payload);
-  });
-  return { socket, joined };
-}
-
-async function sendAndWait(socket: ReturnType<typeof connect>, content: string) {
+async function sendAndWait(socket: Awaited<ReturnType<typeof joinAsVisitor>>['socket'], content: string) {
   const echoed: any = await new Promise((resolve) => {
     socket.on('new-message', (data: any) => {
       if (data?.message?.senderType === 'visitor') resolve(data.message);
@@ -440,13 +446,12 @@ test('identify() is trusted only with the userHash the shop signed', async (t) =
   assert.ok(!JSON.stringify(created.body.site).includes(secret), 'the site JSON carries the key');
 
   // Signed: the conversation belongs to that customer.
-  const visitorId = `v-identity-${Date.now()}`;
-  const signed = await joinWidget({
-    siteKey: tenant.site.siteKey,
-    visitorId,
+  const signed = await joinAsVisitor(tenant.site.siteKey, {
     userId: 'customer-7',
     userHash: userHashFor(secret, 'customer-7')
   });
+  // The same browser keeps its session; later joins renew it.
+  const browser = signed.token;
   t.after(() => signed.socket.disconnect());
   const conversationId = await sendAndWait(signed.socket, 'Merhaba');
   const { rows } = await query(
@@ -457,30 +462,26 @@ test('identify() is trusted only with the userHash the shop signed', async (t) =
 
   // Forged, in the same browser: anonymous, and the customer's conversation
   // is not reopened for it.
-  const forged = await joinWidget({
-    siteKey: tenant.site.siteKey,
-    visitorId,
-    userId: 'customer-7',
-    userHash: 'f'.repeat(64)
-  });
+  const forged = await joinAsVisitor(
+    tenant.site.siteKey,
+    { userId: 'customer-7', userHash: 'f'.repeat(64) },
+    { token: browser }
+  );
+  assert.equal(forged.visitorId, signed.visitorId, 'the browser lost its visitor id');
   t.after(() => forged.socket.disconnect());
   assert.equal(forged.joined.conversation, null, "a forged identity reopened the customer's chat");
 
   // The real customer gets it back.
-  const again = await joinWidget({
-    siteKey: tenant.site.siteKey,
-    visitorId,
-    userId: 'customer-7',
-    userHash: userHashFor(secret, 'customer-7')
-  });
+  const again = await joinAsVisitor(
+    tenant.site.siteKey,
+    { userId: 'customer-7', userHash: userHashFor(secret, 'customer-7') },
+    { token: browser }
+  );
   t.after(() => again.socket.disconnect());
   assert.equal(again.joined.conversation?._id, conversationId);
 
   // Another visitor that is not signed at all starts anonymous.
-  const anonymous = await joinWidget({
-    siteKey: tenant.site.siteKey,
-    visitorId: `v-anon-${Date.now()}`
-  });
+  const anonymous = await joinAsVisitor(tenant.site.siteKey);
   t.after(() => anonymous.socket.disconnect());
   const anonymousId = await sendAndWait(anonymous.socket, 'Merhaba');
   const anon = await query(

@@ -80,9 +80,10 @@ if (process.env.NODE_ENV === 'production') {
 // Socket.io CORS ayarı
 const io = new Server(server, {
   cors: {
-    // The engine endpoint is shared by the public /widget and authenticated
-    // /admin namespaces. Customer sites must be able to reach /widget from any
-    // origin; /admin security is enforced by its mandatory JWT middleware.
+    // The engine endpoint is shared by the /widget and /admin namespaces, and
+    // customer sites must be able to reach /widget. Origins are decided per
+    // namespace instead: /widget accepts only the allowed origins of the site
+    // its signed session names, /admin only the panel's own (socket/auth.ts).
     origin: true,
     methods: ['GET', 'POST'],
     credentials: true
@@ -92,12 +93,17 @@ const io = new Server(server, {
   pingTimeout: 20000
 });
 
-// Public widget APIs are intentionally cross-origin: the one-line embed must
-// work on customer domains without redeploying this service for every site.
+// Widget APIs are called from customer domains, so the CORS layer cannot use
+// the panel's allow-list for them — and it cannot decide per site either: a
+// preflight carries no body and no token. It reflects the origin without
+// credentials, and the real decision is made per site, per request:
+// POST /api/widget/session issues a session only to a page on one of the
+// site's allowed origins, and every other widget endpoint requires that
+// session from such a page (middleware/widgetSession.ts).
 // Dashboard APIs keep the strict allow-list below.
 const PUBLIC_EMBED_PATHS = [
   '/api/widget/',
-  '/api/widget-config/public/',
+  '/api/widget-config/public',
   '/api/faqs/search',
   '/api/files/upload',
   '/api/events/'
@@ -119,7 +125,7 @@ app.use(
       // atip yaniti okuyabilmesi demektir. Panel uclari izin listesiyle kalir.
       credentials: !isPublicEmbedRequest,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-site-key', 'x-csrf-token']
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token']
     });
   })
 );
@@ -243,11 +249,16 @@ app.use(
 // --- Widget dağıtımı ve sürümleme ---
 //
 //   /widget.js              → her zaman en güncel sürüm, kısa önbellek
-//   /widget/v3/widget.js    → sabitlenmiş sürüm, uzun ve değişmez önbellek
+//   /widget/v4/widget.js    → sabitlenmiş sürüm, uzun ve değişmez önbellek
 //
 // Müşteri sabitlenmiş yolu kullanıyorsa yeni bir dağıtım onun sayfasını
 // bozamaz. Kök yolu kullanıyorsa güncellemeleri otomatik alır.
-const WIDGET_MAJOR = 'v3';
+//
+// v4 imzalı widget oturumuyla konuşur (POST /api/widget/session); v3'ün
+// kendi ürettiği visitorId ile katılma akışını sunucu artık kabul etmez.
+// /widget/v3/widget.js bu yüzden 404 yerine güncel dosyayı kısa önbellekle
+// verir: o yolu gömmüş bir sayfa kendiliğinden v4'e geçer.
+const WIDGET_MAJOR = 'v4';
 const widgetFile = path.join(publicPath, 'widget.js');
 
 function serveWidget(immutable: boolean) {
@@ -267,6 +278,7 @@ function serveWidget(immutable: boolean) {
 
 app.get('/widget.js', serveWidget(false));
 app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget(true));
+app.get('/widget/v3/widget.js', serveWidget(false));
 // Yaygın yazım varyantları da aynı dosyaya düşer; kurulum talimatını yanlış
 // kopyalayan bir müşteri 404 yerine çalışan bir widget alır.
 app.get('/widget/widget.js', serveWidget(false));

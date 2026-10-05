@@ -839,7 +839,33 @@ export default {
     deleteTitle: 'Delete Site',
     deleteMessage:
       'Are you sure you want to delete "{{name}}" site? This action cannot be undone and all conversations for this site will be deleted.',
-    deleteConfirm: 'Yes, Delete'
+    deleteConfirm: 'Yes, Delete',
+    access: {
+      button: 'Access',
+      title: 'Access and installation',
+      installation: 'Installation',
+      notInstalled: 'Not installed',
+      connected: 'Connected',
+      lastSeen: 'Last seen {{when}}',
+      seenOn: 'Last seen on {{origin}}{{path}}',
+      originsLabel: 'Allowed origins',
+      originsHelp:
+        'The widget opens only on pages at these addresses. One per line, like https://www.example.com — no path, query or *. On a site that is not listed the code does nothing.',
+      save: 'Save origins',
+      saved: 'Allowed origins saved',
+      saveError: 'Could not save the origins',
+      cspTitle: 'If your site sends a Content-Security-Policy',
+      cspHelp:
+        'The widget script, its connection and its images come from this address. Add these sources to your policy:',
+      rekeyTitle: 'Regenerate the site key',
+      rekeyHelp:
+        'A new key is issued; the old key and every widget session opened with it stop working IMMEDIATELY. You must update the install code on your site with the new key.',
+      rekey: 'Regenerate key',
+      rekeyConfirm:
+        'The old key stops working right now, together with every widget currently open. Visitors cannot chat until you update the code on your site. Continue?',
+      rekeyed: 'New site key created. Update your install code.',
+      rekeyError: 'Could not regenerate the key'
+    }
   },
   settings: {
     title: 'Settings',
@@ -1986,17 +2012,17 @@ export default {
     backend: {
       title: 'Backend and Socket',
       intro:
-        'The complete surface the widget talks to. These endpoints are authenticated by site key, need no session, and return no internal workspace fields.',
+        'The complete surface the widget talks to. A site key is not a credential on its own: the widget first obtains a signed session, and every other endpoint requires it. Sessions are issued only to pages on the site’s allowed origins (Sites → Access). No endpoint returns internal workspace fields.',
       bootstrap:
-        'Widget configuration, help articles and agent availability in a single response. Cached for 30 seconds.',
+        'A signed widget session (with a server-minted visitor id) plus configuration, help articles and agent availability in a single response. Only from an allowed origin.',
       installed:
-        'Installation verification. Called once when the widget first runs on a page; only the origin and path are stored.',
+        'Installation verification. Called on every page load; only the origin and path are stored.',
       upload:
-        'Chat file upload. Authenticated by the X-Site-Key header, 10 MB limit with MIME checking.',
+        'Chat file upload. Requires the widget session (Authorization: Bearer), 10 MB limit with MIME checking.',
       track: 'Visitor behaviour events (the proactive-message rules listen to this stream).',
       socket: 'Socket.IO namespace. The client loads /socket.io/socket.io.js from the same server.',
       socketEvents: 'Socket events',
-      join: 'Join a conversation or prepare a new one. The site key is verified here.',
+      join: 'Join a conversation or prepare a new one. The site and the visitor come from the connection’s session.',
       send: 'Send a message. clientMessageId prevents duplicates.',
       typing: 'Visitor typing indicator.',
       pageview: 'Report the current page on SPA navigation.',

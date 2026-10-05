@@ -31,7 +31,7 @@ import type {
 import type { NextFunction, Request, Response } from 'express';
 import { getRedisClient, isEnabled as redisConfigured } from '../config/redis';
 import { readToken } from '../config/session';
-import { verifySession } from '../config/tokens';
+import { verifySession, verifyWidgetSession } from '../config/tokens';
 import { errorText } from '../http/errors';
 
 class RedisStore implements Store {
@@ -157,11 +157,19 @@ function identifyClient(req: Request): string {
       /* dogrulanamayan token anonim sayilir */
     }
   }
-  // Widget uclari site anahtariyla dogrulanir; ayni sitedeki tum ziyaretciler
-  // tek kotayi paylasmasin diye anahtar yalnizca IP ile birlestirilir.
-  const siteKey = req.header('x-site-key');
   const ip = ipKeyGenerator(req.ip || '');
-  return siteKey ? `s:${siteKey}:${ip}` : `ip:${ip}`;
+  // Widget uclari imzali widget oturumuyla gelir; sayac oturuma ve IP'ye gore
+  // tutulur ki ayni sitedeki tum ziyaretciler tek kotayi paylasmasin.
+  const bearer = /^Bearer\s+(.+)$/i.exec((req.header('Authorization') || '').trim());
+  if (bearer) {
+    try {
+      const widget = verifyWidgetSession(bearer[1].trim());
+      return `w:${widget.sid}:${ip}`;
+    } catch {
+      /* dogrulanamayan token anonim sayilir */
+    }
+  }
+  return `ip:${ip}`;
 }
 
 function limitReachedResponse(code: string, message: string) {
@@ -289,6 +297,21 @@ const registerLimiter = createLimiter({
   max: limit(process.env.REGISTER_RATE_MAX, 20, 100000)
 });
 
+// Widget oturumu: her sayfa acilisinda bir kez alinir. Site anahtari + IP'ye
+// gore sayilir; anahtarlari tarayip oturum basmayi da yavaslatir.
+const widgetSessionLimiter = createLimiter({
+  name: 'widget-session',
+  code: 'TOO_MANY_WIDGET_SESSIONS',
+  message: 'Too many widget sessions, please try again later.',
+  windowMs: minutes(process.env.WIDGET_SESSION_RATE_WINDOW_MS, 15 * 60 * 1000),
+  max: limit(process.env.WIDGET_SESSION_RATE_MAX, 300, 100000),
+  keyGenerator: (req: Request) => {
+    const siteKey =
+      typeof req.body?.siteKey === 'string' ? req.body.siteKey.slice(0, 128) : 'none';
+    return `ws:${siteKey}:${ipKeyGenerator(req.ip || '')}`;
+  }
+});
+
 // Genel API trafigi.
 const apiLimiter = createLimiter({
   name: 'api',
@@ -302,6 +325,7 @@ export {
   loginLimiter,
   loginAccountLimiter,
   registerLimiter,
+  widgetSessionLimiter,
   apiLimiter,
   createLimiter,
   createQuota,

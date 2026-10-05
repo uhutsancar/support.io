@@ -1,20 +1,23 @@
 // Copies the files the compiled server reads at runtime but tsc does not emit.
 //
-// src/db/migrate.ts resolves schema.sql next to itself, so the file has to sit
-// beside the compiled module too. Without this the production image starts and
-// then fails on the first boot, where it is least convenient to notice.
+// src/db/migrate.ts reads its migrations from a directory next to itself, so
+// the SQL files have to sit beside the compiled module too. Without this the
+// production image starts and then fails on the first migration, where it is
+// least convenient to notice.
 
 import fs from 'fs';
 import path from 'path';
 
-const ASSETS: Array<{ from: string; to: string }> = [
-  { from: 'src/db/schema.sql', to: 'dist/db/schema.sql' }
+const DIRECTORIES: Array<{ from: string; to: string; ext: string }> = [
+  { from: 'src/db/migrations', to: 'dist/db/migrations', ext: '.sql' }
 ];
 
-for (const asset of ASSETS) {
-  const source = path.resolve(asset.from);
-  const target = path.resolve(asset.to);
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.copyFileSync(source, target);
-  console.log(`copied ${asset.from} -> ${asset.to}`);
+for (const dir of DIRECTORIES) {
+  const source = path.resolve(dir.from);
+  const target = path.resolve(dir.to);
+  fs.mkdirSync(target, { recursive: true });
+  for (const name of fs.readdirSync(source).filter((n) => n.endsWith(dir.ext))) {
+    fs.copyFileSync(path.join(source, name), path.join(target, name));
+    console.log(`copied ${dir.from}/${name} -> ${dir.to}/${name}`);
+  }
 }

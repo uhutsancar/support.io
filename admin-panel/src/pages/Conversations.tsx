@@ -7,10 +7,16 @@ import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { aiAPI, sitesAPI, conversationsAPI, departmentsAPI, teamAPI } from '../services/api';
+import {
+  aiAPI,
+  sitesAPI,
+  conversationsAPI,
+  departmentsAPI,
+  filesAPI,
+  teamAPI
+} from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
-import { API_BASE_URL } from '../lib/runtime';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AIAssistant from '../components/AIAssistant';
 import {
@@ -491,21 +497,9 @@ const Conversations = () => {
   const uploadAndSendFile = async () => {
     try {
       if (!selectedFile || !selectedSite || !selectedConversation || !socket) return;
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      const response = await fetch(`${API_BASE_URL}/files/upload`, {
-        method: 'POST',
-        headers: {
-          'X-Site-Key': selectedSite.siteKey
-        },
-        // Oturum çerezi bu isteği de taşır; token okunmuyor.
-        credentials: 'include',
-        body: formData
-      });
-      if (!response.ok) {
-        throw new Error('File upload failed');
-      }
-      const data = await response.json();
+      // The panel's own session authorises the upload (cookie + CSRF), for a
+      // site this agent may work on; the site key is not a credential.
+      const { data } = await filesAPI.agentUpload(selectedSite._id, selectedFile);
       const messageType = selectedFile.type.startsWith('image/') ? 'image' : 'file';
       socket.emit('send-message', {
         conversationId: selectedConversation._id,

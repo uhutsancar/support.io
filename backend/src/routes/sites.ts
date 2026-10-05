@@ -9,6 +9,7 @@ import events from '../events';
 import { randomUUID } from 'crypto';
 import Site from '../models/Site';
 import { newSecret, seal } from '../config/secretBox';
+import { normalizeOriginList, originsFromDomain } from '../config/siteOrigins';
 import { checkOrderUrl, testOrderService } from '../services/orderLookup';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
@@ -41,7 +42,38 @@ const router = express.Router();
 router.use(auth, requireOrganization);
 
 /** The fields a client may set on a site; everything else is server-owned. */
-const WRITABLE_FIELDS = ['name', 'domain', 'widgetSettings', 'aiSettings', 'isActive'] as const;
+const WRITABLE_FIELDS = [
+  'name',
+  'domain',
+  'allowedOrigins',
+  'widgetSettings',
+  'aiSettings',
+  'isActive'
+] as const;
+
+/** A site's name and domain, as a client sent them; anything else is a 400. */
+function siteText(value: unknown, label: string, max: number): string {
+  if (typeof value !== 'string' || !value.trim() || value.trim().length > max) {
+    throw badRequest(`${label} is required and must be at most ${max} characters`);
+  }
+  return value.trim();
+}
+
+/**
+ * The origins the widget may run on, as a client sent them. Each must be
+ * exactly `scheme://host[:port]`; the 400 names every entry that is not, so
+ * the panel can point at it.
+ */
+function validateAllowedOrigins(input: unknown): string[] {
+  const { origins, invalid } = normalizeOriginList(input);
+  if (invalid.length) {
+    throw badRequest(
+      `allowedOrigins must be origins such as https://shop.example.com (no path, no *): ${invalid.join(', ')}`,
+      { invalid }
+    );
+  }
+  return origins;
+}
 
 /** Nested settings are merged rather than replaced, so a partial update of one
  *  key does not blank out the rest of the object. */
@@ -152,10 +184,18 @@ router.post(
   '/',
   checkPermission('manage_sites'),
   asyncHandler(async (req: Request, res: Response) => {
-    const { name, domain } = req.body;
+    const name = siteText(req.body?.name, 'name', 100);
+    const domain = siteText(req.body?.domain, 'domain', 253);
+    // Explicit origins win; otherwise the domain and its www. twin, which is
+    // what a site on that domain almost always needs.
+    const allowedOrigins =
+      req.body?.allowedOrigins !== undefined
+        ? validateAllowedOrigins(req.body.allowedOrigins)
+        : originsFromDomain(domain);
     const site = new Site({
       name,
       domain,
+      allowedOrigins,
       siteKey: randomUUID(),
       userId: req.user._id,
       organizationId: orgId(req)
@@ -181,6 +221,14 @@ router.put(
     // this endpoint did before — a caller sending a field this route does not own
     // gets told so instead of watching it vanish.
     const updates = pickStrict<SiteDoc>(req.body, WRITABLE_FIELDS);
+    if (updates.name !== undefined) updates.name = siteText(updates.name, 'name', 100);
+    if (updates.domain !== undefined) updates.domain = siteText(updates.domain, 'domain', 253);
+    if (updates.allowedOrigins !== undefined) {
+      updates.allowedOrigins = validateAllowedOrigins(updates.allowedOrigins);
+    }
+    if (updates.isActive !== undefined && typeof updates.isActive !== 'boolean') {
+      throw badRequest('isActive must be a boolean');
+    }
     if (updates.aiSettings !== undefined) {
       updates.aiSettings = validateAiSettings(updates.aiSettings) as SiteAiSettings;
     }
@@ -300,6 +348,9 @@ router.post(
   })
 );
 
+// A new site key. The widget sessions issued under the old key carry its
+// fingerprint and are refused from this moment (config/tokens.ts), so every
+// page still embedding the old key stops working at once — by design.
 router.post(
   '/:siteId/regenerate-key',
   checkPermission('manage_sites'),

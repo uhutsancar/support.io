@@ -21,7 +21,7 @@
 import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { io } from 'socket.io-client';
+import { widgetSocket, widgetToken } from './helpers/widget';
 import { query } from '../src/db/pool';
 import { getPool } from '../src/db/pool';
 
@@ -133,9 +133,11 @@ async function createTenant(label: string) {
 // handler is async and sets socket.siteId partway through, so a send-message
 // emitted immediately after connecting would be handled before the socket knows
 // which site it belongs to and would be dropped.
-function connectVisitor(siteKey: string, visitorId: string): Promise<any> {
-  const socket = io(`${BASE}/widget`, { transports: ['websocket'], forceNew: true });
-  return new Promise<any>((resolve, reject) => {
+async function connectVisitor(siteKey: string): Promise<{ socket: any; visitorId: string }> {
+  // The server mints the visitor id inside the widget session.
+  const { token, visitorId } = await widgetToken(siteKey);
+  const socket = widgetSocket(token);
+  return new Promise<{ socket: any; visitorId: string }>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('widget socket join timeout')), 15000);
     const fail = (err: any) => {
       clearTimeout(timer);
@@ -148,8 +150,6 @@ function connectVisitor(siteKey: string, visitorId: string): Promise<any> {
 
     socket.on('connect', () => {
       socket.emit('join-conversation', {
-        siteKey,
-        visitorId,
         visitorName: 'E2E Visitor',
         currentPage: '/pricing',
         metadata: { country: 'TR' }
@@ -159,7 +159,7 @@ function connectVisitor(siteKey: string, visitorId: string): Promise<any> {
     socket.once('conversation-joined', () => {
       clearTimeout(timer);
       socket.off('error', fail);
-      resolve(socket);
+      resolve({ socket, visitorId });
     });
   });
 }
@@ -209,8 +209,7 @@ test('automation rule fires end to end and records its effects', async (t) => {
   );
   assert.ok(ruleAudit, 'rule creation was not audited');
 
-  const visitorId = `e2e-visitor-${Date.now()}`;
-  const socket = await connectVisitor(tenant.site.siteKey, visitorId);
+  const { socket, visitorId } = await connectVisitor(tenant.site.siteKey);
   t.after(() => socket.close());
 
   socket.emit('send-message', {
@@ -311,8 +310,7 @@ test('a rule whose condition does not match leaves the conversation alone', asyn
     );
   });
 
-  const visitorId = `e2e-nomatch-${Date.now()}`;
-  const socket = await connectVisitor(tenant.site.siteKey, visitorId);
+  const { socket, visitorId } = await connectVisitor(tenant.site.siteKey);
   t.after(() => socket.close());
 
   socket.emit('send-message', {

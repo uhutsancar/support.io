@@ -24,10 +24,17 @@ export interface VisitorMetadata {
   [extra: string]: unknown;
 }
 
-/** State the widget namespace pins on a visitor's socket once it joins. */
+/**
+ * State on a visitor's socket. The site, organization, visitor and session are
+ * pinned by the handshake (socket/auth.ts) from the signed widget session; the
+ * rest is filled in when the widget joins.
+ */
 export interface WidgetSocketState {
   siteId?: string;
+  organizationId?: string;
   visitorId?: string;
+  /** The widget session's `sid`; keys the per-session event limit. */
+  widgetSessionId?: string;
   visitorName?: string;
   visitorEmail?: string | null;
   currentPage?: string;
@@ -65,9 +72,12 @@ interface ClientPayloadBase {
   [extra: string]: unknown;
 }
 
+/**
+ * What the widget says when it joins. The site and the visitor are not part
+ * of it: they come from the handshake's widget session, and a payload that
+ * names them is ignored.
+ */
 export interface WidgetJoinPayload extends ClientPayloadBase {
-  siteKey?: string;
-  visitorId?: string;
   visitorName?: string;
   visitorEmail?: string;
   currentPage?: string;
