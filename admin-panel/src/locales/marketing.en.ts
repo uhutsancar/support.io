@@ -770,7 +770,7 @@ export default {
   aboutPage: {
     meta: {
       title: 'About',
-      description: 'Why Support.io exists, what it was built around, and what it is built on.'
+      description: 'Why Support.io exists and how we make decisions.'
     },
     eyebrow: 'About',
     title: 'A tool a small team built out of its own frustration',
@@ -799,24 +799,12 @@ export default {
       },
       honest: {
         title: 'Nothing we cannot back up',
-        body: 'No customer counts, no satisfaction scores, no logos of companies that do not use us. Earlier versions of this site had all three. They were removed, because none of them had data behind them.'
+        body: 'No made-up customer counts, satisfaction scores or logos. We write what the product really does today, the AI assistant included.'
       },
       accessible: {
         title: 'Usable by everyone',
         body: 'Navigable by keyboard, readable by a screen reader, legible in dark mode. Animation switches itself off for anyone who finds motion uncomfortable.'
       }
-    },
-
-    stackEyebrow: 'What it runs on',
-    stackNote:
-      'For the curious. You do not need to know any of this — using the product touches none of it.',
-    stack: {
-      frontend: 'The dashboard and this site',
-      backend: 'The server side',
-      db: 'Where the data lives',
-      realtime: 'Delivering messages instantly',
-      storage: 'Shared files',
-      widget: 'The chat bubble, isolated from your site'
     },
 
     contactEyebrow: 'Contact',

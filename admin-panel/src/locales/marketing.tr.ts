@@ -878,7 +878,7 @@ export default {
   aboutPage: {
     meta: {
       title: 'Hakkımızda',
-      description: 'Support.io neden var, neye göre kuruldu ve neyin üzerine inşa edildi.'
+      description: 'Support.io neden var ve neye göre karar veriyoruz.'
     },
     eyebrow: 'Hakkımızda',
     title: 'Küçük bir ekibin kendi derdinden doğan araç',
@@ -907,24 +907,12 @@ export default {
       },
       honest: {
         title: 'Olmayan şeyi yazmayalım',
-        body: 'Bu sayfalarda müşteri sayısı, memnuniyet oranı ya da kullanmadığımız firmaların logoları yok. Önceki sürümlerde vardı, hepsi kaldırıldı — çünkü hiçbirinin arkasında veri yoktu.'
+        body: 'Bu sayfalarda uydurma müşteri sayısı, memnuniyet oranı ya da logo yok. Ürünün bugün gerçekten yaptığını yazıyoruz; yapay zekâ asistanı da dâhil.'
       },
       accessible: {
         title: 'Herkes kullanabilsin',
         body: 'Klavyeyle gezilebilsin, ekran okuyucu okuyabilsin, koyu temada da okunsun. Hareketi rahatsız edici bulanlar için animasyonlar kendiliğinden kapanır.'
       }
-    },
-
-    stackEyebrow: 'Ne üzerine kurulu',
-    stackNote:
-      'Merak edenler için. Bunları bilmeniz gerekmiyor — ürünü kullanmak için hiçbirine dokunmuyorsunuz.',
-    stack: {
-      frontend: 'Panel ve bu site',
-      backend: 'Sunucu tarafı',
-      db: 'Verilerin tutulduğu yer',
-      realtime: 'Mesajların anında iletilmesi',
-      storage: 'Paylaşılan dosyalar',
-      widget: 'Sitenizden yalıtılmış sohbet balonu'
     },
 
     contactEyebrow: 'İletişim',

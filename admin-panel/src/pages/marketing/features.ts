@@ -134,7 +134,7 @@ export const SOLUTIONS = [
     photo: '/photos/ecommerce.webp',
     tone: 'indigo',
     icon: 'Store',
-    features: ['live-chat', 'proactive', 'knowledge-base', 'routing']
+    features: ['live-chat', 'proactive', 'ai-assistant', 'routing']
   },
   {
     id: 'saas',
@@ -155,21 +155,21 @@ export const SOLUTIONS = [
     photo: '/photos/clinic.webp',
     tone: 'emerald',
     icon: 'Stethoscope',
-    features: ['live-chat', 'knowledge-base', 'automation', 'team']
+    features: ['live-chat', 'ai-assistant', 'automation', 'team']
   },
   {
     id: 'hospitality',
     photo: '/photos/hotel.webp',
     tone: 'rose',
     icon: 'BedDouble',
-    features: ['proactive', 'live-chat', 'knowledge-base', 'crm']
+    features: ['proactive', 'live-chat', 'ai-assistant', 'crm']
   },
   {
     id: 'education',
     photo: '/photos/education.webp',
     tone: 'sky',
     icon: 'GraduationCap',
-    features: ['knowledge-base', 'live-chat', 'routing', 'analytics']
+    features: ['ai-assistant', 'live-chat', 'routing', 'analytics']
   }
 ] as const;
 

@@ -21,7 +21,7 @@ export default {
         tag: 'Kargo, iade, beden ve ödeme soruları',
         photoAlt: 'Paketlerin arasında telefonundan siparişlere bakan mağaza sahibi',
         headline: 'Sepetteki müşteri sorusunu sorabilsin, sipariş kaçmasın',
-        desc: '“Bu bedeni var mı?”, “Kargom nerede?”, “İade nasıl?” Ürün sayfasında soru soran müşteri cevabı beklemeden gider. Sohbet balonu tam o sayfada açılır, cevabı belli sorular yardım içeriğinde kendiliğinden biter.',
+        desc: '“Bu bedeni var mı?”, “Kargo ne kadar sürer?”, “İade nasıl?” Ürün sayfasında soru soran müşteri cevabı beklemeden gider. Sık soruları yapay zekâ asistanı gece gündüz yanıtlar; satışa dönecek konuşmalar ekibinize kalır.',
         pains: [
           {
             title: 'Aynı soru günde otuz kez',
@@ -46,8 +46,8 @@ export default {
             body: 'Ödeme sayfasında 30 saniyeden uzun kalan ziyaretçiye kendiliğinden yardım teklif eden bir mesaj gider.'
           },
           {
-            title: 'Kargo ve iade soruları kendiliğinden biter',
-            body: 'Yardım içeriğine bir kez yazdığınız cevabı müşteri balonun içinde arayıp bulur.'
+            title: 'Kargo ve iade sorularını yapay zekâ yanıtlar',
+            body: 'İade süresi, kargo ücreti, beden tablosu… SSS’nize bir kez yazdığınız cevabı asistan saniyeler içinde verir; bilmediğini ekibinize bırakır.'
           },
           {
             title: 'İade ve değişim doğru ekibe gider',
@@ -55,7 +55,7 @@ export default {
           }
         ],
         wins: [
-          { label: 'Ekip satışa odaklanır', body: 'Tekrarlayan sorular yardım içeriğinde kalır.' },
+          { label: 'Ekip satışa odaklanır', body: 'Tekrarlayan soruları yapay zekâ karşılar.' },
           { label: 'Daha az terk edilen sepet', body: 'Takılan ziyaretçi sessizce gitmeden yardım alır.' },
           { label: 'Kampanya haftası panik yok', body: 'Konuşmalar departmanlara dağılır, kuyruk tek kişide birikmez.' }
         ]
@@ -156,8 +156,8 @@ export default {
             body: 'Telefonda tek kişiyle konuşurken sohbette dört kişiye yanıt verilebilir.'
           },
           {
-            title: 'Sık sorular kendiliğinden',
-            body: 'Çalışma saatleri, adres ve hazırlık bilgileri yardım içeriğinde; hasta balonun içinde bulur.'
+            title: 'Sık soruları yapay zekâ yanıtlar',
+            body: 'Çalışma saatleri, adres, otopark ve hazırlık bilgileri — asistan mesai dışında da SSS’nizden yanıtlar.'
           },
           {
             title: 'Mesai dışında doğru mesaj',
@@ -169,7 +169,7 @@ export default {
           }
         ],
         wins: [
-          { label: 'Telefon boşalır', body: 'Rutin sorular yazıya ve yardım içeriğine taşınır.' },
+          { label: 'Telefon boşalır', body: 'Rutin soruları yapay zekâ asistanı karşılar.' },
           { label: 'Gece gelen kaybolmaz', body: 'Sabah ilk iş gelen kutusunda durur.' },
           { label: 'Hasta beklemez', body: 'Basit sorunun cevabı saniyeler içinde.' }
         ]
@@ -195,8 +195,8 @@ export default {
             body: 'Mesaj yazıldığı an ekibin ekranında; dosya ve fotoğraf da paylaşılabilir.'
           },
           {
-            title: 'Sık sorular balonun içinde',
-            body: 'Check-in saati, otopark ve kahvaltı gibi soruların cevabını misafir balonun içinde arayıp bulur.'
+            title: 'Sık soruları yapay zekâ yanıtlar',
+            body: 'Check-in saati, otopark, kahvaltı ve evcil hayvan kuralı — asistan gece yarısı da saniyeler içinde yanıtlar.'
           },
           {
             title: 'Grup ve etkinlik talepleri takipte',
@@ -214,7 +214,7 @@ export default {
         tag: 'Kayıt, ders ve ödeme soruları',
         photoAlt: 'Kulaklıkla dizüstü bilgisayarda çevrimiçi derse katılan öğrenci',
         headline: 'Kayıt döneminde gelen soruların altında kalmayın',
-        desc: 'Kayıt tarihleri, ders programı, ödeme seçenekleri… Dönem başında gelen yüzlerce soru ekibi boğar. Cevabı belli olanı yardım içeriği karşılasın, gerisi doğru birime gitsin.',
+        desc: 'Kayıt tarihleri, ders programı, ödeme seçenekleri… Dönem başında gelen yüzlerce soru ekibi boğar. Cevabı belli olanı yapay zekâ asistanı karşılasın, gerisi doğru birime gitsin.',
         pains: [
           { title: 'Dönem başı yığılması', body: 'İki hafta boyunca gelen kutusu kayıt sorularıyla dolu.' },
           { title: 'Yanlış birime giden soru', body: 'Ödeme sorusu akademik birime, ders sorusu muhasebeye gidiyor.' },
@@ -222,8 +222,8 @@ export default {
         ],
         uses: [
           {
-            title: 'Cevabı belli soru kendiliğinden biter',
-            body: 'Kayıt tarihleri ve belgeler yardım içeriğinde; öğrenci balonun içinde arayıp bulur.'
+            title: 'Cevabı belli soruyu yapay zekâ yanıtlar',
+            body: 'Kayıt tarihleri, gerekli belgeler, ödeme seçenekleri — asistan SSS’nizden saniyeler içinde yanıtlar.'
           },
           {
             title: 'Soru yazıldığı an ekipte',
@@ -239,7 +239,7 @@ export default {
           }
         ],
         wins: [
-          { label: 'Ekip nefes alır', body: 'Rutin sorular yardım içeriğinde kalır.' },
+          { label: 'Ekip nefes alır', body: 'Rutin soruları yapay zekâ karşılar.' },
           { label: 'Öğrenci beklemez', body: 'Cevabı belli soru saniyeler içinde yanıtlanır.' },
           { label: 'Gelecek dönem hazır', body: 'Hangi konuda yoğunluk olacağını bilirsiniz.' }
         ]

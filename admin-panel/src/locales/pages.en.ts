@@ -16,7 +16,7 @@ export default {
         tag: 'Shipping, returns, sizes and payment questions',
         photoAlt: 'Shop owner checking orders on a phone among parcels',
         headline: 'Let the shopper with a full cart ask — and keep the order',
-        desc: '“Do you have this in M?”, “Where is my parcel?”, “How do returns work?” A shopper who asks on a product page will not wait. The chat opens right there, and questions with a known answer end in your help content.',
+        desc: '“Do you have this in M?”, “How long is delivery?”, “How do returns work?” A shopper who asks on a product page will not wait. The AI assistant answers common questions day and night; conversations that turn into sales stay with your team.',
         pains: [
           { title: 'The same question thirty times a day', body: 'Shipping times, return policy, size charts — the team spends the day copy-pasting.' },
           { title: 'Silent loss at checkout', body: 'A stuck visitor does not ask, just closes the tab. You never learn why.' },
@@ -25,11 +25,11 @@ export default {
         uses: [
           { title: 'Sales conversations arrive instantly', body: 'You see which product the visitor is looking at while you reply; nobody waits.' },
           { title: 'You write first to those stuck at checkout', body: 'A visitor who stays on checkout for more than 30 seconds gets an offer of help automatically.' },
-          { title: 'Shipping and returns answer themselves', body: 'Write the answer once in your help content; customers search and find it inside the bubble.' },
+          { title: 'AI answers shipping and returns questions', body: 'Return window, shipping cost, size chart… the assistant gives the answer you wrote once in your FAQ, in seconds, and leaves the rest to your team.' },
           { title: 'Returns go to the right team', body: 'Returns to operations, product questions to sales. Even in campaign week it is clear who handles what.' }
         ],
         wins: [
-          { label: 'The team focuses on selling', body: 'Repeated questions stay in the help content.' },
+          { label: 'The team focuses on selling', body: 'The AI handles repeated questions.' },
           { label: 'Fewer abandoned carts', body: 'Stuck visitors get help before they leave.' },
           { label: 'Calm campaign weeks', body: 'Conversations spread across departments instead of piling up on one person.' }
         ]
@@ -93,12 +93,12 @@ export default {
         ],
         uses: [
           { title: 'Several people at once', body: 'While one person is on the phone, four can be answered in chat.' },
-          { title: 'Common questions answer themselves', body: 'Hours, address and preparation notes live in the help content; patients find them in the bubble.' },
+          { title: 'AI answers common questions', body: 'Opening hours, address, parking and preparation notes — the assistant answers from your FAQ, after hours too.' },
           { title: 'The right message after hours', body: 'Anyone writing outside business hours is told when you will reply; the message waits in the morning inbox.' },
           { title: 'The team sees who asked what', body: 'Reception, billing and the doctor’s assistant can pass a conversation to one another.' }
         ],
         wins: [
-          { label: 'The phone frees up', body: 'Routine questions move to writing and help content.' },
+          { label: 'The phone frees up', body: 'The AI assistant handles routine questions.' },
           { label: 'Night messages are kept', body: 'They wait first thing in the inbox.' },
           { label: 'Patients do not wait', body: 'Simple answers in seconds.' }
         ]
@@ -117,7 +117,7 @@ export default {
         uses: [
           { title: 'You write first on the booking page', body: 'A guest lingering over room choice gets an offer of help automatically.' },
           { title: 'Straight to reception', body: 'The message is on the team’s screen the moment it is written; files and photos can be shared.' },
-          { title: 'Common questions inside the bubble', body: 'Guests search and find check-in times, parking and breakfast answers themselves.' },
+          { title: 'AI answers common questions', body: 'Check-in time, parking, breakfast, pets — the assistant answers in seconds, even at midnight.' },
           { title: 'Group and event requests tracked', body: 'A conversation that turns into a big booking becomes a deal, tracked by stage.' }
         ],
         wins: [
@@ -131,20 +131,20 @@ export default {
         tag: 'Enrolment, courses and payments',
         photoAlt: 'Student with headphones attending an online class on a laptop',
         headline: 'Do not drown in questions during enrolment',
-        desc: 'Enrolment dates, schedules, payment options… Hundreds of questions at the start of term swamp the team. Let help content handle the ones with a known answer and send the rest to the right office.',
+        desc: 'Enrolment dates, schedules, payment options… Hundreds of questions at the start of term swamp the team. Let the AI assistant handle the ones with a known answer and send the rest to the right office.',
         pains: [
           { title: 'Start-of-term pile-up', body: 'For two weeks the inbox is full of enrolment questions.' },
           { title: 'Questions to the wrong office', body: 'Payment questions go to academics, course questions to accounts.' },
           { title: 'Invisible load', body: 'You do not know which topic peaks in which week.' }
         ],
         uses: [
-          { title: 'Known answers end on their own', body: 'Dates and documents are in the help content; students search and find them.' },
+          { title: 'AI answers the known questions', body: 'Enrolment dates, required documents, payment options — the assistant answers from your FAQ in seconds.' },
           { title: 'On the team’s screen at once', body: 'You reply knowing which page the student wrote from; nobody waits on the phone line.' },
           { title: 'Each question to the right office', body: 'Enrolment, payments and academic questions go to separate departments.' },
           { title: 'See the peaks in advance', body: 'Reports show how many questions came in each week, by topic.' }
         ],
         wins: [
-          { label: 'The team breathes', body: 'Routine questions stay in the help content.' },
+          { label: 'The team breathes', body: 'The AI handles routine questions.' },
           { label: 'Students do not wait', body: 'Known answers in seconds.' },
           { label: 'Ready for next term', body: 'You know where the load will be.' }
         ]
