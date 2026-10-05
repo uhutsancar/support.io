@@ -20,7 +20,6 @@ export default {
     allFeatures: 'See all features',
     product: 'Product',
     solutions: 'Solutions',
-    ai: 'AI',
     resourcesLabel: 'Resources',
     resources: {
       docs: { title: 'Setup guide', body: 'Every step from one line to identity verification.' },
@@ -38,12 +37,12 @@ export default {
     hero: {
       title: 'Every message answered,',
       accent: 'no customer left waiting.',
-      desc: 'Visitors write from your site; your assistant answers the simple questions at once and hands the rest to your team. Every conversation on one screen, and it is always clear who is on it.',
+      desc: 'Add a chat bubble to your site with one line. The moment a visitor writes, the message is on your team’s screen — every conversation in one inbox, and it is always clear who is on it.',
       tour: 'Tour the product',
       photoAlt: 'Support agent with a headset answering a customer at a computer',
-      notifTitle: 'New conversation · /cart',
-      notifBody: 'Visitor has been on checkout for 12 seconds',
-      handoff: 'Selin took over the conversation'
+      notifTitle: 'New conversation · /pricing',
+      notifBody: 'Visitor has been on the pricing page for 40 seconds',
+      handoff: 'Selin is replying'
     },
     tour: {
       eyebrow: 'Product tour',
@@ -69,18 +68,18 @@ export default {
           chips: ['Chat', 'Files', 'Proactive', 'History']
         },
         {
-          title: 'The assistant answers first',
-          body: 'It answers common questions from your help content and looks up a signed-in customer’s order in your shop’s system. The moment it is unsure, it hands the conversation to a person.',
-          chips: ['FAQ', 'Orders', 'Handoff']
+          title: 'Visitors look for the answer first',
+          body: 'Your frequently asked questions can be searched inside the bubble. A visitor who finds the answer does not wait; one who does not writes to your team with a single tap.',
+          chips: ['FAQ', 'Search', 'Help article']
         },
         {
           title: 'The rest goes to the right person',
-          body: 'Billing to accounts, returns to sales. Define departments once; each conversation goes to whoever is available right now.',
+          body: 'Billing to accounts, plan questions to sales. Define departments once; each conversation goes to whoever is available right now.',
           chips: ['Department', 'Queue', 'Hours']
         },
         {
           title: 'Repeated work becomes a rule',
-          body: 'Pick rules like “if the message mentions a refund, tag it and send it to sales” from a list. No code, and every run is logged.',
+          body: 'Pick rules like “if the message mentions an invoice, tag it and send it to accounts” from a list. No code, and every run is logged.',
           chips: ['Tags', 'Priority', 'Saved replies']
         },
         {
@@ -90,35 +89,17 @@ export default {
         }
       ]
     },
-    ai: {
-      eyebrow: 'AI',
-      title: 'An assistant that runs on your own server and knows when to stop',
-      desc: 'The assistant answers your customers from your own help content. The model runs on your machine; conversations and customer data are sent nowhere.',
-      points: [
-        { title: 'Your data stays home', body: 'The model runs on your server. Not a sentence goes to another company’s AI service.' },
-        { title: 'Sensitive data never reaches it', body: 'A customer who types a card, IBAN or ID number is warned and passed straight to a person.' },
-        { title: 'Unsure? It hands over', body: 'When the customer asks for a person, complains or information is missing, the conversation goes to your team.' },
-        { title: 'It does not make things up', body: 'A reply with a date, price or link that is not in your help content never reaches the customer.' }
-      ],
-      modes: [
-        { name: 'Off', body: 'No assistant; everything is with your team.' },
-        { name: 'Copilot', body: 'Suggests summaries and drafts to the agent, never sends.' },
-        { name: 'Auto reply', body: 'Answers visitors itself and hands over when needed.' }
-      ],
-      cta: 'Meet the assistant',
-      cta2: 'Feature details'
-    },
     setup: {
       eyebrow: 'Setup',
       title: 'One line. Live in minutes.',
-      desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, invite your team, switch the assistant on. No developer needed.',
+      desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, write the greeting, invite your team. No developer needed.',
       keyPlaceholder: 'YOUR_SITE_KEY',
       comment: 'Support.io chat bubble',
       live: 'The bubble shows up within a minute of pasting',
       noDevs: {
         eyebrow: 'No developers',
         title: 'Copy, paste, done.',
-        body: 'WordPress, Shopify or a site you built yourself — the same line everywhere, pasted into the settings screen.'
+        body: 'WordPress, Shopify, Wix or a site you built yourself — the same line everywhere. On React, Vue or Angular, the guide has the code ready to copy.'
       },
       devices: {
         eyebrow: 'Anywhere',
@@ -137,13 +118,13 @@ export default {
       stats: [
         { label: 'Avg. first reply', value: '1m 40s' },
         { label: 'Resolved', value: '92%' },
-        { label: 'Answered by assistant', value: '38%' }
+        { label: 'Waiting', value: '3' }
       ]
     },
     features: {
       eyebrow: 'All in one',
-      title: 'Eleven features that work today',
-      desc: 'Not a roadmap — the screens you will see when you open your account.'
+      title: 'Ready the day you open your account',
+      desc: 'Not a roadmap — the screens that are switched on in the dashboard today.'
     },
     trustPhotoAlt: 'A small team meeting around a table',
     faq: {
@@ -153,55 +134,44 @@ export default {
       still: 'Still have questions?',
       chat: 'Chat with our team',
       contact: 'Get in touch',
-      cat: { all: 'All', pricing: 'Pricing', setup: 'Setup', ai: 'AI', security: 'Security' },
+      cat: { all: 'All', pricing: 'Pricing', setup: 'Setup', usage: 'Day to day', security: 'Security' },
       items: [
-        { cat: 'pricing', q: 'Is the free plan really free?', a: 'Yes — no time limit and no credit card. It is limited to one site and one user; conversations are unlimited.' },
-        { cat: 'pricing', q: 'What happens when my team grows?', a: 'Move to Pro and pay per user per month. The number of customers or conversations never changes the price.' },
+        { cat: 'pricing', q: 'Is the free plan really free?', a: 'Yes — no time limit and no credit card. It includes one site, one user and 100 new conversations a month.' },
+        { cat: 'pricing', q: 'What happens when my team grows?', a: 'Move to Pro: 3 sites, 5 users and 2,000 new conversations a month for one flat monthly price. There is no per-seat fee.' },
+        { cat: 'pricing', q: 'What if we reach the monthly conversation limit?', a: 'Open conversations carry on and you keep replying. We e-mail you at 80% of the limit; new conversations open again at the start of the next month.' },
         { cat: 'setup', q: 'Do I need a developer to set it up?', a: 'Usually not. On WordPress, Shopify and similar platforms you paste one line into the settings screen. If you get stuck, write to us and we will do it together.' },
+        { cat: 'setup', q: 'Which sites does it work on?', a: 'Any site you can add one line of HTML to: WordPress, Shopify, Wix, Webflow, or apps built with React, Vue, Angular and Next.js. The guide has copy-ready code for each.' },
         { cat: 'setup', q: 'Will it slow my site down?', a: 'No. The bubble starts after the rest of your page has loaded and is isolated from your site’s styles.' },
-        { cat: 'ai', q: 'What if the assistant says something wrong?', a: 'Every reply is checked before it goes out: if it contains a number, date or link that is not in your help content, it is not sent and a person takes over.' },
-        { cat: 'ai', q: 'Do we pay extra for the assistant?', a: 'No. The model runs on your server, so there is no per-question fee. What you need is a graphics card with roughly 12–16 GB of memory.' },
+        { cat: 'usage', q: 'What happens to messages sent out of hours?', a: 'Nothing is lost. We tell the visitor when you will be back and the message waits in your inbox.' },
+        { cat: 'usage', q: 'Can I answer from my phone?', a: 'Yes. The dashboard works in a phone browser — there is no separate app to install.' },
         { cat: 'security', q: 'Can anyone else see our conversations?', a: 'No. Each account’s data is kept within its own boundary, and inside your team every role only sees the screens it is allowed to.' },
         { cat: 'security', q: 'Can I export my data?', a: 'On Pro and Enterprise you can export your conversations. The data is yours.' }
       ]
     }
   },
 
+  // The bubble on this site is Support.io's own, so the scripts are questions
+  // someone would actually ask us — not a made-up shop's parcel trouble.
   demoChat: {
     status: 'Online · usually replies in a few minutes',
-    botName: 'Assistant',
+    articleName: 'Help article',
     hero: {
-      brand: 'Acme Store',
+      brand: 'Support.io',
       lines: [
-        { from: 'visitor', text: 'Hi, how many days do I have to return something?' },
-        { from: 'bot', text: 'You can return it free of charge within 14 days of delivery. An opened box is fine.' },
-        { from: 'visitor', text: 'Can I talk to someone?' },
+        { from: 'visitor', text: 'Hi, my site runs on WordPress. Do I need a developer to install this?' },
         { from: 'note', text: 'Selin joined the conversation' },
-        { from: 'agent', name: 'Selin', text: 'Hi! I’m Selin, happy to help.' }
+        { from: 'agent', name: 'Selin', text: 'Not at all! Paste the one line from your dashboard into your site’s footer and you are done.' },
+        { from: 'visitor', text: 'Great, I’ll try the free plan then 👍' }
       ]
     },
     story: {
-      brand: 'Acme Store',
+      brand: 'Support.io',
       lines: [
-        { from: 'visitor', text: 'Where is my parcel? Order 10482' },
-        { from: 'order', order: { number: '10482', status: 'Shipped', carrier: 'Example Cargo', eta: 'Expected Thursday' } },
-        { from: 'bot', text: 'Your order was shipped yesterday and should arrive on Thursday.' },
-        { from: 'visitor', text: 'I need to change my address' },
-        { from: 'note', text: 'The assistant handed over to the team' },
-        { from: 'agent', name: 'Kerem', text: 'I’m updating your address with the carrier right now.' }
-      ]
-    },
-    ai: {
-      brand: 'Acme Store',
-      lines: [
-        { from: 'visitor', text: 'Hello 👋' },
-        { from: 'bot', text: 'Hi! Ask me about your order, returns or our products.' },
-        { from: 'visitor', text: 'What’s the status of my last order?' },
-        { from: 'order', order: { number: '10482', status: 'Shipped', carrier: 'Example Cargo', eta: 'Expected Thursday' } },
-        { from: 'bot', text: 'Order 10482 is on its way and should arrive on Thursday.' },
-        { from: 'visitor', text: 'Looks like my card was charged twice' },
-        { from: 'note', text: 'Payment issue · passed to an agent' },
-        { from: 'agent', name: 'Selin', text: 'Checking now — could you tell me the amount on your statement?' }
+        { from: 'visitor', text: 'How do I add an agent to my team?' },
+        { from: 'article', text: 'Go to Team → Invite and enter their e-mail. They join by setting a password through the link in the invitation.' },
+        { from: 'visitor', text: 'How many people fit on Pro? Can I talk to sales?' },
+        { from: 'note', text: 'Routed to the Sales department' },
+        { from: 'agent', name: 'Kerem', text: 'Hi, Kerem here. Pro takes up to 5 users; for more, let’s talk about Enterprise.' }
       ]
     }
   },
@@ -217,206 +187,23 @@ export default {
     home: {
       metaTitle: 'Support.io — Add live chat to your site',
       metaDesc:
-        'Your customers message you from your own site; your team answers from one screen. One line of code, two minutes. Start on the free plan.',
-
-      badge: '2-minute setup · No card required',
-      heroTitle: 'Be there when your customer',
-      heroTitleAccent: 'asks.',
-      heroDesc:
-        'Let people browsing your site ask you a question the moment it occurs to them. Your team sees every conversation on one screen, so nothing goes unanswered. One line to install, and as familiar to use as WhatsApp.',
+        'Your customers message you from your own site; your team answers from one screen. One line of code. Start on the free plan.',
 
       btnStart: 'Start free',
-      btnTour: 'See what it does',
       btnDocs: 'Setup guide',
 
       trust: {
         free: 'Free plan never expires',
         card: 'No credit card required',
-        setup: 'Around 2 minutes to install'
+        setup: 'Installs in minutes'
       },
 
-      /* --------------------------------------------------------- problem */
-      problem: {
-        eyebrow: 'Sound familiar',
-        title: 'Customer messages are scattered everywhere',
-        desc: 'One writes on Instagram, another calls, another fills in the contact form. Whoever is answering loses track of which is which, and nobody notices the one that never got a reply.',
-        items: [
-          {
-            title: 'Messages get lost',
-            body: 'A question sitting in an inbox becomes a question nobody answered, on a busy day.'
-          },
-          {
-            title: 'Nobody knows who did what',
-            body: 'Two people answer the same customer while a third assumes it was never picked up.'
-          },
-          {
-            title: 'Replies come too late',
-            body: 'A visitor ready to buy waits for an answer, closes the tab, and does not come back.'
-          },
-          {
-            title: 'You cannot measure it',
-            body: 'How many questions came in, how fast you replied, how many were resolved — no number anywhere.'
-          }
-        ],
-        answer:
-          'Support.io puts all of it in one inbox. Who asked, from which page, what they asked, who answered — on one screen.'
-      },
-
-      /* ------------------------------------------------------- how it works */
-      how: {
-        eyebrow: 'How it works',
-        title: 'Four steps to a support line that works on day one',
-        desc: 'You do not need technical knowledge to set it up. Here is what happens, in order.'
-      },
-
-      steps: [
-        {
-          kicker: 'Visitor side',
-          title: 'A chat bubble appears in the corner of your site',
-          body: 'A visitor clicks and types. No sign-up, no email required. You choose the colour, the greeting and where it sits, so it looks like part of your site.',
-          points: [
-            'Works the same on phones and desktops',
-            'The conversation stays open as they move between pages',
-            'When they come back, they find it where they left off'
-          ]
-        },
-        {
-          kicker: 'Team side',
-          title: 'The message lands on your team’s screen instantly',
-          body: 'No refreshing. The message appears as it is typed, alongside the page the customer is on, what you talked about before, and who is already handling it.',
-          points: [
-            'You see the typing dots as they write',
-            'Files and screenshots can be shared both ways',
-            'Ask a colleague without leaving the conversation'
-          ]
-        },
-        {
-          kicker: 'Organisation',
-          title: 'Each conversation reaches the right person on its own',
-          body: 'Billing questions to accounts, returns to sales. Define your departments once, and every new conversation goes to whoever is free.',
-          points: [
-            'Share the load in turn, or give it to whoever has least',
-            'Automatic notice outside working hours',
-            'When someone goes offline, their open work is handed on'
-          ]
-        },
-        {
-          kicker: 'Outcome',
-          title: 'At the end of the month you see the numbers',
-          body: 'How many came in, the average minutes to first reply, how many each person closed. You look instead of guessing.',
-          points: [
-            'First reply time and time to resolve',
-            'A breakdown per team member',
-            'Which pages generate the most questions'
-          ]
-        }
-      ],
-
-      /* ----------------------------------------------------------- tabs */
       tour: {
-        eyebrow: 'Product tour',
-        title: 'What is inside the dashboard',
-        desc: 'Click through — each one is a screen your team uses during the day.',
         detail: 'See this feature in detail'
       },
 
-      /* ------------------------------------------------------- use cases */
-      cases: {
-        eyebrow: 'Who uses it',
-        title: 'Same product, a different job depending on yours',
-        desc: 'Pick the one closest to your business.',
-        items: {
-          ecommerce: {
-            name: 'Online shops',
-            tag: 'Shipping, returns, sizing',
-            headline: 'Let the customer at checkout ask, so the order does not slip away',
-            body: 'Someone asking “do you have this in medium?” or “when does it ship?” on a product page cannot wait. The chat opens right there, and your agent answers while seeing exactly which product they are looking at. Set up saved replies for the shipping and returns questions you answer thirty times a day.',
-            wins: [
-              {
-                label: 'Fewer abandoned carts',
-                body: 'A visitor stuck at checkout gets a message without being asked.'
-              },
-              {
-                label: 'Repeat questions stop',
-                body: 'Shipping and returns answered instantly with a saved reply.'
-              },
-              {
-                label: 'Context is already there',
-                body: 'The page they are on and your past conversations sit beside the chat.'
-              }
-            ]
-          },
-          saas: {
-            name: 'Software / SaaS',
-            tag: 'Trials, setup, errors',
-            headline: 'Catch the trial user who gets stuck before they quietly leave',
-            body: 'Someone new to your product usually does not ask when they hit a wall — they just leave. You can message a user who stalls on a screen or lingers in the setup step. Every question lands with the right team, so technical ones do not sit with support.',
-            wins: [
-              {
-                label: 'You see the silent churn',
-                body: 'Who is on which screen, and for how long, live in the dashboard.'
-              },
-              {
-                label: 'The right team picks it up',
-                body: 'Billing to accounts, bug reports to engineering.'
-              },
-              {
-                label: 'Answers accumulate',
-                body: 'Common questions become help content people find themselves.'
-              }
-            ]
-          },
-          agency: {
-            name: 'Agencies / Many sites',
-            tag: 'Client sites, separate teams',
-            headline: 'Run several sites from one dashboard without mixing the data',
-            body: 'Each site you manage gets its own install line. Conversations, team members and reports stay separated per site, so one client’s data never shows up in another’s. You decide which team member can reach which site.',
-            wins: [
-              {
-                label: 'Separated per site',
-                body: 'Each site keeps its own conversations and reports.'
-              },
-              { label: 'Access is yours to set', body: 'Pick exactly who can see which site.' },
-              { label: 'One login', body: 'No more one dashboard per client.' }
-            ]
-          },
-          service: {
-            name: 'Services / Bookings',
-            tag: 'Clinics, studios, consulting',
-            headline: 'Take in writing everything people currently phone you about',
-            body: 'Booking, pricing and directions tie up the phone. When the same questions arrive by chat, one person can help several people at once. Messages that arrive out of hours are not lost; they wait for you, and the customer knows when you will be back.',
-            wins: [
-              {
-                label: 'The phone frees up',
-                body: 'Handle several conversations at the same time.'
-              },
-              {
-                label: 'Nothing lost after hours',
-                body: 'A message sent at night is in your inbox in the morning.'
-              },
-              { label: 'Common answers ready', body: 'Pricing and address answered in one click.' }
-            ]
-          }
-        }
-      },
-
-      /* ----------------------------------------------------------- setup */
       setup: {
-        eyebrow: 'Setup',
-        title: 'One line of code, two minutes',
-        desc: 'Once your account is open we give you a line of your own. Send it to whoever looks after your site and they paste it in. That is the whole job.',
-        steps: [
-          { title: 'Open your account', body: 'An email and a password is all it takes. No card.' },
-          { title: 'Add your site', body: 'Enter your address and we give you your install line.' },
-          {
-            title: 'Paste the line into your site',
-            body: 'The bubble shows up on your site within the minute.'
-          }
-        ],
-        file: 'your site’s page',
-        cta: 'Open an account and get the line',
-        note: 'No one to do it for you? Send us your address and we will set it up together.',
-        worksWith: 'Works on whatever your site is built with',
+        cta: 'Open an account and get the code',
         platforms: [
           'WordPress',
           'Shopify',
@@ -424,12 +211,12 @@ export default {
           'Wix',
           'Webflow',
           'Squarespace',
-          'BigCommerce',
+          'Google Tag Manager',
           'React',
           'Next.js',
           'Vue',
+          'Angular',
           'Laravel',
-          'PHP',
           'Django',
           'Magento'
         ]
@@ -450,8 +237,8 @@ export default {
             body: 'Agent, manager and viewer roles are separate. Nobody opens a screen they are not allowed to.'
           },
           {
-            title: 'It will not break or slow your site',
-            body: 'The chat bubble is isolated from your site’s styling and cannot change how your pages look.'
+            title: 'The bubble opens only on your site',
+            body: 'You list the addresses it may run on; someone who copies your key onto another site cannot start a chat.'
           },
           {
             title: 'Old records do not pile up forever',
@@ -465,48 +252,10 @@ export default {
         eyebrow: 'Pricing',
         title: 'Start free, move up as you grow',
         desc: 'The free plan has no time limit. Start on your own and change plan when the team grows.',
-        price: { free: '₺0', pro: '₺490', enterprise: 'Custom' },
-        note: {
-          free: 'One site, one user',
-          pro: 'Per user / month',
-          enterprise: 'For larger teams'
-        },
         link: 'Compare the plans'
       },
 
-      /* -------------------------------------------------------------- FAQ */
-      faq: {
-        title: 'Common questions',
-        desc: 'Anything else — just ask in the chat. This site runs the same product.',
-        items: [
-          {
-            q: 'Do I need a developer to install it?',
-            a: 'Usually not. On WordPress, Shopify and similar platforms you paste one line in the settings screen. If you get stuck, send us your address and we will do it together.'
-          },
-          {
-            q: 'Is the free plan really free?',
-            a: 'Yes, with no time limit and no card. It covers one site and one user, with unlimited conversations.'
-          },
-          {
-            q: 'Will it slow my site down?',
-            a: 'No. The chat bubble loads after the rest of your page, so it never holds your site up.'
-          },
-          {
-            q: 'What happens to messages sent out of hours?',
-            a: 'Nothing is lost. We tell the visitor when you will be back and the message waits in your inbox.'
-          },
-          {
-            q: 'Can I answer from my phone?',
-            a: 'Yes. The dashboard works in a phone browser — there is no separate app to install.'
-          },
-          {
-            q: 'Can I take my data out?',
-            a: 'On Pro and Enterprise you can export your conversations. The data is yours; if you leave, you take it with you.'
-          }
-        ]
-      },
-
-      ctaTitle: 'Your first conversation is two minutes away',
+      ctaTitle: 'Your first conversation is minutes away',
       ctaDesc: 'Open an account, add your site, paste the line. The rest takes care of itself.',
       ctaBtn1: 'Create a free account',
       ctaBtn2: 'See pricing',
@@ -563,12 +312,12 @@ export default {
       },
       grow: {
         title: 'Where you see what happened',
-        desc: 'Reports, live visitors, deal tracking and the AI assistant. Numbers instead of guesses.',
+        desc: 'Reports, live visitors and deal tracking. Numbers instead of guesses.',
         points: [
           'Reply and resolution times, broken down per person',
           'Who is on your site right now, and on which page',
           'Sales opportunities that came out of conversations',
-          'Summaries of long threads and suggested replies'
+          'A returning customer’s history right beside you'
         ]
       }
     },
@@ -662,7 +411,7 @@ export default {
         title: 'Department routing',
         short: 'Every question reaches the right person.',
         plain:
-          'Billing to accounts, returns to sales. Define departments once, and new conversations are handed to whoever is free.',
+          'Billing to accounts, sales questions to sales. Define departments once, and new conversations are handed to whoever is free.',
         setup: 'From the dashboard',
         benefits: [
           'Share in turn, or give it to whoever has least on',
@@ -687,7 +436,7 @@ export default {
         title: 'Automatic rules',
         short: 'Set up repetitive work once.',
         plain:
-          'Build rules like “if the message mentions a return, send it to sales and tag it”. When the condition matches, the rule runs itself.',
+          'Build rules like “if the message mentions an invoice, send it to accounts and tag it”. When the condition matches, the rule runs itself.',
         setup: 'From the dashboard',
         benefits: [
           'Pick conditions and actions from a list — no code',
@@ -709,7 +458,7 @@ export default {
         title: 'Proactive messages',
         short: 'Reach out before they ask.',
         plain:
-          'Send a message on your own to a visitor stuck on the payment page or lingering on the same screen. Most people never ask — they just leave.',
+          'Send a message on your own to a visitor hesitating on the pricing page or lingering on the same screen. Most people never ask — they just leave.',
         setup: 'From the dashboard',
         benefits: [
           'Trigger on time on page, scrolling, or leaving intent',
@@ -718,7 +467,7 @@ export default {
           'Every send is recorded'
         ],
         steps: [
-          { title: 'Choose the page', body: 'Checkout or pricing, for example.' },
+          { title: 'Choose the page', body: 'Pricing or sign-up, for example.' },
           { title: 'Choose the trigger', body: 'After how many seconds, or on which behaviour.' },
           { title: 'Write the message', body: 'Short, and offering help, works best.' }
         ]
@@ -790,31 +539,6 @@ export default {
         ]
       },
 
-      'ai-assist': {
-        title: 'AI assistant',
-        short: 'Answers the simple questions, hands the rest to your team.',
-        plain:
-          'The assistant answers common questions from your help content, looks up a signed-in customer’s order in your shop’s system, and leaves the conversation to your team the moment it is unsure. The model runs on your own server.',
-        setup: 'On your server',
-        benefits: [
-          'Auto reply: greetings, FAQ and order status',
-          'Hands over the moment the customer asks, or on a complaint',
-          'Summary, draft reply, tone and translation for agents',
-          'Conversations and customer data never leave your server'
-        ],
-        steps: [
-          { title: 'Start the model on your server', body: 'One command on a GPU server; the dashboard notices by itself when it is ready.' },
-          { title: 'Choose the mode per site', body: 'Sites → AI settings: off, copilot or automatic replies.' },
-          { title: 'Fill in your help content', body: 'The assistant only says what is written there; the better the content, the better the answer.' }
-        ],
-        body: 'The model runs in one server container that the backend reaches over the internal network only; there is no fallback to any hosted model. A visitor message is first checked in code (a request for a person, card/IBAN/ID numbers, the reply budget), then sent to the model with only the matching FAQ entries. Numbers, dates and links in the answer are checked against those sources; an answer that fails is not sent and a person takes over.',
-        points: [
-          'Automatic replies stop the moment an agent takes over',
-          'Orders are looked up only for a verified customer, with a signed request',
-          'If the model is down or busy, the conversation goes to a person without waiting'
-        ]
-      },
-
       visitors: {
         title: 'Live visitors',
         short: 'Who is on your site right now, and where.',
@@ -872,32 +596,41 @@ export default {
   pricingPage: {
     meta: {
       title: 'Pricing',
-      description: 'Start on the free plan. Priced per user per month, with nothing hidden.'
+      description: 'Start on the free plan. Paid plans are one flat monthly price, not per seat, with nothing hidden.'
     },
     eyebrow: 'Pricing',
-    title: 'Start free, pay as your team grows',
+    title: 'Start free, move up when your team grows',
     description:
-      'The free plan has no time limit and needs no card. Paid plans are per user per month — no surprise line items.',
+      'The free plan has no time limit and needs no card. Paid plans are a flat monthly price per plan, not per user.',
 
     billing: 'Billing period',
     monthly: 'Monthly',
     yearly: 'Yearly',
-    discount: '2 months free',
+    discount: '{{percent}}% off',
     popular: 'Most popular',
-    perSeat: '/ user / month',
+    perMonth: '/ month',
     billedMonthly: 'Billed monthly',
-    billedYearly: 'Billed yearly',
+    billedYearly: 'Billed yearly · {{total}} a year',
     custom: 'Custom',
     freeNote: 'Free forever, nothing to bill',
     contactNote: 'Set to fit your needs',
     vatNote: 'Prices exclude VAT. Change plan or leave whenever you like.',
+    loadError: 'The plans could not be loaded just now. Refresh the page to try again.',
+
+    units: {
+      sites_one: '{{count}} site',
+      sites_other: '{{count}} sites',
+      agents_one: '{{count}} user',
+      agents_other: '{{count}} users',
+      conversations: '{{n}} new conversations a month'
+    },
 
     chooseEyebrow: 'Deciding',
     chooseTitle: 'Which plan fits you?',
 
     compareTitle: 'Plan comparison',
     compareDesc:
-      'The table below reflects the screens that are actually unlocked in the dashboard.',
+      'The table comes from the plan table the server enforces; the limit written here is the limit the dashboard applies.',
     feature: 'Feature',
 
     faqTitle: 'Questions about pricing',
@@ -905,27 +638,31 @@ export default {
     faqItems: [
       {
         q: 'How long does the free plan last?',
-        a: 'There is no limit. Use it indefinitely with one site and one user. We do not cap the number of conversations.'
+        a: 'There is no limit. Use it for as long as you like with one site, one user and 100 new conversations a month.'
       },
       {
         q: 'Do I need a credit card?',
         a: 'Not for the free plan. An email and a password is all it takes.'
       },
       {
+        q: 'What counts as a “conversation”?',
+        a: 'Every new chat a visitor starts is one conversation, however many messages it has. The limit resets at the start of each month, and open conversations carry on when it is reached.'
+      },
+      {
+        q: 'What counts as a “user”?',
+        a: 'Everyone on your team who can sign in, you included; open invitations count too. How many customers you have does not affect the price.'
+      },
+      {
         q: 'Can I change plan later?',
         a: 'Yes, up or down whenever you like. The change is prorated against your remaining time.'
       },
       {
-        q: 'What counts as a “user”?',
-        a: 'Anyone on your team who signs in and answers conversations. How many customers you have does not affect the price.'
-      },
-      {
         q: 'Is there a commitment?',
-        a: 'Not on monthly — leave any month. The yearly plan is paid up front, which is why two months are free.'
+        a: 'Not on monthly — leave any month. On yearly, a discounted year is paid up front.'
       },
       {
         q: 'What is different about Enterprise?',
-        a: 'Unlimited sites, audit logs and single sign-on. We work out the scope with you.'
+        a: 'More sites, users and conversations, audit logs and hands-on setup help. We agree the scope and price with you.'
       }
     ],
 
@@ -937,16 +674,7 @@ export default {
         includes: 'What is included',
         forWho: 'Just starting out',
         forWhoBody: 'One site, and you answer the conversations yourself. Start here.',
-        features: [
-          '1 site',
-          '1 user',
-          'Unlimited conversations',
-          'Chat bubble and appearance settings',
-          'Help content (FAQ)',
-          'Automatic rules',
-          'Proactive messages',
-          'AI assistant (on your own server)'
-        ]
+        extras: ['Chat bubble and appearance settings', 'Help content (FAQ)', 'Reports']
       },
       pro: {
         name: 'Pro',
@@ -954,16 +682,8 @@ export default {
         cta: 'Start with Pro',
         includes: 'Everything in Free, plus',
         forWho: 'Working as a team',
-        forWhoBody: 'With several agents you will want reports and department routing.',
-        features: [
-          '10 sites',
-          'Unlimited users',
-          'Departments and routing rules',
-          'Reports and agent performance',
-          'Live visitors',
-          'Deal tracking',
-          'Data export'
-        ]
+        forWhoBody: 'With several agents you will want department routing, rules and live visitors.',
+        extras: []
       },
       enterprise: {
         name: 'Enterprise',
@@ -972,31 +692,25 @@ export default {
         includes: 'Everything in Pro, plus',
         forWho: 'Larger teams',
         forWhoBody: 'You run many sites and need audit and access records.',
-        features: [
-          'Unlimited sites',
-          'Audit logs',
-          'Single sign-on (SSO)',
-          'Hands-on setup support'
-        ]
+        extras: ['Hands-on setup support']
       }
     },
 
     matrix: {
       sites: 'Sites',
       agents: 'Users',
-      conversations: 'Unlimited conversations',
+      conversations: 'New conversations a month',
       widget: 'Chat bubble and appearance',
       faq: 'Help content (FAQ)',
-      departments: 'Departments',
+      analytics: 'Reports',
+      departments: 'Departments and routing',
       automation: 'Automatic rules',
       proactive: 'Proactive messages',
-      analytics: 'Reports',
       visitors: 'Live visitors',
       crm: 'Deal tracking',
-      aiAssist: 'AI assistant (on your own server)',
       export: 'Data export',
       audit: 'Audit logs',
-      sso: 'Single sign-on (SSO)'
+      noBranding: 'No “Support.io” mark in the bubble'
     }
   },
 
@@ -1093,7 +807,7 @@ export default {
     title: 'Create a free account',
     subtitle: 'An email and a password is all it takes. No card required.',
     metaTitle: 'Create a free account — Support.io',
-    passwordHint: 'At least 6 characters',
+    passwordHint: 'At least 8 characters',
     noCard: 'By signing up you accept the terms of use.',
     hasAccount: 'Already have an account?',
     login: 'Log in'
@@ -1113,23 +827,23 @@ export default {
       rows: [
         {
           name: 'Ella Kay',
-          preview: 'When will my order ship?',
+          preview: 'The password reset e-mail never came.',
           time: '2m',
-          tag: 'Shipping',
+          tag: 'Account',
           tone: 'indigo'
         },
         {
           name: 'Brian Shaw',
-          preview: 'Could you update my invoice?',
+          preview: 'Can the invoice be in our company’s name?',
           time: '14m',
           tag: 'Billing',
           tone: 'sky'
         },
         {
           name: 'Zoe A.',
-          preview: 'Do you have this in a medium?',
+          preview: 'What changes if we switch to yearly?',
           time: '1h',
-          tag: 'Product',
+          tag: 'Sales',
           tone: 'amber'
         },
         {
@@ -1141,23 +855,23 @@ export default {
         }
       ],
       openName: 'Ella Kay',
-      openPage: 'on /track-order',
+      openPage: 'on /login',
       openStatus: 'Waiting',
       today: 'Today',
-      msg1: 'Hi, the order I placed yesterday still says preparing. When does it go out?',
-      msg2: 'Hi Ella! I have checked your order — it ships today before 5pm. Your tracking number will arrive by text.',
-      msg3: 'Great, thank you!',
+      msg1: 'Hi, I want to reset my password but the e-mail never arrived.',
+      msg2: 'Hi Ella! I have sent it again — it should be there in a few minutes. If not, have a look in your spam folder.',
+      msg3: 'Got it, thank you!',
       sentBy: 'Kerem',
       composer: 'Write a reply…'
     },
 
     widget: {
-      title: 'Acme Store',
+      title: 'Nova Software',
       status: 'Usually replies in a few minutes',
       bot: 'Hi there! How can we help?',
-      visitor: 'When will my order arrive?',
-      agent: 'We ship same day, and delivery takes 1–3 working days.',
-      quick: ['Track order', 'Returns', 'Invoice'],
+      visitor: 'How long is the trial?',
+      agent: '14 days, no card needed. If you get stuck setting up, just write here.',
+      quick: ['Pricing', 'Setup', 'Invoices'],
       composer: 'Type your message…'
     },
 
@@ -1183,7 +897,7 @@ export default {
     routing: {
       frame: 'Routing',
       visitor: 'New visitor',
-      message: '“I would like to return this”',
+      message: '“I would like to know more about Pro”',
       new: 'New',
       depts: [
         { name: 'Sales', load: '2 open' },
@@ -1196,13 +910,13 @@ export default {
 
     automation: {
       frame: 'Automatic rules',
-      ruleName: 'Return request',
+      ruleName: 'Billing questions',
       active: 'On',
       ifLabel: 'If',
       and: 'and',
       thenLabel: 'Then',
-      conditions: ['Message mentions “return”', 'Page is /my-orders'],
-      actions: ['Route to Sales', 'Add the “Return” tag', 'Send the saved returns reply'],
+      conditions: ['Message mentions “invoice”', 'Page is /account'],
+      actions: ['Route to Accounts', 'Add the “Billing” tag', 'Send the saved billing reply'],
       stat: 'Ran 128 times this month'
     },
 
@@ -1211,16 +925,16 @@ export default {
       triggers: ['After 30 seconds', 'On leaving intent', 'At the bottom of the page'],
       agent: 'Selin',
       message:
-        'If you are stuck at the payment step, let me help — which card would you like to use?'
+        'Not sure which plan fits? Happy to help — how big is your team?'
     },
 
     knowledge: {
       frame: 'Help content',
-      query: 'when does it ship',
+      query: 'password',
       results: [
-        { q: 'When will my order ship?', meta: 'Read 412 times' },
-        { q: 'Where do I find my tracking number?', meta: 'Read 268 times' },
-        { q: 'How long does delivery take?', meta: 'Read 193 times' }
+        { q: 'How do I reset my password?', meta: 'Read 412 times' },
+        { q: 'How do I change my e-mail address?', meta: 'Read 268 times' },
+        { q: 'Where do I download my invoice?', meta: 'Read 193 times' }
       ],
       note: 'A visitor who finds the answer never writes to you.'
     },
@@ -1258,22 +972,11 @@ export default {
       title: '14 people on your site right now',
       head: ['Location', 'Current page', 'Time'],
       rows: [
-        { city: 'Istanbul', page: '/product/winter-coat', time: '4m' },
-        { city: 'Ankara', page: '/cart', time: '2m' },
-        { city: 'Izmir', page: '/track-order', time: '7m' },
+        { city: 'Istanbul', page: '/pricing', time: '4m' },
+        { city: 'Ankara', page: '/signup', time: '2m' },
+        { city: 'Izmir', page: '/help/setup', time: '7m' },
         { city: 'Bursa', page: '/contact', time: '1m' }
       ]
-    },
-
-    ai: {
-      frame: 'AI assistant',
-      incoming: 'Incoming message',
-      question: 'I want to return this but I threw the box away — do you still accept it?',
-      suggestion: 'Suggested reply',
-      draft:
-        'Hi! We accept returns without the original box, as long as the item is unused. I can send you the return code right away.',
-      actions: ['Send', 'Edit', 'Soften tone'],
-      note: 'The suggestion is always shown to you and never reaches the customer unapproved.'
     },
 
     crm: {

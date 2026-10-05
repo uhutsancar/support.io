@@ -11,6 +11,7 @@ import SiteAssistant from '../components/sites/SiteAssistant';
 import SiteAccess, { InstallBadge } from '../components/sites/SiteAccess';
 import type { Site } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
+import { publicOrigin } from '../lib/publicOrigin';
 
 interface DeleteTarget {
   isOpen: boolean;
@@ -110,7 +111,7 @@ const Sites = () => {
   // zordu. Yeni runtime yapilandirmayi kendi etiketinin data-* niteliklerinden
   // ve kendi src'sinden okur; inline script gerekmez.
   const getInstallCode = (siteKey: string) => {
-    const origin = import.meta.env.VITE_API_URL || window.location.origin;
+    const origin = publicOrigin();
     return `<script
   src="${origin}/widget.js"
   data-site-key="${siteKey}"

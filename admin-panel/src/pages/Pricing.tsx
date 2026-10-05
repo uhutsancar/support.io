@@ -1,22 +1,18 @@
 /**
  * Fiyatlandırma.
  *
- * Planların kapsamı uydurma değil: backend'deki `planFeatures` tablosu ve
- * DashboardLayout'taki menü kapıları ne diyorsa o. Bugün gerçekten kapılı olan
- * şeyler şunlar:
- *
- *   FREE        multiUser: false, export: false, advancedAnalytics: false
- *   PRO         hepsi açık + Ziyaretçiler ve CRM menüleri
- *   ENTERPRISE  PRO + Denetim Kayıtları
- *
- * Eski sayfada "10.000'den fazla şirket güveniyor", "100 Temel Entegrasyon" ve
- * "Gelişmiş Yapay Zeka Botları" yazıyordu; hiçbirinin karşılığı yoktu.
+ * Planların kapsamı burada yazılmaz: sayılar ve özellikler GET /api/plans'tan
+ * gelir, yani sunucunun uyguladığı tablodan (backend/src/domain/plans.ts).
+ * Eski sayfa "10 site", "sınırsız kullanıcı" ve "sınırsız konuşma" yazıyordu;
+ * sunucu ise 3 site, 5 kullanıcı ve aylık konuşma kotası uyguluyordu. Artık
+ * satılanla uygulanan ayrışamaz. Bu dosyada yalnızca etiketler ve görünüm var.
  */
 
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Check, Minus, Sparkles, Store, Rocket, Building2 } from 'lucide-react';
+import { Check, Minus, MessageCircle, Store, Rocket, Building2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
 import {
   Button,
@@ -26,32 +22,64 @@ import {
   AccentIcon,
   Accordion,
   Reveal,
-  accent
+  accent,
+  asList
 } from '../components/marketing/kit';
+import { PLAN_FEATURE_ORDER, planKey, usePlans } from '../hooks/usePlans';
+import type { PlanInfo } from '../types/api';
 
-const PLANS = [
-  { id: 'free', monthly: 0, yearly: 0, tone: 'sky', icon: Store },
-  { id: 'pro', monthly: 490, yearly: 392, tone: 'indigo', icon: Rocket, highlight: true },
-  { id: 'enterprise', monthly: null, yearly: null, tone: 'violet', icon: Building2 }
-];
+type T = ReturnType<typeof useTranslation>['t'];
+
+/** Görünüm — planın kendisi sunucudan gelir. */
+const PLAN_LOOK: Record<string, { tone: string; icon: LucideIcon; highlight?: boolean }> = {
+  FREE: { tone: 'sky', icon: Store },
+  PRO: { tone: 'indigo', icon: Rocket, highlight: true },
+  ENTERPRISE: { tone: 'violet', icon: Building2 }
+};
+const look = (plan: PlanInfo) => PLAN_LOOK[plan.type] || PLAN_LOOK.FREE;
+
+/** "Hangi plan size uygun" kartları sunucuya bakmadan da yazılabilir. */
+const PLAN_IDS = ['free', 'pro', 'enterprise'];
+
+/**
+ * Bir kartın maddeleri: sınırlar, bir önceki planda olmayan özellikler ve
+ * çeviride duran ek maddeler ("kurulumda birebir destek" gibi hizmetler).
+ */
+function planItems(plan: PlanInfo, previous: PlanInfo | undefined, t: T, number: Intl.NumberFormat) {
+  const items = [
+    t('pricingPage.units.sites', { count: plan.sites }),
+    t('pricingPage.units.agents', { count: plan.agents }),
+    t('pricingPage.units.conversations', { n: number.format(plan.monthlyConversations) })
+  ];
+  for (const feature of PLAN_FEATURE_ORDER) {
+    if (plan.features.includes(feature) && !previous?.features.includes(feature)) {
+      items.push(t('pricingPage.matrix.' + feature));
+    }
+  }
+  if (!plan.branding && (previous ? previous.branding : true)) {
+    items.push(t('pricingPage.matrix.noBranding'));
+  }
+  return items.concat(
+    asList<string>(t('pricingPage.plans.' + planKey(plan) + '.extras', { returnObjects: true }))
+  );
+}
 
 /** Karşılaştırma tablosu — satır: özellik, sütun: plan. */
-const MATRIX = [
-  { key: 'sites', free: '1', pro: '10', enterprise: '∞' },
-  { key: 'agents', free: '1', pro: '∞', enterprise: '∞' },
-  { key: 'conversations', free: true, pro: true, enterprise: true },
-  { key: 'widget', free: true, pro: true, enterprise: true },
-  { key: 'faq', free: true, pro: true, enterprise: true },
-  { key: 'departments', free: false, pro: true, enterprise: true },
-  { key: 'automation', free: true, pro: true, enterprise: true },
-  { key: 'proactive', free: true, pro: true, enterprise: true },
-  { key: 'analytics', free: false, pro: true, enterprise: true },
-  { key: 'visitors', free: false, pro: true, enterprise: true },
-  { key: 'crm', free: false, pro: true, enterprise: true },
-  { key: 'export', free: false, pro: true, enterprise: true },
-  { key: 'audit', free: false, pro: false, enterprise: true },
-  { key: 'sso', free: false, pro: false, enterprise: true }
-];
+function matrixRows(number: Intl.NumberFormat) {
+  return [
+    { key: 'sites', value: (p: PlanInfo) => number.format(p.sites) },
+    { key: 'agents', value: (p: PlanInfo) => number.format(p.agents) },
+    { key: 'conversations', value: (p: PlanInfo) => number.format(p.monthlyConversations) },
+    { key: 'widget', value: () => true },
+    { key: 'faq', value: () => true },
+    { key: 'analytics', value: () => true },
+    ...PLAN_FEATURE_ORDER.map((feature) => ({
+      key: feature as string,
+      value: (p: PlanInfo) => p.features.includes(feature)
+    })),
+    { key: 'noBranding', value: (p: PlanInfo) => !p.branding }
+  ];
+}
 
 const Cell = ({
   value,
@@ -92,18 +120,42 @@ const Cell = ({
   );
 };
 
+/** Plan tablosu gelene kadar kartların yerini tutar; sayfa zıplamaz. */
+const CardSkeleton = () => (
+  <div className="h-[520px] rounded-3xl border border-gray-200 dark:border-white/[0.08] p-7 bg-white dark:bg-white/[0.025]">
+    <div className="animate-pulse motion-reduce:animate-none space-y-4">
+      <div className="h-5 w-28 rounded bg-gray-100 dark:bg-white/[0.06]" />
+      <div className="h-4 w-full rounded bg-gray-100 dark:bg-white/[0.06]" />
+      <div className="h-10 w-36 rounded bg-gray-100 dark:bg-white/[0.06]" />
+      <div className="h-11 w-full rounded-xl bg-gray-100 dark:bg-white/[0.06]" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div key={i} className="h-3.5 w-3/4 rounded bg-gray-100 dark:bg-white/[0.06]" />
+      ))}
+    </div>
+  </div>
+);
+
 const Pricing = () => {
   const { t, i18n } = useTranslation();
   const routes = useMarketingRoutes();
   const [yearly, setYearly] = useState(false);
+  const { plans, failed } = usePlans();
 
-  const currency = new Intl.NumberFormat(i18n.language === 'en' ? 'en-US' : 'tr-TR', {
-    style: 'currency',
-    currency: 'TRY',
-    maximumFractionDigits: 0
-  });
+  const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
+  const number = new Intl.NumberFormat(locale);
+  const money = (amount: number, currency: string) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0 }).format(
+      amount
+    );
+
+  // Yıllık indirim, yıllık fiyatı olan ilk ücretli plandan hesaplanır.
+  const paid = plans?.find((p) => (p.price.monthly ?? 0) > 0 && p.price.yearly !== null);
+  const discount = paid
+    ? Math.round((1 - (paid.price.yearly as number) / (paid.price.monthly as number)) * 100)
+    : 0;
 
   const faq = t('pricingPage.faqItems', { returnObjects: true });
+  const rows = matrixRows(number);
 
   return (
     <Shell>
@@ -143,125 +195,138 @@ const Pricing = () => {
                 {option.label}
               </button>
             ))}
-            <span
-              className="ml-1 mr-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold
-              bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
-            >
-              {t('pricingPage.discount')}
-            </span>
+            {discount > 0 && (
+              <span
+                className="ml-1 mr-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold
+                bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+              >
+                {t('pricingPage.discount', { percent: discount })}
+              </span>
+            )}
           </div>
         </div>
       </PageHero>
 
       {/* ----------------------------------------------------- plan kartları */}
       <Section size="sm">
-        <div className="grid gap-5 lg:grid-cols-3">
-          {PLANS.map((plan, i) => {
-            const price = yearly ? plan.yearly : plan.monthly;
-            const features = t('pricingPage.plans.' + plan.id + '.features', {
-              returnObjects: true
-            });
-            const list = Array.isArray(features) ? features : [];
-            const a = accent(plan.tone);
+        {failed ? (
+          <p
+            role="alert"
+            className="max-w-xl mx-auto text-center text-[14.5px] text-gray-600 dark:text-gray-400"
+          >
+            {t('pricingPage.loadError')}
+          </p>
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-3">
+            {!plans
+              ? PLAN_IDS.map((id) => <CardSkeleton key={id} />)
+              : plans.map((plan, i) => {
+                  const id = planKey(plan);
+                  const { tone, icon, highlight } = look(plan);
+                  const price = yearly ? plan.price.yearly : plan.price.monthly;
+                  const list = planItems(plan, plans[i - 1], t, number);
+                  const a = accent(tone);
 
-            return (
-              <Reveal key={plan.id} delay={i * 0.07}>
-                <div
-                  className={[
-                    'relative h-full rounded-3xl border p-7 flex flex-col bg-white dark:bg-white/[0.025]',
-                    plan.highlight
-                      ? 'border-indigo-300 dark:border-indigo-500/40 ring-2 ring-indigo-500/15 shadow-panel-lg lg:-mt-3 lg:mb-[-12px]'
-                      : 'border-gray-200 dark:border-white/[0.08]'
-                  ].join(' ')}
-                >
-                  {plan.highlight && (
-                    <span
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full
-                      text-[11px] font-semibold uppercase tracking-wider bg-indigo-600 text-white
-                      shadow-[0_6px_16px_-6px_rgba(79,70,229,.8)] whitespace-nowrap"
-                    >
-                      {t('pricingPage.popular')}
-                    </span>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <AccentIcon icon={plan.icon} tone={plan.tone} />
-                    <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white">
-                      {t('pricingPage.plans.' + plan.id + '.name')}
-                    </h2>
-                  </div>
-
-                  <p className="mt-3 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400 min-h-[44px]">
-                    {t('pricingPage.plans.' + plan.id + '.tagline')}
-                  </p>
-
-                  <div className="mt-6 pb-6 border-b border-gray-100 dark:border-white/[0.07]">
-                    {price === null ? (
-                      <span className="text-[32px] font-semibold tracking-[-0.03em] text-gray-900 dark:text-white">
-                        {t('pricingPage.custom')}
-                      </span>
-                    ) : (
-                      <>
-                        <span
-                          className="text-[40px] font-semibold tracking-[-0.038em]
-                          text-gray-900 dark:text-white tabular-nums"
-                        >
-                          {currency.format(price)}
-                        </span>
-                        {/*
-                          Ücretsiz planda "/ kullanıcı / ay" yazmıyoruz: plan
-                          zaten tek kullanıcılık ve ücretsiz. "₺0 / kullanıcı /
-                          ay · aylık faturalandırılır" cümlesi, faturalandırma
-                          olmayan bir planda faturalandırma vaat ediyordu.
-                        */}
-                        {price > 0 && (
-                          <span className="ml-1.5 text-[14px] text-gray-500 dark:text-gray-400">
-                            {t('pricingPage.perSeat')}
+                  return (
+                    <Reveal key={plan.type} delay={i * 0.07}>
+                      <div
+                        className={[
+                          'relative h-full rounded-3xl border p-7 flex flex-col bg-white dark:bg-white/[0.025]',
+                          highlight
+                            ? 'border-indigo-300 dark:border-indigo-500/40 ring-2 ring-indigo-500/15 shadow-panel-lg lg:-mt-3 lg:mb-[-12px]'
+                            : 'border-gray-200 dark:border-white/[0.08]'
+                        ].join(' ')}
+                      >
+                        {highlight && (
+                          <span
+                            className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full
+                            text-[11px] font-semibold uppercase tracking-wider bg-indigo-600 text-white
+                            shadow-[0_6px_16px_-6px_rgba(79,70,229,.8)] whitespace-nowrap"
+                          >
+                            {t('pricingPage.popular')}
                           </span>
                         )}
-                      </>
-                    )}
-                    <p className="mt-2 text-[12.5px] text-gray-500 dark:text-gray-500 min-h-[18px]">
-                      {price === null
-                        ? t('pricingPage.contactNote')
-                        : price === 0
-                          ? t('pricingPage.freeNote')
-                          : yearly
-                            ? t('pricingPage.billedYearly')
-                            : t('pricingPage.billedMonthly')}
-                    </p>
-                  </div>
 
-                  <Button
-                    to={plan.id === 'enterprise' ? routes.about : routes.register}
-                    variant={plan.highlight ? 'primary' : 'secondary'}
-                    className="mt-6 w-full"
-                    arrow={plan.highlight}
-                  >
-                    {t('pricingPage.plans.' + plan.id + '.cta')}
-                  </Button>
+                        <div className="flex items-center gap-3">
+                          <AccentIcon icon={icon} tone={tone} />
+                          <h2 className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                            {t('pricingPage.plans.' + id + '.name')}
+                          </h2>
+                        </div>
 
-                  <p
-                    className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                    text-gray-400 dark:text-gray-500"
-                  >
-                    {t('pricingPage.plans.' + plan.id + '.includes')}
-                  </p>
-                  <ul className="mt-3 space-y-2.5 flex-1">
-                    {list.map((item, j) => (
-                      <li key={j} className="flex gap-2.5">
-                        <Check className={['w-4 h-4 mt-0.5 shrink-0', a.text].join(' ')} />
-                        <span className="text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
+                        <p className="mt-3 text-[14px] leading-relaxed text-gray-600 dark:text-gray-400 min-h-[44px]">
+                          {t('pricingPage.plans.' + id + '.tagline')}
+                        </p>
+
+                        <div className="mt-6 pb-6 border-b border-gray-100 dark:border-white/[0.07]">
+                          {price === null ? (
+                            <span className="text-[32px] font-semibold tracking-[-0.03em] text-gray-900 dark:text-white">
+                              {t('pricingPage.custom')}
+                            </span>
+                          ) : (
+                            <>
+                              <span
+                                className="text-[40px] font-semibold tracking-[-0.038em]
+                                text-gray-900 dark:text-white tabular-nums"
+                              >
+                                {money(price, plan.price.currency)}
+                              </span>
+                              {/*
+                                Fiyat plan başınadır, kullanıcı başına değil;
+                                ücretsiz planda "/ ay" da yazmıyoruz, çünkü
+                                faturalandırılan bir şey yok.
+                              */}
+                              {price > 0 && (
+                                <span className="ml-1.5 text-[14px] text-gray-500 dark:text-gray-400">
+                                  {t('pricingPage.perMonth')}
+                                </span>
+                              )}
+                            </>
+                          )}
+                          <p className="mt-2 text-[12.5px] text-gray-500 dark:text-gray-500 min-h-[18px]">
+                            {price === null
+                              ? t('pricingPage.contactNote')
+                              : price === 0
+                                ? t('pricingPage.freeNote')
+                                : yearly
+                                  ? t('pricingPage.billedYearly', {
+                                      total: money(price * 12, plan.price.currency)
+                                    })
+                                  : t('pricingPage.billedMonthly')}
+                          </p>
+                        </div>
+
+                        <Button
+                          to={plan.type === 'ENTERPRISE' ? routes.about : routes.register}
+                          variant={highlight ? 'primary' : 'secondary'}
+                          className="mt-6 w-full"
+                          arrow={highlight}
+                        >
+                          {t('pricingPage.plans.' + id + '.cta')}
+                        </Button>
+
+                        <p
+                          className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.08em]
+                          text-gray-400 dark:text-gray-500"
+                        >
+                          {t('pricingPage.plans.' + id + '.includes')}
+                        </p>
+                        <ul className="mt-3 space-y-2.5 flex-1">
+                          {list.map((item, j) => (
+                            <li key={j} className="flex gap-2.5">
+                              <Check className={['w-4 h-4 mt-0.5 shrink-0', a.text].join(' ')} />
+                              <span className="text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                                {item}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </Reveal>
+                  );
+                })}
+          </div>
+        )}
 
         <p className="mt-8 text-center text-[13.5px] text-gray-500 dark:text-gray-400">
           {t('pricingPage.vatNote')}
@@ -277,95 +342,97 @@ const Pricing = () => {
           align="center"
         />
         <div className="mt-10 grid sm:grid-cols-3 gap-4">
-          {PLANS.map((plan, i) => (
-            <Reveal key={plan.id} delay={i * 0.06}>
-            <Card className="p-6 h-full">
-              <p className={['text-[13px] font-semibold', accent(plan.tone).text].join(' ')}>
-                {t('pricingPage.plans.' + plan.id + '.name')}
-              </p>
-              <p className="mt-2.5 text-[15px] font-medium leading-snug text-gray-900 dark:text-white">
-                {t('pricingPage.plans.' + plan.id + '.forWho')}
-              </p>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
-                {t('pricingPage.plans.' + plan.id + '.forWhoBody')}
-              </p>
-            </Card>
+          {PLAN_IDS.map((id, i) => (
+            <Reveal key={id} delay={i * 0.06}>
+              <Card className="p-6 h-full">
+                <p className={['text-[13px] font-semibold', accent(PLAN_LOOK[id.toUpperCase()].tone).text].join(' ')}>
+                  {t('pricingPage.plans.' + id + '.name')}
+                </p>
+                <p className="mt-2.5 text-[15px] font-medium leading-snug text-gray-900 dark:text-white">
+                  {t('pricingPage.plans.' + id + '.forWho')}
+                </p>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {t('pricingPage.plans.' + id + '.forWhoBody')}
+                </p>
+              </Card>
             </Reveal>
           ))}
         </div>
       </Section>
 
       {/* --------------------------------------------- karşılaştırma tablosu */}
-      <Section>
-        <SectionHead
-          index={2}
-          eyebrow={t('pricingPage.feature')}
-          title={t('pricingPage.compareTitle')}
-          description={t('pricingPage.compareDesc')}
-        />
+      {plans && (
+        <Section>
+          <SectionHead
+            index={2}
+            eyebrow={t('pricingPage.feature')}
+            title={t('pricingPage.compareTitle')}
+            description={t('pricingPage.compareDesc')}
+          />
 
-        <div className="mt-10 overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
-          <table className="w-full min-w-[620px] border-collapse text-left">
-            <caption className="sr-only">{t('pricingPage.compareTitle')}</caption>
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                  className="pb-4 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                  text-gray-400 dark:text-gray-500"
-                >
-                  {t('pricingPage.feature')}
-                </th>
-                {PLANS.map((plan) => (
+          <div className="mt-10 overflow-x-auto -mx-5 sm:mx-0 px-5 sm:px-0">
+            <table className="w-full min-w-[620px] border-collapse text-left">
+              <caption className="sr-only">{t('pricingPage.compareTitle')}</caption>
+              <thead>
+                <tr>
                   <th
-                    key={plan.id}
                     scope="col"
-                    className={[
-                      'pb-4 w-[130px] text-center text-[14px] font-semibold',
-                      plan.highlight
-                        ? 'text-indigo-600 dark:text-indigo-400'
-                        : 'text-gray-900 dark:text-white'
-                    ].join(' ')}
+                    className="pb-4 text-[11.5px] font-semibold uppercase tracking-[0.08em]
+                    text-gray-400 dark:text-gray-500"
                   >
-                    {t('pricingPage.plans.' + plan.id + '.name')}
+                    {t('pricingPage.feature')}
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {MATRIX.map((row) => (
-                <tr
-                  key={row.key}
-                  className="border-t border-gray-100 dark:border-white/[0.06]
-                  hover:bg-gray-50/70 dark:hover:bg-white/[0.02] transition-colors"
-                >
-                  <th
-                    scope="row"
-                    className="py-3.5 pr-4 text-[14px] font-normal text-gray-700 dark:text-gray-300"
-                  >
-                    {t('pricingPage.matrix.' + row.key)}
-                  </th>
-                  {['free', 'pro', 'enterprise'].map((plan) => (
-                    <td
-                      key={plan}
+                  {plans.map((plan) => (
+                    <th
+                      key={plan.type}
+                      scope="col"
                       className={[
-                        'py-3.5 text-center',
-                        plan === 'pro' ? 'bg-indigo-50/40 dark:bg-indigo-500/[0.05]' : ''
+                        'pb-4 w-[130px] text-center text-[14px] font-semibold',
+                        look(plan).highlight
+                          ? 'text-indigo-600 dark:text-indigo-400'
+                          : 'text-gray-900 dark:text-white'
                       ].join(' ')}
                     >
-                      <Cell
-                        value={row[plan as keyof typeof row]}
-                        yesLabel={t('common.yes')}
-                        noLabel={t('common.no')}
-                      />
-                    </td>
+                      {t('pricingPage.plans.' + planKey(plan) + '.name')}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.key}
+                    className="border-t border-gray-100 dark:border-white/[0.06]
+                    hover:bg-gray-50/70 dark:hover:bg-white/[0.02] transition-colors"
+                  >
+                    <th
+                      scope="row"
+                      className="py-3.5 pr-4 text-[14px] font-normal text-gray-700 dark:text-gray-300"
+                    >
+                      {t('pricingPage.matrix.' + row.key)}
+                    </th>
+                    {plans.map((plan) => (
+                      <td
+                        key={plan.type}
+                        className={[
+                          'py-3.5 text-center',
+                          look(plan).highlight ? 'bg-indigo-50/40 dark:bg-indigo-500/[0.05]' : ''
+                        ].join(' ')}
+                      >
+                        <Cell
+                          value={row.value(plan)}
+                          yesLabel={t('common.yes')}
+                          noLabel={t('common.no')}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
 
       {/* ------------------------------------------------------------- SSS */}
       <Section tone="cream">
@@ -385,7 +452,7 @@ const Pricing = () => {
       {/* ------------------------------------------------------------- CTA */}
       <Section tone="deep">
         <Reveal className="text-center max-w-2xl mx-auto">
-          <Sparkles className="w-7 h-7 mx-auto text-indigo-300" strokeWidth={1.8} />
+          <MessageCircle className="w-7 h-7 mx-auto text-indigo-300" strokeWidth={1.8} />
           <h2 className="mt-5 text-[32px] sm:text-[44px] font-bold tracking-[-0.04em] leading-[1.06] text-white text-balance">
             {t('landing.home.ctaTitle')}
           </h2>

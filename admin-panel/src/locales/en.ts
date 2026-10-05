@@ -1316,130 +1316,6 @@ export default {
     active: 'Active',
     inactive: 'Inactive'
   },
-  docs: {
-    meta: {
-      title: 'Documentation',
-      description:
-        'Find out how to integrate and configure the Support.io widget. Explore all details.'
-    },
-    hero: {
-      title: 'Developer Documentation',
-      description:
-        'Integrate the live support system into your platform in minutes. Powerful APIs, flexible configuration, and full control.',
-      version: 'v1.0.0 Latest Version',
-      viewGithub: 'GitHub Code Examples'
-    },
-    nav: {
-      title: 'Table of Contents',
-      gettingStarted: 'Getting Started',
-      installation: 'Quick Setup',
-      configuration: 'Configuration & API',
-      features: 'Features',
-      benefits: 'Why Support.io?'
-    },
-    gettingStarted: {
-      title: 'Getting Started',
-      description:
-        "Support.io is a modern live support engine that works via a small script you add to your website's HTML code. Powered by WebSocket technology for zero-latency chats.",
-      whatIs: {
-        title: 'Exactly How Does It Work?',
-        description:
-          "You don't need any server costs or complex installations to set up the system. All you need to do is copy your dedicated widget code and integrate it into your site. All load and scaling is handled by the Support.io cloud infrastructure."
-      }
-    },
-    installation: {
-      title: 'Quick Setup (5 Mins)',
-      description: 'You can go live instantly by following these 3 steps.',
-      step1: {
-        title: 'Prerequisites & Security',
-        description:
-          'First, define your website\'s domain address (e.g. google.com) from the "Sites" menu and generate a unique Site ID key.'
-      },
-      step2: {
-        title: 'Defining the Configuration Object',
-        description:
-          "You must define the global `supportioConfig` object inside your page's `<head>` tag or just before the installation code."
-      },
-      step3: {
-        title: 'Triggering the Application',
-        description:
-          "You can complete the integration by pasting the following code right before your website's `</body>` tag."
-      },
-      codeSnippetPrefix: '<!-- Standard HTML Integration -->',
-      copy: 'Copy Code',
-      copied: 'Copied!',
-      ready: {
-        title: 'Connection Successful!',
-        description:
-          'When the script file is successfully added to the project, the support bubble will appear in the bottom right corner.'
-      }
-    },
-    configuration: {
-      title: 'Configuration & API',
-      description:
-        'You can control widget behaviors and visual language via the `supportioConfig` object:',
-      required: 'Required Field',
-      optional: 'Optional',
-      siteId:
-        'The unique 24-character identifier (ID) generated from your admin panel. The app cannot ping the server without it.',
-      position:
-        'Determines which corner of the page the widget anchors to. Accepted values: bottom-right (default), bottom-left, top-right, top-left.'
-    },
-    features: {
-      title: 'Next Gen Features',
-      description: 'Go far beyond standard chat platforms.',
-      realtime: {
-        title: 'Zero Latency with WebSocket',
-        description:
-          'Data flows over socket.io. Slow and server-heavy technologies like HTTP polling are strictly avoided.'
-      },
-      easy: {
-        title: 'Vanilla JavaScript, Zero Dependencies',
-        description:
-          'Our widget code does not depend on heavy libraries like jQuery or React. It has zero impact on load times with Vanilla JS.'
-      },
-      customizable: {
-        title: 'Dynamic Theming',
-        description:
-          'You can automatically adjust colors according to the system theme (dark/light) via CSS variables.'
-      },
-      analytics: {
-        title: 'Powerful Analytics & UTM',
-        description:
-          'We read the UTM parameters and visit durations of your website visitors and log them into the background.'
-      }
-    },
-    benefits: {
-      title: 'Why Choose Us?',
-      satisfaction: {
-        title: 'High Customer Satisfaction',
-        description:
-          "Solve your customers' problems in seconds without any delays. Skyrocket your satisfaction rates."
-      },
-      conversion: {
-        title: 'Convert into Sales',
-        description:
-          'Increase your sales conversion rates by lending a hand to the customer who gets stuck at the shopping cart on live e-commerce sites.'
-      },
-      availability: {
-        title: '99.9% Uptime (SLA)',
-        description:
-          "Don't experience any crash issues. Stay live even during your traffic peaks with scalable microservice architecture."
-      },
-      insights: {
-        title: 'Advanced Visitor Profiles',
-        description:
-          "Thanks to the impersonation algorithm, you can track the users' page navigations on your site in real-time."
-      }
-    },
-    cta: {
-      title: "Don't Waste Time Coding",
-      description:
-        'Start your advanced API integration today for free and onboard your team in 5 minutes.',
-      button: 'Get Started Free (No Credit Card Required)',
-      secondaryButton: 'Explore Dashboard'
-    }
-  },
   team: {
     title: 'Team Management',
     subtitle: 'Manage your support team members and their permissions',
@@ -1949,213 +1825,90 @@ export default {
   },
   docsPage: {
     meta: {
-      title: 'Developer Documentation',
+      title: 'Setup guide',
       description:
-        'Add the Support.io widget with one line of code. Installation, JavaScript SDK, events and security for React, Next.js, Vue, Nuxt, Angular, Svelte, Astro, WordPress, Laravel and plain HTML.'
+        'Add the Support.io chat bubble to your site: steps for HTML, WordPress, Shopify, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
     },
-    hero: {
-      title: 'One script. Every stack.',
-      description:
-        'The Support.io widget is framework-agnostic. The same script tag behaves identically in plain HTML, in a React app and in a WordPress theme. Every example below describes the real API of this installation.'
-    },
+    eyebrow: 'Setup guide',
+    title: 'Add Support.io to your site',
+    description:
+      'One snippet, a few minutes. Pick your platform and follow the steps. If you have a developer, copy-ready code for React, Vue, Angular and Next.js is below.',
+    onThisPage: 'On this page',
     nav: {
-      quickstart: 'Quick start',
-      embed: 'Universal embed',
-      api: 'JavaScript API',
-      events: 'Events',
-      identify: 'Identification',
-      spa: 'SPA integration',
-      frameworks: 'Frameworks',
-      backend: 'Backend & Socket',
-      theming: 'Theming',
-      localization: 'Localization',
-      security: 'Security',
-      troubleshooting: 'Troubleshooting'
+      install: 'Install',
+      platforms: 'Platforms',
+      identify: 'Identify users',
+      commands: 'Control from code',
+      help: 'Troubleshooting'
     },
-    table: {
-      attribute: 'Attribute',
-      required: 'Required',
-      description: 'Description',
-      event: 'Event',
-      endpoint: 'Endpoint',
-      direction: 'Direction'
+    install: {
+      title: 'Install in three steps',
+      steps: [
+        {
+          title: 'Open an account, add your site',
+          body: 'Start on the free plan; on the Sites screen enter your site’s name and address.'
+        },
+        {
+          title: 'Copy the install code',
+          body: 'Sites → your site’s card → Install code. The code already carries your site’s key.'
+        },
+        {
+          title: 'Paste it into your site',
+          body: 'Pick your platform below. The bubble appears the moment you save.'
+        }
+      ],
+      codeTitle: 'Install code',
+      note: 'The site key is not a secret; it is visible in your page source. The bubble only opens on the addresses you allow under Sites → Access, so someone who copies the key onto another site cannot start a chat.',
+      cta: 'Open a free account'
     },
-    quickstart: {
-      title: 'Quick start',
-      intro:
-        'Installation is three steps and one script tag. No build step, no npm package, no server-side code.',
-      step1: {
-        title: 'Get your site key',
-        body: 'Create your site under Dashboard → Sites. Each site gets its own key; the key determines which workspace the conversation lands in.'
-      },
-      step2: {
-        title: 'Drop the script tag into your page',
-        body: 'Put it immediately before the closing </body> tag. The async attribute keeps it off your page’s critical path.'
-      },
-      step3: {
-        title: 'Verify the installation',
-        body: 'The first time the widget runs on a page it reports itself to the server. The “Waiting for installation” badge under Dashboard → Sites turns green on its own.'
-      },
-      calloutTitle: 'No global variable to declare',
-      calloutBody:
-        'The widget reads its configuration from its own script tag’s data-* attributes and from its own src. Because no separate inline <script> block is needed, it works under a strict Content-Security-Policy.',
-      getKey: 'Get my site key'
-    },
-    embed: {
-      title: 'Universal embed',
-      intro:
-        'There is one runtime and it is the same everywhere. No framework gets a different embed snippet; only the file the tag goes into changes.',
-      attrs: 'Script attributes',
-      versioning: 'Versioning',
-      versioningBody:
-        '/widget.js always serves the current release with a short cache. To pin a version, use the major-version path: that URL is cached as immutable, so a new deployment cannot change the widget already running on your site.',
-      latest: 'always current',
-      pinned: 'version pinned',
-      consent: 'Running behind a cookie banner',
-      consentBody:
-        'With data-defer="true" the script loads but boots nothing and collects no visitor data. Call SupportChat.init() once consent is given.'
-    },
-    api: {
-      title: 'JavaScript API',
-      intro:
-        'Loading the script creates exactly one global: window.SupportChat. Nothing else is written to the global scope (the old window.SupportIO remains only as a backwards-compatible alias).'
-    },
-    events: {
-      title: 'Events',
-      intro:
-        'on() returns an unsubscribe function. An exception thrown by one listener never stops the others or the widget.',
-      sample: 'new message:',
-      unsub: 'unsubscribe',
-      wildcard: 'to observe every event in one place:'
+    platforms: {
+      title: 'Pick your platform',
+      desc: 'Every platform uses the same code; only where you paste it changes.'
     },
     identify: {
-      title: 'Identification',
-      intro:
-        'An anonymous visitor automatically gets a visitor id and a session id. Once a user signs in on your site, call identify() so the agent can match the conversation to a real person.',
-      afterLogin: 'after the user signs in',
-      attrs: 'free-form fields shown to the agent',
-      afterLogout: 'when the user signs out',
-      warnTitle: 'These fields are not trusted on their own',
-      warnBody:
-        'Anything passed to identify() comes from the browser and can be forged by anyone. The server uses it for display only; no authorisation decision is ever based on a visitor-supplied identity. When you need a verified identity, use a server-generated signed value (HMAC); the runtime carries a userHash field for exactly that.',
-      logoutTitle: 'Call logout() on sign-out',
-      logoutBody:
-        'logout() clears the identity and mints a NEW visitor id. Skip it and, on a shared computer, the second person to sign in sees the first person’s chat history.'
+      title: 'Identify signed-in users',
+      desc: 'Optional. If your site has accounts, pass the user’s name and e-mail to the bubble; your agent knows who they are talking to and the customer does not retype it. The code works before and after the bubble has loaded.',
+      verifiedTitle: 'Verified identity (recommended)',
+      verifiedDesc:
+        'For the “Verified customer” badge in the dashboard, your site’s server signs the user id. Generate the key under Sites → Access → Customer identity verification; it stays on your server only.'
     },
-    spa: {
-      title: 'SPA integration',
-      intro:
-        'In React, Next.js, Vue, Nuxt, Angular, Svelte and friends you do not need to do anything extra; the runtime handles these cases itself.',
-      singleton: {
-        title: 'Singleton runtime',
-        body: 'Adding the script twice, mounting the component twice, or React Strict Mode running an effect twice never produces a second widget.'
-      },
-      history: {
-        title: 'Navigation tracking',
-        body: 'pushState, replaceState, popstate and hashchange are all observed. The page change is reported to the server while the socket and the open conversation are preserved, not reset.'
-      },
-      cleanup: {
-        title: 'Clean teardown',
-        body: 'destroy() removes the DOM, the socket, the timers and the listeners — and restores the patched history methods to their originals.'
-      },
-      ssr: {
-        title: 'SSR and hydration',
-        body: 'The widget renders nothing on the server and attaches itself to the DOM, so it cannot cause a hydration mismatch.'
-      },
-      sampleTitle: 'When the app unmounts entirely (rarely needed)',
-      sampleNote: 'you do not need init(); the script tag already boots it.',
-      sampleDev: 'avoid tearing down on every HMR reload'
+    commands: {
+      title: 'Control from code',
+      desc: 'Every command is sent the same way. If the bubble has not loaded yet, the command waits and runs once it has.',
+      command: 'Command',
+      does: 'What it does',
+      optionsTitle: 'Options for the script tag',
+      option: 'Option'
     },
-    frameworks: {
-      title: 'Frameworks',
-      intro:
-        'Every example below uses the SAME script tag. The only thing that changes is which file that tag goes into.'
-    },
-    backend: {
-      title: 'Backend and Socket',
-      intro:
-        'The complete surface the widget talks to. A site key is not a credential on its own: the widget first obtains a signed session, and every other endpoint requires it. Sessions are issued only to pages on the site’s allowed origins (Sites → Access). No endpoint returns internal workspace fields.',
-      bootstrap:
-        'A signed widget session (with a server-minted visitor id) plus configuration, help articles and agent availability in a single response. Only from an allowed origin.',
-      installed:
-        'Installation verification. Called on every page load; only the origin and path are stored.',
-      upload:
-        'Chat file upload. Requires the widget session (Authorization: Bearer), 10 MB limit with MIME checking.',
-      track: 'Visitor behaviour events (the proactive-message rules listen to this stream).',
-      socket: 'Socket.IO namespace. The client loads /socket.io/socket.io.js from the same server.',
-      socketEvents: 'Socket events',
-      join: 'Join a conversation or prepare a new one. The site and the visitor come from the connection’s session.',
-      send: 'Send a message. clientMessageId prevents duplicates.',
-      typing: 'Visitor typing indicator.',
-      pageview: 'Report the current page on SPA navigation.',
-      joined:
-        'The conversation and its last 100 messages (or the welcome message for a new visitor).',
-      newMessage: 'A message broadcast.',
-      agentTyping: 'An agent is typing.',
-      error: 'An error message; the widget shows it as a banner.'
-    },
-    theming: {
-      title: 'Theming',
-      intro:
-        'Colours, sizes and copy are managed from Widget Studio in the dashboard; in code you only ever need to switch light and dark.',
-      auto: 'follows the system preference',
-      follow: 'flip the widget when the system theme changes:',
-      isolationTitle: 'Style isolation',
-      isolationBody:
-        'All of the widget’s DOM and CSS lives inside a Shadow Root. Your site’s global rules — * { }, button { }, input { } — cannot reach it, and the widget’s CSS cannot leak into your page. The custom CSS field in Widget Studio is injected inside that same Shadow Root.'
-    },
-    localization: {
-      title: 'Localization',
-      intro:
-        'The widget ships with Turkish and English. Resolution order: explicit setting → <html lang> → browser language. Leave a field like the welcome message empty in the dashboard and the widget falls back to its own translation.',
-      viaAttr: 'via the script tag',
-      viaApi: 'at runtime'
-    },
-    security: {
-      title: 'Security',
-      cspTitle: 'Content-Security-Policy',
-      cspBody:
-        'The widget contacts no third-party domain. Everything, including the Socket.IO client, is served from your own Support.io server, so you only have to allow one origin.',
-      inlineTitle: 'No unsafe-inline needed',
-      inlineBody:
-        'The install snippet contains no inline <script> block; configuration is read from data-* attributes. Only style-src needs unsafe-inline, and that is for the style tag inside the Shadow Root, which cannot affect your page’s styles.',
-      corsTitle: 'CORS',
-      corsBody:
-        'The server’s CORS_ORIGINS variable controls which addresses may open the dashboard. Widget endpoints are separate: widget.js is open to every origin (it is a public file), while the API endpoints are authorised by site key.',
-      keyTitle: 'The site key is not a secret',
-      keyBody:
-        'The site key is shipped to the browser. It is not a credential — it is an identifier that says which workspace a conversation belongs to. Read and write permissions are constrained server-side by visitor identity; one key can never reach another workspace’s data.',
-      dataTitle: 'Stored data',
-      dataBody:
-        'In the browser the widget stores only the visitor id and, optionally, a name and email in localStorage. If localStorage is unavailable (private window, blocked cookies) it falls back to an in-memory store and keeps working. Installation verification records only the origin and the path, never the full URL — the query string may carry personal data, so it is dropped.'
-    },
-    troubleshooting: {
+    help: {
       title: 'Troubleshooting',
-      intro: 'The first place to look is SupportChat.debug() in the browser console.',
-      notShowing: {
-        q: 'The widget never appears',
-        a: 'Run SupportChat.debug() in the console. If initialized is false the script never loaded — check the widget.js request in the Network tab. If fatal is set, read the message: MISSING_SITE_KEY means data-site-key is absent, WIDGET_NOT_FOUND means the key is wrong or the site is inactive. Also check whether the “show only on these pages” rules in Widget Studio exclude the current page.'
-      },
-      wrongKey: {
-        q: 'I get a WIDGET_NOT_FOUND error',
-        a: 'The key is mistyped or the site is inactive. Re-copy the key from Dashboard → Sites and confirm the site shows as Active. The same response is returned in both cases on purpose, so that probing keys cannot reveal which sites exist.'
-      },
-      csp: {
-        q: 'The console shows a Content-Security-Policy error',
-        a: 'Add your Support.io server to the script-src and connect-src directives. connect-src must include both the https and the wss scheme, because the chat runs over WebSocket. The example policy in the Security section covers it.'
-      },
-      duplicate: {
-        q: 'Two widgets appear on the page',
-        a: 'The new runtime makes this impossible: a second boot is silently ignored. If you see two, an old-version script tag is most likely still on the page. Check with document.querySelectorAll("script[src*=widget]") and remove the stale tag.'
-      },
-      styles: {
-        q: 'My site’s CSS breaks the widget',
-        a: 'It should not: the widget lives in a Shadow Root and no host rule crosses that boundary. If you still see a problem, something is probably styling the widget’s root element (#support-chat-widget) — an over-broad div { position } rule, for example. Narrow the CSS that reaches the root element.'
-      },
-      disconnect: {
-        q: 'The connection keeps dropping',
-        a: 'The widget shows “Reconnecting” in the header and retries on a backoff by itself; no messages are lost. If it drops constantly, a proxy or load balancer in front of the server may be blocking the WebSocket upgrade. If the server runs as more than one process, REDIS_URL must be set — otherwise a visitor and an agent on different processes never see each other’s messages.'
-      }
+      items: [
+        {
+          q: 'The bubble does not show up',
+          a: 'First make sure your site’s address is on the list under Sites → Access; addresses with and without www are listed separately. Then run SupportChat.debug() in the browser console: if “initialized” is false the code is not on the page, and if “fatal” is set its message tells you why.'
+        },
+        {
+          q: 'My site has a Content-Security-Policy',
+          a: 'Sites → Access has the CSP lines for your site ready; copy them into your policy.'
+        },
+        {
+          q: 'What happens on page changes in a single-page app (React, Vue, Angular)?',
+          a: 'Nothing to do. The bubble follows address changes on its own; the conversation stays open as the visitor moves around.'
+        },
+        {
+          q: 'I want to load it after cookie consent',
+          a: 'Add data-defer="true" to the script tag and call SupportChat.q.push([\'init\']) once the visitor consents.'
+        },
+        {
+          q: 'I want to hide the bubble on some pages',
+          a: 'Use the “show only on these pages” setting in Widget Studio, or call SupportChat.q.push([\'hide\']) on that page.'
+        },
+        {
+          q: 'Will an update change my site?',
+          a: '/widget.js always serves the latest release. To pin the version, change the address to /widget/v3/widget.js.'
+        }
+      ],
+      still: 'Stuck? Write to us from the bubble in the corner and we will set it up together.'
     }
   },
   automation: {

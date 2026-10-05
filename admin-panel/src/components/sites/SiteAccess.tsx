@@ -12,6 +12,7 @@ import { X, RefreshCw } from 'lucide-react';
 import { sitesAPI } from '../../services/api';
 import { errorMessage } from '../../hooks/useAsync';
 import { formatDateTime } from '../../lib/format';
+import { publicOrigin, publicSocketOrigin } from '../../lib/publicOrigin';
 import SiteIntegrations from './SiteIntegrations';
 import type { Site } from '../../types/api';
 
@@ -62,7 +63,8 @@ const SiteAccess = ({ site, onClose, onSaved }: SiteAccessProps) => {
   const { t } = useTranslation();
   const [text, setText] = useState((site.allowedOrigins || []).join('\n'));
   const [busy, setBusy] = useState<'save' | 'rekey' | null>(null);
-  const apiOrigin = import.meta.env.VITE_API_URL || window.location.origin;
+  const origin = publicOrigin();
+  const socketOrigin = publicSocketOrigin();
 
   const save = async () => {
     setBusy('save');
@@ -178,7 +180,7 @@ const SiteAccess = ({ site, onClose, onSaved }: SiteAccessProps) => {
             {t('sites.access.cspHelp')}
           </p>
           <pre className="text-xs bg-gray-50 dark:bg-gray-700 dark:text-white px-3 py-2 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto">
-            {`script-src ${apiOrigin};\nconnect-src ${apiOrigin} ${apiOrigin.replace(/^http/, 'ws')};\nimg-src ${apiOrigin} data:;`}
+            {`script-src ${origin};\nconnect-src ${origin} ${socketOrigin};\nimg-src ${origin} data:;`}
           </pre>
         </section>
 

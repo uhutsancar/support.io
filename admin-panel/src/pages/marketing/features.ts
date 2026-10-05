@@ -106,7 +106,7 @@ export const FEATURE_TONE = {
  */
 export const HOME_TABS = [
   'live-chat',
-  'universal-widget',
+  'knowledge-base',
   'routing',
   'automation',
   'proactive',

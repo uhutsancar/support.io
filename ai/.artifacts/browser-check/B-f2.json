@@ -1,9 +1,0 @@
-[
-  {
-    "id": "B-F2",
-    "expected": "Model kapalıyken panel \"kullanılamıyor\" der; geri gelince sayfa yenilemeden açılır",
-    "observed": "kapalıyken uyarı: true, Özetle kilitli: true; 15 sn sonra açıldı: true",
-    "result": "GEÇTİ",
-    "screenshot": "B-F2-model-back.png"
-  }
-]

@@ -3,8 +3,10 @@
  * sohbet balonu ve hareket tercihi.
  *
  * Üst menünün açılırları Radix NavigationMenu'dür: klavyeyle gezilir, Esc ile
- * kapanır, fare menüden çıkınca kısa bir gecikmeyle kapanır, açık panel
- * içeriğe göre boyut değiştirir. Bunların hiçbiri burada elle yazılmaz.
+ * kapanır, fare menüden çıkınca kısa bir gecikmeyle kapanır. Bunların hiçbiri
+ * burada elle yazılmaz. Her panel kendi başlığının hemen altında açılır;
+ * önceden tek bir ortak pencere menünün sol kenarına sabitti ve "Kaynaklar"
+ * paneli bile "Ürün"ün altında, imlecin çok solunda beliriyordu.
  *
  * Sürüm 1.2.14'e sabittir: sonraki sürümler `forwardRef`i kaldırıp React 19
  * varsayıyor ve bu projedeki React 18'de her açılışta ref uyarısı veriyor.
@@ -34,7 +36,6 @@ import {
   BookOpen,
   BarChart3,
   Users,
-  Sparkles,
   Eye,
   Briefcase,
   ArrowRight,
@@ -71,7 +72,6 @@ export const FEATURE_ICONS: Record<string, React.ElementType> = {
   BookOpen,
   BarChart3,
   Users,
-  Sparkles,
   Eye,
   Briefcase
 };
@@ -295,11 +295,14 @@ const triggerClass = (active: boolean) =>
   ].join(' ');
 
 /**
- * Radix ölçüyü içerikten alır: içerik mutlak konumlu ve kendi genişliğinde
- * olmalı, yoksa viewport'un genişliğine yayılır ve dar bir panel (Kaynaklar)
- * önceki geniş panelin boyunda kalır.
+ * Ortak bir Viewport yok: Radix bu durumda paneli kendi menü öğesinin içinde
+ * çizer, öğe `relative` olduğu için panel tam başlığının altında, sola
+ * hizalı açılır. Üstteki boşluk panelin kendi dolgusudur; imleç başlıktan
+ * panele inerken menü kapanmaz.
  */
-const CONTENT_CLASS = 'absolute left-0 top-0 w-auto';
+const CONTENT_CLASS = 'absolute left-0 top-full z-50 pt-3';
+const PANEL_CLASS =
+  'nav-panel overflow-hidden rounded-2xl border border-gray-200/90 dark:border-white/[0.09] bg-white dark:bg-[#12141f] shadow-panel-lg';
 
 const Chevron = () => (
   <ChevronDown
@@ -366,21 +369,25 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
             aria-label={t('header.mainNavigation')}
           >
             <NavigationMenu.List className="flex items-center gap-0.5">
-              <NavigationMenu.Item>
+              <NavigationMenu.Item className="relative">
                 <NavigationMenu.Trigger className={triggerClass(at(routes.features))}>
                   {t('nav.product')} <Chevron />
                 </NavigationMenu.Trigger>
                 <NavigationMenu.Content className={CONTENT_CLASS}>
-                  <ProductMenu routes={routes} />
+                  <div className={PANEL_CLASS}>
+                    <ProductMenu routes={routes} />
+                  </div>
                 </NavigationMenu.Content>
               </NavigationMenu.Item>
 
-              <NavigationMenu.Item>
+              <NavigationMenu.Item className="relative">
                 <NavigationMenu.Trigger className={triggerClass(at(routes.solutions))}>
                   {t('nav.solutions')} <Chevron />
                 </NavigationMenu.Trigger>
                 <NavigationMenu.Content className={CONTENT_CLASS}>
-                  <SolutionsMenu routes={routes} />
+                  <div className={PANEL_CLASS}>
+                    <SolutionsMenu routes={routes} />
+                  </div>
                 </NavigationMenu.Content>
               </NavigationMenu.Item>
 
@@ -392,25 +399,19 @@ export const Header = ({ overDark = false }: { overDark?: boolean }) => {
                 </NavigationMenu.Link>
               </NavigationMenu.Item>
 
-              <NavigationMenu.Item>
+              <NavigationMenu.Item className="relative">
                 <NavigationMenu.Trigger
                   className={triggerClass(at(routes.docs) || at(routes.about))}
                 >
                   {t('nav.resourcesLabel')} <Chevron />
                 </NavigationMenu.Trigger>
                 <NavigationMenu.Content className={CONTENT_CLASS}>
-                  <ResourcesMenu routes={routes} />
+                  <div className={PANEL_CLASS}>
+                    <ResourcesMenu routes={routes} />
+                  </div>
                 </NavigationMenu.Content>
               </NavigationMenu.Item>
             </NavigationMenu.List>
-
-            <div className="absolute left-0 top-full pt-3">
-              <NavigationMenu.Viewport
-                className="nav-viewport relative overflow-hidden rounded-2xl border border-gray-200/90
-                dark:border-white/[0.09] bg-white dark:bg-[#12141f] shadow-panel-lg
-                data-[state=open]:animate-rise"
-              />
-            </div>
           </NavigationMenu.Root>
 
           <div className="flex-1" />

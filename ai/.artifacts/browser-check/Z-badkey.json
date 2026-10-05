@@ -1,9 +1,0 @@
-[
-  {
-    "id": "Z-bad-key",
-    "expected": "Yanlış anahtar: API WIDGET_NOT_FOUND döner, demo sayfası sebebini yazar",
-    "observed": "API kodu: WIDGET_NOT_FOUND; sayfa: \"Bu site anahtarı tanınmadı\"",
-    "result": "GEÇTİ",
-    "screenshot": "Z-10-bad-key.png"
-  }
-]

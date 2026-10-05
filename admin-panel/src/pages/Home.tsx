@@ -60,9 +60,12 @@ import {
   RoutingVisual,
   AutomationVisual,
   ProactiveVisual,
-  VisitorsVisual
+  VisitorsVisual,
+  KnowledgeVisual
 } from '../components/marketing/visuals';
 import ChatPlayer from '../components/marketing/ChatPlayer';
+import { planKey, usePlans } from '../hooks/usePlans';
+import { publicOrigin } from '../lib/publicOrigin';
 import { openSiteChat, siteChatAvailable } from '../components/marketing/siteChat';
 import {
   FEATURE_GROUPS,
@@ -202,13 +205,15 @@ const TOUR_VISUAL: Record<string, { node: () => React.ReactNode; frame: string }
   routing: { node: () => <RoutingVisual />, frame: 'viz.routing.frame' },
   automation: { node: () => <AutomationVisual />, frame: 'viz.automation.frame' },
   proactive: { node: () => <ProactiveVisual />, frame: 'viz.proactive.frame' },
+  'knowledge-base': { node: () => <KnowledgeVisual />, frame: 'viz.knowledge.frame' },
   analytics: { node: () => <AnalyticsVisual />, frame: 'viz.analytics.frame' },
   visitors: { node: () => <VisitorsVisual />, frame: 'viz.visitors.frame' }
 };
 
 const ProductTour = ({ t, routes }: { t: T; routes: Routes }) => {
   const [active, setActive] = React.useState(HOME_TABS[0]);
-  const tabs = HOME_TABS.map((id) => ({
+  // A tab without a visual would crash the tour; it is left out instead.
+  const tabs = HOME_TABS.filter((id) => TOUR_VISUAL[id]).map((id) => ({
     id,
     label: t('featuresPage.items.' + id + '.title'),
     icon: featureIcon(id)
@@ -564,7 +569,7 @@ const DEMO_BARS = [38, 52, 44, 61, 57, 72, 66];
 
 const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
   const [copied, setCopied] = React.useState(false);
-  const origin = import.meta.env.VITE_API_URL || window.location.origin;
+  const origin = publicOrigin();
   const snippet = `<script\n  src="${origin}/widget.js"\n  data-site-key="${t('homePage.setup.keyPlaceholder')}"\n  async>${CLOSE_SCRIPT}`;
   const barsRef = React.useRef<HTMLDivElement | null>(null);
   const barsInView = useInView(barsRef, { once: true, amount: 0.5 });
@@ -844,46 +849,68 @@ const Trust = ({ t }: { t: T }) => {
 
 /* ------------------------------------------------------------- fiyat */
 
-const PricingTeaser = ({ t, routes }: { t: T; routes: Routes }) => (
-  <Section tone="plain" wide>
-    <SectionHead
-      index={8}
-      eyebrow={t('landing.home.plans.eyebrow')}
-      title={t('landing.home.plans.title')}
-      description={t('landing.home.plans.desc')}
-      align="center"
-    />
-    <div className="mt-12 grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
-      {['free', 'pro', 'enterprise'].map((id, i) => (
-        <Reveal key={id} delay={i * 0.06}>
-          <Card
-            hover
-            className={[
-              'p-6 h-full',
-              i === 1 ? 'ring-2 ring-indigo-600 border-transparent dark:border-transparent' : ''
-            ].join(' ')}
-          >
-            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-gray-500">
-              {t('pricingPage.plans.' + id + '.name')}
-            </p>
-            <p className="mt-3 text-[30px] font-bold tracking-[-0.03em] text-gray-950 dark:text-white tabular-nums">
-              {t('landing.home.plans.price.' + id)}
-            </p>
-            <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
-              {t('landing.home.plans.note.' + id)}
-            </p>
-            <p className="mt-4 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
-              {t('pricingPage.plans.' + id + '.tagline')}
-            </p>
-          </Card>
-        </Reveal>
-      ))}
-    </div>
-    <Reveal className="mt-8 text-center">
-      <TextLink to={routes.pricing}>{t('landing.home.plans.link')}</TextLink>
-    </Reveal>
-  </Section>
-);
+const PricingTeaser = ({ t, routes }: { t: T; routes: Routes }) => {
+  const { i18n } = useTranslation();
+  const { plans } = usePlans();
+  const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
+  const money = (amount: number, currency: string) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0 }).format(
+      amount
+    );
+
+  return (
+    <Section tone="plain" wide>
+      <SectionHead
+        index={8}
+        eyebrow={t('landing.home.plans.eyebrow')}
+        title={t('landing.home.plans.title')}
+        description={t('landing.home.plans.desc')}
+        align="center"
+      />
+      <div className="mt-12 grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto min-h-[190px]">
+        {(plans || []).map((plan, i) => {
+          const id = planKey(plan);
+          const monthly = plan.price.monthly;
+          return (
+            <Reveal key={plan.type} delay={i * 0.06}>
+              <Card
+                hover
+                className={[
+                  'p-6 h-full',
+                  plan.type === 'PRO'
+                    ? 'ring-2 ring-indigo-600 border-transparent dark:border-transparent'
+                    : ''
+                ].join(' ')}
+              >
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-gray-500">
+                  {t('pricingPage.plans.' + id + '.name')}
+                </p>
+                <p className="mt-3 text-[30px] font-bold tracking-[-0.03em] text-gray-950 dark:text-white tabular-nums">
+                  {monthly === null ? t('pricingPage.custom') : money(monthly, plan.price.currency)}
+                  {!!monthly && (
+                    <span className="ml-1 text-[14px] font-medium text-gray-500 dark:text-gray-400">
+                      {t('pricingPage.perMonth')}
+                    </span>
+                  )}
+                </p>
+                <p className="mt-1 text-[13px] text-gray-500 dark:text-gray-400">
+                  {t('pricingPage.units.sites', { count: plan.sites })} ·{' '}
+                  {t('pricingPage.units.agents', { count: plan.agents })}
+                </p>
+                <p className="mt-4 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                  {t('pricingPage.plans.' + id + '.tagline')}
+                </p>
+              </Card>
+            </Reveal>
+          );
+        })}
+      </div>
+      <Reveal className="mt-8 text-center">
+        <TextLink to={routes.pricing}>{t('landing.home.plans.link')}</TextLink>
+      </Reveal>
+    </Section>
+  );
+};
 
 /* ------------------------------------------------------------------ SSS */
 

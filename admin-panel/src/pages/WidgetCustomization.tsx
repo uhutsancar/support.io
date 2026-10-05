@@ -66,6 +66,7 @@ import {
 import { derivePalette, normalizeHex } from '../lib/color';
 import type { Site, WidgetConfig } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
+import { publicOrigin } from '../lib/publicOrigin';
 
 const TABS = [
   { id: 'theme', icon: Palette },
@@ -265,7 +266,7 @@ const WidgetCustomization = () => {
   /* -------------------------------------------------------- embed kodu */
 
   const embedCode = useMemo(() => {
-    const origin = import.meta.env.VITE_API_URL || window.location.origin;
+    const origin = publicOrigin();
     return `<script\n  src="${origin}/widget.js"\n  data-site-key="${site?.siteKey || 'YOUR_SITE_KEY'}"\n  async>${CLOSE_SCRIPT}`;
   }, [site]);
 

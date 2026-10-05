@@ -28,7 +28,6 @@ export default {
     allFeatures: 'Tüm özellikleri gör',
     product: 'Ürün',
     solutions: 'Çözümler',
-    ai: 'Yapay zekâ',
     resourcesLabel: 'Kaynaklar',
     resources: {
       docs: { title: 'Kurulum rehberi', body: 'Tek satırdan kimlik doğrulamaya kadar her adım.' },
@@ -48,12 +47,12 @@ export default {
     hero: {
       title: 'Her mesaja cevap,',
       accent: 'hiçbir müşteri beklemesin.',
-      desc: 'Ziyaretçiniz sitenizden yazar; asistanınız basit soruları anında yanıtlar, gerisini ekibinize devreder. Bütün konuşmalar tek ekranda, kim neye baktı belli.',
+      desc: 'Sitenize tek satırla bir sohbet balonu ekleyin. Ziyaretçiniz yazdığı an mesaj ekibinizin ekranına düşer; bütün konuşmalar tek gelen kutusunda, kimin hangisine baktığı her zaman belli.',
       tour: 'Ürünü gezin',
       photoAlt: 'Kulaklıkla bilgisayar başında müşteriye yanıt veren destek temsilcisi',
-      notifTitle: 'Yeni konuşma · /sepet',
-      notifBody: 'Ziyaretçi 12 saniyedir ödeme sayfasında',
-      handoff: 'Selin konuşmayı devraldı'
+      notifTitle: 'Yeni konuşma · /fiyatlandirma',
+      notifBody: 'Ziyaretçi 40 saniyedir fiyat sayfasında',
+      handoff: 'Selin yanıtlıyor'
     },
     tour: {
       eyebrow: 'Ürün turu',
@@ -79,18 +78,18 @@ export default {
           chips: ['Sohbet', 'Dosya', 'Proaktif', 'Geçmiş']
         },
         {
-          title: 'Asistan ilk cevabı verir',
-          body: 'Sık sorulan soruları yardım içeriğinizden yanıtlar, giriş yapmış müşterinin siparişini mağazanızın sisteminden bakar. Emin olmadığı an konuşmayı bir kişiye bırakır.',
-          chips: ['SSS', 'Sipariş', 'Devir']
+          title: 'Ziyaretçi cevabı önce kendisi arar',
+          body: 'Sık sorulan sorularınız balonun içinde aranabilir. Cevabı bulan ziyaretçi beklemez; bulamayan tek dokunuşla ekibinize yazar.',
+          chips: ['SSS', 'Arama', 'Yardım makalesi']
         },
         {
           title: 'Kalan iş doğru kişiye gider',
-          body: 'Fatura sorusu muhasebeye, iade talebi satışa. Departmanları bir kez tanımlarsınız; konuşma o an müsait olan temsilciye dağıtılır.',
+          body: 'Fatura sorusu muhasebeye, plan sorusu satışa. Departmanları bir kez tanımlarsınız; konuşma o an müsait olan temsilciye dağıtılır.',
           chips: ['Departman', 'Sıra', 'Mesai']
         },
         {
           title: 'Tekrarlayan işler kurala bağlanır',
-          body: '“Mesajda iade geçiyorsa etiketle ve satışa gönder” gibi kuralları listeden seçerek kurarsınız. Kod yok, her çalışma kayıtlı.',
+          body: '“Mesajda fatura geçiyorsa etiketle ve muhasebeye gönder” gibi kuralları listeden seçerek kurarsınız. Kod yok, her çalışma kayıtlı.',
           chips: ['Etiket', 'Öncelik', 'Hazır cevap']
         },
         {
@@ -100,47 +99,17 @@ export default {
         }
       ]
     },
-    ai: {
-      eyebrow: 'Yapay zekâ',
-      title: 'Kendi sunucunuzda çalışan, ne zaman susacağını bilen bir asistan',
-      desc: 'Asistan müşterilerinizin sorularını sizin yardım içeriğinizden yanıtlar. Model sizin makinenizde çalışır; konuşmalar, müşteri bilgileri hiçbir yere gönderilmez.',
-      points: [
-        {
-          title: 'Veriniz evinizde kalır',
-          body: 'Model sizin sunucunuzda çalışır. Başka bir şirketin yapay zekâ servisine tek cümle gitmez.'
-        },
-        {
-          title: 'Hassas bilgi modele hiç ulaşmaz',
-          body: 'Kart numarası, IBAN ya da kimlik numarası yazan müşteri uyarılır ve doğrudan bir kişiye aktarılır.'
-        },
-        {
-          title: 'Emin değilse devreder',
-          body: 'Müşteri “temsilci” dediğinde, şikâyette ya da bilgi eksikse konuşma ekibinize geçer.'
-        },
-        {
-          title: 'Uydurmaz',
-          body: 'Yardım içeriğinizde olmayan bir tarih, fiyat ya da bağlantı içeren cevap müşteriye gitmez.'
-        }
-      ],
-      modes: [
-        { name: 'Kapalı', body: 'Asistan yok; her şey ekibinizde.' },
-        { name: 'Yardımcı', body: 'Temsilciye özet ve taslak önerir, kendisi göndermez.' },
-        { name: 'Otomatik yanıt', body: 'Ziyaretçiye kendisi cevap verir, gerektiğinde devreder.' }
-      ],
-      cta: 'Asistanı yakından tanıyın',
-      cta2: 'Özellik ayrıntıları'
-    },
     setup: {
       eyebrow: 'Kurulum',
       title: 'Tek satır. Birkaç dakikada yayında.',
-      desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, ekibinizi davet edin, asistanı açın. Yazılımcıya gerek yok.',
+      desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, karşılama mesajını yazın, ekibinizi davet edin. Yazılımcıya gerek yok.',
       keyPlaceholder: 'SITE_ANAHTARINIZ',
       comment: 'Support.io sohbet balonu',
       live: 'Balon yapıştırdığınız dakika içinde görünür',
       noDevs: {
         eyebrow: 'Yazılımcı gerekmez',
         title: 'Kopyala, yapıştır, bitti.',
-        body: 'WordPress, Shopify, Ticimax ya da kendi yazdığınız site — hepsinde aynı satır, ayarlar ekranına yapıştırılır.'
+        body: 'WordPress, Shopify, Wix ya da kendi yazdığınız site — hepsinde aynı satır. React, Vue ya da Angular kullanıyorsanız rehberde hazır kod var.'
       },
       devices: {
         eyebrow: 'Her yerden',
@@ -159,13 +128,13 @@ export default {
       stats: [
         { label: 'Ortalama ilk yanıt', value: '1 dk 40 sn' },
         { label: 'Çözülen', value: '%92' },
-        { label: 'Asistanın yanıtladığı', value: '%38' }
+        { label: 'Bekleyen', value: '3' }
       ]
     },
     features: {
       eyebrow: 'Hepsi bir arada',
-      title: 'Bugün çalışan on bir özellik',
-      desc: 'Yol haritası değil; hesabınızı açtığınızda karşınıza çıkacak ekranlar.'
+      title: 'Hesabınızı açtığınız gün hazır olanlar',
+      desc: 'Yol haritası değil; panelde bugün açık olan ekranlar.'
     },
     trustPhotoAlt: 'Masa etrafında toplantı yapan küçük bir ekip',
     faq: {
@@ -179,19 +148,24 @@ export default {
         all: 'Tümü',
         pricing: 'Fiyat',
         setup: 'Kurulum',
-        ai: 'Yapay zekâ',
+        usage: 'Kullanım',
         security: 'Güvenlik'
       },
       items: [
         {
           cat: 'pricing',
           q: 'Ücretsiz plan gerçekten ücretsiz mi?',
-          a: 'Evet, süresi yok ve kredi kartı istemiyoruz. Tek site ve tek kullanıcıyla sınırlıdır; konuşma sayısında sınır yoktur.'
+          a: 'Evet. Süresi yok ve kredi kartı istemiyoruz. Bir site, bir kullanıcı ve ayda 100 yeni konuşma içerir.'
         },
         {
           cat: 'pricing',
           q: 'Ekibim büyürse ne olur?',
-          a: 'Pro plana geçersiniz; kullanıcı başına aylık ödersiniz. Müşterilerinizin ya da konuşmalarınızın sayısı ücreti etkilemez.'
+          a: 'Pro plana geçersiniz: 3 site, 5 kullanıcı ve ayda 2.000 yeni konuşma, sabit aylık ücretle. Kişi başı ücret yoktur.'
+        },
+        {
+          cat: 'pricing',
+          q: 'Aylık konuşma sınırı dolarsa ne olur?',
+          a: 'Açık konuşmalar sürer, yanıt vermeye devam edersiniz. Sınırın %80’ine geldiğinizde e-postayla haber veririz; yeni konuşmalar bir sonraki ayın başında yeniden açılır.'
         },
         {
           cat: 'setup',
@@ -200,18 +174,23 @@ export default {
         },
         {
           cat: 'setup',
+          q: 'Hangi sitelerde çalışır?',
+          a: 'Bir satır HTML ekleyebildiğiniz her sitede: WordPress, Shopify, Wix, Webflow, Ticimax, İdeasoft ya da React, Vue, Angular ve Next.js ile yazılmış uygulamalar. Rehberde her biri için kopyalanabilir kod var.'
+        },
+        {
+          cat: 'setup',
           q: 'Sitemi yavaşlatır mı?',
           a: 'Hayır. Balon sayfanızın geri kalanı yüklendikten sonra devreye girer ve sitenizin tasarımından yalıtılmıştır.'
         },
         {
-          cat: 'ai',
-          q: 'Asistan yanlış bir şey söylerse?',
-          a: 'Cevap müşteriye gitmeden önce kontrol edilir: yardım içeriğinizde olmayan bir rakam, tarih ya da bağlantı varsa gönderilmez ve konuşma bir kişiye aktarılır.'
+          cat: 'usage',
+          q: 'Mesai dışında gelen mesajlara ne oluyor?',
+          a: 'Kaybolmuyor. Ziyaretçiye ne zaman döneceğinizi söyleriz, mesaj gelen kutunuzda sizi bekler.'
         },
         {
-          cat: 'ai',
-          q: 'Asistan için ayrıca ödeme yapıyor muyuz?',
-          a: 'Hayır. Model sizin sunucunuzda çalıştığı için soru başına ücret yoktur. İhtiyaç, yaklaşık 12–16 GB belleği olan bir ekran kartıdır.'
+          cat: 'usage',
+          q: 'Telefondan da cevap verebilir miyim?',
+          a: 'Evet. Panel telefon tarayıcısında da çalışır; ayrı bir uygulama indirmeniz gerekmez.'
         },
         {
           cat: 'security',
@@ -229,63 +208,39 @@ export default {
 
   /* --------------------------------------------- oynayan sohbet senaryoları */
 
+  // Bu sitedeki balon Support.io'nun kendi balonu; senaryolar da bu yüzden
+  // bize yazan birinin sorularıdır, uydurma bir mağazanın kargo derdi değil.
   demoChat: {
     status: 'Çevrimiçi · genelde birkaç dakikada yanıtlar',
-    botName: 'Asistan',
+    articleName: 'Yardım makalesi',
     hero: {
-      brand: 'Acme Mağaza',
+      brand: 'Support.io',
       lines: [
-        { from: 'visitor', text: 'Merhaba, iade süresi kaç gün?' },
-        {
-          from: 'bot',
-          text: 'Teslimattan itibaren 14 gün içinde ücretsiz iade edebilirsiniz. Kutusu açılmış olması sorun değil.'
-        },
-        { from: 'visitor', text: 'Yetkiliyle görüşebilir miyim?' },
+        { from: 'visitor', text: 'Merhaba, sitem WordPress. Kurmak için yazılımcı gerekir mi?' },
         { from: 'note', text: 'Selin konuşmaya katıldı' },
-        { from: 'agent', name: 'Selin', text: 'Merhaba! Ben Selin, hemen yardımcı olayım.' }
+        {
+          from: 'agent',
+          name: 'Selin',
+          text: 'Gerekmez! Panelden aldığınız tek satırı sitenizin altbilgisine yapıştırmanız yeterli.'
+        },
+        { from: 'visitor', text: 'Süper, ücretsiz planla deneyeyim o zaman 👍' }
       ]
     },
     story: {
-      brand: 'Acme Mağaza',
+      brand: 'Support.io',
       lines: [
-        { from: 'visitor', text: 'Kargom nerede? Sipariş no 10482' },
+        { from: 'visitor', text: 'Ekibime nasıl temsilci eklerim?' },
         {
-          from: 'order',
-          order: {
-            number: '10482',
-            status: 'Kargoda',
-            carrier: 'Örnek Kargo',
-            eta: 'Tahmini teslim: Perşembe'
-          }
+          from: 'article',
+          text: 'Ekip → Davet et’ten e-posta adresini yazın. Davet edilen kişi e-postadaki bağlantıyla şifresini belirleyip katılır.'
         },
+        { from: 'visitor', text: 'Pro’da kaç kişi olabiliyor? Satıştan biriyle konuşabilir miyim?' },
+        { from: 'note', text: 'Satış departmanına yönlendirildi' },
         {
-          from: 'bot',
-          text: 'Siparişiniz dün kargoya verildi, perşembe teslim edilmesi bekleniyor.'
-        },
-        { from: 'visitor', text: 'Adresimi değiştirmem lazım' },
-        { from: 'note', text: 'Asistan konuşmayı ekibe devretti' },
-        { from: 'agent', name: 'Kerem', text: 'Hemen kargo firmasıyla adresinizi güncelliyorum.' }
-      ]
-    },
-    ai: {
-      brand: 'Acme Mağaza',
-      lines: [
-        { from: 'visitor', text: 'Merhaba 👋' },
-        { from: 'bot', text: 'Merhaba! Siparişiniz, iade ya da ürünlerimizle ilgili sorabilirsiniz.' },
-        { from: 'visitor', text: 'Son siparişim ne durumda?' },
-        {
-          from: 'order',
-          order: {
-            number: '10482',
-            status: 'Kargoda',
-            carrier: 'Örnek Kargo',
-            eta: 'Tahmini teslim: Perşembe'
-          }
-        },
-        { from: 'bot', text: '10482 numaralı siparişiniz kargoda; perşembe teslim edilmesi bekleniyor.' },
-        { from: 'visitor', text: 'Kartımdan iki kez çekilmiş gibi görünüyor' },
-        { from: 'note', text: 'Ödeme konusu · temsilciye aktarıldı' },
-        { from: 'agent', name: 'Selin', text: 'Hemen kontrol ediyorum, ekstrenizdeki tutarı yazabilir misiniz?' }
+          from: 'agent',
+          name: 'Kerem',
+          text: 'Merhaba, ben Kerem. Pro’da 5 kullanıcıya kadar çıkabilirsiniz; daha fazlası için Kurumsal’ı konuşalım.'
+        }
       ]
     }
   },
@@ -301,209 +256,23 @@ export default {
     home: {
       metaTitle: 'Support.io — Sitenize canlı destek ekleyin',
       metaDesc:
-        'Müşterileriniz sitenizden yazar, ekibiniz tek ekrandan yanıtlar. Kurulum bir satır kod, iki dakika. Ücretsiz planla başlayın.',
-
-      badge: 'Kurulum 2 dakika · Kredi kartı istenmez',
-      heroTitle: 'Müşteriniz soru sorduğunda',
-      heroTitleAccent: 'orada olun.',
-      heroDesc:
-        'Sitenizi gezen kişi bir şey merak ettiğinde size yazabilsin. Ekibiniz bütün konuşmaları tek ekranda görsün, kimse cevapsız kalmasın. Kurulumu bir satır, kullanması WhatsApp kadar tanıdık.',
+        'Müşterileriniz sitenizden yazar, ekibiniz tek ekrandan yanıtlar. Kurulum bir satır kod. Ücretsiz planla başlayın.',
 
       btnStart: 'Ücretsiz başlayın',
-      btnTour: 'Neler yapabildiğine bakın',
       btnDocs: 'Kurulum rehberi',
 
       trust: {
         free: 'Ücretsiz plan süresizdir',
         card: 'Kredi kartı istemiyoruz',
-        setup: 'Kurulum ortalama 2 dakika'
+        setup: 'Kurulum birkaç dakika'
       },
 
-      /* --------------------------------------------------------- problem */
-      problem: {
-        eyebrow: 'Tanıdık geldi mi',
-        title: 'Müşteri mesajları her yere dağılmış durumda',
-        desc: 'Biri Instagram’dan yazıyor, biri telefonla arıyor, biri iletişim formunu dolduruyor. Cevaplayan kişi hangisine baktığını unutuyor, cevaplanmayanı kimse fark etmiyor.',
-        items: [
-          {
-            title: 'Mesajlar kayboluyor',
-            body: 'Gelen kutusunda biriken bir soru, yoğun bir günde kimsenin dönmediği bir soruya dönüşüyor.'
-          },
-          {
-            title: 'Kim ne yaptı belirsiz',
-            body: 'İki kişi aynı müşteriye cevap yazıyor, bir başkası hiç yazılmadığını sanıyor.'
-          },
-          {
-            title: 'Geç kalınıyor',
-            body: 'Satın almaya hazır ziyaretçi cevabı beklerken sekmeyi kapatıyor ve geri gelmiyor.'
-          },
-          {
-            title: 'Ölçemiyorsunuz',
-            body: 'Kaç soru geldi, ne kadar sürede dönüldü, hangisi çözüldü — elinizde bir rakam yok.'
-          }
-        ],
-        answer:
-          'Support.io hepsini tek bir gelen kutusunda toplar. Kim, hangi sayfada, ne sordu, kim cevapladı — hepsi tek ekranda.'
-      },
-
-      /* ---------------------------------------------------- nasıl çalışır */
-      how: {
-        eyebrow: 'Nasıl çalışır',
-        title: 'Dört adımda, ilk günden çalışan bir destek hattı',
-        desc: 'Kurmak için teknik bilgiye ihtiyacınız yok. Sırayla ne olduğunu aşağıda görebilirsiniz.'
-      },
-
-      steps: [
-        {
-          kicker: 'Ziyaretçi tarafı',
-          title: 'Sitenizin köşesinde bir sohbet balonu belirir',
-          body: 'Ziyaretçi tıklar, yazar. Kayıt olmasına, e-posta bırakmasına gerek yoktur. Balonun rengini, yazısını ve nerede duracağını siz seçersiniz; sitenizin tasarımına göre görünür.',
-          points: [
-            'Telefonda da bilgisayarda da aynı şekilde çalışır',
-            'Ziyaretçi sayfa değiştirse bile konuşma kapanmaz',
-            'Geri döndüğünde eski konuşmasını kaldığı yerden bulur'
-          ]
-        },
-        {
-          kicker: 'Ekip tarafı',
-          title: 'Mesaj ekibinizin ekranına anında düşer',
-          body: 'Sayfayı yenilemeniz gerekmez; mesaj yazıldığı an görünür. Müşterinin hangi sayfada olduğunu, daha önce ne konuştuğunuzu ve kimin ilgilendiğini yanında görürsünüz.',
-          points: [
-            'Karşı taraf yazarken üç nokta görünür',
-            'Dosya ve ekran görüntüsü gönderilebilir',
-            'Ekip arkadaşınıza konuşmadan çıkmadan danışabilirsiniz'
-          ]
-        },
-        {
-          kicker: 'Düzen',
-          title: 'Konuşma doğru kişiye kendiliğinden gider',
-          body: 'Fatura sorusu muhasebeye, iade talebi satışa. Departmanları bir kez tanımlarsınız, gelen her konuşma o an müsait olan temsilciye dağıtılır.',
-          points: [
-            'Sırayla ya da en az işi olana dağıtım',
-            'Mesai saatleri dışında otomatik bilgilendirme',
-            'Temsilci çevrimdışı olunca işi başkasına devreder'
-          ]
-        },
-        {
-          kicker: 'Sonuç',
-          title: 'Ay sonunda ne olduğunu rakamla görürsünüz',
-          body: 'Kaç soru geldi, ortalama kaç dakikada dönüldü, hangi temsilci kaç konuşma kapattı. Tahmin etmek yerine bakarsınız.',
-          points: [
-            'İlk yanıt süresi ve çözüm süresi',
-            'Temsilci bazında kırılım',
-            'Hangi sayfadan kaç soru geldiği'
-          ]
-        }
-      ],
-
-      /* ---------------------------------------------------------- sekmeler */
       tour: {
-        eyebrow: 'Ürün turu',
-        title: 'Panelin içinde ne var',
-        desc: 'Başlıklara tıklayın; her biri ekibinizin gün içinde kullandığı bir ekran.',
         detail: 'Bu özelliği ayrıntılı gör'
       },
 
-      /* ---------------------------------------------------------- sektörler */
-      cases: {
-        eyebrow: 'Kimler kullanır',
-        title: 'Aynı ürün, işinize göre farklı işe yarar',
-        desc: 'Soldan işinize en yakın olanı seçin.',
-        items: {
-          ecommerce: {
-            name: 'E-ticaret',
-            tag: 'Kargo, iade, beden sorusu',
-            headline: 'Sepetteki müşteri sorusunu sorabilsin, sipariş kaçmasın',
-            body: 'Ürün sayfasında “bu bedeni var mı”, “kargo ne zaman gelir” diye soran kişi cevabı bekleyemez. Sohbet balonu tam o sayfada açılır, temsilciniz ziyaretçinin hangi ürüne baktığını görerek yanıtlar. Sık sorulan kargo ve iade soruları için hazır cevaplar tanımlarsınız; aynı soruyu günde otuz kez yazmazsınız.',
-            wins: [
-              {
-                label: 'Daha az terk edilen sepet',
-                body: 'Ödeme adımında takılan ziyaretçiye kendiliğinden mesaj gider.'
-              },
-              {
-                label: 'Tekrarlayan sorular biter',
-                body: 'Kargo ve iade soruları hazır cevapla anında yanıtlanır.'
-              },
-              {
-                label: 'Sipariş bağlamı elinizde',
-                body: 'Müşterinin baktığı sayfa ve geçmiş konuşmaları yanınızda durur.'
-              }
-            ]
-          },
-          saas: {
-            name: 'Yazılım / SaaS',
-            tag: 'Deneme süresi, kurulum, hata',
-            headline: 'Deneme süresindeki kullanıcıyı takılıp bırakmadan yakalayın',
-            body: 'Ürününüzü yeni deneyen biri bir yerde takıldığında genellikle sormaz, sessizce çıkar. Belirli bir sayfada uzun süre kalan ya da kurulum adımında duran kullanıcıya kendiliğinden mesaj gönderebilirsiniz. Gelen her soru ilgili ekibe düşer, teknik olanlar destek ekibinde kalmaz.',
-            wins: [
-              {
-                label: 'Sessiz kaybı görürsünüz',
-                body: 'Kim hangi ekranda ne kadar kaldı, panelde canlı akar.'
-              },
-              {
-                label: 'Doğru ekip bakar',
-                body: 'Faturalandırma muhasebeye, hata bildirimi teknik ekibe gider.'
-              },
-              {
-                label: 'Cevaplar birikir',
-                body: 'Sık sorulanlar yardım içeriğine dönüşür, kullanıcı kendi bulur.'
-              }
-            ]
-          },
-          agency: {
-            name: 'Ajans / Birden çok site',
-            tag: 'Müşteri siteleri, ayrı ekipler',
-            headline: 'Tek panelden birden çok siteyi yönetin, veriler birbirine karışmasın',
-            body: 'Yönettiğiniz her site için ayrı bir kurulum kodu alırsınız. Konuşmalar, ekip üyeleri ve raporlar site bazında ayrılır; bir müşterinin verisi diğerinde görünmez. Hangi ekip üyesinin hangi siteye erişeceğini siz belirlersiniz.',
-            wins: [
-              {
-                label: 'Site başına ayrım',
-                body: 'Her sitenin konuşmaları ve raporları kendi içinde kalır.'
-              },
-              { label: 'Yetki sizde', body: 'Kim hangi siteyi görecek, tek tek seçilir.' },
-              { label: 'Tek giriş', body: 'Onlarca site için onlarca panel açmazsınız.' }
-            ]
-          },
-          service: {
-            name: 'Hizmet / Randevu',
-            tag: 'Klinik, atölye, danışmanlık',
-            headline: 'Telefonla sorulan her şeyi yazıyla, mesai dışında da alın',
-            body: 'Randevu, fiyat ve yol tarifi soruları telefonu meşgul eder. Aynı sorular sohbetten geldiğinde ekibiniz aynı anda birkaç kişiyle ilgilenebilir. Mesai saatleri dışında gelen mesaj kaybolmaz; sabah geldiğinizde sizi bekler ve müşteri ne zaman döneceğinizi bilir.',
-            wins: [
-              {
-                label: 'Telefon boşalır',
-                body: 'Aynı anda birden fazla kişiyle yazışabilirsiniz.'
-              },
-              {
-                label: 'Mesai dışı kayıp yok',
-                body: 'Gece gelen mesaj sabah gelen kutusunda durur.'
-              },
-              { label: 'Sık sorular hazır', body: 'Fiyat ve adres gibi sorulara tek tıkla cevap.' }
-            ]
-          }
-        }
-      },
-
-      /* ---------------------------------------------------------- kurulum */
       setup: {
-        eyebrow: 'Kurulum',
-        title: 'Bir satır kod, iki dakika',
-        desc: 'Hesabı açtıktan sonra size özel bir satır veriyoruz. Sitenizin tasarımını yapan kişiye gönderirsiniz, yapıştırır. Hepsi bu.',
-        steps: [
-          { title: 'Hesabınızı açın', body: 'E-posta ve şifre yeterli. Kredi kartı istemiyoruz.' },
-          {
-            title: 'Sitenizi ekleyin',
-            body: 'Site adresini yazın, size özel kurulum satırını verelim.'
-          },
-          {
-            title: 'Satırı sitenize yapıştırın',
-            body: 'Balon aynı dakika içinde sitenizde görünmeye başlar.'
-          }
-        ],
-        file: 'sitenizin sayfası',
         cta: 'Hesap açıp kodu alın',
-        note: 'Sitenizi yapan biri yoksa takılmayın: adresinizi yazın, kurulumu birlikte yapalım.',
-        worksWith: 'Hangi altyapıda olursa olsun çalışır',
         platforms: [
           'WordPress',
           'Shopify',
@@ -512,13 +281,13 @@ export default {
           'Webflow',
           'Ticimax',
           'İdeasoft',
+          'Google Tag Manager',
           'React',
           'Next.js',
           'Vue',
+          'Angular',
           'Laravel',
-          'PHP',
-          'Django',
-          'Squarespace'
+          'Django'
         ]
       },
 
@@ -537,8 +306,8 @@ export default {
             body: 'Temsilci, yönetici ve izleyici rolleri ayrıdır. Yetkisi olmayan ekranı açamaz.'
           },
           {
-            title: 'Sitenizi yavaşlatmaz, bozmaz',
-            body: 'Sohbet balonu sitenizin tasarımından yalıtılmıştır; sayfanızın görünümünü değiştirmez.'
+            title: 'Balon yalnızca sizin sitenizde açılır',
+            body: 'Balonun çalışacağı adresleri siz yazarsınız; anahtarınızı başka bir siteye koyan kişi sohbet başlatamaz.'
           },
           {
             title: 'Eski kayıtlar süresiz birikmez',
@@ -552,48 +321,10 @@ export default {
         eyebrow: 'Fiyat',
         title: 'Ücretsiz başlayın, büyüdükçe geçin',
         desc: 'Ücretsiz planın süresi yok. Tek kişilik başlarsınız, ekip büyüdüğünde plan değiştirirsiniz.',
-        price: { free: '₺0', pro: '₺490', enterprise: 'Size özel' },
-        note: {
-          free: 'Tek site, tek kullanıcı',
-          pro: 'Kullanıcı başına / ay',
-          enterprise: 'Büyük ekipler için'
-        },
         link: 'Planları karşılaştır'
       },
 
-      /* ------------------------------------------------------------- SSS */
-      faq: {
-        title: 'Sık sorulanlar',
-        desc: 'Başka bir şey merak ediyorsanız sohbetten yazın; bu siteye de aynı ürün kurulu.',
-        items: [
-          {
-            q: 'Kurulum için yazılımcıya ihtiyacım var mı?',
-            a: 'Çoğu durumda hayır. WordPress, Shopify ve benzeri altyapılarda tek satırı ayarlar ekranından yapıştırmanız yeterli. Takılırsanız adresinizi yazın, birlikte yapalım.'
-          },
-          {
-            q: 'Ücretsiz plan gerçekten ücretsiz mi?',
-            a: 'Evet, süresi yok ve kredi kartı istemiyoruz. Tek site ve tek kullanıcıyla sınırlıdır; sınırsız konuşma yapabilirsiniz.'
-          },
-          {
-            q: 'Sitemi yavaşlatır mı?',
-            a: 'Hayır. Sohbet balonu sayfanızın geri kalanı yüklendikten sonra devreye girer, sayfanın açılmasını beklettirmez.'
-          },
-          {
-            q: 'Mesai dışında gelen mesajlara ne oluyor?',
-            a: 'Kaybolmuyor. Ziyaretçiye ne zaman döneceğiniz bilgisini gösteriyoruz, mesaj gelen kutunuzda sizi bekliyor.'
-          },
-          {
-            q: 'Telefondan da cevap verebilir miyim?',
-            a: 'Evet. Panel telefon tarayıcısında da çalışır; ayrı bir uygulama indirmenize gerek yok.'
-          },
-          {
-            q: 'Verilerimi dışarı alabilir miyim?',
-            a: 'Pro ve Kurumsal planlarda konuşmalarınızı dışa aktarabilirsiniz. Veriler size aittir, ayrılırsanız yanınızda götürürsünüz.'
-          }
-        ]
-      },
-
-      ctaTitle: 'İlk konuşmanız iki dakika uzağınızda',
+      ctaTitle: 'İlk konuşmanız birkaç dakika uzağınızda',
       ctaDesc:
         'Hesabınızı açın, sitenizi ekleyin, satırı yapıştırın. Gerisi kendiliğinden çalışır.',
       ctaBtn1: 'Ücretsiz hesap oluştur',
@@ -651,12 +382,12 @@ export default {
       },
       grow: {
         title: 'Ne olduğunu gördüğünüz yer',
-        desc: 'Raporlar, canlı ziyaretçiler, fırsat takibi ve yapay zekâ yardımcısı. Tahmin yerine rakam.',
+        desc: 'Raporlar, canlı ziyaretçiler ve fırsat takibi. Tahmin yerine rakam.',
         points: [
           'Yanıt ve çözüm süreleri, temsilci kırılımıyla',
           'O an sitede kimin hangi sayfada olduğu',
           'Konuşmadan doğan satış fırsatlarının takibi',
-          'Uzun konuşmaların özeti ve yanıt önerisi'
+          'Geri dönen müşterinin geçmişi yanınızda'
         ]
       }
     },
@@ -750,7 +481,7 @@ export default {
         title: 'Departman yönlendirme',
         short: 'Her soru doğru kişiye düşer.',
         plain:
-          'Fatura sorusu muhasebeye, iade satışa. Departmanları bir kez tanımlarsınız; gelen konuşma o an müsait olan temsilciye kendiliğinden dağıtılır.',
+          'Fatura sorusu muhasebeye, satış sorusu satış ekibine. Departmanları bir kez tanımlarsınız; gelen konuşma o an müsait olan temsilciye kendiliğinden dağıtılır.',
         setup: 'Panelden',
         benefits: [
           'Sırayla ya da en az işi olana dağıtım',
@@ -772,7 +503,7 @@ export default {
         title: 'Otomatik kurallar',
         short: 'Tekrarlayan işleri bir kez tanımlayın.',
         plain:
-          '“Mesajda iade geçiyorsa satışa yönlendir ve etiketle” gibi kuralları kendiniz kurarsınız. Koşul oluştuğunda kural kendiliğinden çalışır.',
+          '“Mesajda fatura geçiyorsa muhasebeye yönlendir ve etiketle” gibi kuralları kendiniz kurarsınız. Koşul oluştuğunda kural kendiliğinden çalışır.',
         setup: 'Panelden',
         benefits: [
           'Koşulları ve eylemleri listeden seçersiniz, kod yok',
@@ -794,7 +525,7 @@ export default {
         title: 'Proaktif mesaj',
         short: 'Siz sormadan siz yazın.',
         plain:
-          'Ödeme sayfasında takılan ya da uzun süre aynı ekranda kalan ziyaretçiye kendiliğinden bir mesaj gönderin. Çoğu kişi sormaz, sadece çıkar.',
+          'Fiyat sayfasında kararsız kalan ya da uzun süre aynı ekranda bekleyen ziyaretçiye kendiliğinden bir mesaj gönderin. Çoğu kişi sormaz, sadece çıkar.',
         setup: 'Panelden',
         benefits: [
           'Sayfada kalma süresi, kaydırma ve çıkış niyetine göre tetikleme',
@@ -803,7 +534,7 @@ export default {
           'Hangi mesajın kaç kez gönderildiği kayıtlıdır'
         ],
         steps: [
-          { title: 'Sayfayı seçin', body: 'Örneğin ödeme ya da fiyatlandırma sayfası.' },
+          { title: 'Sayfayı seçin', body: 'Örneğin fiyatlandırma ya da kayıt sayfası.' },
           {
             title: 'Tetikleyiciyi seçin',
             body: 'Kaç saniye sonra ya da hangi davranışta gösterilsin.'
@@ -887,40 +618,6 @@ export default {
         ]
       },
 
-      'ai-assist': {
-        title: 'Yapay zekâ asistanı',
-        short: 'Basit soruları kendisi yanıtlar, gerisini ekibe devreder.',
-        plain:
-          'Asistan sık sorulan soruları yardım içeriğinizden yanıtlar, giriş yapmış müşterinin siparişini mağazanızın sisteminden bakar ve emin olmadığı an konuşmayı ekibinize bırakır. Model sizin sunucunuzda çalışır.',
-        setup: 'Kendi sunucunuzda',
-        benefits: [
-          'Otomatik yanıt: selamlaşma, SSS ve sipariş durumu',
-          'Müşteri istediği an ya da şikâyette bir kişiye devreder',
-          'Temsilciye özet, yanıt taslağı, ton düzeltme ve çeviri',
-          'Konuşmalar ve müşteri verisi sunucunuzdan çıkmaz'
-        ],
-        steps: [
-          {
-            title: 'Modeli sunucunuzda başlatın',
-            body: 'Ekran kartlı bir sunucuda tek komutla ayağa kalkar; hazır olunca panel kendiliğinden fark eder.'
-          },
-          {
-            title: 'Site için modu seçin',
-            body: 'Siteler → Yapay zekâ ayarlarından kapalı, yardımcı ya da otomatik yanıt.'
-          },
-          {
-            title: 'Yardım içeriğinizi doldurun',
-            body: 'Asistan yalnızca orada yazanı söyler; içerik ne kadar iyiyse cevap o kadar iyi olur.'
-          }
-        ],
-        body: 'Model tek bir sunucu kapsayıcısında çalışır ve backend ona yalnızca iç ağdan ulaşır; hiçbir barındırılan modele geri düşüş yoktur. Ziyaretçi mesajı önce kodla denetlenir (temsilci isteği, kart/IBAN/kimlik numarası, yanıt sınırı), sonra yalnızca eşleşen SSS kayıtlarıyla modele gider. Çıkan cevaptaki rakam, tarih ve bağlantılar kaynaklarla karşılaştırılır; tutmayan cevap gönderilmez ve konuşma bir kişiye aktarılır.',
-        points: [
-          'Temsilci konuşmayı devraldığı an otomatik yanıt durur',
-          'Sipariş sorgusu yalnızca kimliği doğrulanmış müşteri için, imzalı istekle yapılır',
-          'Model kapalı ya da yoğunsa konuşma bekletilmeden bir kişiye geçer'
-        ]
-      },
-
       visitors: {
         title: 'Canlı ziyaretçiler',
         short: 'O an sitede kim var, hangi sayfada.',
@@ -973,32 +670,42 @@ export default {
     meta: {
       title: 'Fiyatlandırma',
       description:
-        'Ücretsiz planla başlayın. Kullanıcı başına aylık ücretlendirme, gizli ücret yok.'
+        'Ücretsiz planla başlayın. Ücretli planlarda kişi başı değil, sabit aylık ücret; gizli kalem yok.'
     },
     eyebrow: 'Fiyatlandırma',
-    title: 'Ücretsiz başlayın, ekibiniz büyüdükçe ödeyin',
+    title: 'Ücretsiz başlayın, ekibiniz büyüyünce geçin',
     description:
-      'Ücretsiz planın süresi yoktur ve kredi kartı istemiyoruz. Ücretli planlarda kullanıcı başına aylık ödersiniz; sürpriz kalem yok.',
+      'Ücretsiz planın süresi yoktur ve kredi kartı istemiyoruz. Ücretli planlarda kullanıcı başına değil, plan başına sabit aylık ödersiniz.',
 
     billing: 'Ödeme sıklığı',
     monthly: 'Aylık',
     yearly: 'Yıllık',
-    discount: '2 ay hediye',
+    discount: '%{{percent}} indirim',
     popular: 'En çok tercih edilen',
-    perSeat: '/ kullanıcı / ay',
+    perMonth: '/ ay',
     billedMonthly: 'Aylık faturalandırılır',
-    billedYearly: 'Yıllık faturalandırılır',
+    billedYearly: 'Yıllık faturalandırılır · yılda {{total}}',
     custom: 'Size özel',
     freeNote: 'Süresiz ücretsiz, faturalandırma yok',
     contactNote: 'İhtiyacınıza göre belirlenir',
     vatNote:
       'Fiyatlara KDV dâhil değildir. İstediğiniz zaman plan değiştirebilir veya bırakabilirsiniz.',
+    loadError: 'Plan bilgileri şu an yüklenemedi. Sayfayı yenileyip tekrar deneyin.',
+
+    units: {
+      sites_one: '{{count}} site',
+      sites_other: '{{count}} site',
+      agents_one: '{{count}} kullanıcı',
+      agents_other: '{{count}} kullanıcı',
+      conversations: 'Ayda {{n}} yeni konuşma'
+    },
 
     chooseEyebrow: 'Karar verirken',
     chooseTitle: 'Hangi plan size uygun?',
 
     compareTitle: 'Planların karşılaştırması',
-    compareDesc: 'Aşağıdaki tablo panelde gerçekten açık olan ekranları gösterir.',
+    compareDesc:
+      'Tablo, sunucunun uyguladığı plan tablosundan gelir; burada yazan sınır, panelde uygulanan sınırdır.',
     feature: 'Özellik',
 
     faqTitle: 'Fiyat hakkında sık sorulanlar',
@@ -1006,27 +713,31 @@ export default {
     faqItems: [
       {
         q: 'Ücretsiz plan ne kadar sürüyor?',
-        a: 'Süresi yok. Tek site ve tek kullanıcıyla sınırsız süre kullanabilirsiniz. Konuşma sayısında sınır koymuyoruz.'
+        a: 'Süresi yok. Bir site, bir kullanıcı ve ayda 100 yeni konuşmayla istediğiniz kadar kullanırsınız.'
       },
       {
         q: 'Kredi kartı gerekiyor mu?',
         a: 'Ücretsiz plan için hayır. Sadece e-posta ve şifreyle hesap açarsınız.'
       },
       {
+        q: '“Konuşma” ne demek?',
+        a: 'Bir ziyaretçinin başlattığı her yeni sohbet bir konuşmadır; içindeki mesaj sayısı önemli değildir. Sınır her ayın başında yenilenir, dolduğunda açık konuşmalar sürer.'
+      },
+      {
+        q: '“Kullanıcı” ne demek?',
+        a: 'Panele giriş yapabilen her ekip üyesi, siz de dâhil, bir kullanıcıdır; bekleyen davetler de sayılır. Müşterilerinizin sayısı ücreti etkilemez.'
+      },
+      {
         q: 'Planımı sonradan değiştirebilir miyim?',
         a: 'Evet, istediğiniz zaman yükseltip düşürebilirsiniz. Değişiklik kalan sürenize göre oranlanır.'
       },
       {
-        q: '“Kullanıcı” ne demek?',
-        a: 'Panele girip konuşmalara cevap veren her ekip üyesi bir kullanıcıdır. Müşterilerinizin sayısı ücreti etkilemez.'
-      },
-      {
         q: 'Taahhüt var mı?',
-        a: 'Aylık planda yok, istediğiniz ay bırakabilirsiniz. Yıllık planda iki ay hediye edildiği için ödeme peşin alınır.'
+        a: 'Aylık planda yok, istediğiniz ay bırakabilirsiniz. Yıllık planda bir yıllık ücret indirimli olarak peşin alınır.'
       },
       {
         q: 'Kurumsal planda ne farklı?',
-        a: 'Sınırsız site, denetim kayıtları ve tek oturum açma desteği eklenir. Kapsamı birlikte belirleriz.'
+        a: 'Daha fazla site, kullanıcı ve konuşma, denetim kayıtları ve kurulumda birebir destek. Kapsamı ve fiyatı birlikte belirleriz.'
       }
     ],
 
@@ -1038,16 +749,7 @@ export default {
         includes: 'İçinde ne var',
         forWho: 'Yeni başlayanlar',
         forWhoBody: 'Tek bir siteniz varsa ve konuşmalara kendiniz bakıyorsanız buradan başlayın.',
-        features: [
-          '1 site',
-          '1 kullanıcı',
-          'Sınırsız konuşma',
-          'Sohbet balonu ve görünüm ayarları',
-          'Yardım içeriği (SSS)',
-          'Otomatik kurallar',
-          'Proaktif mesajlar',
-          'Yapay zekâ asistanı (kendi sunucunuzda)'
-        ]
+        extras: ['Sohbet balonu ve görünüm ayarları', 'Yardım içeriği (SSS)', 'Raporlar']
       },
       pro: {
         name: 'Pro',
@@ -1056,16 +758,8 @@ export default {
         includes: 'Ücretsiz plandaki her şey, ayrıca',
         forWho: 'Ekip olarak çalışanlar',
         forWhoBody:
-          'Birden fazla temsilciniz varsa, raporlara ve departman dağıtımına ihtiyacınız olacak.',
-        features: [
-          '10 site',
-          'Sınırsız kullanıcı',
-          'Departmanlar ve dağıtım kuralları',
-          'Raporlar ve temsilci performansı',
-          'Canlı ziyaretçiler',
-          'Fırsat takibi',
-          'Dışa aktarma'
-        ]
+          'Birden fazla temsilciniz varsa departman dağıtımına, kurallara ve canlı ziyaretçilere ihtiyacınız olacak.',
+        extras: []
       },
       enterprise: {
         name: 'Kurumsal',
@@ -1075,31 +769,25 @@ export default {
         forWho: 'Büyük ekipler',
         forWhoBody:
           'Çok sayıda siteyi yönetiyor, denetim ve erişim kayıtlarına ihtiyaç duyuyorsanız.',
-        features: [
-          'Sınırsız site',
-          'Denetim kayıtları',
-          'Tek oturum açma (SSO)',
-          'Özel kurulum desteği'
-        ]
+        extras: ['Kurulumda birebir destek']
       }
     },
 
     matrix: {
       sites: 'Site sayısı',
       agents: 'Kullanıcı sayısı',
-      conversations: 'Sınırsız konuşma',
+      conversations: 'Aylık yeni konuşma',
       widget: 'Sohbet balonu ve görünüm ayarları',
       faq: 'Yardım içeriği (SSS)',
-      departments: 'Departmanlar',
+      analytics: 'Raporlar',
+      departments: 'Departmanlar ve dağıtım',
       automation: 'Otomatik kurallar',
       proactive: 'Proaktif mesajlar',
-      analytics: 'Raporlar',
       visitors: 'Canlı ziyaretçiler',
       crm: 'Fırsat takibi',
-      aiAssist: 'Yapay zekâ asistanı (kendi sunucunuzda)',
       export: 'Dışa aktarma',
       audit: 'Denetim kayıtları',
-      sso: 'Tek oturum açma (SSO)'
+      noBranding: 'Balonda “Support.io” yazısı olmadan'
     }
   },
 
@@ -1196,7 +884,7 @@ export default {
     title: 'Ücretsiz hesap açın',
     subtitle: 'E-posta ve şifre yeterli. Kredi kartı istemiyoruz.',
     metaTitle: 'Ücretsiz hesap açın — Support.io',
-    passwordHint: 'En az 6 karakter',
+    passwordHint: 'En az 8 karakter',
     noCard: 'Kayıt olarak kullanım koşullarını kabul etmiş olursunuz.',
     hasAccount: 'Zaten hesabınız var mı?',
     login: 'Giriş yapın'
@@ -1216,23 +904,23 @@ export default {
       rows: [
         {
           name: 'Elif Kaya',
-          preview: 'Siparişim ne zaman kargoya verilir?',
+          preview: 'Şifre sıfırlama e-postası gelmedi.',
           time: '2dk',
-          tag: 'Kargo',
+          tag: 'Hesap',
           tone: 'indigo'
         },
         {
           name: 'Burak Şen',
-          preview: 'Faturamı güncelleyebilir misiniz?',
+          preview: 'Faturayı şirket adına kesebilir misiniz?',
           time: '14dk',
           tag: 'Fatura',
           tone: 'sky'
         },
         {
           name: 'Zeynep A.',
-          preview: 'Bu ürünün M bedeni var mı?',
+          preview: 'Yıllık plana geçersem ne değişir?',
           time: '1sa',
-          tag: 'Ürün',
+          tag: 'Satış',
           tone: 'amber'
         },
         {
@@ -1244,23 +932,23 @@ export default {
         }
       ],
       openName: 'Elif Kaya',
-      openPage: '/kargo-takip sayfasında',
+      openPage: '/giris sayfasında',
       openStatus: 'Bekliyor',
       today: 'Bugün',
-      msg1: 'Merhaba, dün verdiğim sipariş hâlâ hazırlanıyor görünüyor. Ne zaman kargoya verilir?',
-      msg2: 'Merhaba Elif Hanım! Siparişinizi kontrol ettim, bugün 17:00’ye kadar kargoya veriliyor. Takip numarası SMS ile gelecek.',
-      msg3: 'Harika, çok teşekkürler!',
+      msg1: 'Merhaba, şifremi sıfırlamak istiyorum ama e-posta gelmedi.',
+      msg2: 'Merhaba Elif Hanım! E-postayı yeniden gönderdim, birkaç dakika içinde gelir. Gelmezse gereksiz klasörüne de bakabilirsiniz.',
+      msg3: 'Geldi, çok teşekkürler!',
       sentBy: 'Kerem',
       composer: 'Yanıt yazın…'
     },
 
     widget: {
-      title: 'Acme Mağaza',
+      title: 'Nova Yazılım',
       status: 'Genelde birkaç dakikada yanıtlıyor',
       bot: 'Merhaba! Size nasıl yardımcı olabiliriz?',
-      visitor: 'Kargo ne zaman gelir?',
-      agent: 'Aynı gün kargoya veriyoruz, teslimat 1-3 iş günü sürüyor.',
-      quick: ['Kargo takibi', 'İade koşulları', 'Fatura'],
+      visitor: 'Deneme süresi kaç gün?',
+      agent: '14 gün, kredi kartı istemiyoruz. Kurulumda takılırsanız buradan yazın.',
+      quick: ['Fiyatlar', 'Kurulum', 'Fatura'],
       composer: 'Mesajınızı yazın…'
     },
 
@@ -1286,7 +974,7 @@ export default {
     routing: {
       frame: 'Yönlendirme',
       visitor: 'Yeni ziyaretçi',
-      message: '“İade etmek istiyorum”',
+      message: '“Pro plan hakkında bilgi almak istiyorum”',
       new: 'Yeni',
       depts: [
         { name: 'Satış', load: '2 açık' },
@@ -1299,16 +987,16 @@ export default {
 
     automation: {
       frame: 'Otomatik kurallar',
-      ruleName: 'İade talebi',
+      ruleName: 'Fatura soruları',
       active: 'Açık',
       ifLabel: 'Eğer',
       and: 've',
       thenLabel: 'O zaman',
-      conditions: ['Mesajda “iade” geçiyorsa', 'Sayfa /siparislerim ise'],
+      conditions: ['Mesajda “fatura” geçiyorsa', 'Sayfa /hesabim ise'],
       actions: [
-        'Satış departmanına yönlendir',
-        '“İade” etiketi ekle',
-        'Hazır iade cevabını gönder'
+        'Muhasebe departmanına yönlendir',
+        '“Fatura” etiketi ekle',
+        'Hazır fatura cevabını gönder'
       ],
       stat: 'Bu ay 128 kez çalıştı'
     },
@@ -1317,16 +1005,16 @@ export default {
       frame: 'Proaktif mesaj',
       triggers: ['30 saniye sonra', 'Sayfadan çıkarken', 'Sayfa sonuna inince'],
       agent: 'Selin',
-      message: 'Ödeme adımında takıldıysanız yardımcı olayım — hangi kartı kullanmak istiyorsunuz?'
+      message: 'Planlar arasında kararsız kaldıysanız yardımcı olayım — ekibiniz kaç kişi?'
     },
 
     knowledge: {
       frame: 'Yardım içeriği',
-      query: 'kargo ne zaman',
+      query: 'şifre',
       results: [
-        { q: 'Siparişim ne zaman kargoya verilir?', meta: '412 kez okundu' },
-        { q: 'Kargo takip numaramı nereden bulurum?', meta: '268 kez okundu' },
-        { q: 'Teslimat ne kadar sürer?', meta: '193 kez okundu' }
+        { q: 'Şifremi nasıl sıfırlarım?', meta: '412 kez okundu' },
+        { q: 'E-posta adresimi nasıl değiştiririm?', meta: '268 kez okundu' },
+        { q: 'Faturamı nereden indiririm?', meta: '193 kez okundu' }
       ],
       note: 'Cevabı kendi bulan ziyaretçi size hiç yazmaz.'
     },
@@ -1370,22 +1058,11 @@ export default {
       title: 'Şu anda sitede 14 kişi var',
       head: ['Konum', 'Bulunduğu sayfa', 'Süre'],
       rows: [
-        { city: 'İstanbul', page: '/urun/kis-montu', time: '4dk' },
-        { city: 'Ankara', page: '/sepet', time: '2dk' },
-        { city: 'İzmir', page: '/kargo-takip', time: '7dk' },
+        { city: 'İstanbul', page: '/fiyatlandirma', time: '4dk' },
+        { city: 'Ankara', page: '/kayit', time: '2dk' },
+        { city: 'İzmir', page: '/yardim/kurulum', time: '7dk' },
         { city: 'Bursa', page: '/iletisim', time: '1dk' }
       ]
-    },
-
-    ai: {
-      frame: 'Yapay zekâ yardımcısı',
-      incoming: 'Gelen mesaj',
-      question: 'Ürünü iade etmek istiyorum ama kutusunu attım, yine de kabul ediyor musunuz?',
-      suggestion: 'Önerilen yanıt',
-      draft:
-        'Merhaba! Orijinal kutusu olmadan da iade kabul ediyoruz; ürünün kullanılmamış olması yeterli. Size iade kodunu hemen iletebilirim.',
-      actions: ['Gönder', 'Düzenle', 'Tonunu yumuşat'],
-      note: 'Öneri her zaman size gösterilir; siz onaylamadan müşteriye gitmez.'
     },
 
     crm: {

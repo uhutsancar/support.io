@@ -1,117 +1,232 @@
 /**
- * Geliştirici dokümantasyonunun içeriği.
+ * Kurulum rehberinin içeriği.
  *
- * Buradaki HER kod örneği çalışan gerçek API'yi anlatır. Eski dokümantasyon
- * sayfası şunu gösteriyordu:
+ * Rehber kısa tutulur: bir kod, platform başına üç adım, isteğe bağlı kimlik
+ * tanıtma ve birkaç sorun giderme notu. Rakiplerin kurulum sayfaları da böyle
+ * — okuyan çoğu kişi yazılımcı değil, kodu yapıştırıp çıkmak istiyor.
  *
- *     window.supportioConfig = { siteId: "..." }
- *     <script src="https://cdn.support.io/widget/v1/core.js">
+ * Buradaki HER kod örneği bu depodaki gerçek çalışma zamanına karşılık gelir:
+ * `/widget.js`, `data-site-key` ve `window.SupportChat`
+ * (backend/src/widget/widget.ts). Framework'e göre farklı bir kurulum kodu
+ * yoktur; framework bölümleri yalnızca aynı etiketin nereye konacağını ve
+ * `SupportChat.q.push` ile koddan nasıl çağrılacağını gösterir.
  *
- * Bu adres yok, bu global yok, bu alan adı yok. Kopyalayan hiç kimsede
- * çalışmazdı. Gerçek yüzey: `data-site-key` niteliği, sunucunun kendi
- * origin'inden `/widget.js` ve `window.SupportChat`.
- *
- * Ana ilke: FRAMEWORK'E GÖRE FARKLI EMBED KODU YOKTUR. Aşağıdaki framework
- * bölümleri yalnızca AYNI script etiketinin o framework'te nereye konacağını
- * anlatır.
+ * Origin hiçbir zaman "localhost" olarak gösterilmez (lib/publicOrigin.ts).
  */
 
 /**
  * The closing tag of an embed snippet, assembled rather than written whole.
- *
- * These snippets are text the customer copies. A literal closing script tag in
- * a file that is ever inlined into an HTML `<script>` block would terminate
- * that block early. It used to be written `<\/script>`, which reads as a guard
- * but is not one — a backslash before `/` is not an escape sequence in a
- * JavaScript string, so the character emitted was identical. Splitting it is
- * the version that actually holds.
+ * A literal closing script tag in a file that is ever inlined into an HTML
+ * `<script>` block would terminate that block early.
  */
-const CLOSE_SCRIPT = `<${'/'}script>`;
+export const CLOSE_SCRIPT = `<${'/'}script>`;
 
-export const SECTIONS = [
-  'quickstart',
-  'embed',
-  'api',
-  'events',
-  'identify',
-  'spa',
-  'frameworks',
-  'backend',
-  'theming',
-  'localization',
-  'security',
-  'troubleshooting',
-  'reference'
-];
+/** Okuyanın kendi anahtarıyla değiştireceği yer tutucu. */
+export const KEY_PLACEHOLDER = { tr: 'SITE_ANAHTARINIZ', en: 'YOUR_SITE_KEY' };
 
 /** Kurulum kodu her yerde aynı; tek kaynaktan üretilir. */
-export const embedSnippet = (origin: string, siteKey = 'YOUR_SITE_KEY') =>
-  `<script\n  src="${origin}/widget.js"\n  data-site-key="${siteKey}"\n  async>${CLOSE_SCRIPT}`;
+export const embedSnippet = (origin: string, key = KEY_PLACEHOLDER.tr) =>
+  `<script\n  src="${origin}/widget.js"\n  data-site-key="${key}"\n  async>${CLOSE_SCRIPT}`;
 
-export const FRAMEWORKS = [
+type Lang = 'tr' | 'en';
+type Text = Record<Lang, string>;
+
+export interface Platform {
+  id: string;
+  label: string;
+  /** Kısa, numaralı adımlar. */
+  steps: Text[];
+  /** Kopyalanacak kod; yoksa yalnızca kurulum kodu gösterilir. */
+  code?: (origin: string, key: string, lang: Lang) => string;
+  file?: string;
+}
+
+/**
+ * Framework'lerin paylaştığı tek satırlık yardımcı. Script henüz yüklenmemişse
+ * komut sıraya girer; yüklendiyse hemen çalışır. Sitenin kodu hangisinin
+ * olduğunu bilmek zorunda kalmaz.
+ */
+const HELPER_JS = `export const supportChat = (...command) =>
+  (window.SupportChat = window.SupportChat || { q: [] }).q.push(command);`;
+
+const HELPER_TS = `export const supportChat = (...command: unknown[]) => {
+  const w = window as unknown as { SupportChat?: { q: { push: (c: unknown[]) => void } } };
+  (w.SupportChat ??= { q: [] }).q.push(command);
+};`;
+
+export const PLATFORMS: Platform[] = [
   {
     id: 'html',
     label: 'HTML',
     file: 'index.html',
-    lang: 'html',
-    code: (origin: string, key: string) => `<!doctype html>
-<html>
-  <head>
-    <title>My site</title>
-  </head>
-  <body>
-    <!-- ... sayfanız ... -->
+    steps: [
+      { tr: 'Aşağıdaki kodu kopyalayın.', en: 'Copy the code below.' },
+      {
+        tr: 'Sitenizin her sayfasında yer alan şablona, </body> etiketinden hemen önce yapıştırın.',
+        en: 'Paste it into the template every page uses, right before the </body> tag.'
+      },
+      {
+        tr: 'Sayfayı yenileyin; sohbet balonu sağ alt köşede belirir.',
+        en: 'Reload the page; the chat bubble appears in the bottom-right corner.'
+      }
+    ],
+    code: (origin, key, lang) => `<body>
+  <!-- ${lang === 'tr' ? '... sayfanız ...' : '... your page ...'} -->
 
-    <!-- </body> etiketinden hemen önce -->
-    ${embedSnippet(origin, key).split('\n').join('\n    ')}
-  </body>
-</html>`
+  ${embedSnippet(origin, key).split('\n').join('\n  ')}
+</body>`
+  },
+  {
+    id: 'wordpress',
+    label: 'WordPress',
+    steps: [
+      {
+        tr: 'Yönetim panelinde Eklentiler → Yeni Ekle’den “WPCode” eklentisini kurup etkinleştirin.',
+        en: 'In the admin, go to Plugins → Add New, then install and activate “WPCode”.'
+      },
+      {
+        tr: 'Code Snippets → Header & Footer sayfasını açın ve kodu “Footer” alanına yapıştırın.',
+        en: 'Open Code Snippets → Header & Footer and paste the code into the “Footer” box.'
+      },
+      {
+        tr: 'Kaydedin. Temanızı değiştirseniz de kod yerinde kalır.',
+        en: 'Save. The code stays in place even if you change your theme.'
+      }
+    ]
+  },
+  {
+    id: 'shopify',
+    label: 'Shopify',
+    steps: [
+      {
+        tr: 'Shopify yönetiminde Online Mağaza → Temalar’a gidin.',
+        en: 'In Shopify admin, go to Online Store → Themes.'
+      },
+      {
+        tr: 'Temanızın “…” menüsünden Kodu düzenle’yi seçip layout/theme.liquid dosyasını açın.',
+        en: 'From your theme’s “…” menu choose Edit code and open layout/theme.liquid.'
+      },
+      {
+        tr: 'Kodu </body> etiketinden hemen önce yapıştırıp kaydedin.',
+        en: 'Paste the code right before </body> and save.'
+      }
+    ]
+  },
+  {
+    id: 'wix',
+    label: 'Wix',
+    steps: [
+      {
+        tr: 'Wix panelinde Ayarlar → Özel Kod’u açın (ücretli plan ve bağlı alan adı gerekir).',
+        en: 'In your Wix dashboard open Settings → Custom Code (needs a premium plan and a connected domain).'
+      },
+      {
+        tr: '“+ Özel Kod Ekle”ye tıklayın ve kodu yapıştırın.',
+        en: 'Click “+ Add Custom Code” and paste the code.'
+      },
+      {
+        tr: '“Tüm sayfalar” ve “Body – end” seçeneklerini seçip uygulayın.',
+        en: 'Choose “All pages” and “Body – end”, then apply.'
+      }
+    ]
+  },
+  {
+    id: 'webflow',
+    label: 'Webflow',
+    steps: [
+      {
+        tr: 'Site settings → Custom code sekmesini açın.',
+        en: 'Open Site settings → Custom code.'
+      },
+      {
+        tr: 'Kodu “Footer code” alanına yapıştırıp kaydedin.',
+        en: 'Paste the code into “Footer code” and save.'
+      },
+      { tr: 'Siteyi yeniden yayınlayın (Publish).', en: 'Publish the site again.' }
+    ]
+  },
+  {
+    id: 'gtm',
+    label: 'Google Tag Manager',
+    steps: [
+      {
+        tr: 'Etiketler → Yeni → Etiket yapılandırması → Özel HTML’i seçin.',
+        en: 'Go to Tags → New → Tag configuration → Custom HTML.'
+      },
+      {
+        tr: 'Kodu yapıştırın ve tetikleyici olarak “All Pages”i seçin.',
+        en: 'Paste the code and pick “All Pages” as the trigger.'
+      },
+      { tr: 'Kaydedip yayınlayın (Submit → Publish).', en: 'Save, then Submit → Publish.' }
+    ]
   },
   {
     id: 'react',
     label: 'React',
-    file: 'public/index.html  ·  src/App.jsx',
-    lang: 'jsx',
-    code: (
-      _origin: string,
-      _key: string
-    ) => `// 1) En basit yol: public/index.html içine script etiketini koyun.
-//    Widget kendi kendini başlatır, React'in haberi olmasına gerek yoktur.
+    file: 'src/supportChat.js  ·  src/App.jsx',
+    steps: [
+      {
+        tr: 'Kodu index.html dosyasında (Vite’te proje kökü, Create React App’te public/) </body> etiketinden önce yapıştırın.',
+        en: 'Paste the code before </body> in index.html (project root on Vite, public/ on Create React App).'
+      },
+      {
+        tr: 'Koddan kullanmak isterseniz tek satırlık yardımcıyı ekleyin; script yüklenmemiş olsa bile çağrılar kaybolmaz.',
+        en: 'To call it from code, add the one-line helper; calls made before the script loads are not lost.'
+      },
+      {
+        tr: 'Giriş yapan kullanıcıyı tanıtın, çıkışta da logout çağırın.',
+        en: 'Identify the signed-in user, and call logout when they sign out.'
+      }
+    ],
+    code: (_origin, _key, lang) => `// src/supportChat.js
+${HELPER_JS}
 
-// 2) Kullanıcı oturumuna bağlamak isterseniz:
+// src/App.jsx
 import { useEffect } from 'react';
+import { supportChat } from './supportChat';
 
-export default function App({ currentUser }) {
+export default function App({ user, onSignOut }) {
   useEffect(() => {
-    if (!window.SupportChat) return;
+    if (user) supportChat('identify', { userId: user.id, name: user.name, email: user.email });
+  }, [user]);
 
-    if (currentUser) {
-      window.SupportChat.identify({
-        userId: currentUser.id,
-        name: currentUser.name,
-        email: currentUser.email
-      });
-    } else {
-      window.SupportChat.logout();
-    }
-  }, [currentUser]);
+  const signOut = () => {
+    supportChat('logout');
+    onSignOut();
+  };
 
-  return <YourApp />;
-}
-
-// NOT: SupportChat.init() çağırmanız GEREKMEZ ve React 18 Strict Mode'da
-// effect iki kez çalışsa bile ikinci bir widget oluşmaz — runtime singleton'dır.`
+  return (
+    <>
+      <button onClick={() => supportChat('open')}>${lang === 'tr' ? 'Bize yazın' : 'Chat with us'}</button>
+      <button onClick={signOut}>${lang === 'tr' ? 'Çıkış' : 'Sign out'}</button>
+    </>
+  );
+}`
   },
   {
     id: 'nextjs',
     label: 'Next.js',
-    file: 'app/layout.tsx  (App Router)',
-    lang: 'tsx',
-    code: (origin: string, key: string) => `import Script from 'next/script';
+    file: 'app/layout.tsx  ·  lib/supportChat.ts',
+    steps: [
+      {
+        tr: 'Kök layout’a next/script ile ekleyin. Pages Router kullanıyorsanız aynı etiketi pages/_app.tsx içine koyun.',
+        en: 'Add it to the root layout with next/script. On the Pages Router, put the same tag in pages/_app.tsx.'
+      },
+      {
+        tr: '“afterInteractive” sayfanın ilk açılışını yavaşlatmaz; balon yalnızca tarayıcıda çalışır, sunucu tarafında hiçbir şey çizmez.',
+        en: '“afterInteractive” does not slow the first paint; the bubble runs only in the browser and renders nothing on the server.'
+      },
+      {
+        tr: 'Koddan çağırmak için yardımcıyı “use client” bileşenlerinde kullanın.',
+        en: 'To call it from code, use the helper in “use client” components.'
+      }
+    ],
+    code: (origin, key, lang) => `// app/layout.tsx
+import Script from 'next/script';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr">
+    <html lang="${lang}">
       <body>
         {children}
         <Script
@@ -124,407 +239,180 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 
-// Pages Router kullanıyorsanız aynı <Script> etiketini pages/_app.tsx içine koyun.
-//
-// SSR notu: widget yalnızca tarayıcıda çalışır ve DOM'a kendisi bağlanır;
-// sunucu tarafında hiçbir şey render etmez, bu yüzden hydration uyuşmazlığı
-// üretmez. next/script "afterInteractive" ile ilk boyamayı geciktirmez.`
+// lib/supportChat.ts — ${lang === 'tr' ? '"use client" bileşenlerinden çağırın' : 'call it from "use client" components'}
+${HELPER_TS}`
   },
   {
     id: 'vue',
-    label: 'Vue',
-    file: 'index.html  ·  App.vue',
-    lang: 'vue',
-    code: (
-      _origin: string,
-      _key: string
-    ) => `<!-- index.html içine script etiketini koymak yeterlidir. -->
-
-<!-- Kullanıcıyı tanıtmak için: -->
-<script setup>
-import { onMounted, onUnmounted, watch } from 'vue';
-
-const props = defineProps({ user: Object });
-
-watch(() => props.user, (user) => {
-  if (!window.SupportChat) return;
-  user ? window.SupportChat.identify(user) : window.SupportChat.logout();
-}, { immediate: true });
-</script>`
-  },
-  {
-    id: 'nuxt',
-    label: 'Nuxt',
-    file: 'plugins/support-chat.client.ts',
-    lang: 'ts',
-    code: (
-      origin: string,
-      key: string
-    ) => `// .client.ts uzantısı önemlidir: eklenti yalnızca tarayıcıda çalışır.
-export default defineNuxtPlugin(() => {
-  const script = document.createElement('script');
-  script.src = '${origin}/widget.js';
-  script.async = true;
-  script.dataset.siteKey = '${key}';
-  document.body.appendChild(script);
+    label: 'Vue / Nuxt',
+    file: 'nuxt.config.ts  ·  src/supportChat.js',
+    steps: [
+      {
+        tr: 'Vue (Vite): kodu index.html dosyasında </body> etiketinden önce yapıştırın.',
+        en: 'Vue (Vite): paste the code before </body> in index.html.'
+      },
+      {
+        tr: 'Nuxt 3: index.html yoktur; etiketi nuxt.config.ts içinde app.head ile ekleyin.',
+        en: 'Nuxt 3 has no index.html; add the tag through app.head in nuxt.config.ts.'
+      },
+      {
+        tr: 'Koddan çağırmak için aynı tek satırlık yardımcıyı kullanın.',
+        en: 'Use the same one-line helper to call it from code.'
+      }
+    ],
+    code: (origin, key, lang) => `// nuxt.config.ts (Nuxt 3)
+export default defineNuxtConfig({
+  app: {
+    head: {
+      script: [
+        {
+          src: '${origin}/widget.js',
+          'data-site-key': '${key}',
+          async: true,
+          tagPosition: 'bodyClose'
+        }
+      ]
+    }
+  }
 });
 
-// Alternatif: nuxt.config.ts içinde
-// app: { head: { script: [{ src: '${origin}/widget.js', async: true,
-//   'data-site-key': '${key}' }] } }`
+// src/supportChat.js
+${HELPER_JS}
+
+// ${lang === 'tr' ? 'Bir bileşende' : 'In a component'} (<script setup>)
+import { watch } from 'vue';
+import { supportChat } from '@/supportChat';
+
+watch(user, (u) => {
+  if (u) supportChat('identify', { userId: u.id, name: u.name, email: u.email });
+}, { immediate: true });`
   },
   {
     id: 'angular',
     label: 'Angular',
-    file: 'src/index.html  ·  app.component.ts',
-    lang: 'ts',
-    code: (origin: string, key: string) => `<!-- src/index.html, </body> öncesi -->
-<script src="${origin}/widget.js" data-site-key="${key}" async></script>
+    file: 'src/app/support-chat.service.ts',
+    steps: [
+      {
+        tr: 'Kodu src/index.html dosyasında </body> etiketinden önce yapıştırın.',
+        en: 'Paste the code before </body> in src/index.html.'
+      },
+      {
+        tr: 'Koddan çağırmak için küçük bir servis ekleyin; sunucu tarafında (SSR) hiçbir şey yapmaz.',
+        en: 'Add a small service to call it from code; it does nothing during server-side rendering.'
+      },
+      {
+        tr: 'Girişte identify, çıkışta logout çağırın.',
+        en: 'Call identify on sign-in and logout on sign-out.'
+      }
+    ],
+    code: () => `// src/app/support-chat.service.ts
+import { Injectable } from '@angular/core';
 
-// Kullanıcı oturumuna bağlamak için:
-import { Component, OnInit } from '@angular/core';
+@Injectable({ providedIn: 'root' })
+export class SupportChatService {
+  private run(...command: unknown[]) {
+    if (typeof window === 'undefined') return;
+    const w = window as unknown as { SupportChat?: { q: { push: (c: unknown[]) => void } } };
+    (w.SupportChat ??= { q: [] }).q.push(command);
+  }
 
-declare global {
-  interface Window { SupportChat?: any }
-}
+  identify(user: { id: string; name?: string; email?: string }) {
+    this.run('identify', { userId: user.id, name: user.name, email: user.email });
+  }
 
-@Component({ selector: 'app-root', template: '<router-outlet/>' })
-export class AppComponent implements OnInit {
-  ngOnInit() {
-    this.auth.user$.subscribe((user) => {
-      if (!window.SupportChat) return;
-      user ? window.SupportChat.identify(user) : window.SupportChat.logout();
-    });
+  logout() {
+    this.run('logout');
+  }
+
+  open() {
+    this.run('open');
   }
 }`
-  },
-  {
-    id: 'svelte',
-    label: 'Svelte',
-    file: 'src/app.html  ·  +layout.svelte',
-    lang: 'svelte',
-    code: (
-      origin: string,
-      key: string
-    ) => `<!-- SvelteKit: src/app.html içinde %sveltekit.body% sonrasına -->
-<script src="${origin}/widget.js" data-site-key="${key}" async></script>
-
-<!-- Ya da src/routes/+layout.svelte içinde: -->
-<script>
-  import { onMount } from 'svelte';
-
-  onMount(() => {
-    const script = document.createElement('script');
-    script.src = '${origin}/widget.js';
-    script.async = true;
-    script.dataset.siteKey = '${key}';
-    document.body.appendChild(script);
-
-    // SvelteKit istemci-taraflı gezinmede layout'u yeniden mount etmez,
-    // ama HMR sırasında etmesi mümkündür: temizlik güvenli tarafta kalır.
-    return () => window.SupportChat?.destroy();
-  });
-</script>`
-  },
-  {
-    id: 'astro',
-    label: 'Astro',
-    file: 'src/layouts/Layout.astro',
-    lang: 'astro',
-    code: (origin: string, key: string) => `---
-// Layout.astro
----
-<html lang="tr">
-  <body>
-    <slot />
-    <script src="${origin}/widget.js" data-site-key="${key}" async is:inline></script>
-  </body>
-</html>
-
-<!-- is:inline ÖNEMLİ: Astro varsayılan olarak script'leri toplar ve
-     yeniden yazar; is:inline etiketi olduğu gibi bırakır, böylece
-     data-site-key niteliği ve script'in kendi src'si korunur. -->`
-  },
-  {
-    id: 'wordpress',
-    label: 'WordPress',
-    file: 'functions.php',
-    lang: 'php',
-    code: (origin: string, key: string) => `<?php
-// Alt temanızın functions.php dosyasına ekleyin.
-add_action('wp_footer', function () {
-    ?>
-    <script src="<?php echo esc_url('${origin}/widget.js'); ?>"
-            data-site-key="<?php echo esc_attr('${key}'); ?>"
-            async></script>
-    <?php
-});
-
-// Oturum açmış kullanıcıyı otomatik tanıtmak isterseniz:
-add_action('wp_footer', function () {
-    if (!is_user_logged_in()) return;
-    $user = wp_get_current_user();
-    ?>
-    <script>
-      window.SupportChat && window.SupportChat.identify({
-        userId: <?php echo json_encode((string) $user->ID); ?>,
-        name:   <?php echo json_encode($user->display_name); ?>,
-        email:  <?php echo json_encode($user->user_email); ?>
-      });
-    </script>
-    <?php
-}, 20);`
-  },
-  {
-    id: 'laravel',
-    label: 'Laravel',
-    file: 'resources/views/layouts/app.blade.php',
-    lang: 'blade',
-    code: (_origin: string, _key: string) => `{{-- </body> etiketinden hemen önce --}}
-<script src="{{ config('services.support_chat.url') }}/widget.js"
-        data-site-key="{{ config('services.support_chat.key') }}"
-        async></script>
-
-@auth
-<script>
-  window.SupportChat && window.SupportChat.identify({
-    userId: @json((string) auth()->id()),
-    name:   @json(auth()->user()->name),
-    email:  @json(auth()->user()->email)
-  });
-</script>
-@endauth
-
-{{-- config/services.php
-'support_chat' => [
-    'url' => env('SUPPORT_CHAT_URL', '${origin}'),
-    'key' => env('SUPPORT_CHAT_KEY'),
-],
---}}`
-  },
-  {
-    id: 'php',
-    label: 'PHP',
-    file: 'footer.php',
-    lang: 'php',
-    code: (origin: string, key: string) => `<?php
-$supportChatUrl = getenv('SUPPORT_CHAT_URL') ?: '${origin}';
-$supportChatKey = getenv('SUPPORT_CHAT_KEY') ?: '${key}';
-?>
-<script src="<?= htmlspecialchars($supportChatUrl, ENT_QUOTES) ?>/widget.js"
-        data-site-key="<?= htmlspecialchars($supportChatKey, ENT_QUOTES) ?>"
-        async></script>`
-  },
-  {
-    id: 'shopify',
-    label: 'Shopify',
-    file: 'layout/theme.liquid',
-    lang: 'liquid',
-    code: (
-      origin: string,
-      key: string
-    ) => `{%- comment -%} </body> etiketinden hemen önce {%- endcomment -%}
-<script src="${origin}/widget.js" data-site-key="${key}" async></script>
-
-{%- if customer -%}
-<script>
-  window.SupportChat && window.SupportChat.identify({
-    userId: {{ customer.id | json }},
-    name:   {{ customer.name | json }},
-    email:  {{ customer.email | json }}
-  });
-  window.SupportChat && window.SupportChat.setAttributes({
-    ordersCount: {{ customer.orders_count | json }},
-    totalSpent:  {{ customer.total_spent | money_without_currency | json }}
-  });
-</script>
-{%- endif -%}`
   }
 ];
 
-export const API_METHODS = [
+/** Kimlik örneği — düz HTML sayfası için. */
+export const identifySnippet = () => `<script>
+  (window.SupportChat = window.SupportChat || { q: [] }).q.push(['identify', {
+    userId: '42',
+    name: 'Ayşe Yılmaz',
+    email: 'ayse@ornek.com'
+  }]);
+${CLOSE_SCRIPT}`;
+
+/** Sunucuda imza: panelde "doğrulanmış müşteri" rozeti için. */
+export const userHashSnippet = (lang: Lang) => `// Node.js — ${lang === 'tr' ? 'sitenizin sunucusunda; anahtar tarayıcıya asla gönderilmez' : 'on your own server; the key never reaches the browser'}
+import { createHmac } from 'node:crypto';
+
+const userHash = createHmac('sha256', process.env.SUPPORT_IDENTITY_SECRET)
+  .update(String(user.id))
+  .digest('hex');
+
+// ${lang === 'tr' ? 'Sayfaya' : 'In the page'}: ['identify', { userId: user.id, name, email, userHash }]`;
+
+/** En çok kullanılan komutlar. */
+export const COMMANDS: Array<{ call: string; text: Text }> = [
+  { call: "['open']", text: { tr: 'Sohbet penceresini açar.', en: 'Opens the chat window.' } },
+  { call: "['close']", text: { tr: 'Pencereyi kapatır.', en: 'Closes the window.' } },
   {
-    sig: 'SupportChat.init(options?)',
-    tr: 'Widget’ı başlatır. Script etiketi bunu kendisi çağırır; yalnızca `data-defer` kullandıysanız gerekir.',
-    en: 'Boots the widget. The script tag calls this itself; only needed when you used `data-defer`.'
-  },
-  { sig: 'SupportChat.open()', tr: 'Sohbet penceresini açar.', en: 'Opens the chat window.' },
-  {
-    sig: 'SupportChat.close()',
-    tr: 'Pencereyi kapatır, launcher kalır.',
-    en: 'Closes the window, the launcher stays.'
-  },
-  { sig: 'SupportChat.toggle()', tr: 'Açıksa kapatır, kapalıysa açar.', en: 'Toggles the window.' },
-  { sig: 'SupportChat.show()', tr: 'Widget’ı görünür yapar.', en: 'Makes the widget visible.' },
-  {
-    sig: 'SupportChat.hide()',
-    tr: 'Widget’ı tamamen gizler (launcher dahil).',
-    en: 'Hides the widget entirely, launcher included.'
-  },
-  {
-    sig: 'SupportChat.identify(user)',
-    tr: 'Oturum açmış kullanıcıyı tanıtır: `{ userId, name, email, avatar }`.',
-    en: 'Identifies the signed-in user: `{ userId, name, email, avatar }`.'
-  },
-  {
-    sig: 'SupportChat.logout()',
-    tr: 'Kimliği temizler ve YENİ bir ziyaretçi kimliği üretir. Ortak bilgisayarda sohbet geçmişinin sızmaması için şarttır.',
-    en: 'Clears the identity and mints a NEW visitor id. Required so a shared computer does not leak the previous chat.'
+    call: "['identify', { userId, name, email }]",
+    text: { tr: 'Giriş yapmış kullanıcıyı tanıtır.', en: 'Identifies the signed-in user.' }
   },
   {
-    sig: 'SupportChat.setAttributes(attrs)',
-    tr: 'Serbest biçimli özellikler ekler: `{ plan: "pro", mrr: 249 }`. Temsilci panelinde görünür.',
-    en: 'Attaches free-form attributes: `{ plan: "pro", mrr: 249 }`. Visible to agents.'
+    call: "['logout']",
+    text: {
+      tr: 'Kimliği temizler; ortak bilgisayarda önceki sohbet görünmez.',
+      en: 'Clears the identity, so a shared computer does not show the previous chat.'
+    }
   },
   {
-    sig: 'SupportChat.setLocale(locale)',
-    tr: '`"tr"` veya `"en"`. Widget metinlerini anında değiştirir, sohbeti korur.',
-    en: '`"tr"` or `"en"`. Swaps the widget copy instantly, keeps the thread.'
+    call: "['setAttributes', { plan: 'pro' }]",
+    text: {
+      tr: 'Temsilcinin panelde göreceği bilgileri ekler.',
+      en: 'Adds details your agents see in the dashboard.'
+    }
   },
   {
-    sig: 'SupportChat.setTheme(theme)',
-    tr: '`"light"`, `"dark"` veya `"auto"` (sistem tercihini izler).',
-    en: '`"light"`, `"dark"` or `"auto"` (follows the system preference).'
+    call: "['setLocale', 'en']",
+    text: { tr: 'Balonun dilini değiştirir: tr veya en.', en: 'Switches the bubble language: tr or en.' }
   },
   {
-    sig: 'SupportChat.on(event, handler)',
-    tr: 'Olay dinler; aboneliği iptal eden bir fonksiyon döndürür.',
-    en: 'Subscribes to an event; returns an unsubscribe function.'
-  },
-  {
-    sig: 'SupportChat.off(event, handler?)',
-    tr: 'Dinleyiciyi kaldırır. Handler verilmezse o olayın tüm dinleyicileri gider.',
-    en: 'Removes a listener. Without a handler, every listener for that event goes.'
-  },
-  {
-    sig: 'SupportChat.destroy()',
-    tr: 'Widget’ı söker: DOM, soket, zamanlayıcılar ve history sarmalayıcısı geri alınır.',
-    en: 'Tears the widget down: DOM, socket, timers and the history patch are all reverted.'
-  },
-  {
-    sig: 'SupportChat.debug()',
-    tr: 'Tanılama nesnesi döndürür: sürüm, bağlantı durumu, site anahtarı, ziyaretçi kimliği, ölümcül hata.',
-    en: 'Returns a diagnostics object: version, connection state, site key, visitor id, fatal error.'
-  },
-  { sig: 'SupportChat.version', tr: 'Çalışan SDK sürümü.', en: 'The running SDK version.' }
+    call: "['hide']  ·  ['show']",
+    text: {
+      tr: 'Balonu belirli sayfalarda gizler ya da yeniden gösterir.',
+      en: 'Hides the bubble on certain pages or shows it again.'
+    }
+  }
 ];
 
-export const EVENTS = [
+/** Script etiketine eklenebilen seçenekler — yalnızca gerçekten kullanılanlar. */
+export const OPTIONS: Array<{ attr: string; text: Text }> = [
   {
-    name: 'ready',
-    payload: '{ siteKey, locale, version }',
-    tr: 'Widget yüklendi ve çizildi.',
-    en: 'The widget loaded and rendered.'
-  },
-  { name: 'open', payload: '{}', tr: 'Pencere açıldı.', en: 'The window opened.' },
-  { name: 'close', payload: '{}', tr: 'Pencere kapandı.', en: 'The window closed.' },
-  {
-    name: 'message',
-    payload: '{ message }',
-    tr: 'Yeni bir mesaj alındı (temsilci, bot veya sistem).',
-    en: 'A message arrived (agent, bot or system).'
+    attr: 'data-locale="en"',
+    text: {
+      tr: 'Dili sabitler. Verilmezse sayfanızın dili kullanılır.',
+      en: 'Fixes the language. Without it, your page’s language is used.'
+    }
   },
   {
-    name: 'message:sent',
-    payload: '{ content, clientMessageId }',
-    tr: 'Ziyaretçi bir mesaj gönderdi.',
-    en: 'The visitor sent a message.'
+    attr: 'data-position="bottom-left"',
+    text: {
+      tr: 'Paneldeki konumu bu sayfa için değiştirir.',
+      en: 'Overrides the dashboard position on this page.'
+    }
   },
   {
-    name: 'conversation:ready',
-    payload: '{ conversationId }',
-    tr: 'Konuşma açıldı veya mevcut konuşmaya bağlanıldı.',
-    en: 'A conversation opened or was rejoined.'
+    attr: 'data-hidden="true"',
+    text: {
+      tr: 'Balon gizli başlar; ["show"] ile gösterilir.',
+      en: 'The bubble starts hidden; ["show"] reveals it.'
+    }
   },
   {
-    name: 'connection',
-    payload: '{ state, detail }',
-    tr: 'Soket durumu değişti: connecting / connected / reconnecting / disconnected / error.',
-    en: 'Socket state changed: connecting / connected / reconnecting / disconnected / error.'
-  },
-  {
-    name: 'unread',
-    payload: '{ count }',
-    tr: 'Okunmamış sayısı değişti.',
-    en: 'The unread count changed.'
-  },
-  {
-    name: 'identify',
-    payload: '{ user }',
-    tr: 'Kullanıcı tanıtıldı.',
-    en: 'A user was identified.'
-  },
-  { name: 'logout', payload: '{}', tr: 'Kimlik temizlendi.', en: 'The identity was cleared.' },
-  {
-    name: 'attributes',
-    payload: '{ attributes }',
-    tr: 'Özellikler güncellendi.',
-    en: 'Attributes were updated.'
-  },
-  { name: 'locale', payload: '{ locale }', tr: 'Dil değişti.', en: 'The locale changed.' },
-  { name: 'theme', payload: '{ theme }', tr: 'Tema değişti.', en: 'The theme changed.' },
-  {
-    name: 'navigate',
-    payload: '{ url, path }',
-    tr: 'SPA yönlendirmesi algılandı.',
-    en: 'An SPA navigation was detected.'
-  },
-  {
-    name: 'error',
-    payload: '{ code, message }',
-    tr: 'Bir hata oluştu. Kodlar: MISSING_SITE_KEY, MISSING_API_URL, WIDGET_NOT_FOUND, NETWORK_ERROR, SOCKET_ERROR, SEND_FAILED.',
-    en: 'Something failed. Codes: MISSING_SITE_KEY, MISSING_API_URL, WIDGET_NOT_FOUND, NETWORK_ERROR, SOCKET_ERROR, SEND_FAILED.'
-  },
-  { name: 'destroy', payload: '{}', tr: 'Widget söküldü.', en: 'The widget was torn down.' }
-];
-
-export const SCRIPT_ATTRS = [
-  {
-    attr: 'data-site-key',
-    required: true,
-    tr: 'Zorunlu. Panel → Siteler ekranındaki anahtar.',
-    en: 'Required. The key from Dashboard → Sites.'
-  },
-  {
-    attr: 'data-api-url',
-    required: false,
-    tr: 'API adresi. Verilmezse script’in kendi origin’i kullanılır — normalde gerekmez.',
-    en: 'API origin. Defaults to the script’s own origin — normally unnecessary.'
-  },
-  {
-    attr: 'data-locale',
-    required: false,
-    tr: '`tr` veya `en`. Verilmezse `<html lang>` ve tarayıcı dili sırayla denenir.',
-    en: '`tr` or `en`. Falls back to `<html lang>` then the browser language.'
-  },
-  {
-    attr: 'data-theme',
-    required: false,
-    tr: '`light`, `dark` veya `auto`.',
-    en: '`light`, `dark` or `auto`.'
-  },
-  {
-    attr: 'data-position',
-    required: false,
-    tr: 'Paneldeki konumu geçersiz kılar: `bottom-right`, `bottom-left`, `top-right`, `top-left`.',
-    en: 'Overrides the dashboard position: `bottom-right`, `bottom-left`, `top-right`, `top-left`.'
-  },
-  {
-    attr: 'data-hidden',
-    required: false,
-    tr: '`true` ise widget gizli başlar; `SupportChat.show()` ile gösterilir.',
-    en: 'When `true` the widget starts hidden; call `SupportChat.show()` to reveal it.'
-  },
-  {
-    attr: 'data-defer',
-    required: false,
-    tr: '`true` ise otomatik başlatma yapılmaz. Çerez onayı arkasında çalıştırmak için: onay sonrası `SupportChat.init()`.',
-    en: 'When `true` nothing boots automatically. Use it behind a cookie banner: call `SupportChat.init()` after consent.'
-  },
-  {
-    attr: 'data-z-index',
-    required: false,
-    tr: 'Widget kökünün z-index değeri. Varsayılan 2147483000.',
-    en: 'The z-index of the widget root. Defaults to 2147483000.'
+    attr: 'data-defer="true"',
+    text: {
+      tr: 'Çerez onayı için: balon, siz ["init"] çağırana kadar açılmaz.',
+      en: 'For cookie consent: the bubble waits until you call ["init"].'
+    }
   }
 ];

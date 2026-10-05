@@ -1,8 +1,8 @@
 /**
  * Kendi kendine oynayan sohbet — ziyaretçinin gördüğü balonun içi.
  *
- * Statik bir ekran görüntüsü "mesaj anında düşer" ve "asistan emin değilse
- * devreder" cümlelerini anlatamıyordu; bunlar zamanla olan şeyler. Bileşen
+ * Statik bir ekran görüntüsü "mesaj anında düşer" ve "temsilci konuşmaya
+ * katılır" cümlelerini anlatamıyordu; bunlar zamanla olan şeyler. Bileşen
  * ekrana girince senaryoyu baştan oynatır: ziyaretçi mesajı hemen, cevaplar
  * kısa bir "yazıyor…" göstergesinden sonra gelir. Senaryo bitince bir süre
  * bekler ve başa sarar. Ekrandan çıkınca durur; görünmeyen bir döngü pil
@@ -11,21 +11,20 @@
  * "Hareketi azalt" seçiliyse döngü oynamaz, bütün konuşma bir kerede görünür.
  *
  * Senaryo i18n'den gelir (`demoChat.<name>`); her satır bir tür taşır:
- * visitor, bot, agent, note (ortalanmış sistem satırı) veya order (sipariş
- * kartı). İçerik temsilîdir.
+ * visitor, agent, note (ortalanmış sistem satırı) veya article (balonun
+ * yardım bölümünden gelen SSS cevabı). İçerik temsilîdir.
  */
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { Package, Send, Sparkles, UserRound } from 'lucide-react';
+import { BookOpen, Send, UserRound } from 'lucide-react';
 import { asList } from './kit';
 
 export interface ChatLine {
-  from: 'visitor' | 'bot' | 'agent' | 'note' | 'order';
+  from: 'visitor' | 'agent' | 'note' | 'article';
   text?: string;
   name?: string;
-  order?: { number: string; status: string; carrier: string; eta: string };
 }
 
 const TYPING_MS = 1100;
@@ -44,7 +43,7 @@ const Typing = () => (
   </div>
 );
 
-const Bubble = ({ line, botName }: { line: ChatLine; botName: string }) => {
+const Bubble = ({ line, articleName }: { line: ChatLine; articleName: string }) => {
   if (line.from === 'note') {
     return (
       <div className="flex justify-center py-0.5">
@@ -61,34 +60,16 @@ const Bubble = ({ line, botName }: { line: ChatLine; botName: string }) => {
       </div>
     );
   }
-  if (line.from === 'order' && line.order) {
-    return (
-      <div className="max-w-[88%] rounded-2xl rounded-bl-md border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-white/[0.05] p-3">
-        <div className="flex items-center gap-2">
-          <Package className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span className="text-[11px] font-semibold text-gray-900 dark:text-white">
-            #{line.order.number}
-          </span>
-          <span className="ml-auto px-1.5 py-[1px] rounded text-[9.5px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-            {line.order.status}
-          </span>
-        </div>
-        <p className="mt-1.5 text-[10.5px] text-gray-500 dark:text-gray-400">
-          {line.order.carrier} · {line.order.eta}
-        </p>
-      </div>
-    );
-  }
-  const isBot = line.from === 'bot';
+  const isArticle = line.from === 'article';
   return (
     <div className="max-w-[86%]">
       <span className="mb-1 flex items-center gap-1 text-[9.5px] font-medium text-gray-500 dark:text-gray-400">
-        {isBot ? (
-          <Sparkles className="w-3 h-3 text-violet-500" />
+        {isArticle ? (
+          <BookOpen className="w-3 h-3 text-sky-500" />
         ) : (
           <UserRound className="w-3 h-3 text-emerald-500" />
         )}
-        {isBot ? botName : line.name}
+        {isArticle ? articleName : line.name}
       </span>
       <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-white/[0.07] border border-gray-200/80 dark:border-transparent text-[12px] leading-relaxed text-gray-800 dark:text-gray-100">
         {line.text}
@@ -197,7 +178,7 @@ export const ChatPlayer = ({
               transition={{ duration: 0.28, ease: 'easeOut' }}
               className="flex flex-col"
             >
-              <Bubble line={line} botName={t('demoChat.botName')} />
+              <Bubble line={line} articleName={t('demoChat.articleName')} />
             </motion.div>
           ))}
           {typing && (

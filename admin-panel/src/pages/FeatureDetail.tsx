@@ -28,7 +28,6 @@ import {
   asList
 } from '../components/marketing/kit';
 import { FEATURE_VISUAL, WidgetVisual } from '../components/marketing/visuals';
-import ChatPlayer from '../components/marketing/ChatPlayer';
 import {
   FEATURE_IDS,
   FEATURE_PLAN,
@@ -39,13 +38,6 @@ import {
 
 /** Widget görseli kendi kabuğunu taşır; diğerleri panel penceresine girer. */
 const renderVisual = (slug: string, t: (k: string) => string) => {
-  if (slug === 'ai-assist') {
-    return (
-      <div className="mx-auto max-w-[380px]">
-        <ChatPlayer script="ai" height={380} />
-      </div>
-    );
-  }
   const Visual = FEATURE_VISUAL[slug as keyof typeof FEATURE_VISUAL];
   if (!Visual) return null;
   if (Visual === WidgetVisual) {

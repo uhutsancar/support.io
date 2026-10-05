@@ -2384,9 +2384,9 @@ interface Window {
    *
    * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. `userId` ancak magazanin
    * sunucusunun urettigi `userHash` = HMAC_SHA256(kimlik anahtari, userId)
-   * sunucuda dogrulanirsa kimlik sayilir (services/identity.ts); siparis
-   * sorgusu yalnizca bu dogrulanmis kimlikle yapilir. Ad ve e-posta yalnizca
-   * gosterim icindir.
+   * sunucuda dogrulanirsa kimlik sayilir (services/identity.ts); panelde
+   * "dogrulanmis musteri" rozeti ve konusma gecmisinin geri acilmasi yalnizca
+   * bu kimlikle olur. Ad ve e-posta yalnizca gosterim icindir.
    */
   Widget.prototype.identify = function (this: WidgetInstance, user: WidgetIdentity | null) {
     if (!user || typeof user !== 'object') return;
@@ -2559,10 +2559,30 @@ interface Window {
   // `window.SupportIO` yalnizca eski entegrasyonlar icin bir takma addir.
   // -------------------------------------------------------------------------
 
-  // Script yuklenmeden once birikmis komutlar. Musteri sitesi su kaliplari
+  // Script yuklenmeden once birikmis komutlar. Musteri sitesi su kalibi
   // kullanabilir ve hicbiri kaybolmaz:
-  //   SupportChat.q = SupportChat.q || []; SupportChat.q.push(['open']);
+  //   (window.SupportChat = window.SupportChat || { q: [] }).q.push(['open']);
+  // Yuklendikten sonra da ayni satir calisir: `api.q.push` komutu hemen
+  // yurutur. Boylece sitenin kodu script'in yuklenip yuklenmedigini bilmek
+  // zorunda kalmaz.
   var queued = ((window as any)[NAMESPACE] && (window as any)[NAMESPACE].q) || [];
+
+  // Calls that arrive before the runtime exists — between this script running
+  // and boot(), or before SupportChat.init() under data-defer — are kept and
+  // replayed in order once it does. They used to be dropped silently, so an
+  // identify() from a React effect that ran first simply never happened.
+  var pendingCalls: Array<[string, unknown[]]> = [];
+  var MAX_PENDING_CALLS = 50;
+
+  function forward(method: string) {
+    return function () {
+      var args = Array.prototype.slice.call(arguments);
+      var runtime = api.__runtime as unknown as Record<string, (...a: unknown[]) => unknown> | null;
+      if (runtime) return runtime[method].apply(runtime, args);
+      if (pendingCalls.length < MAX_PENDING_CALLS) pendingCalls.push([method, args]);
+      return undefined;
+    };
+  }
 
   var api: Record<string, any> = {
     version: SDK_VERSION,
@@ -2579,42 +2599,32 @@ interface Window {
         widget.on(earlyListeners[i][0], earlyListeners[i][1]);
       }
       widget.init();
+      var calls = pendingCalls;
+      pendingCalls = [];
+      for (var j = 0; j < calls.length; j++) {
+        try {
+          (widget as unknown as Record<string, (...a: unknown[]) => unknown>)[calls[j][0]].apply(
+            widget,
+            calls[j][1]
+          );
+        } catch (e) {
+          // One early call from the host page was malformed; the rest still run.
+        }
+      }
       return widget;
     },
 
-    open: function () {
-      api.__runtime && api.__runtime.open();
-    },
-    close: function () {
-      api.__runtime && api.__runtime.close();
-    },
-    toggle: function () {
-      api.__runtime && api.__runtime.toggle();
-    },
-    show: function () {
-      api.__runtime && api.__runtime.show();
-    },
-    hide: function () {
-      api.__runtime && api.__runtime.hide();
-    },
-    identify: function (user: WidgetIdentity | null) {
-      api.__runtime && api.__runtime.identify(user);
-    },
-    logout: function () {
-      api.__runtime && api.__runtime.logout();
-    },
-    setAttributes: function (attrs: Record<string, unknown>) {
-      api.__runtime && api.__runtime.setAttributes(attrs);
-    },
-    setLocale: function (locale: string) {
-      api.__runtime && api.__runtime.setLocale(locale);
-    },
-    setTheme: function (theme: string | null) {
-      api.__runtime && api.__runtime.setTheme(theme);
-    },
-    sendMessage: function () {
-      api.__runtime && api.__runtime.sendMessage();
-    },
+    open: forward('open'),
+    close: forward('close'),
+    toggle: forward('toggle'),
+    show: forward('show'),
+    hide: forward('hide'),
+    identify: forward('identify'),
+    logout: forward('logout'),
+    setAttributes: forward('setAttributes'),
+    setLocale: forward('setLocale'),
+    setTheme: forward('setTheme'),
+    sendMessage: forward('sendMessage'),
 
     on: function (event: string, handler: EventHandler) {
       if (api.__runtime) return api.__runtime.on(event, handler);
@@ -2665,21 +2675,30 @@ interface Window {
   (window as any)[LEGACY_NAMESPACE].closeWidget = api.close;
   (window as any).SupportIOWidget = { openWidget: api.open, closeWidget: api.close };
 
-  // Kuyruktaki komutlari isle.
-  function drain() {
-    for (var i = 0; i < queued.length; i++) {
-      var entry = queued[i];
-      var method = Array.isArray(entry) ? entry[0] : entry;
-      var args = Array.isArray(entry) ? entry.slice(1) : [];
-      if (typeof api[method] === 'function') {
-        try {
-          api[method].apply(null, args);
-        } catch (e) {
-          // One queued call from the host page was malformed. The remaining
-          // queued calls still run; throwing here would abandon them.
-        }
+  /** Runs one `['method', ...args]` command from the host page. */
+  function run(entry: unknown) {
+    var method = Array.isArray(entry) ? entry[0] : entry;
+    var args = Array.isArray(entry) ? entry.slice(1) : [];
+    if (typeof method === 'string' && method !== 'q' && typeof api[method] === 'function') {
+      try {
+        api[method].apply(null, args);
+      } catch (e) {
+        // One queued call from the host page was malformed. The remaining
+        // queued calls still run; throwing here would abandon them.
       }
     }
+  }
+
+  api.q = {
+    push: function () {
+      for (var i = 0; i < arguments.length; i++) run(arguments[i]);
+      return 0;
+    }
+  };
+
+  // Kuyruktaki komutlari isle.
+  function drain() {
+    for (var i = 0; i < queued.length; i++) run(queued[i]);
     queued.length = 0;
   }
 

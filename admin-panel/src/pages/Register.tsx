@@ -106,7 +106,7 @@ const Register = () => {
             autoComplete="new-password"
             hint={t('register.passwordHint')}
             required
-            minLength={6}
+            minLength={8}
           />
           <Button type="submit" size="lg" disabled={loading} className="w-full">
             {loading ? t('common.loading') : t('register.registerButton')}

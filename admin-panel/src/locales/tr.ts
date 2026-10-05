@@ -1320,130 +1320,6 @@ export default {
     active: 'Etkin',
     inactive: 'Kapalı'
   },
-  docs: {
-    meta: {
-      title: 'Dokümantasyon',
-      description:
-        "Support.io widget'ını web sitenize entegre etme ve yapılandırma rehberi. Tüm detayları keşfedin."
-    },
-    hero: {
-      title: 'Geliştirici Dokümantasyonu',
-      description:
-        'Canlı destek sistemini dakikalar içinde platformunuza dahil edin. Güçlü API, esnek yapılandırma ayarları ve tam kontrol.',
-      version: 'v1.0.0 Güncel Sürüm',
-      viewGithub: 'GitHub Kod Örnekleri'
-    },
-    nav: {
-      title: 'İçindekiler',
-      gettingStarted: 'Başlarken',
-      installation: 'Hızlı Kurulum',
-      configuration: 'Yapılandırma & API',
-      features: 'Özellikler',
-      benefits: 'Neden Support.io?'
-    },
-    gettingStarted: {
-      title: 'Başlarken',
-      description:
-        'Support.io, web sitenizin HTML koduna ekleyeceğiniz ufak bir betik (script) ile çalışan modern bir canlı destek motorudur. WebSocket teknolojisi ile gecikmesiz sohbet imkanı sunar.',
-      whatIs: {
-        title: 'Tam Olarak Nasıl Çalışır?',
-        description:
-          'Sistemi kurmak için herhangi bir sunucu maliyetine veya karmaşık kurulumlara ihtiyacınız yoktur. Tek yapmanız gereken size özel ayrılmış widget kodunu kopyalayıp sitenize entegre etmektir. Bütün yük ve ölçeklendirme Support.io bulut mimarisi tarafından yönetilir.'
-      }
-    },
-    installation: {
-      title: 'Hızlı Kurulum (5 Dakika)',
-      description: 'Aşağıdaki 3 adımı izleyerek platformumuzu anında canlıya alabilirsiniz.',
-      step1: {
-        title: 'Önkoşullar ve Güvenlik',
-        description:
-          'Öncelikle "Siteler" menüsünden web sitenizin domain adresini (örn: google.com) tanımlamalı ve benzersiz bir Site ID anahtarı oluşturmalısınız.'
-      },
-      step2: {
-        title: 'Ayar Objesinin (Config) Tanımlanması',
-        description:
-          'Sayfanızın `<head>` etiketi içerisinde veya body bitimine kurulum kodunun hemen öncesinde global `supportioConfig` nesnesini oluşturmanız gerekir.'
-      },
-      step3: {
-        title: 'Uygulamanın Tetiklenmesi',
-        description:
-          'Aşağıdaki kodu web sitenizin `</body>` etiketinden hemen önce yapıştırarak entegrasyonu tamamlayabilirsiniz.'
-      },
-      codeSnippetPrefix: '<!-- Standard HTML Entegrasyonu -->',
-      copy: 'Kodu Kopyala',
-      copied: 'Kopyalandı!',
-      ready: {
-        title: 'Bağlantı Başarılı!',
-        description:
-          'Script dosyası başarıyla projeye eklendiğinde sağ alt köşede destek balonu belirecektir.'
-      }
-    },
-    configuration: {
-      title: 'Yapılandırma & API',
-      description:
-        'Widget davranışlarını ve görsel dilini `supportioConfig` nesnesi üzerinden kontrol edebilirsiniz:',
-      required: 'Zorunlu Alan',
-      optional: 'İsteğe Bağlı',
-      siteId:
-        'Yönetim panelinden ürettiğiniz 24 haneli benzersiz kimlik (ID). Uygulama bu kimlik olmadan sunucuya istek atamaz.',
-      position:
-        "Widget'ın sayfada hangi köşeye sabitleneceğini belirler. Alabileceği değerler: bottom-right (varsayılan), bottom-left, top-right, top-left."
-    },
-    features: {
-      title: 'Yeni Nesil Özellikler',
-      description: 'Standart sohbet platformlarının ötesine geçin.',
-      realtime: {
-        title: 'WebSocket ile Gecikmesiz',
-        description:
-          'Veriler socket.io üzerinden akar. HTTP polling gibi yavaş ve sunucuyu yoran teknolojiler kullanılmaz.'
-      },
-      easy: {
-        title: 'Native JavaScript, Sıfır Bağımlılık',
-        description:
-          'Widget kodumuz jQuery veya React gibi dev kütüphanelere bağımlı değildir. Saf Vanilla JS ile yükleme süreleriniz etkilenmez.'
-      },
-      customizable: {
-        title: 'Dinamik Tema',
-        description:
-          'Renkleri CSS değişkenleri yardımıyla sistem temasına (karanlık/aydınlık) göre otomatik ayarlayabilirsiniz.'
-      },
-      analytics: {
-        title: 'Güçlü Analitik ve UTM',
-        description:
-          'Sitenize gelen ziyaretçilerin UTM parametrelerini, ziyaret sürelerini okuyup arka plan loglarına işliyoruz.'
-      }
-    },
-    benefits: {
-      title: 'Neden Bizi Seçmelisiniz?',
-      satisfaction: {
-        title: 'Yüksek Müşteri Memnuniyeti',
-        description:
-          'Müşterilerinizin problemlerini gecikme yaşamadan, saniyeler içerisinde çözün. Memnuniyet oranlarını tavana uçurun.'
-      },
-      conversion: {
-        title: 'Satışa Dönüştürün',
-        description:
-          'Canlı e-ticaret sitelerinde alışveriş sepetinde takılan müşteriye el uzatarak satış dönüşüm oranlarınızı artırın.'
-      },
-      availability: {
-        title: '%99.9 Uptime (SLA)',
-        description:
-          'Çökme problemi yaşamayın. Ölçeklenebilir mikroservis mimarisi ile trafiğinizin zirve yaptığı dönemlerde de yayında kalın.'
-      },
-      insights: {
-        title: 'Gelişmiş Ziyaretçi Profilleri',
-        description:
-          'Kimliğe bürünme algoritması sayesinde kullanıcıların sitenizdeki sayfa gezintilerini anlık takip edebilirsiniz.'
-      }
-    },
-    cta: {
-      title: 'Kodlamaya Zaman Kaybetmeyin',
-      description:
-        'Gelişmiş API entegrasyonuna bugün ücretsiz başlayın ve ekibinizi 5 dakikada sisteme adapte edin.',
-      button: 'Hemen Ücretsiz Başla (Kredi Kartı Gerekmez)',
-      secondaryButton: 'Paneli Keşfet'
-    }
-  },
   team: {
     title: 'Ekip Yönetimi',
     subtitle: 'Destek ekip üyelerinizi ve yetkilerini yönetin',
@@ -1956,213 +1832,90 @@ export default {
   },
   docsPage: {
     meta: {
-      title: 'Geliştirici Dokümantasyonu',
+      title: 'Kurulum rehberi',
       description:
-        'Support.io widget’ını tek satır kodla sitenize ekleyin. React, Next.js, Vue, Nuxt, Angular, Svelte, Astro, WordPress, Laravel ve düz HTML için kurulum, JavaScript SDK, olaylar ve güvenlik.'
+        'Support.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
     },
-    hero: {
-      title: 'Tek script. Her stack.',
-      description:
-        'Support.io widget’ı framework’ten bağımsızdır. Aynı script etiketi düz HTML’de de, React uygulamasında da, WordPress temasında da birebir aynı şekilde çalışır. Aşağıdaki her örnek bu kurulumun gerçek API’sini anlatır.'
-    },
+    eyebrow: 'Kurulum rehberi',
+    title: 'Support.io’yu sitenize ekleyin',
+    description:
+      'Tek bir kod, birkaç dakika. Platformunuzu seçin ve adımları izleyin. Yazılımcınız varsa React, Vue, Angular ve Next.js için kopyalanabilir kod aşağıda.',
+    onThisPage: 'Bu sayfada',
     nav: {
-      quickstart: 'Hızlı başlangıç',
-      embed: 'Universal embed',
-      api: 'JavaScript API',
-      events: 'Olaylar',
-      identify: 'Kullanıcı tanıma',
-      spa: 'SPA entegrasyonu',
-      frameworks: 'Framework’ler',
-      backend: 'Backend & Socket',
-      theming: 'Tema',
-      localization: 'Yerelleştirme',
-      security: 'Güvenlik',
-      troubleshooting: 'Sorun giderme'
+      install: 'Kurulum',
+      platforms: 'Platformlar',
+      identify: 'Kullanıcıyı tanıtma',
+      commands: 'Koddan kontrol',
+      help: 'Sorun giderme'
     },
-    table: {
-      attribute: 'Nitelik',
-      required: 'Zorunlu',
-      description: 'Açıklama',
-      event: 'Olay',
-      endpoint: 'Uç nokta',
-      direction: 'Yön'
+    install: {
+      title: 'Üç adımda kurulum',
+      steps: [
+        {
+          title: 'Hesabınızı açın, sitenizi ekleyin',
+          body: 'Ücretsiz hesapla başlayın; Siteler ekranında sitenizin adını ve adresini yazın.'
+        },
+        {
+          title: 'Kurulum kodunu kopyalayın',
+          body: 'Siteler → sitenizin kartı → Kurulum kodu. Kodda sitenize özel anahtar hazır gelir.'
+        },
+        {
+          title: 'Sitenize yapıştırın',
+          body: 'Aşağıdan platformunuzu seçin. Kaydettiğiniz an balon sitenizde görünür.'
+        }
+      ],
+      codeTitle: 'Kurulum kodu',
+      note: 'Site anahtarı gizli bir bilgi değildir; sayfanızın kaynağında görünür. Balon yalnızca Siteler → Erişim ekranında izin verdiğiniz adreslerde açılır, bu yüzden anahtarı başka bir siteye koyan kişi sohbet başlatamaz.',
+      cta: 'Ücretsiz hesap açın'
     },
-    quickstart: {
-      title: 'Hızlı başlangıç',
-      intro:
-        'Kurulum üç adım ve tek script etiketidir. Derleme adımı, npm paketi veya sunucu tarafı kod gerekmez.',
-      step1: {
-        title: 'Site anahtarınızı alın',
-        body: 'Panel → Siteler ekranından sitenizi oluşturun. Her site kendi anahtarını alır; anahtar hangi çalışma alanına ait olduğunu belirler.'
-      },
-      step2: {
-        title: 'Script etiketini sayfanıza ekleyin',
-        body: 'Kodu </body> etiketinden hemen önce koyun. async niteliği sayfanızın yüklenmesini bekletmez.'
-      },
-      step3: {
-        title: 'Kurulumu doğrulayın',
-        body: 'Widget bir sayfada ilk kez çalıştığında kendini sunucuya bildirir. Panel → Siteler ekranındaki “Kurulum bekleniyor” rozeti kendiliğinden yeşile döner.'
-      },
-      calloutTitle: 'Global değişken tanımlamanız gerekmez',
-      calloutBody:
-        'Widget yapılandırmayı kendi script etiketinin data-* niteliklerinden ve kendi src adresinden okur. Ayrı bir inline <script> bloğu gerekmediği için katı bir Content-Security-Policy altında da çalışır.',
-      getKey: 'Site anahtarımı al'
-    },
-    embed: {
-      title: 'Universal embed',
-      intro:
-        'Tek bir çalışma zamanı vardır ve her yerde aynıdır. Framework’e göre farklı bir embed kodu üretilmez; yalnızca aynı etiketin nereye konacağı değişir.',
-      attrs: 'Script nitelikleri',
-      versioning: 'Sürümleme',
-      versioningBody:
-        '/widget.js her zaman en güncel sürümü verir ve kısa süre önbelleklenir. Sürümü sabitlemek isterseniz büyük sürüm yolunu kullanın: bu adres değişmez olarak önbelleklenir, yeni bir dağıtım sitenizdeki widget’ı değiştirmez.',
-      latest: 'her zaman güncel',
-      pinned: 'sürüm sabitlenmiş',
-      consent: 'Çerez onayının arkasında çalıştırma',
-      consentBody:
-        'data-defer="true" verildiğinde script yüklenir ama hiçbir şey başlatmaz, ziyaretçi verisi toplanmaz. Onay alındıktan sonra SupportChat.init() çağırın.'
-    },
-    api: {
-      title: 'JavaScript API',
-      intro:
-        'Script yüklendiğinde tek bir global oluşur: window.SupportChat. Başka hiçbir isim global alana yazılmaz (eski window.SupportIO yalnızca geriye dönük uyumluluk için bir takma addır).'
-    },
-    events: {
-      title: 'Olaylar',
-      intro:
-        'on() bir aboneliği iptal eden fonksiyon döndürür. Bir dinleyicinin fırlattığı hata diğer dinleyicileri veya widget’ı durdurmaz.',
-      sample: 'yeni mesaj:',
-      unsub: 'aboneliği bırak',
-      wildcard: 'tüm olayları tek yerden dinlemek için:'
+    platforms: {
+      title: 'Platformunuzu seçin',
+      desc: 'Her platformda aynı kod kullanılır; değişen yalnızca nereye yapıştırıldığıdır.'
     },
     identify: {
-      title: 'Kullanıcı tanıma',
-      intro:
-        'Anonim ziyaretçi kendiliğinden bir ziyaretçi kimliği ve oturum kimliği alır. Kullanıcı sitenizde oturum açtığında identify() ile onu tanıtın; temsilci konuşmayı gerçek bir kişiyle eşleştirebilsin.',
-      afterLogin: 'kullanıcı oturum açtıktan sonra',
-      attrs: 'temsilciye gösterilecek serbest alanlar',
-      afterLogout: 'kullanıcı çıkış yaptığında',
-      warnTitle: 'Bu alanlara tek başına güvenilmez',
-      warnBody:
-        'identify() ile gönderilen bilgiler tarayıcıdan gelir ve herkes tarafından değiştirilebilir. Sunucu bunları YALNIZCA gösterim için kullanır; hiçbir yetkilendirme kararı ziyaretçinin gönderdiği kimliğe dayandırılmaz. Doğrulanmış kimlik gerekiyorsa sunucu tarafında üretilen imzalı bir değer (HMAC) kullanılmalıdır; runtime bunun için userHash alanını taşır.',
-      logoutTitle: 'Çıkışta logout() çağırmayı unutmayın',
-      logoutBody:
-        'logout() kimliği temizler ve YENİ bir ziyaretçi kimliği üretir. Çağrılmazsa ortak bir bilgisayarda oturum açan ikinci kullanıcı, birincinin sohbet geçmişini görür.'
+      title: 'Giriş yapmış kullanıcıyı tanıtın',
+      desc: 'İsteğe bağlı. Siteniz üyelik kullanıyorsa kullanıcının adını ve e-postasını balona verin; temsilciniz kiminle konuştuğunu bilir, müşteri bilgilerini tekrar yazmaz. Kod, balon yüklenmeden önce de sonra da çalışır.',
+      verifiedTitle: 'Doğrulanmış kimlik (önerilir)',
+      verifiedDesc:
+        'Panelde “Doğrulanmış müşteri” rozeti için sitenizin sunucusu kullanıcı kimliğini imzalar. Anahtarı Siteler → Erişim → Müşteri kimlik doğrulaması bölümünden üretin; bu anahtar yalnızca sunucunuzda durur.'
     },
-    spa: {
-      title: 'SPA entegrasyonu',
-      intro:
-        'React, Next.js, Vue, Nuxt, Angular, Svelte ve benzeri uygulamalarda ek bir şey yapmanız gerekmez; runtime bu durumları kendisi ele alır.',
-      singleton: {
-        title: 'Tekil çalışma zamanı',
-        body: 'Script iki kez eklense, bileşen iki kez mount olsa veya React Strict Mode effect’i iki kez çalıştırsa bile ikinci bir widget oluşmaz.'
-      },
-      history: {
-        title: 'Yönlendirme takibi',
-        body: 'pushState, replaceState, popstate ve hashchange dinlenir. Sayfa değişimi sunucuya bildirilir; soket ve açık konuşma korunur, sıfırlanmaz.'
-      },
-      cleanup: {
-        title: 'Temiz sökülme',
-        body: 'destroy() DOM’u, soketi, zamanlayıcıları ve dinleyicileri kaldırır; sarmalanan history metodlarını da orijinal hâline geri koyar.'
-      },
-      ssr: {
-        title: 'SSR ve hydration',
-        body: 'Widget sunucu tarafında hiçbir şey render etmez ve DOM’a kendisi bağlanır, bu yüzden hydration uyuşmazlığı üretmez.'
-      },
-      sampleTitle: 'Uygulama tamamen unmount olurken (nadiren gerekir)',
-      sampleNote: 'init() çağırmanıza gerek yok; script etiketi zaten başlatır.',
-      sampleDev: 'HMR sırasında gereksiz sökme yapmamak için'
+    commands: {
+      title: 'Koddan kontrol',
+      desc: 'Her komut aynı biçimde gönderilir. Balon henüz yüklenmediyse komut sıraya girer, yüklendiğinde çalışır.',
+      command: 'Komut',
+      does: 'Ne yapar',
+      optionsTitle: 'Kod etiketine eklenebilen seçenekler',
+      option: 'Seçenek'
     },
-    frameworks: {
-      title: 'Framework’ler',
-      intro:
-        'Aşağıdaki örneklerin hepsi AYNI script etiketini kullanır. Değişen tek şey, o etiketin ilgili framework’te hangi dosyaya konduğudur.'
-    },
-    backend: {
-      title: 'Backend ve Socket',
-      intro:
-        'Widget’ın konuştuğu yüzeyin tamamı. Site anahtarı tek başına yetki değildir: widget önce imzalı bir oturum alır ve diğer her uç bu oturumu ister. Oturum yalnızca sitenin izinli adreslerindeki (Siteler → Erişim) sayfalara verilir. Hiçbir uç organizasyon içi bir alan döndürmez.',
-      bootstrap:
-        'İmzalı widget oturumu (sunucunun ürettiği ziyaretçi kimliğiyle) + yapılandırma, SSS ve temsilci uygunluğu tek yanıtta. Yalnızca izinli bir origin’den.',
-      installed:
-        'Kurulum doğrulaması. Widget her sayfa açılışında çağırır; yalnızca origin ve yol saklanır.',
-      upload:
-        'Sohbet dosyası yükleme. Widget oturumu (Authorization: Bearer) ister, 10 MB sınırı ve MIME denetimi vardır.',
-      track: 'Ziyaretçi davranış olayları (proaktif mesaj kuralları bu akışı dinler).',
-      socket:
-        'Socket.IO ad alanı. İstemci /socket.io/socket.io.js dosyasını aynı sunucudan yükler.',
-      socketEvents: 'Socket olayları',
-      join: 'Konuşmaya katıl veya yenisini hazırla. Site ve ziyaretçi bağlantının oturumundan okunur.',
-      send: 'Mesaj gönder. clientMessageId ile tekrar önlenir.',
-      typing: 'Ziyaretçi yazıyor bildirimi.',
-      pageview: 'SPA yönlendirmesinde geçerli sayfayı bildir.',
-      joined: 'Konuşma ve son 100 mesaj (veya yeni ziyaretçi için karşılama mesajı).',
-      newMessage: 'Yeni mesaj yayını.',
-      agentTyping: 'Temsilci yazıyor.',
-      error: 'Hata mesajı; widget bunu banner olarak gösterir.'
-    },
-    theming: {
-      title: 'Tema',
-      intro:
-        'Renkler, ölçüler ve metinler panelin Widget Studio ekranından yönetilir; kod tarafında yalnızca açık/koyu tercihini değiştirmeniz gerekir.',
-      auto: 'sistem tercihini izler',
-      follow: 'sistem teması değişince widget’ı da çevir:',
-      isolationTitle: 'Stil yalıtımı',
-      isolationBody:
-        'Widget’ın tüm DOM ve CSS’i bir Shadow Root içindedir. Sitenizin * { }, button { } veya input { } gibi global kuralları widget’ı bozamaz; widget’ın CSS’i de sitenize sızamaz. Widget Studio’daki özel CSS alanı da bu Shadow Root’un içine enjekte edilir.'
-    },
-    localization: {
-      title: 'Yerelleştirme',
-      intro:
-        'Widget Türkçe ve İngilizce ile gelir. Dil sırası: açık ayar → <html lang> → tarayıcı dili. Paneldeki karşılama mesajı gibi metinler boş bırakılırsa widget kendi çevirisini kullanır.',
-      viaAttr: 'script etiketiyle',
-      viaApi: 'çalışma zamanında'
-    },
-    security: {
-      title: 'Güvenlik',
-      cspTitle: 'Content-Security-Policy',
-      cspBody:
-        'Widget hiçbir üçüncü parti alan adına bağlanmaz. Socket.IO istemcisi dahil her şey sizin Support.io sunucunuzdan gelir, bu yüzden politikanıza tek bir origin eklemeniz yeterlidir.',
-      inlineTitle: 'unsafe-inline gerekmez',
-      inlineBody:
-        'Kurulum kodu bir inline <script> bloğu içermez; yapılandırma data-* niteliklerinden okunur. Yalnızca style-src için unsafe-inline gerekir, o da Shadow Root içindeki stil etiketi içindir ve sayfanızın stillerini etkilemez.',
-      corsTitle: 'CORS',
-      corsBody:
-        'Sunucudaki CORS_ORIGINS değişkeni panelin hangi adreslerden açılabileceğini belirler. Widget uçları bundan bağımsızdır: widget.js her origin’e açıktır (public bir dosyadır), API uçları ise site anahtarıyla yetkilendirilir.',
-      keyTitle: 'Site anahtarı gizli değildir',
-      keyBody:
-        'Site anahtarı tarayıcıya gönderilir; gizli bir sır değildir, yalnızca hangi çalışma alanına yazılacağını belirleyen bir tanımlayıcıdır. Konuşma okuma ve yazma izinleri sunucu tarafında ziyaretçi kimliğine göre sınırlandırılır; bir anahtarla başka bir çalışma alanının verisine erişilemez.',
-      dataTitle: 'Saklanan veri',
-      dataBody:
-        'Widget tarayıcıda yalnızca ziyaretçi kimliğini ve isteğe bağlı ad/e-posta bilgisini localStorage’da tutar. localStorage kapalıysa (gizli sekme, çerez engeli) bellek içi bir yedeğe düşer ve çalışmaya devam eder. Kurulum doğrulamasında tam URL değil yalnızca origin ve yol saklanır; sorgu dizesi kişisel veri taşıyabileceği için atılır.'
-    },
-    troubleshooting: {
+    help: {
       title: 'Sorun giderme',
-      intro: 'İlk bakılacak yer tarayıcı konsolunda SupportChat.debug() çıktısıdır.',
-      notShowing: {
-        q: 'Widget hiç görünmüyor',
-        a: 'Konsolda SupportChat.debug() çalıştırın. initialized false ise script yüklenmemiştir (Network sekmesinde widget.js isteğini kontrol edin). fatal dolu ise mesajı okuyun: MISSING_SITE_KEY data-site-key eksik demektir, WIDGET_NOT_FOUND anahtarın yanlış veya sitenin pasif olduğu anlamına gelir. Ayrıca Widget Studio’daki “yalnızca şu sayfalarda göster” kuralları geçerli sayfayı dışarıda bırakıyor olabilir.'
-      },
-      wrongKey: {
-        q: 'WIDGET_NOT_FOUND hatası alıyorum',
-        a: 'Anahtar yanlış yazılmış ya da site pasif durumda. Panel → Siteler ekranındaki anahtarı yeniden kopyalayın ve sitenin “Aktif” göründüğünden emin olun. Aynı yanıt her iki durumda da döner: bu bilinçlidir, anahtar denemesiyle sistemde hangi sitelerin var olduğu çıkarılamasın diye.'
-      },
-      csp: {
-        q: 'Konsolda Content-Security-Policy hatası var',
-        a: 'Politikanızın script-src ve connect-src yönergelerine Support.io sunucunuzun adresini ekleyin. connect-src hem https hem wss şemasını içermelidir, çünkü sohbet WebSocket üzerinden çalışır. Güvenlik bölümündeki örnek politikayı kullanabilirsiniz.'
-      },
-      duplicate: {
-        q: 'Sayfada iki widget görünüyor',
-        a: 'Yeni çalışma zamanında bu mümkün değildir: ikinci bir başlatma sessizce yok sayılır. İki widget görüyorsanız büyük olasılıkla eski sürüm bir script etiketi hâlâ sayfada duruyordur. document.querySelectorAll("script[src*=widget]") ile kontrol edin ve eski etiketi kaldırın.'
-      },
-      styles: {
-        q: 'Sitemin CSS’i widget’ı bozuyor',
-        a: 'Bozmaması gerekir: widget bir Shadow Root içindedir ve host sayfanın hiçbir kuralı içeri geçmez. Yine de bir sorun görüyorsanız muhtemelen widget’ın kök elemanına (#support-chat-widget) uygulanan bir kural vardır — örneğin çok agresif bir div { position } kuralı. Kök elemana yazan CSS’inizi daraltın.'
-      },
-      disconnect: {
-        q: 'Bağlantı sürekli kopuyor',
-        a: 'Widget başlıkta “Yeniden bağlanıyor” gösterir ve artan aralıklarla kendiliğinden dener; mesaj kaybı olmaz. Sürekli kopuyorsa araya giren bir proxy veya yük dengeleyici WebSocket yükseltmesini kesiyor olabilir. Sunucu birden fazla sürece çıkarıldıysa REDIS_URL tanımlı olmalıdır, aksi halde farklı süreçlere düşen ziyaretçi ve temsilci birbirinin mesajını almaz.'
-      }
+      items: [
+        {
+          q: 'Balon görünmüyor',
+          a: 'Önce sitenizin adresinin Siteler → Erişim ekranındaki listede olduğundan emin olun; www’lu ve www’suz adresler ayrı yazılır. Sonra tarayıcı konsolunda SupportChat.debug() çalıştırın: “initialized” false ise kod sayfaya eklenmemiştir, “fatal” doluysa yazan mesaj sebebi söyler.'
+        },
+        {
+          q: 'Sitemde Content-Security-Policy var',
+          a: 'Siteler → Erişim ekranında sitenize özel CSP satırları hazırdır; kopyalayıp politikanıza ekleyin.'
+        },
+        {
+          q: 'Tek sayfa uygulamada (React, Vue, Angular) sayfa değişince ne olur?',
+          a: 'Bir şey yapmanız gerekmez. Balon adres değişikliklerini kendisi izler; ziyaretçi sayfa değiştirse de konuşma kapanmaz.'
+        },
+        {
+          q: 'Çerez onayından sonra yüklemek istiyorum',
+          a: 'Kod etiketine data-defer="true" ekleyin ve ziyaretçi onay verdiğinde SupportChat.q.push([\'init\']) çağırın.'
+        },
+        {
+          q: 'Balonu bazı sayfalarda gizlemek istiyorum',
+          a: 'Widget Studio’daki “yalnızca şu sayfalarda göster” ayarını kullanın ya da o sayfada SupportChat.q.push([\'hide\']) çağırın.'
+        },
+        {
+          q: 'Bir güncelleme sitemi etkiler mi?',
+          a: '/widget.js her zaman en güncel sürümü verir. Sürümü sabitlemek isterseniz adresi /widget/v3/widget.js olarak değiştirin.'
+        }
+      ],
+      still: 'Takıldınız mı? Sağ alttaki balondan yazın, kurulumu birlikte yapalım.'
     }
   },
   automation: {
