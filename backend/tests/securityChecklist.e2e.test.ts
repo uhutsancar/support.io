@@ -184,3 +184,45 @@ test('site changes and assignment leave audit rows without the content', async (
   assert.equal(deleted.status, 200);
   await auditRow('SITE_DELETED', siteId);
 });
+
+// proxy-addr below 2.0.8 could be talked into trusting an IPv4-mapped IPv6
+// address, and every per-IP limit, the account lock and the 90-day IP log
+// key on the address Express resolves. The backend trusts exactly one hop
+// (Caddy, which overwrites X-Forwarded-For with the address it resolved), so
+// whatever a client prepends must not move the key, and the mapped and plain
+// forms of one IPv4 address must land in the same bucket.
+test('a forged X-Forwarded-For does not change the rate-limit key', async () => {
+  const express = (await import('express')).default;
+  const { identifyClient } = await import('../src/middleware/rateLimit');
+  const app = express();
+  app.set('trust proxy', 1);
+  app.get('/key', (req, res) => {
+    res.json({ ip: req.ip, key: identifyClient(req) });
+  });
+  const server = app.listen(0);
+  try {
+    const { port } = server.address() as { port: number };
+    const keyFor = async (forwardedFor: string) => {
+      const res = await fetch(`http://127.0.0.1:${port}/key`, {
+        headers: { 'X-Forwarded-For': forwardedFor }
+      });
+      return (await res.json()) as { ip: string; key: string };
+    };
+
+    // What Caddy sends: one entry, the resolved visitor.
+    const real = await keyFor('9.9.9.9');
+    assert.equal(real.key, 'ip:9.9.9.9');
+
+    // A client that writes its own header in front of Caddy's entry.
+    for (const forged of [
+      '::ffff:1.2.3.4, 9.9.9.9',
+      '1.2.3.4, 9.9.9.9',
+      '10.0.0.1, ::ffff:9.9.9.9'
+    ]) {
+      const seen = await keyFor(forged);
+      assert.equal(seen.key, real.key, `forged header "${forged}" moved the key to ${seen.key}`);
+    }
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
