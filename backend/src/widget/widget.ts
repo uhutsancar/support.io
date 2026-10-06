@@ -995,6 +995,7 @@ interface Window {
           for (var m = 0; m < missed.length; m++) self._appendMessage(missed[m]);
         } else {
           self._renderThread(data.messages || []);
+          self._keepPending();
         }
         self._resendPending();
       } else {
@@ -1013,6 +1014,7 @@ interface Window {
             createdAt: new Date().toISOString()
           });
         }
+        self._keepPending();
         self._renderEmptyStateIfNeeded();
         // A first message that never reached the server opens the
         // conversation now.
@@ -2000,6 +2002,13 @@ interface Window {
       delete this.pending[clientId];
       placeholder.node.classList.remove('pending');
       placeholder.node.querySelector('.meta').textContent = this._time(message.createdAt);
+      // The thread was redrawn while it was on its way: it goes back where
+      // the server has it.
+      if (!placeholder.node.isConnected) {
+        var stale = this.el.messages.querySelector('.empty');
+        if (stale) stale.remove();
+        this.el.messages.appendChild(placeholder.node);
+      }
       return;
     }
 
@@ -2175,10 +2184,8 @@ interface Window {
       this._notice(this.t.tooLong, 'error');
       return;
     }
-    if (!this.socket) {
-      this._notice(this.t.connectionLost, 'error');
-      return;
-    }
+    // No socket yet (the widget is still starting): the message is queued
+    // like one written while offline and goes out with the first join.
 
     var clientMessageId = uid('c');
     var file = this.selectedFile;
@@ -2282,6 +2289,21 @@ interface Window {
         if (code === 'RATE_LIMITED') self._notice(self.t.rateLimited, 'error');
         else if (code === 'QUOTA_EXCEEDED') self._notice(self.t.quotaExceeded, 'error');
       });
+  };
+
+  /**
+   * Shows the messages still on their way again after the thread was redrawn
+   * (the first join replaces its contents), after what the server already has.
+   */
+  Widget.prototype._keepPending = function (this: WidgetInstance) {
+    if (!this.el) return;
+    for (var id in this.pending) {
+      var entry = this.pending[id];
+      if (!entry || !entry.node || entry.node.isConnected) continue;
+      var empty = this.el.messages.querySelector('.empty');
+      if (empty) empty.remove();
+      this.el.messages.appendChild(entry.node);
+    }
   };
 
   /** Sends again every message still waiting for the connection, in order. */
