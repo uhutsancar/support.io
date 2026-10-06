@@ -40,6 +40,7 @@ async function attachRedisAdapter(io: Server): Promise<AdapterStatus> {
   try {
     pubClient = createClient({
       url,
+      disableOfflineQueue: true,
       socket: {
         connectTimeout: connectTimeoutMs,
         // Redis geçici olarak düşerse süreç ölmemeli; artan aralıklarla
@@ -47,11 +48,36 @@ async function attachRedisAdapter(io: Server): Promise<AdapterStatus> {
         reconnectStrategy: (retries: number) => Math.min(retries * 200, 5000)
       }
     });
-    subClient = pubClient.duplicate();
+    subClient = pubClient.duplicate({ disableOfflineQueue: false });
+
+    // Adapter publish() sözlerini beklemez. Redis düşükken her yayın
+    // kuyrukta zaman aşımına uğrar ve yakalanmamış ret olarak loga düşerdi.
+    // Bu sürecin kendi istemcilerine yayın Redis'ten bağımsız sürer; yalnızca
+    // diğer süreçlere gidecek kopya kaybolur, o da Redis yokken zaten
+    // gidemez. Kuyruk kapalı: kesinti boyunca yayın biriktirilmez.
+    const publish = pubClient.publish.bind(pubClient);
+    Object.defineProperty(pubClient, 'publish', {
+      value: (...args: Parameters<typeof publish>) => publish(...args).catch(() => 0)
+    });
 
     // Bağlantı koptuğunda 'error' yayılır; yakalanmazsa süreci düşürür.
-    pubClient.on('error', (err: Error) => console.error('[redis:pub]', err.message));
-    subClient.on('error', (err: Error) => console.error('[redis:sub]', err.message));
+    // Yeniden bağlanma her denemede hata yayar; kesinti başına tek satır
+    // yazılır, geri gelince de bir satır.
+    for (const [name, c] of [
+      ['pub', pubClient],
+      ['sub', subClient]
+    ] as const) {
+      let down = false;
+      c.on('error', (err: Error) => {
+        if (down) return;
+        down = true;
+        console.error(`[redis:${name}]`, err.message);
+      });
+      c.on('ready', () => {
+        if (down) console.log(`[redis:${name}] yeniden bağlandı`);
+        down = false;
+      });
+    }
 
     await Promise.race([
       Promise.all([pubClient.connect(), subClient.connect()]),
@@ -86,7 +112,11 @@ async function attachRedisAdapter(io: Server): Promise<AdapterStatus> {
 }
 
 async function closeRedisAdapter(): Promise<void> {
-  await Promise.all(clients.map((c) => c.quit().catch(() => {})));
+  // Redis düşükken close() gönderilemeyen komutları bekler ve kapanışı
+  // zaman aşımına kadar uzatır; hazır olmayan istemci doğrudan bırakılır.
+  await Promise.all(
+    clients.map((c) => (c.isReady ? c.close().catch(() => c.destroy()) : c.destroy()))
+  );
   clients = [];
 }
 

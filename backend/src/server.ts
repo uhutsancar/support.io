@@ -424,8 +424,10 @@ const SHUTDOWN_GRACE_MS = Number(process.env.SHUTDOWN_GRACE_MS) || 10_000;
 connectDB()
   .then(async () => {
     // Yatay ölçekleme: REDIS_URL varsa olaylar süreçler arasında yayılır.
-    // Socket.io başlatılmadan önce bağlanmalı.
-    const adapterState = await attachRedisAdapter(io);
+    // Socket.io başlatılmadan önce bağlanmalı. Paylaşılan istemci (hız
+    // sınırı, önbellek) aynı anda kurulur; ilk bağlantı beklemesi açılışta
+    // biter, ilk isteğe kalmaz.
+    const [adapterState] = await Promise.all([attachRedisAdapter(io), getRedisClient()]);
 
     // Socket.io başlat
     new SocketHandler(io);

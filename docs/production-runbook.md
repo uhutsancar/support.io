@@ -204,6 +204,29 @@ Logs rotate at 20 MB × 5 files per container. Do not put
 `docker system prune -a` in cron; prune old images by hand after a
 successful deploy (`docker image prune` keeps the ones in use).
 
+### When Redis is down
+
+Redis only carries rate-limit counters, a short cache and the Socket.IO
+adapter. While it is down, the API, logins and messages keep working; rate
+limits are counted per process, and `/ready` stays `ready` with one
+`Redis unreachable` line in the log. When it is back, the log shows
+`Redis is back` and `[redis:pub] / [redis:sub] yeniden bağlandı`; nothing
+needs a restart. A backend that *started* while Redis was down runs without
+the adapter until its next restart, which only matters with more than one
+backend process.
+
+The drill (run on staging, last run 2026-10-06 on the dev stack: 19/19
+message and widget-session tests passed both with Redis stopped and after
+it came back):
+
+```bash
+$C stop redis
+curl -s https://app.example.com/ready          # still {"status":"ready"}
+# send a widget message, answer it from the panel
+$C start redis
+$C logs --since 1m backend | grep -i redis     # "Redis is back"
+```
+
 ## 10. Staging
 
 Same VPS, separate Compose project and data:
