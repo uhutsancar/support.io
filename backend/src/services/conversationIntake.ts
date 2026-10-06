@@ -83,6 +83,12 @@ export async function openConversation(
   const verifiedUserId =
     typeof visitor.metadata?.verifiedUserId === 'string' ? visitor.metadata.verifiedUserId : null;
 
+  // Numbered before the transaction, in a statement of its own. Inside it,
+  // every opener on the platform waited on the one counter row until the
+  // previous opener committed (scripts/loadtest.ts showed it). A number taken
+  // for a conversation that is not created after all is simply skipped.
+  const ticketNumber = await Conversation.nextTicketNumber();
+
   // One visitor, one running conversation per identity — even when two first
   // messages arrive at once (two tabs, a double send). A transaction-scoped
   // advisory lock on the visitor serialises the openers; whoever comes second
@@ -102,23 +108,16 @@ export async function openConversation(
     );
     if (rows[0]) return { existingId: rows[0].id, conversation: null, quota: null };
 
-    // Counted in this transaction: if the insert below fails, the slot is
-    // given back with it. Over the quota, nothing is created.
+    const conversation = buildConversation(site, visitor, department, responseOwner);
+    conversation.ticketNumber = ticketNumber;
+    conversation.ticketId = `#${String(ticketNumber).padStart(4, '0')}`;
+    await conversation.save({ client });
+
+    // Counted last: the organization's usage row stays locked until commit,
+    // and every message of the organization counts on that row too. Over the
+    // quota, the throw rolls the conversation back with the count.
     const quota = await tryConsumeConversation(String(site.organizationId), client);
     if (!quota.ok) throw new ConversationQuotaError();
-
-    const conversation = buildConversation(site, visitor, department, responseOwner);
-    // Numbered on this same connection: the model's save hook would otherwise
-    // take a second pool connection while this one holds the lock, and under
-    // load every opener would end up waiting for a connection none can free.
-    const ticket = await client.query<{ seq: string }>(
-      `INSERT INTO counters (id, seq) VALUES ('ticketNumber', 1)
-       ON CONFLICT (id) DO UPDATE SET seq = counters.seq + 1
-       RETURNING seq`
-    );
-    conversation.ticketNumber = Number(ticket.rows[0].seq);
-    conversation.ticketId = `#${String(conversation.ticketNumber).padStart(4, '0')}`;
-    await conversation.save({ client });
     return { existingId: null, conversation, quota };
   });
 
