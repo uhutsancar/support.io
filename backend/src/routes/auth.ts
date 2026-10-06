@@ -14,6 +14,7 @@ import Site from '../models/Site';
 import events from '../events';
 import { auth } from '../middleware/auth';
 import { startSession, endSession, SESSION_TTL_SECONDS } from '../config/session';
+import { deleteOrganization } from '../services/organizationDeletion';
 import { signSession } from '../config/tokens';
 import { passwordProblem, burnVerification, needsRehash } from '../config/passwords';
 import { PRESENCE_STATUSES, isPresenceStatus } from '../domain';
@@ -430,13 +431,29 @@ router.delete(
   '/account',
   auth,
   asyncHandler(async (req: Request, res: Response) => {
-    // A soft delete: the row stays so conversations keep a sender, but the
-    // address is released and the account can no longer sign in.
+    // The owner's account is the workspace: deleting it deletes the
+    // organization and everything in it (services/organizationDeletion.ts),
+    // so it asks for the password again, whatever the session says.
+    if (req.user.role === 'owner' && req.user.organizationId) {
+      const password = typeof req.body?.password === 'string' ? req.body.password : '';
+      if (!password || !(await req.user.comparePassword(password))) {
+        throw new HttpError(403, 'The password is not correct', 'PASSWORD_INCORRECT');
+      }
+      await deleteOrganization(String(req.user.organizationId));
+      endSession(res);
+      res.json({ message: 'Workspace deleted', workspaceDeleted: true });
+      return;
+    }
+
+    // Anyone else leaves only themselves. A soft delete: the row stays so
+    // conversations keep a sender, but the address is released and the
+    // account can no longer sign in.
     req.user.email = `deleted_${Date.now()}@deleted.com`;
     req.user.isActive = false;
     req.user.name = 'Deleted User';
     req.user.status = 'offline';
     await req.user.save();
+    endSession(res);
     res.json({ message: 'Account deleted successfully' });
   })
 );

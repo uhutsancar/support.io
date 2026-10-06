@@ -39,6 +39,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSocket } from '../contexts/SocketContext';
 import { conversationsAPI, authAPI } from '../services/api';
 import ConfirmDialog from '../components/ConfirmDialog';
+import DeleteWorkspaceDialog from '../components/DeleteWorkspaceDialog';
 import UpgradeDialog from '../components/billing/UpgradeDialog';
 import { planWith } from '../components/billing/PlanGate';
 import { usePlans } from '../hooks/usePlans';
@@ -257,6 +258,13 @@ const DashboardLayout = () => {
     } catch {
       toast.error(t('account.deleteFailed'));
     }
+  };
+
+  const handleWorkspaceDeleted = async () => {
+    setDeleteConfirmOpen(false);
+    toast.success(t('account.workspace.done'));
+    await logout();
+    navigate(routes.login);
   };
 
   /* -------------------------------------------------------------- menüler */
@@ -693,16 +701,25 @@ const DashboardLayout = () => {
       </div>
 
       <UpgradeDialog base={`${langPrefix}/dashboard`} />
-      <ConfirmDialog
-        isOpen={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-        onConfirm={handleConfirmDeleteAccount}
-        title={t('account.delete')}
-        message={t('account.deleteConfirm')}
-        confirmText={t('common.delete')}
-        cancelText={t('common.cancel')}
-        type="danger"
-      />
+      {user?.role === 'owner' ? (
+        <DeleteWorkspaceDialog
+          isOpen={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          onDeleted={handleWorkspaceDeleted}
+          base={`${langPrefix}/dashboard`}
+        />
+      ) : (
+        <ConfirmDialog
+          isOpen={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          onConfirm={handleConfirmDeleteAccount}
+          title={t('account.delete')}
+          message={t('account.deleteConfirm')}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
+          type="danger"
+        />
+      )}
     </div>
   );
 };

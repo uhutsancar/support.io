@@ -17,7 +17,7 @@
 // The file this replaces was called `s3Upload.ts`, which is no longer the whole
 // truth about what it does.
 
-import { S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import fs from 'fs';
@@ -184,6 +184,42 @@ function uploader(
 
 export const uploadFile = uploader('files', '', MAX_CHAT_BYTES, chatFileFilter);
 export const uploadLogo = uploader('logos', 'logo-', MAX_LOGO_BYTES, logoFileFilter);
+
+// ------------------------------------------------------------- deleting files
+
+/** Every key this server writes: `files/<uuid>.<ext>` or `logos/logo-<uuid>.<ext>`. */
+const STORED_KEY = /(?:^|\/)((?:files|logos)\/[A-Za-z0-9._-]+)(?:[?#]|$)/;
+
+/** The storage key inside a URL this server handed out, or null. */
+export function storedKeyFromUrl(url: unknown): string | null {
+  const match = STORED_KEY.exec(typeof url === 'string' ? url : '');
+  return match ? match[1] : null;
+}
+
+/**
+ * Removes stored files by key, from S3 or from the disk. Keys that are not
+ * ones this server writes are skipped. Returns how many were asked for.
+ */
+export async function deleteStoredFiles(keys: Array<string | null>): Promise<number> {
+  const unique = [...new Set(keys.filter((k): k is string => Boolean(k && STORED_KEY.test(k))))];
+  if (!unique.length) return 0;
+  if (s3) {
+    for (let i = 0; i < unique.length; i += 1000) {
+      // eslint-disable-next-line no-await-in-loop
+      await s3.send(
+        new DeleteObjectsCommand({
+          Bucket: BUCKET as string,
+          Delete: { Objects: unique.slice(i, i + 1000).map((Key) => ({ Key })), Quiet: true }
+        })
+      );
+    }
+  } else {
+    await Promise.all(
+      unique.map((key) => fs.promises.unlink(path.join(UPLOAD_ROOT, key)).catch(() => undefined))
+    );
+  }
+  return unique.length;
+}
 
 // ----------------------------------------------------------- describing a file
 

@@ -331,7 +331,19 @@ export default {
       AUTOMATION_RULE_DELETED: 'Otomasyon Kuralı Silindi',
       AUTOMATION_EXECUTED: 'Otomasyon Çalıştı',
       SITE_AI_SETTINGS_UPDATED: 'AI Ayarları Değişti',
-      SITE_INTEGRATION_UPDATED: 'Entegrasyon Değişti'
+      SITE_INTEGRATION_UPDATED: 'Entegrasyon Değişti',
+      SITE_ASSISTANT_UPDATED: 'Yapay Zekâ Asistanı Ayarı Değişti',
+      SITE_CREATED: 'Site Eklendi',
+      SITE_UPDATED: 'Site Ayarları Değişti',
+      SITE_DELETED: 'Site Silindi',
+      WIDGET_SETTINGS_UPDATED: 'Sohbet Balonu Ayarları Değişti',
+      CONVERSATION_ASSIGNED: 'Konuşma Atandı',
+      EMAIL_VERIFIED: 'E-posta Doğrulandı',
+      PASSWORD_RESET_REQUESTED: 'Şifre Sıfırlama İstendi',
+      PASSWORD_RESET: 'Şifre Sıfırlandı',
+      INVITATION_SENT: 'Davet Gönderildi',
+      INVITATION_REVOKED: 'Davet Geri Alındı',
+      INVITATION_ACCEPTED: 'Davet Kabul Edildi'
     },
     fetchError: 'Denetim kayıtları alınırken bir hata oluştu',
     copyFailed: 'Kopyalama başarısız',
@@ -340,7 +352,10 @@ export default {
       agent: 'Temsilci',
       ticket: 'Talep',
       department: 'Departman',
-      organization: 'Organizasyon'
+      organization: 'Organizasyon',
+      site: 'Site',
+      invitation: 'Davet',
+      automation_rule: 'Otomasyon kuralı'
     },
     startDate: 'Başlangıç',
     endDate: 'Bitiş',
@@ -1844,7 +1859,16 @@ export default {
   account: {
     delete: 'Hesabı sil',
     deleteConfirm: 'Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
-    deleteFailed: 'Hesap silinemedi'
+    deleteFailed: 'Hesap silinemedi',
+    workspace: {
+      title: 'Hesabı ve çalışma alanını sil',
+      body: 'Bu hesap çalışma alanının sahibi. Silerseniz tüm siteler, konuşmalar, ziyaretçi bilgileri, SSS kayıtları ve ekip hesapları kalıcı olarak silinir; sitelerinizdeki sohbet balonu da çalışmayı bırakır.',
+      export: 'Önce verilerinizi indirmek isterseniz:',
+      exportLink: 'Ayarlar → Veri ve gizlilik',
+      password: 'Onaylamak için şifreniz',
+      confirm: 'Kalıcı olarak sil',
+      done: 'Çalışma alanınız silindi.'
+    }
   },
   docsPage: {
     meta: {
@@ -2261,7 +2285,13 @@ export default {
   errors: {
     tooManyRequests: 'Kısa sürede çok fazla istek gönderildi. Birkaç dakika sonra tekrar deneyin.',
     tooManyLogins: 'Çok fazla giriş denemesi yapıldı. Lütfen biraz bekleyip tekrar deneyin.',
-    tooManyRegistrations: 'Çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.'
+    tooManyRegistrations: 'Çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',
+    tooManySites: 'Bir saat içinde çok fazla site eklendi. Biraz sonra tekrar deneyin.',
+    tooManyInvitations: 'Bir saat içinde çok fazla davet gönderildi. Biraz sonra tekrar deneyin.',
+    assistantUnavailable: 'Yapay zekâ asistanı şu anda açılamıyor. Biraz sonra tekrar deneyin.',
+    passwordIncorrect: 'Şifre doğru değil.',
+    subscriptionActive:
+      'Önce aboneliğinizi iptal edin: Faturalandırma → Aboneliği yönet. Dönem bitince çalışma alanını silebilirsiniz.'
   },
   /* Gösterge paneli (2026-09 yeniden tasarım). */
   dash: {
@@ -2325,6 +2355,7 @@ export default {
       title: 'Kurulumu tamamlayın',
       site: 'İlk sitenizi ekleyin',
       install: 'Kurulum satırını sitenize yapıştırın',
+      chat: 'Sitenizden bir deneme mesajı gönderin',
       team: 'Ekip arkadaşınızı davet edin'
     },
     invite: 'Ekibinize yeni birini davet edin',

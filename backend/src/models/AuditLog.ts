@@ -25,7 +25,12 @@ export type AuditAction =
   | 'PASSWORD_RESET'
   | 'INVITATION_SENT'
   | 'INVITATION_REVOKED'
-  | 'INVITATION_ACCEPTED';
+  | 'INVITATION_ACCEPTED'
+  | 'SITE_CREATED'
+  | 'SITE_UPDATED'
+  | 'SITE_DELETED'
+  | 'WIDGET_SETTINGS_UPDATED'
+  | 'CONVERSATION_ASSIGNED';
 
 export interface AuditLogDoc {
   organizationId: Ref<OrganizationDoc>;
@@ -74,7 +79,12 @@ export default defineModel<AuditLogDoc>({
         'PASSWORD_RESET',
         'INVITATION_SENT',
         'INVITATION_REVOKED',
-        'INVITATION_ACCEPTED'
+        'INVITATION_ACCEPTED',
+        'SITE_CREATED',
+        'SITE_UPDATED',
+        'SITE_DELETED',
+        'WIDGET_SETTINGS_UPDATED',
+        'CONVERSATION_ASSIGNED'
       ]
     },
     entityType: { column: 'entity_type', type: 'string' },

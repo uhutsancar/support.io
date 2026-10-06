@@ -198,6 +198,11 @@ curl -s https://app.example.com/ready  # {"status":"ready"}
 $C exec postgres psql -U support_user supportchat   # database shell
 $C exec backend npm run db:migrate:prod             # migrations by hand
 df -h /var/lib/docker                  # disk (alert at 80%)
+
+# support operations (each writes an audit row where it changes something)
+$C exec backend npm run org:list:prod -- acme                 # find a workspace
+$C exec backend npm run plan:set:prod -- owner@x.com PRO      # beta / support case
+$C exec backend npm run site:disable:prod -- <site key>       # widget off (--enable undoes)
 ```
 
 Logs rotate at 20 MB × 5 files per container. Do not put

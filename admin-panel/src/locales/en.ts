@@ -332,7 +332,19 @@ export default {
       AUTOMATION_RULE_DELETED: 'Automation Rule Deleted',
       AUTOMATION_EXECUTED: 'Automation Executed',
       SITE_AI_SETTINGS_UPDATED: 'AI Settings Changed',
-      SITE_INTEGRATION_UPDATED: 'Integration Changed'
+      SITE_INTEGRATION_UPDATED: 'Integration Changed',
+      SITE_ASSISTANT_UPDATED: 'AI Assistant Setting Changed',
+      SITE_CREATED: 'Site Added',
+      SITE_UPDATED: 'Site Settings Changed',
+      SITE_DELETED: 'Site Deleted',
+      WIDGET_SETTINGS_UPDATED: 'Chat Bubble Settings Changed',
+      CONVERSATION_ASSIGNED: 'Conversation Assigned',
+      EMAIL_VERIFIED: 'Email Verified',
+      PASSWORD_RESET_REQUESTED: 'Password Reset Requested',
+      PASSWORD_RESET: 'Password Reset',
+      INVITATION_SENT: 'Invitation Sent',
+      INVITATION_REVOKED: 'Invitation Revoked',
+      INVITATION_ACCEPTED: 'Invitation Accepted'
     },
     fetchError: 'Something went wrong while loading the audit log',
     copyFailed: 'Copy failed',
@@ -341,7 +353,10 @@ export default {
       agent: 'Agent',
       ticket: 'Ticket',
       department: 'Department',
-      organization: 'Organization'
+      organization: 'Organization',
+      site: 'Site',
+      invitation: 'Invitation',
+      automation_rule: 'Automation rule'
     },
     startDate: 'Start',
     endDate: 'End',
@@ -1837,7 +1852,16 @@ export default {
   account: {
     delete: 'Delete account',
     deleteConfirm: 'Delete your account? This cannot be undone.',
-    deleteFailed: 'Could not delete the account'
+    deleteFailed: 'Could not delete the account',
+    workspace: {
+      title: 'Delete account and workspace',
+      body: 'This account owns the workspace. Deleting it permanently removes every site, conversation, visitor detail, FAQ entry and team account, and the chat bubble stops working on your sites.',
+      export: 'To download your data first:',
+      exportLink: 'Settings → Data and privacy',
+      password: 'Your password, to confirm',
+      confirm: 'Delete permanently',
+      done: 'Your workspace has been deleted.'
+    }
   },
   docsPage: {
     meta: {
@@ -2253,7 +2277,15 @@ export default {
   errors: {
     tooManyRequests: 'Too many requests in a short time. Please try again in a few minutes.',
     tooManyLogins: 'Too many sign-in attempts. Please wait a little and try again.',
-    tooManyRegistrations: 'Too many sign-up attempts. Please try again later.'
+    tooManyRegistrations: 'Too many sign-up attempts. Please try again later.',
+    tooManySites: 'Too many sites were added in the last hour. Try again a little later.',
+    tooManyInvitations:
+      'Too many invitations were sent in the last hour. Try again a little later.',
+    assistantUnavailable:
+      'The AI assistant cannot be switched on right now. Try again a little later.',
+    passwordIncorrect: 'The password is not correct.',
+    subscriptionActive:
+      'Cancel your subscription first: Billing → Manage subscription. Once the period ends you can delete the workspace.'
   },
   /* Dashboard (2026-09 redesign). */
   dash: {
@@ -2317,6 +2349,7 @@ export default {
       title: 'Finish setting up',
       site: 'Add your first site',
       install: 'Paste the install line into your site',
+      chat: 'Send a test message from your site',
       team: 'Invite a teammate'
     },
     invite: 'Invite someone new to your team',

@@ -131,6 +131,27 @@ function errorCode(error: unknown): string | undefined {
  * that used to answer 400 on a bad body keeps answering 400 — only the message
  * changes, from raw database text to something safe.
  */
+const BODY_ERRORS: Record<string, { code: string; message: string }> = {
+  'entity.parse.failed': { code: 'INVALID_JSON', message: 'The request body is not valid JSON' },
+  'entity.too.large': { code: 'PAYLOAD_TOO_LARGE', message: 'The request body is too large' },
+  'encoding.unsupported': { code: 'UNSUPPORTED_ENCODING', message: 'Unsupported content encoding' },
+  'charset.unsupported': { code: 'UNSUPPORTED_CHARSET', message: 'Unsupported charset' }
+};
+
+function bodyParserError(error: unknown): { status: number; code: string; message: string } | null {
+  if (!error || typeof error !== 'object') return null;
+  const { type, status } = error as { type?: unknown; status?: unknown };
+  if (typeof type !== 'string' || typeof status !== 'number' || status < 400 || status >= 500) {
+    return null;
+  }
+  const known = BODY_ERRORS[type];
+  return {
+    status,
+    code: known?.code ?? 'REQUEST_ERROR',
+    message: known?.message ?? GENERIC[status] ?? GENERIC[400]
+  };
+}
+
 export function describeError(error: unknown, fallbackStatus = 500): ErrorDescription {
   if (error instanceof HttpError) {
     return {
@@ -168,6 +189,18 @@ export function describeError(error: unknown, fallbackStatus = 500): ErrorDescri
   // CORS rejection travels as a plain Error from the cors middleware.
   if (error instanceof Error && /CORS origin denied/i.test(error.message)) {
     return { status: 403, body: { error: error.message, code: 'CORS_DENIED' }, unexpected: false };
+  }
+
+  // express.json() and express.raw(): a body that is not JSON, too large or in
+  // an encoding they do not read. Their status is the right one; their message
+  // describes the parser, so a fixed one is sent. These used to become 500s.
+  const parser = bodyParserError(error);
+  if (parser) {
+    return {
+      status: parser.status,
+      body: { error: parser.message, code: parser.code },
+      unexpected: false
+    };
   }
 
   const status = fallbackStatus >= 400 && fallbackStatus < 600 ? fallbackStatus : 500;

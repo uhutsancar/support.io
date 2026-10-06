@@ -107,6 +107,12 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   // Whether the FAQ assistant answers on a site, and the site's identity
   // key. The metadata names what changed, never a secret.
   'site.assistant.updated': { action: 'SITE_ASSISTANT_UPDATED', entityType: 'site' },
+  'site.created': { action: 'SITE_CREATED', entityType: 'site' },
+  'site.updated': { action: 'SITE_UPDATED', entityType: 'site' },
+  'site.deleted': { action: 'SITE_DELETED', entityType: 'site' },
+  'site.widget.updated': { action: 'WIDGET_SETTINGS_UPDATED', entityType: 'site' },
+  // Who moved a conversation to whom: agent ids only, never the conversation.
+  'conversation.assigned': { action: 'CONVERSATION_ASSIGNED', entityType: 'ticket' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // Account security. The metadata never carries a token or a password.
   'auth.email.verified': {

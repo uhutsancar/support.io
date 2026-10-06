@@ -47,6 +47,33 @@ Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
 Yük testi rakamları geliştirme makinesini anlatır (dizüstü, Docker Desktop,
 geliştirme modu); üretim kapasitesi diye yazılmaz. Staging'de tekrar ölçülmeli.
 
+## A2. Plan (6) — ayrıntılı plan, madde madde kontrol
+
+Plan (8), plan (6)'nın depoya göre kısaltılmış hâlidir. Plan (6) baştan sona
+ayrıca okundu; plan (8)'de karşılığı olmayan ya da eksik kalan maddeler
+bulunup tamamlandı:
+
+| Plan (6) maddesi | Bulunan durum | Yapılan |
+|---|---|---|
+| §8.2 Hız sınırları: site oluşturma, davet, soket bağlantısı | Yoktu (davet e-postasıyla spam açığı) | Kurum başına saatte 20 site / 20 davet; soket: panel IP başına dakikada 30, widget site+IP başına 60; widget ve panel sınıra takılınca kendiliğinden yeniden dener |
+| §21 Denetim kaydı: site ekleme/değiştirme/silme, widget ayarları, konuşma atama | Yazılmıyordu | Beş yeni eylem (migration 0008), panelde filtre ve Türkçe/İngilizce adlar; içerik değil yalnızca neyin değiştiği yazılır |
+| §22 Kurum (çalışma alanı) silme | Sahip "Hesabı sil" deyince yalnızca kendi satırı kapanıyordu; siteler ve ziyaretçi verisi kalıyordu | Şifre onayıyla tüm çalışma alanı, verisi ve yüklenen dosyaları silinir; hesaplar anonimleşir; aktif abonelik önce iptal ister |
+| §39.1 Başlangıç adımları: "test mesajı gönder" | Listede yoktu | Panelde kurulum listesine eklendi |
+| §46 Yönetim betikleri: kurumları listele, siteyi kapat | Yalnızca plan değiştirme vardı | `org:list`, `site:disable` (denetim kaydıyla) |
+| §49 Güvenlik listesi: izinsiz CORS, SQL benzeri arama, hata yanıtında yığın izi | Testi yoktu; bozuk JSON 500 dönüyordu | Testler eklendi; bozuk JSON artık 400 |
+| Müşteriye sağlayıcı adı | Asistan kapalıyken bir hata mesajında `GEMINI_API_KEY` yazıyordu | Nötr mesaj |
+
+Plan (6)'da olup zaten tamam olanlar (kodda doğrulandı): giriş hatasında
+e-posta ifşası yok; tek SLA zamanlayıcısı; SSS otomatik cevabı varsayılan
+kapalı; Caddy'de Cloudflare IP'leri ve güvenlik başlıkları; dağıtım kilidi
+(flock) ve dağıtım öncesi yedek; yedekte sha256, şifreleme, off-site ve
+7/4/3 saklama; kurulum rehberinde CSP ve gizlilik notu; widget konumu ve
+sürüm sabitleme.
+
+Plan (6) "AI YOK" der; plan (9) ve sizin sonraki isteğiniz bunu değiştirdi:
+yalnızca SSS'den yanıt veren yapay zekâ asistanı var, müşteriye sağlayıcı adı
+gösterilmez.
+
 ## B. Plan (9) — Yapay zekâ asistanı (Gemini)
 
 | İş | Durum | Commit |
@@ -70,7 +97,7 @@ geliştirme modu); üretim kapasitesi diye yazılmaz. Staging'de tekrar ölçül
 | Ödeme ekranı sayfası (Pro/Kurumsal'a geçiş) + uygun yerlerden yönlendirme | [x] | 18a6de7 |
 | Fiyatlar sayfasında giriş yapmış kullanıcı doğrudan ödeme sayfasına; yıllık indirim satırı, sipariş özeti | [x] | d25bfbc |
 | Ücretli özellik ücretsiz planda açılınca "planınızı yükseltin" mesajı + yönlendirme | [x] | 18a6de7 |
-| sancaruhut@gmail.com: sahip (owner) + en yüksek plan, her şeyi kullanabilsin | [x] | (veritabanı, denetim kaydıyla) |
+| sancaruhut@gmail.com: sahip (owner) + en yüksek plan, her şeyi kullanabilsin | [x] | (veritabanı, denetim kaydıyla; 2026-10-06 tekrar doğrulandı: owner, aktif, doğrulanmış, ENTERPRISE, tüm izinler) |
 | Admin panelde sitenin kendi sohbet balonu görünmesin | [x] | 18a6de7 |
 | Siteler kartı taşıyor (rozetler, kurulum kodu, butonlar) | [x] | 18a6de7 |
 | Ekip sohbeti: "+" ile açılan "Üye seçin" / "Grup oluştur" panelleri siyah görünüyor | [x] | 18a6de7 |
@@ -103,6 +130,10 @@ yapılmadı ve "bitti" sayılmadı. Ayrıntılı adımlar: `docs/production-runb
    gerçek pencere sandbox hesabı ister.
 8. Staging sunucusunda `npm run loadtest` ile ölçüm (kapasite rakamı ancak
    oradan söylenebilir).
+9. Production veritabanı boş başlar: canlıda sancaruhut@gmail.com ile kayıt
+   olduktan sonra bir kez
+   `exec backend npm run plan:set:prod -- sancaruhut@gmail.com ENTERPRISE`
+   çalıştırın (runbook §3). Sohbette yazdığınız şifreyi de değiştirin.
 
 Not: `Downloads/plan (6).md` planın eski (v6) sürümüdür; yerini plan (8)
 (v7) aldı. Bu liste plan (8) ve plan (9)'a göre tutulur.

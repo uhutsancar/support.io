@@ -340,6 +340,14 @@ router.put(
         await updateAgentLoad(agentId, 1);
         await recordAgentAssignment(target!.Model, agentId, organizationId);
       }
+      events.emit('conversation.assigned', {
+        organizationId,
+        userId: req.user?._id ?? null,
+        entityId: conversation._id,
+        metadata: { from: previousAgentId ? String(previousAgentId) : null, to: agentId || null },
+        ip: req.ip,
+        ua: req.get('user-agent')
+      });
     }
 
     const notifier = notifyAdmin(req);

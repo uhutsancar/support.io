@@ -56,6 +56,11 @@ const TRANSLATED_CODES: Record<string, string> = {
   TOO_MANY_REQUESTS: 'errors.tooManyRequests',
   TOO_MANY_LOGIN_ATTEMPTS: 'errors.tooManyLogins',
   TOO_MANY_REGISTRATIONS: 'errors.tooManyRegistrations',
+  TOO_MANY_SITES_CREATED: 'errors.tooManySites',
+  TOO_MANY_INVITATIONS: 'errors.tooManyInvitations',
+  ASSISTANT_UNAVAILABLE: 'errors.assistantUnavailable',
+  PASSWORD_INCORRECT: 'errors.passwordIncorrect',
+  SUBSCRIPTION_ACTIVE: 'errors.subscriptionActive',
   PLAN_UPGRADE_REQUIRED: 'upgrade.featureLocked',
   PLAN_LIMIT_REACHED: 'upgrade.limitReached'
 };

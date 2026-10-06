@@ -5,6 +5,7 @@
 // ./widget.ts) that carries no internal fields.
 
 import express from 'express';
+import events from '../events';
 import WidgetConfig from '../models/WidgetConfig';
 import { auth } from '../middleware/auth';
 import { requireWidgetSession } from '../middleware/widgetSession';
@@ -107,6 +108,15 @@ router.put(
     }
 
     await config.save();
+    // Which sections changed, not their contents.
+    events.emit('site.widget.updated', {
+      organizationId: orgId(req),
+      userId: req.user?._id ?? null,
+      entityId: site._id,
+      metadata: { sections: Object.keys(updates) },
+      ip: req.ip,
+      ua: req.get('user-agent')
+    });
     res.json({ config });
   })
 );

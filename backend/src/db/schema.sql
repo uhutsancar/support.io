@@ -1031,3 +1031,25 @@ CREATE INDEX IF NOT EXISTS idx_billing_events_org
 -- same moment cannot both take the last one.
 ALTER TABLE organization_usage_monthly
   ADD COLUMN IF NOT EXISTS assistant_replies integer NOT NULL DEFAULT 0;
+
+-- ===========================================================================
+-- 0008_audit_site_actions.sql
+-- ===========================================================================
+-- Audit trail: sites, the chat bubble's settings and conversation assignment
+-- (plan (6) §21). Only the action list widens; no row changes.
+
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED',
+  -- Kept so the history written before 0005 stays valid.
+  'SITE_AI_SETTINGS_UPDATED',
+  'SITE_INTEGRATION_UPDATED', 'SITE_ASSISTANT_UPDATED',
+  'EMAIL_VERIFIED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET',
+  'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
+  'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
+  'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED'));

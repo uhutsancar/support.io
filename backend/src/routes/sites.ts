@@ -15,9 +15,11 @@ import { assertCanCreateSite, lockOrganization } from '../services/entitlements'
 import { assistantAvailable } from '../services/assistant';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
+import { siteCreateLimiter } from '../middleware/rateLimit';
 import {
   asyncHandler,
   badRequest,
+  HttpError,
   loadOwnedSite,
   notFound,
   orgId,
@@ -99,6 +101,7 @@ router.get(
 router.post(
   '/',
   checkPermission('manage_sites'),
+  siteCreateLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const name = siteText(req.body?.name, 'name', 100);
     const domain = siteText(req.body?.domain, 'domain', 253);
@@ -123,6 +126,10 @@ router.post(
       await lockOrganization(client, organizationId);
       await assertCanCreateSite(organizationId, client);
       await site.save({ client });
+    });
+    events.emit('site.created', {
+      ...auditContext(req, site),
+      metadata: { name: site.name, domain: site.domain }
     });
     res.status(201).json({ site });
   })
@@ -158,9 +165,10 @@ router.put(
       }
     }
     // The assistant needs a Gemini key on this server; switching it on
-    // without one would promise visitors answers that never come.
+    // without one would promise visitors answers that never come. The answer
+    // names no provider: the panel may show it to the customer.
     if (updates.assistantEnabled === true && !assistantAvailable()) {
-      throw badRequest('The assistant is not available on this server (GEMINI_API_KEY is not set)');
+      throw new HttpError(400, 'The AI assistant is not available yet', 'ASSISTANT_UNAVAILABLE');
     }
 
     const site = await loadOwnedSite(req, req.params.siteId);
@@ -179,6 +187,11 @@ router.put(
         metadata: { enabled: site.assistantEnabled }
       });
     }
+    // Which settings changed, not their values.
+    const changed = Object.keys(updates).filter((key) => key !== 'assistantEnabled');
+    if (changed.length) {
+      events.emit('site.updated', { ...auditContext(req, site), metadata: { fields: changed } });
+    }
     res.json({ site });
   })
 );
@@ -192,6 +205,10 @@ router.delete(
       organizationId: orgId(req)
     });
     if (!site) throw notFound('Site');
+    events.emit('site.deleted', {
+      ...auditContext(req, site),
+      metadata: { name: site.name, domain: site.domain }
+    });
     res.json({ message: 'Site deleted successfully' });
   })
 );

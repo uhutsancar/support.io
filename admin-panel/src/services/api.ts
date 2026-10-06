@@ -71,7 +71,9 @@ export const authAPI = {
   me: () => api.get<{ user: CurrentUser }>('/auth/me'),
   logout: () => api.post('/auth/logout'),
   updateStatus: (data: { status: string }) => api.put('/auth/status', data),
-  deleteAccount: () => api.delete('/auth/account'),
+  // The owner confirms with the password: it deletes the whole workspace.
+  deleteAccount: (password?: string) =>
+    api.delete('/auth/account', password ? { data: { password } } : undefined),
 
   // E-mail links (plan §7.2). The answers never say whether an address has
   // an account; the locale picks the mail's language.

@@ -336,6 +336,12 @@ const Dashboard = () => {
   const checklist = [
     { key: 'site', done: sites.length > 0, to: `${base}/sites` },
     { key: 'install', done: installed, to: `${base}/sites` },
+    // The first conversation proves the whole path: page, widget, inbox.
+    {
+      key: 'chat',
+      done: recent.length > 0 || summary.totalConversations > 0,
+      to: `${base}/conversations`
+    },
     { key: 'team', done: team.length > 1, to: `${base}/team` }
   ];
   const doneCount = checklist.filter((i) => i.done).length;
