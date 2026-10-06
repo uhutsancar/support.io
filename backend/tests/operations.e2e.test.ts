@@ -49,6 +49,9 @@ const COMPLETE = {
   CORS_ORIGINS: 'https://app.example.com',
   DATABASE_URL: undefined,
   DB_PASSWORD: 'a-long-random-database-password',
+  REDIS_URL: 'redis://:0123456789abcdef0123456789abcdef@redis:6379',
+  REDIS_PASSWORD: '0123456789abcdef0123456789abcdef',
+  ALLOW_LOCAL_UPLOADS: undefined,
   APP_BASE_URL: 'https://app.example.com',
   MAIL_PROVIDER: 'smtp',
   SMTP_HOST: 'smtp.example.com',
@@ -92,6 +95,26 @@ test('an incomplete one is refused with every problem listed', () => {
         assert.match(problems, new RegExp(expected), `expected a problem about ${expected}`);
       }
     }
+  );
+});
+
+const problemText = () => productionConfigProblems().join('\n');
+
+test('Redis needs a real password, and the URL must carry it', () => {
+  withEnv({ ...COMPLETE, REDIS_PASSWORD: 'short', REDIS_URL: 'redis://:short@redis:6379' }, () =>
+    assert.match(problemText(), /REDIS_PASSWORD/)
+  );
+  withEnv({ ...COMPLETE, REDIS_URL: 'redis://redis:6379' }, () =>
+    assert.match(problemText(), /REDIS_URL must carry the password/)
+  );
+});
+
+test('local uploads are refused unless asked for explicitly', () => {
+  withEnv({ ...COMPLETE, UPLOAD_STORAGE: 'local' }, () =>
+    assert.match(problemText(), /UPLOAD_STORAGE=local/)
+  );
+  withEnv({ ...COMPLETE, UPLOAD_STORAGE: 'local', ALLOW_LOCAL_UPLOADS: 'true' }, () =>
+    assert.deepEqual(productionConfigProblems(), [])
   );
 });
 

@@ -19,17 +19,19 @@ function looksPlaceholder(raw: string): boolean {
   return !raw || PLACEHOLDER.test(raw);
 }
 
+/** The password inside a connection URL, or '' when there is none. */
+function urlPassword(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).password);
+  } catch {
+    return '';
+  }
+}
+
 /** The database password, whether given on its own or inside DATABASE_URL. */
 function databasePassword(): string {
   const url = value('DATABASE_URL');
-  if (url) {
-    try {
-      return decodeURIComponent(new URL(url).password);
-    } catch {
-      return '';
-    }
-  }
-  return value('DB_PASSWORD');
+  return url ? urlPassword(url) : value('DB_PASSWORD');
 }
 
 export function productionConfigProblems(): string[] {
@@ -46,6 +48,18 @@ export function productionConfigProblems(): string[] {
     problems.push(
       'DB_PASSWORD (or the password in DATABASE_URL) is empty or still the example value'
     );
+  }
+
+  // Redis is reachable only on the Docker network and still asks for a
+  // password (SEC-12), so a neighbour container cannot read or wipe it.
+  const redisUrl = value('REDIS_URL');
+  if (redisUrl) {
+    const redisPassword = value('REDIS_PASSWORD') || urlPassword(redisUrl);
+    if (redisPassword.length < 24 || looksPlaceholder(redisPassword)) {
+      problems.push('REDIS_PASSWORD must be a random value of at least 24 characters');
+    } else if (!urlPassword(redisUrl)) {
+      problems.push('REDIS_URL must carry the password: redis://:<REDIS_PASSWORD>@redis:6379');
+    }
   }
 
   const base = value('APP_BASE_URL');
@@ -71,8 +85,14 @@ export function productionConfigProblems(): string[] {
   }
 
   // Upload decision A (plan §12): files live in S3-compatible storage. Local
-  // disk inside the container is lost on every deploy.
-  if (value('UPLOAD_STORAGE') !== 'local') {
+  // disk is a volume nothing backs up (DR-04), so it needs saying twice.
+  if (value('UPLOAD_STORAGE') === 'local') {
+    if (value('ALLOW_LOCAL_UPLOADS') !== 'true') {
+      problems.push(
+        'UPLOAD_STORAGE=local keeps attachments on a volume the backups do not cover; use s3, or set ALLOW_LOCAL_UPLOADS=true and back up the uploads volume yourself'
+      );
+    }
+  } else {
     const bucket = value('S3_BUCKET') || value('AWS_BUCKET_NAME');
     const keys = value('AWS_ACCESS_KEY_ID') && value('AWS_SECRET_ACCESS_KEY');
     const region = value('AWS_REGION') || value('S3_REGION') || value('S3_ENDPOINT');

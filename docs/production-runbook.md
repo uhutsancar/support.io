@@ -89,7 +89,7 @@ sign-up page. To give an organization a plan by hand during the beta (it
 writes a PLAN_CHANGED audit row):
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml   exec backend npm run plan:set:prod -- owner@example.com ENTERPRISE
+docker compose --env-file .env.production -f docker-compose.prod.yml   exec backend node dist/cli/updatePlan.js owner@example.com ENTERPRISE
 ```
 
 ## 4. Deploy and rollback
@@ -196,13 +196,13 @@ $C ps                                  # what is running
 $C logs -f --tail 200 backend          # application log
 curl -s https://app.example.com/ready  # {"status":"ready"}
 $C exec postgres psql -U support_user supportchat   # database shell
-$C exec backend npm run db:migrate:prod             # migrations by hand
+$C exec backend node dist/db/migrate.js               # migrations by hand
 df -h /var/lib/docker                  # disk (alert at 80%)
 
 # support operations (each writes an audit row where it changes something)
-$C exec backend npm run org:list:prod -- acme                 # find a workspace
-$C exec backend npm run plan:set:prod -- owner@x.com PRO      # beta / support case
-$C exec backend npm run site:disable:prod -- <site key>       # widget off (--enable undoes)
+$C exec backend node dist/cli/listOrganizations.js acme       # find a workspace
+$C exec backend node dist/cli/updatePlan.js owner@x.com PRO    # beta / support case
+$C exec backend node dist/cli/disableSite.js <site key>        # widget off (--enable undoes)
 ```
 
 Logs rotate at 20 MB × 5 files per container. Do not put

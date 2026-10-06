@@ -10,7 +10,11 @@
 #
 services:
   postgres:
-    image: postgres:16
+    # Debian (glibc) variant on purpose: the existing development volume was
+    # initialised with glibc en_US.utf8 collation, and moving it to Alpine
+    # (musl) would silently reorder text indexes. Production and CI start
+    # empty and use the Alpine image. Same PostgreSQL release, pinned by digest.
+    image: postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -37,7 +41,7 @@ services:
   # baglanir: redis kimlik dogrulamasi olmadan calisir ve tum arayuzlere acilmasi
   # ag uzerinden acik bir kapi birakir.
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
     container_name: support.io_redis
     restart: unless-stopped
     command: >
@@ -169,7 +173,8 @@ services:
     restart: unless-stopped
 
   proxy:
-    image: caddy:2
+    # The same Caddy as production (docker-compose.prod.yml).
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
     restart: unless-stopped
     ports:
       - "${PROXY_PORT:-80}:80"

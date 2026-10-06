@@ -8,6 +8,12 @@
 # add docker-compose.prod.build.yml, which builds the image here.
 #
 # Never add `ports:` to postgres or redis: published ports bypass UFW.
+#
+# Every third-party image is pinned by digest (plan v10 SUP-02); Dependabot
+# proposes new digests weekly and the release workflow scans them (Trivy).
+# Each service drops the Linux capabilities it does not need and cannot gain
+# new privileges (SEC-14). The memory and CPU ceilings are starting values for
+# a 2 vCPU / 4 GB server; adjust them from the staging measurements.
 
 x-logging: &logging
   driver: json-file
@@ -15,10 +21,39 @@ x-logging: &logging
     max-size: "20m"
     max-file: "5"
 
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     restart: unless-stopped
+    <<: *hardening
+    # The entrypoint starts as root, fixes the data directory's owner and
+    # drops to the postgres user; that is all it needs.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    shm_size: 256mb
+    # Sized for a 4 GB server where the database gets about 1 GB (PERF-03).
+    # log_parameter_max_length=0 keeps bind values (message text, e-mail
+    # addresses) out of the slow-query log. pg_stat_statements is loaded so
+    # the slowest queries can be read on staging:
+    #   CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+    command: >-
+      postgres
+      -c shared_buffers=${PG_SHARED_BUFFERS:-512MB}
+      -c effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-1536MB}
+      -c work_mem=8MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=${PG_MAX_CONNECTIONS:-50}
+      -c random_page_cost=1.1
+      -c log_min_duration_statement=500ms
+      -c log_parameter_max_length=0
+      -c idle_in_transaction_session_timeout=60s
+      -c autovacuum_vacuum_scale_factor=0.05
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
     environment:
       POSTGRES_DB: ${DB_NAME:-supportchat}
       POSTGRES_USER: ${DB_USER:-support_user}
@@ -30,28 +65,59 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEM_LIMIT:-1280m}
     logging: *logging
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
     restart: unless-stopped
+    <<: *hardening
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETGID, SETUID]
     # Redis carries only the Socket.IO adapter, rate limits, presence and short
     # budgets; every message lives in PostgreSQL. Nothing here needs to
     # survive a restart, so persistence is off and there is no volume. If
     # durable data is ever put in Redis, revisit this (and the runbook).
+    #
+    # Only the Docker network reaches it, and it still asks for a password
+    # (SEC-12): a compromised neighbour container cannot read rate-limit or
+    # presence keys, and FLUSHALL / CONFIG are switched off outright.
+    # REDIS_PASSWORD goes into a URL, so keep it to [A-Za-z0-9]
+    # (openssl rand -hex 24).
     command: >-
       redis-server --appendonly no --save ""
       --maxmemory ${REDIS_MAXMEMORY:-256mb} --maxmemory-policy volatile-lru
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      --protected-mode yes
+      --rename-command FLUSHALL ""
+      --rename-command FLUSHDB ""
+      --rename-command CONFIG ""
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEM_LIMIT:-320m}
     logging: *logging
 
   backend:
     image: ${APP_IMAGE:?APP_IMAGE is required, e.g. ghcr.io/uhutsancar/supportio:sha-0000000}
     restart: unless-stopped
+    <<: *hardening
+    # Nothing in the image is written at runtime except uploads (a volume,
+    # local storage only) and temporary files.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop: [ALL]
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -67,7 +133,8 @@ services:
       DB_SSL: "false"
       DB_POOL_MAX: ${DB_POOL_MAX:-20}
       DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-15000}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       # Session cookie: panel and API share the origin, so Lax + Secure.
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
@@ -85,6 +152,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       # File uploads: S3-compatible storage (AWS S3, Cloudflare R2, Hetzner).
       UPLOAD_STORAGE: ${UPLOAD_STORAGE:-s3}
+      # local is refused unless this says so (the volume is not backed up).
+      ALLOW_LOCAL_UPLOADS: ${ALLOW_LOCAL_UPLOADS:-false}
       S3_BUCKET: ${S3_BUCKET:-}
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
@@ -126,11 +195,19 @@ services:
       retries: 5
       start_period: 30s
     stop_grace_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: ${BACKEND_MEM_LIMIT:-1536m}
+          cpus: ${BACKEND_CPUS:-1.5}
     logging: *logging
 
   proxy:
-    image: caddy:2-alpine
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
     restart: unless-stopped
+    <<: *hardening
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
     environment:
       APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN is required}
     ports:
@@ -144,6 +221,10 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: ${CADDY_MEM_LIMIT:-256m}
     logging: *logging
 
 volumes:

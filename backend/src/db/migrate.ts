@@ -16,7 +16,7 @@
 //
 // An advisory lock serialises concurrent runs (two processes booting at once,
 // or a deploy's one-off migrate racing a container that still migrates on
-// boot). Production runs `npm run db:migrate:prod` once per deploy and boots
+// boot). Production runs `node dist/db/migrate.js` once per deploy and boots
 // with MIGRATE_ON_BOOT=false; development keeps migrating on boot.
 //
 // schema.sql next to this file is generated from the migrations
@@ -176,7 +176,7 @@ export function migrateOnBoot(): boolean {
 /** Kept for callers written against the old single-file schema. */
 export const applySchema = runMigrations;
 
-// Run directly: `npm run db:migrate` (tsx) or `npm run db:migrate:prod` (built).
+// Run directly: `npm run db:migrate` (tsx) or `node dist/db/migrate.js` (built image, no npm).
 if (require.main === module) {
   runMigrations()
     .then((applied) => {
