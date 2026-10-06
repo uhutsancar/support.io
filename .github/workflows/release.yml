@@ -1,7 +1,8 @@
-# The production image (plan §14.2): built from main and from v* tags,
-# pushed to GHCR as ghcr.io/<owner>/supportio:sha-<7 chars> and, for a tag,
-# :vX.Y.Z. There is no `latest`: a deployment always names the exact image
-# (scripts/deploy.sh), so a rollback is the previous tag.
+# The production image (plan §14.2, v10 SUP-03): built from main and from v*
+# tags, scanned, pushed to GHCR as ghcr.io/<owner>/supportio:sha-<7 chars>
+# (and :vX.Y.Z for a tag) with an SBOM and provenance, then signed with
+# Sigstore keyless signing. There is no `latest`: a deployment always names
+# the exact image (scripts/deploy.sh), so a rollback is the previous tag.
 name: Release image
 
 on:
@@ -12,37 +13,103 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   image:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      # Keyless signing: cosign exchanges the workflow's OIDC token for a
+      # short-lived certificate; no signing key exists to leak.
+      id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ghcr.io/${{ github.repository_owner }}/supportio
           flavor: latest=false
           tags: |
             type=sha,prefix=sha-,format=short
             type=semver,pattern=v{{version}}
-      - uses: docker/build-push-action@v6
+      - name: Build for the scan
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: .
+          file: backend/Dockerfile.prod
+          load: true
+          push: false
+          tags: supportio:scan
+          build-args: |
+            VITE_SUPPORT_SITE_KEY=${{ vars.SUPPORT_SITE_KEY }}
+            VITE_TURNSTILE_SITE_KEY=${{ vars.TURNSTILE_SITE_KEY }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: No fixable high or critical vulnerability
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: supportio:scan
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          exit-code: '1'
+      - name: Push, with SBOM and provenance
+        id: push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: backend/Dockerfile.prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
           build-args: |
             VITE_SUPPORT_SITE_KEY=${{ vars.SUPPORT_SITE_KEY }}
+            VITE_TURNSTILE_SITE_KEY=${{ vars.TURNSTILE_SITE_KEY }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Sign the pushed digest
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/supportio
+        run: cosign sign --yes "${IMAGE}@${DIGEST}"
       - name: Image reference for the deploy
-        run: echo "Deploy with ./scripts/deploy.sh ghcr.io/${{ github.repository_owner }}/supportio:sha-${GITHUB_SHA::7}" >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          {
+            echo "Deploy with ./scripts/deploy.sh ghcr.io/${{ github.repository_owner }}/supportio:sha-${GITHUB_SHA::7}"
+            echo ""
+            echo "Digest: \`${{ steps.push.outputs.digest }}\` (signed; deploy.sh verifies it when COSIGN_VERIFY=true)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # The images we run but do not build: the same scan, so a pinned digest
+  # that has gone stale is noticed at release time and not months later.
+  third-party:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [proxy, postgres, redis]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - id: ref
+        name: Image pinned in docker-compose.prod.yml
+        run: |
+          image=$(awk -v svc="  ${{ matrix.service }}:" '$0==svc{f=1;next} f&&/image:/{print $2; exit}' docker-compose.prod.yml)
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.ref.outputs.image }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          exit-code: '1'

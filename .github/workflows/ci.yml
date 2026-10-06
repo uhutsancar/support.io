@@ -1,14 +1,18 @@
-# Every push and pull request (plan §14.1).
+# Every push and pull request (plan §14.1, v10 SEC-02 / SUP-03 / PERF-01).
 #
-#   checks    typecheck, lint and formatting for both packages, plus two
-#             guards: no trace of the removed self-hosted AI stack, and no
-#             fixed server address baked into the panel build
+#   checks    typecheck, lint and formatting for both packages, the
+#             production dependency audit, and two guards: no trace of the
+#             removed self-hosted AI stack, and no fixed server address
+#             baked into the panel build
 #   test      the backend e2e suite against a real PostgreSQL and Redis,
 #             with the API running beside it as in development
-#   browser   Playwright: sign-up to a paid plan in two browsers, against
-#             the built panel served by the API
-#   build     both packages, then the production image (not pushed)
+#   browser   Playwright against the built panel served by the API
+#   build     both packages, the size budgets, then the production image
+#             (not pushed) and its vulnerability scan
 #   secrets   gitleaks over the history
+#
+# Every action is pinned to a commit SHA (the tag is in the comment);
+# Dependabot keeps them current.
 name: CI
 
 on:
@@ -30,8 +34,8 @@ jobs:
   checks:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -52,6 +56,15 @@ jobs:
         run: |
           (cd backend && npm run format:check)
           (cd admin-panel && npm run format:check)
+      - name: Translations have the same keys in Turkish and English
+        run: npx tsx scripts/check-locales.ts
+        working-directory: admin-panel
+      - name: Production dependencies have no high or critical advisory
+        # Development-only tooling is reported in docs/security/accepted-risks.md;
+        # what ships in the image must be clean.
+        run: |
+          (cd backend && npm audit --omit=dev --audit-level=high)
+          (cd admin-panel && npm audit --omit=dev --audit-level=high)
       - name: No trace of the removed self-hosted AI stack
         # The FAQ assistant (Google Gemini, backend/src/services/assistant)
         # is the only AI. The old model server, its compose service and its
@@ -70,7 +83,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
         env:
           POSTGRES_DB: supportchat
           POSTGRES_USER: support_user
@@ -80,7 +93,7 @@ jobs:
           --health-cmd "pg_isready -U support_user -d supportchat"
           --health-interval 5s --health-timeout 5s --health-retries 20
       redis:
-        image: redis:7-alpine
+        image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
         ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 20
@@ -103,8 +116,8 @@ jobs:
       PADDLE_PRICE_PRO: pri_ci_pro
       PADDLE_PRICE_ENTERPRISE: pri_ci_enterprise
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -122,21 +135,33 @@ jobs:
           done
           cat /tmp/api.log
           exit 1
-      - name: e2e suite
-        run: npm test
+      - name: e2e suite, with line coverage of the test process
+        # Coverage covers the code the tests import in-process (helpers,
+        # policies, unit-level checks); the API under test is a separate
+        # process. The report is uploaded for reading, not gated.
+        run: |
+          node --import tsx --test --experimental-test-coverage \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=lcov --test-reporter-destination=coverage.lcov \
+            "tests/**/*.test.ts"
         working-directory: backend
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: backend-coverage
+          path: backend/coverage.lcov
+          retention-days: 14
       - name: API log
         if: failure()
         run: cat /tmp/api.log
 
-  # Playwright: sign-up to a paid plan in real browsers, against the built
-  # panel served by the API (e2e/tests/first-chat.spec.ts).
+  # Playwright against the built panel served by the API (e2e/tests).
   browser:
     runs-on: ubuntu-24.04
     needs: [checks]
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
         env:
           POSTGRES_DB: supportchat
           POSTGRES_USER: support_user
@@ -146,7 +171,7 @@ jobs:
           --health-cmd "pg_isready -U support_user -d supportchat"
           --health-interval 5s --health-timeout 5s --health-retries 20
       redis:
-        image: redis:7-alpine
+        image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
         ports: ['6379:6379']
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 20
@@ -159,13 +184,16 @@ jobs:
       MAIL_PROVIDER: console
       APP_BASE_URL: http://localhost:5000
       E2E_APP_URL: http://localhost:5000
+      REGISTER_RATE_MAX: '100000'
+      AUTH_RATE_MAX: '100000'
+      API_RATE_MAX: '1000000'
       PADDLE_ENV: sandbox
       PADDLE_WEBHOOK_SECRET: ci-paddle-webhook-secret
       PADDLE_PRICE_PRO: pri_ci_pro
       PADDLE_PRICE_ENTERPRISE: pri_ci_enterprise
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -177,6 +205,8 @@ jobs:
         working-directory: admin-panel
       - run: npm ci
         working-directory: backend
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: e2e
       - name: Start the API
         working-directory: backend
         run: |
@@ -188,12 +218,10 @@ jobs:
           done
           cat /tmp/api.log
           exit 1
-      - run: npm ci && npx playwright install --with-deps chromium
-        working-directory: e2e
       - name: Browser tests
         run: npm test
         working-directory: e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-report
@@ -209,8 +237,8 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [checks]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -227,22 +255,35 @@ jobs:
             echo "::error::admin-panel/dist contains a hard-coded IP address"
             exit 1
           fi
-      - uses: docker/setup-buildx-action@v3
+      - name: Size budgets (widget and the panel's first load)
+        run: node scripts/check-bundle-size.mjs
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       - name: Production image builds
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: backend/Dockerfile.prod
           push: false
+          load: true
+          tags: supportio:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Image has no fixable high or critical vulnerability
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: supportio:ci
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          exit-code: '1'
 
   secrets:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -268,7 +268,8 @@ export default {
     openMenu: 'Menüyü aç',
     closeMenu: 'Menüyü kapat',
     mobileMenu: 'Mobil menü',
-    switchToEnglish: 'Switch to English'
+    switchToEnglish: 'Switch to English',
+    switchToTurkish: "Türkçe'ye geç"
   },
   sidebar: {
     groups: {
