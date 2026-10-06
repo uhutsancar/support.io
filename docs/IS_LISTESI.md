@@ -31,6 +31,21 @@ Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
 | 16 | Staging + kabul testleri — runbook'ta adımlar var; sunucu gerekiyor | [!] | |
 | 17–18 | Kapalı beta, ücretli lansman | [!] | |
 | P2 | Yapılandırılmış log, KVKK dışa aktarma, IP saklama süresi (90 gün), Gizlilik/Şartlar sayfaları | [x] | 342b942 |
+| — | Bağımlılık güvenliği: nodemailer 10, `npm audit` 0 açık (iki pakette de) | [x] | 9cc5b3c |
+
+### §18 Testler
+
+| Test | Durum | Sonuç | Commit |
+|---|---|---|---|
+| Birim + DB/e2e (izolasyon, sahte ziyaretçi, mükerrer mesaj, eşzamanlı açılış/kota/davet, Paddle sırası, token tekrarı) | [x] | 133/133 | (her görevle) |
+| Redis düşme testi: Redis durdur → REST ve mesaj kaydı → geri gelince bağlantı | [x] | Redis kapalıyken API asılı kalıyordu, düzeltildi; kapalıyken ve geri gelince 19/19 | 1cf8b7f |
+| E2E (Playwright): kayıt → doğrulama → site → widget mesajı → temsilci cevabı → yenileme sonrası geçmiş → kapatma → yükseltme ve limit artışı | [x] | 2/2, yerelde ve CI benzeri ortamda; CI'da ayrı iş | a794c6a |
+| Bu testin bulduğu hata: widget bağlanmadan yazılan ilk mesaj kayboluyordu | [x] | Düzeltildi, regresyon testi eski kodda düşüyor, yenide geçiyor | 03438d5 |
+| Yük testi: 100 / 500 / 1.000 soket, 50 mesaj/sn | [x] | Hatasız; ayrıntı ve sınırları `docs/load-test.md` | b9f218e |
+| Yük testinin bulduğu darboğaz: konuşma açılışı iki satırda sıraya giriyordu (500 sokette 216/500 mesaj zaman aşımı) | [x] | Düzeltildi; 0 hata, ACK p95 0,6–1,5 sn | a2b5137 |
+
+Yük testi rakamları geliştirme makinesini anlatır (dizüstü, Docker Desktop,
+geliştirme modu); üretim kapasitesi diye yazılmaz. Staging'de tekrar ölçülmeli.
 
 ## B. Plan (9) — Yapay zekâ asistanı (Gemini)
 
@@ -53,11 +68,12 @@ Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
 | Planlarda yapay zekâ farkı (Kurumsal'da daha iyi deneyim, kullanım limitleri) | [x] | 18a6de7 |
 | Kurumsal plan: "Size özel" yok; aylık 1.449 TL, somut özellikler | [x] | 18a6de7, 09a0508 |
 | Ödeme ekranı sayfası (Pro/Kurumsal'a geçiş) + uygun yerlerden yönlendirme | [x] | 18a6de7 |
+| Fiyatlar sayfasında giriş yapmış kullanıcı doğrudan ödeme sayfasına; yıllık indirim satırı, sipariş özeti | [x] | d25bfbc |
 | Ücretli özellik ücretsiz planda açılınca "planınızı yükseltin" mesajı + yönlendirme | [x] | 18a6de7 |
 | sancaruhut@gmail.com: sahip (owner) + en yüksek plan, her şeyi kullanabilsin | [x] | (veritabanı, denetim kaydıyla) |
 | Admin panelde sitenin kendi sohbet balonu görünmesin | [x] | 18a6de7 |
 | Siteler kartı taşıyor (rozetler, kurulum kodu, butonlar) | [x] | 18a6de7 |
-| Ekip sohbeti: "Üye seçin" / "Grup oluştur" panelleri siyah görünüyor | [x] | 18a6de7 |
+| Ekip sohbeti: "+" ile açılan "Üye seçin" / "Grup oluştur" panelleri siyah görünüyor | [x] | 18a6de7 |
 | Konuşmalar sayfası çok dar; daha geniş ve ferah olsun | [x] | 18a6de7 |
 | Konuşmalar arasında geçerken ekran zıplıyor (sonsuz yeniden yükleme + sayfa kaydırma hatası) | [x] | 18a6de7 |
 | Gereksiz yazılar kalksın: "Bu tek satır her framework'te aynıdır…", "Balon yapıştırdığınız dakika içinde görünür", "Fiyatlara KDV dâhil değildir…" | [x] | 09a0508 |
@@ -82,3 +98,11 @@ yapılmadı ve "bitti" sayılmadı. Ayrıntılı adımlar: `docs/production-runb
    ve yıllık), API anahtarı, client token, webhook adresi; sandbox kabul testi.
 6. Gizlilik Politikası ve Kullanım Şartları metinlerini bir hukukçuya
    kontrol ettirmek (alt işleyenlerin adlarının yazılması gerekebilir).
+7. Paddle'ın kendi ödeme penceresinde sandbox kartıyla bir ödeme yapmak:
+   E2E testi Paddle'ın ödeme sonrası gönderdiği imzalı bildirimi taklit eder,
+   gerçek pencere sandbox hesabı ister.
+8. Staging sunucusunda `npm run loadtest` ile ölçüm (kapasite rakamı ancak
+   oradan söylenebilir).
+
+Not: `Downloads/plan (6).md` planın eski (v6) sürümüdür; yerini plan (8)
+(v7) aldı. Bu liste plan (8) ve plan (9)'a göre tutulur.
