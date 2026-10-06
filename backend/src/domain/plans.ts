@@ -17,7 +17,9 @@ export const FEATURES = [
   'visitors',
   'crm',
   'export',
-  'audit'
+  'audit',
+  // Requiring two-step verification of every member (SEC-04).
+  'security'
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 

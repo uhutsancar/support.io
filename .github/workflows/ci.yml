@@ -56,6 +56,9 @@ jobs:
         run: |
           (cd backend && npm run format:check)
           (cd admin-panel && npm run format:check)
+      - name: The generated schema matches the migrations
+        run: npm run db:schema -- --check
+        working-directory: backend
       - name: Translations have the same keys in Turkish and English
         run: npx tsx scripts/check-locales.ts
         working-directory: admin-panel

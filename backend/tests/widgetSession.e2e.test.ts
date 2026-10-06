@@ -33,7 +33,7 @@ import {
   widgetSocket,
   widgetToken
 } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { signUp } from './helpers/accounts';
 
 const SHOP = 'https://shop.example.com';
 
@@ -79,12 +79,8 @@ async function api(
 async function createTenant(label: string, allowedOrigins?: string[]) {
   const stamp = `${Date.now()}${Math.floor(Math.random() * 100000)}`;
   const email = `${label}${stamp}@widget-session.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: `${label} owner`, email, password: 'E2ePassw0rd!' }
-  });
+  const reg = await signUp({ name: `${label} owner`, email, password: 'E2ePassw0rd!' });
   assert.ok(reg.status === 201, `register failed: ${JSON.stringify(reg.body)}`);
-  await verifyEmail(email);
   const token = sessionCookie(reg);
   const site = await api('/api/sites', {
     method: 'POST',

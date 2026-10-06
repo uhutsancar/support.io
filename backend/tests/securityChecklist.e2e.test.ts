@@ -17,7 +17,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { signUp } from './helpers/accounts';
 
 const PASSWORD = 'Rt5!checklist';
 const stamp = () => `${Date.now()}${Math.floor(Math.random() * 100000)}`;
@@ -45,12 +45,8 @@ async function api(
 
 async function owner() {
   const email = `owner${stamp()}@checklist.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Checklist Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Checklist Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   const match = /(?:^|,\s*)sc_session=([^;]+)/.exec(reg.headers.get('set-cookie') || '');
   return {
     token: match ? decodeURIComponent(match[1]) : '',

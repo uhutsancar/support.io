@@ -6,11 +6,15 @@
 import { query } from './pool';
 import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
+import { sweepTrials } from '../services/trial';
+import { deleteOrganization } from '../services/organizationDeletion';
 
 const RETENTION_DAYS = 30;
 /** How long a visitor's IP and device details are kept after their last visit. */
 const PERSONAL_DATA_DAYS = 90;
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+/** How long a sign-up may wait for its verification link to be opened. */
+const UNVERIFIED_SIGNUP_DAYS = 7;
 
 const TARGETS = [
   { table: 'event_logs', column: 'timestamp' },
@@ -48,6 +52,30 @@ async function sweepOnce() {
     await reconcileSubscriptions();
   } catch (error) {
     console.error('Subscription reconciliation failed:', errorText(error));
+  }
+  try {
+    // The free trial's reminder and its "it has ended" mail (PRD-15).
+    await sweepTrials();
+  } catch (error) {
+    console.error('Trial sweep failed:', errorText(error));
+  }
+  try {
+    // A sign-up nobody confirmed within a week is not an account (SEC-06):
+    // its workspace goes, so an address typed by someone else does not stay
+    // reserved. Such a workspace never had a session, so it holds nothing.
+    const { rows } = await query<{ organization_id: string }>(
+      `SELECT u.organization_id FROM users u
+         JOIN organizations o ON o.id = u.organization_id AND o.owner_user_id = u.id
+        WHERE u.role = 'owner' AND u.is_active AND u.email_verified_at IS NULL
+          AND u.created_at < now() - interval '${UNVERIFIED_SIGNUP_DAYS} days'
+        LIMIT 200`
+    );
+    for (const { organization_id: organizationId } of rows) {
+      // eslint-disable-next-line no-await-in-loop
+      await deleteOrganization(organizationId);
+    }
+  } catch (error) {
+    console.error('Retention sweep failed for unconfirmed sign-ups:', errorText(error));
   }
   for (const target of TARGETS) {
     try {

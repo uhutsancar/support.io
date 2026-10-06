@@ -3,13 +3,15 @@
 // src/db/migrate.ts reads its migrations from a directory next to itself, so
 // the SQL files have to sit beside the compiled module too. Without this the
 // production image starts and then fails on the first migration, where it is
-// least convenient to notice.
+// least convenient to notice. The same goes for the word lists the password
+// and sign-up policies read (src/config/data).
 
 import fs from 'fs';
 import path from 'path';
 
 const DIRECTORIES: Array<{ from: string; to: string; ext: string }> = [
-  { from: 'src/db/migrations', to: 'dist/db/migrations', ext: '.sql' }
+  { from: 'src/db/migrations', to: 'dist/db/migrations', ext: '.sql' },
+  { from: 'src/config/data', to: 'dist/config/data', ext: '.txt' }
 ];
 
 for (const dir of DIRECTORIES) {

@@ -19,6 +19,7 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
+import { signUp } from './helpers/accounts';
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -34,15 +35,11 @@ test('the API under test and this suite share one database', async () => {
 
   const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const email = `preflight${stamp}@preflight.test`;
-  const registration = await fetch(`${BASE}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: 'preflight',
-      email,
-      password: 'E2ePassw0rd!',
-      companyName: 'preflight co'
-    })
+  const registration = await signUp({
+    name: 'preflight',
+    email,
+    password: 'E2ePassw0rd!',
+    companyName: 'preflight co'
   });
   assert.ok(
     registration.ok,

@@ -26,7 +26,7 @@ import {
 import events from '../events';
 import { withTransaction } from '../db/pool';
 import { assertCanAddAgent, lockOrganization } from '../services/entitlements';
-import { passwordProblem } from '../config/passwords';
+import { assertPasswordAllowed } from '../config/passwords';
 import { ACTIVE_CONVERSATION_STATUSES, PRESENCE_STATUSES, isPresenceStatus } from '../domain';
 import { notifyAdmin } from '../realtime';
 import {
@@ -198,8 +198,7 @@ router.post(
       throw forbidden('You cannot assign this role');
     }
 
-    const passwordIssue = passwordProblem(password);
-    if (passwordIssue) throw badRequest(passwordIssue);
+    assertPasswordAllowed(password, { email: typeof email === 'string' ? email : '' });
 
     if (
       typeof email !== 'string' ||

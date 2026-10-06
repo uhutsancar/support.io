@@ -16,6 +16,7 @@ import connectDB from './config/database';
 import { isConnected } from './config/database';
 import SocketHandler from './socket';
 import authRoutes from './routes/auth';
+import accountRoutes from './routes/account';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
 import conversationRoutes from './routes/conversations';
@@ -200,11 +201,16 @@ app.use(sanitizeInput);
 
 // --- 🛣️ 3. API ROUTELARI ---
 // IP başına ve hesap başına iki ayrı sayaç; ayrıntı middleware/rateLimit.ts
-app.use('/api/auth/login', loginLimiter, loginAccountLimiter);
+// Exactly POST /api/auth/login: app.use would also catch /login/2fa, whose
+// requests carry no e-mail, so every second-step attempt from one address
+// would land in a single per-IP bucket of the account lock. The second step
+// has its own limit (mfaLimiter in routes/auth.ts).
+app.post('/api/auth/login', loginLimiter, loginAccountLimiter);
 app.use('/api/auth/register', registerLimiter);
 app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', accountRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/conversations', conversationRoutes);

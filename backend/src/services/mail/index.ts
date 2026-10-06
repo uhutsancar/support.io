@@ -16,10 +16,17 @@ import { isProduction } from '../../config/env';
 import { consoleTransport } from './console';
 import { smtpTransport } from './smtp';
 import {
+  emailChangeMail,
+  emailChangeNoticeMail,
+  existingAccountMail,
   invitationMail,
   missedChatMail,
+  passwordChangedMail,
   passwordResetMail,
   quotaWarningMail,
+  securityNoticeMail,
+  trialEndedMail,
+  trialEndingMail,
   verificationMail
 } from './templates';
 import type { MailLocale } from './templates';
@@ -92,6 +99,41 @@ export const mail = {
   },
   sendPasswordReset(to: string, args: { name: string; link: string; locale?: MailLocale }) {
     return sendMail({ to, ...passwordResetMail(args) });
+  },
+  sendExistingAccount(to: string, args: { name: string; link: string; locale?: MailLocale }) {
+    return sendMail({ to, ...existingAccountMail(args) });
+  },
+  sendPasswordChanged(to: string, args: { name: string; link: string; locale?: MailLocale }) {
+    return sendMail({ to, ...passwordChangedMail(args) });
+  },
+  sendEmailChange(to: string, args: { name: string; link: string; locale?: MailLocale }) {
+    return sendMail({ to, ...emailChangeMail(args) });
+  },
+  sendEmailChangeNotice(
+    to: string,
+    args: { name: string; newEmail: string; changed: boolean; link: string; locale?: MailLocale }
+  ) {
+    return sendMail({ to, ...emailChangeNoticeMail(args) });
+  },
+  sendSecurityNotice(
+    to: string,
+    args: {
+      name: string;
+      event: 'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked';
+      link: string;
+      locale?: MailLocale;
+    }
+  ) {
+    return sendMail({ to, ...securityNoticeMail(args) });
+  },
+  sendTrialEnding(
+    to: string,
+    args: { name: string; daysLeft: number; link: string; locale?: MailLocale }
+  ) {
+    return sendMail({ to, ...trialEndingMail(args) });
+  },
+  sendTrialEnded(to: string, args: { name: string; link: string; locale?: MailLocale }) {
+    return sendMail({ to, ...trialEndedMail(args) });
   },
   sendInvitation(
     to: string,

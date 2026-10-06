@@ -130,6 +130,43 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
     entityType: 'user',
     entityId: (p) => p.userId
   },
+  'auth.login.locked': {
+    action: 'LOGIN_FAILED_LOCKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.password.changed': {
+    action: 'PASSWORD_CHANGED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.email.change_requested': {
+    action: 'EMAIL_CHANGE_REQUESTED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.email.changed': {
+    action: 'EMAIL_CHANGED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.mfa.enabled': { action: 'MFA_ENABLED', entityType: 'user', entityId: (p) => p.userId },
+  'auth.mfa.disabled': { action: 'MFA_DISABLED', entityType: 'user', entityId: (p) => p.userId },
+  'auth.mfa.recovery_used': {
+    action: 'MFA_RECOVERY_USED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.sessions.revoked': {
+    action: 'SESSIONS_REVOKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'organization.security.updated': {
+    action: 'SECURITY_SETTINGS_UPDATED',
+    entityType: 'organization',
+    entityId: (p) => p.organizationId
+  },
   'invitation.sent': { action: 'INVITATION_SENT', entityType: 'invitation' },
   'invitation.revoked': { action: 'INVITATION_REVOKED', entityType: 'invitation' },
   'invitation.accepted': { action: 'INVITATION_ACCEPTED', entityType: 'invitation' },

@@ -240,3 +240,319 @@ export function quotaWarningMail({
     })
   };
 }
+
+/**
+ * Someone tried to sign up with an address that already has an account. The
+ * sign-up form answers exactly as for a new address (plan v10 SEC-06), so
+ * the owner of the address is the only one told.
+ */
+export function existingAccountMail({
+  name,
+  link,
+  locale
+}: {
+  name: string;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(locale, 'Bu adresle zaten bir hesabınız var', 'You already have an account');
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          'Biri bu e-posta adresiyle yeni bir Support.io hesabı açmaya çalıştı. Bu adresle zaten bir hesabınız olduğu için yeni hesap açılmadı.',
+          'Siz denediyseniz giriş yapabilir ya da şifrenizi hatırlamıyorsanız sıfırlayabilirsiniz.'
+        ],
+        [
+          `Hi ${name},`,
+          'Someone tried to create a new Support.io account with this e-mail address. You already have one, so no new account was opened.',
+          'If it was you, sign in, or reset your password if you have forgotten it.'
+        ]
+      ),
+      action: pick(locale, 'Giriş yap', 'Sign in'),
+      link,
+      footer: pick(
+        locale,
+        'Bu siz değilseniz bir şey yapmanız gerekmez; hesabınız değişmedi.',
+        'If this was not you, there is nothing to do; your account is unchanged.'
+      )
+    })
+  };
+}
+
+/** The password of the account was changed from the settings page. */
+export function passwordChangedMail({
+  name,
+  link,
+  locale
+}: {
+  name: string;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(locale, 'Şifreniz değiştirildi', 'Your password was changed');
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          'Support.io hesabınızın şifresi az önce değiştirildi. Diğer tüm cihazlardaki oturumlarınız kapatıldı.'
+        ],
+        [
+          `Hi ${name},`,
+          'The password of your Support.io account was just changed. You were signed out on every other device.'
+        ]
+      ),
+      action: pick(
+        locale,
+        'Bu ben değildim — şifremi sıfırla',
+        'This was not me — reset my password'
+      ),
+      link,
+      footer: pick(
+        locale,
+        'Değişikliği siz yaptıysanız bu e-postayı yok sayabilirsiniz.',
+        'If you made this change, you can ignore this e-mail.'
+      )
+    })
+  };
+}
+
+/** Confirms a new address before it replaces the account's current one. */
+export function emailChangeMail({
+  name,
+  link,
+  locale
+}: {
+  name: string;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(
+    locale,
+    'Yeni e-posta adresinizi onaylayın',
+    'Confirm your new e-mail address'
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          'Support.io hesabınızın e-posta adresini bu adresle değiştirmek istediniz. Onayladığınızda girişler ve bildirimler bu adrese geçer.'
+        ],
+        [
+          `Hi ${name},`,
+          'You asked to move your Support.io account to this address. Once you confirm, sign-in and notifications use it.'
+        ]
+      ),
+      action: pick(locale, 'Adresi onayla', 'Confirm the address'),
+      link,
+      footer: pick(
+        locale,
+        'Bağlantı 24 saat geçerlidir. Siz istemediyseniz bu e-postayı yok sayın; hesap değişmez.',
+        'The link is valid for 24 hours. If you did not ask for this, ignore this e-mail; the account stays as it is.'
+      )
+    })
+  };
+}
+
+/**
+ * Sent to the old address: a change was asked for, or made. `changed` says
+ * which.
+ */
+export function emailChangeNoticeMail({
+  name,
+  newEmail,
+  changed,
+  link,
+  locale
+}: {
+  name: string;
+  newEmail: string;
+  changed: boolean;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = changed
+    ? pick(locale, 'E-posta adresiniz değiştirildi', 'Your e-mail address was changed')
+    : pick(locale, 'E-posta değişikliği istendi', 'An e-mail change was requested');
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          changed
+            ? `Support.io hesabınızın e-posta adresi ${newEmail} olarak değiştirildi.`
+            : `Support.io hesabınızın e-posta adresini ${newEmail} olarak değiştirmek için bir istek yapıldı. Yeni adres onaylanana kadar bu adres geçerlidir.`
+        ],
+        [
+          `Hi ${name},`,
+          changed
+            ? `The e-mail address of your Support.io account is now ${newEmail}.`
+            : `Someone asked to move your Support.io account to ${newEmail}. This address stays in use until the new one is confirmed.`
+        ]
+      ),
+      action: pick(
+        locale,
+        'Bu ben değildim — şifremi sıfırla',
+        'This was not me — reset my password'
+      ),
+      link,
+      footer: pick(
+        locale,
+        'Değişikliği siz istediyseniz bu e-postayı yok sayabilirsiniz.',
+        'If you asked for this change, you can ignore this e-mail.'
+      )
+    })
+  };
+}
+
+/** Two-step sign-in was switched on or off, or a recovery code was used. */
+export function securityNoticeMail({
+  name,
+  event,
+  link,
+  locale
+}: {
+  name: string;
+  event: 'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked';
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const titles = {
+    mfa_enabled: ['İki adımlı doğrulama açıldı', 'Two-step verification is on'],
+    mfa_disabled: ['İki adımlı doğrulama kapatıldı', 'Two-step verification is off'],
+    recovery_used: ['Bir kurtarma kodu kullanıldı', 'A recovery code was used'],
+    sessions_revoked: ['Tüm cihazlardan çıkış yapıldı', 'You were signed out everywhere']
+  } as const;
+  const bodies = {
+    mfa_enabled: [
+      'Hesabınıza girişte artık doğrulama uygulamanızdaki kod da istenecek.',
+      'Signing in to your account now also asks for the code from your authenticator app.'
+    ],
+    mfa_disabled: [
+      'Hesabınıza girişte artık yalnızca şifre isteniyor.',
+      'Signing in to your account now asks only for the password.'
+    ],
+    recovery_used: [
+      'Hesabınıza bir kurtarma koduyla giriş yapıldı. Kalan kodlarınızı ve doğrulama uygulamanızı kontrol edin.',
+      'Someone signed in to your account with a recovery code. Check your remaining codes and your authenticator app.'
+    ],
+    sessions_revoked: [
+      'Hesabınızın açık olduğu tüm cihazlarda oturum kapatıldı.',
+      'Every session of your account was ended, on every device.'
+    ]
+  } as const;
+  const [titleTr, titleEn] = titles[event];
+  const [bodyTr, bodyEn] = bodies[event];
+  const subject = pick(locale, titleTr, titleEn);
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(locale, [`Merhaba ${name},`, bodyTr], [`Hi ${name},`, bodyEn]),
+      action: pick(
+        locale,
+        'Bu ben değildim — şifremi sıfırla',
+        'This was not me — reset my password'
+      ),
+      link,
+      footer: pick(
+        locale,
+        'Bu işlemi siz yaptıysanız bu e-postayı yok sayabilirsiniz.',
+        'If you did this, you can ignore this e-mail.'
+      )
+    })
+  };
+}
+
+/** The Pro trial ends in a few days. */
+export function trialEndingMail({
+  name,
+  daysLeft,
+  link,
+  locale
+}: {
+  name: string;
+  daysLeft: number;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(
+    locale,
+    `Pro deneme sürenizin bitmesine ${daysLeft} gün kaldı`,
+    `Your Pro trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          'Deneme bittiğinde hesabınız Ücretsiz plana geçer: konuşmalarınız ve ayarlarınız silinmez, yalnızca Pro özellikleri kilitlenir.',
+          'Kesinti yaşamamak için şimdi Pro’ya geçebilirsiniz.'
+        ],
+        [
+          `Hi ${name},`,
+          'When the trial ends your workspace moves to the Free plan: your conversations and settings stay, only the Pro features lock.',
+          'Upgrade now to keep everything running without a break.'
+        ]
+      ),
+      action: pick(locale, 'Planı seç', 'Choose a plan'),
+      link,
+      footer: pick(
+        locale,
+        'Kart bilgisi istemedik; otomatik ücret alınmaz.',
+        'We never asked for a card; nothing is charged automatically.'
+      )
+    })
+  };
+}
+
+/** The Pro trial has ended; the workspace is on Free. */
+export function trialEndedMail({
+  name,
+  link,
+  locale
+}: {
+  name: string;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(locale, 'Pro deneme süreniz bitti', 'Your Pro trial has ended');
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          'Hesabınız Ücretsiz plana geçti. Verileriniz yerinde; Pro özelliklerini yeniden açmak için planınızı yükseltebilirsiniz.'
+        ],
+        [
+          `Hi ${name},`,
+          'Your workspace is on the Free plan now. Your data is all there; upgrade to switch the Pro features back on.'
+        ]
+      ),
+      action: pick(locale, 'Pro’ya geç', 'Upgrade to Pro'),
+      link,
+      footer: pick(locale, 'Bu e-posta bir kez gönderilir.', 'This e-mail is sent once.')
+    })
+  };
+}

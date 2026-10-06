@@ -37,6 +37,11 @@ export interface TeamDoc {
   emailVerifiedAt: Date | null;
   /** Signed into every session; raising it ends them all (migration 0002). */
   sessionVersion: number;
+  /** Two-step sign-in (migration 0009); see models/User.ts. */
+  totpSecretEnc: string | null;
+  totpEnabledAt: Date | null;
+  totpLastStep: number | null;
+  recoveryCodes: string[];
   assignedSites: Array<Ref<SiteDoc>>;
   departments: TeamDepartmentMembership[];
   /** Added by the model's own methods. */
@@ -91,7 +96,11 @@ export default defineModel<TeamDoc>({
     phone: { column: 'phone', type: 'string', default: null },
     bio: { column: 'bio', type: 'string', default: null },
     emailVerifiedAt: { column: 'email_verified_at', type: 'date', default: null },
-    sessionVersion: { column: 'session_version', type: 'number', default: 0 }
+    sessionVersion: { column: 'session_version', type: 'number', default: 0 },
+    totpSecretEnc: { column: 'totp_secret_enc', type: 'string', default: null },
+    totpEnabledAt: { column: 'totp_enabled_at', type: 'date', default: null },
+    totpLastStep: { column: 'totp_last_step', type: 'number', default: null },
+    recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] }
   },
   children: {
     assignedSites: {
@@ -123,6 +132,9 @@ export default defineModel<TeamDoc>({
     toJSON() {
       const obj = this.toObject();
       delete obj.password;
+      delete obj.totpSecretEnc;
+      delete obj.totpLastStep;
+      delete obj.recoveryCodes;
       return obj;
     }
   }

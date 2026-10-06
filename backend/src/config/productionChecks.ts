@@ -106,10 +106,25 @@ export function productionConfigProblems(): string[] {
   return problems;
 }
 
+/**
+ * What production can run without but should not: logged once at boot, never
+ * fatal. Each line says what is missing and what it costs.
+ */
+export function productionConfigWarnings(): string[] {
+  const warnings: string[] = [];
+  if (!value('TURNSTILE_SECRET') || !value('TURNSTILE_SITE_KEY')) {
+    warnings.push(
+      'TURNSTILE_SITE_KEY / TURNSTILE_SECRET are empty: the sign-up form has no bot check (SEC-06)'
+    );
+  }
+  return warnings;
+}
+
 /** Throws with every problem at once; the server calls it in production. */
 export function assertProductionConfig(): void {
   const problems = productionConfigProblems();
   if (problems.length) {
     throw new Error(`Production configuration is incomplete:\n  - ${problems.join('\n  - ')}`);
   }
+  for (const warning of productionConfigWarnings()) console.warn(`[config] ${warning}`);
 }

@@ -60,5 +60,54 @@ export async function setPlan(
   plan: 'FREE' | 'PRO' | 'ENTERPRISE'
 ): Promise<void> {
   const { query } = await import('../../src/db/pool');
-  await query('UPDATE organizations SET plan_type = $2 WHERE id = $1', [organizationId, plan]);
+  // A plan set on purpose ends the free trial every new workspace starts
+  // with (PRD-15); otherwise FREE would still read as PRO for two weeks.
+  await query('UPDATE organizations SET plan_type = $2, trial_ends_at = NULL WHERE id = $1', [
+    organizationId,
+    plan
+  ]);
+}
+
+/** What signUp hands back: the shape a register call used to have. */
+export interface SignUpResult {
+  status: number;
+  ok: boolean;
+  body: any;
+  headers: Headers;
+  json(): Promise<any>;
+}
+
+/**
+ * Signs up the way a person does since sign-up became e-mail first (plan v10
+ * SEC-06): POST /api/auth/register only mails a link, and opening the link
+ * verifies the address and starts the session. The answer to the link is
+ * returned in the shape the register call used to have — status 201,
+ * `body.user`, the session cookie in the headers — so suites read it as
+ * before. The address is verified by then; do not verify it again.
+ */
+export async function signUp(details: Record<string, unknown>): Promise<SignUpResult> {
+  const registered = await fetch(`${BASE}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(details)
+  });
+  const registerBody = await registered.json().catch(() => null);
+  assert.equal(registered.status, 201, `register failed: ${JSON.stringify(registerBody)}`);
+  assert.deepEqual(registerBody, { verificationSent: true });
+
+  const token = await tokenFromMail(String(details.email).toLowerCase(), '/verify-email');
+  const verified = await fetch(`${BASE}/api/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token })
+  });
+  const body = await verified.json().catch(() => null);
+  assert.equal(verified.status, 200, `verification failed: ${JSON.stringify(body)}`);
+  return {
+    status: 201,
+    ok: true,
+    body,
+    headers: verified.headers,
+    json: async () => body
+  };
 }

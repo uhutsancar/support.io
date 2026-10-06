@@ -31,7 +31,7 @@ import type {
 import type { NextFunction, Request, Response } from 'express';
 import { getRedisClient, isEnabled as redisConfigured } from '../config/redis';
 import { readToken } from '../config/session';
-import { verifySession, verifyWidgetSession } from '../config/tokens';
+import { verifyMfaPending, verifySession, verifyWidgetSession } from '../config/tokens';
 import { errorText } from '../http/errors';
 
 class RedisStore implements Store {
@@ -142,6 +142,56 @@ class RedisStore implements Store {
   }
 }
 
+const recentlySeen = new Map<string, number>();
+
+/**
+ * True only for the first call with `key` in a window: SET NX in Redis, or a
+ * small in-process map when Redis is away.
+ */
+async function firstInWindow(key: string, windowMs: number): Promise<boolean> {
+  if (redisConfigured()) {
+    try {
+      const client = await getRedisClient();
+      if (client)
+        return (await client.set(`once:${key}`, '1', { NX: true, PX: windowMs })) === 'OK';
+    } catch {
+      /* fall through to the local map */
+    }
+  }
+  const now = Date.now();
+  for (const [k, until] of recentlySeen) if (until <= now) recentlySeen.delete(k);
+  if ((recentlySeen.get(key) ?? 0) > now) return false;
+  recentlySeen.set(key, now + windowMs);
+  return true;
+}
+
+/** The LOGIN_FAILED_LOCKED audit row, for an account that exists. */
+function emitLocked(req: Request, email: string): void {
+  void (async () => {
+    try {
+      const { query } = await import('../db/pool');
+      const { rows } = await query<{ id: string; organization_id: string | null }>(
+        `SELECT id, organization_id FROM users WHERE email = $1 AND is_active
+         UNION ALL
+         SELECT id, organization_id FROM teams WHERE email = $1 AND is_active
+         LIMIT 1`,
+        [email]
+      );
+      if (!rows[0]) return;
+      const events = (await import('../events')).default;
+      events.emit('auth.login.locked', {
+        organizationId: rows[0].organization_id,
+        userId: rows[0].id,
+        metadata: {},
+        ip: req.ip,
+        ua: req.get('user-agent')
+      });
+    } catch (error) {
+      console.error('[rate-limit] could not record a locked account:', errorText(error));
+    }
+  })();
+}
+
 // Kimligi dogrulanmis istekleri kullaniciya, digerlerini IP'ye gore sayar.
 // Gecersiz imzali bir token IP'ye duser, dolayisiyla token uydurarak sinir
 // asilamaz.
@@ -198,6 +248,8 @@ interface LimiterSpec {
   keyGenerator?: (req: Request) => string;
   /** Yalnizca basarisiz (>= 400) yanitlari say. */
   skipSuccessfulRequests?: boolean;
+  /** Sinira takilan istekten sonra, yanit gittikten sonra calisir. */
+  onLimit?: (req: Request) => void;
 }
 
 function createLimiter({
@@ -207,8 +259,10 @@ function createLimiter({
   windowMs,
   max,
   keyGenerator,
-  skipSuccessfulRequests
+  skipSuccessfulRequests,
+  onLimit
 }: LimiterSpec): RateLimitRequestHandler {
+  const respond = limitReachedResponse(code, message);
   return rateLimit({
     windowMs,
     max,
@@ -219,7 +273,10 @@ function createLimiter({
     legacyHeaders: true,
     keyGenerator: keyGenerator || identifyClient,
     store: new RedisStore(`rl:${name}:`),
-    handler: limitReachedResponse(code, message)
+    handler: (req, res, next, options) => {
+      respond(req, res, next, options);
+      onLimit?.(req);
+    }
   });
 }
 
@@ -283,6 +340,17 @@ const loginAccountLimiter = createLimiter({
     const email =
       typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : '';
     return email ? `acct:${email}` : `ip:${ipKeyGenerator(req.ip || '')}`;
+  },
+  // One audit row per locked account per window (SEC-06), however many
+  // attempts keep hitting the lock: the trail should say it happened, not
+  // fill up with the attacker's retries.
+  onLimit: (req: Request) => {
+    const email =
+      typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : '';
+    if (!email) return;
+    void firstInWindow(`lock-audited:${email}`, 15 * 60 * 1000).then((first) => {
+      if (first) emitLocked(req, email);
+    });
   }
 });
 
@@ -342,6 +410,33 @@ const resendVerificationLimiter = createLimiter({
   message: 'Too many verification e-mails, please try again later.',
   windowMs: 60 * 60 * 1000,
   max: limit(process.env.VERIFY_RESEND_RATE_MAX, 5, 100000)
+});
+
+// Hesap ayarlari: sifre ve e-posta degistirme, iki adimli dogrulamayi
+// acip kapama, tum cihazlardan cikis. Kullanici basina saatte 5 (plan v10
+// SEC-03): mevcut sifreyi tahmin etmek icin bir oturumun elinde tutulacak
+// yol kalmaz.
+const accountChangeLimiter = createLimiter({
+  name: 'account-change',
+  code: 'TOO_MANY_ACCOUNT_CHANGES',
+  message: 'Too many account changes, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: limit(process.env.ACCOUNT_RATE_MAX, 5, 100000)
+});
+
+// Ikinci adim (dogrulama kodu ya da kurtarma kodu): bekleyen giris basina
+// 15 dakikada 5 deneme. Anahtar bekleyen girisin hesabidir; bilinmeyen bir
+// belirtec IP'ye duser.
+const mfaLimiter = createLimiter({
+  name: 'mfa',
+  code: 'TOO_MANY_MFA_ATTEMPTS',
+  message: 'Too many verification attempts, please sign in again later.',
+  windowMs: 15 * 60 * 1000,
+  max: limit(process.env.MFA_RATE_MAX, 5, 100000),
+  keyGenerator: (req: Request) => {
+    const pending = verifyMfaPending(req.body?.mfaToken);
+    return pending ? `mfa:${pending.userId}` : `ip:${ipKeyGenerator(req.ip || '')}`;
+  }
 });
 
 // Genel API trafigi.
@@ -415,6 +510,8 @@ export {
   forgotPasswordLimiter,
   forgotPasswordAccountLimiter,
   resendVerificationLimiter,
+  accountChangeLimiter,
+  mfaLimiter,
   apiLimiter,
   siteCreateLimiter,
   invitationLimiter,

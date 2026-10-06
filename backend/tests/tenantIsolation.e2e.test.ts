@@ -18,7 +18,7 @@
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
-import { setPlan } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { io as connect } from 'socket.io-client';
@@ -79,10 +79,7 @@ async function login(email: string): Promise<string> {
 
 async function register(label: string) {
   const email = `${unique(label)}@isolation.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: `${label} owner`, email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: `${label} owner`, email, password: PASSWORD });
   assert.equal(reg.status, 201, JSON.stringify(reg.body));
   return { token: sessionToken(reg), organizationId: String(reg.body.user.organizationId) };
 }

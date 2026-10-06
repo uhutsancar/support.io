@@ -16,11 +16,11 @@ import { getPool, query } from '../src/db/pool';
 import { generateId } from '../src/db/objectId';
 import { sweepOnce, PERSONAL_DATA_DAYS } from '../src/db/retention';
 import { BASE } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { signUp } from './helpers/accounts';
 
 const stamp = () => `${Date.now()}${Math.floor(Math.random() * 100000)}`;
 
-function sessionCookie(res: Response): string {
+function sessionCookie(res: { headers: Headers }): string {
   const match = /(?:^|,\s*)sc_session=([^;]+)/.exec(res.headers.get('set-cookie') || '');
   return match ? decodeURIComponent(match[1]) : '';
 }
@@ -31,13 +31,8 @@ test.after(async () => {
 
 test('the owner downloads the organization’s data, without secrets', async () => {
   const email = `owner${stamp()}@privacy.test`;
-  const reg = await fetch(`${BASE}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Privacy Owner', email, password: 'E2ePassw0rd!' })
-  });
+  const reg = await signUp({ name: 'Privacy Owner', email, password: 'E2ePassw0rd!' });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   const token = sessionCookie(reg);
   const site = await fetch(`${BASE}/api/sites`, {
     method: 'POST',

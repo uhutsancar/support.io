@@ -92,6 +92,47 @@ export function sessionIsCurrent(
   return (decoded.sv ?? 0) === (account.sessionVersion ?? 0);
 }
 
+// -------------------------------------------------- two-step sign-in pending
+
+const MFA_AUDIENCE = 'support-chat:mfa-pending';
+export const MFA_PENDING_TTL_SECONDS = 5 * 60;
+
+/**
+ * What a correct password earns when the account has two-step sign-in on:
+ * not a session, only five minutes to present the second step. Signed with
+ * its own key and audience, so it can never pass as a session.
+ */
+export interface MfaPendingClaims {
+  purpose: 'mfa';
+  userId: string;
+  userType: 'user' | 'team';
+  sv: number;
+}
+
+export function signMfaPending(claims: Omit<MfaPendingClaims, 'purpose'>): string {
+  return jwt.sign({ ...claims, purpose: 'mfa' }, derivedKey('mfa-pending'), {
+    algorithm: 'HS256',
+    audience: MFA_AUDIENCE,
+    expiresIn: MFA_PENDING_TTL_SECONDS
+  });
+}
+
+export function verifyMfaPending(token: unknown): MfaPendingClaims | null {
+  if (typeof token !== 'string' || !token || token.length > 2048) return null;
+  try {
+    const decoded = jwt.verify(token, derivedKey('mfa-pending'), {
+      algorithms: ['HS256'],
+      audience: MFA_AUDIENCE
+    }) as MfaPendingClaims;
+    if (decoded.purpose !== 'mfa' || !isValidObjectId(decoded.userId)) return null;
+    if (decoded.userType !== 'user' && decoded.userType !== 'team') return null;
+    if (!Number.isInteger(decoded.sv)) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------- yükleme kanıtı
 
 export interface UploadProofClaims {

@@ -25,7 +25,7 @@ import { getPool, query } from '../src/db/pool';
 import { checkoutReference, reconcileSubscriptions } from '../src/services/billing';
 import { effectivePlan } from '../src/domain/subscription';
 import { BASE } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 
 const PASSWORD = 'E2ePassw0rd!';
 const SECRET = process.env.PADDLE_WEBHOOK_SECRET || 'local-dev-paddle-webhook-secret';
@@ -60,12 +60,8 @@ function sessionCookie(res: { headers: Headers }): string {
 
 async function owner() {
   const email = `owner${stamp()}@billing.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Billing Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Billing Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   return { token: sessionCookie(reg), email, organizationId: String(reg.body.user.organizationId) };
 }
 
@@ -219,6 +215,37 @@ test('a signed subscription opens the plan once, and a repeat is a no-op', async
   assert.equal(page.body.limits.sites, 3);
 });
 
+test('a billing-exempt workspace keeps its hand-set plan whatever Paddle says', async () => {
+  const org = await owner();
+  await query(
+    `UPDATE organizations SET plan_type = 'ENTERPRISE', billing_exempt = true, trial_ends_at = NULL
+      WHERE id = $1`,
+    [org.organizationId]
+  );
+  const subscriptionId = `sub_${stamp()}`;
+  const ref = checkoutReference(org.organizationId);
+  const created = subscriptionEvent('subscription.created', {
+    subscriptionId,
+    status: 'active',
+    organizationId: org.organizationId,
+    ref
+  });
+  assert.equal(await deliver(created), 200);
+  assert.equal(await planOf(org.organizationId), 'ENTERPRISE');
+  const canceled = subscriptionEvent('subscription.canceled', {
+    subscriptionId,
+    status: 'canceled',
+    organizationId: org.organizationId,
+    ref,
+    occurredAt: iso(1000),
+    periodEnd: iso(-DAY)
+  });
+  assert.equal(await deliver(canceled), 200);
+  assert.equal(await planOf(org.organizationId), 'ENTERPRISE');
+  const page = await api('/api/billing', { token: org.token });
+  assert.equal(page.body.plan, 'ENTERPRISE', 'the plan in force is the hand-set one');
+});
+
 test('a subscription naming another organization without its reference is ignored', async () => {
   const victim = await owner();
   const forged = subscriptionEvent('subscription.created', {
@@ -346,8 +373,15 @@ test('the billing page is the owner’s, and checkout stays shut while billing i
   const org = await owner();
   const page = await api('/api/billing', { token: org.token });
   assert.equal(page.status, 200);
-  assert.equal(page.body.plan, 'FREE');
+  // A new workspace is on the free Pro trial (PRD-15), with no subscription.
+  assert.equal(page.body.plan, 'PRO');
+  assert.equal(page.body.trial.plan, 'PRO');
+  assert.ok(new Date(page.body.trial.endsAt).getTime() > Date.now() + 13 * DAY);
   assert.equal(page.body.subscription, null);
+  await setPlan(org.organizationId, 'FREE');
+  const afterTrial = await api('/api/billing', { token: org.token });
+  assert.equal(afterTrial.body.plan, 'FREE');
+  assert.equal(afterTrial.body.trial, null);
   assert.equal(typeof page.body.usage.conversations, 'number');
   // Server-side Paddle values never reach the browser.
   const text = JSON.stringify(page.body);

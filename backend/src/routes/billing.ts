@@ -29,6 +29,7 @@ import {
 import { HttpError, asyncHandler, orgId, requireOrganization, unavailable } from '../http';
 import { errorText } from '../http/errors';
 import { logger } from '../config/logger';
+import { trialRunning } from '../services/trial';
 import type { Request, Response } from 'express';
 
 // ------------------------------------------------------------------ webhook
@@ -113,7 +114,16 @@ router.get(
           }
         }
       },
-      emailVerified: Boolean(req.user.emailVerifiedAt)
+      emailVerified: Boolean(req.user.emailVerifiedAt),
+      // The free Pro trial (PRD-15), while it runs and no plan was bought.
+      trial:
+        !subscription &&
+        usage.plan === 'PRO' &&
+        req.organization?.planType === 'FREE' &&
+        trialRunning(req.organization?.trialEndsAt)
+          ? { plan: 'PRO', endsAt: req.organization?.trialEndsAt }
+          : null,
+      billingExempt: Boolean(req.organization?.billingExempt)
     });
   })
 );

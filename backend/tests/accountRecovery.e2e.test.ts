@@ -2,8 +2,9 @@
 
 // E-mail verification and password reset, end to end (plan §7.2).
 //
-//  - sign-up mails a verification link; until it is followed the panel works
-//    but the widget gets no session
+//  - sign-up mails a verification link and nothing else: the session starts
+//    from the link, the answer is the same for a taken address, and a newer
+//    sign-up of an unconfirmed address replaces it (plan v10 SEC-06)
 //  - a link works once, only for its purpose, and only the newest one works
 //  - forgot-password answers the same for every address
 //  - a reset ends every session of the account and the old password
@@ -15,8 +16,8 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getPool, query } from '../src/db/pool';
-import { BASE, widgetSession } from './helpers/widget';
-import { outbox, tokenFromMail } from './helpers/accounts';
+import { BASE } from './helpers/widget';
+import { outbox, tokenFromMail, signUp } from './helpers/accounts';
 
 const PASSWORD = 'E2ePassw0rd!';
 
@@ -57,47 +58,49 @@ const unique = (label: string) =>
   `${label}${Date.now()}${Math.floor(Math.random() * 100000)}@recovery.test`;
 
 async function register(email: string) {
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Recovery Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Recovery Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201, JSON.stringify(reg.body));
-  return { token: sessionCookie(reg), user: reg.body.user, sent: reg.body.verificationSent };
+  return { token: sessionCookie(reg), user: reg.body.user };
 }
 
 test.after(async () => {
   await getPool().end();
 });
 
-test('sign-up mails a link; the widget waits for it; the link works once', async () => {
+/** POST /register as the form sends it; no session comes back. */
+async function registerOnly(email: string, password = PASSWORD, name = 'Recovery Owner') {
+  return api('/api/auth/register', { method: 'POST', body: { name, email, password } });
+}
+
+test('sign-up mails a link and signs in only through it; the link works once', async () => {
   const email = unique('verify');
-  const owner = await register(email);
-  assert.equal(owner.sent, true);
-  assert.equal(owner.user.emailVerified, false);
+  const reg = await registerOnly(email);
+  assert.equal(reg.status, 201, JSON.stringify(reg.body));
+  assert.deepEqual(reg.body, { verificationSent: true });
+  assert.equal(sessionCookie(reg), '', 'sign-up must not start a session');
+
+  // The password alone does not open an unverified owner account.
+  const early = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: PASSWORD }
+  });
+  assert.equal(early.status, 403);
+  assert.equal(early.body.code, 'EMAIL_NOT_VERIFIED');
 
   const mails = await outbox(email);
   assert.equal(mails.length, 1);
   assert.match(mails[0].text, /\/verify-email\?token=/);
   assert.ok(!mails[0].html.includes('<script'), 'the mail carries markup it should not');
 
-  // The panel works, but no page gets a widget session yet.
-  const site = await api('/api/sites', {
-    method: 'POST',
-    token: owner.token,
-    body: { name: 'Unverified', domain: `${Date.now()}.example` }
-  });
-  assert.equal(site.status, 201);
-  const refused = await widgetSession(site.body.site.siteKey);
-  assert.equal(refused.status, 403);
-  assert.equal(refused.body.code, 'ACCOUNT_NOT_VERIFIED');
-
   const token = await tokenFromMail(email, '/verify-email');
   const verified = await api('/api/auth/verify-email', { method: 'POST', body: { token } });
-  assert.equal(verified.status, 200);
-
-  const me = await api('/api/auth/me', { token: owner.token });
+  assert.equal(verified.status, 200, JSON.stringify(verified.body));
+  assert.equal(verified.body.user.emailVerified, true);
+  const session = sessionCookie(verified);
+  assert.ok(session, 'the link signs the browser in');
+  const me = await api('/api/auth/me', { token: session });
+  assert.equal(me.status, 200);
   assert.equal(me.body.user.emailVerified, true);
-  assert.equal((await widgetSession(site.body.site.siteKey)).status, 200);
 
   const again = await api('/api/auth/verify-email', { method: 'POST', body: { token } });
   assert.equal(again.status, 400);
@@ -105,22 +108,28 @@ test('sign-up mails a link; the widget waits for it; the link works once', async
 
   const audit = await query(
     `SELECT count(*)::int AS n FROM audit_logs WHERE action = 'EMAIL_VERIFIED' AND user_id = $1`,
-    [owner.user._id]
+    [verified.body.user._id]
   );
   assert.equal(audit.rows[0].n, 1);
+
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: PASSWORD }
+  });
+  assert.equal(login.status, 200);
 });
 
 test('only the newest verification link works', async () => {
   const email = unique('resend');
-  const owner = await register(email);
+  await registerOnly(email);
   const first = await tokenFromMail(email, '/verify-email');
 
-  const resent = await api('/api/auth/resend-verification', {
+  const resent = await api('/api/auth/resend-verification-link', {
     method: 'POST',
-    token: owner.token
+    body: { email }
   });
   assert.equal(resent.status, 200);
-  assert.equal(resent.body.sent, true);
+  assert.deepEqual(resent.body, { verificationSent: true });
   const second = await tokenFromMail(email, '/verify-email');
   assert.notEqual(second, first);
 
@@ -129,8 +138,96 @@ test('only the newest verification link works', async () => {
   const fresh = await api('/api/auth/verify-email', { method: 'POST', body: { token: second } });
   assert.equal(fresh.status, 200);
 
-  const done = await api('/api/auth/resend-verification', { method: 'POST', token: owner.token });
-  assert.equal(done.body.alreadyVerified, true);
+  // Asking again for an address that has nothing to verify answers the same.
+  const done = await api('/api/auth/resend-verification-link', {
+    method: 'POST',
+    body: { email }
+  });
+  assert.deepEqual(done.body, resent.body);
+});
+
+test('signing up with a taken address answers the same and tells only its owner', async () => {
+  const email = unique('taken');
+  const owner = await register(email);
+
+  const before = (await outbox(email)).length;
+  const again = await registerOnly(email, 'Someone-Elses-Passw0rd!', 'Intruder');
+  const fresh = await registerOnly(unique('fresh'));
+  assert.equal(again.status, fresh.status);
+  assert.deepEqual(again.body, fresh.body);
+  assert.equal(sessionCookie(again), '');
+
+  // The owner got a notice, not a verification link, and nothing changed.
+  const mails = await outbox(email);
+  assert.equal(mails.length, before + 1);
+  assert.doesNotMatch(mails[0].text, /verify-email/);
+  assert.match(mails[0].subject, /hesab|account/i);
+  const { rows } = await query('SELECT count(*)::int AS n FROM users WHERE email = $1', [email]);
+  assert.equal(rows[0].n, 1);
+  const login = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: PASSWORD }
+  });
+  assert.equal(login.status, 200, 'the original password still works');
+  assert.equal((await api('/api/auth/me', { token: owner.token })).status, 200);
+});
+
+test('a second sign-up of an unconfirmed address replaces it; the first link dies', async () => {
+  const email = unique('pending');
+  await registerOnly(email, 'Squatter-Passw0rd!', 'Squatter');
+  const squatterLink = await tokenFromMail(email, '/verify-email');
+
+  const OWNER_PASSWORD = 'Rightful-Owner-9!';
+  await registerOnly(email, OWNER_PASSWORD, 'Rightful Owner');
+  const ownerLink = await tokenFromMail(email, '/verify-email');
+  assert.notEqual(ownerLink, squatterLink);
+
+  const stale = await api('/api/auth/verify-email', {
+    method: 'POST',
+    body: { token: squatterLink }
+  });
+  assert.equal(stale.status, 400, 'a link issued for the replaced password still works');
+
+  const verified = await api('/api/auth/verify-email', {
+    method: 'POST',
+    body: { token: ownerLink }
+  });
+  assert.equal(verified.status, 200);
+  assert.equal(verified.body.user.name, 'Rightful Owner');
+
+  const squatter = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: 'Squatter-Passw0rd!' }
+  });
+  assert.equal(squatter.status, 401);
+  const rightful = await api('/api/auth/login', {
+    method: 'POST',
+    body: { email, password: OWNER_PASSWORD }
+  });
+  assert.equal(rightful.status, 200);
+});
+
+test('sign-up refuses weak passwords and throwaway inboxes', async () => {
+  const common = await registerOnly(unique('weak'), 'password123');
+  assert.equal(common.status, 400);
+  assert.equal(common.body.code, 'PASSWORD_TOO_COMMON');
+
+  const short = await registerOnly(unique('short'), 'Ab1!xyz');
+  assert.equal(short.status, 400);
+  assert.equal(short.body.code, 'PASSWORD_TOO_SHORT');
+
+  const local = `holder${Date.now()}`;
+  const containsEmail = await registerOnly(`${local}@recovery.test`, `${local}-Secret!`);
+  assert.equal(containsEmail.status, 400);
+  assert.equal(containsEmail.body.code, 'PASSWORD_CONTAINS_EMAIL');
+
+  const disposable = await registerOnly(`someone${Date.now()}@mailinator.com`);
+  assert.equal(disposable.status, 400);
+  assert.equal(disposable.body.code, 'EMAIL_DISPOSABLE');
+
+  const config = await api('/api/auth/config');
+  assert.equal(config.status, 200);
+  assert.equal(config.body.passwordMinLength, 10);
 });
 
 test('forgot-password answers the same for every address', async () => {

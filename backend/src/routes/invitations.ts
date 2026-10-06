@@ -22,7 +22,7 @@ import events from '../events';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import { canAssignRole, isTeamRole, ownedSiteIds } from '../middleware/teamPolicy';
-import { passwordProblem } from '../config/passwords';
+import { assertPasswordAllowed } from '../config/passwords';
 import { signSession } from '../config/tokens';
 import { SESSION_TTL_SECONDS, startSession } from '../config/session';
 import { query, withTransaction } from '../db/pool';
@@ -159,8 +159,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
     if (!name || name.length > 100) throw badRequest('Invalid name');
-    const problem = passwordProblem(req.body?.password);
-    if (problem) throw badRequest(problem);
+    assertPasswordAllowed(req.body?.password);
 
     const member = await withTransaction(async (client) => {
       const invitation = await openInvitation(req.body?.token, client);

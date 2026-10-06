@@ -27,7 +27,7 @@ import '../src/config/env';
 import { execFile } from 'child_process';
 import type { Socket } from 'socket.io-client';
 import { BASE, connected, widgetSocket, widgetToken } from '../tests/helpers/widget';
-import { setPlan, verifyEmail } from '../tests/helpers/accounts';
+import { setPlan, signUp } from '../tests/helpers/accounts';
 import type { metricsSnapshot } from '../src/config/metrics';
 
 type Metrics = ReturnType<typeof metricsSnapshot>;
@@ -74,15 +74,10 @@ async function json<T>(path: string, init: RequestInit = {}) {
 /** A fresh, verified owner with one site, on the plan with the most room. */
 async function setup(): Promise<{ siteKey: string }> {
   const email = `load${Date.now()}@load.test`;
-  const reg = await json<{ user: { organizationId: string } }>('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Load Owner', email, password: 'LoadPassw0rd!' })
-  });
-  if (reg.status !== 201) throw new Error(`kayıt başarısız: ${reg.status}`);
+  // Sign-up is e-mail first: the verification link starts the session.
+  const reg = await signUp({ name: 'Load Owner', email, password: 'LoadPassw0rd!' });
   const session = /sc_session=([^;]+)/.exec(reg.headers.get('set-cookie') || '')?.[1];
   const auth = { Authorization: `Bearer ${decodeURIComponent(session || '')}` };
-  await verifyEmail(email);
   const onboarded = await json('/api/onboarding', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...auth },

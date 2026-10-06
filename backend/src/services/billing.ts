@@ -307,12 +307,14 @@ export async function syncOrganizationPlan(
 ): Promise<{ from: PlanType; to: PlanType } | null> {
   const result = await client.query<{
     current: string;
+    billing_exempt: boolean;
     plan_type: string | null;
     status: string | null;
     current_period_end: Date | null;
     past_due_since: Date | null;
   }>(
-    `SELECT o.plan_type AS current, s.plan_type, s.status, s.current_period_end, s.past_due_since
+    `SELECT o.plan_type AS current, o.billing_exempt,
+            s.plan_type, s.status, s.current_period_end, s.past_due_since
        FROM organizations o
        LEFT JOIN subscriptions s ON s.organization_id = o.id
       WHERE o.id = $1
@@ -320,7 +322,8 @@ export async function syncOrganizationPlan(
     [organizationId]
   );
   const row = result.rows[0];
-  if (!row) return null;
+  // A hand-set plan (SEC-05) is never moved by a subscription event.
+  if (!row || row.billing_exempt) return null;
   const from: PlanType = isPlanType(row.current) ? row.current : 'FREE';
   const to = subscriptionPlan(row) ?? from;
   if (to === from) return null;

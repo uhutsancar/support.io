@@ -25,7 +25,7 @@ import { eventLimiter } from '../src/socket/limits';
 import { closeRedisClient } from '../src/config/redis';
 import { getPool, query } from '../src/db/pool';
 import { BASE, connected, joinAsVisitor, widgetSocket } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { signUp } from './helpers/accounts';
 
 interface Ack {
   ok: boolean;
@@ -45,13 +45,8 @@ function sessionToken(res: { headers: Headers }): string {
 async function createTenant(label: string) {
   const stamp = `${Date.now()}${Math.floor(Math.random() * 100000)}`;
   const email = `${label}${stamp}@reliability.test`;
-  const reg = await fetch(`${BASE}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: `${label} owner`, email, password: 'E2ePassw0rd!' })
-  });
+  const reg = await signUp({ name: `${label} owner`, email, password: 'E2ePassw0rd!' });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   const token = sessionToken(reg);
   const site = await fetch(`${BASE}/api/sites`, {
     method: 'POST',

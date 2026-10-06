@@ -69,11 +69,24 @@ function paddleHosts(): { script: string; frame: string; connect: string } | nul
   };
 }
 
+/**
+ * Cloudflare Turnstile on the sign-up form (SEC-06), only when a site key is
+ * configured: its script and its challenge frame come from one host.
+ */
+function turnstileHost(): string | null {
+  return String(process.env.TURNSTILE_SITE_KEY || '').trim()
+    ? 'https://challenges.cloudflare.com'
+    : null;
+}
+
 const STRICT_BASE = (nonce: string): string[] => {
   const paddle = paddleHosts();
+  const turnstile = turnstileHost();
+  const scripts = [paddle?.script, turnstile].filter(Boolean).join(' ');
+  const frames = [paddle?.frame, turnstile].filter(Boolean).join(' ');
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${paddle ? ' ' + paddle.script : ''}`,
+    `script-src 'self' 'nonce-${nonce}'${scripts ? ' ' + scripts : ''}`,
     // Inline style attributes are everywhere in a React tree (style={{…}}), and
     // they cannot carry a nonce. Styles cannot read localStorage, so this is the
     // one relaxation worth making.
@@ -81,7 +94,7 @@ const STRICT_BASE = (nonce: string): string[] => {
     "font-src 'self' https://fonts.gstatic.com data:",
     `img-src 'self' data: blob: ${mediaHosts().join(' ')}`.trim(),
     `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}`.trim(),
-    ...(paddle ? [`frame-src ${paddle.frame}`] : []),
+    ...(frames ? [`frame-src ${frames}`] : []),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

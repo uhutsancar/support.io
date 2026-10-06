@@ -20,7 +20,7 @@ import { getPool, query } from '../src/db/pool';
 import { PLAN_LIMITS } from '../src/domain/plans';
 import { currentPeriod } from '../src/services/entitlements';
 import { BASE, joinAsVisitor, widgetSession } from './helpers/widget';
-import { outbox, setPlan, verifyEmail } from './helpers/accounts';
+import { outbox, setPlan, signUp } from './helpers/accounts';
 
 const PASSWORD = 'E2ePassw0rd!';
 
@@ -60,12 +60,8 @@ const stamp = () => `${Date.now()}${Math.floor(Math.random() * 100000)}`;
 
 async function tenant(plan: 'FREE' | 'PRO' | 'ENTERPRISE', { site = true } = {}) {
   const email = `owner${stamp()}@limits.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Limits Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Limits Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   const organizationId = String(reg.body.user.organizationId);
   await setPlan(organizationId, plan);
   const token = sessionCookie(reg);
