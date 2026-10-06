@@ -353,6 +353,60 @@ const apiLimiter = createLimiter({
   max: limit(process.env.API_RATE_MAX, 1000, 1000000)
 });
 
+// Kurum basina yazma sinirlari (plan (6) §8.2). Plan limiti toplam site ve
+// koltuk sayisini tutar; bunlar sil-yeniden-olustur dongusunu ve davet
+// e-postalariyla rastgele adreslere spam atilmasini yavaslatir.
+function perOrganization(req: Request): string {
+  const id = req.organization?._id || req.user?.organizationId;
+  return id ? `org:${String(id)}` : identifyClient(req);
+}
+
+const siteCreateLimiter = createLimiter({
+  name: 'site-create',
+  code: 'TOO_MANY_SITES_CREATED',
+  message: 'Too many sites created, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: limit(process.env.SITE_CREATE_RATE_MAX, 20, 100000),
+  keyGenerator: perOrganization
+});
+
+const invitationLimiter = createLimiter({
+  name: 'invitation-send',
+  code: 'TOO_MANY_INVITATIONS',
+  message: 'Too many invitations sent, please try again later.',
+  windowMs: 60 * 60 * 1000,
+  max: limit(process.env.INVITE_RATE_MAX, 20, 100000),
+  keyGenerator: perOrganization
+});
+
+// Soket baglantilari. Bir oturum belirteci gecerli oldugu surece istenen kadar
+// soket acmaya yetiyordu. Panel IP'ye, widget site + IP'ye gore sayilir:
+// mobil operatorler cok sayida ziyaretciyi tek IP'nin arkasinda toplar ve her
+// sayfa acilisi yeni bir baglantidir, bu yuzden widget'in tavani daha yuksek.
+const socketConnectQuota = {
+  admin: createQuota({
+    name: 'socket-admin',
+    windowMs: 60 * 1000,
+    max: limit(process.env.SOCKET_ADMIN_CONNECT_RATE_MAX, 30, 100000)
+  }),
+  widget: createQuota({
+    name: 'socket-widget',
+    windowMs: 60 * 1000,
+    max: limit(process.env.SOCKET_WIDGET_CONNECT_RATE_MAX, 60, 100000)
+  })
+};
+
+/**
+ * The address a socket handshake came from, by the same rule Express uses
+ * with `trust proxy` 1: the last X-Forwarded-For entry, which Caddy writes.
+ */
+function handshakeIp(headers: Record<string, unknown>, address: string): string {
+  const forwarded =
+    typeof headers['x-forwarded-for'] === 'string' ? headers['x-forwarded-for'] : '';
+  const last = forwarded.split(',').pop()?.trim();
+  return ipKeyGenerator(last || address || '');
+}
+
 export {
   loginLimiter,
   loginAccountLimiter,
@@ -362,6 +416,10 @@ export {
   forgotPasswordAccountLimiter,
   resendVerificationLimiter,
   apiLimiter,
+  siteCreateLimiter,
+  invitationLimiter,
+  socketConnectQuota,
+  handshakeIp,
   createLimiter,
   createQuota,
   identifyClient

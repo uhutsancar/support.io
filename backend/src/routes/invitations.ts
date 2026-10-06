@@ -29,7 +29,7 @@ import { query, withTransaction } from '../db/pool';
 import { generateId, isValidObjectId } from '../db/objectId';
 import { appBaseUrl, mail } from '../services/mail';
 import { assertCanAddAgent, lockOrganization } from '../services/entitlements';
-import { createLimiter } from '../middleware/rateLimit';
+import { createLimiter, invitationLimiter } from '../middleware/rateLimit';
 import {
   HttpError,
   asyncHandler,
@@ -268,6 +268,7 @@ router.get(
 
 router.post(
   '/',
+  invitationLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const organizationId = orgId(req);
     const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
@@ -338,6 +339,7 @@ async function ownOpenInvitation(req: Request, id: unknown): Promise<InvitationR
 
 router.post(
   '/:id/resend',
+  invitationLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const invitation = await ownOpenInvitation(req, req.params.id);
     if (!canAssignRole(req.user.role, invitation.role as TeamRole)) {

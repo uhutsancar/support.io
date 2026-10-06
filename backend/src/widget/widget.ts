@@ -968,6 +968,18 @@ interface Window {
     // refusing does not turn into a request loop.
     var refusals = 0;
     this.socket.on('connect_error', function (err: Error) {
+      // Refused for too many connections from this address: temporary, and
+      // the client does not retry a middleware refusal by itself.
+      if (err && err.message === 'RATE_LIMITED') {
+        self._setConnection('reconnecting');
+        self._timer(
+          function () {
+            if (self.socket && !self.destroyed) self.socket.connect();
+          },
+          5000 + Math.random() * 10000
+        );
+        return;
+      }
       if (!err || err.message !== 'WIDGET_SESSION_INVALID') return;
       if (++refusals > 3) {
         self._setConnection('error', err.message);

@@ -13,10 +13,13 @@ import { isOriginAllowed } from '../config/origins';
 import { sessionIsCurrent, verifySession, verifyWidgetSession } from '../config/tokens';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { siteForWidgetSession, WIDGET_SESSION_INVALID } from '../middleware/widgetSession';
+import { handshakeIp, socketConnectQuota } from '../middleware/rateLimit';
 import type { Namespace, Socket } from 'socket.io';
 import type { AdminSocket, WidgetSocket } from './types';
 
 const AUTH_FAILED = 'Authentication required';
+/** Too many handshakes from one address; the client retries with its backoff. */
+const RATE_LIMITED = 'RATE_LIMITED';
 
 /**
  * Reads the session cookie out of a raw Cookie header.
@@ -50,6 +53,9 @@ export function installAdminAuthentication(admin: Namespace): void {
   admin.use(async (rawSocket: Socket, next) => {
     const socket = rawSocket as AdminSocket;
     try {
+      const ip = handshakeIp(socket.handshake.headers, socket.handshake.address);
+      if (!(await socketConnectQuota.admin.take(ip))) return next(new Error(RATE_LIMITED));
+
       const cookieToken = sessionCookie(socket.handshake.headers?.cookie);
       const explicitToken = socket.handshake.auth?.token;
 
@@ -121,6 +127,11 @@ export function installWidgetAuthentication(widget: Namespace): void {
       const claims = verifyWidgetSession(token);
       const site = await siteForWidgetSession(claims);
       if (!site) return next(new Error(WIDGET_SESSION_INVALID));
+
+      const ip = handshakeIp(socket.handshake.headers, socket.handshake.address);
+      if (!(await socketConnectQuota.widget.take(`${site._id}:${ip}`))) {
+        return next(new Error(RATE_LIMITED));
+      }
 
       const origin = requestOrigin(socket.handshake.headers as Record<string, unknown>);
       if (origin !== null && !siteAcceptsOrigin(site, origin)) {

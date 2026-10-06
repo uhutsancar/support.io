@@ -53,7 +53,16 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       if (reason !== 'io client disconnect') setConnection('disconnected');
     };
     const onReconnectAttempt = () => setConnection('reconnecting');
-    const onConnectError = () => setConnection('disconnected');
+    // A refusal from the server's middleware is not retried by the client on
+    // its own. Too many handshakes from this address is temporary, so try
+    // again after a while (backend/src/socket/auth.ts).
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const onConnectError = (error: Error) => {
+      setConnection('disconnected');
+      if (error?.message !== 'RATE_LIMITED') return;
+      clearTimeout(retry);
+      retry = setTimeout(() => client.connect(), 5000 + Math.random() * 10000);
+    };
 
     client.on('connect', onConnect);
     client.on('disconnect', onDisconnect);
@@ -66,6 +75,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       client.off('disconnect', onDisconnect);
       client.off('connect_error', onConnectError);
       client.io.off('reconnect_attempt', onReconnectAttempt);
+      clearTimeout(retry);
       client.close();
       setSocket((current) => (current === client ? null : current));
     };
