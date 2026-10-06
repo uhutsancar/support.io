@@ -630,7 +630,7 @@ export default {
     invalid:
       'This invitation is invalid, expired or already used. Ask the person who invited you for a new one.',
     name: 'Your name',
-    password: 'Your password (at least 8 characters)',
+    password: 'Your password (at least 10 characters)',
     join: 'Accept the invitation',
     welcome: 'Welcome aboard!',
     error: 'The invitation could not be accepted'
@@ -643,7 +643,8 @@ export default {
     sendLink: 'Send the link',
     backToLogin: 'Back to sign in',
     resetTitle: 'Choose a new password',
-    resetSubtitle: 'At least 8 characters. Saving it signs you out on every device.',
+    resetSubtitle:
+      'At least 10 characters, not a common one. Saving it signs you out on every device.',
     newPassword: 'New password',
     confirmPassword: 'New password (again)',
     savePassword: 'Save password',
@@ -2092,7 +2093,11 @@ export default {
         benefit: 'Follow conversations that turn into sales, stage by stage.'
       },
       export: { name: 'Data export', benefit: 'Download your conversations as a file.' },
-      audit: { name: 'Audit logs', benefit: 'See who on your team changed what, and when.' }
+      audit: { name: 'Audit logs', benefit: 'See who on your team changed what, and when.' },
+      security: {
+        name: 'Required two-step verification',
+        benefit: 'Make everyone on your team enter the code from their phone at sign-in.'
+      }
     }
   },
   billing: {

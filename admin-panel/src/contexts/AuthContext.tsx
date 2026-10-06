@@ -2,15 +2,25 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { hasSession, purgeLegacyStorage } from '../lib/session';
 import type { ReactNode } from 'react';
-import { authAPI } from '../services/api';
-import type { AuthResponse } from '../services/api';
+import { authAPI, isPendingSecondStep } from '../services/api';
+import type { AuthResponse, LoginResponse, RegisterPayload } from '../services/api';
 import type { CurrentUser } from '../types/api';
 
 export interface AuthContextValue {
   user: CurrentUser | null;
   loading: boolean;
-  login(email: string, password: string): Promise<AuthResponse>;
-  register(name: string, email: string, password: string): Promise<AuthResponse>;
+  /** A session, or a pending second step (two-step sign-in). */
+  login(email: string, password: string): Promise<LoginResponse>;
+  /** Trades the pending token and a code for the session. */
+  loginSecondStep(data: {
+    mfaToken: string;
+    code?: string;
+    recoveryCode?: string;
+  }): Promise<AuthResponse>;
+  /** E-mail first: mails the link and starts no session. */
+  register(data: RegisterPayload): Promise<void>;
+  /** Takes over a session the server just started (verification link). */
+  signedIn(data: AuthResponse): void;
   logout(): Promise<void>;
   /** Updates fields on the signed-in user without reloading the app. */
   patchUser(updates: Partial<CurrentUser>): void;
@@ -56,14 +66,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   const login = async (email: string, password: string) => {
     const response = await authAPI.login({ email, password });
+    if (!isPendingSecondStep(response.data)) setUser(toCurrentUser(response.data.user));
+    return response.data;
+  };
+  const loginSecondStep = async (data: {
+    mfaToken: string;
+    code?: string;
+    recoveryCode?: string;
+  }) => {
+    const response = await authAPI.loginSecondStep(data);
     setUser(toCurrentUser(response.data.user));
     return response.data;
   };
-  const register = async (name: string, email: string, password: string) => {
-    const response = await authAPI.register({ name, email, password });
-    setUser(toCurrentUser(response.data.user));
-    return response.data;
+  const register = async (data: RegisterPayload) => {
+    await authAPI.register(data);
   };
+  const signedIn = (data: AuthResponse) => setUser(toCurrentUser(data.user));
   const logout = async () => {
     try {
       await authAPI.logout();
@@ -92,7 +110,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     loading,
     login,
+    loginSecondStep,
     register,
+    signedIn,
     logout,
     patchUser,
     refresh: checkAuth,

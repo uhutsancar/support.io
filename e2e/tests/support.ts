@@ -130,3 +130,46 @@ export function paidSubscription(organizationId: string) {
     .digest('hex');
   return { body, signature: `ts=${ts};h1=${h1}` };
 }
+
+/** The RFC 6238 code an authenticator app shows for `secret` (base32) now. */
+export function totp(secret: string, offsetSteps = 0): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let value = 0;
+  const bytes: number[] = [];
+  for (const char of secret.toUpperCase().replace(/[\s=]/g, '')) {
+    value = (value << 5) | alphabet.indexOf(char);
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000) + offsetSteps));
+  const hmac = crypto.createHmac('sha1', Buffer.from(bytes)).update(counter).digest();
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  return String((hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, '0');
+}
+
+/**
+ * An owner account set up through the API: e-mail-first sign-up, then the
+ * mailed link, which signs the request context in. Returns the CSRF header
+ * that context needs for writes.
+ */
+export async function ownerThroughApi(
+  request: APIRequestContext,
+  { email, password, name = 'E2E Owner' }: { email: string; password: string; name?: string }
+): Promise<{ csrf: Record<string, string> }> {
+  const registered = await request.post('/api/auth/register', {
+    data: { name, email, password }
+  });
+  if (registered.status() !== 201) throw new Error(`register: ${registered.status()}`);
+  const link = new URL(await mailedLink(request, email, '/verify-email'), 'http://x');
+  const verified = await request.post('/api/auth/verify-email', {
+    data: { token: link.searchParams.get('token') }
+  });
+  if (verified.status() !== 200) throw new Error(`verify: ${verified.status()}`);
+  const { cookies } = await request.storageState();
+  return { csrf: { 'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? '' } };
+}

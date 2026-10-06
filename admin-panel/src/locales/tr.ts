@@ -630,7 +630,7 @@ export default {
     invalid:
       'Bu davet geçersiz, süresi dolmuş ya da daha önce kullanılmış. Sizi davet eden kişiden yenisini isteyin.',
     name: 'Adınız',
-    password: 'Şifreniz (en az 8 karakter)',
+    password: 'Şifreniz (en az 10 karakter)',
     join: 'Daveti kabul et',
     welcome: 'Hoş geldiniz!',
     error: 'Davet kabul edilemedi'
@@ -643,7 +643,8 @@ export default {
     sendLink: 'Bağlantı gönder',
     backToLogin: 'Girişe dön',
     resetTitle: 'Yeni şifre belirleyin',
-    resetSubtitle: 'En az 8 karakter. Kaydettiğinizde tüm cihazlardaki oturumlarınız kapanır.',
+    resetSubtitle:
+      'En az 10 karakter, yaygın bir şifre olmasın. Kaydettiğinizde tüm cihazlardaki oturumlarınız kapanır.',
     newPassword: 'Yeni şifre',
     confirmPassword: 'Yeni şifre (tekrar)',
     savePassword: 'Şifreyi kaydet',
@@ -2098,6 +2099,10 @@ export default {
       audit: {
         name: 'Denetim kayıtları',
         benefit: 'Ekibinizde kimin neyi ne zaman değiştirdiğini görün.'
+      },
+      security: {
+        name: 'Zorunlu iki adımlı doğrulama',
+        benefit: 'Ekibinizdeki herkesin girişte telefonundaki kodu da girmesini şart koşun.'
       }
     }
   },

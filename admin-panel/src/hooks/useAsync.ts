@@ -72,6 +72,8 @@ export function errorMessage(error: unknown, fallback: string): string {
     ).response;
     const code = typeof response?.data?.code === 'string' ? response.data.code : '';
     if (TRANSLATED_CODES[code]) return i18n.t(TRANSLATED_CODES[code]);
+    // Account and sign-up codes (locales/account.*.ts) by their own name.
+    if (code && i18n.exists(`account.errors.${code}`)) return i18n.t(`account.errors.${code}`);
     const fromBody = response?.data?.error ?? response?.data?.message;
     if (typeof fromBody === 'string' && fromBody) return fromBody;
   }

@@ -141,7 +141,7 @@ export const ResetPassword = () => {
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               required
             />
             <Field
@@ -150,7 +150,7 @@ export const ResetPassword = () => {
               value={confirm}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirm(e.target.value)}
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               required
             />
             <p className="text-[13px] text-gray-500 dark:text-gray-400">
@@ -169,10 +169,13 @@ export const ResetPassword = () => {
 export const VerifyEmail = () => {
   const { t } = useTranslation();
   const prefix = usePrefix();
+  const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { user, patchUser } = useAuth();
+  const { user, patchUser, signedIn } = useAuth();
   const token = params.get('token') || '';
-  const [state, setState] = useState<'working' | 'done' | 'failed'>(token ? 'working' : 'failed');
+  const [state, setState] = useState<'working' | 'done' | 'signedIn' | 'failed'>(
+    token ? 'working' : 'failed'
+  );
   // React 18 runs effects twice in development; a token is single-use, so
   // the second run must not spend it again and report failure.
   const started = useRef(false);
@@ -182,11 +185,25 @@ export const VerifyEmail = () => {
     started.current = true;
     authAPI
       .verifyEmail(token)
-      .then(() => {
+      .then(({ data }) => {
+        // The link signs the browser in (e-mail-first sign-up); a new owner
+        // goes straight to the setup.
+        if (data.user && data.csrfToken) {
+          signedIn({ user: data.user, csrfToken: data.csrfToken });
+          setState('signedIn');
+          const onboarding = data.user.role === 'owner' && data.user.isOnboarded === false;
+          window.setTimeout(
+            () => navigate(`${prefix}${onboarding ? '/onboarding' : '/dashboard'}`),
+            900
+          );
+          return;
+        }
         setState('done');
         if (user) patchUser({ emailVerified: true });
       })
       .catch(() => setState('failed'));
+    // Runs once per token; the auth helpers it calls are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   return (
@@ -201,13 +218,82 @@ export const VerifyEmail = () => {
         subtitle={
           state === 'working'
             ? t('common.loading')
-            : state === 'done'
-              ? t('recovery.verifyDone')
-              : t('recovery.verifyFailed')
+            : state === 'signedIn'
+              ? t('account.verify.signedIn')
+              : state === 'done'
+                ? user
+                  ? t('recovery.verifyDone')
+                  : t('account.verify.done')
+                : t('recovery.verifyFailed')
         }
         footer={
           <p className="text-[14px] text-gray-600 dark:text-gray-400">
             <Link to={user ? `${prefix}/dashboard` : `${prefix}/login`} className={linkClass}>
+              {user ? t('recovery.toDashboard') : t('recovery.backToLogin')}
+            </Link>
+          </p>
+        }
+      />
+    </>
+  );
+};
+
+/**
+ * /confirm-email?token=…  — the link sent to a new address (plan v10 SEC-03).
+ * Works without a session: the link itself is the proof.
+ */
+export const ConfirmEmail = () => {
+  const { t } = useTranslation();
+  const prefix = usePrefix();
+  const [params] = useSearchParams();
+  const { user, patchUser } = useAuth();
+  const token = params.get('token') || '';
+  const [state, setState] = useState<'working' | 'done' | 'taken' | 'failed'>(
+    token ? 'working' : 'failed'
+  );
+  const [email, setEmail] = useState('');
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (!token || started.current) return;
+    started.current = true;
+    authAPI
+      .confirmEmailChange(token)
+      .then(({ data }) => {
+        setEmail(data.email);
+        setState('done');
+        if (user) patchUser({ email: data.email, emailVerified: true });
+      })
+      .catch((error) =>
+        setState(error?.response?.data?.code === 'EMAIL_TAKEN' ? 'taken' : 'failed')
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  return (
+    <>
+      <Helmet>
+        <title>{`${t('account.confirmEmail.title')} — Support.io`}</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      <AuthLayout
+        side="login"
+        title={t('account.confirmEmail.title')}
+        subtitle={
+          state === 'working'
+            ? t('account.confirmEmail.working')
+            : state === 'done'
+              ? t('account.confirmEmail.done', { email })
+              : state === 'taken'
+                ? t('account.confirmEmail.taken')
+                : t('account.confirmEmail.failed')
+        }
+        footer={
+          <p className="text-[14px] text-gray-600 dark:text-gray-400">
+            <Link
+              to={user ? `${prefix}/dashboard/settings` : `${prefix}/login`}
+              className={linkClass}
+            >
               {user ? t('recovery.toDashboard') : t('recovery.backToLogin')}
             </Link>
           </p>

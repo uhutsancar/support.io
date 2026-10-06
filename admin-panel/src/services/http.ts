@@ -23,6 +23,9 @@ const REQUEST_TIMEOUT_MS = 15 * 1000;
 /** Dispatched on window when a request is refused for the plan. */
 export const PLAN_REQUIRED_EVENT = 'supportio:plan-required';
 
+/** Dispatched on window when the organization requires two-step sign-in. */
+export const MFA_SETUP_REQUIRED_EVENT = 'supportio:mfa-setup-required';
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: REQUEST_TIMEOUT_MS,
@@ -79,7 +82,20 @@ api.interceptors.response.use(
         })
       );
     }
-    if (error.response?.status === 401) {
+    // An organization that requires two-step verification blocks a member
+    // without it; the layout shows the set-up screen (SEC-04).
+    if (code === 'MFA_SETUP_REQUIRED') {
+      window.dispatchEvent(new CustomEvent(MFA_SETUP_REQUIRED_EVENT));
+    }
+    // The sign-in endpoints answer 401 for a wrong password or an expired
+    // second step; the page that asked shows the reason, so these are not a
+    // lost session and must not reload the page.
+    const url = String(error.config?.url || '');
+    const signingIn =
+      /^\/auth\/(login|register|verify-email|resend-verification-link|confirm-email-change)/.test(
+        url
+      );
+    if (error.response?.status === 401 && !signingIn) {
       // The session is gone: drop everything held for it before leaving, or the
       // login page would be served this tenant's cached data on the way back.
       cache.clear();

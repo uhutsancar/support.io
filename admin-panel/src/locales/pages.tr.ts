@@ -489,7 +489,9 @@ export default {
       sections: [
         {
           h: 'Hizmet',
-          p: ['Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.']
+          p: [
+            'Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.'
+          ]
         },
         {
           h: 'Hesap',

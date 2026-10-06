@@ -26,6 +26,9 @@ const ResetPassword = lazy(() =>
 const VerifyEmail = lazy(() =>
   import('./pages/AccountRecovery').then((m) => ({ default: m.VerifyEmail }))
 );
+const ConfirmEmail = lazy(() =>
+  import('./pages/AccountRecovery').then((m) => ({ default: m.ConfirmEmail }))
+);
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Sites = lazy(() => import('./pages/Sites'));
@@ -190,6 +193,7 @@ function App() {
                     />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/confirm-email" element={<ConfirmEmail />} />
                     <Route path="/invite/accept" element={<AcceptInvitation />} />
                     <Route path="/en" element={<Home />} />
                     <Route path="/en/features" element={<Features />} />
@@ -227,6 +231,7 @@ function App() {
                     />
                     <Route path="/en/reset-password" element={<ResetPassword />} />
                     <Route path="/en/verify-email" element={<VerifyEmail />} />
+                    <Route path="/en/confirm-email" element={<ConfirmEmail />} />
                     <Route path="/en/invite/accept" element={<AcceptInvitation />} />
                     <Route
                       path="/onboarding"

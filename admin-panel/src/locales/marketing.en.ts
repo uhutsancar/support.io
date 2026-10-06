@@ -867,6 +867,7 @@ export default {
       crm: 'Deal tracking',
       export: 'Data export',
       audit: 'Audit logs',
+      security: 'Two-step verification required for the team',
       noBranding: 'No “Support.io” mark in the bubble'
     }
   },
@@ -952,7 +953,7 @@ export default {
     title: 'Create a free account',
     subtitle: 'An email and a password is all it takes. No card required.',
     metaTitle: 'Create a free account — Support.io',
-    passwordHint: 'At least 8 characters',
+    passwordHint: 'At least 10 characters, not a common one',
     noCard: 'By signing up you accept the terms of use.',
     hasAccount: 'Already have an account?',
     login: 'Log in'

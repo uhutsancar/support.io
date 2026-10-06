@@ -58,6 +58,31 @@ export interface RegisterPayload {
   email: string;
   password: string;
   companyName?: string;
+  /** The Cloudflare Turnstile answer, when the server asks for one. */
+  turnstileToken?: string;
+  locale?: string;
+}
+
+/**
+ * What /auth/login answers: a session, or — with two-step sign-in on — a
+ * five-minute token to trade for one at /auth/login/2fa.
+ */
+export type LoginResponse = AuthResponse | { mfaRequired: true; mfaToken: string };
+
+export const isPendingSecondStep = (
+  data: LoginResponse
+): data is { mfaRequired: true; mfaToken: string } => 'mfaRequired' in data && data.mfaRequired;
+
+/** Public settings the sign-up and sign-in forms read before anything else. */
+export interface AuthConfig {
+  turnstileSiteKey: string | null;
+  passwordMinLength: number;
+}
+
+export interface MfaStatus {
+  enabled: boolean;
+  recoveryCodesLeft: number;
+  enforcedByOrganization: boolean;
 }
 
 export interface LoginPayload {
@@ -66,8 +91,15 @@ export interface LoginPayload {
 }
 
 export const authAPI = {
-  register: (data: RegisterPayload) => api.post<AuthResponse>('/auth/register', data),
-  login: (data: LoginPayload) => api.post<AuthResponse>('/auth/login', data),
+  config: () => api.get<AuthConfig>('/auth/config'),
+  // E-mail first: the answer is the same for every address and starts no
+  // session; the link in the mail does (verifyEmail below).
+  register: (data: RegisterPayload) => api.post<{ verificationSent: true }>('/auth/register', data),
+  login: (data: LoginPayload) => api.post<LoginResponse>('/auth/login', data),
+  loginSecondStep: (data: { mfaToken: string; code?: string; recoveryCode?: string }) =>
+    api.post<AuthResponse>('/auth/login/2fa', data),
+  resendVerificationLink: (email: string, locale?: string) =>
+    api.post<{ verificationSent: true }>('/auth/resend-verification-link', { email, locale }),
   me: () => api.get<{ user: CurrentUser }>('/auth/me'),
   logout: () => api.post('/auth/logout'),
   updateStatus: (data: { status: string }) => api.put('/auth/status', data),
@@ -81,7 +113,35 @@ export const authAPI = {
     api.post<{ message: string }>('/auth/forgot-password', { email, locale }),
   resetPassword: (token: string, password: string) =>
     api.post<{ reset: boolean }>('/auth/reset-password', { token, password }),
-  verifyEmail: (token: string) => api.post<{ verified: boolean }>('/auth/verify-email', { token }),
+  // Opening the link signs the browser in (unless the account has two-step
+  // sign-in, which then goes through the ordinary sign-in).
+  verifyEmail: (token: string) =>
+    api.post<Partial<AuthResponse> & { verified?: boolean }>('/auth/verify-email', { token }),
+  confirmEmailChange: (token: string) =>
+    api.post<{ changed: boolean; email: string }>('/auth/confirm-email-change', { token }),
+
+  // The signed-in account's own security (routes/account.ts).
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post<{ changed: boolean; csrfToken: string }>('/auth/change-password', {
+      currentPassword,
+      newPassword
+    }),
+  changeEmail: (newEmail: string, password: string, locale?: string) =>
+    api.post<{ message: string }>('/auth/change-email', { newEmail, password, locale }),
+  revokeSessions: () => api.post<{ revoked: boolean; csrfToken: string }>('/auth/sessions/revoke'),
+  mfaStatus: () => api.get<MfaStatus>('/auth/2fa', { cache: false }),
+  mfaSetup: (password: string) =>
+    api.post<{ secret: string; otpauthUri: string }>('/auth/2fa/setup', { password }),
+  mfaConfirm: (code: string) =>
+    api.post<{ enabled: true; recoveryCodes: string[]; csrfToken: string }>('/auth/2fa/confirm', {
+      code
+    }),
+  mfaDisable: (data: { password: string; code?: string; recoveryCode?: string }) =>
+    api.post<{ enabled: false }>('/auth/2fa/disable', data),
+  mfaRecoveryCodes: (data: { password: string; code?: string; recoveryCode?: string }) =>
+    api.post<{ recoveryCodes: string[] }>('/auth/2fa/recovery-codes', data),
+  setOrganizationSecurity: (enforce2fa: boolean) =>
+    api.put<{ enforce2fa: boolean }>('/auth/organization-security', { enforce2fa }),
   resendVerification: (locale?: string) =>
     api.post<{ sent?: boolean; alreadyVerified?: boolean }>('/auth/resend-verification', {
       locale

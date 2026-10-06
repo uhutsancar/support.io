@@ -1,0 +1,180 @@
+/**
+ * Hesap güvenliği, kayıt ve deneme süresi metinleri (Türkçe).
+ *
+ * i18n.ts bu ağacı temel çevirinin üzerine derin birleştirir; `audit.actions`
+ * altındaki yeni adlar mevcut listeye eklenir.
+ */
+
+export default {
+  account: {
+    register: {
+      checkInboxTitle: 'Gelen kutunuzu kontrol edin',
+      checkInboxBody:
+        '{{email}} adresine bir doğrulama bağlantısı gönderdik. Bağlantıyı açtığınızda hesabınız açılır ve kuruluma geçersiniz.',
+      checkInboxHint: 'E-posta birkaç dakika içinde gelmezse istenmeyen klasörüne bakın.',
+      resend: 'Bağlantıyı yeniden gönder',
+      resent: 'Bağlantı yeniden gönderildi.',
+      otherAddress: 'Farklı bir adresle kayıt ol',
+      trialNote: '14 gün boyunca Pro özellikleri ücretsiz; kredi kartı gerekmez.',
+      securityCheck: 'Güvenlik doğrulaması yükleniyor…'
+    },
+    login: {
+      notVerified:
+        'E-posta adresiniz henüz doğrulanmadı. Size yeni bir doğrulama bağlantısı gönderebiliriz.',
+      sendLink: 'Doğrulama bağlantısı gönder',
+      linkSent: 'Doğrulama bağlantısı gönderildi. Gelen kutunuzu kontrol edin.',
+      mfaTitle: 'İki adımlı doğrulama',
+      mfaSubtitle: 'Doğrulama uygulamanızdaki 6 haneli kodu girin.',
+      mfaRecoverySubtitle:
+        'Kaydettiğiniz kurtarma kodlarından birini girin. Her kod bir kez çalışır.',
+      code: 'Doğrulama kodu',
+      recoveryCode: 'Kurtarma kodu',
+      useRecovery: 'Telefonuma erişemiyorum, kurtarma kodu kullan',
+      useApp: 'Uygulamadaki kodu kullan',
+      verify: 'Doğrula',
+      startOver: 'Baştan başla'
+    },
+    verify: {
+      signedIn: 'E-posta adresiniz doğrulandı. Hesabınıza yönlendiriliyorsunuz…',
+      done: 'E-posta adresiniz doğrulandı. Şimdi giriş yapabilirsiniz.'
+    },
+    confirmEmail: {
+      title: 'Yeni e-posta adresi',
+      working: 'Adres onaylanıyor…',
+      done: 'E-posta adresiniz değişti. Bundan sonra {{email}} ile giriş yapın.',
+      failed:
+        'Bu bağlantı geçersiz ya da süresi dolmuş. Ayarlar sayfasından yeniden isteyebilirsiniz.',
+      taken: 'Bu adres artık kullanılamıyor. Başka bir adres deneyin.'
+    },
+    security: {
+      title: 'Hesap güvenliği',
+      description: 'Şifrenizi, e-posta adresinizi ve girişte istenen ikinci adımı buradan yönetin.',
+      password: {
+        title: 'Şifre',
+        current: 'Mevcut şifre',
+        next: 'Yeni şifre',
+        confirm: 'Yeni şifre (tekrar)',
+        hint: 'En az 10 karakter. Kaydettiğinizde diğer cihazlardaki oturumlarınız kapanır.',
+        save: 'Şifreyi değiştir',
+        changed: 'Şifreniz değişti. Diğer cihazlardaki oturumlarınız kapatıldı.',
+        mismatch: 'Yeni şifreler aynı değil'
+      },
+      email: {
+        title: 'E-posta adresi',
+        current: 'Şu anki adres: {{email}}',
+        next: 'Yeni e-posta adresi',
+        password: 'Şifreniz',
+        send: 'Onay bağlantısı gönder',
+        sent: 'Onay bağlantısı yeni adrese gönderildi. Bağlantı açılana kadar mevcut adresiniz geçerli kalır.'
+      },
+      sessions: {
+        title: 'Açık oturumlar',
+        body: 'Hesabınız başka bir bilgisayarda ya da telefonda açık kaldıysa oradaki tüm oturumları kapatın. Bu tarayıcıda oturumunuz açık kalır.',
+        button: 'Diğer tüm cihazlardan çıkış yap',
+        done: 'Diğer tüm cihazlardaki oturumlar kapatıldı.'
+      },
+      mfa: {
+        title: 'İki adımlı doğrulama',
+        body: 'Girişte şifrenize ek olarak telefonunuzdaki doğrulama uygulamasının (Google Authenticator, Microsoft Authenticator, 1Password vb.) ürettiği kod istenir.',
+        on: 'Açık',
+        off: 'Kapalı',
+        enable: 'İki adımlı doğrulamayı aç',
+        disable: 'Kapat',
+        passwordPrompt: 'Devam etmek için şifrenizi girin',
+        continue: 'Devam et',
+        scan: 'Doğrulama uygulamanızla bu QR kodunu okutun.',
+        manual: 'QR okutamıyorsanız bu anahtarı elle girin:',
+        codeLabel: 'Uygulamadaki 6 haneli kod',
+        confirm: 'Doğrula ve aç',
+        recoveryTitle: 'Kurtarma kodlarınız',
+        recoveryBody:
+          'Telefonunuza erişemezseniz bu kodlarla giriş yapabilirsiniz. Her kod bir kez çalışır. Şimdi güvenli bir yere kaydedin: bir daha gösterilmeyecekler.',
+        copy: 'Kopyala',
+        copied: 'Kopyalandı',
+        download: 'İndir',
+        saved: 'Kaydettim',
+        enabled: 'İki adımlı doğrulama açıldı.',
+        disabled: 'İki adımlı doğrulama kapatıldı.',
+        disableBody:
+          'Kapatmak için şifrenizi ve uygulamadaki güncel kodu (ya da bir kurtarma kodunu) girin.',
+        recoveryLeft: '{{count}} kurtarma kodu kaldı.',
+        regenerate: 'Yeni kurtarma kodları oluştur',
+        regenerateBody: 'Yeni kodlar oluşturduğunuzda eski kodların hiçbiri çalışmaz.',
+        enforcedNote: 'Kuruluşunuz iki adımlı doğrulamayı zorunlu tuttuğu için kapatılamaz.'
+      },
+      enforce: {
+        title: 'Tüm ekip için zorunlu kıl',
+        body: 'Açıkken iki adımlı doğrulaması olmayan üyeler, kurmadan panelin geri kalanını kullanamaz.',
+        enterpriseOnly: 'Kurumsal planda kullanılabilir.',
+        turnOn: 'Zorunlu kıl',
+        turnOff: 'Zorunluluğu kaldır',
+        updated: 'Ekip güvenlik ayarı kaydedildi.'
+      },
+      required: {
+        title: 'Kuruluşunuz iki adımlı doğrulama istiyor',
+        body: 'Panele devam etmek için hesabınızda iki adımlı doğrulamayı açın. Birkaç dakika sürer.'
+      }
+    },
+    trial: {
+      banner: 'Pro deneme sürenizin bitmesine {{count}} gün kaldı.',
+      lastDay: 'Pro deneme süreniz bugün bitiyor.',
+      choose: 'Planı seç',
+      label: 'Ücretsiz deneme',
+      billingNote:
+        'Pro deneme: {{date}} tarihine kadar. Kart bilgisi istemedik; otomatik ücret alınmaz.'
+    },
+    errors: {
+      PASSWORD_TOO_SHORT: 'Şifre en az 10 karakter olmalı.',
+      PASSWORD_TOO_LONG: 'Şifre çok uzun.',
+      PASSWORD_TOO_COMMON: 'Bu şifre çok yaygın; tahmin edilmesi zor bir şifre seçin.',
+      PASSWORD_CONTAINS_EMAIL: 'Şifre e-posta adresinizi içermemeli.',
+      PASSWORD_REQUIRED: 'Şifre gerekli.',
+      PASSWORD_UNCHANGED: 'Yeni şifre mevcut şifreyle aynı olamaz.',
+      EMAIL_DISPOSABLE: 'Lütfen kalıcı bir e-posta adresi kullanın.',
+      EMAIL_INVALID: 'Geçerli bir e-posta adresi yazın.',
+      EMAIL_UNCHANGED: 'Bu zaten sizin adresiniz.',
+      CAPTCHA_FAILED: 'Güvenlik doğrulaması tamamlanamadı, lütfen tekrar deneyin.',
+      MFA_CODE_INVALID: 'Kod doğru değil.',
+      MFA_EXPIRED: 'Giriş süresi doldu, lütfen baştan başlayın.',
+      MFA_ENFORCED: 'Kuruluşunuz iki adımlı doğrulamayı zorunlu tutuyor.',
+      MFA_REQUIRED_FIRST: 'Önce kendi hesabınızda iki adımlı doğrulamayı açın.',
+      TOO_MANY_ACCOUNT_CHANGES:
+        'Çok fazla değişiklik denemesi yapıldı. Bir saat sonra tekrar deneyin.',
+      TOO_MANY_MFA_ATTEMPTS: 'Çok fazla kod denemesi yapıldı. Biraz sonra yeniden giriş yapın.',
+      INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
+    }
+  },
+  audit: {
+    actions: {
+      LOGIN_FAILED_LOCKED: 'Hesap Geçici Olarak Kilitlendi',
+      PASSWORD_CHANGED: 'Şifre Değiştirildi',
+      EMAIL_CHANGE_REQUESTED: 'E-posta Değişikliği İstendi',
+      EMAIL_CHANGED: 'E-posta Adresi Değişti',
+      MFA_ENABLED: 'İki Adımlı Doğrulama Açıldı',
+      MFA_DISABLED: 'İki Adımlı Doğrulama Kapatıldı',
+      MFA_RECOVERY_USED: 'Kurtarma Koduyla Giriş',
+      SESSIONS_REVOKED: 'Tüm Cihazlardan Çıkış',
+      SECURITY_SETTINGS_UPDATED: 'Ekip Güvenlik Ayarı Değişti',
+      VISITOR_BLOCKED: 'Ziyaretçi Engellendi',
+      VISITOR_UNBLOCKED: 'Ziyaretçi Engeli Kaldırıldı',
+      VISITOR_DATA_DELETED: 'Ziyaretçi Verisi Silindi',
+      RETENTION_PURGE: 'Saklama Süresi Dolan Veri Silindi',
+      RETENTION_SETTINGS_UPDATED: 'Saklama Süresi Değişti',
+      ASSISTANT_ENABLED: 'Yapay Zekâ Asistanı Açıldı',
+      ASSISTANT_KILL_SWITCH: 'Asistan Platform Genelinde Durduruldu',
+      API_KEY_CREATED: 'API Anahtarı Oluşturuldu',
+      API_KEY_REVOKED: 'API Anahtarı İptal Edildi',
+      WEBHOOK_CREATED: 'Webhook Eklendi',
+      WEBHOOK_UPDATED: 'Webhook Değişti',
+      WEBHOOK_DELETED: 'Webhook Silindi',
+      SITE_SUSPENDED: 'Site Askıya Alındı',
+      SITE_REACTIVATED: 'Site Yeniden Açıldı',
+      TRIAL_STARTED: 'Pro Deneme Başladı',
+      TRIAL_ENDED: 'Pro Deneme Bitti',
+      SAVED_REPLY_CREATED: 'Hazır Yanıt Eklendi',
+      SAVED_REPLY_UPDATED: 'Hazır Yanıt Değişti',
+      SAVED_REPLY_DELETED: 'Hazır Yanıt Silindi',
+      CONVERSATIONS_MERGED: 'Konuşmalar Birleştirildi'
+    }
+  }
+};

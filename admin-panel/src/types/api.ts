@@ -61,8 +61,16 @@ export interface CurrentUser {
   organization?: {
     id: string;
     name: string;
+    /** The plan in force: the free trial counts as PRO while it runs. */
     planType: PlanType;
+    enforce2fa?: boolean;
+    /** When the free Pro trial ends; null without a running trial. */
+    trialEndsAt?: string | null;
   } | null;
+  /** Two-step sign-in is on for this account. */
+  mfaEnabled?: boolean;
+  /** The organization requires it and this account has none yet. */
+  mfaSetupRequired?: boolean;
   permissions?: Record<string, boolean>;
   [extra: string]: unknown;
 }
@@ -153,6 +161,10 @@ export interface PlanInfo {
 /** GET /api/billing — the owner's billing page. */
 export interface BillingOverview {
   plan: PlanType;
+  /** The free Pro trial while it runs and no plan was bought (PRD-15). */
+  trial?: { plan: PlanType; endsAt: string } | null;
+  /** A hand-set plan no subscription event moves (beta, platform owner). */
+  billingExempt?: boolean;
   limits: {
     sites: number;
     agents: number;

@@ -8,6 +8,7 @@
 //   locales/tr.ts            ↔ locales/en.ts
 //   locales/marketing.tr.ts  ↔ locales/marketing.en.ts
 //   locales/pages.tr.ts      ↔ locales/pages.en.ts
+//   locales/account.tr.ts    ↔ locales/account.en.ts
 //
 // Arrays are leaves: their items are content, and the two languages may
 // legitimately list a different number of examples.
@@ -20,6 +21,8 @@ import marketingTr from '../src/locales/marketing.tr';
 import marketingEn from '../src/locales/marketing.en';
 import pagesTr from '../src/locales/pages.tr';
 import pagesEn from '../src/locales/pages.en';
+import accountTr from '../src/locales/account.tr';
+import accountEn from '../src/locales/account.en';
 
 type Tree = Record<string, unknown>;
 
@@ -40,7 +43,8 @@ let problems = 0;
 for (const [name, a, b] of [
   ['tr.ts / en.ts', tr, en],
   ['marketing.tr.ts / marketing.en.ts', marketingTr, marketingEn],
-  ['pages.tr.ts / pages.en.ts', pagesTr, pagesEn]
+  ['pages.tr.ts / pages.en.ts', pagesTr, pagesEn],
+  ['account.tr.ts / account.en.ts', accountTr, accountEn]
 ] as const) {
   const left = leaves(a as Tree);
   const right = leaves(b as Tree);

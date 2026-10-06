@@ -47,7 +47,6 @@ import { assertProductionConfig } from './config/productionChecks';
 import { logger, requestLogging } from './config/logger';
 import { metricsSnapshot, resetMetrics } from './config/metrics';
 import { closeRedisClient, getRedisClient, isEnabled as redisEnabled } from './config/redis';
-import { pool } from './db/pool';
 import { closeRedisAdapter } from './socket/adapter';
 import { mailProvider } from './services/mail';
 import { outboxFor } from './services/mail/console';
@@ -58,7 +57,9 @@ import {
   registerLimiter,
   apiLimiter
 } from './middleware/rateLimit';
-import { apiNotFound, errorHandler } from './http';
+import { apiNotFound, asyncHandler, errorHandler } from './http';
+import { auth } from './middleware/auth';
+import { pool, query } from './db/pool';
 import { IMAGE_TYPES, UPLOAD_ROOT, UPLOAD_URL_PREFIX, describeStorage } from './middleware/upload';
 import './services/auditService';
 import { attachRedisAdapter } from './socket/adapter';
@@ -244,6 +245,23 @@ if (!isProduction && mailProvider() === 'console') {
   app.get('/api/dev/outbox', (req: Request, res: Response) => {
     res.json({ mails: outboxFor(String(req.query.to || '')) });
   });
+}
+
+// Development only: ends the signed-in workspace's free trial at once, so the
+// browser tests can walk from the trial to Free to a paid plan without
+// waiting two weeks. Never mounted in production.
+if (!isProduction) {
+  app.post(
+    '/api/dev/end-trial',
+    auth,
+    asyncHandler(async (req: Request, res: Response) => {
+      await query(
+        `UPDATE organizations SET trial_ends_at = now() - interval '1 second' WHERE id = $1`,
+        [String(req.user.organizationId)]
+      );
+      res.status(204).end();
+    })
+  );
 }
 
 // Load-test measurements (config/metrics.ts, scripts/loadtest.ts). Outside

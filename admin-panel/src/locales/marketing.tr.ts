@@ -890,6 +890,7 @@ export default {
       crm: 'Fırsat takibi',
       export: 'Dışa aktarma',
       audit: 'Denetim kayıtları',
+      security: 'Ekip için zorunlu iki adımlı doğrulama',
       noBranding: 'Balonda “Support.io” yazısı olmadan'
     }
   },
@@ -975,7 +976,7 @@ export default {
     title: 'Ücretsiz hesap açın',
     subtitle: 'E-posta ve şifre yeterli. Kredi kartı istemiyoruz.',
     metaTitle: 'Ücretsiz hesap açın — Support.io',
-    passwordHint: 'En az 8 karakter',
+    passwordHint: 'En az 10 karakter, tahmin edilmesi kolay olmasın',
     noCard: 'Kayıt olarak kullanım koşullarını kabul etmiş olursunuz.',
     hasAccount: 'Zaten hesabınız var mı?',
     login: 'Giriş yapın'

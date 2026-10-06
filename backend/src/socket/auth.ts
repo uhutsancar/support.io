@@ -88,6 +88,11 @@ export function installAdminAuthentication(admin: Namespace): void {
         isActive: true
       });
       if (!organization) return next(new Error(AUTH_FAILED));
+      // The REST rule for organizations that require two-step sign-in
+      // (middleware/auth.ts): a member without it gets no live inbox either.
+      if (organization.enforce2fa && !(account.totpEnabledAt && account.totpSecretEnc)) {
+        return next(new Error(AUTH_FAILED));
+      }
 
       socket.userId = String(account._id);
       socket.userName = account.name || 'Support';

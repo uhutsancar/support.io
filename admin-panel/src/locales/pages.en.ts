@@ -410,14 +410,65 @@ export default {
       intro:
         'Support.io lets businesses add live chat and an AI assistant to their websites. This policy covers both the businesses that open a Support.io account and the visitors who use the chat bubble on their sites.',
       sections: [
-        { h: 'Roles', p: ['Support.io is the controller of your account data.', 'For the chat data of a site’s visitors, the business that added the bubble is the controller; Support.io processes that data on its behalf and instructions.'] },
-        { h: 'What we process', p: ['Account: name, e-mail, role, a one-way hash of the password, session and activity records.', 'Visitor: chat messages and files; their name and e-mail if they type them; the page they are on, browser and operating system, IP address and country.', 'Payment: card details never reach us. Paddle takes payments and invoices as the seller.'] },
-        { h: 'Why', p: ['To run the service: deliver, store and show messages to your team.', 'Security: preventing abuse and unauthorised access, rate limiting.', 'Account e-mails: verification, password reset, team invitations and usage warnings. We send no marketing e-mail.', 'Billing and legal obligations.'] },
-        { h: 'The AI assistant', p: ['If a business switches the assistant on, the visitor’s question and the site’s public FAQ entries are sent to our AI service provider to produce an answer. E-mail addresses and phone numbers in the question are masked first.', 'The visitor’s name, e-mail and earlier messages are never sent. A question containing a card number, IBAN or ID number is not sent at all; the conversation goes to the team.'] },
-        { h: 'How long we keep it', p: ['Conversations are kept while the account is open or until the business deletes them.', 'Visitors’ IP addresses and device details are deleted 90 days after their last visit; IP addresses in activity records after 90 days.', 'Deleting an account deletes its data; it leaves the encrypted backups within three months.'] },
-        { h: 'Who we share it with', p: ['We do not sell data. We share it only as far as needed with the providers that run the service: hosting, file storage, e-mail delivery, payments and the AI service.'] },
-        { h: 'Cookies and browser storage', p: ['The dashboard uses a required session cookie (sc_session) and a security cookie (sc_csrf).', 'So that a conversation survives page changes, the chat bubble keeps a signed visitor session (sc_widget_session) in the browser’s local storage, and the visitor’s name and e-mail (sc_visitor_name, sc_visitor_email) if they typed them. No advertising or tracking cookies.'] },
-        { h: 'Your rights', p: ['Under KVKK and GDPR you may access, correct, delete and port your data and object to its processing.', 'Account owners can download all data under Settings → Data and privacy and delete the account. Visitors can send requests to the business concerned or to us.'] }
+        {
+          h: 'Roles',
+          p: [
+            'Support.io is the controller of your account data.',
+            'For the chat data of a site’s visitors, the business that added the bubble is the controller; Support.io processes that data on its behalf and instructions.'
+          ]
+        },
+        {
+          h: 'What we process',
+          p: [
+            'Account: name, e-mail, role, a one-way hash of the password, session and activity records.',
+            'Visitor: chat messages and files; their name and e-mail if they type them; the page they are on, browser and operating system, IP address and country.',
+            'Payment: card details never reach us. Paddle takes payments and invoices as the seller.'
+          ]
+        },
+        {
+          h: 'Why',
+          p: [
+            'To run the service: deliver, store and show messages to your team.',
+            'Security: preventing abuse and unauthorised access, rate limiting.',
+            'Account e-mails: verification, password reset, team invitations and usage warnings. We send no marketing e-mail.',
+            'Billing and legal obligations.'
+          ]
+        },
+        {
+          h: 'The AI assistant',
+          p: [
+            'If a business switches the assistant on, the visitor’s question and the site’s public FAQ entries are sent to our AI service provider to produce an answer. E-mail addresses and phone numbers in the question are masked first.',
+            'The visitor’s name, e-mail and earlier messages are never sent. A question containing a card number, IBAN or ID number is not sent at all; the conversation goes to the team.'
+          ]
+        },
+        {
+          h: 'How long we keep it',
+          p: [
+            'Conversations are kept while the account is open or until the business deletes them.',
+            'Visitors’ IP addresses and device details are deleted 90 days after their last visit; IP addresses in activity records after 90 days.',
+            'Deleting an account deletes its data; it leaves the encrypted backups within three months.'
+          ]
+        },
+        {
+          h: 'Who we share it with',
+          p: [
+            'We do not sell data. We share it only as far as needed with the providers that run the service: hosting, file storage, e-mail delivery, payments and the AI service.'
+          ]
+        },
+        {
+          h: 'Cookies and browser storage',
+          p: [
+            'The dashboard uses a required session cookie (sc_session) and a security cookie (sc_csrf).',
+            'So that a conversation survives page changes, the chat bubble keeps a signed visitor session (sc_widget_session) in the browser’s local storage, and the visitor’s name and e-mail (sc_visitor_name, sc_visitor_email) if they typed them. No advertising or tracking cookies.'
+          ]
+        },
+        {
+          h: 'Your rights',
+          p: [
+            'Under KVKK and GDPR you may access, correct, delete and port your data and object to its processing.',
+            'Account owners can download all data under Settings → Data and privacy and delete the account. Visitors can send requests to the business concerned or to us.'
+          ]
+        }
       ]
     },
     terms: {
@@ -425,15 +476,66 @@ export default {
       title: 'Terms of Use',
       intro: 'By using Support.io you accept these terms. We have tried to keep them short.',
       sections: [
-        { h: 'The service', p: ['Support.io gives your site a chat bubble, an AI assistant and a dashboard for your team. Features depend on your plan.'] },
-        { h: 'Your account', p: ['You give accurate details and keep your password safe.', 'You are responsible for what the people you invite do in your account.'] },
-        { h: 'Plans and payment', p: ['The free plan has no time limit. Paid plans are billed in advance, monthly or yearly; Paddle takes the payment as the seller.', 'Cancel any time; your plan runs until the paid period ends. If a payment fails, the plan returns to Free after 7 days.', 'The site, user, conversation and AI answer limits of each plan are enforced on the server.'] },
-        { h: 'Acceptable use', p: ['You may not use the service for illegal content, spam, malware or collecting other people’s data without permission.', 'We may suspend an account that breaks these rules.'] },
-        { h: 'Visitor data', p: ['You are the controller of your visitors’ data. State in your site’s privacy notice that you use Support.io for live chat.'] },
-        { h: 'The AI assistant', p: ['The assistant bases its answers on your FAQ content; you are responsible for that content being correct.', 'AI can make mistakes. When unsure, the assistant hands the conversation to your team, and your team can take over at any time.'] },
-        { h: 'Availability', p: ['We take reasonable care to keep the service running and back up data regularly, but we do not guarantee it will never be interrupted.'] },
-        { h: 'Limitation of liability', p: ['To the extent the law allows, we are not liable for indirect losses; our liability for direct losses is limited to what you paid us in the last 12 months.'] },
-        { h: 'Changes and law', p: ['We will tell you by e-mail about significant changes to these terms.', 'These terms are governed by the laws of the Republic of Türkiye.'] }
+        {
+          h: 'The service',
+          p: [
+            'Support.io gives your site a chat bubble, an AI assistant and a dashboard for your team. Features depend on your plan.'
+          ]
+        },
+        {
+          h: 'Your account',
+          p: [
+            'You give accurate details and keep your password safe.',
+            'You are responsible for what the people you invite do in your account.'
+          ]
+        },
+        {
+          h: 'Plans and payment',
+          p: [
+            'The free plan has no time limit. Paid plans are billed in advance, monthly or yearly; Paddle takes the payment as the seller.',
+            'Cancel any time; your plan runs until the paid period ends. If a payment fails, the plan returns to Free after 7 days.',
+            'The site, user, conversation and AI answer limits of each plan are enforced on the server.'
+          ]
+        },
+        {
+          h: 'Acceptable use',
+          p: [
+            'You may not use the service for illegal content, spam, malware or collecting other people’s data without permission.',
+            'We may suspend an account that breaks these rules.'
+          ]
+        },
+        {
+          h: 'Visitor data',
+          p: [
+            'You are the controller of your visitors’ data. State in your site’s privacy notice that you use Support.io for live chat.'
+          ]
+        },
+        {
+          h: 'The AI assistant',
+          p: [
+            'The assistant bases its answers on your FAQ content; you are responsible for that content being correct.',
+            'AI can make mistakes. When unsure, the assistant hands the conversation to your team, and your team can take over at any time.'
+          ]
+        },
+        {
+          h: 'Availability',
+          p: [
+            'We take reasonable care to keep the service running and back up data regularly, but we do not guarantee it will never be interrupted.'
+          ]
+        },
+        {
+          h: 'Limitation of liability',
+          p: [
+            'To the extent the law allows, we are not liable for indirect losses; our liability for direct losses is limited to what you paid us in the last 12 months.'
+          ]
+        },
+        {
+          h: 'Changes and law',
+          p: [
+            'We will tell you by e-mail about significant changes to these terms.',
+            'These terms are governed by the laws of the Republic of Türkiye.'
+          ]
+        }
       ]
     }
   }

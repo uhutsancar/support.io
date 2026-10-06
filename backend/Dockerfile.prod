@@ -18,12 +18,9 @@ ARG VITE_API_URL=""
 ARG VITE_SUPPORT_SITE_KEY=""
 # Shown in install snippets; empty means "the page's own origin".
 ARG VITE_PUBLIC_APP_ORIGIN=""
-# Cloudflare Turnstile site key for the sign-up form (public by design).
-ARG VITE_TURNSTILE_SITE_KEY=""
 ENV VITE_API_URL=${VITE_API_URL} \
     VITE_SUPPORT_SITE_KEY=${VITE_SUPPORT_SITE_KEY} \
-    VITE_PUBLIC_APP_ORIGIN=${VITE_PUBLIC_APP_ORIGIN} \
-    VITE_TURNSTILE_SITE_KEY=${VITE_TURNSTILE_SITE_KEY}
+    VITE_PUBLIC_APP_ORIGIN=${VITE_PUBLIC_APP_ORIGIN}
 RUN npm run build
 
 FROM node-base AS backend-build

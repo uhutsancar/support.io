@@ -22,6 +22,8 @@ import marketingTr from './locales/marketing.tr';
 import marketingEn from './locales/marketing.en';
 import pagesTr from './locales/pages.tr';
 import pagesEn from './locales/pages.en';
+import accountTr from './locales/account.tr';
+import accountEn from './locales/account.en';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -37,8 +39,8 @@ function deepMerge(base: any, override: any) {
 
 i18n.use(initReactI18next).init({
   resources: {
-    tr: { translation: deepMerge(deepMerge(tr, marketingTr), pagesTr) },
-    en: { translation: deepMerge(deepMerge(en, marketingEn), pagesEn) }
+    tr: { translation: deepMerge(deepMerge(deepMerge(tr, marketingTr), pagesTr), accountTr) },
+    en: { translation: deepMerge(deepMerge(deepMerge(en, marketingEn), pagesEn), accountEn) }
   },
   lng: localStorage.getItem('language') || 'tr',
   fallbackLng: 'tr',
