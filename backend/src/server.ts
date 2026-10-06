@@ -44,6 +44,7 @@ import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
 import { stopRetentionSweeps } from './db/retention';
 import { assertProductionConfig } from './config/productionChecks';
 import { logger, requestLogging } from './config/logger';
+import { metricsSnapshot, resetMetrics } from './config/metrics';
 import { closeRedisClient, getRedisClient, isEnabled as redisEnabled } from './config/redis';
 import { pool } from './db/pool';
 import { closeRedisAdapter } from './socket/adapter';
@@ -236,6 +237,18 @@ app.use('/api/audit', auditRoutes);
 if (!isProduction && mailProvider() === 'console') {
   app.get('/api/dev/outbox', (req: Request, res: Response) => {
     res.json({ mails: outboxFor(String(req.query.to || '')) });
+  });
+}
+
+// Load-test measurements (config/metrics.ts, scripts/loadtest.ts). Outside
+// production only: they describe the process, not any tenant.
+if (!isProduction) {
+  app.get('/api/dev/metrics', (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store').json(metricsSnapshot());
+  });
+  app.post('/api/dev/metrics/reset', (_req: Request, res: Response) => {
+    resetMetrics();
+    res.status(204).end();
   });
 }
 

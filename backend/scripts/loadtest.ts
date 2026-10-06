@@ -1,236 +1,246 @@
 'use strict';
 
-// Yük testi.
+// Yük testi (plan §18).
 //
-// İki soruyu ölçer:
-//   A) Yüksek trafikte panel işlemleri çalışıyor mu?  (eşzamanlı inbox okuması)
-//   B) Yüksek trafikte herkes sohbet edebiliyor mu?   (eşzamanlı widget oturumu)
+// Her aşamada N ziyaretçi gerçek widget yolundan bağlanır (POST
+// /api/widget/session → /widget soketi → join) ve bağlı kalır. Hepsi
+// bağlıyken kısa bir mesaj patlaması gönderilir (varsayılan 50 mesaj/sn,
+// 10 sn); her mesaj sunucunun ACK'iyle, yani veritabanına yazıldıktan
+// sonra kapanır.
 //
-// Kullanım:
-//   node scripts/loadtest.js                 varsayılan profil
-//   node scripts/loadtest.js --agents 40 --visitors 60 --rounds 5
+// Ölçülenler:
+//   istemci   bağlanma+join süresi, ACK süresi (p50/p95/p99), hatalar
+//   sunucu    mesaj insert süresi, event-loop gecikmesi, sürecin CPU'su ve
+//             RAM'i (GET /api/dev/metrics, yalnızca production dışında)
+//   docker    aşamanın ortasında backend ve postgres konteynerlerinin
+//             CPU/RAM'i (docker CLI varsa)
 //
-// Çalışan bir backend ve tohumlanmış demo verisi gerektirir.
+// Sonuç ölçüldüğü makineyi anlatır; üretim kapasitesi değildir. İstemci ile
+// sunucu aynı makinedeyse ikisi aynı CPU'yu paylaşır.
+//
+// Kullanım (compose yığını ayaktayken, başka yük yokken):
+//   npm run loadtest
+//   npm run loadtest -- --stages 100,500,1000 --rate 50 --seconds 10
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
-import { io } from 'socket.io-client';
+import { execFile } from 'child_process';
+import type { Socket } from 'socket.io-client';
+import { BASE, connected, widgetSocket, widgetToken } from '../tests/helpers/widget';
+import { setPlan, verifyEmail } from '../tests/helpers/accounts';
+import type { metricsSnapshot } from '../src/config/metrics';
 
-const BASE = process.env.E2E_BASE_URL || `http://127.0.0.1:${process.env.PORT || 5000}`;
-const DEMO_OWNER = { email: 'owner@demo.support.io', password: 'Demo1234!' };
+type Metrics = ReturnType<typeof metricsSnapshot>;
 
-function arg(name: string, fallback: number): number {
+function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
-  return i === -1 ? fallback : Number(process.argv[i + 1]);
+  return i === -1 ? fallback : String(process.argv[i + 1]);
 }
 
-const AGENTS = arg('agents', 25);
-const VISITORS = arg('visitors', 40);
-const ROUNDS = arg('rounds', 4);
+const STAGES = arg('stages', '100,500,1000').split(',').map(Number).filter(Boolean);
+const RATE = Number(arg('rate', '50'));
+const SECONDS = Number(arg('seconds', '10'));
+const CONCURRENCY = Number(arg('concurrency', '50'));
+const ACK_TIMEOUT_MS = 15000;
 
-// Yüzdelikler ortalamadan daha bilgilendiricidir: yavaşlama genelde kuyruğun
-// sonunda yaşanır, ortalama onu gizler.
-function summarize(label: string, samples: number[], errors: number) {
-  if (!samples.length) {
-    console.log(`  ${label.padEnd(26)} ölçüm yok (hata: ${errors})`);
-    return null;
-  }
-  const s = [...samples].sort((a: any, b: any) => a - b);
-  const at = (p: number) => s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))];
-  const avg = Math.round(s.reduce((a: any, b: any) => a + b, 0) / s.length);
-  console.log(
-    `  ${label.padEnd(26)} n=${String(s.length).padStart(4)}  ` +
-      `ort=${String(avg).padStart(5)}ms  p50=${String(at(50)).padStart(5)}ms  ` +
-      `p95=${String(at(95)).padStart(5)}ms  p99=${String(at(99)).padStart(5)}ms  ` +
-      `max=${String(s[s.length - 1]).padStart(5)}ms  hata=${errors}`
-  );
-  return { avg, p50: at(50), p95: at(95), p99: at(99), max: s[s.length - 1], errors, n: s.length };
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function stats(samples: number[]) {
+  if (!samples.length) return null;
+  const s = [...samples].sort((a, b) => a - b);
+  const at = (p: number) => Math.round(s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]);
+  return { n: s.length, p50: at(50), p95: at(95), p99: at(99), max: Math.round(s[s.length - 1]) };
 }
 
-async function login() {
-  const r = await fetch(`${BASE}/api/auth/login`, {
+const fmt = (x: ReturnType<typeof stats>) =>
+  x ? `n=${x.n} p50=${x.p50}ms p95=${x.p95}ms p99=${x.p99}ms max=${x.max}ms` : 'ölçüm yok';
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout;
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timeout`)), ms);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function json<T>(path: string, init: RequestInit = {}) {
+  const res = await fetch(`${BASE}${path}`, init);
+  const body = (res.status === 204 ? null : await res.json().catch(() => null)) as T | null;
+  return { status: res.status, body, headers: res.headers };
+}
+
+/** A fresh, verified owner with one site, on the plan with the most room. */
+async function setup(): Promise<{ siteKey: string }> {
+  const email = `load${Date.now()}@load.test`;
+  const reg = await json<{ user: { organizationId: string } }>('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(DEMO_OWNER)
+    body: JSON.stringify({ name: 'Load Owner', email, password: 'LoadPassw0rd!' })
   });
-  if (!r.ok) throw new Error(`Demo hesabıyla giriş başarısız (${r.status}). Önce: npm run db:seed`);
-  return r.json();
+  if (reg.status !== 201) throw new Error(`kayıt başarısız: ${reg.status}`);
+  const session = /sc_session=([^;]+)/.exec(reg.headers.get('set-cookie') || '')?.[1];
+  const auth = { Authorization: `Bearer ${decodeURIComponent(session || '')}` };
+  await verifyEmail(email);
+  const onboarded = await json('/api/onboarding', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...auth },
+    body: JSON.stringify({ websiteUrl: 'http://localhost:3001', title: 'Load Owner' })
+  });
+  if (onboarded.status >= 300) throw new Error(`onboarding başarısız: ${onboarded.status}`);
+  await setPlan(String(reg.body?.user.organizationId), 'ENTERPRISE');
+  const { body } = await json<{ sites: { siteKey: string }[] }>('/api/sites', { headers: auth });
+  const siteKey = body?.sites[0]?.siteKey;
+  if (!siteKey) throw new Error('site oluşturulamadı');
+  return { siteKey };
 }
 
-async function timed(fn: () => Promise<unknown>) {
-  const t0 = Date.now();
-  try {
-    const ok = await fn();
-    return { ms: Date.now() - t0, ok };
-  } catch (error) {
-    return {
-      ms: Date.now() - t0,
-      ok: false,
-      error: error instanceof Error ? error.message : String(error)
-    };
-  }
+/** Runs `task(i)` for i < total, at most `limit` at a time. */
+async function inPool(total: number, limit: number, task: (i: number) => Promise<void>) {
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, total) }, async () => {
+    while (next < total) {
+      const i = next++;
+      await task(i);
+    }
+  });
+  await Promise.all(workers);
 }
 
-// --- A) Panel: eşzamanlı inbox okuması ------------------------------------
-async function scenarioPanel(token: string, siteId: string) {
-  const samples: number[] = [];
-  let errors = 0;
+function dockerStats(): Promise<string[]> {
+  return new Promise((resolve) => {
+    execFile(
+      'docker',
+      ['stats', '--no-stream', '--format', '{{.Name}}  cpu={{.CPUPerc}}  mem={{.MemUsage}}'],
+      { timeout: 15000 },
+      (error, stdout) => {
+        if (error) return resolve([]);
+        resolve(
+          stdout
+            .split(/\r?\n/)
+            .filter((line) => /backend|postgres/i.test(line))
+            .map((line) => line.trim())
+        );
+      }
+    );
+  });
+}
 
-  for (let round = 0; round < ROUNDS; round++) {
-    const batch = Array.from({ length: AGENTS }, () =>
-      timed(async () => {
-        const r = await fetch(`${BASE}/api/conversations/${siteId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!r.ok) throw new Error(String(r.status));
-        await r.json();
-        return true;
+async function stage(siteKey: string, sockets: number, index: number) {
+  console.log(`\n=== ${sockets} eşzamanlı soket, ${RATE} mesaj/sn × ${SECONDS} sn ===`);
+  await json('/api/dev/metrics/reset', { method: 'POST' });
+
+  // --- bağlanma
+  const visitors: Socket[] = [];
+  const joins: number[] = [];
+  const connectErrors = new Map<string, number>();
+  const connectStarted = Date.now();
+  await inPool(sockets, CONCURRENCY, async () => {
+    const started = performance.now();
+    try {
+      const { token } = await widgetToken(siteKey);
+      const socket = widgetSocket(token);
+      await withTimeout(connected(socket), 20000, 'connect');
+      await withTimeout(
+        new Promise((resolve) => {
+          socket.once('conversation-joined', resolve);
+          socket.emit('join-conversation', {});
+        }),
+        20000,
+        'join'
+      );
+      joins.push(performance.now() - started);
+      visitors.push(socket);
+    } catch (error) {
+      const kind = (error instanceof Error ? error.message : String(error)).slice(0, 60);
+      connectErrors.set(kind, (connectErrors.get(kind) || 0) + 1);
+    }
+  });
+  const connectSeconds = ((Date.now() - connectStarted) / 1000).toFixed(1);
+  console.log(`bağlanma+join   ${fmt(stats(joins))}  (${connectSeconds} sn)`);
+  if (connectErrors.size) console.log('  bağlanma hataları:', Object.fromEntries(connectErrors));
+  if (!visitors.length) return { ok: false };
+
+  // --- mesaj patlaması
+  const total = RATE * SECONDS;
+  const acks: number[] = [];
+  const ackErrors = new Map<string, number>();
+  const pending: Promise<void>[] = [];
+  let docker: Promise<string[]> = Promise.resolve([]);
+  const burstStarted = performance.now();
+  for (let k = 0; k < total; k++) {
+    const due = burstStarted + (k * 1000) / RATE;
+    const wait = due - performance.now();
+    if (wait > 0) await sleep(wait);
+    if (k === Math.floor(total / 2)) docker = dockerStats();
+    const socket = visitors[k % visitors.length];
+    const sent = performance.now();
+    pending.push(
+      new Promise<void>((resolve) => {
+        socket
+          .timeout(ACK_TIMEOUT_MS)
+          .emit(
+            'send-message',
+            { content: `Yük testi mesajı ${k}`, clientMessageId: `load-${index}-${k}` },
+            (err: Error | null, reply: { ok?: boolean; code?: string } | undefined) => {
+              if (err || !reply?.ok) {
+                const kind = err ? 'ack timeout' : reply?.code || 'refused';
+                ackErrors.set(kind, (ackErrors.get(kind) || 0) + 1);
+              } else {
+                acks.push(performance.now() - sent);
+              }
+              resolve();
+            }
+          );
       })
     );
-    const results = await Promise.all(batch);
-    for (const r of results) {
-      if (r.ok) samples.push(r.ms);
-      else errors++;
-    }
   }
-  return summarize(`inbox okuma (${AGENTS} eşzamanlı)`, samples, errors);
-}
+  const sendSeconds = ((performance.now() - burstStarted) / 1000).toFixed(1);
+  await Promise.all(pending);
+  const achieved = (total / Number(sendSeconds)).toFixed(1);
+  console.log(
+    `mesaj ACK       ${fmt(stats(acks))}  (${total} mesaj ${sendSeconds} sn'de, ${achieved}/sn)`
+  );
+  if (ackErrors.size) console.log('  ACK hataları:', Object.fromEntries(ackErrors));
 
-// --- B) Widget: eşzamanlı ziyaretçi sohbeti -------------------------------
-/** What one simulated visitor reports back. */
-interface VisitorResult {
-  joinMs: number | null;
-  sendMs: number | null;
-  ok: boolean;
-  error: string | null;
-}
-
-function visitorSession(siteKey: string, index: number): Promise<VisitorResult> {
-  return new Promise<VisitorResult>((resolve) => {
-    const started = Date.now();
-    const visitorId = `load-${Date.now()}-${index}`;
-    const result: VisitorResult = { joinMs: null, sendMs: null, ok: false, error: null };
-
-    const socket = io(`${BASE}/widget`, {
-      transports: ['websocket'],
-      forceNew: true,
-      timeout: 20000
-    });
-
-    const done = (err: any) => {
-      result.error = err || null;
-      try {
-        socket.close();
-      } catch {
-        /* zaten kapalı */
-      }
-      resolve(result);
-    };
-
-    const guard = setTimeout(() => done('timeout'), 30000);
-
-    socket.on('connect_error', (e) => {
-      clearTimeout(guard);
-      done('connect_error: ' + e.message);
-    });
-    socket.on('error', (e) => {
-      clearTimeout(guard);
-      done('error: ' + (e?.message || e));
-    });
-
-    socket.on('connect', () => {
-      socket.emit('join-conversation', {
-        siteKey,
-        visitorId,
-        visitorName: `Yük Ziyaretçisi ${index}`,
-        currentPage: '/',
-        metadata: { country: 'TR' }
-      });
-    });
-
-    socket.once('conversation-joined', () => {
-      result.joinMs = Date.now() - started;
-      const sendStart = Date.now();
-
-      // Gönderilen mesajın kendisine geri yankılanması, sunucunun mesajı
-      // gerçekten işlediğinin kanıtıdır.
-      socket.on('new-message', (payload) => {
-        if (payload?.message?.senderType !== 'visitor') return;
-        clearTimeout(guard);
-        result.sendMs = Date.now() - sendStart;
-        result.ok = true;
-        done(null);
-      });
-
-      socket.emit('send-message', {
-        content: `Yük testi mesajı ${index}`,
-        senderName: `Yük Ziyaretçisi ${index}`
-      });
-    });
-  });
-}
-
-async function scenarioWidget(siteKey: string) {
-  const joins: number[] = [];
-  const sends = [];
-  let errors = 0;
-  const errorKinds = new Map();
-
-  for (let round = 0; round < ROUNDS; round++) {
-    const batch = Array.from({ length: VISITORS }, (_, i) =>
-      visitorSession(siteKey, round * VISITORS + i)
+  // --- sunucu ve konteynerler
+  const { body: m } = await json<Metrics>('/api/dev/metrics');
+  if (m) {
+    const insert = m.timings?.['message.insert'];
+    console.log(
+      `sunucu          insert p50=${insert?.p50}ms p95=${insert?.p95}ms p99=${insert?.p99}ms max=${insert?.max}ms (n=${insert?.n})`
     );
-    const results = await Promise.all(batch);
-    for (const r of results) {
-      if (r.ok) {
-        joins.push(r.joinMs as number);
-        sends.push(r.sendMs as number);
-      } else {
-        errors++;
-        const k = (r.error || 'bilinmeyen').split(':')[0];
-        errorKinds.set(k, (errorKinds.get(k) || 0) + 1);
-      }
-    }
+    console.log(
+      `                event-loop gecikmesi p50=${m.eventLoopDelayMs.p50}ms p99=${m.eventLoopDelayMs.p99}ms max=${m.eventLoopDelayMs.max}ms`
+    );
+    console.log(
+      `                süreç CPU ort=%${m.cpuPercent} (tek çekirdeğe göre, ${Math.round(m.windowMs / 1000)} sn)  RSS=${m.rssMb}MB  heap=${m.heapUsedMb}MB`
+    );
+  } else {
+    console.log('sunucu          /api/dev/metrics yok (production modunda mı?)');
   }
+  for (const line of await docker) console.log(`docker          ${line}`);
 
-  const j = summarize(`widget bağlanma (${VISITORS} eşzamanlı)`, joins, 0);
-  const s = summarize('mesaj gönderme', sends, errors);
-  if (errorKinds.size) {
-    console.log('    hata dağılımı:', [...errorKinds].map(([k, v]) => `${k}=${v}`).join(', '));
-  }
-  return { join: j, send: s };
+  for (const socket of visitors) socket.close();
+  await sleep(2000);
+  return { ok: connectErrors.size === 0 && ackErrors.size === 0 };
 }
 
 async function main() {
   console.log(`Hedef: ${BASE}`);
-  console.log(
-    `Profil: ${AGENTS} temsilci × ${ROUNDS} tur, ${VISITORS} ziyaretçi × ${ROUNDS} tur\n`
-  );
-
-  const { token } = (await login()) as { token: string };
-  const sitesRes = await fetch(`${BASE}/api/sites`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  const { sites } = (await sitesRes.json()) as { sites: any[] };
-  const site = sites.find((s: any) => s.siteKey === 'demo-site-key-0000-1111-2222') || sites[0];
-  if (!site) throw new Error('Site bulunamadı. Önce: npm run db:seed');
-
-  console.log('A) PANEL İŞLEMLERİ');
-  const panel = await scenarioPanel(token, site._id);
-
-  console.log('\nB) ZİYARETÇİ SOHBETİ');
-  const widget = await scenarioWidget(site.siteKey);
-
-  console.log('\nÖZET');
-  const totalErrors = (panel?.errors || 0) + (widget.send?.errors || 0);
-  console.log(`  toplam hata: ${totalErrors}`);
-  console.log(`  panel p95  : ${panel?.p95 ?? '-'} ms`);
-  console.log(`  sohbet p95 : ${widget.send?.p95 ?? '-'} ms`);
-
-  process.exit(totalErrors > 0 ? 1 : 0);
+  console.log(`Aşamalar: ${STAGES.join(', ')} soket; patlama ${RATE} mesaj/sn × ${SECONDS} sn`);
+  console.log('Not: sonuç bu makineyi anlatır, üretim kapasitesi değildir.');
+  const { siteKey } = await setup();
+  let ok = true;
+  for (const [index, sockets] of STAGES.entries()) {
+    const result = await stage(siteKey, sockets, index);
+    ok = ok && result.ok;
+  }
+  process.exit(ok ? 0 : 1);
 }
 
-main().catch((e: any) => {
-  console.error('Yük testi başarısız:', e.message);
+main().catch((error: unknown) => {
+  console.error('Yük testi başarısız:', error instanceof Error ? error.message : error);
   process.exit(1);
 });

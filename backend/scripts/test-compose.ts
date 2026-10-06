@@ -45,10 +45,15 @@ for (const [key, value] of Object.entries(defaults)) {
 console.log(`e2e hedefi : ${process.env.E2E_BASE_URL}`);
 console.log(`veritabani : ${String(process.env.DATABASE_URL).replace(/\/\/[^@]*@/, '//***@')}\n`);
 
+// Bir betik verilirse (npm run loadtest) test paketi yerine o, ayni ortamla
+// ve kalan argumanlarla calisir.
+const [script, ...rest] = process.argv.slice(2);
 const child = spawn(
   process.execPath,
   // Testler TypeScript; tsx olmadan node bu dosyalari calistiramaz.
-  ['--import', 'tsx', '--test', 'tests/**/*.test.ts'],
+  script
+    ? ['--import', 'tsx', script, ...rest]
+    : ['--import', 'tsx', '--test', 'tests/**/*.test.ts'],
   { stdio: 'inherit', env: process.env }
 );
 child.on('exit', (code) => process.exit(code ?? 1));

@@ -30,6 +30,7 @@ import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
 import { ConversationQuotaError, countMessage } from '../../services/entitlements';
 import { conversationRoom } from '../../realtime/rooms';
+import { timed } from '../../config/metrics';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
 import type { MessageDoc } from '../../models/Message';
@@ -393,7 +394,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       let message;
       try {
-        message = await Message.create(messageData);
+        message = await timed('message.insert', () => Message.create(messageData));
       } catch (error) {
         // Two copies raced past the check above; the unique index kept one.
         if ((error as { code?: string })?.code !== UNIQUE_VIOLATION || !clientMessageId)

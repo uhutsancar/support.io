@@ -18,6 +18,7 @@
     "plan:set:prod": "node dist/cli/updatePlan.js",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:compose": "tsx scripts/test-compose.ts",
+    "loadtest": "tsx scripts/test-compose.ts scripts/loadtest.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write . --ignore-path ../.prettierignore",
