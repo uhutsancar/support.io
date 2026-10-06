@@ -26,6 +26,7 @@ import {
   asList
 } from '../components/marketing/kit';
 import { PLAN_FEATURE_ORDER, planKey, usePlans } from '../hooks/usePlans';
+import { useAuth } from '../contexts/AuthContext';
 import type { PlanInfo } from '../types/api';
 
 type T = ReturnType<typeof useTranslation>['t'];
@@ -152,6 +153,7 @@ const Pricing = () => {
   const routes = useMarketingRoutes();
   const [yearly, setYearly] = useState(false);
   const { plans, failed } = usePlans();
+  const { isAuthenticated } = useAuth();
 
   const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
   const number = new Intl.NumberFormat(locale);
@@ -308,8 +310,19 @@ const Pricing = () => {
                           </p>
                         </div>
 
+                        {/*
+                          Signed in, a paid plan goes straight to the checkout
+                          page (and the free plan to the dashboard); signed
+                          out, to sign-up first.
+                        */}
                         <Button
-                          to={routes.register}
+                          to={
+                            !isAuthenticated
+                              ? routes.register
+                              : plan.type === 'FREE'
+                                ? routes.dashboard
+                                : `${routes.dashboard}/upgrade?plan=${plan.type}`
+                          }
                           variant={highlight ? 'primary' : 'secondary'}
                           className="mt-6 w-full"
                           arrow={highlight}

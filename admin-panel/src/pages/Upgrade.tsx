@@ -331,6 +331,19 @@ const Upgrade = () => {
                     {cycle === 'yearly' ? t('checkout.billedYearly') : t('checkout.billedMonthly')}
                   </dd>
                 </div>
+                {cycle === 'yearly' && selected.price.monthly && selected.price.yearly && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-emerald-700 dark:text-emerald-400">
+                      {t('checkout.yearlySaving')}
+                    </dt>
+                    <dd className="font-medium text-emerald-700 dark:text-emerald-400 tabular-nums">
+                      {money(
+                        (selected.price.monthly - selected.price.yearly) * 12,
+                        selected.price.currency
+                      )}
+                    </dd>
+                  </div>
+                )}
                 <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between gap-3">
                   <dt className="font-semibold text-gray-900 dark:text-white">
                     {t('checkout.total')}
@@ -378,7 +391,13 @@ const Upgrade = () => {
                 </button>
               </>
             )}
-            <p className="mt-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            <p className="mt-4 text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+              {t('checkout.instant')}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              {t('checkout.methods')}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
               {t('checkout.secure')}
             </p>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

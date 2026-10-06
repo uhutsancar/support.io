@@ -918,7 +918,8 @@ export default {
     privacy: {
       title: 'Data and privacy',
       body: 'Download everything in your account (sites, conversations, messages, visitors, FAQ, team) as one file. Passwords and secret keys are left out.',
-      retention: 'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit.',
+      retention:
+        'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit.',
       export: 'Download my data',
       ownerOnly: 'Only the account owner can download the data.'
     },
@@ -2100,6 +2101,10 @@ export default {
     ofLimit: '{{used}} / {{limit}}'
   },
   checkout: {
+    yearlySaving: 'Saved by paying yearly',
+    instant:
+      'Your new plan opens the moment the payment is confirmed; your sites, conversations and settings stay as they are.',
+    methods: 'Credit and debit cards; PayPal, Apple Pay and Google Pay depending on your country.',
     title: 'Upgrade your plan',
     subtitle: 'Pick a plan and billing period, then finish on the secure payment screen.',
     choosePlan: 'Plan',

@@ -920,7 +920,8 @@ export default {
     privacy: {
       title: 'Veri ve gizlilik',
       body: 'Hesabınızdaki tüm veriyi (siteler, konuşmalar, mesajlar, ziyaretçiler, SSS, ekip) tek bir dosya olarak indirebilirsiniz. Şifreler ve gizli anahtarlar dosyaya girmez.',
-      retention: 'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir.',
+      retention:
+        'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir.',
       export: 'Verilerimi indir',
       ownerOnly: 'Verileri yalnızca hesap sahibi indirebilir.'
     },
@@ -2107,6 +2108,10 @@ export default {
     ofLimit: '{{used}} / {{limit}}'
   },
   checkout: {
+    yearlySaving: 'Yıllık ödemede tasarruf',
+    instant:
+      'Ödeme onaylandığı an yeni planınız açılır; siteleriniz, konuşmalarınız ve ayarlarınız olduğu gibi kalır.',
+    methods: 'Kredi ve banka kartı; ülkenize göre PayPal, Apple Pay ve Google Pay.',
     title: 'Planınızı yükseltin',
     subtitle: 'Planı seçin, ödeme sıklığını belirleyin, güvenli ödeme ekranında tamamlayın.',
     choosePlan: 'Plan',
