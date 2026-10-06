@@ -913,6 +913,7 @@ const Conversations = () => {
                         <select
                           value={selectedConversation.priority}
                           onChange={(e) => handlePriorityChange(e.target.value)}
+                          aria-label={t('conversations.setPriority', 'Önceliği değiştir')}
                           className={`px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium ${getPriorityColor(selectedConversation.priority)}`}
                         >
                           <option value="low">{t('conversations.priorities.low', 'Düşük')}</option>
@@ -929,6 +930,7 @@ const Conversations = () => {
                         <select
                           value={selectedConversation.status}
                           onChange={(e) => handleStatusChange(e.target.value)}
+                          aria-label={t('conversations.setStatus', 'Durumu değiştir')}
                           className={`px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}
                         >
                           <option value="open">{t('conversations.statuses.open', 'Açık')}</option>

@@ -5,6 +5,8 @@
 #             fixed server address baked into the panel build
 #   test      the backend e2e suite against a real PostgreSQL and Redis,
 #             with the API running beside it as in development
+#   browser   Playwright: sign-up to a paid plan in two browsers, against
+#             the built panel served by the API
 #   build     both packages, then the production image (not pushed)
 #   secrets   gitleaks over the history
 name: CI
@@ -123,6 +125,82 @@ jobs:
       - name: e2e suite
         run: npm test
         working-directory: backend
+      - name: API log
+        if: failure()
+        run: cat /tmp/api.log
+
+  # Playwright: sign-up to a paid plan in real browsers, against the built
+  # panel served by the API (e2e/tests/first-chat.spec.ts).
+  browser:
+    runs-on: ubuntu-24.04
+    needs: [checks]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: supportchat
+          POSTGRES_USER: support_user
+          POSTGRES_PASSWORD: supportchat
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U support_user -d supportchat"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      NODE_ENV: development
+      PORT: '5000'
+      DATABASE_URL: postgresql://support_user:supportchat@localhost:5432/supportchat
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-only-secret-that-is-long-enough-for-the-checks
+      MAIL_PROVIDER: console
+      APP_BASE_URL: http://localhost:5000
+      E2E_APP_URL: http://localhost:5000
+      PADDLE_ENV: sandbox
+      PADDLE_WEBHOOK_SECRET: ci-paddle-webhook-secret
+      PADDLE_PRICE_PRO: pri_ci_pro
+      PADDLE_PRICE_ENTERPRISE: pri_ci_enterprise
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            admin-panel/package-lock.json
+            e2e/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: admin-panel
+      - run: npm ci
+        working-directory: backend
+      - name: Start the API
+        working-directory: backend
+        run: |
+          npm run build:widget
+          nohup npx tsx src/server.ts > /tmp/api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fs http://localhost:5000/ready && exit 0
+            sleep 2
+          done
+          cat /tmp/api.log
+          exit 1
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: e2e
+      - name: Browser tests
+        run: npm test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
       - name: API log
         if: failure()
         run: cat /tmp/api.log

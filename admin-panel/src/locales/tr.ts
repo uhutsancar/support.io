@@ -814,6 +814,8 @@ export default {
     noteAdded: 'Dahili not eklendi',
     noteError: 'Not eklenemedi',
     statusFilter: 'Duruma göre filtrele',
+    setStatus: 'Durumu değiştir',
+    setPriority: 'Önceliği değiştir',
     allStatuses: 'Tüm durumlar',
     departmentFilter: 'Departmana göre filtrele',
     allDepartments: 'Tüm departmanlar',

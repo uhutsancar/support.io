@@ -813,6 +813,8 @@ export default {
     noteAdded: 'Internal note added',
     noteError: 'Could not add the note',
     statusFilter: 'Filter by status',
+    setStatus: 'Change status',
+    setPriority: 'Change priority',
     allStatuses: 'All statuses',
     departmentFilter: 'Filter by department',
     allDepartments: 'All departments',

@@ -52,11 +52,18 @@ Copy-ready code per platform is in the setup guide at `/dokumantasyon`
 
 ```bash
 cd backend && npm run test:compose     # e2e suite against the compose stack
+cd e2e && npm ci && npm test           # browser tests (Playwright, installed Chrome)
 npm run check                          # typecheck + lint, both packages (repo root)
 (cd backend && npm run format:check) && (cd admin-panel && npm run format:check)
 ```
 
-CI (`.github/workflows/ci.yml`) runs all of these, the suite against a fresh
+The browser tests need `docker compose up -d` and drive the panel and a
+stand-in customer website in two separate browsers: sign-up, the mailed
+verification link, onboarding, the install code, a visitor's message, the
+agent's answer, the history after a reload, closing, and a paid upgrade
+raising the limits. `E2E_APP_URL` points them at another stack.
+
+CI (`.github/workflows/ci.yml`) runs all of these, the suites against a fresh
 PostgreSQL and Redis, the production image build and a secret scan.
 `release.yml` publishes `ghcr.io/<owner>/supportio:sha-<7>` from `main`.
 
