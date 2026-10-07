@@ -55,6 +55,8 @@ export interface ConversationRating {
   score: number | null;
   feedback: string | null;
   ratedAt: Date | null;
+  /** Where the visitor rated it (PRD-04). */
+  channel?: 'widget' | 'email';
 }
 
 export interface AgentStats {
@@ -106,7 +108,16 @@ export interface UserPreferences {
   autoAcceptAssignments: boolean;
   maxActiveConversations: number;
   notificationSound: boolean;
+  /** Unanswered-chat mails: at once (grouped per 10 min), hourly, or never (PRD-01). */
+  missedChatEmail?: 'instant' | 'hourly' | 'off';
+  /** Desktop notifications (PRD-02). */
+  desktop?: { newConversation: boolean; assigned: boolean; allMessages: boolean };
+  /** The language the account's mails go out in. */
+  locale?: 'tr' | 'en';
 }
+
+/** Notification preferences as both account tables keep them. */
+export type NotificationPreferences = Partial<UserPreferences>;
 
 /** The widget settings kept on the site row (the widget's own config is richer). */
 export interface SiteWidgetSettings {

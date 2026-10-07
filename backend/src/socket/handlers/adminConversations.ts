@@ -5,6 +5,7 @@
 // the organization *and* the agent's site allow-list. A handler never queries a
 // conversation by id on its own.
 
+import { announceConversationEnded } from '../../services/conversationEnd';
 import Department from '../../models/Department';
 import { hasPermission } from '../../middleware/rbac';
 import { countMessage } from '../../services/entitlements';
@@ -481,6 +482,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         conversationId: conversation._id,
         conversation
       });
+      await announceConversationEnded(ctx.io, conversation);
     })
   );
 }

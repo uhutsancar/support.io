@@ -26,6 +26,8 @@ export interface TeamDoc {
   isActive: boolean;
   status: TeamStatus;
   skills: string[];
+  /** Notification preferences (migration 0012); see domain UserPreferences. */
+  preferences: import('../domain').NotificationPreferences;
   maxCapacity: number;
   currentLoad: number;
   permissions: TeamPermissions;
@@ -67,6 +69,7 @@ export default defineModel<TeamDoc>({
       trim: true,
       default: () => []
     },
+    preferences: { column: 'preferences', type: 'json', default: () => ({}) },
     maxCapacity: { column: 'max_capacity', type: 'number', default: 10, min: 1 },
     currentLoad: { column: 'current_load', type: 'number', default: 0, min: 0 },
     permissions: {

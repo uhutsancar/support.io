@@ -298,6 +298,7 @@ export interface ConversationRating {
   score: number | null;
   feedback: string | null;
   ratedAt: string | null;
+  channel?: 'widget' | 'email';
 }
 
 export interface InternalNote {
@@ -344,6 +345,11 @@ export interface Conversation {
   updatedAt?: string;
   /** Added by the list endpoint so the row can show a preview. */
   lastMessage?: Message | null;
+  /** From the pre-chat form (PRD-05). */
+  visitorPhone?: string | null;
+  prechat?: Record<string, string>;
+  visitorConsentAt?: string | null;
+  snoozedUntil?: string | null;
   [extra: string]: unknown;
 }
 

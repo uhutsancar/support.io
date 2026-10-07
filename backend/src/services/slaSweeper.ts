@@ -31,6 +31,7 @@ import { shouldCalculateSLA } from './businessHours';
 import { refreshSla } from './conversationSla';
 import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
 import { AdminNotifier } from '../realtime';
+import { runConversationMail } from './conversationMail';
 import type { Server } from 'socket.io';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -206,6 +207,13 @@ function startSlaSweeper(
       await sweepOnce(io);
     } catch (error) {
       console.error('[sla] sweep pass failed', error);
+    }
+    try {
+      // Unanswered-chat, reply and rating mails ride on the same pass, so
+      // SLA_SWEEPER=off keeps them to one process as well (PRD-01).
+      await runConversationMail();
+    } catch (error) {
+      console.error('[sla] conversation mail pass failed', error);
     } finally {
       running = false;
     }

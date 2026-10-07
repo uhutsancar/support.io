@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../lib/runtime';
 import SecuritySettings from '../components/settings/SecuritySettings';
+import NotificationSettings from '../components/settings/NotificationSettings';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -102,6 +103,7 @@ const Settings = () => {
               </div>
             </div>
           </div>
+          <NotificationSettings />
           <SecuritySettings />
           {/* Veri ve gizlilik: KVKK/GDPR veri taşınabilirliği (plan §16). */}
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">

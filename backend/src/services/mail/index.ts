@@ -16,6 +16,10 @@ import { isProduction } from '../../config/env';
 import { consoleTransport } from './console';
 import { smtpTransport } from './smtp';
 import {
+  activationMail,
+  csatRequestMail,
+  transcriptMail,
+  visitorReplyMail,
   emailChangeMail,
   emailChangeNoticeMail,
   existingAccountMail,
@@ -149,9 +153,54 @@ export const mail = {
   },
   sendMissedChat(
     to: string,
-    args: { site: string; visitor: string; link: string; locale?: MailLocale }
+    args: {
+      site: string;
+      visitors: string[];
+      preview?: string;
+      link: string;
+      settingsLink: string;
+      locale?: MailLocale;
+    }
   ) {
     return sendMail({ to, ...missedChatMail(args) });
+  },
+  sendVisitorReply(
+    to: string,
+    args: {
+      site: string;
+      replies: Array<{ who: string; text: string }>;
+      link: string;
+      optOutLink: string;
+      locale?: MailLocale;
+    }
+  ) {
+    return sendMail({ to, ...visitorReplyMail(args) });
+  },
+  sendCsatRequest(to: string, args: { site: string; link: string; locale?: MailLocale }) {
+    return sendMail({ to, ...csatRequestMail(args) });
+  },
+  sendTranscript(
+    to: string,
+    args: {
+      site: string;
+      messages: Array<{ who: string; text: string }>;
+      link: string;
+      locale?: MailLocale;
+    }
+  ) {
+    return sendMail({ to, ...transcriptMail(args) });
+  },
+  sendActivation(
+    to: string,
+    args: {
+      step: 'welcome' | 'install_reminder' | 'faq_assistant' | 'invite_team' | 'widget_live';
+      name: string;
+      link: string;
+      settingsLink: string;
+      locale?: MailLocale;
+    }
+  ) {
+    return sendMail({ to, ...activationMail(args) });
   }
 };
 

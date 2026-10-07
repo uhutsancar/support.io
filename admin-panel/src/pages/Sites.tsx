@@ -4,10 +4,21 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
-import { Plus, Globe, Copy, Check, Trash2, Palette, Sparkles, ShieldCheck } from 'lucide-react';
+import {
+  Plus,
+  Globe,
+  Copy,
+  Check,
+  Trash2,
+  Palette,
+  Sparkles,
+  ShieldCheck,
+  MessageSquare
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SiteAssistant from '../components/sites/SiteAssistant';
+import SiteChatSettings from '../components/sites/SiteChatSettings';
 import SiteAccess, { InstallBadge } from '../components/sites/SiteAccess';
 import type { Site } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
@@ -41,6 +52,7 @@ const Sites = () => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [assistantSite, setAssistantSite] = useState<Site | null>(null);
   const [accessSite, setAccessSite] = useState<Site | null>(null);
+  const [chatSite, setChatSite] = useState<Site | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<DeleteTarget>({
     isOpen: false,
     siteId: null,
@@ -280,6 +292,13 @@ const Sites = () => {
                       <Sparkles className="w-4 h-4 shrink-0 text-violet-500" />
                       <span className="truncate">{t('assistant.settings.button')}</span>
                     </button>
+                    <button
+                      onClick={() => setChatSite(site)}
+                      className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm"
+                    >
+                      <MessageSquare className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{t('account.chatSettings.button')}</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -350,6 +369,8 @@ const Sites = () => {
             }}
           />
         )}
+
+        {chatSite && <SiteChatSettings site={chatSite} onClose={() => setChatSite(null)} />}
 
         {assistantSite && (
           <SiteAssistant

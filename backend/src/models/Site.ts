@@ -20,6 +20,10 @@ export interface SiteDoc {
   /** The exact origins the widget may run on; see config/siteOrigins.ts. */
   allowedOrigins: string[];
   isActive: boolean;
+  /** Missed chats, forms, ratings (services/chatSettings.ts); stored sparse. */
+  chatSettings: Record<string, unknown>;
+  /** Over the plan's site limit after a downgrade (BIL-04): widget silent. */
+  suspendedAt: Date | null;
 }
 
 /** What the panel may know about the integrations: whether, never what. */
@@ -67,7 +71,9 @@ export default defineModel<SiteDoc>({
     //   { verifiedAt, lastSeenAt, url, origin, sdkVersion, userAgent }
     installation: { column: 'installation', type: 'json', default: () => ({}) },
     allowedOrigins: { column: 'allowed_origins', type: 'stringArray', default: () => [] },
-    isActive: { column: 'is_active', type: 'boolean', default: true }
+    isActive: { column: 'is_active', type: 'boolean', default: true },
+    chatSettings: { column: 'chat_settings', type: 'json', default: () => ({}) },
+    suspendedAt: { column: 'suspended_at', type: 'date', default: null }
   },
   methods: {
     // The integration secrets are sealed in the database and must never be

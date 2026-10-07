@@ -79,6 +79,32 @@ export interface AuthConfig {
   passwordMinLength: number;
 }
 
+/** A site's chat behaviour (backend services/chatSettings.ts). */
+export interface ChatSettings {
+  missedChat: { delayMinutes: number; notify: 'all' | 'assigned' | 'off' };
+  offlineForm: boolean;
+  emailReplies: boolean;
+  preChat: {
+    mode: 'off' | 'optional' | 'required';
+    name: boolean;
+    email: boolean;
+    phone: boolean;
+    customFields: string[];
+    department: boolean;
+    consent: { mode: 'off' | 'optional' | 'required'; policyUrl: string };
+  };
+  csat: { enabled: boolean; style: 'thumbs' | 'stars'; askByEmail: boolean };
+  transcript: boolean;
+  spamMode: boolean;
+}
+
+export interface NotificationPreferences {
+  missedChatEmail: 'instant' | 'hourly' | 'off';
+  desktop: { newConversation: boolean; assigned: boolean; allMessages: boolean };
+  notificationSound: boolean;
+  locale: 'tr' | 'en';
+}
+
 export interface MfaStatus {
   enabled: boolean;
   recoveryCodesLeft: number;
@@ -140,6 +166,10 @@ export const authAPI = {
     api.post<{ enabled: false }>('/auth/2fa/disable', data),
   mfaRecoveryCodes: (data: { password: string; code?: string; recoveryCode?: string }) =>
     api.post<{ recoveryCodes: string[] }>('/auth/2fa/recovery-codes', data),
+  preferences: () =>
+    api.get<{ preferences: NotificationPreferences }>('/auth/preferences', { cache: false }),
+  updatePreferences: (prefs: Partial<NotificationPreferences>) =>
+    api.put<{ preferences: NotificationPreferences }>('/auth/preferences', prefs),
   setOrganizationSecurity: (enforce2fa: boolean) =>
     api.put<{ enforce2fa: boolean }>('/auth/organization-security', { enforce2fa }),
   resendVerification: (locale?: string) =>
@@ -161,6 +191,12 @@ export const sitesAPI = {
   regenerateKey: mutates('/sites', (siteId: string) =>
     api.post<{ site: Site }>(`/sites/${siteId}/regenerate-key`)
   ),
+
+  // Missed-chat mails, the offline and pre-chat forms, ratings, transcripts.
+  getChatSettings: (siteId: string) =>
+    api.get<{ settings: ChatSettings }>(`/sites/${siteId}/chat-settings`, { cache: false }),
+  updateChatSettings: (siteId: string, settings: Partial<ChatSettings>) =>
+    api.put<{ settings: ChatSettings }>(`/sites/${siteId}/chat-settings`, settings),
 
   // The integration secrets come back once, in the response that creates them;
   // the site itself only ever says whether one is set.

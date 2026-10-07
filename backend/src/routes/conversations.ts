@@ -10,6 +10,7 @@
 //     persistent update happens in services/slaSweeper.ts, so opening an inbox
 //     no longer issues fifty UPDATEs.
 
+import { announceConversationEnded } from '../services/conversationEnd';
 import { takeOver } from '../services/assistant';
 import express from 'express';
 import Conversation from '../models/Conversation';
@@ -550,6 +551,9 @@ router.put(
     const notifier = notifyAdmin(req);
     notifier?.conversationUpdated(conversation, conversation);
     if (status === 'resolved') notifier?.conversationResolved(conversation, conversation);
+    if (wasActive && (status === 'resolved' || status === 'closed')) {
+      await announceConversationEnded(req.app.get('io'), conversation);
+    }
 
     emitStatusEvent(req, conversation, previousStatus, status);
 

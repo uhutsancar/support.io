@@ -27,24 +27,51 @@ function layout({
   lines,
   action,
   link,
-  footer
+  footer,
+  quotes = [],
+  footerLink
 }: {
   title: string;
   lines: string[];
   action: string;
   link: string;
   footer: string;
+  /** Messages shown as a quoted thread: who said it, and what. */
+  quotes?: Array<{ who: string; text: string }>;
+  /** A second, quiet link under the footer (notification settings, opt-out). */
+  footerLink?: { label: string; href: string };
 }): { text: string; html: string } {
-  const text = [title, '', ...lines, '', `${action}: ${link}`, '', footer].join('\n');
+  const text = [
+    title,
+    '',
+    ...lines,
+    ...(quotes.length ? ['', ...quotes.map((q) => `${q.who}: ${q.text}`)] : []),
+    '',
+    `${action}: ${link}`,
+    '',
+    footer,
+    ...(footerLink ? [`${footerLink.label}: ${footerLink.href}`] : [])
+  ].join('\n');
+  const quoteHtml = quotes
+    .map(
+      (q) =>
+        `<div style="margin:0 0 10px;padding:10px 12px;border-left:3px solid #c7d2fe;background:#f8fafc;border-radius:6px"><div style="font-size:12px;color:#6b7280;margin-bottom:4px">${escapeHtml(q.who)}</div><div style="font-size:14px;line-height:1.5;white-space:pre-wrap">${escapeHtml(q.text)}</div></div>`
+    )
+    .join('\n');
+  const footerLinkHtml = footerLink
+    ? `<p style="margin:8px 0 0;font-size:12px"><a href="${escapeHtml(footerLink.href)}" style="color:#6b7280">${escapeHtml(footerLink.label)}</a></p>`
+    : '';
   const html = `<!doctype html>
 <html><body style="margin:0;padding:24px;background:#f6f7f9;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111827">
 <table role="presentation" width="100%" style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px">
 <tr><td style="padding:28px">
 <h1 style="margin:0 0 16px;font-size:20px">${escapeHtml(title)}</h1>
 ${lines.map((l) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.5">${escapeHtml(l)}</p>`).join('\n')}
+${quoteHtml}
 <p style="margin:24px 0"><a href="${escapeHtml(link)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">${escapeHtml(action)}</a></p>
 <p style="margin:0;font-size:12px;color:#6b7280;word-break:break-all">${escapeHtml(link)}</p>
 <p style="margin:24px 0 0;font-size:12px;color:#6b7280">${escapeHtml(footer)}</p>
+${footerLinkHtml}
 </td></tr></table></body></html>`;
   return { text, html };
 }
@@ -165,34 +192,287 @@ export function invitationMail({
   };
 }
 
+/**
+ * Chats nobody has answered yet (PRD-01): one, or several gathered over the
+ * last minutes. `visitors` are the names, newest first.
+ */
 export function missedChatMail({
   site,
-  visitor,
+  visitors,
+  preview,
   link,
+  settingsLink,
   locale
 }: {
   site: string;
-  visitor: string;
+  visitors: string[];
+  /** The first visitor message of the newest chat, shortened. */
+  preview?: string;
   link: string;
+  settingsLink: string;
   locale?: MailLocale;
 }): Rendered {
-  const subject = pick(locale, `${site}: yanıtlanmamış sohbet`, `${site}: unanswered chat`);
+  const count = visitors.length;
+  const subject =
+    count === 1
+      ? pick(locale, `${site}: yanıtlanmamış sohbet`, `${site}: unanswered chat`)
+      : pick(
+          locale,
+          `${site}: ${count} yanıtlanmamış sohbet`,
+          `${site}: ${count} unanswered chats`
+        );
+  const names = visitors.slice(0, 5).join(', ') + (count > 5 ? ` +${count - 5}` : '');
   return {
     subject,
     ...layout({
       title: subject,
       lines: pick(
         locale,
-        [`${visitor} çevrimdışıyken bir mesaj bıraktı ve henüz yanıt almadı.`],
-        [`${visitor} left a message while you were offline and has no answer yet.`]
+        [
+          count === 1
+            ? `${names} bir mesaj bıraktı ve henüz yanıt almadı.`
+            : `${names} mesaj bıraktı ve henüz yanıt almadı.`
+        ],
+        [
+          count === 1
+            ? `${names} left a message and has no answer yet.`
+            : `${names} left messages and have no answer yet.`
+        ]
       ),
+      quotes: preview ? [{ who: visitors[0], text: preview }] : [],
       action: pick(locale, 'Sohbeti aç', 'Open the conversation'),
       link,
       footer: pick(
         locale,
-        'Bu bildirimi ekip ayarlarınızdan kapatabilirsiniz.',
-        'You can switch this notification off in your team settings.'
+        'Bu e-postaları ayarlardan saatlik özete çevirebilir ya da kapatabilirsiniz.',
+        'You can turn these into an hourly digest or switch them off in your settings.'
+      ),
+      footerLink: {
+        label: pick(locale, 'Bildirim ayarları', 'Notification settings'),
+        href: settingsLink
+      }
+    })
+  };
+}
+
+/** An agent answered while the visitor was away (PRD-01). */
+export function visitorReplyMail({
+  site,
+  replies,
+  link,
+  optOutLink,
+  locale
+}: {
+  site: string;
+  replies: Array<{ who: string; text: string }>;
+  link: string;
+  optOutLink: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(locale, `${site} size yanıt verdi`, `${site} replied to you`);
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        ['Sohbetten ayrıldıktan sonra mesajınıza yanıt geldi:'],
+        ['You had left the chat when this answer arrived:']
+      ),
+      quotes: replies,
+      action: pick(locale, 'Sohbete dön', 'Back to the chat'),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-postayı sohbette e-posta adresinizi bıraktığınız için aldınız. Yanıt vermek için bağlantıyı kullanın; bu e-postaya verilen yanıtlar okunmaz.',
+        'You got this e-mail because you left your address in the chat. Use the link to answer; replies to this e-mail are not read.'
+      ),
+      footerLink: {
+        label: pick(
+          locale,
+          'Bu sohbet için e-posta almak istemiyorum',
+          'Stop e-mails about this chat'
+        ),
+        href: optOutLink
+      }
+    })
+  };
+}
+
+/** How was it? Sent when the visitor left before rating (PRD-04). */
+export function csatRequestMail({
+  site,
+  link,
+  locale
+}: {
+  site: string;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(
+    locale,
+    `${site} ile görüşmenizi değerlendirin`,
+    `Rate your conversation with ${site}`
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        ['Sohbetiniz kapandı. Yardımcı olabildik mi? Tek tıkla değerlendirebilirsiniz.'],
+        ['Your conversation has ended. Did we help? It takes one click to tell us.']
+      ),
+      action: pick(locale, 'Değerlendir', 'Rate it'),
+      link,
+      footer: pick(locale, 'Bağlantı 7 gün geçerlidir.', 'The link is valid for 7 days.')
+    })
+  };
+}
+
+/** The whole conversation, mailed to the visitor who asked for it (PRD-06). */
+export function transcriptMail({
+  site,
+  messages,
+  link,
+  locale
+}: {
+  site: string;
+  messages: Array<{ who: string; text: string }>;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(locale, `${site} ile sohbetinizin dökümü`, `Your chat with ${site}`);
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        ['İstediğiniz sohbet dökümü aşağıda.'],
+        ['Here is the transcript you asked for.']
+      ),
+      quotes: messages,
+      action: pick(locale, 'Sohbete dön', 'Back to the chat'),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-postayı sohbet sırasında siz istediğiniz için aldınız.',
+        'You got this e-mail because you asked for it during the chat.'
       )
+    })
+  };
+}
+
+/** The set-up mails after sign-up and the first sight of the widget (PRD-08). */
+export function activationMail({
+  step,
+  name,
+  link,
+  settingsLink,
+  locale
+}: {
+  step: 'welcome' | 'install_reminder' | 'faq_assistant' | 'invite_team' | 'widget_live';
+  name: string;
+  link: string;
+  settingsLink: string;
+  locale?: MailLocale;
+}): Rendered {
+  const copy = {
+    welcome: {
+      subject: ['Support.io hesabınız hazır', 'Your Support.io account is ready'],
+      lines: [
+        [
+          `Merhaba ${name},`,
+          'Sohbet balonunu sitenize eklemek için tek satırlık kurulum kodunu kopyalayıp sitenizin <head> bölümüne yapıştırın. WordPress, Shopify ve diğer altyapılar için adımlar panelde.'
+        ],
+        [
+          `Hi ${name},`,
+          'To put the chat bubble on your site, copy the one-line install code into your site’s <head>. The steps for WordPress, Shopify and the rest are in the panel.'
+        ]
+      ],
+      action: ['Kurulum kodunu al', 'Get the install code']
+    },
+    install_reminder: {
+      subject: [
+        'Sohbet balonunuz henüz sitenizde değil',
+        'Your chat bubble is not on your site yet'
+      ],
+      lines: [
+        [
+          `Merhaba ${name},`,
+          'Kurulum kodunu henüz bir sayfada görmedik. Kodu ekledikten sonra panel bunu kendiliğinden fark eder; takıldığınız yerde sohbetten bize yazabilirsiniz.'
+        ],
+        [
+          `Hi ${name},`,
+          'We have not seen the install code on a page yet. Once you add it, the panel notices by itself; if you get stuck, write to us in the chat.'
+        ]
+      ],
+      action: ['Kurulum adımları', 'Installation steps']
+    },
+    faq_assistant: {
+      subject: [
+        'Sık sorulan soruları yapay zekâ asistanı yanıtlasın',
+        'Let the AI assistant answer the common questions'
+      ],
+      lines: [
+        [
+          `Merhaba ${name},`,
+          'SSS sayfanıza birkaç soru ekleyin ve yapay zekâ asistanını açın: ziyaretçilerin sık sorduğu sorular siz çevrimdışıyken de yanıtlanır, gerisi ekibinize aktarılır.'
+        ],
+        [
+          `Hi ${name},`,
+          'Add a few questions to your FAQ page and switch on the AI assistant: common questions get answered even while you are offline, the rest goes to your team.'
+        ]
+      ],
+      action: ['SSS ekle', 'Add FAQs']
+    },
+    invite_team: {
+      subject: ['Ekibinizi davet edin', 'Invite your team'],
+      lines: [
+        [
+          `Merhaba ${name},`,
+          'Sohbetleri tek başınıza karşılamak zorunda değilsiniz. Ekip arkadaşlarınızı davet edin; konuşmalar aralarında otomatik dağıtılır.'
+        ],
+        [
+          `Hi ${name},`,
+          'You do not have to answer every chat yourself. Invite your teammates; conversations are shared out among them automatically.'
+        ]
+      ],
+      action: ['Ekip arkadaşı davet et', 'Invite a teammate']
+    },
+    widget_live: {
+      subject: ['Sohbet balonunuz yayında', 'Your chat bubble is live'],
+      lines: [
+        [
+          `Tebrikler ${name},`,
+          'Kurulum kodunu sitenizde gördük. Bir test mesajı gönderip panelde nasıl düştüğüne bakın.'
+        ],
+        [
+          `Congratulations ${name},`,
+          'We have seen the install code on your site. Send a test message and watch it arrive in the panel.'
+        ]
+      ],
+      action: ['Paneli aç', 'Open the panel']
+    }
+  }[step];
+  const subject = pick(locale, copy.subject[0], copy.subject[1]);
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(locale, copy.lines[0], copy.lines[1]),
+      action: pick(locale, copy.action[0], copy.action[1]),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-postalar yalnızca hesabınızın kurulumuyla ilgilidir.',
+        'These e-mails are only about setting up your account.'
+      ),
+      footerLink: {
+        label: pick(locale, 'Kurulum e-postalarını kapat', 'Turn off set-up e-mails'),
+        href: settingsLink
+      }
     })
   };
 }

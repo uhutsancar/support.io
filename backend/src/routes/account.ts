@@ -321,6 +321,67 @@ router.post(
   })
 );
 
+// ----------------------------------------------------- notification settings
+
+/**
+ * How this account hears about chats (PRD-01, PRD-02): unanswered-chat mails
+ * at once / hourly / never, which events raise a desktop notification, the
+ * sound, and the language mails go out in. Only these keys are written.
+ */
+router.get(
+  '/preferences',
+  auth,
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json({ preferences: notificationPreferences(req.user.preferences) });
+  })
+);
+
+router.put(
+  '/preferences',
+  auth,
+  asyncHandler(async (req: Request, res: Response) => {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const current = notificationPreferences(req.user.preferences);
+    const desktop = (body.desktop ?? {}) as Record<string, unknown>;
+    const pickBool = (value: unknown, fallback: boolean) =>
+      typeof value === 'boolean' ? value : fallback;
+    const next = {
+      missedChatEmail: ['instant', 'hourly', 'off'].includes(String(body.missedChatEmail))
+        ? (body.missedChatEmail as 'instant' | 'hourly' | 'off')
+        : current.missedChatEmail,
+      desktop: {
+        newConversation: pickBool(desktop.newConversation, current.desktop.newConversation),
+        assigned: pickBool(desktop.assigned, current.desktop.assigned),
+        allMessages: pickBool(desktop.allMessages, current.desktop.allMessages)
+      },
+      notificationSound: pickBool(body.notificationSound, current.notificationSound),
+      locale: body.locale === 'en' || body.locale === 'tr' ? body.locale : current.locale
+    };
+    req.user.preferences = {
+      ...(req.user.preferences || {}),
+      ...next
+    } as typeof req.user.preferences;
+    await req.user.save();
+    res.json({ preferences: next });
+  })
+);
+
+function notificationPreferences(stored: unknown) {
+  const prefs = (stored && typeof stored === 'object' ? stored : {}) as Record<string, any>;
+  return {
+    missedChatEmail: (['instant', 'hourly', 'off'].includes(prefs.missedChatEmail)
+      ? prefs.missedChatEmail
+      : 'instant') as 'instant' | 'hourly' | 'off',
+    desktop: {
+      newConversation: prefs.desktop?.newConversation !== false,
+      assigned: prefs.desktop?.assigned !== false,
+      allMessages: prefs.desktop?.allMessages === true
+    },
+    notificationSound: prefs.notificationSound !== false,
+    locale: (prefs.locale === 'en' ? 'en' : 'tr') as 'tr' | 'en'
+  };
+}
+
 // ------------------------------------------------- organization: require 2FA
 
 router.put(

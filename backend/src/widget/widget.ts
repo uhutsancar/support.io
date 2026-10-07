@@ -354,7 +354,37 @@ interface Window {
       talkToHuman: 'Temsilciye bağlan',
       rateLimited: 'Çok hızlı mesaj gönderiyorsunuz. Lütfen biraz bekleyin.',
       quotaExceeded: 'Şu anda mesaj alamıyoruz, lütfen daha sonra tekrar deneyin.',
-      tooLong: 'Mesaj çok uzun.'
+      tooLong: 'Mesaj çok uzun.',
+      preChatTitle: 'Başlamadan önce',
+      preChatSub: 'Size daha hızlı yardımcı olabilmemiz için birkaç bilgi rica ediyoruz.',
+      offlineFormTitle: 'Ekibimiz şu an çevrimdışı',
+      offlineFormSub: 'Mesajınızı ve e-posta adresinizi bırakın, size e-postayla dönelim.',
+      nameLabel: 'Adınız',
+      emailLabel: 'E-posta adresiniz',
+      phoneLabel: 'Telefon numaranız',
+      departmentLabel: 'Konu',
+      consentText: 'Kişisel verilerimin işlenmesine ilişkin aydınlatma metnini okudum.',
+      consentLink: 'Aydınlatma metni',
+      optional: 'isteğe bağlı',
+      submitForm: 'Devam et',
+      skipForm: 'Atla',
+      formSaved: 'Teşekkürler, bilgileriniz kaydedildi.',
+      fieldRequired: 'Bu alan gerekli.',
+      invalidEmail: 'Geçerli bir e-posta adresi yazın.',
+      invalidPhone: 'Geçerli bir telefon numarası yazın.',
+      consentRequired: 'Devam etmek için kutuyu işaretleyin.',
+      chatEnded: 'Sohbet sona erdi',
+      rateTitle: 'Görüşmemizi nasıl buldunuz?',
+      rateUp: 'Memnun kaldım',
+      rateDown: 'Memnun kalmadım',
+      rateStar: '{n} yıldız',
+      feedbackPlaceholder: 'Eklemek istediğiniz bir şey var mı? (isteğe bağlı)',
+      rateSubmit: 'Gönder',
+      rateThanks: 'Değerlendirmeniz için teşekkürler!',
+      transcriptTitle: 'Sohbet dökümü',
+      transcriptSub: 'Bu sohbetin bir kopyasını e-postanıza gönderelim.',
+      transcriptSend: 'Dökümü gönder',
+      transcriptSent: 'Döküm e-postanıza gönderildi.'
     },
     en: {
       launcherLabel: 'Open support chat',
@@ -397,7 +427,37 @@ interface Window {
       talkToHuman: 'Talk to a person',
       rateLimited: 'You are sending messages too quickly. Please wait a moment.',
       quotaExceeded: 'We cannot take new messages right now, please try again later.',
-      tooLong: 'The message is too long.'
+      tooLong: 'The message is too long.',
+      preChatTitle: 'Before we start',
+      preChatSub: 'A few details help us answer you faster.',
+      offlineFormTitle: 'Our team is offline right now',
+      offlineFormSub: 'Leave your message and your e-mail address, and we will reply by e-mail.',
+      nameLabel: 'Your name',
+      emailLabel: 'Your e-mail address',
+      phoneLabel: 'Your phone number',
+      departmentLabel: 'Topic',
+      consentText: 'I have read the privacy notice on how my personal data is processed.',
+      consentLink: 'Privacy notice',
+      optional: 'optional',
+      submitForm: 'Continue',
+      skipForm: 'Skip',
+      formSaved: 'Thank you, your details are saved.',
+      fieldRequired: 'This field is required.',
+      invalidEmail: 'Enter a valid e-mail address.',
+      invalidPhone: 'Enter a valid phone number.',
+      consentRequired: 'Tick the box to continue.',
+      chatEnded: 'The chat has ended',
+      rateTitle: 'How was our conversation?',
+      rateUp: 'Good',
+      rateDown: 'Not good',
+      rateStar: '{n} stars',
+      feedbackPlaceholder: 'Anything you would like to add? (optional)',
+      rateSubmit: 'Send',
+      rateThanks: 'Thank you for your rating!',
+      transcriptTitle: 'Chat transcript',
+      transcriptSub: 'We can send a copy of this chat to your e-mail.',
+      transcriptSend: 'Send the transcript',
+      transcriptSent: 'The transcript is on its way to your inbox.'
     }
   };
 
@@ -681,6 +741,26 @@ interface Window {
       return;
     }
 
+    // The link in a reply mail opens the page with ?sc_resume=…: it brings
+    // this visitor back to their conversation. Read once, then removed from
+    // the address bar so it is not bookmarked or shared.
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var resume = params.get('sc_resume');
+      if (resume) {
+        this._resumeToken = resume;
+        params.delete('sc_resume');
+        var rest = params.toString();
+        window.history.replaceState(
+          window.history.state,
+          '',
+          window.location.pathname + (rest ? '?' + rest : '') + window.location.hash
+        );
+      }
+    } catch (e) {
+      /* an unusual URL: nothing to resume */
+    }
+
     var ok = await this._session();
     if (!ok) return;
 
@@ -701,7 +781,11 @@ interface Window {
       this.config.autoOpen !== undefined && this.config.autoOpen !== null
         ? this.config.autoOpen
         : behavior.autoOpen;
-    if (autoOpen && !this.isHidden) {
+    if (this._openOnReady && !this.isHidden) {
+      // Back from a reply mail: straight to the conversation.
+      this.open();
+      this._setView('messages');
+    } else if (autoOpen && !this.isHidden) {
       this._timer(this.open.bind(this), Number(behavior.autoOpenDelay) || 5000);
     }
 
@@ -729,7 +813,11 @@ interface Window {
           method: 'POST',
           credentials: 'omit',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({ siteKey: self.config.siteKey, token: self.token || undefined })
+          body: JSON.stringify({
+            siteKey: self.config.siteKey,
+            token: self.token || undefined,
+            resumeToken: self._resumeToken || undefined
+          })
         });
         if (!res.ok) {
           var body = await res.json().catch(function () {
@@ -750,6 +838,10 @@ interface Window {
           return false;
         }
         var data = await res.json();
+        if (self._resumeToken) {
+          self._resumeToken = null;
+          if (data.resumed) self._openOnReady = true;
+        }
         self.token = data.token;
         self.visitorId = data.visitorId;
         store.set(self._tokenKey(), data.token);
@@ -1065,7 +1157,19 @@ interface Window {
       self._showTyping(data && data.durationMs);
     });
 
+    // The agent closed the conversation: ask for a rating, offer the
+    // transcript, as the site's settings say.
+    this.socket.on('conversation-ended', function (data: any) {
+      self._showEndCard(data || {});
+      self.emit('conversation:ended', { conversationId: data && data.conversationId });
+    });
+
     this.socket.on('error', function (data: any) {
+      if (data && data.code === 'PRECHAT_REQUIRED') {
+        self._contactRequired = true;
+        self._maybeShowContactForm();
+        return;
+      }
       var message = (data && data.message) || 'Unknown socket error';
       self.emit('error', { code: 'SOCKET_ERROR', message: message });
       self._notice(message, 'error');
@@ -1254,6 +1358,7 @@ interface Window {
       '.banner.show{display:block;}',
       '.banner.warn{background:#FEF3C7;color:#92400E;}',
       '.banner.error{background:#FEE2E2;color:#991B1B;}',
+      '.banner.success{background:#DCFCE7;color:#166534;}',
       '.banner.ok{background:#DCFCE7;color:#166534;}',
 
       /* --- views --- */
@@ -1432,6 +1537,74 @@ interface Window {
       'opacity:.6;display:flex;padding:2px;}',
       '.file-chip button:hover{opacity:1;}',
 
+      /* pre-chat / offline form and the end-of-chat card */
+      '.contact-wrap:empty{display:none;}',
+      '.contact,.end-card{margin:8px 12px;padding:14px;border:1px solid ' + colors.border + ';',
+      'border-radius:14px;background:' +
+        colors.background +
+        ';display:flex;flex-direction:column;gap:10px;}',
+      '.contact h3,.end-title{font-size:14px;font-weight:650;color:' + colors.text + ';}',
+      '.contact .sub,.end-card .sub{font-size:12.5px;color:' +
+        colors.textSecondary +
+        ';line-height:1.45;}',
+      '.contact label.field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:' +
+        colors.textSecondary +
+        ';}',
+      '.contact input[type=text],.contact input[type=email],.contact input[type=tel],.end-card input,.end-card textarea{',
+      'width:100%;border:1px solid ' + colors.border + ';border-radius:10px;padding:9px 11px;',
+      'font:inherit;font-size:14px;color:' +
+        colors.text +
+        ';background:' +
+        colors.background +
+        ';outline:none;}',
+      '.contact input:focus,.end-card input:focus,.end-card textarea:focus{border-color:' +
+        primary +
+        ';box-shadow:0 0 0 3px ' +
+        withAlpha(primary, 0.16) +
+        ';}',
+      '.contact .consent{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:' +
+        colors.text +
+        ';line-height:1.45;}',
+      '.contact .consent input{margin-top:2px;width:16px;height:16px;flex:0 0 auto;accent-color:' +
+        primary +
+        ';}',
+      '.contact .consent a{color:' + primary + ';}',
+      '.contact .err{font-size:11.5px;color:#B91C1C;min-height:0;}',
+      '.contact .err:empty{display:none;}',
+      '.contact .actions,.end-card .actions{display:flex;gap:8px;align-items:center;}',
+      '.btn-primary{border:0;border-radius:10px;padding:9px 14px;font:inherit;font-size:13.5px;font-weight:600;',
+      'background:' + primary + ';color:' + onPrimary + ';cursor:pointer;}',
+      '.btn-primary:disabled{opacity:.45;cursor:not-allowed;}',
+      '.btn-link{border:0;background:none;font:inherit;font-size:13px;color:' +
+        colors.textSecondary +
+        ';cursor:pointer;text-decoration:underline;}',
+      '.btn-primary:focus-visible,.btn-link:focus-visible,.choice:focus-visible{outline:2px solid ' +
+        primary +
+        ';outline-offset:2px;}',
+      '.composer.locked{opacity:.5;pointer-events:none;}',
+      '.choices{display:flex;gap:8px;}',
+      '.choice{min-width:44px;min-height:44px;border:1px solid ' +
+        colors.border +
+        ';border-radius:12px;',
+      'background:' +
+        colors.background +
+        ';color:' +
+        colors.text +
+        ';cursor:pointer;font:inherit;font-size:13px;',
+      'display:flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;}',
+      '.choice svg{width:18px;height:18px;}',
+      '.choice[aria-pressed=true]{border-color:' +
+        primary +
+        ';background:' +
+        withAlpha(primary, 0.1) +
+        ';color:' +
+        primary +
+        ';}',
+      '.choice.star{padding:0;font-size:20px;line-height:1;}',
+      '.end-card .row{display:flex;gap:8px;}',
+      '.end-card .row input{flex:1;min-width:0;}',
+      '.end-card .done{font-size:13px;color:' + colors.text + ';}',
+
       /* nav */
       '.nav{flex:0 0 auto;display:flex;border-top:1px solid ' + colors.border + ';',
       'padding-bottom:env(safe-area-inset-bottom,0px);}',
@@ -1573,6 +1746,8 @@ interface Window {
       '<section class="view js-view-messages" aria-label="' + escapeHtml(t.messages) + '">',
       '<div class="messages js-messages" role="log" aria-live="polite"></div>',
       '<div class="typing js-typing" aria-hidden="true"><i></i><i></i><i></i></div>',
+      // The pre-chat / offline form is drawn here when the site asks for it.
+      '<div class="contact-wrap js-contact"></div>',
       '<div class="file-chip js-file-chip">',
       ICONS.file,
       '<span class="file-name js-file-name"></span>',
@@ -1639,7 +1814,9 @@ interface Window {
       // The free plan's widget says where it comes from (plan limits,
       // `branding`); paid plans can leave it out.
       this.remote.branding
-        ? '<a class="powered" href="https://support.io" target="_blank" rel="noopener">' +
+        ? '<a class="powered" href="' +
+          escapeHtml(this.config.apiUrl + '/?ref=widget') +
+          '" target="_blank" rel="noopener">' +
           escapeHtml(t.poweredBy) +
           '</a>'
         : '',
@@ -1681,6 +1858,8 @@ interface Window {
       faqList: q('.js-faq-list'),
       faqPreview: q('.js-faq-preview'),
       replyTime: q('.js-reply-time'),
+      contact: q('.js-contact'),
+      composer: q('.composer'),
       views: {
         home: q('.js-view-home'),
         messages: q('.js-view-messages'),
@@ -1781,6 +1960,7 @@ interface Window {
       this.unread = 0;
       this._renderBadge();
       this._scrollToEnd();
+      this._maybeShowContactForm();
     }
   };
 
@@ -2372,6 +2552,404 @@ interface Window {
   // -------------------------------------------------------------------------
   // 8. Public API
   // -------------------------------------------------------------------------
+
+  // -------------------------------------------------------------------------
+  // Pre-chat / offline form, rating and transcript (plan v10 PRD-01/04/05/06)
+  // -------------------------------------------------------------------------
+
+  var EMAIL_RX = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
+  var PHONE_RX = /^[+0-9 ()-]{5,40}$/;
+  var THUMB_UP =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3zm0 0 4-8a3 3 0 0 1 3 3v4h5.5a2 2 0 0 1 2 2.3l-1.3 8A2 2 0 0 1 18.2 21H7"/></svg>';
+  var THUMB_DOWN =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3zm0 0-4 8a3 3 0 0 1-3-3v-4H4.5a2 2 0 0 1-2-2.3l1.3-8A2 2 0 0 1 5.8 3H17"/></svg>';
+
+  Widget.prototype._contactKey = function (this: WidgetInstance) {
+    return 'sc_contact_' + this.config.siteKey;
+  };
+
+  /** Sends an event and waits for the server's acknowledgement. */
+  Widget.prototype._ask = function (this: WidgetInstance, event: string, payload: unknown) {
+    var self = this;
+    return new Promise(function (resolve) {
+      var send = function () {
+        self.socket.timeout(10000).emit(event, payload, function (err: Error | null, reply: any) {
+          resolve(err ? { ok: false, code: 'TIMEOUT' } : reply || { ok: false });
+        });
+      };
+      if (self.socket && self.socket.connected) send();
+      else if (self.socket) self.socket.once('connect', send);
+      else resolve({ ok: false, code: 'NOT_CONNECTED' });
+    });
+  };
+
+  Widget.prototype._setComposerLocked = function (this: WidgetInstance, locked: boolean) {
+    if (!this.el || !this.el.composer) return;
+    this.el.composer.classList.toggle('locked', locked);
+    this.el.composer.setAttribute('aria-disabled', locked ? 'true' : 'false');
+    this.el.input.disabled = locked;
+  };
+
+  /**
+   * Shows the form the site asks for, if any: the pre-chat form before the
+   * first message (required, or optional with "Skip"), or — while nobody is
+   * online — the short form asking for an address to reply to.
+   */
+  Widget.prototype._maybeShowContactForm = function (this: WidgetInstance) {
+    if (!this.el || !this.el.contact) return;
+    var chat = this.remote && (this.remote as any).chat;
+    if (!chat) return;
+    var pre = chat.preChat || { mode: 'off', consent: { mode: 'off' } };
+    var verified = Boolean(this.identity && this.identity.userHash);
+    var done = store.get(this._contactKey()) === '1' || this._contactSkipped;
+    var wantsPre = !verified && !done && !this.conversationId && pre.mode && pre.mode !== 'off';
+    var wantsOffline =
+      !done &&
+      !store.get('sc_visitor_email') &&
+      this.availability === 'offline' &&
+      chat.offlineForm;
+    var mode = this._contactRequired || wantsPre ? 'prechat' : wantsOffline ? 'offline' : null;
+    if (!mode) {
+      this.el.contact.innerHTML = '';
+      this._contactMode = null;
+      this._setComposerLocked(false);
+      return;
+    }
+    if (this._contactMode !== mode || !this.el.contact.firstChild) {
+      this._contactMode = mode;
+      this._renderContactForm(mode, pre);
+    }
+    var blocking =
+      mode === 'prechat' &&
+      (this._contactRequired ||
+        pre.mode === 'required' ||
+        (pre.consent && pre.consent.mode === 'required'));
+    this._setComposerLocked(Boolean(blocking));
+  };
+
+  Widget.prototype._renderContactForm = function (
+    this: WidgetInstance,
+    mode: string,
+    pre: Record<string, any>
+  ) {
+    var t = this.t;
+    var self = this;
+    var offline = mode === 'offline';
+    var required = !offline && pre.mode === 'required';
+    var opt = ' <span class="opt">(' + escapeHtml(t.optional) + ')</span>';
+    var field = function (
+      key: string,
+      type: string,
+      label: string,
+      isRequired: boolean,
+      value: string
+    ) {
+      var id = 'sc-' + key;
+      return (
+        '<label class="field" for="' +
+        id +
+        '">' +
+        escapeHtml(label) +
+        (isRequired ? '' : opt) +
+        '<input id="' +
+        id +
+        '" type="' +
+        type +
+        '" name="' +
+        key +
+        '" value="' +
+        escapeHtml(value || '') +
+        '"' +
+        (isRequired ? ' required aria-required="true"' : '') +
+        ' aria-describedby="sc-err-' +
+        key +
+        '" autocomplete="' +
+        (key === 'email' ? 'email' : key === 'name' ? 'name' : key === 'phone' ? 'tel' : 'off') +
+        '" /><span class="err" id="sc-err-' +
+        key +
+        '"></span></label>'
+      );
+    };
+    var parts = [
+      '<form class="contact js-contact-form" novalidate aria-labelledby="sc-contact-title">',
+      '<h3 id="sc-contact-title">' +
+        escapeHtml(offline ? t.offlineFormTitle : t.preChatTitle) +
+        '</h3>',
+      '<p class="sub">' + escapeHtml(offline ? t.offlineFormSub : t.preChatSub) + '</p>'
+    ];
+    var known = {
+      name: (this.identity && this.identity.name) || store.get('sc_visitor_name') || '',
+      email: (this.identity && this.identity.email) || store.get('sc_visitor_email') || ''
+    };
+    if (offline || pre.name)
+      parts.push(field('name', 'text', t.nameLabel, required && pre.name, known.name));
+    if (offline || pre.email) {
+      parts.push(
+        field('email', 'email', t.emailLabel, offline || (required && pre.email), known.email)
+      );
+    }
+    if (!offline && pre.phone) parts.push(field('phone', 'tel', t.phoneLabel, required, ''));
+    var custom: string[] = (!offline && pre.customFields) || [];
+    for (var i = 0; i < custom.length; i++) {
+      parts.push(field('custom' + i, 'text', custom[i], required, ''));
+    }
+    var consent = pre.consent || { mode: 'off' };
+    if (consent.mode && consent.mode !== 'off') {
+      parts.push(
+        '<label class="consent"><input type="checkbox" name="consent"' +
+          (consent.mode === 'required' ? ' required aria-required="true"' : '') +
+          ' aria-describedby="sc-err-consent" /><span>' +
+          escapeHtml(t.consentText) +
+          (consent.policyUrl
+            ? ' <a href="' +
+              escapeHtml(consent.policyUrl) +
+              '" target="_blank" rel="noopener noreferrer">' +
+              escapeHtml(t.consentLink) +
+              '</a>'
+            : '') +
+          '</span></label><span class="err" id="sc-err-consent"></span>'
+      );
+    }
+    parts.push(
+      '<div class="actions"><button type="submit" class="btn-primary">' +
+        escapeHtml(t.submitForm) +
+        '</button>' +
+        (!required && consent.mode !== 'required' && !this._contactRequired
+          ? '<button type="button" class="btn-link js-skip">' + escapeHtml(t.skipForm) + '</button>'
+          : '') +
+        '</div></form>'
+    );
+    this.el!.contact.innerHTML = parts.join('');
+    var form = this.el!.contact.querySelector('.js-contact-form') as HTMLFormElement;
+    this._listen(form, 'submit', function (e) {
+      e.preventDefault();
+      self._submitContact(form, custom);
+    });
+    var skip = this.el!.contact.querySelector('.js-skip');
+    if (skip) {
+      this._listen(skip, 'click', function () {
+        self._contactSkipped = true;
+        self._maybeShowContactForm();
+        self.el!.input.focus();
+      });
+    }
+  };
+
+  Widget.prototype._submitContact = async function (
+    this: WidgetInstance,
+    form: HTMLFormElement,
+    custom: string[]
+  ) {
+    var t = this.t;
+    var value = function (name: string) {
+      var input = form.querySelector('[name="' + name + '"]') as HTMLInputElement | null;
+      return input ? input.value.trim() : '';
+    };
+    var errors: Record<string, string> = {};
+    var inputs = form.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; i++) {
+      var input = inputs[i] as HTMLInputElement;
+      var err = form.querySelector('#sc-err-' + input.name) as HTMLElement | null;
+      if (err) err.textContent = '';
+      input.removeAttribute('aria-invalid');
+      if (input.type === 'checkbox') {
+        if (input.required && !input.checked) errors[input.name] = t.consentRequired;
+      } else if (input.required && !input.value.trim()) {
+        errors[input.name] = t.fieldRequired;
+      } else if (
+        input.name === 'email' &&
+        input.value.trim() &&
+        !EMAIL_RX.test(input.value.trim())
+      ) {
+        errors.email = t.invalidEmail;
+      } else if (
+        input.name === 'phone' &&
+        input.value.trim() &&
+        !PHONE_RX.test(input.value.trim())
+      ) {
+        errors.phone = t.invalidPhone;
+      }
+    }
+    var showErrors = function () {
+      var first: HTMLElement | null = null;
+      for (var key in errors) {
+        var box = form.querySelector('#sc-err-' + key) as HTMLElement | null;
+        if (box) box.textContent = errors[key];
+        var field = form.querySelector('[name="' + key + '"]') as HTMLElement | null;
+        if (field) {
+          field.setAttribute('aria-invalid', 'true');
+          if (!first) first = field;
+        }
+      }
+      if (first) first.focus();
+    };
+    if (Object.keys(errors).length) return showErrors();
+
+    var fields: Record<string, string> = {};
+    for (var c = 0; c < custom.length; c++) {
+      if (value('custom' + c)) fields[custom[c]] = value('custom' + c);
+    }
+    var consentBox = form.querySelector('[name="consent"]') as HTMLInputElement | null;
+    var payload = {
+      name: value('name') || undefined,
+      email: value('email') || undefined,
+      phone: value('phone') || undefined,
+      fields: fields,
+      consent: Boolean(consentBox && consentBox.checked)
+    };
+    var reply: any = await this._ask('visitor-contact', payload);
+    if (!reply || !reply.ok) {
+      if (reply && reply.code === 'PRECHAT_INVALID' && reply.details && reply.details.field) {
+        errors[reply.details.field] =
+          reply.details.field === 'phone' ? t.invalidPhone : t.invalidEmail;
+        return showErrors();
+      }
+      this._notice((reply && reply.message) || t.uploadFailed, 'error');
+      return;
+    }
+    if (payload.name) store.set('sc_visitor_name', payload.name);
+    if (payload.email) store.set('sc_visitor_email', payload.email);
+    store.set(this._contactKey(), '1');
+    this._contactRequired = false;
+    this._maybeShowContactForm();
+    this._notice(t.formSaved, 'success');
+    this.emit('contact', { name: payload.name || null, email: payload.email || null });
+    // A first message the server refused for the form goes out now.
+    this._resendPending();
+    if (this.el) this.el.input.focus();
+  };
+
+  /** The card at the end of a closed conversation: rating, then transcript. */
+  Widget.prototype._showEndCard = function (this: WidgetInstance, data: Record<string, any>) {
+    if (!this.el) return;
+    var t = this.t;
+    var self = this;
+    var conversationId = data.conversationId || this.conversationId;
+    var card = document.createElement('div');
+    card.className = 'end-card';
+    card.setAttribute('role', 'group');
+    card.setAttribute('aria-label', t.chatEnded);
+    var html = ['<div class="end-title">' + escapeHtml(t.chatEnded) + '</div>'];
+    if (data.csat) {
+      var choices = '';
+      if (data.csat.style === 'stars') {
+        for (var n = 1; n <= 5; n++) {
+          choices +=
+            '<button type="button" class="choice star" aria-pressed="false" data-score="' +
+            n +
+            '" aria-label="' +
+            escapeHtml(String(t.rateStar).replace('{n}', String(n))) +
+            '">★</button>';
+        }
+      } else {
+        choices =
+          '<button type="button" class="choice" aria-pressed="false" data-score="5">' +
+          THUMB_UP +
+          '<span>' +
+          escapeHtml(t.rateUp) +
+          '</span></button>' +
+          '<button type="button" class="choice" aria-pressed="false" data-score="1">' +
+          THUMB_DOWN +
+          '<span>' +
+          escapeHtml(t.rateDown) +
+          '</span></button>';
+      }
+      html.push(
+        '<div class="js-rate"><p class="sub">' +
+          escapeHtml(t.rateTitle) +
+          '</p><div class="choices" role="group" aria-label="' +
+          escapeHtml(t.rateTitle) +
+          '">' +
+          choices +
+          '</div><textarea class="js-feedback" rows="2" maxlength="1000" aria-label="' +
+          escapeHtml(t.feedbackPlaceholder) +
+          '" placeholder="' +
+          escapeHtml(t.feedbackPlaceholder) +
+          '"></textarea><div class="actions"><button type="button" class="btn-primary js-rate-send" disabled>' +
+          escapeHtml(t.rateSubmit) +
+          '</button></div></div>'
+      );
+    }
+    if (data.transcript) {
+      html.push(
+        '<div class="js-transcript"><p class="sub">' +
+          escapeHtml(t.transcriptSub) +
+          '</p><div class="row"><input type="email" class="js-transcript-email" autocomplete="email" aria-label="' +
+          escapeHtml(t.emailLabel) +
+          '" value="' +
+          escapeHtml(store.get('sc_visitor_email') || '') +
+          '" /><button type="button" class="btn-primary js-transcript-send">' +
+          escapeHtml(t.transcriptSend) +
+          '</button></div></div>'
+      );
+    }
+    if (html.length === 1) return;
+    card.innerHTML = html.join('');
+    this.el.messages.appendChild(card);
+    this._scrollToEnd();
+
+    var score = 0;
+    var buttons = card.querySelectorAll('.choice');
+    var send = card.querySelector('.js-rate-send') as HTMLButtonElement | null;
+    for (var b = 0; b < buttons.length; b++) {
+      this._listen(buttons[b], 'click', function (e) {
+        var target = e.currentTarget as HTMLElement;
+        score = Number(target.getAttribute('data-score'));
+        for (var k = 0; k < buttons.length; k++) {
+          var on =
+            data.csat.style === 'stars'
+              ? Number(buttons[k].getAttribute('data-score')) <= score
+              : buttons[k] === target;
+          buttons[k].setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
+        if (send) send.disabled = false;
+      });
+    }
+    if (send) {
+      this._listen(send, 'click', async function () {
+        send!.disabled = true;
+        var feedback = (card.querySelector('.js-feedback') as HTMLTextAreaElement).value;
+        var reply: any = await self._ask('rate-conversation', {
+          conversationId: conversationId,
+          score: score,
+          feedback: feedback
+        });
+        var rate = card.querySelector('.js-rate') as HTMLElement;
+        if (reply && reply.ok) {
+          rate.innerHTML = '<p class="done" role="status">' + escapeHtml(t.rateThanks) + '</p>';
+          self.emit('rating', { conversationId: conversationId, score: score });
+        } else {
+          send!.disabled = false;
+          self._notice((reply && reply.message) || t.uploadFailed, 'error');
+        }
+      });
+    }
+    var transcriptBtn = card.querySelector('.js-transcript-send');
+    if (transcriptBtn) {
+      this._listen(transcriptBtn, 'click', async function () {
+        var input = card.querySelector('.js-transcript-email') as HTMLInputElement;
+        var email = input.value.trim();
+        if (!EMAIL_RX.test(email)) {
+          input.setAttribute('aria-invalid', 'true');
+          self._notice(t.invalidEmail, 'error');
+          input.focus();
+          return;
+        }
+        (transcriptBtn as HTMLButtonElement).disabled = true;
+        var reply: any = await self._ask('request-transcript', {
+          conversationId: conversationId,
+          email: email
+        });
+        var box = card.querySelector('.js-transcript') as HTMLElement;
+        if (reply && reply.ok) {
+          box.innerHTML = '<p class="done" role="status">' + escapeHtml(t.transcriptSent) + '</p>';
+        } else {
+          (transcriptBtn as HTMLButtonElement).disabled = false;
+          self._notice((reply && reply.message) || t.uploadFailed, 'error');
+        }
+      });
+    }
+  };
 
   Widget.prototype.open = function (this: WidgetInstance) {
     if (this.destroyed || !this.el || this.isHidden) return;

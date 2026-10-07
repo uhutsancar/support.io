@@ -13,6 +13,7 @@ import { normalizeOriginList, originsFromDomain } from '../config/siteOrigins';
 import { withTransaction } from '../db/pool';
 import { assertCanCreateSite, lockOrganization } from '../services/entitlements';
 import { assistantAvailable } from '../services/assistant';
+import { chatSettings, sanitizeChatSettings } from '../services/chatSettings';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import { siteCreateLimiter } from '../middleware/rateLimit';
@@ -193,6 +194,33 @@ router.put(
       events.emit('site.updated', { ...auditContext(req, site), metadata: { fields: changed } });
     }
     res.json({ site });
+  })
+);
+
+// The site's chat behaviour (services/chatSettings.ts): unanswered-chat mails,
+// the offline and pre-chat forms, ratings, transcripts, spam mode. Every
+// field is optional; what is sent is merged over what is stored and checked.
+router.get(
+  '/:siteId/chat-settings',
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    res.json({ settings: chatSettings(site.chatSettings) });
+  })
+);
+
+router.put(
+  '/:siteId/chat-settings',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const settings = sanitizeChatSettings(req.body, chatSettings(site.chatSettings));
+    site.chatSettings = settings as unknown as Record<string, unknown>;
+    await site.save();
+    events.emit('site.updated', {
+      ...auditContext(req, site),
+      metadata: { fields: ['chatSettings'] }
+    });
+    res.json({ settings });
   })
 );
 

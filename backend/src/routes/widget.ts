@@ -31,8 +31,14 @@ import {
   newWidgetSessionId,
   renewableWidgetSession,
   signWidgetSession,
-  siteKeyVersion
+  siteKeyVersion,
+  verifyVisitorLink
 } from '../config/tokens';
+import Conversation from '../models/Conversation';
+import { chatSettings, publicChatSettings } from '../services/chatSettings';
+import { recordRating } from '../services/ratings';
+import { createLimiter } from '../middleware/rateLimit';
+import { HttpError } from '../http';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { originRefused, requireWidgetSession } from '../middleware/widgetSession';
 import { widgetSessionLimiter } from '../middleware/rateLimit';
@@ -223,9 +229,10 @@ router.post(
     if (!siteKey) throw badRequest('siteKey is required');
 
     const site = await Site.findOne({ siteKey, isActive: true });
-    // An invalid key and a disabled site answer identically, so probing keys
-    // cannot reveal "this site exists but is switched off".
-    if (!site) throw widgetNotFound();
+    // An invalid key, a disabled site and a site over the plan's limit after
+    // a downgrade (BIL-04) answer identically, so probing keys cannot reveal
+    // "this site exists but is switched off".
+    if (!site || site.suspendedAt) throw widgetNotFound();
 
     // The widget goes live once the organization's owner has verified their
     // address (plan §7.2); until then the panel works but no page does.
@@ -245,12 +252,20 @@ router.post(
     const previous = renewableWidgetSession(req.body?.token);
     const continues =
       previous !== null && previous.siteId === String(site._id) && previous.kv === keyVersion;
+    // The link in a reply mail (PRD-01) brings the visitor back to their
+    // conversation, even from another browser: it names the visitor, signed.
+    const resumed = verifyVisitorLink('resume', req.body?.resumeToken);
+    const resumesHere = resumed !== null && resumed.siteId === String(site._id);
 
-    const visitorId = continues ? previous.visitorId : newVisitorId();
+    const visitorId = resumesHere
+      ? resumed.visitorId
+      : continues
+        ? previous.visitorId
+        : newVisitorId();
     const { token, expiresAt } = signWidgetSession({
       siteId: String(site._id),
       visitorId,
-      sid: continues ? previous.sid : newWidgetSessionId(),
+      sid: continues && !resumesHere ? previous.sid : newWidgetSessionId(),
       kv: keyVersion
     });
 
@@ -268,6 +283,7 @@ router.post(
       expiresAt: expiresAt.toISOString(),
       visitorId,
       renewed: continues,
+      resumed: resumesHere,
       version: WIDGET_VERSION,
       apiVersion: API_VERSION,
       serverTime: new Date().toISOString(),
@@ -277,6 +293,9 @@ router.post(
       // so and offers a way to a person. Nothing else about it is public.
       assistant: assistantActive(site),
       config: publicConfig(site, saved ? saved.toObject() : null),
+      // Forms and ratings (services/chatSettings.ts): what the widget shows,
+      // nothing about who on the team gets mailed.
+      chat: publicChatSettings(chatSettings(site.chatSettings)),
       faqs: (faqs || []).map((f) => ({
         id: String(f._id),
         question: f.question,
@@ -321,6 +340,95 @@ router.post(
     await site.save();
 
     res.json({ ok: true, verifiedAt: site.installation.verifiedAt });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Links mailed to a visitor (plan v10 PRD-01, PRD-04). No session: the
+// signed token in the link is the proof, and it names one conversation.
+// ---------------------------------------------------------------------------
+
+const linkLimiter = createLimiter({
+  name: 'visitor-link',
+  code: 'TOO_MANY_REQUESTS',
+  message: 'Too many requests, please slow down.',
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.VISITOR_LINK_RATE_MAX) || 60
+});
+
+const page = (title: string, body: string) => `<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>${title}</title></head>
+<body style="margin:0;padding:48px 16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f6f7f9;color:#111827">
+<main style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:28px">
+<h1 style="font-size:20px;margin:0 0 12px">${title}</h1><p style="margin:0;line-height:1.5">${body}</p></main></body></html>`;
+
+// One click from the reply mail: no more e-mails about this conversation.
+router.get(
+  '/email-optout',
+  linkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const claims = verifyVisitorLink('email-optout', req.query.t);
+    res.set('Cache-Control', 'no-store');
+    if (!claims) {
+      res
+        .status(400)
+        .type('html')
+        .send(page('Bağlantı geçersiz', 'Bu bağlantı geçersiz ya da süresi dolmuş.'));
+      return;
+    }
+    await Conversation.updateOne(
+      { _id: claims.conversationId, siteId: claims.siteId, visitorId: claims.visitorId },
+      { $set: { emailRepliesOptOut: true } }
+    );
+    res
+      .type('html')
+      .send(
+        page(
+          'E-postalar durduruldu',
+          'Bu sohbetle ilgili size artık e-posta gönderilmeyecek. / You will get no more e-mails about this chat.'
+        )
+      );
+  })
+);
+
+// The rating page the CSAT mail opens (panel /rate) reads and writes here.
+router.get(
+  '/rating',
+  linkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const claims = verifyVisitorLink('csat', req.query.t);
+    if (!claims) throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
+    const [site, conversation] = await Promise.all([
+      Site.findById(claims.siteId).select('name chatSettings'),
+      Conversation.findOne({ _id: claims.conversationId, siteId: claims.siteId })
+    ]);
+    if (!site || !conversation) {
+      throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
+    }
+    res.set('Cache-Control', 'no-store').json({
+      site: site.name,
+      style: chatSettings(site.chatSettings).csat.style,
+      rated: Boolean(conversation.rating?.score)
+    });
+  })
+);
+
+router.post(
+  '/rating',
+  linkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const claims = verifyVisitorLink('csat', req.body?.t);
+    if (!claims) throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
+    const rating = await recordRating(req.app.get('io'), {
+      conversationId: claims.conversationId,
+      siteId: claims.siteId,
+      visitorId: claims.visitorId,
+      score: req.body?.score,
+      feedback: req.body?.feedback,
+      channel: 'email'
+    });
+    res.json({ rating });
   })
 );
 

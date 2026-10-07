@@ -30,6 +30,8 @@ import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
 import { ConversationQuotaError, countMessage } from '../../services/entitlements';
 import { conversationRoom } from '../../realtime/rooms';
+import { installWidgetExtras, applyContact } from './widgetExtras';
+import { preChatSatisfied } from '../../services/visitorContact';
 import { timed } from '../../config/metrics';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
@@ -158,6 +160,16 @@ async function openFirstConversation(
   socket.conversationId = opened._id;
   if (!created) return;
 
+  // What the visitor filled in before writing (PRD-05) goes on the new
+  // conversation; a department they picked routes it.
+  if (socket.contact) {
+    applyContact(opened, socket.contact);
+    if (socket.contact.departmentId && !opened.department) {
+      opened.department = socket.contact.departmentId;
+    }
+    await opened.save();
+  }
+
   if (greeting) {
     ctx.toWidgetConversation(opened._id, 'new-message', { message: greeting });
   }
@@ -173,6 +185,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
     const socket = rawSocket as WidgetSocket;
     // Counted per widget session, before any handler runs; see ../limits.ts.
     limit(socket, `v:${socket.widgetSessionId}`);
+    installWidgetExtras(ctx, socket);
 
     // ---------------------------------------------------------------- joining
 
@@ -344,6 +357,11 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       // The first message opens the conversation; see conversationIntake.ts.
       if (!socket.conversationId) {
+        // A site with a required pre-chat form or consent box hears nothing
+        // before it is filled in (PRD-05).
+        if (!preChatSatisfied(site.chatSettings, socket.contact, Boolean(socket.verifiedUserId))) {
+          return refuse(socket, ack, 'PRECHAT_REQUIRED', 'Please fill in the form first');
+        }
         try {
           await openFirstConversation(ctx, socket, site, content, assistant);
         } catch (error) {

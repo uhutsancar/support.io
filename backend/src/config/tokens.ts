@@ -92,6 +92,60 @@ export function sessionIsCurrent(
   return (decoded.sv ?? 0) === (account.sessionVersion ?? 0);
 }
 
+// ------------------------------------------------------------ e-mailed links
+
+/**
+ * Links mailed to a visitor (plan v10 PRD-01, PRD-04): back to the chat,
+ * no more e-mails about it, rate it. Each purpose has its own key and
+ * audience, so one can never be traded for another — or for a session.
+ */
+export type VisitorLinkPurpose = 'resume' | 'email-optout' | 'csat';
+
+export interface VisitorLinkClaims {
+  siteId: string;
+  conversationId: string;
+  visitorId: string;
+}
+
+const VISITOR_LINK_TTL: Record<VisitorLinkPurpose, number> = {
+  resume: 14 * 24 * 60 * 60,
+  'email-optout': 90 * 24 * 60 * 60,
+  csat: 7 * 24 * 60 * 60
+};
+
+export function signVisitorLink(purpose: VisitorLinkPurpose, claims: VisitorLinkClaims): string {
+  return jwt.sign({ ...claims, purpose }, derivedKey(`visitor-link-${purpose}`), {
+    algorithm: 'HS256',
+    audience: `support-chat:${purpose}`,
+    expiresIn: VISITOR_LINK_TTL[purpose]
+  });
+}
+
+export function verifyVisitorLink(
+  purpose: VisitorLinkPurpose,
+  token: unknown
+): VisitorLinkClaims | null {
+  if (typeof token !== 'string' || !token || token.length > 2048) return null;
+  try {
+    const decoded = jwt.verify(token, derivedKey(`visitor-link-${purpose}`), {
+      algorithms: ['HS256'],
+      audience: `support-chat:${purpose}`
+    }) as VisitorLinkClaims & { purpose?: string };
+    if (decoded.purpose !== purpose) return null;
+    if (!isValidObjectId(decoded.siteId) || !isValidObjectId(decoded.conversationId)) return null;
+    if (typeof decoded.visitorId !== 'string' || !WIDGET_VISITOR_ID.test(decoded.visitorId)) {
+      return null;
+    }
+    return {
+      siteId: decoded.siteId,
+      conversationId: decoded.conversationId,
+      visitorId: decoded.visitorId
+    };
+  } catch {
+    return null;
+  }
+}
+
 // -------------------------------------------------- two-step sign-in pending
 
 const MFA_AUDIENCE = 'support-chat:mfa-pending';

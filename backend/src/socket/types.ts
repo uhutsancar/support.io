@@ -50,6 +50,8 @@ export interface WidgetSocketState {
   verifiedUserId?: string | null;
   /** The message being handled; the next one waits for it (handlers/widget.ts). */
   sending?: Promise<unknown>;
+  /** What the visitor left in the pre-chat / offline form (PRD-05). */
+  contact?: import('../services/visitorContact').VisitorContact;
 }
 
 export type WidgetSocket = Socket & WidgetSocketState;
