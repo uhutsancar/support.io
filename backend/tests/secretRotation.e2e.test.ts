@@ -173,5 +173,4 @@ test('secrets:rotate re-seals a workspace under the new key', async () => {
   );
   assert.equal(open(user.rows[0].totp), 'JBSWY3DPEHPK3PXP');
   assert.match(user.rows[0].totp, new RegExp(`^v2\\.${keyId(derivedKey('site-secrets'))}\\.`));
-
 });
