@@ -226,21 +226,22 @@ asks for the database name.
    `subscription.*` (created, activated, updated, canceled, past_due, paused,
    resumed, trialing). Copy its secret key.
 4. Fill `PADDLE_*` in `.env.production`, set `BILLING_ENABLED=true`, deploy.
-5. Sandbox acceptance: buy Pro with a test card, see the plan change on the
-   billing page; cancel from the customer portal; replay an event from the
-   Paddle dashboard (it must be a no-op).
+5. Sandbox acceptance: every scenario in `docs/billing-acceptance.md`
+   (purchase, plan changes and the downgrade on-hold rules, failed payment,
+   cancellation, replay, bad signature, portal, who sends which mail).
 6. Live: repeat 1–3 in the live account, `PADDLE_ENV=production`.
 
 **Troubleshooting webhooks** (`docker compose … logs backend | grep billing`):
 
 | Symptom | Meaning |
 |---|---|
-| 400 in Paddle's delivery log | Signature rejected: wrong `PADDLE_WEBHOOK_SECRET`, or the server clock is off by more than a few seconds (`timedatectl`). |
+| 400 in Paddle's delivery log | Signature rejected (`paddle webhook rejected` in the log, `supportio_billing_webhook_rejected_total` up): wrong `PADDLE_WEBHOOK_SECRET`, or the server clock is off by more than a few seconds (`timedatectl`). |
 | 503 | `PADDLE_WEBHOOK_SECRET` is empty on the server. |
 | `…: ignored` | The event is not about a subscription, the price id is not one of `PADDLE_PRICE_*`, or the checkout reference did not match (not started from the panel). |
 | `…: stale` | An older event arrived after a newer one; correctly not applied. |
 | `…: duplicate` | Paddle retried an event already applied. |
 | 500 | The database write failed; Paddle retries by itself. |
+| `paddle price differs from domain/plans.ts` | A `PADDLE_PRICE_*` amount was changed in Paddle; the pricing page already shows Paddle's figure. Bring `domain/plans.ts` in line in the next release. |
 
 ## 8. Rotating secrets
 
