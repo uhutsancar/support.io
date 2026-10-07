@@ -8,6 +8,7 @@
 #   services    a compose service not running, or running but unhealthy
 #   ready       the API's /ready does not answer 200 (asked inside the network)
 #   backup      the last successful backup is older than 26 hours, or unknown
+#   restore-test the last passing weekly restore test is older than 8 days
 #   database    PostgreSQL connections above DB_CONN_ALERT_PCT (80) of max
 #   certificate the certificate on :443 expires within 14 days
 #
@@ -31,7 +32,8 @@ STATE_DIR="${WATCHDOG_STATE_DIR:-/var/lib/supportio/watchdog}"
 STATUS_DIR="${BACKUP_STATUS_DIR:-/var/lib/supportio/status}"
 REPEAT_SECONDS=3600
 
-env_value() { grep -E "^$1=" "$ENV_FILE" 2>/dev/null | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
+# A variable missing from the file is empty, not an error (see backup-postgres.sh).
+env_value() { { grep -E "^$1=" "$ENV_FILE" 2>/dev/null || true; } | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 
 WEBHOOK="$(env_value ALERT_WEBHOOK_URL)"
 DOMAIN="$(env_value APP_DOMAIN)"
@@ -124,6 +126,20 @@ if [[ -f "$STATUS_DIR/backup-last-success" ]]; then
   fi
 else
   problem backup "no successful backup recorded ($STATUS_DIR/backup-last-success)"
+fi
+
+# backup verification (DR-03): a restore test at least every 8 days
+if [[ -f "$STATUS_DIR/backup-verify-last-success" ]]; then
+  vage=$(( $(date +%s) - $(cat "$STATUS_DIR/backup-verify-last-success") ))
+  if (( vage > 8 * 86400 )); then
+    problem restore-test "last passing restore test $(( vage / 86400 )) days ago"
+  else
+    fine restore-test
+  fi
+elif [[ -f "$STATUS_DIR/backup-verify-due" ]] && (( $(date +%s) > $(cat "$STATUS_DIR/backup-verify-due") )); then
+  problem restore-test "no restore test has passed yet"
+else
+  fine restore-test
 fi
 
 # database connections

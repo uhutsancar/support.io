@@ -12,15 +12,25 @@
 # and asks for the database name to be typed back. Take a fresh backup first.
 #
 #   BACKUP_AGE_IDENTITY  the age private key file, for .age files
+#
+# The check also runs every week from backup-postgres.sh on the night's
+# plain dump, before it is encrypted (plan v10 DR-03): it fails when the
+# restored database's latest migration differs from the live one's.
+#
+# SUPPORTIO_COMPOSE_FILE / SUPPORTIO_ENV_FILE point it at another stack
+# (defaults: docker-compose.prod.yml, .env.production) — how it is tried on a
+# development machine.
 set -euo pipefail
 
 FILE="${1:?usage: $0 <file.dump[.age|.gpg]> [--into-production]}"
 MODE="${2:-check}"
 ROOT="${SUPPORTIO_ROOT:-/opt/supportio}"
 cd "$ROOT"
-ENV_FILE=.env.production
-C="docker compose --env-file $ENV_FILE -f docker-compose.prod.yml"
-env_value() { grep -E "^$1=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
+ENV_FILE="${SUPPORTIO_ENV_FILE:-.env.production}"
+COMPOSE_FILE_NAME="${SUPPORTIO_COMPOSE_FILE:-docker-compose.prod.yml}"
+C="docker compose --env-file $ENV_FILE -f $COMPOSE_FILE_NAME"
+# A variable missing from the file is empty, not an error (see backup-postgres.sh).
+env_value() { { grep -E "^$1=" "$ENV_FILE" 2>/dev/null || true; } | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 DB_NAME="$(env_value DB_NAME)"; DB_NAME="${DB_NAME:-supportchat}"
 DB_USER="$(env_value DB_USER)"; DB_USER="${DB_USER:-support_user}"
 
@@ -60,8 +70,14 @@ trap cleanup_db EXIT
 $C exec -T postgres pg_restore -U "$DB_USER" -d "$TARGET" --no-owner < "$DUMP"
 
 echo "restored into $TARGET; checking"
-psql -d "$TARGET" -At -c "SELECT 'latest migration: ' || max(version) FROM schema_migrations"
-psql -d "$TARGET" -At -c "SELECT 'organizations: ' || count(*) FROM organizations"
-psql -d "$TARGET" -At -c "SELECT 'conversations: ' || count(*) FROM conversations"
-psql -d "$TARGET" -At -c "SELECT 'messages: ' || count(*) FROM messages"
+restored="$(psql -d "$TARGET" -At -c "SELECT max(version) FROM schema_migrations")"
+live="$(psql -d "$DB_NAME" -At -c "SELECT max(version) FROM schema_migrations")"
+echo "latest migration: $restored (live: $live)"
+for table in organizations users sites conversations messages; do
+  echo "$table: $(psql -d "$TARGET" -At -c "SELECT count(*) FROM $table")"
+done
+if [[ -z "$restored" || "$restored" != "$live" ]]; then
+  echo "restore test FAILED: the restored schema is not the live one" >&2
+  exit 1
+fi
 echo "restore test passed"

@@ -200,7 +200,14 @@ BACKUP_AGE_IDENTITY=~/supportio-backup.key ./scripts/restore-postgres.sh /tmp/su
 ```
 
 It restores into a scratch database, prints the latest migration and row
-counts, and drops it. To replace the live database (an incident only):
+counts, fails if the migration is not the live one, and drops it.
+
+The same check runs **every Sunday by itself**: `backup-postgres.sh`
+restores the night's plain dump into a scratch database before encrypting it
+(`BACKUP_VERIFY=weekly`; `always` or `off` also work), records the time in
+`/var/lib/supportio/status/backup-verify-last-success` and pings
+`BACKUP_VERIFY_PING_URL`. The watchdog alarms when no restore test has passed
+for 8 days. The private key never has to be on the server for it. To replace the live database (an incident only):
 `... restore-postgres.sh <file> --into-production` — it stops the backend and
 asks for the database name.
 

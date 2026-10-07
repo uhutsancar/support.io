@@ -18,7 +18,8 @@ set -euo pipefail
 ROOT="${SUPPORTIO_ROOT:-/opt/supportio}"
 cd "$ROOT"
 ENV_FILE=.env.production
-env_value() { grep -E "^$1=" "$ENV_FILE" | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
+# A variable missing from the file is empty, not an error (see backup-postgres.sh).
+env_value() { { grep -E "^$1=" "$ENV_FILE" 2>/dev/null || true; } | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 
 REMOTE="$(env_value LOG_REMOTE)"
 [[ -n "$REMOTE" ]] || { echo "LOG_REMOTE is not set; nothing shipped" >&2; exit 1; }
