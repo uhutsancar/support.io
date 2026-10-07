@@ -176,6 +176,8 @@ export interface TeamChatSendPayload extends TeamChatPayload {
 
 /** A file that passed token verification and is safe to store on a message. */
 export interface VerifiedFile {
+  /** The storage key (the same as filename); see models/Message.ts. */
+  key: string;
   filename: string;
   originalName: string;
   mimeType: string;

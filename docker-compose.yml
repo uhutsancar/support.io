@@ -101,6 +101,10 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_REGION
       - S3_BUCKET
+      # This stack runs the e2e suite, which uploads files; they stay on the
+      # container's disk unless UPLOAD_STORAGE=s3 is set on the host, so no
+      # test ever writes to a real bucket.
+      - UPLOAD_STORAGE=${UPLOAD_STORAGE:-local}
       # Redis: tanimliysa Socket.IO adapter'i devreye girer ve backend birden
       # fazla surec olarak calistirilabilir. Tanimsizken tek surec modunda calisir.
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}

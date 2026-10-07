@@ -8,3 +8,6 @@ files/*
 !files/.gitkeep
 logos/*
 !logos/.gitkeep
+
+# Private chat attachments (plan v10 SEC-08): org/<org>/site/<site>/<file>.
+org/

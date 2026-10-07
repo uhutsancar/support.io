@@ -86,6 +86,12 @@ export interface ModelHooks {
 export interface ModelOptions {
   /** Include virtuals (and an `id` alias) in toObject() output. */
   virtuals?: boolean;
+  /**
+   * How a document looks once it leaves the server (toObject, toJSON,
+   * populate). For values that must be computed at the moment they are sent
+   * — a signed, short-lived link to a private file, for one.
+   */
+  present?: (row: Row) => Row;
 }
 
 export interface ModelConfig {
@@ -767,7 +773,7 @@ export class Document {
         out[name] = fn.call(self);
       }
     }
-    return out;
+    return model.options.present ? model.options.present(out) : out;
   }
 
   toJSON(): Row {

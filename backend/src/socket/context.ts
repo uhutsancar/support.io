@@ -224,6 +224,9 @@ export class SocketContext {
       if (!isAcceptableAttachmentUrl(String(fileData.url))) return null;
 
       return {
+        // The storage key; a private attachment is shown through a link
+        // signed from it whenever the message is read (models/Message.ts).
+        key: String(fileData.filename).slice(0, 500),
         filename: String(fileData.filename).slice(0, 500),
         originalName: String(fileData.originalName || 'attachment').slice(0, 255),
         mimeType: String(fileData.mimeType || 'application/octet-stream').slice(0, 150),

@@ -10,7 +10,7 @@ import WidgetConfig from '../models/WidgetConfig';
 import { auth } from '../middleware/auth';
 import { requireWidgetSession } from '../middleware/widgetSession';
 import { checkPermission } from '../middleware/rbac';
-import { describeUpload, uploadLogo } from '../middleware/upload';
+import { storeUpload, uploadLogo } from '../middleware/upload';
 import { publicConfig } from './widget';
 import {
   asyncHandler,
@@ -131,8 +131,9 @@ router.post(
     const site = await loadOwnedSite(req, req.params.siteId);
     if (!req.file) throw badRequest('Dosya yüklenemedi');
 
-    const stored = describeUpload(req, req.file);
-    if (!stored) throw badRequest('Logo yüklenemedi');
+    // Checked and re-encoded like every image (middleware/upload.ts); a
+    // logo is public by nature and is stored as such.
+    const stored = await storeUpload(req, req.file, { kind: 'logo' });
 
     const config = await configForSite(site, orgId(req));
     config.branding.logo = stored.url;

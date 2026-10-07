@@ -15,7 +15,7 @@
 import { query, withTransaction } from '../db/pool';
 import { LIVE_STATUSES, isSubscriptionStatus } from '../domain/subscription';
 import { HttpError } from '../http/errors';
-import { deleteStoredFiles, storedKeyFromUrl } from '../middleware/upload';
+import { deleteOrganizationFiles, deleteStoredFiles, storedKeyFromUrl } from '../middleware/upload';
 import { logger } from '../config/logger';
 
 export async function deleteOrganization(organizationId: string): Promise<{ files: number }> {
@@ -50,7 +50,9 @@ export async function deleteOrganization(organizationId: string): Promise<{ file
     );
     const anonymous = `email = 'deleted_' || id || '@deleted.invalid', name = 'Deleted User',
       password = '!', avatar = NULL, is_active = false, status = 'offline',
-      email_verified_at = NULL, session_version = session_version + 1`;
+      email_verified_at = NULL, session_version = session_version + 1,
+      totp_secret_enc = NULL, totp_enabled_at = NULL, totp_last_step = NULL,
+      recovery_codes = '[]'::jsonb`;
     await client.query(`UPDATE users SET ${anonymous} WHERE organization_id = $1`, [
       organizationId
     ]);
@@ -67,6 +69,9 @@ export async function deleteOrganization(organizationId: string): Promise<{ file
   let removed = 0;
   try {
     removed = await deleteStoredFiles(keys);
+    // Private attachments live under the organization's own prefix; this
+    // also catches files uploaded but never sent in a message.
+    removed += await deleteOrganizationFiles(organizationId);
   } catch (error) {
     logger.error(
       { organizationId, error: error instanceof Error ? error.message : String(error) },

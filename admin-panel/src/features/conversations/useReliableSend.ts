@@ -121,7 +121,17 @@ export function useReliableSend({
         senderName: sender.name,
         content: fields.content,
         messageType: fields.messageType ?? 'text',
-        fileData: (fields.fileData as Message['fileData']) ?? null,
+        // Until the server answers, the attachment shows through the signed
+        // preview link the upload returned: its stable address opens nothing
+        // by itself (private attachments, plan v10 SEC-08).
+        fileData: fields.fileData
+          ? ({
+              ...fields.fileData,
+              url:
+                (fields.fileData as { previewUrl?: string }).previewUrl ??
+                (fields.fileData as { url?: string }).url
+            } as Message['fileData'])
+          : null,
         isRead: true,
         readAt: null,
         createdAt: new Date().toISOString(),

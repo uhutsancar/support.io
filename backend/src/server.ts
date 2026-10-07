@@ -390,6 +390,12 @@ if (!isProduction) {
 // declared type is never re-sniffed, and anything that is not an image
 // downloads instead of rendering — an uploaded .html must not be openable as a
 // page on our own origin, where it would run with our cookies in scope.
+// Private attachments (uploads/org/...) are never served from here; they open
+// only through a signed link (routes/files.ts). Logos and files stored before
+// that change still are.
+app.use(`${UPLOAD_URL_PREFIX}/org`, (_req: Request, res: Response) => {
+  res.status(404).end();
+});
 app.use(
   UPLOAD_URL_PREFIX,
   express.static(UPLOAD_ROOT, {
