@@ -28,6 +28,7 @@ import {
 } from '../../domain';
 import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
+import { validateEvents, WIDGET_EVENTS } from '../schema';
 import { ConversationQuotaError, countMessage } from '../../services/entitlements';
 import { conversationRoom } from '../../realtime/rooms';
 import { installWidgetExtras, applyContact } from './widgetExtras';
@@ -189,6 +190,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
     const socket = rawSocket as WidgetSocket;
     // Counted per widget session, before any handler runs; see ../limits.ts.
     limit(socket, `v:${socket.widgetSessionId}`);
+    // Then every payload is checked against its event's shape; see ../schema.ts.
+    validateEvents(socket, WIDGET_EVENTS);
     installWidgetExtras(ctx, socket);
 
     // ---------------------------------------------------------------- joining

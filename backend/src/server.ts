@@ -101,7 +101,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  maxHttpBufferSize: 1024 * 1024,
+  // The largest thing a client sends is a 5 000-character message (SEC-15);
+  // files go over HTTP. A polling request may carry a few packets at once.
+  maxHttpBufferSize: Number(process.env.SOCKET_MAX_PAYLOAD_BYTES) || 256 * 1024,
   pingInterval: 25000,
   pingTimeout: 20000
 });
