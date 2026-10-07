@@ -1,7 +1,7 @@
 // The social preview image (plan v10 MKT-03): Facebook, LinkedIn, X and
 // WhatsApp do not show SVG, so public/og-image.png (1200×630) is rendered
 // from public/og-image.svg. Run after changing the SVG:
-//   node scripts/og-image.mjs
+//   npx tsx scripts/og-image.ts
 // sharp comes from the backend's dependencies (it already re-encodes
 // uploaded images); the panel does not carry it.
 import { createRequire } from 'node:module';

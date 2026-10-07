@@ -26,7 +26,7 @@ test('robots.txt keeps private pages out and names the sitemap on this domain', 
     '/reset-password',
     '/verify-email'
   ]) {
-    assert.match(text, new RegExp(`^Disallow: ${path.replace(/\//g, '\/')}$`, 'm'), path);
+    assert.match(text, new RegExp(`^Disallow: ${path}$`, 'm'), path);
   }
   assert.match(text, /^Sitemap: https?:\/\/[^\s]+\/sitemap\.xml$/m);
   assert.doesNotMatch(text, /support\.io/, 'no hard-coded domain');
