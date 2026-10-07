@@ -174,15 +174,21 @@ app.use(
 app.use(contentSecurityPolicy({ isProduction }));
 
 // --- ⚙️ 2. ARA KATMANLAR (MIDDLEWARES) ---
-app.use(
-  compression({
-    filter: (req: Request, res: Response) => {
-      if (req.headers['x-no-compression']) return false;
-      return compression.filter(req, res);
-    },
-    level: 6
-  })
-);
+// Behind Caddy (production) compression is Caddy's job: it compresses in Go,
+// off this process's event loop, and skips a response that is already
+// encoded — so compressing here too only spent Node's CPU (PERF-04).
+// HTTP_COMPRESSION=off there; on its own (development, tests) Express does it.
+if (process.env.HTTP_COMPRESSION !== 'off') {
+  app.use(
+    compression({
+      filter: (req: Request, res: Response) => {
+        if (req.headers['x-no-compression']) return false;
+        return compression.filter(req, res);
+      },
+      level: 6
+    })
+  );
+}
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.url.includes('/widget.js')) {

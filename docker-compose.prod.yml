@@ -184,6 +184,8 @@ services:
       # scripts/backup-postgres.sh writes.
       METRICS_TOKEN: ${METRICS_TOKEN:-}
       OPS_REPORT_EMAIL: ${OPS_REPORT_EMAIL:-}
+      # Caddy compresses (encode zstd gzip); doing it here too only costs CPU.
+      HTTP_COMPRESSION: "off"
       BACKUP_STATUS_FILE: /run/supportio-status/backup-last-success
       # Paddle. The boot check refuses BILLING_ENABLED=true without the rest.
       BILLING_ENABLED: ${BILLING_ENABLED:-false}

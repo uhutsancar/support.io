@@ -4,6 +4,7 @@
 // customer's page reads a reduced, whitelisted view of it (`publicConfig` in
 // ./widget.ts) that carries no internal fields.
 
+import { forgetSiteBundle } from '../services/widgetBundle';
 import express from 'express';
 import events from '../events';
 import WidgetConfig from '../models/WidgetConfig';
@@ -108,6 +109,7 @@ router.put(
     }
 
     await config.save();
+    await forgetSiteBundle(site._id);
     // Which sections changed, not their contents.
     events.emit('site.widget.updated', {
       organizationId: orgId(req),
@@ -138,6 +140,7 @@ router.post(
     const config = await configForSite(site, orgId(req));
     config.branding.logo = stored.url;
     await config.save();
+    await forgetSiteBundle(site._id);
 
     res.json({ success: true, config, logoUrl: stored.url });
   })
@@ -157,6 +160,7 @@ router.delete(
     // Only the reference is dropped; the object itself stays in the bucket.
     config.branding.logo = null;
     await config.save();
+    await forgetSiteBundle(site._id);
     res.json({ config });
   })
 );

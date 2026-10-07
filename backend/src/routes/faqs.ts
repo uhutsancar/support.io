@@ -4,6 +4,7 @@
 //   /admin/*   the dashboard, behind a session and the caller's organization
 //   /search    the widget, on a customer's page, behind its widget session
 
+import { forgetSiteBundle } from '../services/widgetBundle';
 import express from 'express';
 import FAQ from '../models/FAQ';
 import { auth } from '../middleware/auth';
@@ -68,6 +69,7 @@ router.post(
     const site = await loadOwnedSite(req, req.body?.siteId);
     const faq = new FAQ({ ...pick<FAQDoc>(req.body, WRITABLE_FIELDS), siteId: site._id });
     await faq.save();
+    await forgetSiteBundle(site._id);
     res.status(201).json({ faq });
   })
 );
@@ -84,6 +86,7 @@ router.put(
     const faq = await loadOwnedFaq(req, req.params.faqId);
     Object.assign(faq, updates);
     await faq.save();
+    await forgetSiteBundle(faq.siteId);
     res.json({ faq });
   })
 );
@@ -96,6 +99,7 @@ router.delete(
   asyncHandler(async (req: Request, res: Response) => {
     const faq = await loadOwnedFaq(req, req.params.faqId);
     await faq.deleteOne();
+    await forgetSiteBundle(faq.siteId);
     res.json({ message: 'FAQ deleted successfully' });
   })
 );

@@ -21,7 +21,6 @@ import { plainString } from '../middleware/sanitize';
 import { asyncHandler, badRequest, notFound } from '../http';
 import Site from '../models/Site';
 import WidgetConfig from '../models/WidgetConfig';
-import FAQ from '../models/FAQ';
 import Team from '../models/Team';
 import User from '../models/User';
 import { isProduction } from '../config/env';
@@ -45,13 +44,13 @@ import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { originRefused, requireWidgetSession } from '../middleware/widgetSession';
 import { widgetSessionLimiter } from '../middleware/rateLimit';
 import { organizationVerified } from '../services/verification';
-import { limitsFor } from '../services/entitlements';
 import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActiveFor } from '../services/assistant';
 import { visitorCountry } from '../services/assistant/region';
 import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
+import { siteBundle } from '../services/widgetBundle';
 import Visitor from '../models/Visitor';
 import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
 import { ioFrom, siteRoom } from '../realtime';
@@ -290,11 +289,11 @@ router.post(
       kv: keyVersion
     });
 
-    const [saved, faqs, availability, plan, openConversation] = await Promise.all([
-      WidgetConfig.findOne({ siteId: site._id, isActive: true }),
-      FAQ.find({ siteId: site._id, isActive: true }).sort({ order: 1 }).limit(50).lean(),
+    // The look, the FAQ list and the plan's branding change only when the
+    // owner edits them: kept for a minute in the shared cache (PERF-04).
+    const [bundle, availability, openConversation] = await Promise.all([
+      siteBundle(String(site._id), String(site.organizationId)),
       resolveAvailability(site),
-      limitsFor(String(site.organizationId)),
       // A returning visitor with a conversation still open connects at once,
       // so a reply reaches them; everyone else only when they open the
       // widget (PERF-02).
@@ -310,7 +309,7 @@ router.post(
     res.json({
       token,
       // The free plan's widget shows "Powered by Support.io".
-      branding: plan.limits.branding,
+      branding: bundle.branding,
       expiresAt: expiresAt.toISOString(),
       visitorId,
       renewed: continues,
@@ -324,16 +323,11 @@ router.post(
       // True when the site's FAQ assistant answers first; the widget then says
       // so and offers a way to a person. Nothing else about it is public.
       assistant: assistantActiveFor(site, visitorCountry(req.get('cf-ipcountry'))),
-      config: publicConfig(site, saved ? saved.toObject() : null),
+      config: publicConfig(site, bundle.saved),
       // Forms and ratings (services/chatSettings.ts): what the widget shows,
       // nothing about who on the team gets mailed.
       chat: publicChatSettings(chatSettings(site.chatSettings)),
-      faqs: (faqs || []).map((f) => ({
-        id: String(f._id),
-        question: f.question,
-        answer: f.answer,
-        category: f.category || null
-      }))
+      faqs: bundle.faqs
     });
   })
 );
