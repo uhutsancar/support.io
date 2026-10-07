@@ -176,6 +176,10 @@ services:
       GEMINI_TIER: ${GEMINI_TIER:-free}
       GEMINI_COST_PER_ANSWER: ${GEMINI_COST_PER_ANSWER:-}
       ASSISTANT_KILL_SWITCH: ${ASSISTANT_KILL_SWITCH:-false}
+      # Error tracking (OBS-01); empty DSN sends nothing.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      WIDGET_TELEMETRY_SAMPLE: ${WIDGET_TELEMETRY_SAMPLE:-0.1}
       # Paddle. The boot check refuses BILLING_ENABLED=true without the rest.
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       PADDLE_ENV: ${PADDLE_ENV:-sandbox}

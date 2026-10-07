@@ -42,6 +42,8 @@ import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/b
 import dataExportRoutes from './routes/dataExport';
 import wellKnownRoutes from './routes/wellKnown';
 import cspReportRoutes from './routes/cspReport';
+import { panelTelemetry, widgetTelemetry } from './routes/telemetry';
+import { captureError } from './services/errorReporting';
 import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
@@ -206,6 +208,9 @@ app.use('/api/billing/paddle/webhook', billingWebhookRoutes);
 // Browsers' CSP reports come as application/csp-report or reports+json, read
 // by the route itself with an 8 KB cap (routes/cspReport.ts).
 app.use('/api/csp-report', cspReportRoutes);
+// Panel and widget errors, read with an 8 KB cap (routes/telemetry.ts).
+app.use('/api/telemetry/panel', panelTelemetry);
+app.use('/api/widget/telemetry', widgetTelemetry);
 
 // Oturum httpOnly cerezde tasinir; auth ara katmani onu buradan okur.
 app.use(cookieParser());
@@ -575,4 +580,5 @@ ${signal} alındı, kapatılıyor...`);
 // Hata Yönetimi
 process.on('unhandledRejection', (err) => {
   console.error('Beklenmedik Hata:', err);
+  captureError(err, { source: 'process' });
 });

@@ -820,6 +820,18 @@ interface Window {
     this.fatal = { code: code, message: message };
     if (window.console && console.error) console.error('[SupportChat] ' + code + ': ' + message);
     this.emit('error', { code: code, message: message });
+    // Reported to our own API, sampled there (OBS-01). No page address: this
+    // runs on a customer's site. A network failure has no one to report to.
+    if (code !== 'NETWORK_ERROR' && this.config.apiUrl && navigator.sendBeacon) {
+      try {
+        navigator.sendBeacon(
+          this.config.apiUrl + '/api/widget/telemetry',
+          JSON.stringify({ code: code, message: message, sdkVersion: SDK_VERSION })
+        );
+      } catch (e) {
+        /* never let reporting break the page */
+      }
+    }
   };
 
   /**

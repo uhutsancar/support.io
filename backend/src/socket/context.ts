@@ -7,6 +7,7 @@
 // "may this socket act on this row" is decided, so a handler is left with just
 // its own logic.
 
+import { captureError } from '../services/errorReporting';
 import Conversation from '../models/Conversation';
 import Site from '../models/Site';
 import TeamChat from '../models/TeamChat';
@@ -87,6 +88,7 @@ export class SocketContext {
    */
   fail(socket: Socket, error: unknown): void {
     console.error('[socket]', error);
+    captureError(error, { source: 'socket' });
     socket.emit('error', { message: 'Request failed' });
   }
 

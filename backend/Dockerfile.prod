@@ -18,9 +18,12 @@ ARG VITE_API_URL=""
 ARG VITE_SUPPORT_SITE_KEY=""
 # Shown in install snippets; empty means "the page's own origin".
 ARG VITE_PUBLIC_APP_ORIGIN=""
+# The commit this image is built from: error reports name it (OBS-01).
+ARG APP_RELEASE=""
 ENV VITE_API_URL=${VITE_API_URL} \
     VITE_SUPPORT_SITE_KEY=${VITE_SUPPORT_SITE_KEY} \
-    VITE_PUBLIC_APP_ORIGIN=${VITE_PUBLIC_APP_ORIGIN}
+    VITE_PUBLIC_APP_ORIGIN=${VITE_PUBLIC_APP_ORIGIN} \
+    VITE_APP_RELEASE=${APP_RELEASE}
 RUN npm run build
 
 FROM node-base AS backend-build
@@ -49,7 +52,9 @@ RUN apk upgrade --no-cache \
  && addgroup -g 1000 node \
  && adduser -u 1000 -G node -s /bin/sh -D node
 COPY --from=node-base /usr/local/bin/node /usr/local/bin/node
-ENV NODE_ENV=production
+ARG APP_RELEASE=""
+ENV NODE_ENV=production \
+    APP_RELEASE=${APP_RELEASE}
 WORKDIR /app/backend
 COPY --chown=node:node backend/package.json ./
 COPY --from=backend-build --chown=node:node /build/backend/dist ./dist

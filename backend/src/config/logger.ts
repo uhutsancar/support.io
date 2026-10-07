@@ -69,6 +69,17 @@ export const logger = pino(
     level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
     base: undefined,
     timestamp: pino.stdTimeFunctions.isoTime,
+    // An error's message and a database error's detail can carry the value
+    // that failed, an e-mail address among them; scrubbed like console output.
+    serializers: {
+      err: (error: Error) => {
+        const out = pino.stdSerializers.err(error) as unknown as Record<string, unknown>;
+        for (const key of ['message', 'stack', 'detail', 'hint', 'where']) {
+          if (typeof out[key] === 'string') out[key] = scrubText(out[key] as string);
+        }
+        return out;
+      }
+    },
     redact: {
       paths: [...HEADER_PATHS, ...SECRET_KEYS.flatMap((key) => [key, `*.${key}`])],
       censor: (value: unknown, path: string[]) =>
