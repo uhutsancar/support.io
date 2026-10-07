@@ -95,7 +95,8 @@ export function increment(name: string, labels: Record<string, string> = {}): vo
 function labelText(labels: Record<string, string>): string {
   const entries = Object.entries(labels);
   if (!entries.length) return '';
-  return `{${entries.map(([k, v]) => `${k}="${String(v).replace(/["\\n]/g, '_')}"`).join(',')}}`;
+  // A quote, a backslash or a line break would end the value early.
+  return `{${entries.map(([k, v]) => `${k}="${String(v).replace(/["\\\r\n]/g, '_')}"`).join(',')}}`;
 }
 
 export interface Gauge {
