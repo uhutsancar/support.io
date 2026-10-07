@@ -47,7 +47,7 @@ import { initialize as initializeProactiveEngine } from './services/proactiveEng
 import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
 import { stopRetentionSweeps } from './db/retention';
 import { assertProductionConfig } from './config/productionChecks';
-import { logger, requestLogging } from './config/logger';
+import { installConsoleRedaction, logger, requestLogging } from './config/logger';
 import { metricsSnapshot, resetMetrics } from './config/metrics';
 import { closeRedisClient, getRedisClient, isEnabled as redisEnabled } from './config/redis';
 import { closeRedisAdapter } from './socket/adapter';
@@ -67,6 +67,10 @@ import { IMAGE_TYPES, UPLOAD_ROOT, UPLOAD_URL_PREFIX, describeStorage } from './
 import './services/auditService';
 import { attachRedisAdapter } from './socket/adapter';
 import type { Request, Response, NextFunction } from 'express';
+
+// Whatever older code still writes with console.* is scrubbed of e-mail
+// addresses, tokens and keys (config/logger.ts, plan v10 SEC-16).
+installConsoleRedaction();
 
 // --- Route Tanımları ---
 
