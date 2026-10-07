@@ -25,6 +25,7 @@ import { assistantAPI, sitesAPI } from '../services/api';
 import { errorMessage, useAsync } from '../hooks/useAsync';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Toggle } from '../components/sites/SiteAssistant';
+import AssistantConsent from '../components/sites/AssistantConsent';
 import type { AssistantOverview, AssistantSiteOverview } from '../types/api';
 
 const number = (value: number, locale: string) => new Intl.NumberFormat(locale).format(value);
@@ -55,6 +56,8 @@ const Assistant = () => {
   const locale = language === 'en' ? 'en-US' : 'tr-TR';
   const base = `${language === 'en' ? '/en' : ''}/dashboard`;
   const [busy, setBusy] = useState<string | null>(null);
+  // The site waiting for the owner's confirmation before switching on (AI-04).
+  const [asking, setAsking] = useState<AssistantSiteOverview | null>(null);
 
   const overview = useAsync<AssistantOverview | null>(
     () => assistantAPI.overview().then((r) => r.data),
@@ -76,7 +79,9 @@ const Assistant = () => {
 
   const update = async (
     site: AssistantSiteOverview,
-    fields: Partial<Pick<AssistantSiteOverview, 'assistantEnabled' | 'faqAutoReply'>>
+    fields: Partial<Pick<AssistantSiteOverview, 'assistantEnabled' | 'faqAutoReply'>> & {
+      assistantConsent?: boolean;
+    }
   ) => {
     setBusy(site._id);
     try {
@@ -85,7 +90,19 @@ const Assistant = () => {
         current
           ? {
               ...current,
-              sites: current.sites.map((s) => (s._id === site._id ? { ...s, ...fields } : s))
+              sites: current.sites.map((s) =>
+                s._id === site._id
+                  ? {
+                      ...s,
+                      ...(fields.assistantEnabled !== undefined
+                        ? { assistantEnabled: fields.assistantEnabled }
+                        : {}),
+                      ...(fields.faqAutoReply !== undefined
+                        ? { faqAutoReply: fields.faqAutoReply }
+                        : {})
+                    }
+                  : s
+              )
             }
           : current
       );
@@ -310,7 +327,9 @@ const Assistant = () => {
                               disabled={
                                 busy === site._id || (!data.available && !site.assistantEnabled)
                               }
-                              onChange={(value) => update(site, { assistantEnabled: value })}
+                              onChange={(value) =>
+                                value ? setAsking(site) : update(site, { assistantEnabled: false })
+                              }
                               label={t('assistant.page.assistantSwitch')}
                               help={t('assistant.page.assistantHelp')}
                             />
@@ -425,6 +444,17 @@ const Assistant = () => {
           </>
         ) : null}
       </div>
+      {asking && (
+        <AssistantConsent
+          siteName={asking.name}
+          onCancel={() => setAsking(null)}
+          onConfirm={() => {
+            const site = asking;
+            setAsking(null);
+            void update(site, { assistantEnabled: true, assistantConsent: true });
+          }}
+        />
+      )}
     </>
   );
 };

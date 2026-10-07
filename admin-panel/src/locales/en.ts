@@ -2250,6 +2250,14 @@ export default {
       usageNear: 'Most of this month’s answers have been used.',
       upgrade: 'Upgrade for more answers'
     },
+    consent: {
+      title: 'Switch on the AI assistant',
+      point1: 'Your site’s public FAQ content and your visitors’ questions are sent to our AI service provider to produce answers; this may happen outside Türkiye.',
+      point2: 'E-mail addresses and phone numbers in questions are masked before they are sent; questions containing a card, IBAN or ID number are not sent at all.',
+      point3: 'Your visitors are clearly shown that they are writing with an AI. We recommend saying so in your site’s privacy notice.',
+      box: 'I understand and agree that my FAQ content and visitor questions, with personal data masked, are sent to the AI service provider.',
+      confirm: 'Agree and switch on'
+    },
     settings: {
       button: 'Assistant',
       title: 'FAQ assistant',
@@ -2262,6 +2270,8 @@ export default {
         'The visitor’s name, e-mail and earlier messages are never sent to the AI; a card number or IBAN is handed to a person without sending the question.',
       rule3:
         'The moment an agent writes or presses “Take over”, the assistant stays silent in that conversation.',
+      rule4:
+        'The assistant’s answers are marked “AI assistant” for the visitor, and the first one says how to reach a person.',
       faqAutoReply: 'Keyword FAQ reply',
       faqAutoReplyHelp:
         'While the assistant is off, a message that strongly matches an FAQ entry gets that entry back as a “help article”.',

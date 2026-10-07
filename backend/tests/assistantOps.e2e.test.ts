@@ -24,7 +24,15 @@ import type { AddressInfo } from 'node:net';
 import { Server } from 'socket.io';
 import { io as connect } from 'socket.io-client';
 import type { Socket as ClientSocket } from 'socket.io-client';
+import express from 'express';
 import SocketHandler from '../src/socket';
+import siteRoutes from '../src/routes/sites';
+// The audit trail listens for route events once this is loaded (as in server.ts).
+import '../src/services/auditService';
+import { errorHandler } from '../src/http';
+import { signSession } from '../src/config/tokens';
+import { BASE } from './helpers/widget';
+import { signUp } from './helpers/accounts';
 import Organization from '../src/models/Organization';
 import Site from '../src/models/Site';
 import FAQ from '../src/models/FAQ';
@@ -271,4 +279,93 @@ test('a day may use a tenth of the month; the next question goes to a person', a
     [org._id]
   );
   assert.equal(rows[0].n, 5, 'only the answers given were counted');
+});
+
+// ------------------------------------------------------- consent (AI-04)
+
+async function ownerWithSite() {
+  const email = `owner${Date.now()}${Math.floor(Math.random() * 1e5)}@consent.test`;
+  const reg = await signUp({ name: 'Consent Owner', email, password: 'E2ePassw0rd!' });
+  const token = /(?:^|,\s*)sc_session=([^;]+)/.exec(reg.headers.get('set-cookie') || '')?.[1];
+  const created = await fetch(`${BASE}/api/sites`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name: `Onay ${generateId()}`, domain: `${generateId()}.example` })
+  });
+  const { site } = (await created.json()) as { site: { _id: string; organizationId: string } };
+  const { rows } = await query<{ id: string; session_version: number }>(
+    'SELECT id, session_version FROM users WHERE email = $1',
+    [email]
+  );
+  return { token: decodeURIComponent(token || ''), site, user: rows[0] };
+}
+
+test('switching the assistant on needs the owner to confirm the notice', async () => {
+  const { token, site } = await ownerWithSite();
+  const put = (body: unknown) =>
+    fetch(`${BASE}/api/sites/${site._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+  const refused = await put({ assistantEnabled: true });
+  assert.equal(refused.status, 400);
+  assert.equal(((await refused.json()) as { code: string }).code, 'ASSISTANT_CONSENT_REQUIRED');
+  // Confirmed, it gets past the notice: on, or "not available" on a stack
+  // without a key — never the consent refusal again.
+  const confirmed = await put({ assistantEnabled: true, assistantConsent: true });
+  const body = (await confirmed.json()) as { code?: string };
+  assert.ok(
+    confirmed.status === 200 || body.code === 'ASSISTANT_UNAVAILABLE',
+    JSON.stringify(body)
+  );
+  // Switching it off needs nothing.
+  const off = await put({ assistantEnabled: false });
+  assert.equal(off.status, 200);
+});
+
+test('confirmed, it is switched on and audited with who and when', async () => {
+  // The sites route runs here, where the assistant is configured.
+  const { site, user } = await ownerWithSite();
+  const app = express();
+  app.use(express.json());
+  app.use('/api/sites', siteRoutes);
+  app.use(errorHandler);
+  const local = http.createServer(app);
+  await new Promise<void>((resolve) => local.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(local.address() as AddressInfo).port}`;
+  const session = signSession(
+    {
+      userId: user.id,
+      userType: 'user',
+      role: 'owner',
+      organizationId: String(site.organizationId),
+      sv: user.session_version
+    },
+    600
+  );
+  try {
+    await checkModel();
+    const res = await fetch(`${url}/api/sites/${site._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session}` },
+      body: JSON.stringify({ assistantEnabled: true, assistantConsent: true })
+    });
+    assert.equal(res.status, 200, await res.clone().text());
+    let rows: Array<{ user_id: string; metadata: Record<string, unknown> }> = [];
+    for (let i = 0; i < 20 && !rows.length; i += 1) {
+      ({ rows } = await query(
+        `SELECT user_id, metadata FROM audit_logs
+          WHERE organization_id = $1 AND action = 'ASSISTANT_ENABLED'`,
+        [String(site.organizationId)]
+      ));
+      if (!rows.length) await sleep(100);
+    }
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].user_id, user.id);
+    assert.equal(rows[0].metadata.consent, true);
+    assert.ok(Date.parse(String(rows[0].metadata.consentedAt)) > Date.now() - 60_000);
+  } finally {
+    local.close();
+  }
 });

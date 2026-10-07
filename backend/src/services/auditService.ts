@@ -107,6 +107,7 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   // Whether the FAQ assistant answers on a site, and the site's identity
   // key. The metadata names what changed, never a secret.
   'site.assistant.updated': { action: 'SITE_ASSISTANT_UPDATED', entityType: 'site' },
+  'site.assistant.enabled': { action: 'ASSISTANT_ENABLED', entityType: 'site' },
   'site.created': { action: 'SITE_CREATED', entityType: 'site' },
   'site.updated': { action: 'SITE_UPDATED', entityType: 'site' },
   'site.deleted': { action: 'SITE_DELETED', entityType: 'site' },

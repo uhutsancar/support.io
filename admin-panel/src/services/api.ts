@@ -186,8 +186,10 @@ export const sitesAPI = {
   getAll: () => api.get<{ sites: Site[] }>('/sites'),
   getOne: (siteId: string) => api.get<{ site: Site }>(`/sites/${siteId}`),
   create: mutates('/sites', (data: Partial<Site>) => api.post<{ site: Site }>('/sites', data)),
-  update: mutates('/sites', (siteId: string, data: Partial<Site>) =>
-    api.put<{ site: Site }>(`/sites/${siteId}`, data)
+  update: mutates(
+    '/sites',
+    (siteId: string, data: Partial<Site> & { assistantConsent?: boolean }) =>
+      api.put<{ site: Site }>(`/sites/${siteId}`, data)
   ),
   delete: mutates('/sites', (siteId: string) => api.delete(`/sites/${siteId}`)),
   regenerateKey: mutates('/sites', (siteId: string) =>

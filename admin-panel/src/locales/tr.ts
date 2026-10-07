@@ -2258,6 +2258,14 @@ export default {
       usageNear: 'Bu ayın yanıt hakkının çoğu kullanıldı.',
       upgrade: 'Daha fazla yanıt için planı yükseltin'
     },
+    consent: {
+      title: 'Yapay zekâ asistanını açın',
+      point1: 'Sitenizin herkese açık SSS içeriği ve ziyaretçilerin soruları, yanıt üretilmesi için yapay zekâ hizmet sağlayıcımıza iletilir; bu işlem yurt dışında gerçekleşebilir.',
+      point2: 'Sorulardaki e-posta adresleri ve telefon numaraları gönderilmeden önce maskelenir; kart, IBAN veya kimlik numarası içeren sorular hiç gönderilmez.',
+      point3: 'Ziyaretçilerinize yapay zekâ ile yazıştıkları açıkça gösterilir. Sitenizin gizlilik metninde bunu belirtmenizi öneririz.',
+      box: 'SSS içeriğimin ve ziyaretçi sorularının, kişisel veriler maskelenerek yapay zekâ hizmet sağlayıcısına iletileceğini anladım ve onaylıyorum.',
+      confirm: 'Onayla ve aç'
+    },
     settings: {
       button: 'Asistan',
       title: 'SSS asistanı',
@@ -2269,6 +2277,8 @@ export default {
       rule2:
         'Ziyaretçinin adı, e-postası ve önceki mesajları yapay zekâya gönderilmez; kart, IBAN gibi bilgiler görülürse soru hiç gönderilmeden temsilciye aktarılır.',
       rule3: 'Bir temsilci yazdığı ya da “Devral” dediği anda asistan o konuşmada susar.',
+      rule4:
+        'Asistanın yanıtları ziyaretçiye “Yapay zekâ asistanı” olarak işaretlenir ve ilk yanıtın altında temsilciye nasıl ulaşılacağı yazar.',
       faqAutoReply: 'Anahtar kelimeyle SSS cevabı',
       faqAutoReplyHelp:
         'Asistan kapalıyken, mesaj bir SSS kaydıyla güçlü biçimde eşleşirse o kaydı “Yardım makalesi” olarak gönderir.',

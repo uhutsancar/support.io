@@ -72,8 +72,11 @@ interface WidgetMessage {
   clientMessageId?: string;
   senderType?: string;
   senderName?: string;
+  senderId?: string;
   content?: string;
   messageType?: string;
+  /** Set on the assistant's messages: what it cited, or why it handed over. */
+  assistant?: { sources?: string[]; handoff?: string | null } | null;
   fileData?: Record<string, any> | null;
   createdAt?: string | number | Date;
   [field: string]: unknown;
@@ -387,7 +390,9 @@ interface Window {
       transcriptSent: 'Döküm e-postanıza gönderildi.',
       blocked:
         'Sohbet şu anda kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız lütfen bize başka bir yoldan ulaşın.',
-      slowDown: 'Lütfen bir sonraki mesajınızdan önce biraz bekleyin.'
+      slowDown: 'Lütfen bir sonraki mesajınızdan önce biraz bekleyin.',
+      aiBadge: 'Yapay zekâ asistanı',
+      aiNote: 'Otomatik yanıt · Bir temsilciye bağlanmak için yazın: temsilci'
     },
     en: {
       launcherLabel: 'Open support chat',
@@ -463,7 +468,9 @@ interface Window {
       transcriptSent: 'The transcript is on its way to your inbox.',
       blocked:
         'Chat is not available right now. If you think this is a mistake, please reach us another way.',
-      slowDown: 'Please wait a little before sending your next message.'
+      slowDown: 'Please wait a little before sending your next message.',
+      aiBadge: 'AI assistant',
+      aiNote: 'Automatic answer · To reach a person, type: agent'
     }
   };
 
@@ -1495,6 +1502,11 @@ interface Window {
       '.msg-sender{font-size:11px;font-weight:600;color:' +
         colors.textSecondary +
         ';padding:0 4px;}',
+      // The assistant's answers say what they are (AI-03).
+      '.msg-badge{font-size:10.5px;font-weight:600;letter-spacing:.01em;padding:1px 7px;border-radius:999px;color:' +
+        colors.textSecondary +
+        ';border:1px solid currentColor;opacity:.85;}',
+      '.ai-note{font-size:11px;color:' + colors.textSecondary + ';padding:0 4px;max-width:260px;}',
       '.bubble{padding:10px 13px;border-radius:' +
         c.messages.messageBubbleRadius +
         'px;font-size:14px;',
@@ -2283,7 +2295,13 @@ interface Window {
     node.className = 'msg ' + type;
 
     var parts = [];
-    if (type !== 'visitor' && c.messages.showAvatars !== false && message.senderName) {
+    // An answer the assistant wrote is marked as such, whatever the site's
+    // avatar setting; the first one also says how to reach a person (AI-03).
+    var aiAnswer =
+      message.senderId === 'assistant' && !(message.assistant && message.assistant.handoff);
+    if (aiAnswer) {
+      parts.push('<div class="msg-badge">' + escapeHtml(this.t.aiBadge) + '</div>');
+    } else if (type !== 'visitor' && c.messages.showAvatars !== false && message.senderName) {
       parts.push('<div class="msg-sender">' + escapeHtml(message.senderName) + '</div>');
     }
 
@@ -2323,6 +2341,9 @@ interface Window {
       );
     } else {
       parts.push('<div class="meta"></div>');
+    }
+    if (aiAnswer && !(this.el && this.el.messages.querySelector('.ai-note'))) {
+      parts.push('<div class="ai-note">' + escapeHtml(this.t.aiNote) + '</div>');
     }
 
     node.innerHTML = parts.join('');
