@@ -11,8 +11,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { PLAN_LIMITS } from '../domain/plans';
 import { PLAN_TYPES } from '../domain';
+import { displayPrice } from './paddlePrices';
 
 interface Meta {
   title: string;
@@ -74,12 +74,12 @@ function structuredData(base: string, page: PublicPage, lang: 'tr' | 'en', meta:
       description: meta.description,
       inLanguage: lang,
       publisher: { '@id': `${base}/#organization` },
-      // Prices from the table the server enforces (domain/plans.ts).
+      // The prices GET /api/plans shows: Paddle's once billing is on.
       offers: PLAN_TYPES.map((plan) => ({
         '@type': 'Offer',
         name: plan,
-        price: String(PLAN_LIMITS[plan].price.monthly ?? 0),
-        priceCurrency: PLAN_LIMITS[plan].price.currency,
+        price: String(displayPrice(plan).monthly ?? 0),
+        priceCurrency: displayPrice(plan).currency,
         url: `${base}${lang === 'en' ? page.en : page.tr}`
       }))
     });

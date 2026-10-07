@@ -48,6 +48,7 @@ import { withSeoHead } from './services/seoHead';
 import { appBaseUrl } from './services/mail';
 import { captureError } from './services/errorReporting';
 import { usePlanOverageRealtime } from './services/planOverage';
+import { startPaddlePriceSync, stopPaddlePriceSync } from './services/paddlePrices';
 import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
@@ -561,6 +562,8 @@ connectDB()
 
     // The model check and the kill switch (services/assistant/availability.ts).
     startAssistantWatch();
+    // Paddle's prices for the pricing page, with billing on (BIL-03).
+    startPaddlePriceSync();
 
     server.listen(PORT, () => {
       logger.info({ port: Number(PORT) }, 'server listening');
@@ -595,6 +598,7 @@ ${signal} alındı, kapatılıyor...`);
       // still being written are abandoned rather than left holding timers.
       stopAssistant();
       stopAssistantWatch();
+      stopPaddlePriceSync();
       stopSlaSweeper();
       stopRetentionSweeps();
       try {

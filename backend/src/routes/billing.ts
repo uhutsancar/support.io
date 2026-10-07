@@ -36,6 +36,7 @@ import {
 } from '../http';
 import { errorText } from '../http/errors';
 import { logger } from '../config/logger';
+import { increment } from '../config/metrics';
 import { trialRunning } from '../services/trial';
 import { overageSummary, reconcilePlanLimits } from '../services/planOverage';
 import type { Request, Response } from 'express';
@@ -63,6 +64,12 @@ webhookRouter.post(
       );
     } catch (error) {
       if (error instanceof InvalidWebhookError || error instanceof SyntaxError) {
+        // A wrong secret or a forged call: worth seeing, never the body.
+        increment('supportio_billing_webhook_rejected_total');
+        logger.warn(
+          { reason: error instanceof SyntaxError ? 'malformed' : 'signature' },
+          'paddle webhook rejected'
+        );
         res.status(400).json({ error: 'Invalid webhook' });
         return;
       }
