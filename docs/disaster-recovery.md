@@ -53,16 +53,17 @@ restore (the two sort text differently), not by reusing its volume.
 A table dropped at 14:05, data wrong since 14:00: restore to 13:59.
 
 1. Note the target time in UTC. Stop the backend: `docker compose ... stop backend`.
-2. Keep the current data aside (do not delete it yet):
+2. Keep the current data aside (do not delete it yet). `POSTGRES_IMAGE` is
+   the value from `.env.production` (`set -a; . ./.env.production; set +a`):
    ```bash
    docker compose ... stop postgres
    docker volume create supportio_postgres_before_restore
    docker run --rm -v supportio_postgres_prod_data:/from -v supportio_postgres_before_restore:/to \
-     alpine sh -c 'cp -a /from/. /to/'
+     --entrypoint sh "$POSTGRES_IMAGE" -c 'cp -a /from/. /to/'
    ```
 3. Empty the data volume, fetch the base backup, set the target, start:
    ```bash
-   docker run --rm -v supportio_postgres_prod_data:/d alpine sh -c 'rm -rf /d/* /d/.[!.]*'
+   docker run --rm -v supportio_postgres_prod_data:/d --entrypoint sh "$POSTGRES_IMAGE" -c 'rm -rf /d/* /d/.[!.]*'
    docker compose ... run --rm --no-deps --user postgres --entrypoint bash postgres -c "
      wal-g backup-fetch /var/lib/postgresql/data LATEST &&
      touch /var/lib/postgresql/data/recovery.signal &&
