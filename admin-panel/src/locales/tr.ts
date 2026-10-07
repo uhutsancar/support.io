@@ -2304,6 +2304,7 @@ export default {
   },
 
   errors: {
+    supportCode: '(Destek kodu: {{code}})',
     tooManyRequests: 'Kısa sürede çok fazla istek gönderildi. Birkaç dakika sonra tekrar deneyin.',
     tooManyLogins: 'Çok fazla giriş denemesi yapıldı. Lütfen biraz bekleyip tekrar deneyin.',
     tooManyRegistrations: 'Çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',

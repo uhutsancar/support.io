@@ -68,8 +68,19 @@ const TRANSLATED_CODES: Record<string, string> = {
 export function errorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {
     const response = (
-      error as { response?: { data?: { error?: unknown; message?: unknown; code?: unknown } } }
+      error as {
+        response?: {
+          status?: number;
+          data?: { error?: unknown; message?: unknown; code?: unknown; requestId?: unknown };
+        };
+      }
     ).response;
+    // An unexpected failure carries the request id the server logged it
+    // under (OBS-05): shown as a support code the customer can quote.
+    const requestId = typeof response?.data?.requestId === 'string' ? response.data.requestId : '';
+    if (requestId && (response?.status ?? 500) >= 500) {
+      return `${fallback} ${i18n.t('errors.supportCode', { code: requestId.slice(0, 8) })}`;
+    }
     const code = typeof response?.data?.code === 'string' ? response.data.code : '';
     if (TRANSLATED_CODES[code]) return i18n.t(TRANSLATED_CODES[code]);
     // Account and sign-up codes (locales/account.*.ts) by their own name.

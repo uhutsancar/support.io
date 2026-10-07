@@ -2296,6 +2296,7 @@ export default {
   },
 
   errors: {
+    supportCode: '(Support code: {{code}})',
     tooManyRequests: 'Too many requests in a short time. Please try again in a few minutes.',
     tooManyLogins: 'Too many sign-in attempts. Please wait a little and try again.',
     tooManyRegistrations: 'Too many sign-up attempts. Please try again later.',
