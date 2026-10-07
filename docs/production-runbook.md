@@ -192,6 +192,9 @@ Smoke test on its own: `./scripts/smoke.sh https://app.example.com`.
 
 ## 6. Restore
 
+A moment in time (WAL-G), the burned-server drill and the targets are in
+[disaster-recovery.md](disaster-recovery.md). The nightly dump:
+
 Once a month, prove the backups work:
 
 ```bash

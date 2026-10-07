@@ -86,7 +86,8 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+        # The base of docker/postgres and of the development stack (DR-02).
+        image: postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
         env:
           POSTGRES_DB: supportchat
           POSTGRES_USER: support_user
@@ -164,7 +165,8 @@ jobs:
     needs: [checks]
     services:
       postgres:
-        image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+        # The base of docker/postgres and of the development stack (DR-02).
+        image: postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
         env:
           POSTGRES_DB: supportchat
           POSTGRES_USER: support_user

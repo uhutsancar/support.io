@@ -27,7 +27,9 @@ x-hardening: &hardening
 
 services:
   postgres:
-    image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    # PostgreSQL 16 with WAL-G (docker/postgres, DR-02), built and signed by the
+    # release workflow; its summary prints the reference to put here.
+    image: ${POSTGRES_IMAGE:?POSTGRES_IMAGE is required, e.g. ghcr.io/<owner>/supportio-postgres:16.15-walg-3.0.9@sha256:...}
     restart: unless-stopped
     <<: *hardening
     # The entrypoint starts as root, fixes the data directory's owner and
@@ -54,10 +56,24 @@ services:
       -c autovacuum_vacuum_scale_factor=0.05
       -c shared_preload_libraries=pg_stat_statements
       -c pg_stat_statements.track=all
+      -c archive_mode=${PG_ARCHIVE_MODE:-off}
+      -c "archive_command=wal-g wal-push %p"
+      -c archive_timeout=300
     environment:
       POSTGRES_DB: ${DB_NAME:-supportchat}
       POSTGRES_USER: ${DB_USER:-support_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      # WAL-G (DR-02): continuous archive to its own bucket, encrypted. Used
+      # only with PG_ARCHIVE_MODE=on; docs/disaster-recovery.md.
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-}
+      AWS_ACCESS_KEY_ID: ${WALG_AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${WALG_AWS_SECRET_ACCESS_KEY:-}
+      AWS_ENDPOINT: ${WALG_AWS_ENDPOINT:-}
+      AWS_REGION: ${WALG_AWS_REGION:-auto}
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      WALG_LIBSODIUM_KEY: ${WALG_LIBSODIUM_KEY:-}
+      WALG_LIBSODIUM_KEY_TRANSFORM: hex
+      WALG_COMPRESSION_METHOD: lz4
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     healthcheck:
