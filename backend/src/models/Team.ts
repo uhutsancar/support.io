@@ -43,6 +43,8 @@ export interface TeamDoc {
   totpSecretEnc: string | null;
   totpEnabledAt: Date | null;
   totpLastStep: number | null;
+  /** Over the plan's seats after a downgrade (0015); see models/User.ts. */
+  seatSuspendedAt: Date | null;
   recoveryCodes: string[];
   assignedSites: Array<Ref<SiteDoc>>;
   departments: TeamDepartmentMembership[];
@@ -102,6 +104,7 @@ export default defineModel<TeamDoc>({
     sessionVersion: { column: 'session_version', type: 'number', default: 0 },
     totpSecretEnc: { column: 'totp_secret_enc', type: 'string', default: null },
     totpEnabledAt: { column: 'totp_enabled_at', type: 'date', default: null },
+    seatSuspendedAt: { column: 'seat_suspended_at', type: 'date', default: null },
     totpLastStep: { column: 'totp_last_step', type: 'number', default: null },
     recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] }
   },

@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePlans } from '../hooks/usePlans';
 import { formatDateTime } from '../lib/format';
+import PlanOverage from '../components/billing/PlanOverage';
 import type { BillingOverview } from '../types/api';
 
 const PLAN_ICON = { FREE: Store, PRO: Rocket, ENTERPRISE: Building2 } as const;
@@ -239,6 +240,11 @@ const Billing = () => {
               <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t('billing.resets')}</p>
             </section>
           </div>
+        )}
+        {data && (
+          <PlanOverage
+            upgradeLink={`${base}/upgrade?plan=${data.plan === 'PRO' ? 'ENTERPRISE' : 'PRO'}`}
+          />
         )}
       </div>
     </>

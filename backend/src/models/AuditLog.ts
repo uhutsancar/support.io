@@ -59,7 +59,9 @@ export type AuditAction =
   | 'SAVED_REPLY_CREATED'
   | 'SAVED_REPLY_UPDATED'
   | 'SAVED_REPLY_DELETED'
-  | 'CONVERSATIONS_MERGED';
+  | 'CONVERSATIONS_MERGED'
+  | 'SEAT_SUSPENDED'
+  | 'SEAT_RESTORED';
 
 /** Every action the database accepts (migration 0009), in one list. */
 export const AUDIT_ACTIONS: readonly AuditAction[] = [
@@ -119,7 +121,9 @@ export const AUDIT_ACTIONS: readonly AuditAction[] = [
   'SAVED_REPLY_CREATED',
   'SAVED_REPLY_UPDATED',
   'SAVED_REPLY_DELETED',
-  'CONVERSATIONS_MERGED'
+  'CONVERSATIONS_MERGED',
+  'SEAT_SUSPENDED',
+  'SEAT_RESTORED'
 ];
 
 export interface AuditLogDoc {

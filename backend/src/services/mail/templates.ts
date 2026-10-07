@@ -836,3 +836,62 @@ export function trialEndedMail({
     })
   };
 }
+
+/** Sites or seats went past a smaller plan and were suspended (BIL-04). */
+export function planOverageMail({
+  name,
+  organization,
+  sites,
+  seats,
+  link,
+  locale
+}: {
+  name: string;
+  organization: string;
+  sites: number;
+  seats: number;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(
+    locale,
+    `${organization}: plan limitinin üzerindeki kayıtlar askıya alındı`,
+    `${organization}: what is over your plan's limit is on hold`
+  );
+  const what = pick(
+    locale,
+    [sites ? `${sites} site` : '', seats ? `${seats} ekip üyesi` : ''].filter(Boolean).join(' ve '),
+    [
+      sites ? `${sites} site${sites > 1 ? 's' : ''}` : '',
+      seats ? `${seats} seat${seats > 1 ? 's' : ''}` : ''
+    ]
+      .filter(Boolean)
+      .join(' and ')
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          `Yeni planınız daha az site ve ekip üyesi içeriyor, bu yüzden ${what} askıya alındı. Hiçbir veri silinmedi.`,
+          'Askıdaki sitelerde sohbet balonu görünmez; askıdaki ekip üyeleri giriş yapıp okuyabilir ama yanıt yazamaz. Hangilerinin açık kalacağını faturalandırma sayfasından seçebilir ya da planınızı yükselterek hepsini geri açabilirsiniz.'
+        ],
+        [
+          `Hi ${name},`,
+          `Your new plan includes fewer sites and seats, so ${what} ${sites + seats > 1 ? 'are' : 'is'} now on hold. Nothing has been deleted.`,
+          'The chat bubble stays hidden on sites on hold; members on hold can sign in and read but cannot reply. Choose which ones stay active on the billing page, or upgrade to bring them all back.'
+        ]
+      ),
+      action: pick(locale, 'Seçimi yap', 'Choose what stays active'),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-postayı çalışma alanınızın planı değiştiği için aldınız.',
+        'You received this because your workspace plan changed.'
+      )
+    })
+  };
+}

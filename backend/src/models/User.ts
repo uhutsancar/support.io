@@ -42,6 +42,8 @@ export interface UserDoc {
   totpSecretEnc: string | null;
   /** When two-step sign-in was switched on; null while off. */
   totpEnabledAt: Date | null;
+  /** Over the plan's seats after a downgrade: reads, cannot write (0015, BIL-04). */
+  seatSuspendedAt: Date | null;
   /** The last 30-second step a code was accepted for; replays are refused. */
   totpLastStep: number | null;
   /** Keyed hashes of the unused recovery codes. */
@@ -67,6 +69,7 @@ export default defineModel<UserDoc>({
     sessionVersion: { column: 'session_version', type: 'number', default: 0 },
     totpSecretEnc: { column: 'totp_secret_enc', type: 'string', default: null },
     totpEnabledAt: { column: 'totp_enabled_at', type: 'date', default: null },
+    seatSuspendedAt: { column: 'seat_suspended_at', type: 'date', default: null },
     totpLastStep: { column: 'totp_last_step', type: 'number', default: null },
     recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },

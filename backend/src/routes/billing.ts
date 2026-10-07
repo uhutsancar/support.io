@@ -26,10 +26,18 @@ import {
   subscriptionSummary,
   verifyWebhook
 } from '../services/billing';
-import { HttpError, asyncHandler, orgId, requireOrganization, unavailable } from '../http';
+import {
+  HttpError,
+  asyncHandler,
+  badRequest,
+  orgId,
+  requireOrganization,
+  unavailable
+} from '../http';
 import { errorText } from '../http/errors';
 import { logger } from '../config/logger';
 import { trialRunning } from '../services/trial';
+import { overageSummary, reconcilePlanLimits } from '../services/planOverage';
 import type { Request, Response } from 'express';
 
 // ------------------------------------------------------------------ webhook
@@ -125,6 +133,54 @@ router.get(
           : null,
       billingExempt: Boolean(req.organization?.billingExempt)
     });
+  })
+);
+
+// -------------------------------------------- over the plan's limits (BIL-04)
+
+// The sites and members, and which of them are on hold after a downgrade.
+router.get(
+  '/overage',
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await overageSummary(orgId(req)));
+  })
+);
+
+const idList = (value: unknown): string[] | null =>
+  Array.isArray(value) && value.length <= 500 && value.every((v) => typeof v === 'string')
+    ? [...new Set(value as string[])]
+    : null;
+
+// The owner picks which sites and members stay active; the rest go on hold.
+router.post(
+  '/overage',
+  asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = orgId(req);
+    const keepSiteIds = idList(req.body?.keepSiteIds ?? []);
+    const keepMemberIds = idList(req.body?.keepMemberIds ?? []);
+    if (!keepSiteIds || !keepMemberIds) throw badRequest('Lists of ids expected');
+    const summary = await overageSummary(organizationId);
+    const siteIds = new Set(summary.sites.map((s) => s.id));
+    const memberIds = new Set(summary.members.filter((m) => !m.owner).map((m) => m.id));
+    if (
+      !keepSiteIds.every((id) => siteIds.has(id)) ||
+      !keepMemberIds.every((id) => memberIds.has(id))
+    ) {
+      throw badRequest('Unknown site or member');
+    }
+    // The owner's seat is always kept and counts towards the limit.
+    if (
+      keepSiteIds.length > summary.limits.sites ||
+      keepMemberIds.length > summary.limits.agents - 1
+    ) {
+      throw new HttpError(400, 'More than the plan allows', 'OVER_PLAN_LIMIT', {
+        sites: summary.limits.sites,
+        agents: summary.limits.agents
+      });
+    }
+    // Chosen ones first; any room left goes to what is active now.
+    const change = await reconcilePlanLimits(organizationId, { keepSiteIds, keepMemberIds });
+    res.json({ change, ...(await overageSummary(organizationId)) });
   })
 );
 

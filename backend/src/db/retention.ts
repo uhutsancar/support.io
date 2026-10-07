@@ -7,6 +7,7 @@ import { query } from './pool';
 import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
 import { sweepTrials } from '../services/trial';
+import { reconcileAllPlanLimits } from '../services/planOverage';
 import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
 import { nightlyPurge } from '../services/dataRetention';
@@ -61,6 +62,13 @@ async function sweepOnce() {
     await sweepTrials();
   } catch (error) {
     console.error('Trial sweep failed:', errorText(error));
+  }
+  try {
+    // Sites and seats over the plan in force, which can change by the clock
+    // alone (a trial or a paid period ending): on hold, or back (BIL-04).
+    await reconcileAllPlanLimits();
+  } catch (error) {
+    console.error('Plan limit reconciliation failed:', errorText(error));
   }
   try {
     // The set-up mails of the first month (PRD-08).

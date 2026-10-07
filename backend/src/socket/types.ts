@@ -66,6 +66,8 @@ export interface AdminSocketState {
   userName: string;
   organizationId: string;
   role: string;
+  /** Over the plan's seats (BIL-04): reads only; see middleware/rbac.ts. */
+  seatSuspended: boolean;
   userType: UserType;
   /** Empty for an account that is not restricted to specific sites. */
   allowedSiteIds: Set<string>;

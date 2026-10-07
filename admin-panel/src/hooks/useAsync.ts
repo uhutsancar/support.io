@@ -62,7 +62,10 @@ const TRANSLATED_CODES: Record<string, string> = {
   PASSWORD_INCORRECT: 'errors.passwordIncorrect',
   SUBSCRIPTION_ACTIVE: 'errors.subscriptionActive',
   PLAN_UPGRADE_REQUIRED: 'upgrade.featureLocked',
-  PLAN_LIMIT_REACHED: 'upgrade.limitReached'
+  PLAN_LIMIT_REACHED: 'upgrade.limitReached',
+  SEAT_SUSPENDED: 'errors.seatSuspended',
+  SITE_SUSPENDED: 'errors.siteSuspended',
+  OVER_PLAN_LIMIT: 'errors.overPlanLimit'
 };
 
 export function errorMessage(error: unknown, fallback: string): string {

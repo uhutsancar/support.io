@@ -14,6 +14,7 @@ import type {
   AssistantOverview,
   BillingOverview,
   CheckoutSession,
+  PlanOverage,
   AssistantStatus,
   AgentPerformance,
   AnalyticsOverview,
@@ -494,7 +495,13 @@ export const billingAPI = {
   checkout: (plan: 'PRO' | 'ENTERPRISE', cycle: 'monthly' | 'yearly') =>
     api.post<CheckoutSession>('/billing/checkout', { plan, cycle }),
   /** A one-off link to Paddle's customer portal. */
-  portal: () => api.post<{ url: string }>('/billing/portal')
+  portal: () => api.post<{ url: string }>('/billing/portal'),
+  /** Sites and members, and which are on hold over the plan (BIL-04). */
+  overage: () => api.get<PlanOverage>('/billing/overage', { cache: false }),
+  /** The owner's choice of what stays active; the rest goes on hold. */
+  keep: mutates(['/sites', '/team'], (keepSiteIds: string[], keepMemberIds: string[]) =>
+    api.post<PlanOverage>('/billing/overage', { keepSiteIds, keepMemberIds })
+  )
 };
 
 // ----------------------------------------------------------------- team chat

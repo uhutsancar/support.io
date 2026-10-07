@@ -71,6 +71,8 @@ export interface CurrentUser {
   mfaEnabled?: boolean;
   /** The organization requires it and this account has none yet. */
   mfaSetupRequired?: boolean;
+  /** Over the plan's seats after a downgrade: reads, cannot reply (BIL-04). */
+  seatSuspended?: boolean;
   permissions?: Record<string, boolean>;
   [extra: string]: unknown;
 }
@@ -122,6 +124,8 @@ export interface Site {
   /** The keyword FAQ reply, sent as a help article. */
   faqAutoReply?: boolean;
   integrations?: SiteIntegrationsView;
+  /** Over the plan's site limit after a downgrade: widget hidden, read-only. */
+  suspendedAt?: string | null;
   installation?: {
     verifiedAt?: string | null;
     lastSeenAt?: string | null;
@@ -161,6 +165,23 @@ export interface PlanInfo {
 }
 
 /** GET /api/billing — the owner's billing page. */
+/** GET /api/billing/overage: what is over the plan, and on hold (BIL-04). */
+export interface PlanOverage {
+  plan: PlanType;
+  limits: { sites: number; agents: number };
+  sites: Array<{ id: string; name: string; domain: string; suspendedAt: string | null }>;
+  members: Array<{
+    id: string;
+    kind: 'user' | 'team';
+    name: string;
+    email: string;
+    role: string;
+    owner: boolean;
+    suspendedAt: string | null;
+  }>;
+  over: boolean;
+}
+
 export interface BillingOverview {
   plan: PlanType;
   /** The free Pro trial while it runs and no plan was bought (PRD-15). */

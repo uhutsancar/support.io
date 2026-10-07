@@ -100,6 +100,7 @@ export function installAdminAuthentication(admin: Namespace): void {
       socket.userName = account.name || 'Support';
       socket.organizationId = String(account.organizationId);
       socket.role = account.role;
+      socket.seatSuspended = Boolean(account.seatSuspendedAt);
       socket.userType = decoded.userType === 'team' ? 'team' : 'user';
       // Empty means "every site"; see SocketContext.siteFor.
       socket.allowedSiteIds = new Set((account.assignedSites || []).map(String));

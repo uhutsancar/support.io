@@ -12,6 +12,7 @@ import { generateId } from '../db/objectId';
 import User from '../models/User';
 import Organization from '../models/Organization';
 import { PLAN_TYPES, isPlanType } from '../domain';
+import { reconcilePlanLimits } from '../services/planOverage';
 
 async function updatePlan() {
   const args = process.argv.slice(2);
@@ -93,10 +94,15 @@ async function updatePlan() {
       })
     ]
   );
+  // Sites and seats over a smaller plan go on hold, or come back (BIL-04).
+  const overage = await reconcilePlanLimits(String(org._id));
   console.log(
     `Organization "${org.name}" set to ${plan} for ${email} (was ${from})` +
       (exemptAfter ? '; billing exempt: subscription events leave it alone' : '')
   );
+  for (const [label, list] of Object.entries(overage) as Array<[string, string[]]>) {
+    if (list.length) console.log(`  ${label}: ${list.join(', ')}`);
+  }
 }
 
 updatePlan()

@@ -30,7 +30,7 @@ import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
 import { validateEvents, WIDGET_EVENTS } from '../schema';
 import { ConversationQuotaError, countMessage } from '../../services/entitlements';
-import { conversationRoom } from '../../realtime/rooms';
+import { conversationRoom, siteRoom } from '../../realtime/rooms';
 import { installWidgetExtras, applyContact } from './widgetExtras';
 import { preChatSatisfied } from '../../services/visitorContact';
 import { chatSettings } from '../../services/chatSettings';
@@ -193,6 +193,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
     // Then every payload is checked against its event's shape; see ../schema.ts.
     validateEvents(socket, WIDGET_EVENTS);
     installWidgetExtras(ctx, socket);
+    // Every visitor of one site, so a site suspended over the plan's limit
+    // (services/planOverage.ts) can close them all at once.
+    if (socket.siteId) void socket.join(siteRoom(socket.siteId));
 
     // ---------------------------------------------------------------- joining
 
@@ -205,8 +208,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         const visitorId = socket.visitorId!;
 
         const site = await Site.findOne({ _id: socket.siteId, isActive: true });
-        if (!site) {
-          // Switched off since the handshake.
+        if (!site || site.suspendedAt) {
+          // Switched off, or suspended over the plan's limit, since the handshake.
           socket.emit('error', { message: 'Invalid widget session' });
           return;
         }

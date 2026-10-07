@@ -28,6 +28,7 @@ import {
   missedChatMail,
   passwordChangedMail,
   passwordResetMail,
+  planOverageMail,
   quotaWarningMail,
   securityNoticeMail,
   trialEndedMail,
@@ -141,6 +142,19 @@ export const mail = {
   },
   sendTrialEnded(to: string, args: { name: string; link: string; locale?: MailLocale }) {
     return sendMail({ to, ...trialEndedMail(args) });
+  },
+  sendPlanOverage(
+    to: string,
+    args: {
+      name: string;
+      organization: string;
+      sites: number;
+      seats: number;
+      link: string;
+      locale?: MailLocale;
+    }
+  ) {
+    return sendMail({ to, ...planOverageMail(args) });
   },
   sendInvitation(
     to: string,

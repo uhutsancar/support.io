@@ -56,7 +56,14 @@ function loadAgents(filter: Filter) {
  */
 async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId: string) {
   const { requiredSkills = [], department } = conversation;
-  const onlineInOrg: Filter = { organizationId, isActive: true, status: 'online' };
+  // A seat over the plan's limit reads but does not reply (BIL-04): it is
+  // never handed a conversation.
+  const onlineInOrg: Filter = {
+    organizationId,
+    isActive: true,
+    status: 'online',
+    seatSuspendedAt: null
+  };
 
   let candidates: Awaited<ReturnType<typeof loadAgents>> = [];
   if (department) {

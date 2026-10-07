@@ -3,6 +3,9 @@
  *
  *   TrialBanner      the free Pro trial is running (PRD-15): days left and
  *                    the way to a plan, for the people who can buy one
+ *   PlanOverageBanner  the plan went below what the workspace uses (BIL-04):
+ *                    a member on hold reads that they cannot reply; the
+ *                    owner is sent to the billing page to choose
  *   MfaRequiredGate  the organization requires two-step sign-in and this
  *                    account has none (SEC-04): the set-up takes the page's
  *                    place until it is done; the server refuses everything
@@ -12,9 +15,10 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ShieldCheck, Sparkles } from 'lucide-react';
+import { PauseCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { MFA_SETUP_REQUIRED_EVENT } from '../../services/http';
+import { billingAPI } from '../../services/api';
 
 const MfaEnrolment = lazy(() =>
   import('./SecuritySettings').then((m) => ({ default: m.MfaEnrolment }))
@@ -45,6 +49,46 @@ export const TrialBanner = ({ base }: { base: string }) => {
       >
         {t('account.trial.choose')}
       </Link>
+    </div>
+  );
+};
+
+export const PlanOverageBanner = ({ base }: { base: string }) => {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [ownerOver, setOwnerOver] = useState(false);
+  const isOwner = user?.role === 'owner';
+
+  useEffect(() => {
+    if (!isOwner) return;
+    let live = true;
+    billingAPI
+      .overage()
+      .then(({ data }) => live && setOwnerOver(data.over))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [isOwner]);
+
+  if (!user?.seatSuspended && !ownerOver) return null;
+  return (
+    <div
+      role="status"
+      className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 text-sm"
+    >
+      <PauseCircle className="hidden sm:block w-4 h-4 shrink-0" />
+      <span className="flex-1">
+        {user?.seatSuspended ? t('overage.seatBanner') : t('overage.ownerBanner')}
+      </span>
+      {!user?.seatSuspended && (
+        <Link
+          to={`${base}/billing`}
+          className="self-start sm:self-auto px-3 py-1.5 rounded-md bg-amber-600 text-white hover:bg-amber-700 transition"
+        >
+          {t('overage.choose')}
+        </Link>
+      )}
     </div>
   );
 };

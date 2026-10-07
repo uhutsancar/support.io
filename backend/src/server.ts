@@ -47,6 +47,7 @@ import { internalMetricsRoutes } from './routes/internalMetrics';
 import { withSeoHead } from './services/seoHead';
 import { appBaseUrl } from './services/mail';
 import { captureError } from './services/errorReporting';
+import { usePlanOverageRealtime } from './services/planOverage';
 import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
@@ -204,6 +205,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.set('io', io);
+usePlanOverageRealtime(io);
 
 // Hiz sinirlari surec disinda (Redis) tutulur ve kimligi dogrulanmis
 // istekleri kullaniciya gore sayar; ayrintilar icin middleware/rateLimit.js.

@@ -206,6 +206,14 @@ const Sites = () => {
                       >
                         {site.isActive ? t('sites.active') : t('sites.inactive')}
                       </span>
+                      {site.suspendedAt && (
+                        <span
+                          title={t('overage.siteHint')}
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                        >
+                          {t('overage.suspended')}
+                        </span>
+                      )}
                       {/* Kurulum dogrulamasi: widget her sayfa acilisinda kendini
                            bildirir (POST /api/widget/installed). Boylece "kodu
                            koydum ama calisiyor mu?" sorusu panelden cevaplanir. */}

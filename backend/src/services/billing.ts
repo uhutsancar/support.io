@@ -24,6 +24,8 @@ import { billingConfig, planForPrice } from '../config/billing';
 import { isPlanType } from '../domain';
 import { LIVE_STATUSES, effectivePlan, isSubscriptionStatus } from '../domain/subscription';
 import { lockOrganization } from './entitlements';
+import { reconcilePlanLimits } from './planOverage';
+import { errorText } from '../http/errors';
 import type { PlanType } from '../domain';
 import type { SubscriptionState, SubscriptionStatus } from '../domain/subscription';
 import type { PoolClient } from 'pg';
@@ -117,7 +119,8 @@ export type WebhookOutcome = 'processed' | 'duplicate' | 'ignored' | 'stale';
 /** Applies one verified event, exactly once. */
 export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<WebhookOutcome> {
   const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
-  return withTransaction(async (client) => {
+  const changed: { organizationId: string | null } = { organizationId: null };
+  const result = await withTransaction(async (client) => {
     // A concurrent delivery of the same id waits here on the primary key and
     // then finds the row, so only one of them applies the event.
     const inserted = await client.query(
@@ -140,8 +143,17 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
         WHERE provider_event_id = $1`,
       [event.event_id, outcome, organizationId]
     );
+    if (outcome === 'processed') changed.organizationId = organizationId;
     return outcome;
   });
+  // Sites and seats over a smaller plan go on hold, and come back with a
+  // bigger one (BIL-04) — after the commit, in their own transaction.
+  if (changed.organizationId) {
+    await reconcilePlanLimits(changed.organizationId).catch((error: unknown) => {
+      console.error('Plan limit reconciliation failed:', errorText(error));
+    });
+  }
+  return result;
 }
 
 interface SubscriptionRow {

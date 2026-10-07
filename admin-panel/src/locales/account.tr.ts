@@ -222,6 +222,33 @@ export default {
       INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
     }
   },
+  overage: {
+    title: 'Plan sınırının üzerindekiler askıda',
+    description:
+      'Planınız {{sites}} site ve {{agents}} kişilik ekip içeriyor. Fazlası askıda: askıdaki sitelerde sohbet balonu görünmez ve panelde yalnızca okunur; askıdaki ekip üyeleri giriş yapıp okuyabilir ama yanıt yazamaz. Hiçbir veri silinmedi. Hangilerinin açık kalacağını seçin.',
+    sites: 'Açık kalacak siteler ({{chosen}}/{{limit}})',
+    members: 'Yanıt yazabilecek ekip ({{chosen}}/{{limit}})',
+    owner: 'Hesap sahibi, her zaman açık',
+    suspended: 'Askıda',
+    active: 'Açık',
+    save: 'Seçimi kaydet',
+    saved: 'Seçiminiz kaydedildi.',
+    saveError: 'Seçim kaydedilemedi.',
+    upgrade: 'Ya da planınızı yükseltip hepsini açın',
+    choose: 'Seçimi yap',
+    ownerBanner:
+      'Planınızın sınırını aşan siteler veya ekip üyeleri askıda. Hangilerinin açık kalacağını seçin.',
+    seatBanner:
+      'Ekibin kişi sınırı aşıldığı için hesabınız şimdilik salt okunur: konuşmaları okuyabilirsiniz ama yanıt yazamazsınız. Hesap sahibi sizi yeniden açabilir.',
+    siteHint: 'Plan sınırının üzerinde: sohbet balonu gizli, ayarlar salt okunur.'
+  },
+  errors: {
+    seatSuspended:
+      'Hesabınız plan sınırı nedeniyle salt okunur; yanıt yazamaz ve değişiklik yapamazsınız.',
+    siteSuspended:
+      'Bu site plan sınırının üzerinde olduğu için askıda; okunabilir ama değiştirilemez.',
+    overPlanLimit: 'Planınızın izin verdiğinden fazlasını seçtiniz.'
+  },
   retention: {
     title: 'Konuşma saklama süresi',
     description:
@@ -305,6 +332,8 @@ export default {
       WEBHOOK_DELETED: 'Webhook Silindi',
       SITE_SUSPENDED: 'Site Askıya Alındı',
       SITE_REACTIVATED: 'Site Yeniden Açıldı',
+      SEAT_SUSPENDED: 'Ekip Üyesi Askıya Alındı',
+      SEAT_RESTORED: 'Ekip Üyesi Yeniden Açıldı',
       TRIAL_STARTED: 'Pro Deneme Başladı',
       TRIAL_ENDED: 'Pro Deneme Bitti',
       SAVED_REPLY_CREATED: 'Hazır Yanıt Eklendi',

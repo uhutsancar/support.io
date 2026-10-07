@@ -108,6 +108,12 @@ export async function findOwnedSite(req: Request, siteId: unknown): Promise<Doc<
 export async function loadOwnedSite(req: Request, siteId: unknown): Promise<Doc<SiteDoc>> {
   const site = await findOwnedSite(req, siteId);
   if (!site) throw notFound('Site');
+  // A site over the plan's limit after a downgrade is read-only (BIL-04):
+  // it can be looked at and deleted, not changed, until the owner keeps it
+  // on the billing page or upgrades.
+  if (site.suspendedAt && req.method !== 'GET' && req.method !== 'HEAD') {
+    throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
+  }
   return site;
 }
 

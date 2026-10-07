@@ -219,6 +219,33 @@ export default {
       INVALID_TOKEN: 'This link is invalid or has expired.'
     }
   },
+  overage: {
+    title: 'What is over your plan is on hold',
+    description:
+      'Your plan includes {{sites}} sites and a team of {{agents}}. The rest is on hold: sites on hold show no chat bubble and are read-only in the panel; members on hold can sign in and read but cannot reply. Nothing has been deleted. Choose which ones stay active.',
+    sites: 'Sites that stay active ({{chosen}}/{{limit}})',
+    members: 'Team members who can reply ({{chosen}}/{{limit}})',
+    owner: 'Account owner, always active',
+    suspended: 'On hold',
+    active: 'Active',
+    save: 'Save choice',
+    saved: 'Your choice is saved.',
+    saveError: 'Could not save your choice.',
+    upgrade: 'Or upgrade to bring them all back',
+    choose: 'Choose',
+    ownerBanner:
+      'Some sites or team members are over your plan and on hold. Choose which ones stay active.',
+    seatBanner:
+      'The team is over its seat limit, so your account is read-only for now: you can read conversations but not reply. The account owner can bring you back.',
+    siteHint: 'Over the plan limit: chat bubble hidden, settings read-only.'
+  },
+  errors: {
+    seatSuspended:
+      'Your account is read-only because of the plan limit; you cannot reply or make changes.',
+    siteSuspended:
+      'This site is over the plan limit and on hold; you can read it but not change it.',
+    overPlanLimit: 'You chose more than your plan allows.'
+  },
   retention: {
     title: 'Conversation retention',
     description:
@@ -302,6 +329,8 @@ export default {
       WEBHOOK_DELETED: 'Webhook Deleted',
       SITE_SUSPENDED: 'Site Suspended',
       SITE_REACTIVATED: 'Site Reactivated',
+      SEAT_SUSPENDED: 'Team Member Put on Hold',
+      SEAT_RESTORED: 'Team Member Reactivated',
       TRIAL_STARTED: 'Pro Trial Started',
       TRIAL_ENDED: 'Pro Trial Ended',
       SAVED_REPLY_CREATED: 'Saved Reply Added',

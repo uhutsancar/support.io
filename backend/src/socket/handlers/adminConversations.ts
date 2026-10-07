@@ -7,7 +7,7 @@
 
 import { announceConversationEnded } from '../../services/conversationEnd';
 import Department from '../../models/Department';
-import { hasPermission } from '../../middleware/rbac';
+import { SEAT_SUSPENDED, hasPermission, seatPermits } from '../../middleware/rbac';
 import { countMessage } from '../../services/entitlements';
 import Message from '../../models/Message';
 import Team from '../../models/Team';
@@ -34,6 +34,7 @@ import { conversationRoom, siteRoom } from '../../realtime/rooms';
 import type { Doc } from '../../db/model';
 import type { CreateInput } from '../../db/model';
 import type { ConversationDoc } from '../../models/Conversation';
+import { siteSuspended } from '../../services/planOverage';
 import type { MessageDoc } from '../../models/Message';
 import type { SocketContext } from '../context';
 import type {
@@ -59,7 +60,7 @@ const DEFAULT_CAPACITY = 10;
  * conversation over REST cannot close it over the socket either.
  */
 const may = (socket: AdminSocket, permission: string): boolean =>
-  hasPermission(socket.role, permission);
+  hasPermission(socket.role, permission) && seatPermits(socket.seatSuspended, permission);
 
 const NOT_PERMITTED = { message: 'Insufficient role permissions' };
 
@@ -168,6 +169,9 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     };
 
     // validate
+    if (socket.seatSuspended) {
+      return refuse(SEAT_SUSPENDED, 'Your seat is over the plan limit; you can read but not reply');
+    }
     if (!may(socket, 'respond')) return refuse('FORBIDDEN', NOT_PERMITTED.message);
     if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
       return refuse('INVALID_MESSAGE', 'Invalid message content');
@@ -189,6 +193,11 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     if (!conversation) {
       ctx.reject(socket);
       return ack?.({ ok: false, code: 'NOT_FOUND' });
+    }
+    // A site over the plan's limit is read-only (BIL-04): its widget is
+    // hidden, so a reply would reach nobody.
+    if (await siteSuspended(conversation.siteId)) {
+      return refuse('SITE_SUSPENDED', 'This site is over the plan limit and is read-only');
     }
 
     // A resend after a dropped connection: the reply is already stored and

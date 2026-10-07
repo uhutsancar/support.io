@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { notifyDesktop, showUnreadInTab } from '../lib/desktopNotifications';
 import { VerifyEmailBanner } from '../pages/AccountRecovery';
-import { MfaRequiredGate, TrialBanner } from '../components/settings/AccountGates';
+import {
+  MfaRequiredGate,
+  PlanOverageBanner,
+  TrialBanner
+} from '../components/settings/AccountGates';
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -748,6 +752,7 @@ const DashboardLayout = () => {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <VerifyEmailBanner />
           <TrialBanner base={`${langPrefix}/dashboard`} />
+          <PlanOverageBanner base={`${langPrefix}/dashboard`} />
           <MfaRequiredGate>
             <Outlet />
           </MfaRequiredGate>

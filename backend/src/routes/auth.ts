@@ -116,6 +116,9 @@ export function accountResponse(
     organizationId: user.organizationId ?? null,
     userType,
     mfaEnabled: mfaEnabled(user),
+    // Over the plan's seats after a downgrade (BIL-04): the panel shows a
+    // read-only notice and hides the reply box.
+    seatSuspended: Boolean(user.seatSuspendedAt),
     // The organization asks every member for a second step and this account
     // has none yet: the panel shows the set-up screen and nothing else.
     mfaSetupRequired: Boolean(organization?.enforce2fa) && !mfaEnabled(user),
