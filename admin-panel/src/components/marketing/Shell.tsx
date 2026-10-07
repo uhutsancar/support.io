@@ -63,6 +63,7 @@ import {
   FEATURE_TONE,
   SOLUTIONS
 } from '../../pages/marketing/features';
+import { SUPPORT_EMAIL } from '../../lib/contact';
 
 /** The public status page (OBS-06), shown once one exists. */
 const STATUS_PAGE_URL = (import.meta.env.VITE_STATUS_PAGE_URL as string | undefined) || '';
@@ -275,7 +276,7 @@ const ResourcesMenu = ({ routes }: { routes: Routes }) => {
             type="button"
             className={itemClass}
             onClick={() => {
-              if (!openSiteChat()) window.location.href = 'mailto:destek@support.io';
+              if (!openSiteChat()) window.location.href = `mailto:${SUPPORT_EMAIL}`;
             }}
           >
             <AccentIcon icon={LifeBuoy} size="sm" tone="emerald" className="mt-0.5" />
@@ -670,11 +671,11 @@ export const Footer = () => {
                 {language === 'tr' ? 'Türkçe' : 'English'}
               </button>
               <a
-                href="mailto:destek@support.io"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium
                   border border-white/15 text-gray-300 hover:bg-white/[0.06] transition"
               >
-                <Mail className="w-3.5 h-3.5" /> destek@support.io
+                <Mail className="w-3.5 h-3.5" /> {SUPPORT_EMAIL}
               </a>
             </div>
           </div>

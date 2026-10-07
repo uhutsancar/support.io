@@ -12,6 +12,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import Shell from '../components/marketing/Shell';
 import { Section, asList } from '../components/marketing/kit';
+import { withContacts } from '../lib/contact';
 
 type Kind = 'privacy' | 'terms';
 
@@ -50,14 +51,14 @@ const Legal = ({ kind }: { kind: Kind }) => {
                     key={paragraph}
                     className="text-[15.5px] leading-[1.75] text-gray-700 dark:text-gray-300"
                   >
-                    {paragraph}
+                    {withContacts(paragraph)}
                   </p>
                 ))}
               </div>
             </section>
           ))}
           <p className="pt-6 border-t border-gray-200 dark:border-white/10 text-[14.5px] text-gray-600 dark:text-gray-400">
-            {t('legal.contact')}
+            {withContacts(t('legal.contact', { interpolation: { skipOnVariables: true } }))}
           </p>
         </div>
       </Section>

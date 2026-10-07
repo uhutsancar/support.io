@@ -51,6 +51,8 @@ jobs:
             VITE_SUPPORT_SITE_KEY=${{ vars.SUPPORT_SITE_KEY }}
             APP_RELEASE=${{ github.sha }}
             VITE_STATUS_PAGE_URL=${{ vars.STATUS_PAGE_URL }}
+            VITE_SUPPORT_EMAIL=${{ vars.SUPPORT_EMAIL }}
+            VITE_SECURITY_EMAIL=${{ vars.SECURITY_EMAIL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: No fixable high or critical vulnerability
@@ -77,6 +79,8 @@ jobs:
             VITE_SUPPORT_SITE_KEY=${{ vars.SUPPORT_SITE_KEY }}
             APP_RELEASE=${{ github.sha }}
             VITE_STATUS_PAGE_URL=${{ vars.STATUS_PAGE_URL }}
+            VITE_SUPPORT_EMAIL=${{ vars.SUPPORT_EMAIL }}
+            VITE_SECURITY_EMAIL=${{ vars.SECURITY_EMAIL }}
           cache-from: type=gha
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Sign the pushed digest

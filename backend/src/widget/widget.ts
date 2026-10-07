@@ -302,6 +302,13 @@ interface Window {
     );
   }
 
+  /** A short, stable tag for a site in the "Powered by" link (MKT-01): not its key. */
+  function shortHash(value: string): string {
+    var h = 5381;
+    for (var i = 0; i < value.length; i++) h = ((h << 5) + h + value.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+
   function formatBytes(bytes: number): string {
     if (!bytes) return '0 B';
     var units = ['B', 'KB', 'MB'];
@@ -1969,7 +1976,11 @@ interface Window {
       // `branding`); paid plans can leave it out.
       this.remote.branding
         ? '<a class="powered" href="' +
-          escapeHtml(this.config.apiUrl + '/?ref=widget') +
+          escapeHtml(
+            this.config.apiUrl +
+              '/?ref=widget&utm_source=widget&utm_medium=referral&site=' +
+              shortHash(this.config.siteKey || '')
+          ) +
           '" target="_blank" rel="noopener">' +
           escapeHtml(t.poweredBy) +
           '</a>'

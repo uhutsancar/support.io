@@ -46,7 +46,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && tsx scripts/build-icons.ts && vite build",
+    "build": "npm run typecheck && tsx scripts/build-icons.ts && vite build && tsx scripts/public-pages.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview",
     "icons": "tsx scripts/build-icons.ts",

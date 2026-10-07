@@ -40,7 +40,7 @@ import analyticsRoutes from './routes/analytics';
 import assistantRoutes from './routes/assistant';
 import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
 import dataExportRoutes from './routes/dataExport';
-import wellKnownRoutes from './routes/wellKnown';
+import wellKnownRoutes, { robotsHeader } from './routes/wellKnown';
 import cspReportRoutes from './routes/cspReport';
 import { panelTelemetry, widgetTelemetry } from './routes/telemetry';
 import { internalMetricsRoutes } from './routes/internalMetrics';
@@ -338,7 +338,10 @@ app.get('/ready', async (_req: Request, res: Response) => {
   res.json({ status: 'ready' });
 });
 
-// /.well-known/security.txt, before the SPA fallback would answer it.
+// /.well-known/security.txt, /robots.txt and /sitemap.xml, before the panel's
+// static files and the SPA fallback would answer them; X-Robots-Tag on the
+// private pages (MKT-02).
+app.use(robotsHeader);
 app.use(wellKnownRoutes);
 // Prometheus metrics for the Docker network only (routes/internalMetrics.ts).
 app.use(internalMetricsRoutes(io));

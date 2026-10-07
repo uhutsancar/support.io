@@ -414,7 +414,7 @@ export default {
 
   legal: {
     updated: 'Son güncelleme: 7 Ekim 2026',
-    contact: 'Sorularınız için: destek@support.io',
+    contact: 'Sorularınız için: {{supportEmail}}',
     privacy: {
       meta: 'Support.io’nun hangi verileri neden işlediği, ne kadar sakladığı ve haklarınız.',
       title: 'Gizlilik Politikası',
@@ -544,7 +544,7 @@ export default {
           id: 'guvenlik',
           h: 'Güvenlik açığı bildirimi',
           p: [
-            'Hizmetimizde bir güvenlik açığı bulduğunuzu düşünüyorsanız security@support.io adresine yazın. Açığı nasıl tekrarlayabileceğimizi ve hangi adresi etkilediğini ekleyin. Aynı bilgiler /.well-known/security.txt dosyasında da yer alır.',
+            'Hizmetimizde bir güvenlik açığı bulduğunuzu düşünüyorsanız {{securityEmail}} adresine yazın. Açığı nasıl tekrarlayabileceğimizi ve hangi adresi etkilediğini ekleyin. Aynı bilgiler /.well-known/security.txt dosyasında da yer alır.',
             'Bildiriminizi 3 iş günü içinde aldığımızı yanıtlarız ve açığı en geç 90 gün içinde kapatmayı hedefleriz. Düzeltme yayına girene kadar ayrıntıları herkese açık paylaşmamanızı rica ederiz.',
             'Lütfen yalnızca kendi hesabınızda deneme yapın; başkalarının verisine erişmeyin, hizmeti yavaşlatacak yük testleri ve sosyal mühendislik denemeleri yapmayın. Şu an bir ödül programımız yok.'
           ]

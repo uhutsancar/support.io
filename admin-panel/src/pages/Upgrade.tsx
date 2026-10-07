@@ -28,13 +28,14 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { usePlans, PLAN_FEATURE_ORDER } from '../hooks/usePlans';
 import { openCheckout, releaseCheckout } from '../lib/paddle';
 import type { BillingOverview, PlanInfo } from '../types/api';
+import { SUPPORT_EMAIL } from '../lib/contact';
 
 type Paid = 'PRO' | 'ENTERPRISE';
 type Cycle = 'monthly' | 'yearly';
 type Phase = 'idle' | 'opening' | 'waiting' | 'done' | 'slow';
 
 const ICON = { PRO: Rocket, ENTERPRISE: Building2 } as const;
-const CONTACT = 'mailto:destek@support.io?subject=Plan%20y%C3%BCkseltme';
+const CONTACT = `mailto:${SUPPORT_EMAIL}?subject=Plan%20y%C3%BCkseltme`;
 
 const Upgrade = () => {
   const { t } = useTranslation();
