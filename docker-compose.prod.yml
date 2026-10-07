@@ -173,6 +173,9 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
       GEMINI_RPM: ${GEMINI_RPM:-10}
       GEMINI_RPD: ${GEMINI_RPD:-900}
+      GEMINI_TIER: ${GEMINI_TIER:-free}
+      GEMINI_COST_PER_ANSWER: ${GEMINI_COST_PER_ANSWER:-}
+      ASSISTANT_KILL_SWITCH: ${ASSISTANT_KILL_SWITCH:-false}
       # Paddle. The boot check refuses BILLING_ENABLED=true without the rest.
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       PADDLE_ENV: ${PADDLE_ENV:-sandbox}

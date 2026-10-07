@@ -48,6 +48,8 @@ export type HandoffReason =
   | 'sensitive'
   | 'limit'
   | 'plan_quota'
+  /** A tenth of the month's answers went in one day (AI-07). */
+  | 'daily_cap'
   | 'no_faq'
   | 'no_answer'
   | 'unsupported'

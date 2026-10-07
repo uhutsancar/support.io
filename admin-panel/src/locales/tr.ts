@@ -2193,6 +2193,7 @@ export default {
       sensitive: 'Hassas bilgi paylaşıldı',
       limit: 'Konuşma başına yanıt sınırı doldu',
       plan_quota: 'Aylık yapay zekâ yanıt hakkı doldu',
+      daily_cap: 'Günlük yapay zekâ yanıt sınırı doldu',
       no_faq: 'Sitede SSS yok',
       no_answer: 'SSS’de cevabı yok',
       unsupported: 'Cevap SSS’ye dayanmıyordu',

@@ -278,6 +278,7 @@ df -h /var/lib/docker                  # disk (alert at 80%)
 $C exec backend node dist/cli/listOrganizations.js acme       # find a workspace
 $C exec backend node dist/cli/updatePlan.js owner@x.com PRO    # beta / support case
 $C exec backend node dist/cli/disableSite.js <site key>        # widget off (--enable undoes)
+$C exec backend node dist/cli/assistantKill.js on               # AI assistant off everywhere (off / status)
 ```
 
 Logs rotate at 20 MB × 5 files per container. Do not put

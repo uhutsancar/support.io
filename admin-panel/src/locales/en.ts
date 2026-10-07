@@ -2185,6 +2185,7 @@ export default {
       sensitive: 'Sensitive data was shared',
       limit: 'Per-conversation answer limit reached',
       plan_quota: 'Monthly AI answers used up',
+      daily_cap: 'Daily AI answer limit reached',
       no_faq: 'The site has no FAQ',
       no_answer: 'Not answered by the FAQ',
       unsupported: 'The answer was not backed by the FAQ',

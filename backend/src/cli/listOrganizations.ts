@@ -2,7 +2,9 @@
 //   development:  npm run org:list -- [text in the name or the owner's e-mail]
 //   production:   docker compose ... exec backend npm run org:list:prod -- [text]
 // Read only. Prints no visitor data, only what an operator needs to find a
-// workspace: plan, subscription, owner, sites and this month's usage.
+// workspace: plan, subscription, owner, sites and this month's usage —
+// conversations and AI answers, with an estimated cost when
+// GEMINI_COST_PER_ANSWER is set (plan v10 AI-07).
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../config/env';
 import { pool, query } from '../db/pool';
@@ -17,6 +19,7 @@ async function listOrganizations() {
     owner: string | null;
     sites: number;
     conversations: number;
+    ai_answers: number;
     created_at: Date;
   }>(
     `SELECT o.id, o.name, o.plan_type,
@@ -27,6 +30,8 @@ async function listOrganizations() {
             (SELECT count(*)::int FROM sites WHERE organization_id = o.id) AS sites,
             coalesce((SELECT conversations FROM organization_usage_monthly
                        WHERE organization_id = o.id AND period = to_char(now(), 'YYYY-MM')), 0) AS conversations,
+            coalesce((SELECT assistant_replies FROM organization_usage_monthly
+                       WHERE organization_id = o.id AND period = to_char(now(), 'YYYY-MM')), 0) AS ai_answers,
             o.created_at
        FROM organizations o
        LEFT JOIN subscriptions s ON s.organization_id = o.id
@@ -41,6 +46,7 @@ async function listOrganizations() {
     console.log('No organization matches.');
     return;
   }
+  const costPerAnswer = Number(process.env.GEMINI_COST_PER_ANSWER) || 0;
   console.table(
     rows.map((r) => ({
       id: r.id,
@@ -50,9 +56,17 @@ async function listOrganizations() {
       owner: r.owner ?? '-',
       sites: r.sites,
       'conversations this month': r.conversations,
+      'AI answers this month': r.ai_answers,
+      ...(costPerAnswer ? { 'AI cost (est.)': (r.ai_answers * costPerAnswer).toFixed(2) } : {}),
       created: new Date(r.created_at).toISOString().slice(0, 10)
     }))
   );
+  if (costPerAnswer) {
+    const answers = rows.reduce((sum, r) => sum + r.ai_answers, 0);
+    console.log(
+      `AI answers this month: ${answers}, estimated cost ${(answers * costPerAnswer).toFixed(2)} (GEMINI_COST_PER_ANSWER=${costPerAnswer})`
+    );
+  }
 }
 
 listOrganizations()

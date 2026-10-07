@@ -24,6 +24,8 @@ import Department from '../../models/Department';
 import Message from '../../models/Message';
 import Site from '../../models/Site';
 import { assistantConfig } from '../../config/assistant';
+import { createQuota } from '../../middleware/rateLimit';
+import { platformBlock } from './availability';
 import { withTransaction, query } from '../../db/pool';
 import { generateId } from '../../db/objectId';
 import { isActiveConversationStatus } from '../../domain';
@@ -51,9 +53,33 @@ const ASSISTANT_NAME = 'Asistan';
 /** A second message inside this window replaces the first as the one answered. */
 export const DEBOUNCE_MS = 800;
 
-/** Whether this server can run the assistant at all (a Gemini key is set). */
+/**
+ * Whether this server can run the assistant at all: a key is set, the model
+ * exists and is stable, and nobody has thrown the kill switch
+ * (./availability.ts).
+ */
 export function assistantAvailable(): boolean {
-  return assistantConfig() !== null;
+  return assistantConfig() !== null && platformBlock() === null;
+}
+
+// One day may use at most a tenth of the month's answers (AI-07), so one
+// busy site cannot spend the workspace's month in an afternoon. A quota per
+// distinct limit, since each counter has one maximum.
+const dailyQuotas = new Map<number, ReturnType<typeof createQuota>>();
+
+/** The day's answers for a plan: a tenth of the month's, at least one. */
+export function dailyAnswerCap(monthlyReplies: number): number {
+  return Math.max(1, Math.ceil(monthlyReplies / 10));
+}
+
+async function withinDailyCap(organizationId: string, monthlyReplies: number): Promise<boolean> {
+  const max = dailyAnswerCap(monthlyReplies);
+  let quota = dailyQuotas.get(max);
+  if (!quota) {
+    quota = createQuota({ name: `assistant-day-${max}`, windowMs: 24 * 60 * 60 * 1000, max });
+    dailyQuotas.set(max, quota);
+  }
+  return quota.take(organizationId);
 }
 
 /** Whether the assistant answers first on this site. */
@@ -290,6 +316,10 @@ async function answer(
 
   if (outcome.kind === 'handoff') {
     await handOver(io, conversation, outcome.reason, outcome.text, messageId);
+    return;
+  }
+  if (!(await withinDailyCap(organizationId, limits.assistant.monthlyReplies))) {
+    await handOver(io, conversation, 'daily_cap', undefined, messageId);
     return;
   }
   // Counted when an answer is about to go out, atomically: two answers at the

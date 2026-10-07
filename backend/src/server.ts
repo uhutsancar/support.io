@@ -55,6 +55,7 @@ import { closeRedisAdapter } from './socket/adapter';
 import { mailProvider } from './services/mail';
 import { outboxFor } from './services/mail/console';
 import { stopAssistant } from './services/assistant';
+import { startAssistantWatch, stopAssistantWatch } from './services/assistant/availability';
 import {
   loginLimiter,
   loginAccountLimiter,
@@ -507,6 +508,9 @@ connectDB()
       startSlaSweeper(io);
     }
 
+    // The model check and the kill switch (services/assistant/availability.ts).
+    startAssistantWatch();
+
     server.listen(PORT, () => {
       logger.info({ port: Number(PORT) }, 'server listening');
       console.log(`🚀 Sunucu ${PORT} portunda ve bulutlarda uçuyor!`);
@@ -539,6 +543,7 @@ ${signal} alındı, kapatılıyor...`);
       // Timers first, so nothing new starts while connections drain. Answers
       // still being written are abandoned rather than left holding timers.
       stopAssistant();
+      stopAssistantWatch();
       stopSlaSweeper();
       stopRetentionSweeps();
       try {

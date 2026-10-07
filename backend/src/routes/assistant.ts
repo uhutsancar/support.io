@@ -16,6 +16,7 @@ import express from 'express';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import { assistantConfig } from '../config/assistant';
+import { platformBlock } from '../services/assistant/availability';
 import { query } from '../db/pool';
 import { assistantAllowance, getPlan } from '../services/entitlements';
 import { PLAN_LIMITS } from '../domain/plans';
@@ -27,9 +28,16 @@ const router = express.Router();
 /** The window the overview counts over. */
 const OVERVIEW_DAYS = 30;
 
+// Why it is not available, in words for the panel and nothing more: whether
+// the service is set up here, or paused for every workspace for now. No
+// provider, model or key state (AI-01).
 router.get('/status', auth, requireOrganization, (_req: Request, res: Response) => {
   const config = assistantConfig();
-  res.json({ available: config !== null });
+  const block = config ? platformBlock() : null;
+  res.json({
+    available: config !== null && block === null,
+    reason: !config ? 'not_configured' : block ? 'paused' : null
+  });
 });
 
 router.get(
@@ -38,7 +46,7 @@ router.get(
   requireOrganization,
   checkPermission('manage_sites'),
   asyncHandler(async (req: Request, res: Response) => {
-    const config = assistantConfig();
+    const config = assistantConfig() && !platformBlock() ? assistantConfig() : null;
     const restricted = restrictedSiteIds(req);
     const restrictedList = restricted ? [...restricted] : null;
     const { rows: sites } = await query<{
