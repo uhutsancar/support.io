@@ -555,7 +555,11 @@ export const assistantAPI = {
   /** Whether this server has a Gemini key; the site switch depends on it. */
   status: () => api.get<AssistantStatus>('/assistant/status', { cache: false }),
   /** Every site's switch, FAQ count and the last 30 days of activity. */
-  overview: () => api.get<AssistantOverview>('/assistant/overview', { cache: false })
+  overview: () => api.get<AssistantOverview>('/assistant/overview', { cache: false }),
+  /** Marks one of the assistant's answers as wrong, or takes the mark back (AI-06). */
+  flag: (messageId: string) => api.post<{ flagged: boolean }>('/assistant/feedback', { messageId }),
+  unflag: (messageId: string) =>
+    api.delete<{ flagged: boolean }>(`/assistant/feedback/${messageId}`)
 };
 
 // ----------------------------------------------------------------- reporting

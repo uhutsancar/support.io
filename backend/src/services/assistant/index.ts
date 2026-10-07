@@ -35,7 +35,15 @@ import { isWithinBusinessHours } from '../businessHours';
 import { GeminiError, generateJson } from './gemini';
 import { faqSources } from './knowledge';
 import { carriesSensitiveData, redact } from './privacy';
-import { MAX_ANSWER_CHARS, MAX_ASSISTANT_REPLIES, TEXT, wantsHuman } from './policy';
+import {
+  MAX_ANSWER_CHARS,
+  MAX_ASSISTANT_REPLIES,
+  TEXT,
+  isAbusive,
+  keepFaqLinks,
+  leaksInstructions,
+  wantsHuman
+} from './policy';
 import { assistantAllowance, limitsFor, tryConsumeAssistantReply } from '../entitlements';
 import type { Server } from 'socket.io';
 import type { Doc } from '../../db/model';
@@ -217,6 +225,7 @@ export interface ComposeInput {
 export async function compose(input: ComposeInput): Promise<Outcome | null> {
   const { question } = input;
   if (wantsHuman(question)) return { kind: 'handoff', reason: 'requested' };
+  if (isAbusive(question)) return { kind: 'handoff', reason: 'abuse' };
   if (carriesSensitiveData(question)) {
     return { kind: 'handoff', reason: 'sensitive', text: TEXT.sensitive };
   }
@@ -259,7 +268,14 @@ export async function compose(input: ComposeInput): Promise<Outcome | null> {
   if (!cited.length || parsed.answer.length > limits.answerChars) {
     return { kind: 'handoff', reason: 'unsupported' };
   }
-  return { kind: 'answer', text: parsed.answer, sources: cited.map((s) => s.question) };
+  // Only links the FAQ itself contains survive; an answer that repeats the
+  // assistant's own instructions is not sent (AI-06).
+  const text = keepFaqLinks(
+    parsed.answer,
+    input.sources.map((s) => `${s.question} ${s.answer}`).join(' ')
+  );
+  if (!text || leaksInstructions(text)) return { kind: 'handoff', reason: 'unsupported' };
+  return { kind: 'answer', text, sources: cited.map((s) => s.question) };
 }
 
 async function answer(

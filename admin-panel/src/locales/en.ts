@@ -2179,6 +2179,10 @@ export default {
     takeOverError: 'The conversation could not be taken over',
     verifiedCustomer: 'Verified customer',
     sources: 'Source',
+    flag: 'Wrong answer',
+    flagged: 'Marked as wrong',
+    unflag: 'Remove mark',
+    flagHint: 'Wrong answers are recorded to keep an eye on the assistant’s quality.',
     handoffReason: 'Handed over because',
     reasons: {
       requested: 'The visitor asked for a person',

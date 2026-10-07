@@ -2187,6 +2187,10 @@ export default {
     takeOverError: 'Konuşma devralınamadı',
     verifiedCustomer: 'Doğrulanmış müşteri',
     sources: 'Kaynak',
+    flag: 'Yanlış yanıt',
+    flagged: 'Yanlış olarak işaretlendi',
+    unflag: 'İşareti kaldır',
+    flagHint: 'Yanlış yanıtlar, asistanın kalitesini izlemek için kaydedilir.',
     handoffReason: 'Temsilciye aktarma nedeni',
     reasons: {
       requested: 'Ziyaretçi temsilci istedi',

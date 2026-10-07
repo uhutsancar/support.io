@@ -147,6 +147,8 @@ export interface MessageAssistantNote {
   sources: string[];
   /** Why it handed the conversation to a person; null on an answer. */
   handoff: string | null;
+  /** An agent marked the answer as wrong (AI-06). */
+  flagged?: boolean;
 }
 
 /** Proof that the widget really loaded on the customer's site. */

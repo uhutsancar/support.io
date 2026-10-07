@@ -20,7 +20,17 @@ import { platformBlock } from '../services/assistant/availability';
 import { query } from '../db/pool';
 import { assistantAllowance, getPlan } from '../services/entitlements';
 import { PLAN_LIMITS } from '../domain/plans';
-import { asyncHandler, orgId, requireOrganization, restrictedSiteIds } from '../http';
+import {
+  asyncHandler,
+  badRequest,
+  loadAccessibleConversation,
+  notFound,
+  orgId,
+  requireOrganization,
+  restrictedSiteIds
+} from '../http';
+import Message from '../models/Message';
+import { generateId } from '../db/objectId';
 import type { Request, Response } from 'express';
 
 const router = express.Router();
@@ -67,7 +77,7 @@ router.get(
     );
     const siteIds = sites.map((s) => s.id);
 
-    const [activity, reasons, allowance, plan] = await Promise.all([
+    const [activity, reasons, allowance, plan, flagged] = await Promise.all([
       query<{ site_id: string; answered: number; handed_over: number; conversations: number }>(
         `SELECT c.site_id,
                 count(*) FILTER (WHERE m.assistant ->> 'handoff' IS NULL)::int AS answered,
@@ -92,7 +102,13 @@ router.get(
         [siteIds, OVERVIEW_DAYS]
       ),
       assistantAllowance(orgId(req)),
-      getPlan(orgId(req))
+      getPlan(orgId(req)),
+      query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM assistant_feedback
+          WHERE organization_id = $1 AND site_id = ANY($2)
+            AND created_at > now() - make_interval(days => $3)`,
+        [orgId(req), siteIds, OVERVIEW_DAYS]
+      )
     ]);
     const bySite = new Map(activity.rows.map((r) => [r.site_id, r]));
 
@@ -100,6 +116,8 @@ router.get(
       available: config !== null,
       days: OVERVIEW_DAYS,
       plan,
+      // Answers an agent marked as wrong in the window (AI-06).
+      flagged: flagged.rows[0]?.n ?? 0,
       // This month's answers against the plan's allowance.
       usage: {
         used: allowance.used,
@@ -124,6 +142,81 @@ router.get(
         return acc;
       }, {})
     });
+  })
+);
+
+// ------------------------------------------------- "wrong answer" (AI-06)
+//
+//   POST   /api/assistant/feedback            { messageId, note? }
+//   DELETE /api/assistant/feedback/:messageId
+//
+// An agent who can see the conversation marks one of the assistant's answers
+// as wrong, or takes the mark back. One row per answer in
+// assistant_feedback, for the quality report; the answer carries
+// `flagged` so the inbox shows it.
+
+async function answerFor(req: Request, messageId: unknown) {
+  if (typeof messageId !== 'string' || !/^[0-9a-f]{24}$/.test(messageId)) {
+    throw badRequest('messageId is required');
+  }
+  const message = await Message.findById(messageId);
+  if (!message || message.senderId !== 'assistant' || message.assistant?.handoff) {
+    throw notFound('Answer');
+  }
+  // Answers the caller's organization and site assignment cannot see are 404.
+  const conversation = await loadAccessibleConversation(req, message.conversationId);
+  return { message, conversation };
+}
+
+async function setFlag(messageId: string, flagged: boolean) {
+  await query(
+    `UPDATE messages SET assistant = coalesce(assistant, '{}'::jsonb) || jsonb_build_object('flagged', $2::boolean)
+      WHERE id = $1`,
+    [messageId, flagged]
+  );
+}
+
+router.post(
+  '/feedback',
+  auth,
+  requireOrganization,
+  checkPermission('respond'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { message, conversation } = await answerFor(req, req.body?.messageId);
+    const note =
+      typeof req.body?.note === 'string' ? req.body.note.trim().slice(0, 500) || null : null;
+    await query(
+      `INSERT INTO assistant_feedback (id, organization_id, site_id, conversation_id, message_id, user_id, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (message_id) DO UPDATE SET note = EXCLUDED.note, user_id = EXCLUDED.user_id`,
+      [
+        generateId(),
+        orgId(req),
+        String(conversation.siteId),
+        String(conversation._id),
+        String(message._id),
+        String(req.user._id),
+        note
+      ]
+    );
+    await setFlag(String(message._id), true);
+    res.json({ flagged: true });
+  })
+);
+
+router.delete(
+  '/feedback/:messageId',
+  auth,
+  requireOrganization,
+  checkPermission('respond'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { message } = await answerFor(req, req.params.messageId);
+    await query('DELETE FROM assistant_feedback WHERE message_id = $1 AND organization_id = $2', [
+      String(message._id),
+      orgId(req)
+    ]);
+    await setFlag(String(message._id), false);
+    res.json({ flagged: false });
   })
 );
 

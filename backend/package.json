@@ -24,6 +24,7 @@
     "secrets:rotate:prod": "node dist/cli/rotateSecrets.js",
     "assistant:kill": "tsx src/cli/assistantKill.ts",
     "assistant:kill:prod": "node dist/cli/assistantKill.js",
+    "assistant:eval": "tsx scripts/assistant-eval.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:compose": "tsx scripts/test-compose.ts",
     "loadtest": "tsx scripts/test-compose.ts scripts/loadtest.ts",
