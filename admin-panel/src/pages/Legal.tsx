@@ -17,7 +17,7 @@ type Kind = 'privacy' | 'terms';
 
 const Legal = ({ kind }: { kind: Kind }) => {
   const { t } = useTranslation();
-  const sections = asList<{ h: string; p: string[] }>(
+  const sections = asList<{ h: string; p: string[]; id?: string }>(
     t(`legal.${kind}.sections`, { returnObjects: true })
   );
   return (
@@ -40,7 +40,7 @@ const Legal = ({ kind }: { kind: Kind }) => {
       <Section tone="plain" size="sm">
         <div className="max-w-3xl mx-auto space-y-10">
           {sections.map((section, i) => (
-            <section key={section.h}>
+            <section key={section.h} id={section.id} className="scroll-mt-28">
               <h2 className="text-[20px] font-semibold text-gray-950 dark:text-white">
                 {i + 1}. {section.h}
               </h2>

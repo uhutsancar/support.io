@@ -402,7 +402,7 @@ export default {
   },
 
   legal: {
-    updated: 'Last updated: 6 October 2026',
+    updated: 'Last updated: 7 October 2026',
     contact: 'Questions: destek@support.io',
     privacy: {
       meta: 'What data Support.io processes and why, how long it keeps it, and your rights.',
@@ -527,6 +527,15 @@ export default {
           h: 'Limitation of liability',
           p: [
             'To the extent the law allows, we are not liable for indirect losses; our liability for direct losses is limited to what you paid us in the last 12 months.'
+          ]
+        },
+        {
+          id: 'guvenlik',
+          h: 'Reporting a vulnerability',
+          p: [
+            'If you believe you have found a security vulnerability in our service, write to security@support.io. Tell us how to reproduce it and which address it affects. The same details are in /.well-known/security.txt.',
+            'We confirm that we received your report within 3 working days and aim to fix the issue within 90 days at the latest. Please do not share the details publicly until the fix is live.',
+            'Please test only against your own account; do not access other people’s data, and do not run load tests that slow the service down or attempt social engineering. We do not run a bug bounty at the moment.'
           ]
         },
         {

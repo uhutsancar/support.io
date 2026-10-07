@@ -40,6 +40,7 @@ import analyticsRoutes from './routes/analytics';
 import assistantRoutes from './routes/assistant';
 import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
 import dataExportRoutes from './routes/dataExport';
+import wellKnownRoutes from './routes/wellKnown';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
@@ -311,6 +312,9 @@ app.get('/ready', async (_req: Request, res: Response) => {
   }
   res.json({ status: 'ready' });
 });
+
+// /.well-known/security.txt, before the SPA fallback would answer it.
+app.use(wellKnownRoutes);
 
 // --- 📦 4. STATİK DOSYALAR ---
 //

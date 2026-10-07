@@ -125,6 +125,9 @@ services:
       MIGRATE_ON_BOOT: "false"
       APP_BASE_URL: https://${APP_DOMAIN:?APP_DOMAIN is required}
       CORS_ORIGINS: https://${APP_DOMAIN}
+      # /.well-known/security.txt (SEC-10).
+      SECURITY_CONTACT_EMAIL: ${SECURITY_CONTACT_EMAIL:-}
+      SECURITY_TXT_EXPIRES: ${SECURITY_TXT_EXPIRES:-}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-supportchat}

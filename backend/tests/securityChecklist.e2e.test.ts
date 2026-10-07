@@ -8,6 +8,7 @@
 //  - an error answer carries no stack trace
 //  - adding, changing and deleting a site, and assigning a conversation,
 //    leave audit rows that say what changed but not the content
+//  - /.well-known/security.txt names where to report a vulnerability (SEC-10)
 //
 // Needs the running API. Run: npm run test:compose
 
@@ -221,4 +222,22 @@ test('a forged X-Forwarded-For does not change the rate-limit key', async () => 
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
+});
+
+test('security.txt names a contact, an expiry under a year and the policy', async () => {
+  const res = await fetch(`${BASE}/.well-known/security.txt`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type') || '', /^text\/plain/);
+  const text = await res.text();
+  assert.match(text, /^Contact: mailto:\S+@\S+$/m);
+  assert.match(text, /^Preferred-Languages: tr, en$/m);
+  assert.match(text, /^Canonical: https?:\/\/\S+\/\.well-known\/security\.txt$/m);
+  assert.match(text, /^Policy: https?:\/\/\S+\/kullanim-sartlari#guvenlik$/m);
+  const expires = Date.parse(/^Expires: (\S+)$/m.exec(text)?.[1] || '');
+  assert.ok(expires > Date.now(), 'not expired');
+  assert.ok(expires < Date.now() + 365 * 24 * 60 * 60 * 1000, 'less than a year ahead');
+
+  const legacy = await fetch(`${BASE}/security.txt`, { redirect: 'manual' });
+  assert.equal(legacy.status, 301);
+  assert.equal(legacy.headers.get('location'), '/.well-known/security.txt');
 });
