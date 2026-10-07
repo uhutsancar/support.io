@@ -64,6 +64,9 @@ import {
   SOLUTIONS
 } from '../../pages/marketing/features';
 
+/** The public status page (OBS-06), shown once one exists. */
+const STATUS_PAGE_URL = (import.meta.env.VITE_STATUS_PAGE_URL as string | undefined) || '';
+
 export const FEATURE_ICONS: Record<string, React.ElementType> = {
   MessageSquare,
   Code2,
@@ -706,6 +709,16 @@ export const Footer = () => {
             <Link to={routes.terms} className="hover:text-gray-300 transition-colors">
               {t('legal.terms.title')}
             </Link>
+            {STATUS_PAGE_URL && (
+              <a
+                href={STATUS_PAGE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gray-300 transition-colors"
+              >
+                {t('landing.home.footerStatus')}
+              </a>
+            )}
             <span>{t('landing.home.footerMade')}</span>
           </div>
         </div>

@@ -405,6 +405,7 @@ export default {
 
       footerDesc:
         'Sitenize eklenen canlı destek. Müşteriniz yazar, ekibiniz tek ekrandan yanıtlar.',
+      footerStatus: 'Sistem durumu',
       footerMade: 'Türkiye’de geliştirildi',
       footerProduct: 'Ürün',
       footerFeatures: 'Özellikler',

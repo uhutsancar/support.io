@@ -389,6 +389,7 @@ export default {
 
       footerDesc:
         'Live chat for your website. Your customer writes, your team answers from one screen.',
+      footerStatus: 'System status',
       footerMade: 'Built in Türkiye',
       footerProduct: 'Product',
       footerFeatures: 'Features',

@@ -20,10 +20,13 @@ ARG VITE_SUPPORT_SITE_KEY=""
 ARG VITE_PUBLIC_APP_ORIGIN=""
 # The commit this image is built from: error reports name it (OBS-01).
 ARG APP_RELEASE=""
+# The public status page, linked in the site's footer once it exists (OBS-06).
+ARG VITE_STATUS_PAGE_URL=""
 ENV VITE_API_URL=${VITE_API_URL} \
     VITE_SUPPORT_SITE_KEY=${VITE_SUPPORT_SITE_KEY} \
     VITE_PUBLIC_APP_ORIGIN=${VITE_PUBLIC_APP_ORIGIN} \
-    VITE_APP_RELEASE=${APP_RELEASE}
+    VITE_APP_RELEASE=${APP_RELEASE} \
+    VITE_STATUS_PAGE_URL=${VITE_STATUS_PAGE_URL}
 RUN npm run build
 
 FROM node-base AS backend-build
