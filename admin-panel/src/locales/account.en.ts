@@ -155,7 +155,7 @@ export default {
       transcript: 'Let visitors have the transcript e-mailed',
       spamMode: 'Spam protection',
       spamModeHelp:
-        'Applies a stricter message limit to new visitors and flags messages with many links.'
+        'Visitors nobody has answered yet can send at most 3 messages a minute and one message with a link every 5 minutes. Messages with many links, or the same text repeated, are always tagged “spam”.'
     },
     notifications: {
       title: 'Notifications',
@@ -218,6 +218,23 @@ export default {
       TOO_MANY_MFA_ATTEMPTS: 'Too many code attempts. Sign in again a little later.',
       INVALID_TOKEN: 'This link is invalid or has expired.'
     }
+  },
+  visitorBlocks: {
+    block: 'Block visitor',
+    explain:
+      'The visitor cannot start a chat on this site, and their open window closes at once. The block applies to their visitor id and the connection they were last seen from.',
+    period: 'Period',
+    days_one: '{{count}} day',
+    days_other: '{{count}} days',
+    reason: 'Reason (optional, only your team sees it)',
+    confirm: 'Block',
+    blocked: 'Visitor blocked.',
+    listTitle: 'Blocked visitors',
+    empty: 'No visitors are blocked on this site.',
+    noReason: 'No reason given',
+    range: '{{from}} – {{to}}',
+    unblock: 'Unblock',
+    unblocked: 'Block removed.'
   },
   savedReplies: {
     title: 'Saved replies',

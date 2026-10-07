@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import VisitorFormDetails from '../components/conversations/VisitorFormDetails';
 import SavedReplyInput from '../components/conversations/SavedReplyInput';
+import BlockVisitor from '../components/conversations/BlockVisitor';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, conversationsAPI, departmentsAPI, filesAPI, teamAPI } from '../services/api';
@@ -1192,6 +1193,9 @@ const Conversations = () => {
                       </span>
                     </div>
                     <VisitorFormDetails conversation={selectedConversation} />
+                    {user?.role !== 'viewer' && (
+                      <BlockVisitor conversationId={selectedConversation._id} />
+                    )}
                     <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
                       <Globe2 className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
                       <span className="break-all flex-1">

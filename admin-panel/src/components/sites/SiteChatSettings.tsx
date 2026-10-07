@@ -12,6 +12,7 @@ import { sitesAPI } from '../../services/api';
 import type { ChatSettings } from '../../services/api';
 import { errorMessage } from '../../hooks/useAsync';
 import { Toggle } from './SiteAssistant';
+import SiteVisitorBlocks from './SiteVisitorBlocks';
 import type { Site } from '../../types/api';
 
 const input =
@@ -312,6 +313,7 @@ const SiteChatSettings = ({ site, onClose }: { site: Site; onClose: () => void }
               label={t('account.chatSettings.spamMode')}
               help={t('account.chatSettings.spamModeHelp')}
             />
+            <SiteVisitorBlocks siteId={site._id} />
           </Section>
 
           <div className="flex justify-end gap-2 pt-2">

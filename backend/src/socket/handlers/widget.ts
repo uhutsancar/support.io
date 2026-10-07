@@ -32,6 +32,10 @@ import { ConversationQuotaError, countMessage } from '../../services/entitlement
 import { conversationRoom } from '../../realtime/rooms';
 import { installWidgetExtras, applyContact } from './widgetExtras';
 import { preChatSatisfied } from '../../services/visitorContact';
+import { chatSettings } from '../../services/chatSettings';
+import { hasLink, looksLikeSpam } from '../../services/visitorBlocks';
+import { spamModeQuota } from '../../middleware/rateLimit';
+import { query } from '../../db/pool';
 import { timed } from '../../config/metrics';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
@@ -275,7 +279,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           { visitorId, siteId: site._id },
           {
             organizationId: site.organizationId,
-            ip: socket.handshake.address || null,
+            // The visitor's address, not Caddy's: the handshake read it from
+            // X-Forwarded-For (socket/auth.ts).
+            ip: socket.clientIp ?? null,
             country: socket.metadata.country,
             browser: socket.metadata.browser,
             os: socket.metadata.os,
@@ -389,6 +395,26 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         if (existing) return delivered(socket, ack, existing.toObject(), true);
       }
 
+      // Spam mode (SEC-09): until somebody on the team has answered, the
+      // visitor writes at a slower pace, and a link waits its turn.
+      if (chatSettings(site.chatSettings).spamMode && !conversation.firstResponseAt) {
+        const key = `${socket.siteId}:${socket.visitorId}`;
+        const allowed =
+          (await spamModeQuota.messages.take(key)) &&
+          (!hasLink(content) || (await spamModeQuota.links.take(key)));
+        if (!allowed) {
+          return refuse(socket, ack, 'SLOW_DOWN', 'Please wait a moment before the next message');
+        }
+      }
+
+      // The visitor's last two messages, to notice the same text a third time.
+      const { rows: earlier } = await query<{ content: string }>(
+        `SELECT content FROM messages
+          WHERE conversation_id = $1 AND sender_type = 'visitor'
+          ORDER BY created_at DESC LIMIT 2`,
+        [conversation._id]
+      );
+
       const needsAttachment = messageType === 'file' || messageType === 'image';
       const verifiedFile = needsAttachment
         ? ctx.verifyAttachment(fileData, conversation.siteId)
@@ -438,6 +464,22 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       if (counted) {
         conversation.unreadCount = counted.unreadCount;
         conversation.lastMessageAt = counted.lastMessageAt;
+      }
+
+      // More than three links, or the same text three times running: the
+      // conversation is tagged so the inbox can filter it out (SEC-09).
+      const tags = conversation.tags || [];
+      if (
+        !tags.includes('spam') &&
+        looksLikeSpam(content, earlier.map((m) => m.content).reverse())
+      ) {
+        // Plain SQL: the model's $addToSet covers child tables, not array columns.
+        await query(
+          `UPDATE conversations SET tags = array_append(tags, 'spam')
+            WHERE id = $1 AND NOT ('spam' = ANY(tags))`,
+          [conversation._id]
+        );
+        conversation.tags = [...tags, 'spam'];
       }
 
       // The assigned agent has gone away since they took this: hand it on

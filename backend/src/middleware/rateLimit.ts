@@ -495,12 +495,26 @@ const socketConnectQuota = {
  * The address a socket handshake came from, by the same rule Express uses
  * with `trust proxy` 1: the last X-Forwarded-For entry, which Caddy writes.
  */
-function handshakeIp(headers: Record<string, unknown>, address: string): string {
+function clientAddress(headers: Record<string, unknown>, address: string): string {
   const forwarded =
     typeof headers['x-forwarded-for'] === 'string' ? headers['x-forwarded-for'] : '';
   const last = forwarded.split(',').pop()?.trim();
-  return ipKeyGenerator(last || address || '');
+  return (last || address || '').replace(/^::ffff:/, '');
 }
+
+/** The same address as a rate-limit key: IPv6 is counted per /56. */
+function handshakeIp(headers: Record<string, unknown>, address: string): string {
+  return ipKeyGenerator(clientAddress(headers, address));
+}
+
+// Spam mode (SEC-09, services/chatSettings.ts): a visitor nobody on the team
+// has answered yet sends at most three messages a minute, and one with a link
+// every five minutes. Fixed, not tuned per environment: a site turns it on
+// because it is being flooded.
+const spamModeQuota = {
+  messages: createQuota({ name: 'spam-messages', windowMs: 60 * 1000, max: 3 }),
+  links: createQuota({ name: 'spam-links', windowMs: 5 * 60 * 1000, max: 1 })
+};
 
 export {
   loginLimiter,
@@ -516,6 +530,8 @@ export {
   siteCreateLimiter,
   invitationLimiter,
   socketConnectQuota,
+  spamModeQuota,
+  clientAddress,
   handshakeIp,
   createLimiter,
   createQuota,

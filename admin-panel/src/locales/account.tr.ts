@@ -157,7 +157,7 @@ export default {
       transcript: 'Ziyaretçi sohbet dökümünü e-postayla isteyebilsin',
       spamMode: 'Spam koruması',
       spamModeHelp:
-        'Yeni ziyaretçilere daha sıkı mesaj sınırı uygular ve çok bağlantı içeren mesajları işaretler.'
+        'Henüz yanıt almamış ziyaretçiler dakikada en fazla 3 mesaj, 5 dakikada bir bağlantılı mesaj gönderebilir. Çok bağlantılı ya da üst üste tekrarlanan mesajlar her durumda “spam” etiketi alır.'
     },
     notifications: {
       title: 'Bildirimler',
@@ -221,6 +221,23 @@ export default {
       TOO_MANY_MFA_ATTEMPTS: 'Çok fazla kod denemesi yapıldı. Biraz sonra yeniden giriş yapın.',
       INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
     }
+  },
+  visitorBlocks: {
+    block: 'Ziyaretçiyi engelle',
+    explain:
+      'Ziyaretçi bu sitede sohbet açamaz; açık penceresi hemen kapanır. Engel, ziyaretçi kimliğine ve son görüldüğü bağlantıya uygulanır.',
+    period: 'Süre',
+    days_one: '{{count}} gün',
+    days_other: '{{count}} gün',
+    reason: 'Gerekçe (isteğe bağlı, yalnızca ekibiniz görür)',
+    confirm: 'Engelle',
+    blocked: 'Ziyaretçi engellendi.',
+    listTitle: 'Engellenen ziyaretçiler',
+    empty: 'Bu sitede engellenen ziyaretçi yok.',
+    noReason: 'Gerekçe belirtilmedi',
+    range: '{{from}} – {{to}}',
+    unblock: 'Engeli kaldır',
+    unblocked: 'Engel kaldırıldı.'
   },
   savedReplies: {
     title: 'Hazır yanıtlar',

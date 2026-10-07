@@ -35,6 +35,8 @@ export interface WidgetSocketState {
   visitorId?: string;
   /** The widget session's `sid`; keys the per-session event limit. */
   widgetSessionId?: string;
+  /** The visitor's address as the proxy saw it (not the proxy's own). */
+  clientIp?: string | null;
   visitorName?: string;
   visitorEmail?: string | null;
   currentPage?: string;

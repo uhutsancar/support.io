@@ -384,7 +384,10 @@ interface Window {
       transcriptTitle: 'Sohbet dökümü',
       transcriptSub: 'Bu sohbetin bir kopyasını e-postanıza gönderelim.',
       transcriptSend: 'Dökümü gönder',
-      transcriptSent: 'Döküm e-postanıza gönderildi.'
+      transcriptSent: 'Döküm e-postanıza gönderildi.',
+      blocked:
+        'Sohbet şu anda kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız lütfen bize başka bir yoldan ulaşın.',
+      slowDown: 'Lütfen bir sonraki mesajınızdan önce biraz bekleyin.'
     },
     en: {
       launcherLabel: 'Open support chat',
@@ -457,7 +460,10 @@ interface Window {
       transcriptTitle: 'Chat transcript',
       transcriptSub: 'We can send a copy of this chat to your e-mail.',
       transcriptSend: 'Send the transcript',
-      transcriptSent: 'The transcript is on its way to your inbox.'
+      transcriptSent: 'The transcript is on its way to your inbox.',
+      blocked:
+        'Chat is not available right now. If you think this is a mistake, please reach us another way.',
+      slowDown: 'Please wait a little before sending your next message.'
     }
   };
 
@@ -769,6 +775,17 @@ interface Window {
     }
 
     this._render();
+    if (this._blocked) {
+      // Blocked on this site: the bubble stays, with a polite line and no
+      // way to write. No socket, no installation report.
+      this._enterBlocked();
+      this.emit('ready', {
+        siteKey: this.config.siteKey,
+        locale: this.locale,
+        version: SDK_VERSION
+      });
+      return;
+    }
     this._connect();
     this._reportInstallation();
     this._watchNavigation();
@@ -823,6 +840,24 @@ interface Window {
           var body = await res.json().catch(function () {
             return {};
           });
+          if (body.code === 'VISITOR_BLOCKED') {
+            // The team blocked this visitor. The answer still carries the
+            // widget's look, so the bubble can say so instead of vanishing.
+            self._blocked = true;
+            if (!self.remote && body.details && body.details.config) {
+              self.remote = {
+                config: body.details.config,
+                faqs: [],
+                availability: 'offline'
+              } as any;
+              self.faqs = [];
+              self.availability = 'offline';
+              if (self.config.locale) self.setLocale(self.config.locale, true);
+              return true;
+            }
+            if (self.remote) self._enterBlocked();
+            return false;
+          }
           if (body.code === 'ORIGIN_NOT_ALLOWED') {
             self._fail(
               'ORIGIN_NOT_ALLOWED',
@@ -1072,6 +1107,10 @@ interface Window {
         );
         return;
       }
+      if (err && err.message === 'VISITOR_BLOCKED') {
+        self._enterBlocked();
+        return;
+      }
       if (!err || err.message !== 'WIDGET_SESSION_INVALID') return;
       if (++refusals > 3) {
         self._setConnection('error', err.message);
@@ -1164,12 +1203,19 @@ interface Window {
       self.emit('conversation:ended', { conversationId: data && data.conversationId });
     });
 
+    // The team blocked this visitor while the chat was open (SEC-09).
+    this.socket.on('visitor-blocked', function () {
+      self._enterBlocked();
+    });
+
     this.socket.on('error', function (data: any) {
       if (data && data.code === 'PRECHAT_REQUIRED') {
         self._contactRequired = true;
         self._maybeShowContactForm();
         return;
       }
+      // Answered on the message itself, in the visitor's language.
+      if (data && (data.code === 'SLOW_DOWN' || data.code === 'VISITOR_BLOCKED')) return;
       var message = (data && data.message) || 'Unknown socket error';
       self.emit('error', { code: 'SOCKET_ERROR', message: message });
       self._notice(message, 'error');
@@ -2365,7 +2411,30 @@ interface Window {
     this.el.send.disabled = !this.el.input.value.trim();
   };
 
+  /**
+   * The team blocked this visitor on the site (SEC-09): the socket closes for
+   * good, the composer locks and a polite line stays in its place.
+   */
+  Widget.prototype._enterBlocked = function (this: WidgetInstance) {
+    this._blocked = true;
+    if (this.socket) {
+      try {
+        this.socket.disconnect();
+      } catch (e) {
+        /* already closed */
+      }
+    }
+    if (this.el && this.el.contact) this.el.contact.innerHTML = '';
+    this._setComposerLocked(true);
+    this._banner(this.t.blocked, 'warn', 0);
+    this.emit('error', { code: 'VISITOR_BLOCKED', message: this.t.blocked });
+  };
+
   Widget.prototype.sendMessage = async function (this: WidgetInstance) {
+    if (this._blocked) {
+      this._banner(this.t.blocked, 'warn', 0);
+      return;
+    }
     if (this.fatal) {
       this._notice(this.fatal.message, 'error');
       return;
@@ -2480,6 +2549,8 @@ interface Window {
         var code = reply && reply.code;
         if (code === 'RATE_LIMITED') self._notice(self.t.rateLimited, 'error');
         else if (code === 'QUOTA_EXCEEDED') self._notice(self.t.quotaExceeded, 'error');
+        else if (code === 'SLOW_DOWN') self._notice(self.t.slowDown, 'warn');
+        else if (code === 'VISITOR_BLOCKED') self._enterBlocked();
       });
   };
 
@@ -2585,6 +2656,8 @@ interface Window {
 
   Widget.prototype._setComposerLocked = function (this: WidgetInstance, locked: boolean) {
     if (!this.el || !this.el.composer) return;
+    // A blocked visitor's composer stays locked, whatever a form says.
+    if (this._blocked) locked = true;
     this.el.composer.classList.toggle('locked', locked);
     this.el.composer.setAttribute('aria-disabled', locked ? 'true' : 'false');
     this.el.input.disabled = locked;
@@ -2597,6 +2670,12 @@ interface Window {
    */
   Widget.prototype._maybeShowContactForm = function (this: WidgetInstance) {
     if (!this.el || !this.el.contact) return;
+    if (this._blocked) {
+      this.el.contact.innerHTML = '';
+      this._setComposerLocked(true);
+      this._banner(this.t.blocked, 'warn', 0);
+      return;
+    }
     var chat = this.remote && (this.remote as any).chat;
     if (!chat) return;
     var pre = chat.preChat || { mode: 'off', consent: { mode: 'off' } };

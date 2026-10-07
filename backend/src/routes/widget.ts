@@ -49,6 +49,7 @@ import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActive } from '../services/assistant';
+import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
@@ -263,6 +264,18 @@ router.post(
       : continues
         ? previous.visitorId
         : newVisitorId();
+
+    // A blocked visitor (SEC-09) gets no session — by their id, or by their
+    // address when the browser forgot the id. The look of the widget comes
+    // along, so it can still draw its bubble and say, politely, that the
+    // chat is not available.
+    if (await isBlocked({ siteId: String(site._id), visitorId, ip: req.ip })) {
+      const saved = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
+      throw new HttpError(403, 'Chat is not available', VISITOR_BLOCKED, {
+        config: publicConfig(site, saved ? saved.toObject() : null)
+      });
+    }
+
     const { token, expiresAt } = signWidgetSession({
       siteId: String(site._id),
       visitorId,

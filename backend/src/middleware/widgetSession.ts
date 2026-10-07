@@ -12,6 +12,7 @@ import Site from '../models/Site';
 import { verifyWidgetSession, siteKeyVersion } from '../config/tokens';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { HttpError, forbidden } from '../http/errors';
+import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
 import { asyncMiddleware } from '../http/asyncHandler';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
@@ -70,6 +71,11 @@ export const requireWidgetSession = asyncMiddleware(
     // where this check means something; the token alone decides then.
     const origin = requestOrigin(req.headers);
     if (origin !== null && !siteAcceptsOrigin(site, origin)) throw originRefused();
+
+    // Blocked since the session was issued (SEC-09): no upload, no form.
+    if (await isBlocked({ siteId: String(site._id), visitorId: claims.visitorId, ip: req.ip })) {
+      throw forbidden('This visitor is blocked on the site', VISITOR_BLOCKED);
+    }
 
     req.site = site;
     req.widget = claims;

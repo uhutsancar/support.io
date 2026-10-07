@@ -229,11 +229,25 @@ export const filesAPI = {
 
 // ------------------------------------------------------------------ visitors
 
+/** A block still in force on a site (SEC-09). */
+export interface VisitorBlock {
+  _id: string;
+  visitorId: string | null;
+  reason: string | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export const visitorsAPI = {
   // Never cached: this is a live presence list, and a thirty-second-old answer
   // is worse than none.
   getAll: (siteId: string, active = true) =>
-    api.get<Visitor[]>(`/visitors/site/${siteId}`, { params: { active }, cache: false })
+    api.get<Visitor[]>(`/visitors/site/${siteId}`, { params: { active }, cache: false }),
+  block: (body: { conversationId: string; days: number; reason?: string }) =>
+    api.post<{ id: string; days: number }>('/visitors/block', body),
+  blocks: (siteId: string) =>
+    api.get<{ blocks: VisitorBlock[] }>(`/visitors/blocks/${siteId}`, { cache: false }),
+  unblock: (id: string) => api.delete(`/visitors/blocks/${id}`)
 };
 
 // --------------------------------------------------------------------- deals
