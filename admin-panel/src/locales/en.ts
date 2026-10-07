@@ -2119,6 +2119,15 @@ export default {
     graceUntil: 'Update your payment details by {{date}}, or the plan returns to Free.',
     manage: 'Manage subscription',
     manageHelp: 'Payment method, invoices and cancellation are in the Paddle customer portal.',
+    invoices: {
+      title: 'Invoices',
+      empty: 'No invoices yet.',
+      pending: 'Invoice being prepared',
+      download: 'Download PDF',
+      loadError: 'Invoices could not be loaded.',
+      openError: 'The invoice could not be opened; try again shortly.',
+      note: 'Paddle issues the invoices as the seller; the company name and tax number you entered at checkout appear on them. Each invoice is also e-mailed to you.'
+    },
     portalError: 'The customer portal could not be opened',
     upgrade: 'Upgrade plan',
     changePlan: 'Change plan',
@@ -2256,9 +2265,12 @@ export default {
     },
     consent: {
       title: 'Switch on the AI assistant',
-      point1: 'Your site’s public FAQ content and your visitors’ questions are sent to our AI service provider to produce answers; this may happen outside Türkiye.',
-      point2: 'E-mail addresses and phone numbers in questions are masked before they are sent; questions containing a card, IBAN or ID number are not sent at all.',
-      point3: 'Your visitors are clearly shown that they are writing with an AI. We recommend saying so in your site’s privacy notice.',
+      point1:
+        'Your site’s public FAQ content and your visitors’ questions are sent to our AI service provider to produce answers; this may happen outside Türkiye.',
+      point2:
+        'E-mail addresses and phone numbers in questions are masked before they are sent; questions containing a card, IBAN or ID number are not sent at all.',
+      point3:
+        'Your visitors are clearly shown that they are writing with an AI. We recommend saying so in your site’s privacy notice.',
       box: 'I understand and agree that my FAQ content and visitor questions, with personal data masked, are sent to the AI service provider.',
       confirm: 'Agree and switch on'
     },

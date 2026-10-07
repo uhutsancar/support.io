@@ -18,6 +18,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { usePlans } from '../hooks/usePlans';
 import { formatDateTime } from '../lib/format';
 import PlanOverage from '../components/billing/PlanOverage';
+import Invoices from '../components/billing/Invoices';
 import type { BillingOverview } from '../types/api';
 
 const PLAN_ICON = { FREE: Store, PRO: Rocket, ENTERPRISE: Building2 } as const;
@@ -241,6 +242,7 @@ const Billing = () => {
             </section>
           </div>
         )}
+        {sub?.manageable && <Invoices locale={locale} />}
         {data && (
           <PlanOverage
             upgradeLink={`${base}/upgrade?plan=${data.plan === 'PRO' ? 'ENTERPRISE' : 'PRO'}`}

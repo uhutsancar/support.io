@@ -15,6 +15,7 @@ import type {
   BillingOverview,
   CheckoutSession,
   PlanOverage,
+  Invoice,
   AssistantStatus,
   AgentPerformance,
   AnalyticsOverview,
@@ -496,6 +497,13 @@ export const billingAPI = {
     api.post<CheckoutSession>('/billing/checkout', { plan, cycle }),
   /** A one-off link to Paddle's customer portal. */
   portal: () => api.post<{ url: string }>('/billing/portal'),
+  /** The subscription's invoices, issued by Paddle (BIL-06). */
+  invoices: () => api.get<{ invoices: Invoice[] }>('/billing/invoices', { cache: false }),
+  /** A short-lived link to one invoice's PDF. */
+  invoicePdf: (transactionId: string) =>
+    api.get<{ url: string }>(`/billing/invoices/${encodeURIComponent(transactionId)}/pdf`, {
+      cache: false
+    }),
   /** Sites and members, and which are on hold over the plan (BIL-04). */
   overage: () => api.get<PlanOverage>('/billing/overage', { cache: false }),
   /** The owner's choice of what stays active; the rest goes on hold. */

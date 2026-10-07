@@ -167,6 +167,16 @@ export interface PlanInfo {
 }
 
 /** GET /api/billing — the owner's billing page. */
+/** One Paddle invoice of the subscription (GET /api/billing/invoices). */
+export interface Invoice {
+  id: string;
+  number: string | null;
+  billedAt: string | null;
+  total: number | null;
+  currency: string;
+  status: string;
+}
+
 /** GET /api/billing/overage: what is over the plan, and on hold (BIL-04). */
 export interface PlanOverage {
   plan: PlanType;

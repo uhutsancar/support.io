@@ -39,6 +39,7 @@ import { logger } from '../config/logger';
 import { increment } from '../config/metrics';
 import { trialRunning } from '../services/trial';
 import { overageSummary, reconcilePlanLimits } from '../services/planOverage';
+import { invoicePdf, listInvoices } from '../services/paddleInvoices';
 import type { Request, Response } from 'express';
 
 // ------------------------------------------------------------------ webhook
@@ -224,6 +225,48 @@ router.post(
       // organization id only together with the reference signed here.
       customData: { organizationId, ref: checkoutReference(organizationId) }
     });
+  })
+);
+
+// ------------------------------------------------------- invoices (BIL-06)
+
+// Paddle issues the invoices (with the company and tax number entered at
+// checkout); the page lists them and opens Paddle's PDF.
+router.get(
+  '/invoices',
+  asyncHandler(async (req: Request, res: Response) => {
+    const subscription = await subscriptionSummary(orgId(req));
+    if (!subscription?.customerId) {
+      res.json({ invoices: [] });
+      return;
+    }
+    if (!billingConfig().apiKey) throw unavailable('Billing is not configured');
+    try {
+      res.json({ invoices: await listInvoices(subscription.customerId) });
+    } catch (error) {
+      console.error('[billing] invoice list failed:', errorText(error));
+      throw unavailable('Invoices could not be loaded; try again shortly');
+    }
+  })
+);
+
+router.get(
+  '/invoices/:transactionId/pdf',
+  asyncHandler(async (req: Request, res: Response) => {
+    const transactionId = String(req.params.transactionId);
+    if (!/^txn_[a-z0-9]{10,40}$/.test(transactionId)) throw badRequest('Unknown invoice');
+    const subscription = await subscriptionSummary(orgId(req));
+    if (!subscription?.customerId) throw new HttpError(404, 'Invoice not found', 'NOT_FOUND');
+    if (!billingConfig().apiKey) throw unavailable('Billing is not configured');
+    let url: string | null;
+    try {
+      url = await invoicePdf(subscription.customerId, transactionId);
+    } catch (error) {
+      console.error('[billing] invoice pdf failed:', errorText(error));
+      throw unavailable('The invoice could not be opened; try again shortly');
+    }
+    if (!url) throw new HttpError(404, 'Invoice not found', 'NOT_FOUND');
+    res.json({ url });
   })
 );
 

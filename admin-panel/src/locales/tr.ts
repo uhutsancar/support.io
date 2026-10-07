@@ -2126,6 +2126,15 @@ export default {
       'Ödeme bilgilerinizi {{date}} tarihine kadar güncelleyin; aksi hâlde plan Ücretsiz’e döner.',
     manage: 'Aboneliği yönet',
     manageHelp: 'Ödeme yöntemi, faturalar ve iptal Paddle müşteri portalında.',
+    invoices: {
+      title: 'Faturalar',
+      empty: 'Henüz kesilmiş bir fatura yok.',
+      pending: 'Fatura hazırlanıyor',
+      download: 'PDF indir',
+      loadError: 'Faturalar yüklenemedi.',
+      openError: 'Fatura açılamadı, biraz sonra tekrar deneyin.',
+      note: 'Faturaları satıcı olarak Paddle düzenler; ödeme sırasında girdiğiniz şirket adı ve vergi numarası faturada yer alır. Her fatura ayrıca e-postanıza gönderilir.'
+    },
     portalError: 'Müşteri portalı açılamadı',
     upgrade: 'Planı yükselt',
     changePlan: 'Plan değiştir',
@@ -2264,9 +2273,12 @@ export default {
     },
     consent: {
       title: 'Yapay zekâ asistanını açın',
-      point1: 'Sitenizin herkese açık SSS içeriği ve ziyaretçilerin soruları, yanıt üretilmesi için yapay zekâ hizmet sağlayıcımıza iletilir; bu işlem yurt dışında gerçekleşebilir.',
-      point2: 'Sorulardaki e-posta adresleri ve telefon numaraları gönderilmeden önce maskelenir; kart, IBAN veya kimlik numarası içeren sorular hiç gönderilmez.',
-      point3: 'Ziyaretçilerinize yapay zekâ ile yazıştıkları açıkça gösterilir. Sitenizin gizlilik metninde bunu belirtmenizi öneririz.',
+      point1:
+        'Sitenizin herkese açık SSS içeriği ve ziyaretçilerin soruları, yanıt üretilmesi için yapay zekâ hizmet sağlayıcımıza iletilir; bu işlem yurt dışında gerçekleşebilir.',
+      point2:
+        'Sorulardaki e-posta adresleri ve telefon numaraları gönderilmeden önce maskelenir; kart, IBAN veya kimlik numarası içeren sorular hiç gönderilmez.',
+      point3:
+        'Ziyaretçilerinize yapay zekâ ile yazıştıkları açıkça gösterilir. Sitenizin gizlilik metninde bunu belirtmenizi öneririz.',
       box: 'SSS içeriğimin ve ziyaretçi sorularının, kişisel veriler maskelenerek yapay zekâ hizmet sağlayıcısına iletileceğini anladım ve onaylıyorum.',
       confirm: 'Onayla ve aç'
     },
