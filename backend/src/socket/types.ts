@@ -37,6 +37,8 @@ export interface WidgetSocketState {
   widgetSessionId?: string;
   /** The visitor's address as the proxy saw it (not the proxy's own). */
   clientIp?: string | null;
+  /** Cloudflare's CF-IPCountry for the handshake, or null (AI-02). */
+  country?: string | null;
   visitorName?: string;
   visitorEmail?: string | null;
   currentPage?: string;

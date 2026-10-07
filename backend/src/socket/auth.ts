@@ -15,6 +15,7 @@ import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { siteForWidgetSession, WIDGET_SESSION_INVALID } from '../middleware/widgetSession';
 import { clientAddress, handshakeIp, socketConnectQuota } from '../middleware/rateLimit';
 import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
+import { visitorCountry } from '../services/assistant/region';
 import type { Namespace, Socket } from 'socket.io';
 import type { AdminSocket, WidgetSocket } from './types';
 
@@ -153,6 +154,7 @@ export function installWidgetAuthentication(widget: Namespace): void {
 
       socket.siteId = String(site._id);
       socket.clientIp = address || null;
+      socket.country = visitorCountry(socket.handshake.headers['cf-ipcountry']);
       socket.organizationId = String(site.organizationId);
       socket.visitorId = claims.visitorId;
       socket.widgetSessionId = claims.sid;

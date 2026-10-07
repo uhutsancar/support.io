@@ -49,7 +49,8 @@ import { limitsFor } from '../services/entitlements';
 import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
-import { assistantActive } from '../services/assistant';
+import { assistantActiveFor } from '../services/assistant';
+import { visitorCountry } from '../services/assistant/region';
 import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
@@ -308,7 +309,7 @@ router.post(
       availability,
       // True when the site's FAQ assistant answers first; the widget then says
       // so and offers a way to a person. Nothing else about it is public.
-      assistant: assistantActive(site),
+      assistant: assistantActiveFor(site, visitorCountry(req.get('cf-ipcountry'))),
       config: publicConfig(site, saved ? saved.toObject() : null),
       // Forms and ratings (services/chatSettings.ts): what the widget shows,
       // nothing about who on the team gets mailed.

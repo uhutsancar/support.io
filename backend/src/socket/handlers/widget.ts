@@ -16,7 +16,7 @@ import { openConversation } from '../../services/conversationIntake';
 import { refreshSla } from '../../services/conversationSla';
 import { tryFaqAutoResponse } from '../../services/faqAutoResponse';
 import { runAutomation } from '../../services/automationTrigger';
-import { assistantActive, requestHuman, scheduleAssistantReply } from '../../services/assistant';
+import { assistantActiveFor, requestHuman, scheduleAssistantReply } from '../../services/assistant';
 import { verifiedIdentity } from '../../services/identity';
 import {
   ACTIVE_CONVERSATION_STATUSES,
@@ -362,7 +362,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       }
       // The site's assistant answers when it is on; otherwise the FAQ keyword
       // bot below does, as before. Never both.
-      const assistant = assistantActive(site);
+      const assistant = assistantActiveFor(site, socket.country ?? null);
 
       // The first message opens the conversation; see conversationIntake.ts.
       if (!socket.conversationId) {

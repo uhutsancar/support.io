@@ -26,6 +26,7 @@ import Site from '../../models/Site';
 import { assistantConfig } from '../../config/assistant';
 import { createQuota } from '../../middleware/rateLimit';
 import { platformBlock } from './availability';
+import { regionAllowsAssistant } from './region';
 import { withTransaction, query } from '../../db/pool';
 import { generateId } from '../../db/objectId';
 import { isActiveConversationStatus } from '../../domain';
@@ -85,6 +86,18 @@ async function withinDailyCap(organizationId: string, monthlyReplies: number): P
 /** Whether the assistant answers first on this site. */
 export function assistantActive(site: Pick<SiteDoc, 'assistantEnabled'>): boolean {
   return assistantAvailable() && Boolean(site.assistantEnabled);
+}
+
+/**
+ * Whether it answers this visitor: on the free tier, never one from the
+ * EEA, Switzerland or the UK (./region.ts, AI-02).
+ */
+export function assistantActiveFor(
+  site: Pick<SiteDoc, 'assistantEnabled'>,
+  country: string | null
+): boolean {
+  const config = assistantConfig();
+  return Boolean(config) && assistantActive(site) && regionAllowsAssistant(country, config!.tier);
 }
 
 // ------------------------------------------------------------- scheduling
