@@ -793,7 +793,16 @@ interface Window {
       });
       return;
     }
-    this._connect();
+    // The socket opens only when it is needed (PERF-02): a returning visitor
+    // whose conversation is still open (a reply must reach them), the link
+    // in a reply mail, or later the visitor opening the widget. Until then
+    // a small request keeps the panel's live visitor list right.
+    if ((this.remote as any).conversationOpen || this._openOnReady) {
+      this._ensureSocket();
+    } else {
+      this._presence();
+      this._startPresenceBeat();
+    }
     this._reportInstallation();
     this._watchNavigation();
 
@@ -993,6 +1002,8 @@ interface Window {
         self.socket.emit('visitor-page-view', {
           currentPage: window.location.origin + window.location.pathname
         });
+      } else {
+        self._presence();
       }
       self.emit('navigate', { url: window.location.href, path: window.location.pathname });
     };
@@ -1051,6 +1062,88 @@ interface Window {
     this.emit('connection', { state: state, detail: detail || null });
   };
 
+  /** Opens the socket unless it is open, opening, or not allowed (PERF-02). */
+  Widget.prototype._ensureSocket = function (this: WidgetInstance) {
+    if (this.socket || this._connecting || this._blocked || this.destroyed) return;
+    this._connecting = true;
+    this._connect();
+  };
+
+  /** Runs `fn` once the socket has joined, opening it if needed. */
+  Widget.prototype._whenJoined = function (this: WidgetInstance, fn: () => void) {
+    if (this.socket && this.socket.connected && this._joinedOnce) {
+      fn();
+      return;
+    }
+    (this._afterJoin = this._afterJoin || []).push(fn);
+    this._ensureSocket();
+  };
+
+  /** What the browser is, for the panel's visitor details. */
+  Widget.prototype._browserInfo = function () {
+    var ua = navigator.userAgent || '';
+    var browser = /Edg\//.test(ua)
+      ? 'Edge'
+      : /OPR\//.test(ua)
+        ? 'Opera'
+        : /Chrome\//.test(ua)
+          ? 'Chrome'
+          : /Firefox\//.test(ua)
+            ? 'Firefox'
+            : /Safari\//.test(ua)
+              ? 'Safari'
+              : 'Other';
+    var os = /Windows/i.test(ua)
+      ? 'Windows'
+      : /Android/i.test(ua)
+        ? 'Android'
+        : /iPhone|iPad|iPod/i.test(ua)
+          ? 'iOS'
+          : /Mac OS/i.test(ua)
+            ? 'macOS'
+            : /Linux/i.test(ua)
+              ? 'Linux'
+              : 'Other';
+    return { browser: browser, os: os };
+  };
+
+  /** Tells the server the visitor is on this page, without a socket. */
+  Widget.prototype._presence = function (this: WidgetInstance) {
+    if (!this.token || this._blocked || this.destroyed) return;
+    if (this.socket && this.socket.connected) return;
+    var info = this._browserInfo();
+    try {
+      fetch(this._api('/api/widget/presence'), {
+        method: 'POST',
+        credentials: 'omit',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + this.token },
+        body: JSON.stringify({
+          currentPage: window.location.origin + window.location.pathname,
+          browser: info.browser,
+          os: info.os,
+          referrer: document.referrer || null,
+          language: navigator.language || null
+        })
+      }).catch(function () {
+        /* presence is best effort */
+      });
+    } catch (e) {
+      /* presence is best effort */
+    }
+  };
+
+  /** Every four minutes while the page is visible and no socket is open. */
+  Widget.prototype._startPresenceBeat = function (this: WidgetInstance) {
+    var self = this;
+    if (this._presenceBeat) clearInterval(this._presenceBeat);
+    this._presenceBeat = setInterval(
+      function () {
+        if (document.visibilityState === 'visible') self._presence();
+      },
+      4 * 60 * 1000
+    );
+  };
+
   Widget.prototype._connect = async function (this: WidgetInstance) {
     var self = this;
     this._setConnection('connecting');
@@ -1064,6 +1157,10 @@ interface Window {
       return;
     }
     if (this.destroyed) return;
+    this._connecting = false;
+    // From here the socket keeps the visitor record fresh.
+    if (this._presenceBeat) clearInterval(this._presenceBeat);
+    this._presenceBeat = null;
 
     this.socket = io(this.config.socketUrl + '/widget', {
       // Read on every (re)connect, so a renewed session is what reconnects.
@@ -1183,6 +1280,10 @@ interface Window {
         self._resendPending();
       }
       self.emit('conversation:ready', { conversationId: self.conversationId });
+      // What waited for the socket (a form, a rating, a request for a person).
+      var waiting = self._afterJoin || [];
+      self._afterJoin = [];
+      for (var w = 0; w < waiting.length; w++) waiting[w]();
     });
 
     this.socket.on('new-message', function (data: any) {
@@ -1243,29 +1344,9 @@ interface Window {
 
   Widget.prototype._join = function (this: WidgetInstance) {
     if (!this.socket) return;
-    var ua = navigator.userAgent || '';
-    var browser = /Edg\//.test(ua)
-      ? 'Edge'
-      : /OPR\//.test(ua)
-        ? 'Opera'
-        : /Chrome\//.test(ua)
-          ? 'Chrome'
-          : /Firefox\//.test(ua)
-            ? 'Firefox'
-            : /Safari\//.test(ua)
-              ? 'Safari'
-              : 'Other';
-    var os = /Windows/i.test(ua)
-      ? 'Windows'
-      : /Android/i.test(ua)
-        ? 'Android'
-        : /iPhone|iPad|iPod/i.test(ua)
-          ? 'iOS'
-          : /Mac OS/i.test(ua)
-            ? 'macOS'
-            : /Linux/i.test(ua)
-              ? 'Linux'
-              : 'Other';
+    var info = this._browserInfo();
+    var browser = info.browser;
+    var os = info.os;
     // The site and the visitor are not sent: the server reads both from the
     // signed session the socket connected with.
     this.socket.emit('join-conversation', {
@@ -2400,8 +2481,13 @@ interface Window {
    * over yet; the server then starts the conversation with a person instead.
    */
   Widget.prototype.requestHuman = function (this: WidgetInstance) {
-    if (!this.socket || !this.socket.connected) {
-      this._notice(this.t.connectionLost, 'error');
+    var self = this;
+    if (!this.socket || !this.socket.connected || !this._joinedOnce) {
+      // Not connected yet (the socket opens on demand): ask once it has.
+      this._whenJoined(function () {
+        self.requestHuman();
+      });
+      this._setView('messages');
       return;
     }
     this.socket.emit('request-human');
@@ -2478,8 +2564,9 @@ interface Window {
       this._notice(this.t.tooLong, 'error');
       return;
     }
-    // No socket yet (the widget is still starting): the message is queued
-    // like one written while offline and goes out with the first join.
+    // No socket yet (it opens on demand): the message is queued like one
+    // written while offline and goes out with the first join.
+    this._ensureSocket();
 
     var clientMessageId = uid('c');
     var file = this.selectedFile;
@@ -2681,9 +2768,8 @@ interface Window {
           resolve(err ? { ok: false, code: 'TIMEOUT' } : reply || { ok: false });
         });
       };
-      if (self.socket && self.socket.connected) send();
-      else if (self.socket) self.socket.once('connect', send);
-      else resolve({ ok: false, code: 'NOT_CONNECTED' });
+      if (self.socket && self.socket.connected && self._joinedOnce) send();
+      else self._whenJoined(send);
     });
   };
 
@@ -3065,6 +3151,8 @@ interface Window {
 
   Widget.prototype.open = function (this: WidgetInstance) {
     if (this.destroyed || !this.el || this.isHidden) return;
+    // The visitor is about to talk: now the socket is worth having.
+    this._ensureSocket();
     this.isOpen = true;
     this.el.wrap.classList.add('open');
     this.el.launcher.setAttribute('aria-expanded', 'true');
@@ -3257,6 +3345,8 @@ interface Window {
 
     this._teardownDom();
 
+    if (this._presenceBeat) clearInterval(this._presenceBeat);
+    this._presenceBeat = null;
     if (this.socket) {
       this.socket.removeAllListeners();
       this.socket.disconnect();

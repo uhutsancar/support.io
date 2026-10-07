@@ -357,11 +357,18 @@ app.use(
 
 // --- Widget dağıtımı ve sürümleme ---
 //
-//   /widget.js              → her zaman en güncel sürüm, kısa önbellek
-//   /widget/v4/widget.js    → sabitlenmiş sürüm, uzun ve değişmez önbellek
+//   /widget.js                    → her zaman en güncel sürüm
+//   /widget/v4/widget.js          → v4'ün en güncel sürümü
+//   /widget/v4/widget.<hash>.js   → tam olarak o içerik, bir yıl değişmez
+//                                   önbellek (plan v10 PERF-02)
 //
-// Müşteri sabitlenmiş yolu kullanıyorsa yeni bir dağıtım onun sayfasını
-// bozamaz. Kök yolu kullanıyorsa güncellemeleri otomatik alır.
+// İlk ikisi 5 dakika önbellekte kalır, sonra ETag ile yeniden doğrulanır;
+// `stale-while-revalidate` sayesinde müşteri sayfası bu sırada beklemez.
+// Eskiden /widget/v4/widget.js bir yıl `immutable` gönderiliyordu: içeriği
+// her dağıtımda değiştiği için o yolu kullanan sayfalar bir yıl eski widget'ta
+// kalabilirdi. Değişmez önbellek artık yalnızca adında içerik özeti olan
+// dosyada; özet derlemede yazılır (scripts/minify-widget.ts). Eski bir özetle
+// gelen istek de çalışır: güncel dosya kısa önbellekle döner.
 //
 // v4 imzalı widget oturumuyla konuşur (POST /api/widget/session); v3'ün
 // kendi ürettiği visitorId ile katılma akışını sunucu artık kabul etmez.
@@ -369,29 +376,49 @@ app.use(
 // verir: o yolu gömmüş bir sayfa kendiliğinden v4'e geçer.
 const WIDGET_MAJOR = 'v4';
 const widgetFile = path.join(publicPath, 'widget.js');
+const SHORT_CACHE = 'public, max-age=300, stale-while-revalidate=86400';
 
-function serveWidget(immutable: boolean) {
-  return (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    // Widget herhangi bir müşteri alan adından yüklenir; bu dosya için * doğru
-    // olan tek değerdir. Dosya publictir, kimlik taşımaz.
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader(
-      'Cache-Control',
-      immutable ? 'public, max-age=31536000, immutable' : 'public, max-age=300, must-revalidate'
-    );
-    res.sendFile(widgetFile);
-  };
+let widgetHashCache: string | null = null;
+/** The content hash the build wrote; re-read outside production. */
+function widgetHash(): string | null {
+  if (widgetHashCache && isProduction) return widgetHashCache;
+  try {
+    const { hash } = JSON.parse(
+      fs.readFileSync(path.join(publicPath, 'widget-version.json'), 'utf8')
+    ) as { hash?: string };
+    widgetHashCache = typeof hash === 'string' ? hash : null;
+  } catch {
+    widgetHashCache = null;
+  }
+  return widgetHashCache;
 }
 
-app.get('/widget.js', serveWidget(false));
-app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget(true));
-app.get('/widget/v3/widget.js', serveWidget(false));
+function sendWidget(res: Response, cacheControl: string): void {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  // Widget herhangi bir müşteri alan adından yüklenir; bu dosya için * doğru
+  // olan tek değerdir. Dosya publictir, kimlik taşımaz.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', cacheControl);
+  res.sendFile(widgetFile);
+}
+
+const serveWidget = () => (_req: Request, res: Response) => sendWidget(res, SHORT_CACHE);
+
+app.get('/widget.js', serveWidget());
+app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget());
+app.get(`/widget/${WIDGET_MAJOR}/widget.:hash([0-9a-f]{12}).js`, (req: Request, res: Response) => {
+  const current = widgetHash();
+  sendWidget(
+    res,
+    current && req.params.hash === current ? 'public, max-age=31536000, immutable' : SHORT_CACHE
+  );
+});
+app.get('/widget/v3/widget.js', serveWidget());
 // Yaygın yazım varyantları da aynı dosyaya düşer; kurulum talimatını yanlış
 // kopyalayan bir müşteri 404 yerine çalışan bir widget alır.
-app.get('/widget/widget.js', serveWidget(false));
-app.get('/embed.js', serveWidget(false));
+app.get('/widget/widget.js', serveWidget());
+app.get('/embed.js', serveWidget());
 
 app.use(
   express.static(publicPath, {

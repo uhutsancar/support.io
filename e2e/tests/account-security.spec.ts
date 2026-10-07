@@ -45,7 +45,7 @@ test('password change and two-step sign-in, from the settings page', async ({ br
     await page.getByLabel('Devam etmek için şifrenizi girin').fill(NEW_PASSWORD);
     await page.getByRole('button', { name: 'Devam et' }).click();
     await expect(page.getByRole('img', { name: 'QR' })).toBeVisible();
-    secret = (await page.locator('code').first().innerText()).replace(/\s/g, '');
+    secret = (await page.getByTestId('totp-secret').innerText()).replace(/\s/g, '');
     expect(secret).toMatch(/^[A-Z2-7]{32}$/);
     await page.getByLabel('Uygulamadaki 6 haneli kod').fill(totp(secret));
     await page.getByRole('button', { name: 'Doğrula ve aç' }).click();

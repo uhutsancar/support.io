@@ -111,8 +111,8 @@ test('a new customer answers their first visitor and upgrades', async ({ browser
       const claim = panel.getByRole('button', { name: 'Talebi Üzerime Al' });
       if (await claim.isVisible().catch(() => false)) await claim.click();
       await expect(panel.getByText(question).last()).toBeVisible();
-      await panel.getByPlaceholder('Mesajınızı yazın...').fill(answer);
-      await panel.getByPlaceholder('Mesajınızı yazın...').press('Enter');
+      await panel.getByPlaceholder(/^Mesajınızı yazın/).fill(answer);
+      await panel.getByPlaceholder(/^Mesajınızı yazın/).press('Enter');
     });
 
     await test.step('the visitor sees the answer live', async () => {

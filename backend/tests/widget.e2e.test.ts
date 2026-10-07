@@ -148,10 +148,12 @@ test('widget.js is served with the right type, CORS and cache headers', async ()
   );
 });
 
-test('the pinned widget path is cacheable as immutable', async () => {
+test('the v4 path is revalidated, not frozen for a year', async () => {
+  // Its content changes with each deploy, so it is not immutable; the
+  // content-hashed name is (tests/widgetDelivery.e2e.test.ts, PERF-02).
   const res = await fetch(`${BASE}/widget/v4/widget.js`);
   assert.equal(res.status, 200);
-  assert.match(res.headers.get('cache-control') || '', /immutable/);
+  assert.doesNotMatch(res.headers.get('cache-control') || '', /immutable/);
 
   // v3 spoke a protocol the server no longer accepts; its pinned path now
   // serves the current runtime with a short cache instead of a 404.

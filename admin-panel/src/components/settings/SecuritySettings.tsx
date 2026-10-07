@@ -362,7 +362,10 @@ export const MfaEnrolment = ({ onEnabled }: { onEnabled: () => void }) => {
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t('account.security.mfa.manual')}
           </p>
-          <code className="block break-all font-mono text-sm bg-gray-50 dark:bg-gray-900 rounded px-3 py-2 text-gray-900 dark:text-gray-100 select-all">
+          <code
+            data-testid="totp-secret"
+            className="block break-all font-mono text-sm bg-gray-50 dark:bg-gray-900 rounded px-3 py-2 text-gray-900 dark:text-gray-100 select-all"
+          >
             {setup.secret.replace(/(.{4})/g, '$1 ').trim()}
           </code>
           <Label text={t('account.security.mfa.codeLabel')}>

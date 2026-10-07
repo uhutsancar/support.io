@@ -16,4 +16,5 @@ coverage/
 # Build output, not a source file: compiled from backend/src/widget/widget.ts by
 # `npm run build:widget`, which `npm run dev` and `npm run build` both do first.
 backend/public/widget.js
+backend/public/widget-version.json
 

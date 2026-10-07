@@ -52,6 +52,9 @@ import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActiveFor } from '../services/assistant';
 import { visitorCountry } from '../services/assistant/region';
 import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
+import Visitor from '../models/Visitor';
+import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
+import { ioFrom, siteRoom } from '../realtime';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
@@ -287,11 +290,21 @@ router.post(
       kv: keyVersion
     });
 
-    const [saved, faqs, availability, plan] = await Promise.all([
+    const [saved, faqs, availability, plan, openConversation] = await Promise.all([
       WidgetConfig.findOne({ siteId: site._id, isActive: true }),
       FAQ.find({ siteId: site._id, isActive: true }).sort({ order: 1 }).limit(50).lean(),
       resolveAvailability(site),
-      limitsFor(String(site.organizationId))
+      limitsFor(String(site.organizationId)),
+      // A returning visitor with a conversation still open connects at once,
+      // so a reply reaches them; everyone else only when they open the
+      // widget (PERF-02).
+      continues || resumesHere
+        ? Conversation.findOne({
+            siteId: site._id,
+            visitorId,
+            status: { $in: [...ACTIVE_CONVERSATION_STATUSES] }
+          })
+        : Promise.resolve(null)
     ]);
 
     res.json({
@@ -302,6 +315,7 @@ router.post(
       visitorId,
       renewed: continues,
       resumed: resumesHere,
+      conversationOpen: Boolean(openConversation),
       version: WIDGET_VERSION,
       apiVersion: API_VERSION,
       serverTime: new Date().toISOString(),
@@ -366,6 +380,43 @@ router.post(
 );
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// POST /api/widget/presence   { currentPage, browser?, os?, referrer?, language? }
+//
+// The widget opens its socket only when the visitor opens it or has a
+// conversation going (PERF-02). Until then this keeps the panel's live
+// visitor list right: one small request when a page loads or changes, and
+// one every few minutes while the page is visible. It upserts the same
+// visitor record the socket join writes and tells the panel.
+// ---------------------------------------------------------------------------
+const bounded = (value: unknown, max: number): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null;
+
+router.post(
+  '/presence',
+  requireWidgetSession,
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = req.site;
+    const body = (req.body || {}) as Record<string, unknown>;
+    const visitor = await Visitor.findOneAndUpdate(
+      { visitorId: req.widget.visitorId, siteId: site._id },
+      {
+        organizationId: site.organizationId,
+        ip: req.ip ?? null,
+        browser: bounded(body.browser, 100),
+        os: bounded(body.os, 100),
+        currentPage: bounded(body.currentPage, 2048) ?? '/',
+        referrer: bounded(body.referrer, 2048),
+        isActive: true,
+        lastActiveAt: new Date()
+      },
+      { new: true, upsert: true }
+    );
+    ioFrom(req)?.of('/admin').to(siteRoom(site._id)).emit('visitor-updated', visitor);
+    res.status(204).end();
+  })
+);
+
 // Links mailed to a visitor (plan v10 PRD-01, PRD-04). No session: the
 // signed token in the link is the proof, and it names one conversation.
 // ---------------------------------------------------------------------------
