@@ -41,6 +41,11 @@ export function productionConfigProblems(): string[] {
   if (jwt.length < 32 || looksPlaceholder(jwt)) {
     problems.push('JWT_SECRET must be a random value of at least 32 characters');
   }
+  // During a rotation (SEC-18) the old secret is still trusted for checking.
+  const previous = value('JWT_SECRET_PREVIOUS');
+  if (previous && (previous.length < 32 || looksPlaceholder(previous))) {
+    problems.push('JWT_SECRET_PREVIOUS, when set, must be the old secret (32+ characters)');
+  }
   if (!value('CORS_ORIGINS')) {
     problems.push('CORS_ORIGINS must list the panel’s origin');
   }

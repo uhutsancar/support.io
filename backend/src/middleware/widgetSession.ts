@@ -9,7 +9,7 @@
 // useless on another site's page.
 
 import Site from '../models/Site';
-import { verifyWidgetSession, siteKeyVersion } from '../config/tokens';
+import { verifyWidgetSession, siteKeyMatches } from '../config/tokens';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { HttpError, forbidden } from '../http/errors';
 import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
@@ -44,7 +44,7 @@ export async function siteForWidgetSession(
   claims: VerifiedWidgetSession
 ): Promise<Doc<SiteDoc> | null> {
   const site = await Site.findOne({ _id: claims.siteId, isActive: true });
-  if (!site || siteKeyVersion(site.siteKey) !== claims.kv) return null;
+  if (!site || !siteKeyMatches(site.siteKey, claims.kv)) return null;
   return site;
 }
 

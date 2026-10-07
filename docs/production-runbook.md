@@ -177,8 +177,26 @@ asks for the database name.
 
 ## 8. Rotating secrets
 
-- `JWT_SECRET`: change it and deploy. Every session, widget session and
-  unfinished checkout reference becomes invalid; users sign in again.
+- `JWT_SECRET` — without signing anybody out (plan v10 SEC-18):
+  1. In `.env.production` set `JWT_SECRET_PREVIOUS` to the current value
+     and `JWT_SECRET` to a new one (`openssl rand -hex 48`). Deploy.
+     Everything signed or sealed with the old secret is still accepted —
+     panel and widget sessions, e-mail links, attachment links, checkout
+     references, IP blocks, sealed site and authenticator secrets — and
+     everything new uses the new one.
+  2. `docker compose -f docker-compose.prod.yml exec backend npm run
+     secrets:rotate:prod -- --dry-run`, then without `--dry-run`. It
+     re-seals every stored secret under the new key and prints how many
+     accounts still hold recovery codes from the old key; those keep working
+     until step 3, so ask those users to create new codes (Settings →
+     Security).
+  3. After 7 days (the longest session), empty `JWT_SECRET_PREVIOUS` and
+     deploy. Old sessions and links now fail; IP-based visitor blocks made
+     before the rotation stop matching by address (they still match by
+     visitor id).
+  If the old secret leaked, skip the overlap: set the new `JWT_SECRET`
+  with `JWT_SECRET_PREVIOUS` empty. Everybody signs in again, sealed
+  secrets read as "not configured" and owners generate new ones.
 - `DB_PASSWORD`: `ALTER USER support_user PASSWORD '…'` in psql, then the
   same value in `.env.production`, then `docker compose … up -d backend`.
 - Paddle keys and webhook secret: create the new one in Paddle, update

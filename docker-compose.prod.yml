@@ -139,6 +139,9 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      # Only while rotating JWT_SECRET (runbook §8): the old value, still trusted
+      # for checking what it signed and sealed.
+      JWT_SECRET_PREVIOUS: ${JWT_SECRET_PREVIOUS:-}
       # Session cookie: panel and API share the origin, so Lax + Secure.
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
       SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}

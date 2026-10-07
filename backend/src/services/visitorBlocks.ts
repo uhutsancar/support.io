@@ -11,22 +11,30 @@ import crypto from 'crypto';
 import { ipKeyGenerator } from 'express-rate-limit';
 import { query } from '../db/pool';
 import { generateId } from '../db/objectId';
-import { derivedKey } from '../config/tokens';
+import { derivedKeys } from '../config/tokens';
 
 /**
  * The keyed hash a block compares. An IPv6 address counts by its /56, as the
  * rate limits do: one home connection hands out a whole range of them.
  */
 export function ipHash(ip: string | null | undefined): string | null {
+  return ipHashes(ip)[0] ?? null;
+}
+
+/**
+ * The address's hash under the current secret, and during a JWT_SECRET
+ * rotation under the previous one too, so blocks made before it still hold
+ * (SEC-18). The first is the one new blocks store.
+ */
+function ipHashes(ip: string | null | undefined): string[] {
   const value = String(ip || '')
     .replace(/^::ffff:/, '')
     .trim();
-  if (!value) return null;
-  return crypto
-    .createHmac('sha256', derivedKey('visitor-ip'))
-    .update(ipKeyGenerator(value))
-    .digest('hex')
-    .slice(0, 32);
+  if (!value) return [];
+  const network = ipKeyGenerator(value);
+  return derivedKeys('visitor-ip').map((key) =>
+    crypto.createHmac('sha256', key).update(network).digest('hex').slice(0, 32)
+  );
 }
 
 /** The refusal a blocked visitor's widget turns into its polite line. */
@@ -41,14 +49,14 @@ export async function isBlocked({
   visitorId?: string | null;
   ip?: string | null;
 }): Promise<boolean> {
-  const hash = ipHash(ip);
-  if (!visitorId && !hash) return false;
+  const hashes = ipHashes(ip);
+  if (!visitorId && !hashes.length) return false;
   const { rows } = await query(
     `SELECT 1 FROM visitor_blocks
       WHERE site_id = $1 AND expires_at > now()
-        AND ((visitor_id IS NOT NULL AND visitor_id = $2) OR (ip_hash IS NOT NULL AND ip_hash = $3))
+        AND ((visitor_id IS NOT NULL AND visitor_id = $2) OR (ip_hash IS NOT NULL AND ip_hash = ANY($3)))
       LIMIT 1`,
-    [siteId, visitorId || null, hash]
+    [siteId, visitorId || null, hashes]
   );
   return rows.length > 0;
 }

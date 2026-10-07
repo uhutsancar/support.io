@@ -19,7 +19,7 @@ import crypto from 'crypto';
 import { NodeRuntime, Webhooks } from '@paddle/paddle-node-sdk';
 import { getPool, withTransaction } from '../db/pool';
 import { generateId } from '../db/objectId';
-import { derivedKey } from '../config/tokens';
+import { derivedKey, derivedKeys } from '../config/tokens';
 import { billingConfig, planForPrice } from '../config/billing';
 import { isPlanType } from '../domain';
 import { LIVE_STATUSES, effectivePlan, isSubscriptionStatus } from '../domain/subscription';
@@ -31,19 +31,21 @@ import type { PoolClient } from 'pg';
 // -------------------------------------------------------------- checkout ref
 
 /** Ties a checkout to the organization that asked for it; see the header. */
-export function checkoutReference(organizationId: string): string {
-  return crypto
-    .createHmac('sha256', derivedKey('billing-checkout'))
-    .update(organizationId)
-    .digest('hex')
-    .slice(0, 32);
+export function checkoutReference(
+  organizationId: string,
+  secret = derivedKey('billing-checkout')
+): string {
+  return crypto.createHmac('sha256', secret).update(organizationId).digest('hex').slice(0, 32);
 }
 
 function referenceMatches(organizationId: unknown, reference: unknown): boolean {
   if (typeof organizationId !== 'string' || typeof reference !== 'string') return false;
-  const expected = Buffer.from(checkoutReference(organizationId));
   const given = Buffer.from(reference);
-  return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+  // A checkout started before a JWT_SECRET rotation still completes (SEC-18).
+  return derivedKeys('billing-checkout').some((secret) => {
+    const expected = Buffer.from(checkoutReference(organizationId, secret));
+    return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+  });
 }
 
 // ------------------------------------------------------------------ webhook

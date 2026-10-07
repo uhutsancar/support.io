@@ -40,7 +40,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto, { randomUUID } from 'crypto';
 import { isProduction } from '../config/env';
-import { derivedKey } from '../config/tokens';
+import { derivedKey, derivedKeys } from '../config/tokens';
 import { HttpError } from '../http/errors';
 import type { FileFilterCallback } from 'multer';
 import type { Request } from 'express';
@@ -285,9 +285,13 @@ export function attachmentPath(key: string): string {
 
 const LINK_TTL_SECONDS = 12 * 60 * 60;
 
-function linkSignature(key: string, expires: number): string {
+function linkSignature(
+  key: string,
+  expires: number,
+  secret = derivedKey('attachment-link')
+): string {
   return crypto
-    .createHmac('sha256', derivedKey('attachment-link'))
+    .createHmac('sha256', secret)
     .update(`${key}\n${expires}`)
     .digest('base64url')
     .slice(0, 32);
@@ -309,8 +313,10 @@ export function attachmentLinkValid(key: string, expires: unknown, signature: un
   const e = Number(expires);
   if (!Number.isInteger(e) || e * 1000 < Date.now()) return false;
   if (typeof signature !== 'string' || signature.length !== 32) return false;
-  const expected = linkSignature(key, e);
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  // A link signed before a JWT_SECRET rotation still opens (SEC-18).
+  return derivedKeys('attachment-link').some((secret) =>
+    crypto.timingSafeEqual(Buffer.from(linkSignature(key, e, secret)), Buffer.from(signature))
+  );
 }
 
 // ----------------------------------------------------------------- storing

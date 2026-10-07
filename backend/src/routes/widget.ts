@@ -31,6 +31,7 @@ import {
   newWidgetSessionId,
   renewableWidgetSession,
   signWidgetSession,
+  siteKeyMatches,
   siteKeyVersion,
   verifyVisitorLink
 } from '../config/tokens';
@@ -253,7 +254,9 @@ router.post(
     const keyVersion = siteKeyVersion(site.siteKey);
     const previous = renewableWidgetSession(req.body?.token);
     const continues =
-      previous !== null && previous.siteId === String(site._id) && previous.kv === keyVersion;
+      previous !== null &&
+      previous.siteId === String(site._id) &&
+      siteKeyMatches(site.siteKey, previous.kv);
     // The link in a reply mail (PRD-01) brings the visitor back to their
     // conversation, even from another browser: it names the visitor, signed.
     const resumed = verifyVisitorLink('resume', req.body?.resumeToken);

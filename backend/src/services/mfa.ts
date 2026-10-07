@@ -9,7 +9,7 @@
 
 import crypto from 'crypto';
 import { seal, open } from '../config/secretBox';
-import { derivedKey } from '../config/tokens';
+import { derivedKey, derivedKeys, keyId } from '../config/tokens';
 import { generateTotpSecret, otpauthUri, verifyTotp } from './totp';
 import type { AuthenticatedUser } from '../types/auth';
 
@@ -24,9 +24,29 @@ function newRecoveryCode(): string {
   return `${chars.slice(0, 5)}-${chars.slice(5)}`;
 }
 
-function recoveryHash(code: string): string {
-  const normalised = code.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return crypto.createHmac('sha256', derivedKey('recovery-codes')).update(normalised).digest('hex');
+const normalise = (code: string) => code.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/**
+ * What is stored for a recovery code: the id of the key it was hashed with
+ * and a keyed hash, so a database dump alone does not reveal the codes and
+ * a JWT_SECRET rotation knows which accounts still hold codes from the old
+ * key (SEC-18, npm run secrets:rotate).
+ */
+function recoveryHash(code: string, key = derivedKey('recovery-codes')): string {
+  return `${keyId(key)}:${crypto.createHmac('sha256', key).update(normalise(code)).digest('hex')}`;
+}
+
+/** Every stored form a typed code may match: each known key, with and without its id. */
+function recoveryCandidates(code: string): string[] {
+  return derivedKeys('recovery-codes').flatMap((key) => {
+    const stored = recoveryHash(code, key);
+    return [stored, stored.slice(stored.indexOf(':') + 1)];
+  });
+}
+
+/** Whether a stored recovery code was hashed with the current key. */
+export function recoveryCodeIsCurrent(stored: string): boolean {
+  return stored.startsWith(`${keyId(derivedKey('recovery-codes'))}:`);
 }
 
 export function mfaEnabled(account: AuthenticatedUser): boolean {
@@ -61,7 +81,7 @@ export async function confirmEnrollment(
   const codes = Array.from({ length: RECOVERY_CODE_COUNT }, newRecoveryCode);
   account.totpEnabledAt = new Date();
   account.totpLastStep = step;
-  account.recoveryCodes = codes.map(recoveryHash);
+  account.recoveryCodes = codes.map((code) => recoveryHash(code));
   await account.save();
   return codes;
 }
@@ -69,7 +89,7 @@ export async function confirmEnrollment(
 /** Fresh recovery codes; the old ones stop working. */
 export async function regenerateRecoveryCodes(account: AuthenticatedUser): Promise<string[]> {
   const codes = Array.from({ length: RECOVERY_CODE_COUNT }, newRecoveryCode);
-  account.recoveryCodes = codes.map(recoveryHash);
+  account.recoveryCodes = codes.map((code) => recoveryHash(code));
   await account.save();
   return codes;
 }
@@ -101,12 +121,14 @@ export async function verifySecondStep(
     return 'totp';
   }
   if (typeof recoveryCode === 'string' && recoveryCode && recoveryCode.length <= 32) {
-    const hash = recoveryHash(recoveryCode);
+    const hashes = recoveryCandidates(recoveryCode);
     const stored = Array.isArray(account.recoveryCodes) ? account.recoveryCodes : [];
-    const index = stored.findIndex(
-      (candidate) =>
-        candidate.length === hash.length &&
-        crypto.timingSafeEqual(Buffer.from(candidate), Buffer.from(hash))
+    const index = stored.findIndex((candidate) =>
+      hashes.some(
+        (hash) =>
+          candidate.length === hash.length &&
+          crypto.timingSafeEqual(Buffer.from(candidate), Buffer.from(hash))
+      )
     );
     if (index < 0) return null;
     account.recoveryCodes = stored.filter((_, i) => i !== index);
