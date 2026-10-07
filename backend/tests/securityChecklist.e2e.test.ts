@@ -9,6 +9,7 @@
 //  - adding, changing and deleting a site, and assigning a conversation,
 //    leave audit rows that say what changed but not the content
 //  - /.well-known/security.txt names where to report a vulnerability (SEC-10)
+//  - the CSP names a report endpoint that answers 204 and logs no URL (SEC-11)
 //
 // Needs the running API. Run: npm run test:compose
 
@@ -19,6 +20,7 @@ import assert from 'node:assert/strict';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor } from './helpers/widget';
 import { signUp } from './helpers/accounts';
+import { summarize } from '../src/routes/cspReport';
 
 const PASSWORD = 'Rt5!checklist';
 const stamp = () => `${Date.now()}${Math.floor(Math.random() * 100000)}`;
@@ -240,4 +242,56 @@ test('security.txt names a contact, an expiry under a year and the policy', asyn
   const legacy = await fetch(`${BASE}/security.txt`, { redirect: 'manual' });
   assert.equal(legacy.status, 301);
   assert.equal(legacy.headers.get('location'), '/.well-known/security.txt');
+});
+
+test('CSP violations are reported to an endpoint that keeps no URL', async () => {
+  const page = await fetch(`${BASE}/api/plans`);
+  const policy = page.headers.get('content-security-policy') || '';
+  assert.match(policy, /report-uri \/api\/csp-report/);
+  assert.match(policy, /report-to csp/);
+  assert.equal(page.headers.get('reporting-endpoints'), 'csp="/api/csp-report"');
+
+  const legacy = await fetch(`${BASE}/api/csp-report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/csp-report' },
+    body: JSON.stringify({
+      'csp-report': {
+        'document-uri': 'https://app.example/verify-email?token=secret',
+        'violated-directive': 'script-src',
+        'blocked-uri': 'https://evil.example/x.js?mail=a@b.example'
+      }
+    })
+  });
+  assert.equal(legacy.status, 204);
+  const modern = await fetch(`${BASE}/api/csp-report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/reports+json' },
+    body: JSON.stringify([{ type: 'csp-violation', body: { effectiveDirective: 'img-src' } }])
+  });
+  assert.equal(modern.status, 204);
+  const huge = await fetch(`${BASE}/api/csp-report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/csp-report' },
+    body: JSON.stringify({ 'csp-report': { 'blocked-uri': 'x'.repeat(9000) } })
+  });
+  assert.equal(huge.status, 413);
+
+  // What would be logged: the directive and origins, never a query string.
+  const [line] = summarize({
+    'csp-report': {
+      'document-uri': 'https://app.example/verify-email?token=secret',
+      'effective-directive': 'script-src-elem',
+      'blocked-uri': 'https://evil.example/x.js?mail=a@b.example'
+    }
+  });
+  assert.deepEqual(line, {
+    directive: 'script-src-elem',
+    blocked: 'https://evil.example',
+    page: '/verify-email',
+    disposition: null
+  });
+  assert.deepEqual(
+    summarize([{ type: 'csp-violation', body: { blockedURL: 'inline' } }])[0].blocked,
+    'inline'
+  );
 });

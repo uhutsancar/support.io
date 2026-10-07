@@ -27,6 +27,14 @@
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 
+/**
+ * Where browsers report what the policy blocked (routes/cspReport.ts, SEC-11):
+ * report-uri for the browsers that only know it, report-to with the
+ * Reporting-Endpoints header for the rest.
+ */
+export const CSP_REPORT_PATH = '/api/csp-report';
+const REPORTING = [`report-uri ${CSP_REPORT_PATH}`, 'report-to csp'];
+
 /** Hosts that uploaded files may be served from. */
 function mediaHosts(): string[] {
   const hosts: string[] = [];
@@ -100,7 +108,8 @@ const STRICT_BASE = (nonce: string): string[] => {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "worker-src 'self' blob:",
-    'upgrade-insecure-requests'
+    'upgrade-insecure-requests',
+    ...REPORTING
   ];
 };
 
@@ -115,7 +124,8 @@ const RELAXED = (): string[] => [
   `connect-src 'self' ${connectHosts().join(' ')}`.trim(),
   "object-src 'none'",
   "base-uri 'self'",
-  "frame-ancestors 'none'"
+  "frame-ancestors 'none'",
+  ...REPORTING
 ];
 
 /**
@@ -141,6 +151,7 @@ export function contentSecurityPolicy(options: { isProduction: boolean }) {
       .join('; ');
 
     res.setHeader('Content-Security-Policy', policy);
+    res.setHeader('Reporting-Endpoints', `csp="${CSP_REPORT_PATH}"`);
     next();
   };
 }

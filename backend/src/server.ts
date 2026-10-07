@@ -41,6 +41,7 @@ import assistantRoutes from './routes/assistant';
 import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
 import dataExportRoutes from './routes/dataExport';
 import wellKnownRoutes from './routes/wellKnown';
+import cspReportRoutes from './routes/cspReport';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
@@ -194,6 +195,9 @@ app.use(requestLogging);
 // Paddle's webhook is signed over the exact bytes it sent, so it is mounted
 // before the JSON parser, the sanitizer and the API rate limit (routes/billing.ts).
 app.use('/api/billing/paddle/webhook', billingWebhookRoutes);
+// Browsers' CSP reports come as application/csp-report or reports+json, read
+// by the route itself with an 8 KB cap (routes/cspReport.ts).
+app.use('/api/csp-report', cspReportRoutes);
 
 // Oturum httpOnly cerezde tasinir; auth ara katmani onu buradan okur.
 app.use(cookieParser());
