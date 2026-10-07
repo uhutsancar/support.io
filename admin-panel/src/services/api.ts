@@ -247,7 +247,13 @@ export const visitorsAPI = {
     api.post<{ id: string; days: number }>('/visitors/block', body),
   blocks: (siteId: string) =>
     api.get<{ blocks: VisitorBlock[] }>(`/visitors/blocks/${siteId}`, { cache: false }),
-  unblock: (id: string) => api.delete(`/visitors/blocks/${id}`)
+  unblock: (id: string) => api.delete(`/visitors/blocks/${id}`),
+  /** KVKK m.11: every conversation of this conversation's visitor on its site (SEC-17). */
+  erase: (conversationId: string) =>
+    api.post<{ conversations: number; messages: number; files: number; events: number }>(
+      '/visitors/erase',
+      { conversationId }
+    )
 };
 
 // --------------------------------------------------------------------- deals

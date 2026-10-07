@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import VisitorFormDetails from '../components/conversations/VisitorFormDetails';
 import SavedReplyInput from '../components/conversations/SavedReplyInput';
 import BlockVisitor from '../components/conversations/BlockVisitor';
+import EraseVisitor from '../components/conversations/EraseVisitor';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, conversationsAPI, departmentsAPI, filesAPI, teamAPI } from '../services/api';
@@ -1195,6 +1196,19 @@ const Conversations = () => {
                     <VisitorFormDetails conversation={selectedConversation} />
                     {user?.role !== 'viewer' && (
                       <BlockVisitor conversationId={selectedConversation._id} />
+                    )}
+                    {(user?.role === 'owner' || user?.role === 'admin') && (
+                      <EraseVisitor
+                        conversationId={selectedConversation._id}
+                        onErased={() => {
+                          const visitorId = selectedConversation.visitorId;
+                          setConversations((prev) =>
+                            prev.filter((conv) => conv.visitorId !== visitorId)
+                          );
+                          setSelectedConversation(null);
+                          setMessages([]);
+                        }}
+                      />
                     )}
                     <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
                       <Globe2 className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />

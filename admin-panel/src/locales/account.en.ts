@@ -219,6 +219,29 @@ export default {
       INVALID_TOKEN: 'This link is invalid or has expired.'
     }
   },
+  retention: {
+    title: 'Conversation retention',
+    description:
+      'Conversations whose last message is older than this are deleted for good every night, with their messages and attachments.',
+    keep: 'Keep conversations for:',
+    days_one: '{{count}} day',
+    days_other: '{{count}} days',
+    years_one: '{{count}} year',
+    years_other: '{{count}} years',
+    default: 'default',
+    fixed: 'On the Free plan conversations are kept for {{period}}.',
+    upgrade: 'Upgrade to keep them longer',
+    saved: 'Retention saved.'
+  },
+  visitorErase: {
+    button: 'Delete this visitor’s data',
+    title: 'Delete this visitor’s data?',
+    message:
+      'Every conversation this visitor had on this site, with its messages, the files they sent, their visitor record and page activity, is deleted for good. Use it for data-deletion requests under KVKK/GDPR. This cannot be undone.',
+    confirm: 'Delete for good',
+    done_one: 'The visitor’s data is deleted ({{count}} conversation).',
+    done_other: 'The visitor’s data is deleted ({{count}} conversations).'
+  },
   visitorBlocks: {
     block: 'Block visitor',
     explain:

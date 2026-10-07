@@ -35,7 +35,11 @@ const defaults = {
   E2E_BASE_URL: `http://localhost:${rootEnv('BACKEND_PORT') || '5000'}`,
   PADDLE_WEBHOOK_SECRET: rootEnv('PADDLE_WEBHOOK_SECRET') || 'local-dev-paddle-webhook-secret',
   PADDLE_PRICE_PRO: rootEnv('PADDLE_PRICE_PRO') || 'pri_local_pro',
-  PADDLE_PRICE_ENTERPRISE: rootEnv('PADDLE_PRICE_ENTERPRISE') || 'pri_local_enterprise'
+  PADDLE_PRICE_ENTERPRISE: rootEnv('PADDLE_PRICE_ENTERPRISE') || 'pri_local_enterprise',
+  // Suites that delete files in-process (retention, account deletion) must
+  // reach the same disk as the stack, never a real bucket whose keys sit in
+  // backend/.env.
+  UPLOAD_STORAGE: 'local'
 };
 
 for (const [key, value] of Object.entries(defaults)) {

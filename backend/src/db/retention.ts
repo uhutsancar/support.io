@@ -9,6 +9,7 @@ import { reconcileSubscriptions } from '../services/billing';
 import { sweepTrials } from '../services/trial';
 import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
+import { nightlyPurge } from '../services/dataRetention';
 
 const RETENTION_DAYS = 30;
 /** How long a visitor's IP and device details are kept after their last visit. */
@@ -83,6 +84,13 @@ async function sweepOnce() {
     }
   } catch (error) {
     console.error('Retention sweep failed for unconfirmed sign-ups:', errorText(error));
+  }
+  try {
+    // Conversations past the workspace's retention window, with their
+    // attachments, once a night (SEC-17).
+    await nightlyPurge();
+  } catch (error) {
+    console.error('Retention purge failed:', errorText(error));
   }
   for (const target of TARGETS) {
     try {

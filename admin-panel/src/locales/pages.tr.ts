@@ -455,7 +455,7 @@ export default {
         {
           h: 'Saklama süreleri',
           p: [
-            'Sohbetler, hesap açık kaldığı sürece ya da işletme silene kadar saklanır.',
+            'Sohbetler son mesajlarından sonra işletmenin seçtiği süre boyunca saklanır: Ücretsiz planda 90 gün, ücretli planlarda 30 gün ile 5 yıl arası. Süre dolan sohbetler ekleriyle birlikte her gece silinir; işletme bir sohbeti daha önce de silebilir.',
             'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretten 90 gün sonra; işlem kayıtlarındaki IP adresleri 90 gün sonra silinir.',
             'Hesap silindiğinde tüm verileri silinir; şifreli yedeklerden en geç üç ay içinde düşer.'
           ]
@@ -477,7 +477,7 @@ export default {
           h: 'Haklarınız',
           p: [
             'KVKK ve GDPR kapsamında verilerinize erişme, düzeltilmesini, silinmesini ve aktarılmasını isteme, işlenmesine itiraz etme haklarınız vardır.',
-            'Hesap sahipleri tüm veriyi panelde Ayarlar → Veri ve gizlilik bölümünden indirebilir ve hesabı silebilir. Ziyaretçiler taleplerini ilgili işletmeye ya da bize iletebilir.'
+            'Hesap sahipleri tüm veriyi panelde Ayarlar → Veri ve gizlilik bölümünden indirebilir ve hesabı silebilir. Ziyaretçiler taleplerini ilgili işletmeye ya da bize iletebilir; işletme bir ziyaretçinin o sitedeki tüm verisini panelden tek adımda silebilir.'
           ]
         }
       ]

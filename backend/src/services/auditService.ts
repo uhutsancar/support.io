@@ -172,6 +172,11 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   'saved_reply.deleted': { action: 'SAVED_REPLY_DELETED', entityType: 'saved_reply' },
   'visitor.blocked': { action: 'VISITOR_BLOCKED', entityType: 'visitor' },
   'visitor.unblocked': { action: 'VISITOR_UNBLOCKED', entityType: 'visitor' },
+  'visitor.data_deleted': { action: 'VISITOR_DATA_DELETED', entityType: 'visitor' },
+  'organization.retention.updated': {
+    action: 'RETENTION_SETTINGS_UPDATED',
+    entityType: 'organization'
+  },
   'invitation.sent': { action: 'INVITATION_SENT', entityType: 'invitation' },
   'invitation.revoked': { action: 'INVITATION_REVOKED', entityType: 'invitation' },
   'invitation.accepted': { action: 'INVITATION_ACCEPTED', entityType: 'invitation' },

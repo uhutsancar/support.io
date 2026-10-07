@@ -22,6 +22,7 @@ router.get('/', (_req: Request, res: Response) => {
       monthlyConversations: PLAN_LIMITS[type].monthlyConversations,
       branding: PLAN_LIMITS[type].branding,
       savedReplies: PLAN_LIMITS[type].savedReplies,
+      retention: PLAN_LIMITS[type].retention,
       assistant: {
         monthlyReplies: PLAN_LIMITS[type].assistant.monthlyReplies,
         repliesPerConversation: PLAN_LIMITS[type].assistant.repliesPerConversation

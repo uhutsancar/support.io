@@ -938,7 +938,7 @@ export default {
       title: 'Data and privacy',
       body: 'Download everything in your account (sites, conversations, messages, visitors, FAQ, team) as one file. Passwords and secret keys are left out.',
       retention:
-        'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit.',
+        'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit. Conversations are deleted once the retention period below has passed.',
       export: 'Download my data',
       ownerOnly: 'Only the account owner can download the data.'
     },

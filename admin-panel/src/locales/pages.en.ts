@@ -444,7 +444,7 @@ export default {
         {
           h: 'How long we keep it',
           p: [
-            'Conversations are kept while the account is open or until the business deletes them.',
+            'Conversations are kept for the period the business chooses after their last message: 90 days on the Free plan, from 30 days to 5 years on paid plans. Conversations past that period are deleted every night with their attachments; the business can delete one earlier.',
             'Visitors’ IP addresses and device details are deleted 90 days after their last visit; IP addresses in activity records after 90 days.',
             'Deleting an account deletes its data; it leaves the encrypted backups within three months.'
           ]
@@ -466,7 +466,7 @@ export default {
           h: 'Your rights',
           p: [
             'Under KVKK and GDPR you may access, correct, delete and port your data and object to its processing.',
-            'Account owners can download all data under Settings → Data and privacy and delete the account. Visitors can send requests to the business concerned or to us.'
+            'Account owners can download all data under Settings → Data and privacy and delete the account. Visitors can send requests to the business concerned or to us; the business can delete all of a visitor’s data on its site from the panel in one step.'
           ]
         }
       ]

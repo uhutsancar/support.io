@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../lib/runtime';
 import SecuritySettings from '../components/settings/SecuritySettings';
 import NotificationSettings from '../components/settings/NotificationSettings';
 import SavedRepliesSettings from '../components/settings/SavedRepliesSettings';
+import RetentionSettings from '../components/settings/RetentionSettings';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -129,6 +130,7 @@ const Settings = () => {
                 {t('settings.privacy.ownerOnly')}
               </p>
             )}
+            {(user?.role === 'owner' || user?.role === 'admin') && <RetentionSettings />}
           </div>
         </div>
       </div>

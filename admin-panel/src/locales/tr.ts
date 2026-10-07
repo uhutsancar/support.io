@@ -940,7 +940,7 @@ export default {
       title: 'Veri ve gizlilik',
       body: 'Hesabınızdaki tüm veriyi (siteler, konuşmalar, mesajlar, ziyaretçiler, SSS, ekip) tek bir dosya olarak indirebilirsiniz. Şifreler ve gizli anahtarlar dosyaya girmez.',
       retention:
-        'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir.',
+        'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir. Konuşmalar aşağıdaki saklama süresi dolunca silinir.',
       export: 'Verilerimi indir',
       ownerOnly: 'Verileri yalnızca hesap sahibi indirebilir.'
     },

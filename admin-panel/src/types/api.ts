@@ -155,6 +155,8 @@ export interface PlanInfo {
   branding: boolean;
   features: string[];
   assistant: { monthlyReplies: number; repliesPerConversation: number };
+  /** How long conversations are kept after their last message (SEC-17). */
+  retention?: { defaultDays: number; minDays: number; maxDays: number };
   price: { monthly: number | null; yearly: number | null; currency: string };
 }
 

@@ -767,7 +767,12 @@ export default {
       agents_other: '{{count}} users',
       conversations: '{{n}} new conversations a month',
       assistant: '{{n}} AI answers a month',
-      assistantDepth: 'Up to {{count}} AI answers per conversation'
+      assistantDepth: 'Up to {{count}} AI answers per conversation',
+      history: '{{period}} of conversation history',
+      days_one: '{{count}} day',
+      days_other: '{{count}} days',
+      years_one: '{{count}} year',
+      years_other: '{{count}} years'
     },
 
     chooseEyebrow: 'Deciding',
@@ -854,6 +859,7 @@ export default {
       sites: 'Sites',
       agents: 'Users',
       conversations: 'New conversations a month',
+      history: 'Conversation history',
       widget: 'Chat bubble and appearance',
       faq: 'Help content (FAQ)',
       assistant: 'AI assistant',

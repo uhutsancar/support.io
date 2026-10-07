@@ -7,8 +7,9 @@ import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import { requireFeature } from '../services/entitlements';
 import { blockVisitor, listBlocks, unblockVisitor } from '../services/visitorBlocks';
+import { eraseVisitor } from '../services/dataRetention';
 import events from '../events';
-import { conversationRoom, ioFrom } from '../realtime';
+import { conversationRoom, ioFrom, siteRoom } from '../realtime';
 import {
   asyncHandler,
   badRequest,
@@ -134,6 +135,36 @@ router.delete(
     if (!(await unblockVisitor(orgId(req), id))) throw notFound('Block');
     audit(req, 'visitor.unblocked', id, {});
     res.json({ ok: true });
+  })
+);
+
+// POST /api/visitors/erase   { conversationId }
+//
+// A visitor asked the business to delete their data (KVKK article 11): every
+// conversation they had on that site, with messages and attachments, their
+// visitor record and page events. Owner and admins only; audited with the
+// counts, not the content. Cannot be undone.
+router.post(
+  '/erase',
+  auth,
+  requireOrganization,
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const conversation = await loadAccessibleConversation(req, req.body?.conversationId);
+    const siteId = String(conversation.siteId);
+    const removed = await eraseVisitor({
+      organizationId: orgId(req),
+      siteId,
+      visitorId: conversation.visitorId
+    });
+    const admin = ioFrom(req)?.of('/admin');
+    admin?.to(siteRoom(siteId)).emit('stats-update', {
+      type: 'conversation-deleted',
+      siteId,
+      conversationId: String(conversation._id)
+    });
+    audit(req, 'visitor.data_deleted', String(conversation._id), { siteId, ...removed });
+    res.json(removed);
   })
 );
 

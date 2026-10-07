@@ -28,6 +28,7 @@ import {
 } from '../db/queries';
 import { listConversations, conversationCounts, messageMatchesForSearch } from '../db/inboxQueries';
 import { updateAgentLoad } from '../services/autoAssignment';
+import { deleteConversations } from '../services/dataRetention';
 import { refreshSla, refreshSlaAll } from '../services/conversationSla';
 import {
   recordAgentAssignment,
@@ -610,15 +611,10 @@ router.delete(
     });
     if (!conversation) throw notFound('Conversation');
 
-    if (conversation.assignedAgent && isActiveConversationStatus(conversation.status)) {
-      // Only release the agent's slot if the conversation was actually holding
-      // one; decrementing for an already-closed thread drove the counter
-      // negative.
-      await updateAgentLoad(conversation.assignedAgent, -1);
-    }
-
-    await Message.deleteMany({ conversationId });
-    await Conversation.findByIdAndDelete(conversationId);
+    // Messages, notes and the stored attachments go with it; the agent's slot
+    // is released only if the conversation was still holding one
+    // (services/dataRetention.ts).
+    await deleteConversations(orgId(req), [conversationId]);
 
     notifyAdmin(req)?.conversationDeleted(site._id, conversationId);
     res.json({ message: 'Conversation deleted successfully' });

@@ -222,6 +222,29 @@ export default {
       INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
     }
   },
+  retention: {
+    title: 'Konuşma saklama süresi',
+    description:
+      'Son mesajından bu süre geçen konuşmalar mesajları ve ekleriyle birlikte her gece kalıcı olarak silinir.',
+    keep: 'Konuşmaları sakla:',
+    days_one: '{{count}} gün',
+    days_other: '{{count}} gün',
+    years_one: '{{count}} yıl',
+    years_other: '{{count}} yıl',
+    default: 'varsayılan',
+    fixed: 'Ücretsiz planda konuşmalar {{period}} saklanır.',
+    upgrade: 'Daha uzun süre için planınızı yükseltin',
+    saved: 'Saklama süresi kaydedildi.'
+  },
+  visitorErase: {
+    button: 'Bu ziyaretçinin verilerini sil',
+    title: 'Ziyaretçinin verileri silinsin mi?',
+    message:
+      'Bu ziyaretçinin bu sitedeki tüm konuşmaları, mesajları, gönderdiği dosyalar, ziyaretçi kaydı ve sayfa hareketleri kalıcı olarak silinir. KVKK kapsamındaki silme talepleri için kullanın. Bu işlem geri alınamaz.',
+    confirm: 'Kalıcı olarak sil',
+    done_one: 'Ziyaretçinin verileri silindi ({{count}} konuşma).',
+    done_other: 'Ziyaretçinin verileri silindi ({{count}} konuşma).'
+  },
   visitorBlocks: {
     block: 'Ziyaretçiyi engelle',
     explain:

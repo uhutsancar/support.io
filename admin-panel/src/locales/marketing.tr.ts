@@ -790,7 +790,12 @@ export default {
       agents_other: '{{count}} kullanıcı',
       conversations: 'Ayda {{n}} yeni konuşma',
       assistant: 'Ayda {{n}} yapay zekâ yanıtı',
-      assistantDepth: 'Konuşma başına {{count}} yapay zekâ yanıtı'
+      assistantDepth: 'Konuşma başına {{count}} yapay zekâ yanıtı',
+      history: '{{period}} konuşma geçmişi',
+      days_one: '{{count}} gün',
+      days_other: '{{count}} gün',
+      years_one: '{{count}} yıl',
+      years_other: '{{count}} yıl'
     },
 
     chooseEyebrow: 'Karar verirken',
@@ -877,6 +882,7 @@ export default {
       sites: 'Site sayısı',
       agents: 'Kullanıcı sayısı',
       conversations: 'Aylık yeni konuşma',
+      history: 'Konuşma geçmişi',
       widget: 'Sohbet balonu ve görünüm ayarları',
       faq: 'Yardım içeriği (SSS)',
       assistant: 'Yapay zekâ asistanı',

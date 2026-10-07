@@ -42,6 +42,7 @@ import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/b
 import dataExportRoutes from './routes/dataExport';
 import wellKnownRoutes from './routes/wellKnown';
 import cspReportRoutes from './routes/cspReport';
+import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
@@ -250,6 +251,7 @@ app.use('/api/account/export', dataExportRoutes);
 
 app.use('/api/audit', auditRoutes);
 app.use('/api/saved-replies', savedReplyRoutes);
+app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
 // verification and reset links can be followed without a mail server. Never

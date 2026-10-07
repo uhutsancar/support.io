@@ -52,6 +52,11 @@ export interface PlanLimits {
   branding: boolean;
   /** Saved replies the organization may keep (PRD-03). */
   savedReplies: number;
+  /**
+   * How long a conversation is kept after its last message (SEC-17): the
+   * owner chooses within min–max; Free has no choice.
+   */
+  retention: { defaultDays: number; minDays: number; maxDays: number };
   assistant: AssistantLimits;
   features: readonly Feature[];
   /** Display prices; what is charged is the Paddle price behind the plan. */
@@ -65,6 +70,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     monthlyConversations: 100,
     branding: true,
     savedReplies: 10,
+    retention: { defaultDays: 90, minDays: 90, maxDays: 90 },
     assistant: {
       monthlyReplies: 50,
       repliesPerConversation: 3,
@@ -81,6 +87,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     monthlyConversations: 2_000,
     branding: false,
     savedReplies: 200,
+    retention: { defaultDays: 365, minDays: 30, maxDays: 365 },
     assistant: {
       monthlyReplies: 1_000,
       repliesPerConversation: 6,
@@ -97,6 +104,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     monthlyConversations: 20_000,
     branding: false,
     savedReplies: 100_000,
+    retention: { defaultDays: 365, minDays: 30, maxDays: 1830 },
     assistant: {
       monthlyReplies: 5_000,
       repliesPerConversation: 12,
