@@ -180,7 +180,6 @@ export async function runEval({
       }) as typeof fetch;
       let outcome;
       try {
-         
         outcome = await compose({
           siteName: SHOP,
           question: c.message,
@@ -207,7 +206,6 @@ export async function runEval({
         modelCalled: calls > 0
       } as Omit<CaseResult, 'passed' | 'problems'>;
       if (pauseMs && calls > 0) {
-         
         await new Promise((resolve) => setTimeout(resolve, pauseMs));
       }
       const problems = judge(c, base, prompt, mode === 'live');
