@@ -1173,8 +1173,11 @@ interface Window {
       forceNew: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
-      reconnectionDelay: 800,
-      reconnectionDelayMax: 8000,
+      // Exponential back-off from 1 s to 30 s with ±50 % jitter (PERF-06):
+      // after a deploy thousands of widgets must not knock at the same second.
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 30000,
+      randomizationFactor: 0.5,
       timeout: 10000
     });
 

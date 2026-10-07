@@ -29,6 +29,7 @@
     "assistant:eval": "tsx scripts/assistant-eval.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:compose": "tsx scripts/test-compose.ts",
+    "reconnect-storm": "tsx scripts/test-compose.ts scripts/reconnect-storm.ts",
     "loadtest": "tsx scripts/test-compose.ts scripts/loadtest.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
