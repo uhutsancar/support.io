@@ -183,6 +183,7 @@ services:
       # /internal/metrics (OBS-03): optional bearer token; the backup time
       # scripts/backup-postgres.sh writes.
       METRICS_TOKEN: ${METRICS_TOKEN:-}
+      OPS_REPORT_EMAIL: ${OPS_REPORT_EMAIL:-}
       BACKUP_STATUS_FILE: /run/supportio-status/backup-last-success
       # Paddle. The boot check refuses BILLING_ENABLED=true without the rest.
       BILLING_ENABLED: ${BILLING_ENABLED:-false}

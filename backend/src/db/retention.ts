@@ -10,6 +10,7 @@ import { sweepTrials } from '../services/trial';
 import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
 import { nightlyPurge } from '../services/dataRetention';
+import { weeklyReport } from '../services/productStats';
 
 const RETENTION_DAYS = 30;
 /** How long a visitor's IP and device details are kept after their last visit. */
@@ -91,6 +92,12 @@ async function sweepOnce() {
     await nightlyPurge();
   } catch (error) {
     console.error('Retention purge failed:', errorText(error));
+  }
+  try {
+    // The owner's weekly numbers, Monday morning (OBS-07).
+    await weeklyReport();
+  } catch (error) {
+    console.error('Weekly report failed:', errorText(error));
   }
   for (const target of TARGETS) {
     try {

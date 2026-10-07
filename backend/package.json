@@ -18,6 +18,8 @@
     "plan:set:prod": "node dist/cli/updatePlan.js",
     "org:list": "tsx src/cli/listOrganizations.ts",
     "org:list:prod": "node dist/cli/listOrganizations.js",
+    "org:stats": "tsx src/cli/orgStats.ts",
+    "org:stats:prod": "node dist/cli/orgStats.js",
     "site:disable": "tsx src/cli/disableSite.ts",
     "site:disable:prod": "node dist/cli/disableSite.js",
     "secrets:rotate": "tsx src/cli/rotateSecrets.ts",
