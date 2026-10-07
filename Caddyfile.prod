@@ -21,6 +21,13 @@
 {$APP_DOMAIN} {
 	encode zstd gzip
 
+	# The certificate. Nothing here: Caddy gets one from Let's Encrypt. With a
+	# Cloudflare Origin CA certificate (needed once 80/443 accept only
+	# Cloudflare, scripts/ufw-cloudflare.sh) put `tls /etc/caddy/origin/origin.pem
+	# /etc/caddy/origin/origin.key` in caddy/tls.d/origin.caddy on the server
+	# (runbook §2). An empty directory imports nothing.
+	import /etc/caddy/tls.d/*.caddy
+
 	reverse_proxy backend:3000 {
 		# The backend trusts exactly one proxy hop (app.set('trust proxy', 1)),
 		# so it reads the last X-Forwarded-For entry. That entry is set here to

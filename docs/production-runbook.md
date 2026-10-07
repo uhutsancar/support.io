@@ -13,7 +13,9 @@ Files on the server, in `/opt/supportio`:
 
 ```text
 docker-compose.prod.yml   Caddyfile.prod   .env.production (chmod 600)
+caddy/tls.d/  caddy/origin/   (only with a Cloudflare Origin CA certificate)
 scripts/deploy.sh  rollback.sh  smoke.sh  backup-postgres.sh  restore-postgres.sh
+        bootstrap-server.sh  ufw-cloudflare.sh
 ```
 
 Steps marked **[you]** need an account, a payment or a decision only the
@@ -24,57 +26,112 @@ owner can make; nothing in the repository does them.
 ## 1. One-time server setup
 
 1. **[you]** Rent a VPS: Ubuntu 24.04, 2 vCPU / 4 GB is enough for the first
-   customers (4 vCPU / 8 GB if staging shares the machine). Note its IP.
+   customers (4 vCPU / 8 GB if staging shares the machine). Turn on disk
+   encryption if the provider offers it. Note its IP.
 2. Log in as root once, then:
 
    ```bash
    adduser deploy && usermod -aG sudo deploy
    mkdir -p /home/deploy/.ssh && cp ~/.ssh/authorized_keys /home/deploy/.ssh/
    chown -R deploy:deploy /home/deploy/.ssh
-   timedatectl set-timezone UTC
-   apt update && apt -y upgrade && apt -y install unattended-upgrades ufw rclone age curl
    ```
 
-3. After logging in as `deploy` with the key works, in `/etc/ssh/sshd_config`:
-   `PermitRootLogin no`, `PasswordAuthentication no`, then `systemctl restart ssh`.
-4. Firewall — only SSH, HTTP and HTTPS:
+3. Log in as `deploy` with the key (check it works before going on), copy the
+   repository's `scripts/` to the server and run
 
    ```bash
-   ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw enable
+   sudo ./scripts/bootstrap-server.sh
    ```
+
+   It is safe to run again. It sets up automatic security updates with
+   reboots only on Sunday 04:00 UTC, fail2ban for SSH, chrony, SSH with keys
+   only and no root login, UFW (SSH, HTTP, HTTPS), the Docker daemon settings
+   (live restore, rotated logs, no userland proxy, no new privileges), a 2 GB
+   swap file and `/opt/supportio` owned by `deploy`.
 
    Docker publishes ports past UFW, which is why PostgreSQL and Redis have no
    `ports:` in the compose file. Never add them.
-5. Docker Engine and the Compose plugin from Docker's apt repository
+4. Docker Engine and the Compose plugin from Docker's apt repository
    (docs.docker.com/engine/install/ubuntu), then `usermod -aG docker deploy`.
-6. `sudo mkdir -p /opt/supportio && sudo chown deploy: /opt/supportio`, copy
-   `docker-compose.prod.yml`, `Caddyfile.prod` and `scripts/` there.
-7. `cp .env.production.example /opt/supportio/.env.production`, fill it in,
+   If Docker was installed after step 3, run the script once more so it
+   writes `/etc/docker/daemon.json`.
+5. Copy `docker-compose.prod.yml`, `Caddyfile.prod` and `scripts/` to
+   `/opt/supportio`.
+6. `cp .env.production.example /opt/supportio/.env.production`, fill it in,
    `chmod 600 .env.production`. The backend refuses to start and lists what is
    missing while anything required is empty or still the example.
-8. GHCR access for pulling the image: **[you]** create a GitHub token with
+7. GHCR access for pulling the image: **[you]** create a GitHub token with
    `read:packages`, then `docker login ghcr.io -u <github-user>`.
+8. Recommended once things run: SSH only over Tailscale or WireGuard
+   (`ufw delete allow 22/tcp`, then allow 22 on the tailnet interface only),
+   so port 22 is not on the internet at all.
 
 ## 2. Cloudflare and HTTPS
 
 1. **[you]** Add the domain to Cloudflare; point the registrar's nameservers
-   at it.
+   at it. Turn on DNSSEC (and add the DS record at the registrar).
 2. DNS: `A app <VPS IP>`, **DNS only (grey cloud)** for the first start.
 3. First start (section 3). Caddy obtains a Let's Encrypt certificate.
-4. Switch the record to **Proxied (orange cloud)**, then SSL/TLS →
-   **Full (strict)**. Never Flexible.
-5. Network → WebSockets: on. Cache Rules: bypass `/api/*` and `/socket.io/*`;
-   `/widget/v4/*` may be cached long.
-6. `Caddyfile.prod` trusts the visitor IP only from Cloudflare's ranges.
+4. Switch the record to **Proxied (orange cloud)**, then in SSL/TLS:
+   **Full (strict)** (never Flexible), Always Use HTTPS on, Minimum TLS
+   version 1.2, TLS 1.3 on.
+5. Network → WebSockets: on.
+6. Caching → Cache Rules: bypass `/api/*` and `/socket.io/*`; cache
+   `/widget/v4/*` and `/assets/*` at the edge (they are versioned).
+7. Security:
+   - WAF → the free Cloudflare managed ruleset on.
+   - Rate limiting rule: `/api/auth/*`, 20 requests a minute per IP, block
+     for a minute. The application has its own limits; this one stops a
+     flood before it reaches the server.
+   - Bot Fight Mode **off**: it challenges the widget's requests and sockets
+     on customers' sites. Sign-up is protected by Turnstile instead
+     (`TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET`).
+8. CAA records: `0 issue "letsencrypt.org"` and the CAs Cloudflare lists for
+   its edge certificates (SSL/TLS → Edge Certificates shows them).
+9. `Caddyfile.prod` trusts the visitor IP only from Cloudflare's ranges.
    Re-check https://www.cloudflare.com/ips/ before each release and update
    `trusted_proxies` if they changed.
-7. HSTS is one day (`max-age=86400`). Raise it to a year only after a few
-   weeks of Full (strict) without trouble; `preload` only as a deliberate
-   decision.
+10. HSTS is one day (`max-age=86400`). Raise it to a year only after a few
+    weeks of Full (strict) without trouble; `preload` only as a deliberate
+    decision.
 
-Later, optionally: allow 80/443 only from Cloudflare's IPs. HTTP-01
-certificate renewal then fails — switch Caddy to the DNS-01 challenge or a
-Cloudflare Origin CA certificate first.
+### Origin lock: 80/443 from Cloudflare only
+
+Without it, anyone who learns the server's address can skip Cloudflare's WAF
+and rate limits. Let's Encrypt cannot renew once the ports are closed to it,
+so the certificate comes from Cloudflare first:
+
+1. **[you]** SSL/TLS → Origin Server → Create Certificate (RSA, the domain
+   and `*.domain`, 15 years). On the server:
+
+   ```bash
+   mkdir -p /opt/supportio/caddy/origin /opt/supportio/caddy/tls.d
+   # paste the certificate and the key
+   nano /opt/supportio/caddy/origin/origin.pem
+   nano /opt/supportio/caddy/origin/origin.key
+   chmod 600 /opt/supportio/caddy/origin/origin.key
+   echo 'tls /etc/caddy/origin/origin.pem /etc/caddy/origin/origin.key'      > /opt/supportio/caddy/tls.d/origin.caddy
+   docker compose --env-file .env.production -f docker-compose.prod.yml up -d proxy
+   ./scripts/smoke.sh https://<domain>
+   ```
+
+   The Origin CA certificate is trusted by Cloudflare only — fine, because
+   the record is proxied. Removing `origin.caddy` goes back to Let's Encrypt.
+2. Then:
+
+   ```bash
+   sudo ./scripts/ufw-cloudflare.sh --dry-run   # read what it will write
+   sudo ./scripts/ufw-cloudflare.sh --apply
+   ```
+
+   It allows 80/443 from Cloudflare's ranges in UFW and adds the same rule to
+   Docker's `DOCKER-USER` chain (Docker's published ports bypass UFW).
+3. Test from a machine outside Cloudflare:
+   `curl -m 5 -k https://<server IP>/health` must time out;
+   `curl https://<domain>/health` must answer `{"status":"ok"}`;
+   `sudo iptables -L DOCKER-USER -n -v` shows the drop rule counting.
+   Undo with `--revert`. Re-run `--apply` when Cloudflare's ranges change.
+4. Later (P2): Authenticated Origin Pulls (mTLS between Cloudflare and Caddy).
 
 ## 3. First start
 
