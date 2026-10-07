@@ -37,6 +37,7 @@ import {
 import Conversation from '../models/Conversation';
 import { chatSettings, publicChatSettings } from '../services/chatSettings';
 import { recordRating } from '../services/ratings';
+import { sendActivation } from '../services/activation';
 import { createLimiter } from '../middleware/rateLimit';
 import { HttpError } from '../http';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
@@ -338,6 +339,10 @@ router.post(
       sdkVersion: typeof sdkVersion === 'string' ? sdkVersion.slice(0, 20) : null
     };
     await site.save();
+    // The first sight of the widget on any page: tell the owner it is live.
+    if (!previous.verifiedAt) {
+      void sendActivation(String(site.organizationId), 'widget_live').catch(() => undefined);
+    }
 
     res.json({ ok: true, verifiedAt: site.installation.verifiedAt });
   })

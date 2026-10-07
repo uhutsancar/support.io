@@ -355,6 +355,7 @@ router.put(
         allMessages: pickBool(desktop.allMessages, current.desktop.allMessages)
       },
       notificationSound: pickBool(body.notificationSound, current.notificationSound),
+      activationEmails: pickBool(body.activationEmails, current.activationEmails),
       locale: body.locale === 'en' || body.locale === 'tr' ? body.locale : current.locale
     };
     req.user.preferences = {
@@ -378,6 +379,7 @@ function notificationPreferences(stored: unknown) {
       allMessages: prefs.desktop?.allMessages === true
     },
     notificationSound: prefs.notificationSound !== false,
+    activationEmails: prefs.activationEmails !== false,
     locale: (prefs.locale === 'en' ? 'en' : 'tr') as 'tr' | 'en'
   };
 }

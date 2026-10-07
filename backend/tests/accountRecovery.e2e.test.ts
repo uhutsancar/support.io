@@ -150,7 +150,9 @@ test('signing up with a taken address answers the same and tells only its owner'
   const email = unique('taken');
   const owner = await register(email);
 
-  const before = (await outbox(email)).length;
+  const notices = async () =>
+    (await outbox(email)).filter((m) => /zaten bir hesab|already have an account/i.test(m.subject));
+  const before = (await notices()).length;
   const again = await registerOnly(email, 'Someone-Elses-Passw0rd!', 'Intruder');
   const fresh = await registerOnly(unique('fresh'));
   assert.equal(again.status, fresh.status);
@@ -158,10 +160,10 @@ test('signing up with a taken address answers the same and tells only its owner'
   assert.equal(sessionCookie(again), '');
 
   // The owner got a notice, not a verification link, and nothing changed.
-  const mails = await outbox(email);
+  // (Set-up mails may arrive meanwhile; only the notice is counted.)
+  const mails = await notices();
   assert.equal(mails.length, before + 1);
   assert.doesNotMatch(mails[0].text, /verify-email/);
-  assert.match(mails[0].subject, /hesab|account/i);
   const { rows } = await query('SELECT count(*)::int AS n FROM users WHERE email = $1', [email]);
   assert.equal(rows[0].n, 1);
   const login = await api('/api/auth/login', {

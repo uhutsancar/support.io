@@ -21,6 +21,7 @@ router.get('/', (_req: Request, res: Response) => {
       agents: PLAN_LIMITS[type].agents,
       monthlyConversations: PLAN_LIMITS[type].monthlyConversations,
       branding: PLAN_LIMITS[type].branding,
+      savedReplies: PLAN_LIMITS[type].savedReplies,
       assistant: {
         monthlyReplies: PLAN_LIMITS[type].assistant.monthlyReplies,
         repliesPerConversation: PLAN_LIMITS[type].assistant.repliesPerConversation

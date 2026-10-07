@@ -136,6 +136,15 @@ const NotificationSettings = () => {
           {t('account.notifications.sound')}
         </label>
 
+        <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={prefs.activationEmails}
+            onChange={(e) => save({ activationEmails: e.target.checked })}
+          />
+          {t('account.notifications.activation')}
+        </label>
+
         <label className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <span className="text-sm font-medium text-gray-900 dark:text-white">
             {t('account.notifications.language')}

@@ -17,6 +17,7 @@ import { isConnected } from './config/database';
 import SocketHandler from './socket';
 import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
+import savedReplyRoutes from './routes/savedReplies';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
 import conversationRoutes from './routes/conversations';
@@ -237,6 +238,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/account/export', dataExportRoutes);
 
 app.use('/api/audit', auditRoutes);
+app.use('/api/saved-replies', savedReplyRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
 // verification and reset links can be followed without a mail server. Never

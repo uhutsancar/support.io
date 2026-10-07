@@ -7,6 +7,7 @@ import { query } from './pool';
 import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
 import { sweepTrials } from '../services/trial';
+import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
 
 const RETENTION_DAYS = 30;
@@ -58,6 +59,12 @@ async function sweepOnce() {
     await sweepTrials();
   } catch (error) {
     console.error('Trial sweep failed:', errorText(error));
+  }
+  try {
+    // The set-up mails of the first month (PRD-08).
+    await sweepActivation();
+  } catch (error) {
+    console.error('Activation sweep failed:', errorText(error));
   }
   try {
     // A sign-up nobody confirmed within a week is not an account (SEC-06):

@@ -50,6 +50,8 @@ export interface PlanLimits {
   monthlyConversations: number;
   /** Whether the widget must show "Powered by Support.io". */
   branding: boolean;
+  /** Saved replies the organization may keep (PRD-03). */
+  savedReplies: number;
   assistant: AssistantLimits;
   features: readonly Feature[];
   /** Display prices; what is charged is the Paddle price behind the plan. */
@@ -62,6 +64,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 1,
     monthlyConversations: 100,
     branding: true,
+    savedReplies: 10,
     assistant: {
       monthlyReplies: 50,
       repliesPerConversation: 3,
@@ -77,6 +80,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 5,
     monthlyConversations: 2_000,
     branding: false,
+    savedReplies: 200,
     assistant: {
       monthlyReplies: 1_000,
       repliesPerConversation: 6,
@@ -92,6 +96,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 20,
     monthlyConversations: 20_000,
     branding: false,
+    savedReplies: 100_000,
     assistant: {
       monthlyReplies: 5_000,
       repliesPerConversation: 12,

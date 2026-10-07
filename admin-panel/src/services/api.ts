@@ -102,6 +102,8 @@ export interface NotificationPreferences {
   missedChatEmail: 'instant' | 'hourly' | 'off';
   desktop: { newConversation: boolean; assigned: boolean; allMessages: boolean };
   notificationSound: boolean;
+  /** The set-up mails of the first month (PRD-08). */
+  activationEmails: boolean;
   locale: 'tr' | 'en';
 }
 

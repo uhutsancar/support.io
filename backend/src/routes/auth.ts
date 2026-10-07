@@ -47,6 +47,7 @@ import { appBaseUrl, mail } from '../services/mail';
 import { mfaEnabled, recoveryCodesLeft, verifySecondStep } from '../services/mfa';
 import { turnstileSiteKey, verifyTurnstile } from '../services/turnstile';
 import { startTrial, trialRunning } from '../services/trial';
+import { sendActivation } from '../services/activation';
 import { getPlan } from '../services/entitlements';
 import type { PlanType } from '../domain';
 import {
@@ -496,6 +497,10 @@ router.post(
     if (!user.emailVerifiedAt) {
       user.emailVerifiedAt = new Date();
       await user.save();
+      // A new owner's first set-up mail: where the install code is (PRD-08).
+      if (spent.type === 'user' && user.role === 'owner' && user.organizationId) {
+        void sendActivation(String(user.organizationId), 'welcome').catch(() => undefined);
+      }
       events.emit('auth.email.verified', {
         organizationId: user.organizationId,
         userId: user._id,

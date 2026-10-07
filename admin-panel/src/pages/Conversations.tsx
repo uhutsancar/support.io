@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import VisitorFormDetails from '../components/conversations/VisitorFormDetails';
+import SavedReplyInput from '../components/conversations/SavedReplyInput';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, conversationsAPI, departmentsAPI, filesAPI, teamAPI } from '../services/api';
@@ -1125,7 +1126,7 @@ const Conversations = () => {
                         ref={fileInputRef}
                         type="file"
                         onChange={handleFileSelect}
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+                        accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                         className="hidden"
                       />
                       <button
@@ -1136,12 +1137,19 @@ const Conversations = () => {
                       >
                         <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
-                      <input
+                      <SavedReplyInput
                         type="text"
                         value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={t('conversations.messagePlaceholder')}
-                        className="flex-1 min-w-0 px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm lg:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                        onChange={setNewMessage}
+                        siteId={selectedSite ? siteIdOf(selectedSite) : null}
+                        vars={{
+                          visitorName: selectedConversation.visitorName,
+                          agentName: user?.name,
+                          siteName: selectedSite?.name
+                        }}
+                        placeholder={t('savedReplies.placeholder')}
+                        aria-label={t('conversations.messagePlaceholder')}
+                        className="px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm lg:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
                       />
                       <button
                         type="submit"

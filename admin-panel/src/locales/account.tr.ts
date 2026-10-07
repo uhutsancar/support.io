@@ -175,6 +175,7 @@ export default {
       assigned: 'Bana atanan konuşma',
       allMessages: 'Tüm yeni mesajlar',
       sound: 'Bildirim sesi',
+      activation: 'Hesap kurulumu e-postaları (ilk ay)',
       language: 'E-postaların dili',
       saved: 'Bildirim tercihleri kaydedildi.'
     },
@@ -220,6 +221,24 @@ export default {
       TOO_MANY_MFA_ATTEMPTS: 'Çok fazla kod denemesi yapıldı. Biraz sonra yeniden giriş yapın.',
       INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
     }
+  },
+  savedReplies: {
+    title: 'Hazır yanıtlar',
+    description: 'Sık yazdığınız cevapları kaydedin; yanıt kutusunda "/" yazınca listelenir.',
+    shortcut: 'Kısayol',
+    titleLabel: 'Başlık',
+    body: 'Metin',
+    variables: 'Kullanabileceğiniz değişkenler:',
+    site: 'Geçerli olduğu site',
+    allSites: 'Tüm siteler',
+    add: 'Ekle',
+    update: 'Güncelle',
+    edit: 'Düzenle',
+    delete: 'Sil',
+    saved: 'Hazır yanıt kaydedildi.',
+    empty: 'Henüz hazır yanıt yok.',
+    none: 'Eşleşen hazır yanıt yok',
+    placeholder: 'Mesajınızı yazın… (hazır yanıt için /)'
   },
   audit: {
     actions: {

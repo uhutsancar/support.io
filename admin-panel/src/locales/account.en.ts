@@ -173,6 +173,7 @@ export default {
       assigned: 'Conversation assigned to me',
       allMessages: 'Every new message',
       sound: 'Notification sound',
+      activation: 'Account set-up e-mails (first month)',
       language: 'Language of e-mails',
       saved: 'Notification preferences saved.'
     },
@@ -217,6 +218,24 @@ export default {
       TOO_MANY_MFA_ATTEMPTS: 'Too many code attempts. Sign in again a little later.',
       INVALID_TOKEN: 'This link is invalid or has expired.'
     }
+  },
+  savedReplies: {
+    title: 'Saved replies',
+    description: 'Save the answers you write often; typing "/" in the reply box lists them.',
+    shortcut: 'Shortcut',
+    titleLabel: 'Title',
+    body: 'Text',
+    variables: 'Variables you can use:',
+    site: 'Site',
+    allSites: 'All sites',
+    add: 'Add',
+    update: 'Update',
+    edit: 'Edit',
+    delete: 'Delete',
+    saved: 'Saved reply stored.',
+    empty: 'No saved replies yet.',
+    none: 'No matching saved reply',
+    placeholder: 'Type your message… (/ for saved replies)'
   },
   audit: {
     actions: {

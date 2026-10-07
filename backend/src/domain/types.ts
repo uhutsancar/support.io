@@ -114,6 +114,8 @@ export interface UserPreferences {
   desktop?: { newConversation: boolean; assigned: boolean; allMessages: boolean };
   /** The language the account's mails go out in. */
   locale?: 'tr' | 'en';
+  /** The set-up mails of the first month (PRD-08). */
+  activationEmails?: boolean;
 }
 
 /** Notification preferences as both account tables keep them. */
