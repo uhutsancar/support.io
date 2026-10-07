@@ -326,7 +326,32 @@ staging on another machine, or add a `staging.example.com` site block to
 
 ## 11. Scaling later (not needed now)
 
-One VPS → a bigger VPS → PostgreSQL on its own host → several backend
-processes (the Redis adapter is already there; set `SLA_SWEEPER=off` on all
-but one, run migrations as a single job, sticky sessions if long-polling is
-on) → managed Redis.
+**When.** Not before the staging measurements (docs/load-test.md) say so,
+and then when either holds for a week of normal traffic:
+
+- CPU of the server above 60 % most of the day, or
+- message acknowledgement p95 above 500 ms
+  (`supportio_operation_seconds{operation="message.insert"}` plus the
+  socket round trip), or event-loop p99 above 100 ms
+  (`supportio_event_loop_delay_seconds`).
+
+**In this order**, each step only when the previous one is used up:
+
+1. **A bigger VPS** (vertical): 4 vCPU / 8 GB. Raise `PG_SHARED_BUFFERS`
+   to 1 GB and `PG_EFFECTIVE_CACHE_SIZE` to 3 GB, `BACKEND_CPUS` to 3.
+   No code change.
+2. **PostgreSQL on its own** — a managed service, chosen with the data
+   residency decision (Türkiye or EU; KARAR-INF-1). `DB_HOST`, `DB_SSL=true`,
+   restore the latest backup there (§6), switch, keep the old one a week.
+3. **Two backend processes** on the same or a second machine: the Redis
+   adapter already carries broadcasts between them. `SLA_SWEEPER=off` on all
+   but one; migrations stay a single job in `deploy.sh`; sticky sessions
+   only if long-polling is used (the widget prefers websockets). Caddy:
+   `reverse_proxy backend1:3000 backend2:3000 { lb_policy least_conn;
+   health_uri /ready }` — this also gives deploys without downtime (one
+   process at a time).
+4. **Managed Redis** once two processes depend on it (with a password and
+   TLS).
+
+Connection budget at every step: `DB_POOL_MAX` × backend processes + the
+backup + a psql session ≤ `max_connections` (50 now: 20 + spare).
