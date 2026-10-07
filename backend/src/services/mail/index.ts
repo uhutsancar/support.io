@@ -12,6 +12,7 @@
 // A failed send is logged and reported to the caller as `false`: none of
 // these flows may leak whether an address exists by failing differently.
 
+import { increment } from '../../config/metrics';
 import { isProduction } from '../../config/env';
 import { consoleTransport } from './console';
 import { smtpTransport } from './smtp';
@@ -85,8 +86,10 @@ export function setMailTransport(next: MailTransport | null): void {
 export async function sendMail(mail: OutgoingMail): Promise<boolean> {
   try {
     await currentTransport().send({ ...mail, from: mailFrom() });
+    increment('supportio_mail_total', { outcome: 'sent' });
     return true;
   } catch (error) {
+    increment('supportio_mail_total', { outcome: 'failed' });
     // The recipient is not logged: an address is personal data, and the
     // reason is what an operator needs.
     console.error(

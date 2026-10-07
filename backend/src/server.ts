@@ -43,6 +43,7 @@ import dataExportRoutes from './routes/dataExport';
 import wellKnownRoutes from './routes/wellKnown';
 import cspReportRoutes from './routes/cspReport';
 import { panelTelemetry, widgetTelemetry } from './routes/telemetry';
+import { internalMetricsRoutes } from './routes/internalMetrics';
 import { captureError } from './services/errorReporting';
 import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
@@ -333,6 +334,8 @@ app.get('/ready', async (_req: Request, res: Response) => {
 
 // /.well-known/security.txt, before the SPA fallback would answer it.
 app.use(wellKnownRoutes);
+// Prometheus metrics for the Docker network only (routes/internalMetrics.ts).
+app.use(internalMetricsRoutes(io));
 
 // --- 📦 4. STATİK DOSYALAR ---
 //

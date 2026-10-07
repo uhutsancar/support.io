@@ -13,6 +13,9 @@
 #   BACKUP_GPG_RECIPIENT  or a gpg key id instead. One of them is required.
 #   BACKUP_DIR            working directory, default /var/backups/supportio
 #   BACKUP_PING_URL       optional; called on success (healthchecks.io style)
+#   BACKUP_STATUS_DIR     where the time of the last success is written, read
+#                         by the API's /internal/metrics and scripts/watchdog.sh;
+#                         default /var/lib/supportio/status
 #
 # Retention (7 daily, 4 weekly, 3 monthly) is the bucket's lifecycle rule.
 # Exits non-zero on any failure and never prints a secret.
@@ -33,6 +36,7 @@ AGE_RECIPIENT="$(env_value BACKUP_AGE_RECIPIENT)"
 GPG_RECIPIENT="$(env_value BACKUP_GPG_RECIPIENT)"
 PING_URL="$(env_value BACKUP_PING_URL)"
 DIR="$(env_value BACKUP_DIR)"; DIR="${DIR:-/var/backups/supportio}"
+STATUS_DIR="$(env_value BACKUP_STATUS_DIR)"; STATUS_DIR="${STATUS_DIR:-/var/lib/supportio/status}"
 
 [[ -n "$REMOTE" ]] || { echo "BACKUP_REMOTE is not set (use an rclone remote, or 'local' explicitly)" >&2; exit 1; }
 [[ -n "$AGE_RECIPIENT" || -n "$GPG_RECIPIENT" ]] || { echo "set BACKUP_AGE_RECIPIENT or BACKUP_GPG_RECIPIENT" >&2; exit 1; }
@@ -65,5 +69,7 @@ else
   rm -f "$OUT" "$OUT.sha256"
 fi
 
+mkdir -p "$STATUS_DIR"
+date -u +%s > "$STATUS_DIR/backup-last-success"
 [[ -n "$PING_URL" ]] && curl -fsS --max-time 10 "$PING_URL" > /dev/null || true
 echo "backup ok: $(basename "$OUT") (sha256 of the dump: $SUM)"

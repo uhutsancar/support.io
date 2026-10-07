@@ -180,6 +180,10 @@ services:
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       WIDGET_TELEMETRY_SAMPLE: ${WIDGET_TELEMETRY_SAMPLE:-0.1}
+      # /internal/metrics (OBS-03): optional bearer token; the backup time
+      # scripts/backup-postgres.sh writes.
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
+      BACKUP_STATUS_FILE: /run/supportio-status/backup-last-success
       # Paddle. The boot check refuses BILLING_ENABLED=true without the rest.
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       PADDLE_ENV: ${PADDLE_ENV:-sandbox}
@@ -195,6 +199,8 @@ services:
       # Used only with UPLOAD_STORAGE=local (plan §12, decision B); then it
       # must be in the backups too.
       - uploads_data:/app/backend/uploads
+      # The time of the last successful backup (scripts/backup-postgres.sh).
+      - /var/lib/supportio/status:/run/supportio-status:ro
     expose:
       - "3000"
     depends_on:
