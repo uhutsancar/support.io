@@ -20,10 +20,6 @@
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
     <meta
-      name="description"
-      content="Support.io — modern müşteri destek ve canlı sohbet platformu. Tek satır kodla sitenize ekleyin, ziyaretçilerinizle gerçek zamanlı konuşun."
-    />
-    <meta
       name="keywords"
       content="canlı destek, canlı sohbet, chat widget, müşteri desteği, live chat, customer support"
     />
@@ -39,6 +35,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
+    <!--
+      seo: the backend replaces everything between these markers with the
+      page's own title, description, Open Graph, canonical, hreflang and
+      JSON-LD, on the domain it runs on (backend/src/services/seoHead.ts,
+      plan v10 MKT-03). What is here is the default for other pages.
+    -->
+    <!--seo-->
+    <meta
+      name="description"
+      content="Support.io — modern müşteri destek ve canlı sohbet platformu. Tek satır kodla sitenize ekleyin, ziyaretçilerinizle gerçek zamanlı konuşun."
+    />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Support.io" />
     <meta property="og:title" content="Support.io — Modern Müşteri Destek Sistemi" />
@@ -46,7 +53,7 @@
       property="og:description"
       content="Tek satır kodla sitenize ekleyin. React, Next.js, Vue, WordPress ve daha fazlası için aynı embed."
     />
-    <meta property="og:image" content="/og-image.svg" />
+    <meta property="og:image" content="/og-image.png" />
     <meta property="og:locale" content="tr_TR" />
 
     <meta name="twitter:card" content="summary_large_image" />
@@ -55,7 +62,7 @@
       name="twitter:description"
       content="Tek satır kodla sitenize ekleyin. Gerçek zamanlı canlı destek."
     />
-    <meta name="twitter:image" content="/og-image.svg" />
+    <meta name="twitter:image" content="/og-image.png" />
 
     <!--
       JSON-LD'den `aggregateRating` KALDIRILDI. Orada "4.8 / 127 değerlendirme"
@@ -74,6 +81,7 @@
     </script>
 
     <title>Support.io — Canlı Destek Platformu</title>
+    <!--/seo-->
   </head>
   <body>
     <div id="root"></div>

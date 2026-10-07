@@ -44,6 +44,8 @@ import wellKnownRoutes, { robotsHeader } from './routes/wellKnown';
 import cspReportRoutes from './routes/cspReport';
 import { panelTelemetry, widgetTelemetry } from './routes/telemetry';
 import { internalMetricsRoutes } from './routes/internalMetrics';
+import { withSeoHead } from './services/seoHead';
+import { appBaseUrl } from './services/mail';
 import { captureError } from './services/errorReporting';
 import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
@@ -509,7 +511,10 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
           : 'Panel derlemesi yok (admin-panel/dist). Gelistirmede panel Vite tarafindan sunulur: http://localhost'
       );
   }
-  res.type('html').send(withNonce(shellCache, res.locals.cspNonce));
+  // A public page gets its own title, description, Open Graph, canonical and
+  // JSON-LD on this domain (services/seoHead.ts, MKT-03).
+  const base = appBaseUrl() || `${req.protocol}://${req.get('host')}`;
+  res.type('html').send(withNonce(withSeoHead(shellCache, req.path, base), res.locals.cspNonce));
 });
 
 // The error handler must come after EVERY route and static handler. Declared
