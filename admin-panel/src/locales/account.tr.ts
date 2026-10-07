@@ -193,6 +193,12 @@ export default {
       low: 'Düşük puan',
       label: 'Memnuniyet'
     },
+    payment: {
+      banner:
+        'Son ödemeniz alınamadı. Planınız {{date}} tarihine kadar açık; ödeme yönteminizi güncelleyin.',
+      bannerNoDate: 'Son ödemeniz alınamadı; ödeme yönteminizi güncelleyin.',
+      action: 'Ödemeyi güncelle'
+    },
     trial: {
       banner: 'Pro deneme sürenizin bitmesine {{count}} gün kaldı.',
       lastDay: 'Pro deneme süreniz bugün bitiyor.',

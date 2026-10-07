@@ -895,3 +895,56 @@ export function planOverageMail({
     })
   };
 }
+
+/** A payment failed: what happens to the workspace, and by when (BIL-05). */
+export function paymentFailedMail({
+  name,
+  organization,
+  graceEndsAt,
+  link,
+  locale
+}: {
+  name: string;
+  organization: string;
+  graceEndsAt: Date;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const date = graceEndsAt.toLocaleDateString(locale === 'en' ? 'en-GB' : 'tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Istanbul'
+  });
+  const subject = pick(
+    locale,
+    `${organization}: ödemeniz alınamadı`,
+    `${organization}: your payment did not go through`
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          `Aboneliğinizin son ödemesi alınamadı. Planınız ${date} tarihine kadar açık kalıyor; bu tarihe kadar ödeme yönteminizi güncellerseniz hiçbir şey değişmez.`,
+          'Güncellenmezse çalışma alanınız Ücretsiz plana geçer. Verileriniz silinmez; planın üzerindeki siteler ve ekip üyeleri askıya alınır.'
+        ],
+        [
+          `Hi ${name},`,
+          `The latest payment for your subscription did not go through. Your plan stays on until ${date}; update your payment method before then and nothing changes.`,
+          'If it is not updated, the workspace moves to the Free plan. Nothing is deleted; sites and members over the Free plan go on hold.'
+        ]
+      ),
+      action: pick(locale, 'Ödeme yöntemini güncelle', 'Update payment method'),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-posta her başarısız ödemede bir kez gönderilir.',
+        'This e-mail is sent once for each failed payment.'
+      )
+    })
+  };
+}

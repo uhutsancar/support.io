@@ -49,6 +49,7 @@ import { turnstileSiteKey, verifyTurnstile } from '../services/turnstile';
 import { startTrial, trialRunning } from '../services/trial';
 import { sendActivation } from '../services/activation';
 import { getPlan } from '../services/entitlements';
+import { subscriptionSummary } from '../services/billing';
 import type { PlanType } from '../domain';
 import {
   forgotPasswordAccountLimiter,
@@ -451,7 +452,18 @@ router.get(
   auth,
   asyncHandler(async (req: Request, res: Response) => {
     const plan = req.organization ? await getPlan(String(req.organization._id)) : undefined;
-    res.json({ user: accountResponse(req.user, req.userType, req.organization, plan) });
+    // A failed payment, for the person who can fix it (BIL-05).
+    const subscription =
+      req.organization && req.user.role === 'owner'
+        ? await subscriptionSummary(String(req.organization._id))
+        : null;
+    res.json({
+      user: {
+        ...accountResponse(req.user, req.userType, req.organization, plan),
+        paymentIssue:
+          subscription?.status === 'past_due' ? { graceEndsAt: subscription.graceEndsAt } : null
+      }
+    });
   })
 );
 

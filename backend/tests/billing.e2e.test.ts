@@ -25,7 +25,7 @@ import { getPool, query } from '../src/db/pool';
 import { checkoutReference, reconcileSubscriptions } from '../src/services/billing';
 import { effectivePlan } from '../src/domain/subscription';
 import { BASE } from './helpers/widget';
-import { setPlan, signUp } from './helpers/accounts';
+import { outbox, setPlan, signUp } from './helpers/accounts';
 
 const PASSWORD = 'E2ePassw0rd!';
 const SECRET = process.env.PADDLE_WEBHOOK_SECRET || 'local-dev-paddle-webhook-secret';
@@ -367,6 +367,61 @@ test('canceled keeps the plan until the period ends; past_due for the grace peri
   );
   await reconcileSubscriptions();
   assert.equal(await planOf(org.organizationId), 'FREE', 'after the grace period');
+});
+
+test('a failed payment mails the owner once and shows them a strip', async () => {
+  const org = await owner();
+  const subscriptionId = `sub_${stamp()}`;
+  const ref = checkoutReference(org.organizationId);
+  assert.equal(
+    await deliver(
+      subscriptionEvent('subscription.activated', {
+        subscriptionId,
+        status: 'active',
+        organizationId: org.organizationId,
+        ref,
+        occurredAt: iso(-3000)
+      })
+    ),
+    200
+  );
+  const failedMails = async () =>
+    (await outbox(org.email)).filter((m) => /ödemeniz alınamadı/.test(m.subject));
+  assert.equal((await failedMails()).length, 0);
+  let me = await api('/api/auth/me', { token: org.token });
+  assert.equal(me.body.user.paymentIssue, null);
+
+  for (const occurredAt of [iso(-2000), iso(-1000)]) {
+    assert.equal(
+      await deliver(
+        subscriptionEvent('subscription.past_due', {
+          subscriptionId,
+          status: 'past_due',
+          occurredAt
+        })
+      ),
+      200
+    );
+  }
+  const mails = await failedMails();
+  assert.equal(mails.length, 1, 'one mail for one failed payment, not one per event');
+  assert.ok(mails[0].text.includes('/dashboard/billing'), mails[0].text);
+  me = await api('/api/auth/me', { token: org.token });
+  assert.ok(me.body.user.paymentIssue?.graceEndsAt, JSON.stringify(me.body.user.paymentIssue));
+
+  // Paid after all: the strip goes.
+  assert.equal(
+    await deliver(
+      subscriptionEvent('subscription.updated', {
+        subscriptionId,
+        status: 'active',
+        occurredAt: iso(0)
+      })
+    ),
+    200
+  );
+  me = await api('/api/auth/me', { token: org.token });
+  assert.equal(me.body.user.paymentIssue, null);
 });
 
 test('the billing page is the owner’s, and checkout stays shut while billing is off', async () => {

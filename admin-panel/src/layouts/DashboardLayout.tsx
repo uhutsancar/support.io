@@ -3,6 +3,7 @@ import { notifyDesktop, showUnreadInTab } from '../lib/desktopNotifications';
 import { VerifyEmailBanner } from '../pages/AccountRecovery';
 import {
   MfaRequiredGate,
+  PaymentIssueBanner,
   PlanOverageBanner,
   TrialBanner
 } from '../components/settings/AccountGates';
@@ -752,6 +753,7 @@ const DashboardLayout = () => {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <VerifyEmailBanner />
           <TrialBanner base={`${langPrefix}/dashboard`} />
+          <PaymentIssueBanner base={`${langPrefix}/dashboard`} />
           <PlanOverageBanner base={`${langPrefix}/dashboard`} />
           <MfaRequiredGate>
             <Outlet />

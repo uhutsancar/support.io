@@ -25,6 +25,7 @@ import { isPlanType } from '../domain';
 import { LIVE_STATUSES, effectivePlan, isSubscriptionStatus } from '../domain/subscription';
 import { lockOrganization } from './entitlements';
 import { reconcilePlanLimits } from './planOverage';
+import { appBaseUrl, mail } from './mail';
 import { errorText } from '../http/errors';
 import type { PlanType } from '../domain';
 import type { SubscriptionState, SubscriptionStatus } from '../domain/subscription';
@@ -119,7 +120,9 @@ export type WebhookOutcome = 'processed' | 'duplicate' | 'ignored' | 'stale';
 /** Applies one verified event, exactly once. */
 export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<WebhookOutcome> {
   const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
-  const changed: { organizationId: string | null } = { organizationId: null };
+  const changed: { organizationId: string | null; pastDueStarted?: Date } = {
+    organizationId: null
+  };
   const result = await withTransaction(async (client) => {
     // A concurrent delivery of the same id waits here on the primary key and
     // then finds the row, so only one of them applies the event.
@@ -135,7 +138,9 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
     let outcome: Exclude<WebhookOutcome, 'duplicate'> = 'ignored';
     let organizationId: string | null = null;
     if (event.event_type.startsWith('subscription.')) {
-      ({ outcome, organizationId } = await applySubscriptionEvent(client, event));
+      const applied = await applySubscriptionEvent(client, event);
+      ({ outcome, organizationId } = applied);
+      changed.pastDueStarted = applied.pastDueStarted;
     }
 
     await client.query(
@@ -152,8 +157,36 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
     await reconcilePlanLimits(changed.organizationId).catch((error: unknown) => {
       console.error('Plan limit reconciliation failed:', errorText(error));
     });
+    // Paddle sends its own dunning mails; ours is the one that says what
+    // happens to the workspace and when (BIL-05). Once per failed payment:
+    // only the event that moved the subscription into past_due sends it.
+    if (changed.pastDueStarted) {
+      await tellOwnerPaymentFailed(changed.organizationId, changed.pastDueStarted).catch(
+        (error: unknown) => console.error('Payment failure mail failed:', errorText(error))
+      );
+    }
   }
   return result;
+}
+
+async function tellOwnerPaymentFailed(organizationId: string, since: Date): Promise<void> {
+  const { rows } = await getPool().query<{ email: string; name: string; org: string }>(
+    `SELECT u.email, u.name, o.name AS org FROM organizations o
+       JOIN users u ON u.id = o.owner_user_id AND u.is_active
+      WHERE o.id = $1`,
+    [organizationId]
+  );
+  const owner = rows[0];
+  if (!owner) return;
+  const graceEndsAt = new Date(
+    new Date(since).getTime() + billingConfig().pastDueGraceDays * 24 * 60 * 60 * 1000
+  );
+  await mail.sendPaymentFailed(owner.email, {
+    name: owner.name || '',
+    organization: owner.org,
+    graceEndsAt,
+    link: `${appBaseUrl()}/dashboard/billing`
+  });
 }
 
 interface SubscriptionRow {
@@ -171,7 +204,12 @@ interface SubscriptionRow {
 async function applySubscriptionEvent(
   client: PoolClient,
   event: PaddleEvent
-): Promise<{ outcome: Exclude<WebhookOutcome, 'duplicate'>; organizationId: string | null }> {
+): Promise<{
+  outcome: Exclude<WebhookOutcome, 'duplicate'>;
+  organizationId: string | null;
+  /** This event is the first of a failed payment: the owner is told (BIL-05). */
+  pastDueStarted?: Date;
+}> {
   const data = event.data || {};
   const subscriptionId = data.id;
   const status = data.status;
@@ -271,7 +309,11 @@ async function applySubscriptionEvent(
     eventId: event.event_id,
     status
   });
-  return { outcome: 'processed', organizationId };
+  const pastDueStarted =
+    status === 'past_due' && !(sameSubscription && current!.status === 'past_due')
+      ? (pastDueSince ?? occurredAt)
+      : undefined;
+  return { outcome: 'processed', organizationId, pastDueStarted };
 }
 
 // ------------------------------------------------------------ plan in force

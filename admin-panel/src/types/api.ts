@@ -73,6 +73,8 @@ export interface CurrentUser {
   mfaSetupRequired?: boolean;
   /** Over the plan's seats after a downgrade: reads, cannot reply (BIL-04). */
   seatSuspended?: boolean;
+  /** The owner's subscription payment failed; the plan holds until then (BIL-05). */
+  paymentIssue?: { graceEndsAt: string | null } | null;
   permissions?: Record<string, boolean>;
   [extra: string]: unknown;
 }

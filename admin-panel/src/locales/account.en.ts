@@ -191,6 +191,12 @@ export default {
       low: 'Low rating',
       label: 'Satisfaction'
     },
+    payment: {
+      banner:
+        'Your latest payment did not go through. Your plan stays on until {{date}}; please update your payment method.',
+      bannerNoDate: 'Your latest payment did not go through; please update your payment method.',
+      action: 'Update payment'
+    },
     trial: {
       banner: '{{count}} days left in your Pro trial.',
       lastDay: 'Your Pro trial ends today.',

@@ -3,6 +3,8 @@
  *
  *   TrialBanner      the free Pro trial is running (PRD-15): days left and
  *                    the way to a plan, for the people who can buy one
+ *   PaymentIssueBanner the subscription payment failed (BIL-05): until when
+ *                    the plan holds, and the way to the payment method
  *   PlanOverageBanner  the plan went below what the workspace uses (BIL-04):
  *                    a member on hold reads that they cannot reply; the
  *                    owner is sent to the billing page to choose
@@ -15,7 +17,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PauseCircle, ShieldCheck, Sparkles } from 'lucide-react';
+import { CreditCard, PauseCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { MFA_SETUP_REQUIRED_EVENT } from '../../services/http';
 import { billingAPI } from '../../services/api';
@@ -48,6 +50,36 @@ export const TrialBanner = ({ base }: { base: string }) => {
         className="self-start sm:self-auto px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition"
       >
         {t('account.trial.choose')}
+      </Link>
+    </div>
+  );
+};
+
+export const PaymentIssueBanner = ({ base }: { base: string }) => {
+  const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const issue = user?.paymentIssue;
+  if (!issue) return null;
+  const date = issue.graceEndsAt
+    ? new Date(issue.graceEndsAt).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'tr-TR', {
+        day: 'numeric',
+        month: 'long'
+      })
+    : null;
+  return (
+    <div
+      role="alert"
+      className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-4 py-3 rounded-lg border border-red-200 bg-red-50 text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 text-sm"
+    >
+      <CreditCard className="hidden sm:block w-4 h-4 shrink-0" />
+      <span className="flex-1">
+        {date ? t('account.payment.banner', { date }) : t('account.payment.bannerNoDate')}
+      </span>
+      <Link
+        to={`${base}/billing`}
+        className="self-start sm:self-auto px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition"
+      >
+        {t('account.payment.action')}
       </Link>
     </div>
   );
