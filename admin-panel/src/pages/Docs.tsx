@@ -32,16 +32,27 @@ import {
   KEY_PLACEHOLDER,
   OPTIONS,
   PLATFORMS,
+  STORAGE_KEYS,
   embedSnippet,
+  privacyParagraph,
   identifySnippet,
   userHashSnippet
 } from './docs/content';
 
-const SECTIONS = ['install', 'platforms', 'identify', 'commands', 'help'] as const;
+const SECTIONS = ['install', 'platforms', 'identify', 'commands', 'privacy', 'help'] as const;
 
 /* ------------------------------------------------------------------ parçalar */
 
-const CodeBlock = ({ code, filename }: { code: string; filename?: string }) => {
+const CodeBlock = ({
+  code,
+  filename,
+  prose = false
+}: {
+  code: string;
+  filename?: string;
+  /** Running text to copy (a paragraph), wrapped instead of scrolled. */
+  prose?: boolean;
+}) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -73,8 +84,14 @@ const CodeBlock = ({ code, filename }: { code: string; filename?: string }) => {
           {copied ? t('common.copied') : t('common.copy')}
         </button>
       </div>
-      <pre className="overflow-x-auto p-4 text-[12.5px] leading-[1.7] text-gray-200">
-        <code>{code}</code>
+      <pre
+        className={
+          prose
+            ? 'whitespace-pre-wrap break-words p-4 font-sans text-[13.5px] leading-[1.7] text-gray-200'
+            : 'overflow-x-auto p-4 text-[12.5px] leading-[1.7] text-gray-200'
+        }
+      >
+        <code className={prose ? 'font-sans' : undefined}>{code}</code>
       </pre>
     </div>
   );
@@ -346,6 +363,54 @@ const Docs = () => {
                         </td>
                         <td className="px-4 py-3 text-[13.5px] text-gray-700 dark:text-gray-300">
                           {o.text[lang]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* ------------------------------------- gizlilik metniniz için */}
+            <section>
+              <H2 id="privacy">{t('docsPage.privacy.title')}</H2>
+              <Lead>{t('docsPage.privacy.desc')}</Lead>
+              <div className="mt-6 space-y-5">
+                <CodeBlock
+                  prose
+                  code={privacyParagraph(lang, origin)}
+                  filename={t('docsPage.privacy.thisLanguage')}
+                />
+                <CodeBlock
+                  prose
+                  code={privacyParagraph(lang === 'en' ? 'tr' : 'en', origin)}
+                  filename={t('docsPage.privacy.otherLanguage')}
+                />
+              </div>
+              <h3 className="mt-10 text-[17px] font-semibold text-gray-900 dark:text-white">
+                {t('docsPage.privacy.storageTitle')}
+              </h3>
+              <Lead>{t('docsPage.privacy.storageDesc')}</Lead>
+              <div className="mt-4 overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/[0.08]">
+                <table className="w-full min-w-[520px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-white/[0.03]">
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-500">
+                        {t('docsPage.privacy.key')}
+                      </th>
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-500">
+                        {t('docsPage.privacy.purpose')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {STORAGE_KEYS.map((s) => (
+                      <tr key={s.key} className="border-t border-gray-100 dark:border-white/[0.06]">
+                        <td className="px-4 py-3 align-top">
+                          <Mono>{s.key}</Mono>
+                        </td>
+                        <td className="px-4 py-3 text-[13.5px] text-gray-700 dark:text-gray-300">
+                          {s.text[lang]}
                         </td>
                       </tr>
                     ))}

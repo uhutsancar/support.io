@@ -1880,6 +1880,7 @@ export default {
       install: 'Install',
       platforms: 'Platforms',
       identify: 'Identify users',
+      privacy: 'Your privacy notice',
       commands: 'Control from code',
       help: 'Troubleshooting'
     },
@@ -1922,12 +1923,23 @@ export default {
       optionsTitle: 'Options for the script tag',
       option: 'Option'
     },
+    privacy: {
+      title: 'For your privacy notice',
+      desc: 'You are the controller of your visitors’ data. Add the paragraph below to your own privacy notice and fill in the brackets, so your visitors learn from you how the chat window works.',
+      thisLanguage: 'English',
+      otherLanguage: 'Türkçe',
+      storageTitle: 'What the chat bubble keeps in the browser',
+      storageDesc:
+        'The bubble sets no cookies; it writes only these keys to your site’s local storage. List them as essential in your cookie notice or consent tool.',
+      key: 'Key',
+      purpose: 'What for'
+    },
     help: {
       title: 'Troubleshooting',
       items: [
         {
           q: 'What should my privacy notice say?',
-          a: 'State that you use Support.io for live chat. So a conversation survives page changes, the bubble keeps sc_widget_session in the browser’s local storage, plus sc_visitor_name and sc_visitor_email if the visitor typed them. No advertising or tracking cookies.'
+          a: 'State that you use Support.io for live chat. “For your privacy notice” above has a ready-made paragraph in English and Turkish and the list of keys the bubble keeps in the browser. No advertising or tracking cookies.'
         },
         {
           q: 'How do I switch on the AI assistant?',

@@ -421,3 +421,62 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
     }
   }
 ];
+
+/* ------------------------------------------------- gizlilik metni (LEG-04) */
+
+/**
+ * The paragraph a customer adds to their own privacy notice. The customer is
+ * the controller of their visitors' data; the brackets are theirs to fill.
+ * The AI provider is never named here (its name appears only in our own
+ * sub-processor list).
+ */
+export const privacyParagraph = (lang: 'tr' | 'en', origin: string) =>
+  lang === 'en'
+    ? [
+        'Live chat',
+        'The chat window on this site is provided by Support.io. When you use it, the messages you write, any files you send and the name, e-mail address or phone number you choose to give are processed to answer your questions, together with the page you are on, your browser and operating system, your IP address and country.',
+        '[Your company name] is the controller of this data; Support.io processes it only on our behalf and instructions. Conversations are kept for [retention period] after the last message.',
+        '[If you use the AI assistant:] Some questions may be answered by an AI assistant; its answers are marked as such in the chat window and you can ask for a person at any time.',
+        "The chat window keeps a few entries in your browser's local storage so the conversation continues when you change page; it sets no advertising or tracking cookies.",
+        `Support.io's privacy policy: ${origin}/en/privacy`
+      ].join('\n\n')
+    : [
+        'Canlı destek',
+        'Sitemizdeki sohbet penceresi Support.io tarafından sağlanır. Sohbet penceresini kullandığınızda yazdığınız mesajlar, gönderdiğiniz dosyalar ve kendi isteğinizle verdiğiniz ad, e-posta adresi ya da telefon numarası; bulunduğunuz sayfa, tarayıcınız ve işletim sisteminiz, IP adresiniz ve ülkeniz ile birlikte sorularınızı yanıtlamak amacıyla işlenir.',
+        'Bu verilerin sorumlusu [Şirket adınız]’dır; Support.io bu verileri yalnızca bizim adımıza ve talimatımızla işler. Sohbetler son mesajdan sonra [saklama süresi] boyunca saklanır.',
+        '[Yapay zekâ asistanını kullanıyorsanız:] Sorularınızın bir kısmı yapay zekâ destekli bir asistan tarafından yanıtlanabilir; bu yanıtlar sohbet penceresinde ayrıca belirtilir ve dilediğiniz an bir temsilciye bağlanabilirsiniz.',
+        'Sohbet penceresi, sayfa değiştirdiğinizde konuşmanın sürmesi için tarayıcınızın yerel deposunu kullanır; reklam ya da izleme çerezi kullanmaz.',
+        `Support.io gizlilik politikası: ${origin}/gizlilik`
+      ].join('\n\n');
+
+/** What the chat bubble keeps in the visitor's browser (local storage only). */
+export const STORAGE_KEYS: Array<{ key: string; text: Text }> = [
+  {
+    key: 'sc_widget_session:<site>',
+    text: {
+      tr: 'İmzalı ziyaretçi oturumu: sayfa değişince aynı konuşmaya dönmek için.',
+      en: 'Signed visitor session: to return to the same conversation after a page change.'
+    }
+  },
+  {
+    key: 'sc_contact_<site>',
+    text: {
+      tr: 'İletişim formunun doldurulduğu; form tekrar sorulmasın diye.',
+      en: 'That the contact form was filled in, so it is not asked again.'
+    }
+  },
+  {
+    key: 'sc_visitor_name',
+    text: {
+      tr: 'Ziyaretçinin kendi yazdığı ad.',
+      en: 'The name the visitor typed.'
+    }
+  },
+  {
+    key: 'sc_visitor_email',
+    text: {
+      tr: 'Ziyaretçinin kendi yazdığı e-posta adresi.',
+      en: 'The e-mail address the visitor typed.'
+    }
+  }
+];

@@ -1888,6 +1888,7 @@ export default {
       platforms: 'Platformlar',
       identify: 'Kullanıcıyı tanıtma',
       commands: 'Koddan kontrol',
+      privacy: 'Gizlilik metniniz',
       help: 'Sorun giderme'
     },
     install: {
@@ -1929,12 +1930,23 @@ export default {
       optionsTitle: 'Kod etiketine eklenebilen seçenekler',
       option: 'Seçenek'
     },
+    privacy: {
+      title: 'Gizlilik metniniz için',
+      desc: 'Ziyaretçilerinizin verisinde sorumlu sizsiniz. Aşağıdaki paragrafı kendi gizlilik metninize ekleyin ve köşeli parantezleri doldurun; ziyaretçileriniz sohbet penceresinin nasıl çalıştığını sizden öğrensin.',
+      thisLanguage: 'Türkçe',
+      otherLanguage: 'English',
+      storageTitle: 'Sohbet balonunun tarayıcıda tuttukları',
+      storageDesc:
+        'Balon çerez kullanmaz; yalnızca sitenizin yerel deposuna şu anahtarları yazar. Çerez bildiriminizde ya da onay aracınızda bunları zorunlu olarak listeleyebilirsiniz.',
+      key: 'Anahtar',
+      purpose: 'Ne için'
+    },
     help: {
       title: 'Sorun giderme',
       items: [
         {
           q: 'Sitemin gizlilik metnine ne yazmalıyım?',
-          a: 'Canlı destek için Support.io kullandığınızı belirtin. Balon, sayfa değişse de konuşmanın sürmesi için tarayıcının yerel deposunda sc_widget_session anahtarını, ziyaretçi yazdıysa sc_visitor_name ve sc_visitor_email anahtarlarını tutar. Reklam ya da izleme çerezi kullanmaz.'
+          a: 'Canlı destek için Support.io kullandığınızı belirtin. Yukarıdaki “Gizlilik metniniz için” bölümünde Türkçe ve İngilizce hazır bir paragraf ve balonun tarayıcıda tuttuğu anahtarların listesi var. Balon reklam ya da izleme çerezi kullanmaz.'
         },
         {
           q: 'Yapay zekâ asistanını nasıl açarım?',
