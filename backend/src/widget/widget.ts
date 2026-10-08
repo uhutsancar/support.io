@@ -270,19 +270,43 @@ interface Window {
       .replace(/'/g, '&#39;');
   }
 
-  /** Rengin uzerine okunur metin rengi secer (WCAG luminance). */
-  function readableOn(hex: string): string {
+  /** Relative luminance (WCAG 2.x); null for a value that is not #rgb/#rrggbb. */
+  function luminance(hex: string): number | null {
     var c = String(hex || '').replace('#', '');
     if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
-    if (c.length !== 6) return '#FFFFFF';
-    var r = parseInt(c.slice(0, 2), 16) / 255;
-    var g = parseInt(c.slice(2, 4), 16) / 255;
-    var b = parseInt(c.slice(4, 6), 16) / 255;
+    if (!/^[0-9a-f]{6}$/i.test(c)) return null;
     var f = function (v: number) {
+      v = v / 255;
       return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
     };
-    var L = 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-    return L > 0.45 ? '#111827' : '#FFFFFF';
+    return (
+      0.2126 * f(parseInt(c.slice(0, 2), 16)) +
+      0.7152 * f(parseInt(c.slice(2, 4), 16)) +
+      0.0722 * f(parseInt(c.slice(4, 6), 16))
+    );
+  }
+
+  /** The WCAG contrast ratio of two colours (1–21); 21 when one is unreadable. */
+  function contrast(a: string, b: string): number {
+    var la = luminance(a);
+    var lb = luminance(b);
+    if (la === null || lb === null) return 21;
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  /**
+   * Text on a background the site owner chose: white or near-black,
+   * whichever reads better (WCAG 1.4.3). A luminance cut-off of 0.45 used to
+   * put white on mid-tones where it fell to 3:1.
+   */
+  function readableOn(hex: string): string {
+    if (luminance(hex) === null) return '#FFFFFF';
+    return contrast(hex, '#FFFFFF') >= contrast(hex, '#111827') ? '#FFFFFF' : '#111827';
+  }
+
+  /** The accent as text on a background: itself when it reads (4.5:1), else the text colour. */
+  function accentText(accent: string, background: string, fallback: string): string {
+    return contrast(accent, background) >= 4.5 ? accent : fallback;
   }
 
   function withAlpha(hex: string, alpha: number): string {
@@ -399,6 +423,7 @@ interface Window {
         'Sohbet şu anda kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız lütfen bize başka bir yoldan ulaşın.',
       slowDown: 'Lütfen bir sonraki mesajınızdan önce biraz bekleyin.',
       aiBadge: 'Yapay zekâ asistanı',
+      supportTeam: 'Destek ekibi',
       aiNote: 'Otomatik yanıt · Bir temsilciye bağlanmak için yazın: temsilci'
     },
     en: {
@@ -477,6 +502,7 @@ interface Window {
         'Chat is not available right now. If you think this is a mistake, please reach us another way.',
       slowDown: 'Please wait a little before sending your next message.',
       aiBadge: 'AI assistant',
+      supportTeam: 'Support team',
       aiNote: 'Automatic answer · To reach a person, type: agent'
     }
   };
@@ -1307,8 +1333,11 @@ interface Window {
       if (!self.conversationId && message.conversationId) {
         self.conversationId = String(message.conversationId);
       }
-      self._appendMessage(message);
-      if (message.senderType !== 'visitor') self._hideTyping();
+      var drawn = self._appendMessage(message);
+      if (message.senderType !== 'visitor') {
+        self._hideTyping();
+        if (drawn) self._announce(message);
+      }
       // The FAQ assistant handed over: from here a person answers, so the
       // line offering one has done its job.
       if (message.assistant && message.assistant.handoff) self._hideAssistantLine();
@@ -1495,14 +1524,14 @@ interface Window {
       'object-fit:contain;border-radius:8px;background:rgba(255,255,255,.14);flex:0 0 auto;}',
       '.header-text{flex:1;min-width:0;}',
       '.header-title{font-size:15px;font-weight:650;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.header-status{font-size:12px;opacity:.85;display:flex;align-items:center;gap:6px;margin-top:2px;}',
-      '.assistant-line{font-size:11px;opacity:.9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.header-status{font-size:12px;display:flex;align-items:center;gap:6px;margin-top:2px;}',
+      '.assistant-line{font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.link-btn{border:0;background:none;padding:0;color:inherit;font:inherit;cursor:pointer;text-decoration:underline;}',
       '.dot{width:7px;height:7px;border-radius:50%;background:#9CA3AF;flex:0 0 auto;}',
       '.dot.online{background:#22C55E;}.dot.away{background:#F59E0B;}',
       '.dot.pulse{animation:pulse 1.4s ease-in-out infinite;}',
       '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}',
-      '.icon-btn{width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:inherit;',
+      '.icon-btn{width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:inherit;',
       'cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;',
       'transition:background 140ms ease;}',
       '.icon-btn:hover{background:rgba(255,255,255,.16);}',
@@ -1608,7 +1637,7 @@ interface Window {
       // The assistant's answers say what they are (AI-03).
       '.msg-badge{font-size:10.5px;font-weight:600;letter-spacing:.01em;padding:1px 7px;border-radius:999px;color:' +
         colors.textSecondary +
-        ';border:1px solid currentColor;opacity:.85;}',
+        ';border:1px solid currentColor;}',
       '.ai-note{font-size:11px;color:' + colors.textSecondary + ';padding:0 4px;max-width:260px;}',
       '.bubble{padding:10px 13px;border-radius:' +
         c.messages.messageBubbleRadius +
@@ -1644,7 +1673,7 @@ interface Window {
         ';text-decoration:none;color:inherit;}',
       '.file svg{width:18px;height:18px;flex:0 0 auto;opacity:.7;}',
       '.file-name{font-size:12.5px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-      '.file-size{font-size:10.5px;opacity:.7;}',
+      '.file-size{font-size:10.5px;}',
       '.typing{align-self:flex-start;display:none;gap:4px;padding:11px 14px;border-radius:14px;',
       'background:' + agentBg + ';}',
       '.typing.show{display:flex;}',
@@ -1680,7 +1709,7 @@ interface Window {
         withAlpha(primary, 0.16) +
         ';}',
       '.composer textarea::placeholder{color:' + colors.textSecondary + ';opacity:.75;}',
-      '.send{width:38px;height:38px;flex:0 0 auto;border:0;border-radius:11px;background:' +
+      '.send{width:44px;height:44px;flex:0 0 auto;border:0;border-radius:11px;background:' +
         primary +
         ';',
       'color:' +
@@ -1759,8 +1788,8 @@ interface Window {
         ';background:' +
         withAlpha(primary, 0.1) +
         ';color:' +
-        primary +
-        ';}',
+        accentText(primary, colors.background, colors.text) +
+        ';font-weight:600;}',
       '.choice.star{padding:0;font-size:20px;line-height:1;}',
       '.end-card .row{display:flex;gap:8px;}',
       '.end-card .row input{flex:1;min-width:0;}',
@@ -1775,13 +1804,17 @@ interface Window {
         ';display:flex;flex-direction:column;',
       'align-items:center;gap:3px;transition:color 140ms ease;}',
       '.nav button svg{width:19px;height:19px;}',
-      '.nav button.active{color:' + primary + ';}',
+      '.nav button.active{color:' +
+        accentText(primary, colors.background, colors.text) +
+        ';box-shadow:inset 0 2px 0 ' +
+        primary +
+        ';}',
       '.nav button:focus-visible{outline:2px solid ' + primary + ';outline-offset:-2px;}',
 
       '.footer{flex:0 0 auto;padding:7px;text-align:center;font-size:10.5px;color:' +
         colors.textSecondary +
         ';',
-      'opacity:.7;border-top:1px solid ' + colors.border + ';}',
+      'border-top:1px solid ' + colors.border + ';}',
 
       /* --- mobil ---
          100vh mobil tarayicilarda adres cubugunun ALTINA tasar. 100dvh dogru
@@ -1798,7 +1831,9 @@ interface Window {
       'max-height:none;border-radius:0;border:0;}',
       '.header{padding-top:calc(16px + env(safe-area-inset-top,0px));}',
       '}',
-      '@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}'
+      '@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}.messages{scroll-behavior:auto;}}',
+      // Read by screen readers, invisible on screen.
+      '.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}'
     ].join('');
   };
 
@@ -1861,13 +1896,13 @@ interface Window {
     var wrap = document.createElement('div');
     wrap.className = 'root';
     wrap.innerHTML = [
-      '<div class="panel" role="dialog" aria-modal="false" aria-label="' +
-        escapeHtml(brand) +
-        '" tabindex="-1">',
+      '<div class="panel" role="dialog" aria-modal="false" ' +
+        (showBrand ? 'aria-labelledby="sc-title"' : 'aria-label="' + brand + '"') +
+        ' tabindex="-1">',
       '<div class="header">',
       logo,
       '<div class="header-text">',
-      showBrand ? '<div class="header-title">' + brand + '</div>' : '',
+      showBrand ? '<div class="header-title" id="sc-title">' + brand + '</div>' : '',
       '<div class="header-status"><span class="dot"></span><span class="status-text"></span></div>',
       // Said plainly when a machine answers first, with the way to a person
       // one click away.
@@ -1905,7 +1940,8 @@ interface Window {
       '</section>',
 
       '<section class="view js-view-messages" aria-label="' + escapeHtml(t.messages) + '">',
-      '<div class="messages js-messages" role="log" aria-live="polite"></div>',
+      '<div class="messages js-messages" role="log" aria-live="off"></div>',
+      '<div class="sr-only js-announce" aria-live="polite" aria-atomic="true"></div>',
       '<div class="typing js-typing" aria-hidden="true"><i></i><i></i><i></i></div>',
       // The pre-chat / offline form is drawn here when the site asks for it.
       '<div class="contact-wrap js-contact"></div>',
@@ -2010,6 +2046,7 @@ interface Window {
       statusDot: q('.dot'),
       statusText: q('.status-text'),
       messages: q('.js-messages'),
+      announce: q('.js-announce'),
       typing: q('.js-typing'),
       assistantLine: q('.js-assistant'),
       input: q('.js-input'),
@@ -2376,6 +2413,22 @@ interface Window {
     this.el.messages.appendChild(node);
     if (!bulk) this._scrollToEnd();
     return node;
+  };
+
+  /** Reads a message from the other side out to a screen reader (UX-01). */
+  Widget.prototype._announce = function (this: WidgetInstance, message: WidgetMessage) {
+    var region = this.el && this.el.announce;
+    if (!region) return;
+    var who =
+      message.senderId === 'assistant'
+        ? this.t.aiBadge
+        : message.senderName || (message.senderType === 'system' ? '' : this.t.supportTeam);
+    var text = String(message.content || '').slice(0, 500);
+    // Emptied first so the same words twice are still read twice.
+    region.textContent = '';
+    setTimeout(function () {
+      region.textContent = (who ? who + ': ' : '') + text;
+    }, 60);
   };
 
   Widget.prototype._time = function (
@@ -3176,8 +3229,12 @@ interface Window {
     // Odagi panele tasi — klavye kullanicisi acildiktan sonra sayfanin
     // basindan devam etmemeli.
     var panel = this.el.panel;
+    var input =
+      this.view === 'messages' && !this.el.composer.classList.contains('locked')
+        ? this.el.input
+        : null;
     setTimeout(function () {
-      panel.focus();
+      (input || panel).focus();
     }, 50);
     this.emit('open', {});
   };
@@ -3185,8 +3242,13 @@ interface Window {
   Widget.prototype.close = function (this: WidgetInstance) {
     if (this.destroyed || !this.el) return;
     this.isOpen = false;
+    // Closed from inside (the close button, Esc): the keyboard goes back to
+    // the bubble instead of the top of the page.
+    var focusInside =
+      this.root && this.root.activeElement && this.root.activeElement !== this.el.launcher;
     this.el.wrap.classList.remove('open');
     this.el.launcher.setAttribute('aria-expanded', 'false');
+    if (focusInside) this.el.launcher.focus();
     this.emit('close', {});
   };
 
