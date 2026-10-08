@@ -92,6 +92,51 @@ const equal = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
  */
 const CLOSE_SCRIPT = `<${'/'}script>`;
 
+const linesOf = (text: string) =>
+  text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 50);
+
+/**
+ * Page paths, one per line. The text is kept as typed — a new line stays
+ * while it is still empty — and the trimmed list is what gets saved.
+ */
+const PathList = ({
+  id,
+  value,
+  onChange
+}: {
+  id: string;
+  value: string[];
+  onChange: (paths: string[]) => void;
+}) => {
+  const [text, setText] = useState(() => value.join('\n'));
+  // A reset or a preset brings a different list: show that one.
+  useEffect(() => {
+    setText((current) =>
+      linesOf(current).join('\n') === value.join('\n') ? current : value.join('\n')
+    );
+  }, [value]);
+  return (
+    <textarea
+      id={id}
+      rows={3}
+      spellCheck={false}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(linesOf(e.target.value));
+      }}
+      placeholder={'/checkout/*\n/hesabim'}
+      className="mt-2 w-full px-3 py-2 text-xs font-mono rounded-lg border border-gray-300
+        dark:border-gray-600 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100
+        resize-y focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+    />
+  );
+};
+
 const WidgetCustomization = () => {
   const { t, i18n } = useTranslation();
   // The route guarantees the parameter; useParams cannot know that.
@@ -786,6 +831,36 @@ const WidgetCustomization = () => {
                       checked={draft.behavior.enableSound !== false}
                       onChange={(v: any) => patch('behavior', { enableSound: v })}
                     />
+                    <Toggle
+                      id="title-alert"
+                      label={t('studio.behavior.titleAlert')}
+                      description={t('studio.behavior.titleAlertHint')}
+                      checked={draft.behavior.titleAlert !== false}
+                      onChange={(v: any) => patch('behavior', { titleAlert: v })}
+                    />
+                    <Toggle
+                      id="hide-on-mobile"
+                      label={t('studio.behavior.hideOnMobile')}
+                      description={t('studio.behavior.hideOnMobileHint')}
+                      checked={draft.behavior.hideOnMobile === true}
+                      onChange={(v: any) => patch('behavior', { hideOnMobile: v })}
+                    />
+                    <div>
+                      <label
+                        htmlFor="hide-on-pages"
+                        className="block text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        {t('studio.behavior.hideOnPages')}
+                      </label>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {t('studio.behavior.hideOnPagesHint')}
+                      </p>
+                      <PathList
+                        id="hide-on-pages"
+                        value={draft.behavior.hideOnPages || []}
+                        onChange={(hideOnPages) => patch('behavior', { hideOnPages })}
+                      />
+                    </div>
                   </Section>
                 </>
               )}

@@ -140,10 +140,15 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       if (!conversation) return ctx.reject(socket);
 
       await socket.join(conversationRoom(conversation._id));
-      await Message.updateMany(
+      const readAt = new Date();
+      const read = await Message.updateMany(
         { conversationId: conversation._id, isRead: false, senderType: 'visitor' },
-        { isRead: true, readAt: new Date() }
+        { isRead: true, readAt }
       );
+      // The visitor sees "seen" under their messages (UX-04).
+      if (read.modifiedCount) {
+        ctx.toWidgetConversation(conversation._id, 'messages-seen', { readAt });
+      }
     })
   );
 

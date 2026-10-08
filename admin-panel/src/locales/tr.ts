@@ -1770,7 +1770,13 @@ export default {
       delay: 'Gecikme',
       unreadBadge: 'Okunmamış rozeti',
       sound: 'Bildirim sesi',
-      soundHint: 'Yeni mesaj geldiğinde kısa bir ton çalar'
+      soundHint: 'Yeni mesaj geldiğinde kısa bir ton çalar',
+      titleAlert: 'Sekme başlığında uyarı',
+      titleAlertHint: 'Ziyaretçi başka sekmedeyken gelen yanıtı “(1) Sayfa adı” olarak gösterir',
+      hideOnMobile: 'Telefonda gizle',
+      hideOnMobileHint: 'Sohbet balonu 480 px’ten dar ekranlarda görünmez',
+      hideOnPages: 'Şu sayfalarda gösterme',
+      hideOnPagesHint: 'Her satıra bir adres yolu; * her şeyle eşleşir (ör. /checkout/*)'
     },
     advanced: {
       window: 'Pencere ölçüleri',

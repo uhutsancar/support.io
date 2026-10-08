@@ -119,7 +119,9 @@ const DEFAULTS = {
     hideOnPages: [],
     showUnreadBadge: true,
     enableSound: true,
-    enableNotifications: true
+    enableNotifications: true,
+    titleAlert: true,
+    hideOnMobile: false
   },
   typography: { fontFamily: '', fontSize: 'medium', fontWeight: 'normal' },
   advanced: { customCSS: null, zIndex: 2147483000, animationSpeed: 'normal' }

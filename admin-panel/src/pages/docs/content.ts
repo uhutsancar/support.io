@@ -387,6 +387,13 @@ export const COMMANDS: Array<{ call: string; text: Text }> = [
       tr: 'Balonu belirli sayfalarda gizler ya da yeniden gösterir.',
       en: 'Hides the bubble on certain pages or shows it again.'
     }
+  },
+  {
+    call: "['on', 'message', (e) => …]",
+    text: {
+      tr: 'Ekibiniz ya da asistan yazdığında çağrılır; e.message mesajın kendisidir. Diğer olaylar: open, close, unread, ready.',
+      en: 'Called when your team or the assistant writes; e.message is the message. Other events: open, close, unread, ready.'
+    }
   }
 ];
 

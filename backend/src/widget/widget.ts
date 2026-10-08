@@ -192,6 +192,8 @@ interface WidgetInstance extends EmitterInstance {
   } | null;
   /** The next popstate is the one our own history.back() caused. */
   _ignorePop: boolean;
+  /** Answers counted into the tab title, "(2) …" (UX-04). */
+  _titleCount: number;
   _lastTypingAt: number;
   _lightColors: boolean;
   _typingTimer: ReturnType<typeof setTimeout> | null;
@@ -433,6 +435,8 @@ interface Window {
       slowDown: 'Lütfen bir sonraki mesajınızdan önce biraz bekleyin.',
       aiBadge: 'Yapay zekâ asistanı',
       supportTeam: 'Destek ekibi',
+      emoji: 'Emoji ekle',
+      seen: 'Görüldü',
       aiNote: 'Otomatik yanıt · Bir temsilciye bağlanmak için yazın: temsilci'
     },
     en: {
@@ -512,6 +516,8 @@ interface Window {
       slowDown: 'Please wait a little before sending your next message.',
       aiBadge: 'AI assistant',
       supportTeam: 'Support team',
+      emoji: 'Add an emoji',
+      seen: 'Seen',
       aiNote: 'Automatic answer · To reach a person, type: agent'
     }
   };
@@ -990,6 +996,14 @@ interface Window {
       );
       return rx.test(path);
     };
+    // No bubble on phone-sized screens, when the site says so (UX-04).
+    if (
+      behavior.hideOnMobile &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(max-width:480px)').matches
+    ) {
+      return false;
+    }
     var hide = behavior.hideOnPages || [];
     for (var i = 0; i < hide.length; i++) if (match(hide[i])) return false;
     var show = behavior.showOnPages || [];
@@ -1348,7 +1362,13 @@ interface Window {
       var drawn = self._appendMessage(message);
       if (message.senderType !== 'visitor') {
         self._hideTyping();
-        if (drawn) self._announce(message);
+        if (drawn) {
+          self._announce(message);
+          self._titleAlert();
+        }
+      } else {
+        var stale = self.el && self.el.messages.querySelector('.seen');
+        if (stale) stale.remove();
       }
       // The FAQ assistant handed over: from here a person answers, so the
       // line offering one has done its job.
@@ -1363,6 +1383,11 @@ interface Window {
 
     // The assistant asks for longer than a person's keystroke pause: its
     // answer can take a few seconds to write.
+    // The team has read the visitor's messages (UX-04).
+    this.socket.on('messages-seen', function () {
+      self._markSeen();
+    });
+
     this.socket.on('agent-typing', function (data: any) {
       self._showTyping(data && data.durationMs);
     });
@@ -1705,7 +1730,9 @@ interface Window {
       '.powered:hover{text-decoration:underline;}',
 
       /* composer */
-      '.composer{flex:0 0 auto;border-top:1px solid ' + colors.border + ';padding:10px 12px;',
+      '.composer{position:relative;flex:0 0 auto;border-top:1px solid ' +
+        colors.border +
+        ';padding:10px 12px;',
       'display:flex;align-items:flex-end;gap:8px;background:' + colors.background + ';',
       'padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));}',
       '.composer textarea{flex:1;min-width:0;resize:none;border:1px solid ' + colors.border + ';',
@@ -1844,12 +1871,30 @@ interface Window {
       '.header{padding-top:calc(16px + env(safe-area-inset-top,0px));}',
       '}',
       '@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}.messages{scroll-behavior:auto;}}',
+      // The emoji panel above the message box (UX-04).
+      '.emoji-pop{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);display:grid;grid-template-columns:repeat(8,1fr);gap:2px;',
+      'padding:8px;border:1px solid ' +
+        colors.border +
+        ';border-radius:14px;background:' +
+        colors.background +
+        ';box-shadow:0 10px 30px rgba(0,0,0,.14);z-index:2;}',
+      '.emoji-pop[hidden]{display:none;}',
+      '.emoji-pop button{min-width:36px;min-height:36px;border:0;border-radius:8px;background:none;font-size:20px;line-height:1;cursor:pointer;}',
+      '.emoji-pop button:hover,.emoji-pop button:focus-visible{background:' +
+        withAlpha(primary, 0.1) +
+        ';outline:none;}',
+      // A file dragged over the conversation.
+      '.panel.dragging .messages{outline:2px dashed ' + primary + ';outline-offset:-8px;}',
+      // "Seen" under the visitor's last message once the team has read it.
+      '.seen{font-size:10.5px;color:' + colors.textSecondary + ';padding:0 4px;}',
       // Read by screen readers, invisible on screen.
       '.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}'
     ].join('');
   };
 
   var ICONS = {
+    smile:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
     close:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
@@ -1975,6 +2020,16 @@ interface Window {
         '">' +
         ICONS.paperclip +
         '</button>',
+      '<button class="icon-btn js-emoji" aria-label="' +
+        escapeHtml(t.emoji) +
+        '" aria-haspopup="true" aria-expanded="false" style="color:' +
+        c.colors.textSecondary +
+        '">' +
+        ICONS.smile +
+        '</button>',
+      '<div class="emoji-pop js-emoji-pop" role="group" aria-label="' +
+        escapeHtml(t.emoji) +
+        '" hidden></div>',
       '<input type="file" class="js-file-input" hidden />',
       '<textarea class="js-input" rows="1" maxlength="' +
         MAX_MESSAGE_LENGTH +
@@ -2064,6 +2119,8 @@ interface Window {
       input: q('.js-input'),
       send: q('.js-send'),
       attach: q('.js-attach'),
+      emoji: q('.js-emoji'),
+      emojiPop: q('.js-emoji-pop'),
       fileInput: q('.js-file-input'),
       fileChip: q('.js-file-chip'),
       fileName: q('.js-file-name'),
@@ -2085,6 +2142,9 @@ interface Window {
     // --- olay baglamalari ---
     this._listen(this.el.launcher, 'click', function () {
       self.toggle();
+    });
+    this._listen(document, 'visibilitychange', function () {
+      if (!document.hidden && self.isOpen) self._clearTitleAlert();
     });
     this._listen(window, 'popstate', function (e: Event) {
       if (self._ignorePop) {
@@ -2137,6 +2197,68 @@ interface Window {
     });
     this._listen(this.el!.attach, 'click', function () {
       self.el!.fileInput.click();
+    });
+    if (this.el.emoji) {
+      this._listen(this.el.emoji, 'click', function (e: Event) {
+        e.stopPropagation();
+        self._toggleEmoji();
+      });
+      this._listen(this.el.emojiPop, 'keydown', function (e: Event) {
+        if ((e as KeyboardEvent).key === 'Escape') {
+          e.stopPropagation();
+          self._toggleEmoji(false);
+          self.el!.emoji.focus();
+        }
+      });
+      this._listen(this.el.panel, 'click', function (e: Event) {
+        var target = e.target as Node;
+        if (!self.el!.emojiPop.contains(target) && target !== self.el!.emoji) {
+          self._toggleEmoji(false);
+        }
+      });
+    }
+    // A file dropped on the conversation, or an image pasted into the box,
+    // is attached as if picked with the paper clip.
+    var canAttach = function () {
+      return self.view === 'messages' && !self.el!.composer.classList.contains('locked');
+    };
+    var hasFiles = function (e: Event) {
+      var types = (e as DragEvent).dataTransfer && (e as DragEvent).dataTransfer!.types;
+      return Boolean(types && Array.prototype.indexOf.call(types, 'Files') !== -1);
+    };
+    this._listen(this.el.panel, 'dragover', function (e: Event) {
+      if (!canAttach() || !hasFiles(e)) return;
+      e.preventDefault();
+      self.el!.panel.classList.add('dragging');
+    });
+    this._listen(this.el.panel, 'dragleave', function (e: Event) {
+      if (
+        (e as DragEvent).relatedTarget &&
+        self.el!.panel.contains((e as DragEvent).relatedTarget as Node)
+      )
+        return;
+      self.el!.panel.classList.remove('dragging');
+    });
+    this._listen(this.el.panel, 'drop', function (e: Event) {
+      self.el!.panel.classList.remove('dragging');
+      if (!canAttach() || !hasFiles(e)) return;
+      e.preventDefault();
+      var files = (e as DragEvent).dataTransfer!.files;
+      if (files && files[0]) self._pickFile(files[0]);
+    });
+    this._listen(this.el.input, 'paste', function (e: Event) {
+      var items = (e as ClipboardEvent).clipboardData && (e as ClipboardEvent).clipboardData!.items;
+      if (!items || !canAttach()) return;
+      for (var k = 0; k < items.length; k++) {
+        if (items[k].kind === 'file') {
+          var pasted = items[k].getAsFile();
+          if (pasted) {
+            e.preventDefault();
+            self._pickFile(pasted);
+            return;
+          }
+        }
+      }
     });
     this._listen(this.el.fileInput, 'change', function (e) {
       self._pickFile((e.target as HTMLInputElement).files?.[0]);
@@ -2382,6 +2504,19 @@ interface Window {
   // --- mesajlar -------------------------------------------------------------
 
   Widget.prototype._renderThread = function (this: WidgetInstance, messages: WidgetMessage[]) {
+    this._renderThreadMessages(messages);
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].senderType === 'visitor') {
+        if ((messages[i] as WidgetMessage & { isRead?: boolean }).isRead) this._markSeen();
+        break;
+      }
+    }
+  };
+
+  Widget.prototype._renderThreadMessages = function (
+    this: WidgetInstance,
+    messages: WidgetMessage[]
+  ) {
     if (!this.el) return;
     this.el.messages.innerHTML = '';
     this.seen = Object.create(null);
@@ -2592,6 +2727,125 @@ interface Window {
     if (this._lastTypingAt && now - this._lastTypingAt < 1000) return;
     this._lastTypingAt = now;
     this.socket.emit('typing');
+  };
+
+  // ------------------------------------------------------- emoji (UX-04)
+  // A fixed handful drawn on first use: no library, no request.
+  var EMOJIS = [
+    '😀',
+    '😄',
+    '😊',
+    '🙂',
+    '😉',
+    '😍',
+    '😎',
+    '🤔',
+    '😐',
+    '😕',
+    '😢',
+    '😭',
+    '😡',
+    '😅',
+    '🙈',
+    '🤝',
+    '👍',
+    '👎',
+    '👏',
+    '🙏',
+    '👋',
+    '💪',
+    '🎉',
+    '✨',
+    '❤️',
+    '🔥',
+    '✅',
+    '❌',
+    '⚠️',
+    '❓',
+    '💡',
+    '⏰',
+    '📦',
+    '🚚',
+    '🛒',
+    '💳',
+    '🎁',
+    '📞',
+    '📧',
+    '📍'
+  ];
+
+  Widget.prototype._toggleEmoji = function (this: WidgetInstance, force?: boolean) {
+    if (!this.el || !this.el.emojiPop) return;
+    var pop = this.el.emojiPop as HTMLElement;
+    var open = force === undefined ? pop.hidden : force;
+    if (open && !pop.childElementCount) {
+      var self = this;
+      for (var i = 0; i < EMOJIS.length; i++) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = EMOJIS[i];
+        this._listen(b, 'click', function (e: Event) {
+          e.stopPropagation();
+          self._insertText((e.currentTarget as HTMLElement).textContent || '');
+          self._toggleEmoji(false);
+        });
+        pop.appendChild(b);
+      }
+    }
+    pop.hidden = !open;
+    this.el.emoji.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) (pop.firstElementChild as HTMLElement | null)?.focus();
+  };
+
+  /** Puts text at the cursor in the message box, as typing would. */
+  Widget.prototype._insertText = function (this: WidgetInstance, text: string) {
+    if (!this.el || !text) return;
+    var input = this.el.input as HTMLTextAreaElement;
+    var start = input.selectionStart == null ? input.value.length : input.selectionStart;
+    var end = input.selectionEnd == null ? start : input.selectionEnd;
+    input.value = input.value.slice(0, start) + text + input.value.slice(end);
+    var at = start + text.length;
+    input.focus();
+    try {
+      input.setSelectionRange(at, at);
+    } catch (e) {
+      /* not focusable yet */
+    }
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  // ------------------------------------------------- "seen" (UX-04)
+  /** "Seen" under the visitor's last message: the team has read up to there. */
+  Widget.prototype._markSeen = function (this: WidgetInstance) {
+    if (!this.el) return;
+    var old = this.el.messages.querySelector('.seen');
+    if (old) old.remove();
+    var mine = this.el.messages.querySelectorAll('.msg.visitor:not(.pending):not(.failed)');
+    var last = mine[mine.length - 1];
+    if (!last) return;
+    var seen = document.createElement('div');
+    seen.className = 'seen';
+    seen.textContent = this.t.seen;
+    last.appendChild(seen);
+  };
+
+  // ------------------------------------------- the page's tab (UX-04)
+  var TITLE_PREFIX = /^\(\d+\+?\) /;
+
+  /** "(2) Shop" in the tab while answers wait unread, when the site allows it. */
+  Widget.prototype._titleAlert = function (this: WidgetInstance) {
+    var behavior = (this.remote && this.remote.config.behavior) || {};
+    if (behavior.titleAlert === false) return;
+    if (this.isOpen && !document.hidden) return;
+    this._titleCount = (this._titleCount || 0) + 1;
+    var count = this._titleCount > 9 ? '9+' : String(this._titleCount);
+    document.title = '(' + count + ') ' + document.title.replace(TITLE_PREFIX, '');
+  };
+
+  Widget.prototype._clearTitleAlert = function (this: WidgetInstance) {
+    if (!this._titleCount) return;
+    this._titleCount = 0;
+    document.title = document.title.replace(TITLE_PREFIX, '');
   };
 
   Widget.prototype._pickFile = function (this: WidgetInstance, file?: File | null) {
@@ -3246,6 +3500,7 @@ interface Window {
     this.el.wrap.classList.add('open');
     this.el.launcher.setAttribute('aria-expanded', 'true');
     this._enterPhoneScreen();
+    this._clearTitleAlert();
     this.unread = 0;
     this._renderBadge();
     if (this.view === 'messages') this._scrollToEnd();
@@ -3516,8 +3771,9 @@ interface Window {
   Widget.prototype.destroy = function (this: WidgetInstance) {
     if (this.destroyed) return;
     this.destroyed = true;
-    // The page scrolls again and keeps its history as it was.
+    // The page scrolls again and keeps its history and title as they were.
     this._leavePhoneScreen(false);
+    this._clearTitleAlert();
 
     for (var i = 0; i < this._timers.length; i++) clearTimeout(this._timers[i]);
     this._timers = [];

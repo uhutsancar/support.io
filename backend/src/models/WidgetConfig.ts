@@ -58,6 +58,10 @@ export interface WidgetBehavior {
   showUnreadBadge: boolean;
   enableSound: boolean;
   enableNotifications: boolean;
+  /** "(1) …" in the page's tab while an answer waits unread (UX-04). */
+  titleAlert?: boolean;
+  /** No bubble on phone-sized screens (UX-04). */
+  hideOnMobile?: boolean;
 }
 
 export interface WidgetTypography {
@@ -164,7 +168,9 @@ export default defineModel<WidgetConfigDoc>({
         hideOnPages: [],
         showUnreadBadge: true,
         enableSound: true,
-        enableNotifications: true
+        enableNotifications: true,
+        titleAlert: true,
+        hideOnMobile: false
       })
     },
     typography: {

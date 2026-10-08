@@ -623,6 +623,10 @@ export interface WidgetBehavior {
   showUnreadBadge: boolean;
   enableSound: boolean;
   enableNotifications: boolean;
+  /** "(1) …" in the page's tab while an answer waits unread. */
+  titleAlert?: boolean;
+  /** No bubble on phone-sized screens. */
+  hideOnMobile?: boolean;
 }
 
 export interface WidgetTypography {

@@ -1764,7 +1764,14 @@ export default {
       delay: 'Delay',
       unreadBadge: 'Unread badge',
       sound: 'Notification sound',
-      soundHint: 'Plays a short tone when a new message arrives'
+      soundHint: 'Plays a short tone when a new message arrives',
+      titleAlert: 'Alert in the tab title',
+      titleAlertHint:
+        'Shows an answer that arrives while the visitor is on another tab as “(1) Page name”',
+      hideOnMobile: 'Hide on phones',
+      hideOnMobileHint: 'No chat bubble on screens narrower than 480 px',
+      hideOnPages: 'Do not show on these pages',
+      hideOnPagesHint: 'One path per line; * matches anything (e.g. /checkout/*)'
     },
     advanced: {
       window: 'Window size',

@@ -187,6 +187,11 @@ export class WidgetNotifier {
   newMessage(conversationId: unknown, message: unknown): void {
     this.toConversation(conversationId, 'new-message', { message: plain(message) });
   }
+
+  /** The team has read the visitor's messages (UX-04). */
+  messagesSeen(conversationId: unknown, readAt: Date): void {
+    this.toConversation(conversationId, 'messages-seen', { readAt });
+  }
 }
 
 /**

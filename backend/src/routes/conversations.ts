@@ -44,7 +44,7 @@ import {
   isPriority,
   slaTargetsFor
 } from '../domain';
-import { ioFrom, notifyAdmin } from '../realtime';
+import { WidgetNotifier, ioFrom, notifyAdmin } from '../realtime';
 import {
   asyncHandler,
   badRequest,
@@ -251,10 +251,16 @@ router.get(
     const hasMore = newestFirst.length > limit;
     const messages = newestFirst.slice(0, limit).reverse();
 
-    await Message.updateMany(
+    const readAt = new Date();
+    const read = await Message.updateMany(
       { conversationId: conversation._id, senderType: 'visitor', isRead: false },
-      { isRead: true, readAt: new Date() }
+      { isRead: true, readAt }
     );
+    // The visitor sees "seen" under their messages (UX-04).
+    if (read.modifiedCount) {
+      const io = ioFrom(req);
+      if (io) new WidgetNotifier(io).messagesSeen(conversation._id, readAt);
+    }
     conversation.unreadCount = 0;
     await conversation.save();
 
