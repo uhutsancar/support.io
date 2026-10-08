@@ -122,6 +122,50 @@ export function productionConfigWarnings(): string[] {
       'TURNSTILE_SITE_KEY / TURNSTILE_SECRET are empty: the sign-up form has no bot check (SEC-06)'
     );
   }
+  // The rest of plan v10 appendix C (INF-04): each one costs something when
+  // empty, nothing breaks.
+  if (!value('SENTRY_DSN')) {
+    warnings.push('SENTRY_DSN is empty: errors stay in the server log only (OBS-01)');
+  }
+  if (!value('ALERT_WEBHOOK_URL')) {
+    warnings.push('ALERT_WEBHOOK_URL is empty: the watchdog has nobody to tell (OBS-04)');
+  }
+  if (!value('BACKUP_REMOTE') || !value('BACKUP_AGE_RECIPIENT')) {
+    warnings.push(
+      'BACKUP_REMOTE / BACKUP_AGE_RECIPIENT are empty: backups stay on this server (DR-01)'
+    );
+  }
+  if (!value('BACKUP_PING_URL')) {
+    warnings.push('BACKUP_PING_URL is empty: a night without a backup goes unnoticed (DR-01)');
+  }
+  if (!value('SECURITY_CONTACT_EMAIL')) {
+    warnings.push(
+      'SECURITY_CONTACT_EMAIL is empty: security.txt names security@ on the panel domain'
+    );
+  }
+  if (!value('OPS_REPORT_EMAIL')) {
+    warnings.push('OPS_REPORT_EMAIL is empty: no weekly product report (OBS-07)');
+  }
+  const tier = value('GEMINI_TIER').toLowerCase();
+  if (tier && tier !== 'free' && tier !== 'paid') {
+    warnings.push(`GEMINI_TIER=${tier} is not free or paid; free applies (AI-02)`);
+  } else if (value('GEMINI_API_KEY') && tier !== 'paid') {
+    warnings.push(
+      'GEMINI_TIER is free: the assistant does not answer visitors from the EEA, UK or Switzerland (AI-02, KARAR-AI-1)'
+    );
+  }
+  if (value('S3_ACL') && value('S3_ACL') !== 'private') {
+    warnings.push(`S3_ACL=${value('S3_ACL')}: uploaded files must stay private (SEC-08)`);
+  }
+  // Staging settings on a server that may be production.
+  if (value('MAIL_ALLOWLIST_DOMAINS')) {
+    warnings.push(
+      'MAIL_ALLOWLIST_DOMAINS is set: mail to every other domain is withheld — right for staging only (INF-03)'
+    );
+  }
+  if (String(process.env.SITE_NOINDEX).toLowerCase() === 'true') {
+    warnings.push('SITE_NOINDEX=true: search engines are told to skip every page — staging only');
+  }
   return warnings;
 }
 
