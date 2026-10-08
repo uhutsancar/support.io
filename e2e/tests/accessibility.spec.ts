@@ -143,7 +143,8 @@ test('the widget: no serious axe problem, keyboard, and what is read out', async
   }
 });
 
-test('the panel: no serious axe problem on its main pages', async ({ browser }) => {
+test('the panel: no serious axe problem on its pages', async ({ browser }) => {
+  test.setTimeout(300_000);
   // Reduced motion: the pages draw their final state at once, so axe does
   // not judge a bubble halfway through fading in.
   const visitorPages = await (await browser.newContext({ reducedMotion: 'reduce' })).newPage();
@@ -166,15 +167,37 @@ test('the panel: no serious axe problem on its main pages', async ({ browser }) 
 
   const owner = await (await browser.newContext()).newPage();
   await onboardedOwner(owner.request);
+  const { sites } = await (await owner.request.get('/api/sites')).json();
+  // Every page of the panel (UX-02), not only the ones a customer meets first.
+  const found: Record<string, string[]> = {};
   for (const path of [
     '/dashboard',
     '/dashboard/conversations',
     '/dashboard/settings',
-    '/dashboard/billing'
+    '/dashboard/billing',
+    '/dashboard/upgrade',
+    '/dashboard/sites',
+    `/dashboard/widget-customization/${sites[0]._id}`,
+    '/dashboard/faqs',
+    '/dashboard/assistant',
+    '/dashboard/team',
+    '/dashboard/team-chat',
+    '/dashboard/departments',
+    '/dashboard/assigned',
+    '/dashboard/analytics',
+    '/dashboard/my-performance',
+    '/dashboard/visitors',
+    '/dashboard/crm',
+    '/dashboard/automation-rules',
+    '/dashboard/proactive-rules',
+    '/dashboard/audit-logs'
   ]) {
     await owner.goto(path);
     await settle(owner);
     await expect(owner.locator('main')).toBeVisible();
-    expect(await seriousProblems(owner), path).toEqual([]);
+    const problems = await seriousProblems(owner);
+    if (problems.length) found[path] = problems;
   }
+  // Every page's problems at once, not only the first page's.
+  expect(found).toEqual({});
 });

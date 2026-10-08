@@ -232,7 +232,7 @@ const Upgrade = () => {
                   >
                     {t('checkout.' + c)}
                     {c === 'yearly' && selected && saving(selected) > 0 && (
-                      <span className="ml-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="ml-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
                         {t('checkout.save', { percent: saving(selected) })}
                       </span>
                     )}

@@ -249,6 +249,7 @@ const Sites = () => {
                       </code>
                       <button
                         onClick={() => copyToClipboard(site.siteKey, site._id)}
+                        aria-label={t('a11y.copySiteKey')}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                         {copiedKey === site._id ? (
@@ -272,6 +273,7 @@ const Sites = () => {
                         onClick={() =>
                           copyToClipboard(getInstallCode(site.siteKey), `code-${site._id}`)
                         }
+                        aria-label={t('a11y.copyInstallCode')}
                         className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                         {copiedKey === `code-${site._id}` ? (

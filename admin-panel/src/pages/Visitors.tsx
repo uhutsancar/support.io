@@ -136,6 +136,7 @@ const Visitors = () => {
           </div>
           <div className="w-full sm:w-auto">
             <select
+              aria-label={t('a11y.siteSelect')}
               value={activeSite || ''}
               onChange={(e) => setActiveSite(e.target.value)}
               className="w-full sm:w-48 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-indigo-500 dark:focus:border-indigo-500"

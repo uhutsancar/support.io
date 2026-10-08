@@ -296,6 +296,7 @@ export const ColorField = ({
           style={{ backgroundColor: value }}
         />
         <input
+          aria-label={typeof label === 'string' ? `${label} (hex)` : undefined}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commit(e.target.value)}

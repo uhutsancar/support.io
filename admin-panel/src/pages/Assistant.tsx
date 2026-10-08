@@ -198,6 +198,7 @@ const Assistant = () => {
                 <div
                   className="mt-3 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"
                   role="progressbar"
+                  aria-label={t('a11y.usage')}
                   aria-valuemin={0}
                   aria-valuemax={usage.limit}
                   aria-valuenow={usage.used}
@@ -230,7 +231,7 @@ const Assistant = () => {
             )}
 
             {/* -------------------------------------------- son 30 gün */}
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               {t('assistant.page.window', { days: data.days })}
             </p>
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
@@ -401,7 +402,7 @@ const Assistant = () => {
                         <div className="px-3 py-2 rounded-2xl rounded-bl-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-800 dark:text-gray-100">
                           {t('assistant.page.previewAnswer')}
                         </div>
-                        <span className="mt-1 block text-[10px] text-gray-400">
+                        <span className="mt-1 block text-[10px] text-gray-600 dark:text-gray-400">
                           {t('assistant.page.previewSource')}
                         </span>
                       </div>

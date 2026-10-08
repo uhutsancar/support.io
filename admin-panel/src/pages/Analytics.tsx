@@ -182,6 +182,7 @@ const Analytics = () => {
           </div>
           <div className="flex items-center gap-3">
             <select
+              aria-label={t('a11y.timeRange')}
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
               className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"

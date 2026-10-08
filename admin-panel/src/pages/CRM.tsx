@@ -297,7 +297,7 @@ const CRM = () => {
                       ))
                   )}
                   {!loading && deals.filter((d) => d.stage === stage.id).length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-600 dark:text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-lg">
                       <Tag className="w-6 h-6 mb-2 opacity-30" />
                       <span className="text-xs">{t('crm.empty', 'Boş')}</span>
                     </div>
