@@ -2560,7 +2560,15 @@ interface Window {
         if (stale) stale.remove();
         this.el.messages.appendChild(placeholder.node);
       }
-      return;
+      // A picture or file was only a name while it uploaded: drawn now as
+      // the server stored it, the same as after a reload.
+      if (message.fileData && message.fileData.url) {
+        var drawn = this._messageNode(message);
+        placeholder.node.replaceWith(drawn);
+        placeholder.node = drawn;
+        this._scrollToEnd();
+      }
+      return placeholder.node;
     }
 
     var emptyState = this.el.messages.querySelector('.empty');
