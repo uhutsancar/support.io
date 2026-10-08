@@ -12,6 +12,7 @@
 const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/ozellikler', '/en/features'],
   ['/cozumler', '/en/solutions'],
+  ['/karsilastirma', '/en/compare'],
   ['/fiyatlandirma', '/en/pricing'],
   ['/yapay-zeka', '/en/ai-assistant'],
   ['/gizlilik', '/en/privacy'],
@@ -45,6 +46,8 @@ export function marketingRoutes(language: 'tr' | 'en') {
     home: langPrefix || '/',
     features,
     solutions: en ? '/en/solutions' : '/cozumler',
+    /** Karşılaştırmaların öneki; sayfa `${compare}/<rakip>`. */
+    compare: en ? '/en/compare' : '/karsilastirma',
     pricing: en ? '/en/pricing' : '/fiyatlandirma',
     ai,
     privacy: en ? '/en/privacy' : '/gizlilik',

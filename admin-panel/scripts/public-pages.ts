@@ -9,7 +9,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marketingRoutes } from '../src/lib/marketingPaths';
-import { FEATURE_IDS, SOLUTION_IDS } from '../src/pages/marketing/features';
+import {
+  COMPARISONS,
+  COMPARISONS_PUBLISHED,
+  FEATURE_IDS,
+  SOLUTION_IDS
+} from '../src/pages/marketing/features';
 import tr from '../src/locales/tr';
 import en from '../src/locales/en';
 import marketingTr from '../src/locales/marketing.tr';
@@ -102,7 +107,30 @@ const pages: Array<{ tr: string; en: string; kind: string; meta: { tr: Meta; en:
     kind: 'legal',
     meta: meta('legal.accessibility.title', 'legal.accessibility.meta')
   },
-  { ...pair((x) => x.aiUse), kind: 'legal', meta: meta('legal.aiUse.title', 'legal.aiUse.meta') }
+  { ...pair((x) => x.aiUse), kind: 'legal', meta: meta('legal.aiUse.title', 'legal.aiUse.meta') },
+  // Karşılaştırmalar hukukçu onayından sonra listeye girer (features.ts).
+  ...(COMPARISONS_PUBLISHED ? COMPARISONS : []).map(({ id }) => ({
+    ...pair((x) => `${x.compare}/${id}`),
+    kind: 'compare',
+    meta: {
+      tr: {
+        title:
+          text('tr', 'compare.metaTitle').replace(
+            '{{name}}',
+            text('tr', `compare.items.${id}.name`)
+          ) + SUFFIX,
+        description: text('tr', `compare.items.${id}.summary`)
+      },
+      en: {
+        title:
+          text('en', 'compare.metaTitle').replace(
+            '{{name}}',
+            text('en', `compare.items.${id}.name`)
+          ) + SUFFIX,
+        description: text('en', `compare.items.${id}.summary`)
+      }
+    }
+  }))
 ];
 
 const here = path.dirname(fileURLToPath(import.meta.url));

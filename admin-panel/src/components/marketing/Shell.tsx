@@ -58,6 +58,8 @@ import { FEATURE_VISUAL, WidgetVisual } from './visuals';
 import { marketingRoutes } from '../../lib/marketingPaths';
 import { useSiteChat, openSiteChat } from './siteChat';
 import {
+  COMPARISONS,
+  COMPARISONS_PUBLISHED,
   FEATURE_GROUPS,
   FEATURE_ICON,
   FEATURE_TONE,
@@ -635,7 +637,13 @@ export const Footer = () => {
       title: t('nav.resourcesLabel'),
       links: [
         { label: t('landing.home.footerDocs'), to: routes.docs },
-        { label: t('landing.home.footerAbout'), to: routes.about }
+        { label: t('landing.home.footerAbout'), to: routes.about },
+        ...(COMPARISONS_PUBLISHED
+          ? COMPARISONS.map((c) => ({
+              label: t('compare.title', { name: t('compare.items.' + c.id + '.name') }),
+              to: routes.compare + '/' + c.id
+            }))
+          : [])
       ]
     },
     {

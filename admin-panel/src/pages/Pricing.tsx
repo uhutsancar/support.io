@@ -364,6 +364,16 @@ const Pricing = () => {
                 })}
           </div>
         )}
+        {/*
+          KARAR-MKT-2: Paddle vergiyi ödeme penceresinde, alıcının ülkesine
+          ve fatura bilgisine göre hesaplayıp gösterir; buradaki satır onunla
+          çelişmeyen tek ifadedir.
+        */}
+        {!failed && (
+          <p className="mt-8 text-center text-[13px] text-gray-500 dark:text-gray-400">
+            {t('pricingPage.taxNote')}
+          </p>
+        )}
       </Section>
 
       {/* ------------------------------------------- hangi plan bana uygun */}

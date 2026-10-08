@@ -179,3 +179,22 @@ export const SOLUTION_IDS: readonly string[] = SOLUTIONS.map((s) => s.id);
 
 /** Sektöre göre anlatım. Her biri aynı ürünü farklı bir dille anlatır. */
 export const USE_CASES = ['ecommerce', 'saas', 'agency', 'service'];
+
+/**
+ * Karşılaştırma sayfaları (`/karsilastirma/:id`, `/en/compare/:id`; plan v10
+ * MKT-04). Rakip bilgileri `compare.items.<id>` altında, kaynağı ve kontrol
+ * tarihiyle; Support.io sütunu sunucunun plan tablosundan gelir.
+ *
+ * Yayın, rakip markalarının kullanımı için hukukçu kontrolünden sonradır
+ * [SAHİP]. O zamana kadar sayfalar adresinden açılır ama menüde ve site
+ * haritasında yoktur, arama motorlarına kapalıdır (noindex). Onaydan sonra
+ * bu bayrak `true` yapılır; docs/legal/README.md onay tablosuna yazılır.
+ */
+export const COMPARISONS_PUBLISHED = false;
+
+export const COMPARISONS = [
+  { id: 'tawk-to', source: 'https://www.tawk.to/pricing/' },
+  { id: 'crisp', source: 'https://crisp.chat/en/pricing/' },
+  { id: 'intercom', source: 'https://www.intercom.com/pricing' },
+  { id: 'tidio', source: 'https://www.tidio.com/pricing/' }
+] as const;
