@@ -20,7 +20,7 @@
 #   APP_DOMAIN          for the certificate check
 #
 # Cron (UTC):
-#   */5 * * * *  /opt/supportio/scripts/watchdog.sh >> /var/log/supportio-watchdog.log 2>&1
+#   */5 * * * *  /opt/supportio/scripts/watchdog.sh >> /var/log/supportio/watchdog.log 2>&1
 #
 #   ./scripts/watchdog.sh --test   sends one test alert and exits
 set -uo pipefail

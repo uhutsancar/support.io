@@ -33,8 +33,8 @@ service; link it from the panel footer and the docs once it exists.
 ```bash
 # once, to check the webhook
 /opt/supportio/scripts/watchdog.sh --test
-# cron (crontab -e as deploy)
-*/5 * * * *  /opt/supportio/scripts/watchdog.sh >> /var/log/supportio-watchdog.log 2>&1
+# cron: written by scripts/bootstrap-server.sh to /etc/cron.d/supportio
+*/5 * * * *  /opt/supportio/scripts/watchdog.sh >> /var/log/supportio/watchdog.log 2>&1
 ```
 
 `ALERT_WEBHOOK_URL` in `.env.production` receives `{"text": …, "content": …}`
@@ -105,7 +105,7 @@ container. `scripts/ship-logs.sh` copies the last day, gzipped, to
 30-day lifecycle rule):
 
 ```bash
-15 0 * * *  /opt/supportio/scripts/ship-logs.sh >> /var/log/supportio-logs.log 2>&1
+15 0 * * *  /opt/supportio/scripts/ship-logs.sh >> /var/log/supportio/logs.log 2>&1
 ```
 
 Every API answer carries `X-Request-Id`; an unexpected failure's answer has

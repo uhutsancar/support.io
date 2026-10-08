@@ -28,33 +28,27 @@ owner can make; nothing in the repository does them.
 1. **[you]** Rent a VPS: Ubuntu 24.04, 2 vCPU / 4 GB is enough for the first
    customers (4 vCPU / 8 GB if staging shares the machine). Turn on disk
    encryption if the provider offers it. Note its IP.
-2. Log in as root once, then:
+2. Copy the repository's `scripts/` to the server, log in as root once and run
 
    ```bash
-   adduser deploy && usermod -aG sudo deploy
-   mkdir -p /home/deploy/.ssh && cp ~/.ssh/authorized_keys /home/deploy/.ssh/
-   chown -R deploy:deploy /home/deploy/.ssh
+   ./scripts/bootstrap-server.sh
    ```
 
-3. Log in as `deploy` with the key (check it works before going on), copy the
-   repository's `scripts/` to the server and run
-
-   ```bash
-   sudo ./scripts/bootstrap-server.sh
-   ```
-
-   It is safe to run again. It sets up automatic security updates with
-   reboots only on Sunday 04:00 UTC, fail2ban for SSH, chrony, SSH with keys
-   only and no root login, UFW (SSH, HTTP, HTTPS), the Docker daemon settings
-   (live restore, rotated logs, no userland proxy, no new privileges), a 2 GB
-   swap file and `/opt/supportio` owned by `deploy`.
+   It is safe to run again (plan v10 INF-02). It creates the `deploy` user
+   with root's SSH key, sets up automatic security updates with reboots only
+   on Sunday 04:00 UTC, fail2ban for SSH, chrony, SSH with keys only and no
+   root login, UFW (SSH, HTTP, HTTPS), Docker Engine with the Compose plugin
+   and the daemon settings (live restore, rotated logs, no userland proxy, no
+   new privileges), a 2 GB swap file, `/opt/supportio` owned by `deploy`, and
+   the cron jobs — backup 03:00, watchdog every 5 minutes, log shipping
+   00:15 (UTC) — with their logs in `/var/log/supportio`, rotated weekly.
 
    Docker publishes ports past UFW, which is why PostgreSQL and Redis have no
    `ports:` in the compose file. Never add them.
-4. Docker Engine and the Compose plugin from Docker's apt repository
-   (docs.docker.com/engine/install/ubuntu), then `usermod -aG docker deploy`.
-   If Docker was installed after step 3, run the script once more so it
-   writes `/etc/docker/daemon.json`.
+3. Log in as `deploy` with the key from now on (check it works before closing
+   the root session).
+4. Once DNS is on Cloudflare: `sudo ./scripts/ufw-cloudflare.sh --apply`
+   (§2); with PITR, the WAL-G cron in disaster-recovery.md.
 5. Copy `docker-compose.prod.yml`, `Caddyfile.prod` and `scripts/` to
    `/opt/supportio`.
 6. `cp .env.production.example /opt/supportio/.env.production`, fill it in,
@@ -180,11 +174,8 @@ Smoke test on its own: `./scripts/smoke.sh https://app.example.com`.
 - **[you]** `age-keygen -o supportio-backup.key` on your own computer; put
   the public key in `BACKUP_AGE_RECIPIENT`, keep the private key off the
   server (password manager).
-- Cron, nightly at 03:00 UTC:
-
-  ```cron
-  0 3 * * * /opt/supportio/scripts/backup-postgres.sh >> /var/log/supportio-backup.log 2>&1
-  ```
+- Nightly at 03:00 UTC from `/etc/cron.d/supportio` (written by
+  bootstrap-server.sh, §1); its log is `/var/log/supportio/backup.log`.
 
   Set `BACKUP_PING_URL` (healthchecks.io or similar) to hear about a night
   that did not run.

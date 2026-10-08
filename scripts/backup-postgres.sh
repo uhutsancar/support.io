@@ -24,7 +24,7 @@
 # Retention (7 daily, 4 weekly, 3 monthly) is the bucket's lifecycle rule.
 # Exits non-zero on any failure and never prints a secret.
 #
-# Cron (UTC):  0 3 * * *  /opt/supportio/scripts/backup-postgres.sh >> /var/log/supportio-backup.log 2>&1
+# Cron (UTC):  0 3 * * *  /opt/supportio/scripts/backup-postgres.sh >> /var/log/supportio/backup.log 2>&1
 set -euo pipefail
 
 ROOT="${SUPPORTIO_ROOT:-/opt/supportio}"

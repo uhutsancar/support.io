@@ -12,7 +12,7 @@
 # Settings, from .env.production:
 #   LOG_REMOTE   rclone destination, e.g. r2:supportio-logs
 #
-# Cron (UTC):  15 0 * * *  /opt/supportio/scripts/ship-logs.sh >> /var/log/supportio-logs.log 2>&1
+# Cron (UTC):  15 0 * * *  /opt/supportio/scripts/ship-logs.sh >> /var/log/supportio/logs.log 2>&1
 set -euo pipefail
 
 ROOT="${SUPPORTIO_ROOT:-/opt/supportio}"
