@@ -95,35 +95,50 @@ export async function customerWebsite(port: number, installCode: string) {
  * carrying the organization and the signed reference the checkout was
  * opened with, signed with the notification destination's secret.
  */
-export function paidSubscription(organizationId: string) {
+export function paidSubscription(
+  organizationId: string,
+  {
+    id = `sub_e2e_${Date.now()}`,
+    status = 'active',
+    eventType = 'subscription.created',
+    occurredAt = Date.now(),
+    periodEnd = Date.now() + 30 * 24 * 3600 * 1000
+  }: {
+    id?: string;
+    status?: string;
+    eventType?: string;
+    occurredAt?: number;
+    periodEnd?: number;
+  } = {}
+) {
   const jwtSecret = shared('JWT_SECRET');
   const key = crypto
     .createHmac('sha256', jwtSecret)
     .update('support-chat/billing-checkout/v1')
     .digest();
   const ref = crypto.createHmac('sha256', key).update(organizationId).digest('hex').slice(0, 32);
-  const id = `sub_e2e_${Date.now()}`;
-  const now = Date.now();
+  const now = occurredAt;
   const event = {
-    event_id: `evt_${id}`,
-    event_type: 'subscription.created',
+    event_id: `evt_${id}_${now}`,
+    event_type: eventType,
     occurred_at: new Date(now).toISOString(),
-    notification_id: `ntf_${id}`,
+    notification_id: `ntf_${id}_${now}`,
     data: {
       id,
-      status: 'active',
+      status,
       customer_id: `ctm_${id}`,
       items: [{ price: { id: shared('PADDLE_PRICE_PRO', 'pri_local_pro') }, quantity: 1 }],
       current_billing_period: {
-        starts_at: new Date(now).toISOString(),
-        ends_at: new Date(now + 30 * 24 * 3600 * 1000).toISOString()
+        starts_at: new Date(periodEnd - 30 * 24 * 3600 * 1000).toISOString(),
+        ends_at: new Date(periodEnd).toISOString()
       },
       scheduled_change: null,
       custom_data: { organizationId, ref }
     }
   };
   const body = JSON.stringify(event);
-  const ts = Math.floor(now / 1000);
+  // The signature's own clock is now, whatever the event says it was.
+  const ts = Math.floor(Date.now() / 1000);
   const h1 = crypto
     .createHmac('sha256', shared('PADDLE_WEBHOOK_SECRET', 'local-dev-paddle-webhook-secret'))
     .update(`${ts}:${body}`)

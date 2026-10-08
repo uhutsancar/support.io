@@ -1266,6 +1266,21 @@ interface Window {
       self._setConnection('reconnecting');
     });
 
+    // The browser knows first when the network goes: the connection is dropped
+    // at once instead of after the ping timeout, so what the visitor writes
+    // waits in the queue; and it comes back as soon as the network does,
+    // instead of after the backoff (TST-01 #13).
+    this._listen(window, 'offline', function () {
+      var engine = self.socket && (self.socket.io as any).engine;
+      if (self.socket && self.socket.connected && engine) engine.close();
+    });
+    this._listen(window, 'online', function () {
+      if (self.socket && !self.socket.connected && !self.destroyed) {
+        self.socket.disconnect();
+        self.socket.connect();
+      }
+    });
+
     // The handshake refused the session: it expired while the page was open,
     // or the site key was regenerated. A refusal by the server is not retried
     // by Socket.IO itself, so a fresh session is fetched and the socket

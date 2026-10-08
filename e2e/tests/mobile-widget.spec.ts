@@ -90,9 +90,7 @@ test('the widget on a phone or a tablet', async ({ browser, baseURL }, testInfo)
         await expect
           .poll(() => visitor.evaluate(() => Boolean(history.state && history.state.supportChat)))
           .toBe(false);
-        expect(await visitor.evaluate(() => history.length)).toBeLessThanOrEqual(
-          historyBefore + 2
-        );
+        expect(await visitor.evaluate(() => history.length)).toBeLessThanOrEqual(historyBefore + 2);
         expect(await overflow()).toBe('');
       });
     }

@@ -199,6 +199,11 @@ jobs:
       PADDLE_WEBHOOK_SECRET: ci-paddle-webhook-secret
       PADDLE_PRICE_PRO: pri_ci_pro
       PADDLE_PRICE_ENTERPRISE: pri_ci_enterprise
+      # The AI model is the stand-in in e2e/fake-gemini.mjs: no real key, no
+      # request leaves the runner (TST-01 #2).
+      GEMINI_API_KEY: test-key-not-a-real-one
+      GEMINI_BASE_URL: http://127.0.0.1:5199/v1beta
+      E2E_FAKE_GEMINI: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -217,6 +222,8 @@ jobs:
       # iPad and desktop Safari, Firefox for desktop Firefox (UX-03).
       - run: npm ci && npx playwright install --with-deps chromium webkit firefox
         working-directory: e2e
+      - name: Start the stand-in AI model
+        run: nohup node e2e/fake-gemini.mjs 5199 > /tmp/fake-gemini.log 2>&1 &
       - name: Start the API
         working-directory: backend
         run: |
