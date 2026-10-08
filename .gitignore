@@ -19,3 +19,4 @@ backend/public/widget.js
 backend/public/widget-version.json
 
 lhci/
+.lighthouseci/
