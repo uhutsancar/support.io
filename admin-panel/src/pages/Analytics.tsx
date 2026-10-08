@@ -20,7 +20,7 @@ import {
   ResponsiveContainer,
   ComposedChart
 } from 'recharts';
-import { TrendingUp, Clock, AlertCircle, CheckCircle2, BarChart3 } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle2, BarChart3 } from 'lucide-react';
 import { analyticsAPI } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
 import { formatMinutes } from '../lib/format';
@@ -198,10 +198,6 @@ const Analytics = () => {
               <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                +12%
-              </span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
               {stats.openTickets}
@@ -240,10 +236,6 @@ const Analytics = () => {
               <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                +3%
-              </span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
               {stats.satisfaction}%

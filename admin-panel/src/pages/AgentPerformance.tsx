@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import {
-  TrendingUp,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -104,8 +103,7 @@ const AgentPerformance = () => {
     value,
     subValue,
     icon: Icon,
-    color,
-    trend
+    color
   }: {
     title: string;
     /** Already formatted for display, so a dash is as valid as a number. */
@@ -113,8 +111,6 @@ const AgentPerformance = () => {
     subValue?: React.ReactNode;
     icon: React.ElementType;
     color: string;
-    /** Percentage change against the previous period. */
-    trend?: number;
   }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
       <div className="flex items-start justify-between">
@@ -128,18 +124,6 @@ const AgentPerformance = () => {
               <span className="text-sm text-gray-500 dark:text-gray-400">{subValue}</span>
             )}
           </div>
-          {trend && (
-            <div
-              className={`flex items-center mt-2 text-sm ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
-            >
-              {trend > 0 ? (
-                <TrendingUp className="w-4 h-4 mr-1" />
-              ) : (
-                <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
-              )}
-              <span>{Math.abs(trend)}% vs last period</span>
-            </div>
-          )}
         </div>
         <div
           className={`p-3 rounded-lg bg-${color}-50 dark:bg-${color}-900/40 border border-${color}-100 dark:border-${color}-900/60`}
