@@ -144,6 +144,11 @@ services:
       # /.well-known/security.txt (SEC-10).
       SECURITY_CONTACT_EMAIL: ${SECURITY_CONTACT_EMAIL:-}
       SECURITY_TXT_EXPIRES: ${SECURITY_TXT_EXPIRES:-}
+      # Staging: robots.txt and every page say noindex (MKT-02).
+      SITE_NOINDEX: ${SITE_NOINDEX:-false}
+      # Bot check on sign-up (SEC-06).
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-supportchat}
@@ -172,6 +177,8 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+      # Staging only: mail goes to these domains alone (INF-03).
+      MAIL_ALLOWLIST_DOMAINS: ${MAIL_ALLOWLIST_DOMAINS:-}
       # File uploads: S3-compatible storage (AWS S3, Cloudflare R2, Hetzner).
       UPLOAD_STORAGE: ${UPLOAD_STORAGE:-s3}
       # local is refused unless this says so (the volume is not backed up).
