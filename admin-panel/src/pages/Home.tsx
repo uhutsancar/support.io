@@ -138,9 +138,11 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
 
       {/* ---- iki taraf birden: sohbeti yanıtlayan kişi ve ziyaretçinin balonu ---- */}
       <div className="relative mx-auto w-full max-w-[600px] lg:max-w-none">
+        {/* Grows in, never fades in: a transparent picture is not painted,
+            and it is the largest thing on the page (LCP). */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ scale: 0.97 }}
+          animate={{ scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <Photo
@@ -849,7 +851,7 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
                   (src) => (
                     <img
                       key={src}
-                      src={src}
+                      src={src.replace('.webp', '-700.webp')}
                       alt=""
                       loading="lazy"
                       className="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-[#12141f]"

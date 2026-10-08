@@ -19,6 +19,7 @@ import Logo from '../Logo';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import ChatPlayer from './ChatPlayer';
+import { photoSrcSet } from './kit';
 
 const AuthLayout = ({
   title,
@@ -112,6 +113,8 @@ const AuthLayout = ({
         <div className="relative h-full min-h-[640px] overflow-hidden rounded-[28px]">
           <img
             src="/photos/agent-woman.webp"
+            srcSet={photoSrcSet('/photos/agent-woman.webp')}
+            sizes="(min-width: 1024px) 45vw, 100vw"
             alt=""
             className="absolute inset-0 w-full h-full object-cover object-[60%_center]"
           />

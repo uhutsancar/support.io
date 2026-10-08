@@ -365,7 +365,11 @@ app.use(
   express.static(adminPanelPath, {
     maxAge: '1h',
     etag: true,
-    lastModified: true
+    lastModified: true,
+    // "/" must reach the page handler below, which writes the home page's
+    // own head (title, canonical, Open Graph, the hero preload); served from
+    // here it went out with the shell's defaults.
+    index: false
   })
 );
 

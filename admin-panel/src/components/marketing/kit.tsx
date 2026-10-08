@@ -392,6 +392,10 @@ export const Section = ({
         pad,
         'px-5 sm:px-8',
         bordered ? 'border-t border-gray-200/70 dark:border-white/[0.06]' : '',
+        // Laid out only when near the screen (plan v10 PERF-08): the long
+        // marketing pages spent two seconds of a phone's CPU on style and
+        // layout of sections nobody had scrolled to yet.
+        '[content-visibility:auto] [contain-intrinsic-size:auto_900px]',
         className
       ].join(' ')}
     >
@@ -527,29 +531,45 @@ export const Pill = ({
  * Fotoğraf. Genişlik/yükseklik verilir ki yüklenirken sayfa zıplamasın;
  * ekranın altındakiler tembel yüklenir.
  */
+/**
+ * The photos ship at 1400 px and 700 px (public/photos/*-700.webp): a phone
+ * downloads the small one (plan v10 PERF-08).
+ */
+export const photoSrcSet = (src: string): string | undefined =>
+  /^\/photos\/[^/]+\.webp$/.test(src)
+    ? `${src.replace(/\.webp$/, '-700.webp')} 700w, ${src} 1400w`
+    : undefined;
+
 export const Photo = ({
   src,
   alt,
   className = '',
   imgClassName = '',
   eager = false,
+  sizes = '(min-width: 1024px) 50vw, 100vw',
   children
 }: {
   src: string;
   alt: string;
   className?: string;
   imgClassName?: string;
+  /** The first picture on the page: loaded at once, ahead of everything. */
   eager?: boolean;
+  sizes?: string;
   children?: React.ReactNode;
 }) => (
   <div className={['relative overflow-hidden', className].join(' ')}>
     <img
       src={src}
+      srcSet={photoSrcSet(src)}
+      sizes={sizes}
       alt={alt}
       width={1400}
       height={934}
       loading={eager ? 'eager' : 'lazy'}
-      decoding="async"
+      decoding={eager ? 'sync' : 'async'}
+      // React 18 knows no fetchPriority prop; the lower-case attribute passes as is.
+      {...(eager ? { fetchpriority: 'high' } : {})}
       className={['absolute inset-0 w-full h-full object-cover', imgClassName].join(' ')}
     />
     {children}

@@ -121,6 +121,13 @@ export function seoHead(
     `<script type="application/ld+json">${json(structuredData(base, page, lang, meta))}</script>`,
     `<title>${attr(meta.title)}</title>`
   ];
+  // The home page's largest element is its hero photo: asked for with the
+  // HTML, not after the JavaScript has drawn it (plan v10 PERF-08).
+  if (page.kind === 'home') {
+    lines.push(
+      '<link rel="preload" as="image" href="/photos/agent-woman-700.webp" imagesrcset="/photos/agent-woman-700.webp 700w, /photos/agent-woman.webp 1400w" imagesizes="(min-width: 1024px) 50vw, 100vw" fetchpriority="high" />'
+    );
+  }
   return { html: lines.join('\n    '), lang };
 }
 

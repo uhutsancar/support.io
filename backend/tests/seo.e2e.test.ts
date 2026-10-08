@@ -72,3 +72,16 @@ test('private pages say noindex; public ones do not', async () => {
     assert.equal(res.headers.get('x-robots-tag'), null, path);
   }
 });
+
+test('the home page gets its own head, the hero preload included', async (t) => {
+  const res = await fetch(`${BASE}/`);
+  const html = await res.text();
+  if (res.status === 404 || !html.includes('<html')) {
+    t.skip('no panel build behind this API');
+    return;
+  }
+  // "/" used to be answered by the static files with the shell's defaults.
+  assert.match(html, /<link rel="canonical" href="[^"]+\/"/);
+  assert.match(html, /property="og:title"/);
+  assert.match(html, /rel="preload" as="image" href="\/photos\/agent-woman-700\.webp"/);
+});

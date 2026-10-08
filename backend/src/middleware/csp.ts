@@ -98,8 +98,8 @@ const STRICT_BASE = (nonce: string): string[] => {
     // Inline style attributes are everywhere in a React tree (style={{…}}), and
     // they cannot carry a nonce. Styles cannot read localStorage, so this is the
     // one relaxation worth making.
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
     `img-src 'self' data: blob: ${mediaHosts().join(' ')}`.trim(),
     `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}`.trim(),
     ...(frames ? [`frame-src ${frames}`] : []),
@@ -118,8 +118,8 @@ const STRICT_BASE = (nonce: string): string[] => {
 const RELAXED = (): string[] => [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "img-src 'self' data: blob:",
   `connect-src 'self' ${connectHosts().join(' ')}`.trim(),
   "object-src 'none'",

@@ -248,6 +248,16 @@ jobs:
       - name: Browser tests
         run: npm test
         working-directory: e2e
+      - name: Lighthouse on the marketing pages
+        # Plan v10 PERF-08: accessibility, SEO and layout shift must hold;
+        # performance (target 90 on mobile) and LCP are reported, not gated.
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: lighthouse
+          path: lhci
+          retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:

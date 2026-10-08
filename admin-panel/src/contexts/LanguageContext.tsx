@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { translatePath } from '../lib/marketingPaths';
+import { switchLanguage } from '../i18n';
 
 export interface LanguageContextValue {
   language: 'tr' | 'en';
@@ -34,12 +35,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const newLang = getLanguageFromPath();
     if (newLang !== language) {
       setLanguage(newLang);
-      i18n.changeLanguage(newLang);
+      void switchLanguage(newLang);
       localStorage.setItem('language', newLang);
     }
   }, [location.pathname]);
   useEffect(() => {
-    i18n.changeLanguage(language);
+    void switchLanguage(language);
     localStorage.setItem('language', language);
     // `text-transform: uppercase` follows the document language, so leaving
     // this at "tr" turned English table headers into TRİGGER and ACTİON.
