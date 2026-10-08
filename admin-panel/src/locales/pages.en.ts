@@ -546,6 +546,102 @@ export default {
           ]
         }
       ]
+    },
+    accessibility: {
+      meta: 'What we do so that everyone can use the chat bubble, the dashboard and this website, what is still missing, and how to reach us.',
+      title: 'Accessibility Statement',
+      updated: 'Last updated: 8 October 2026',
+      intro:
+        'We want Support.io to be easy to use for everyone, including people with visual, hearing, motor or cognitive differences. Our target is WCAG 2.2 level AA. This statement covers the chat bubble, the dashboard and this website.',
+      sections: [
+        {
+          h: 'The chat bubble',
+          p: [
+            'The bubble and the chat window work with the keyboard alone: Esc closes the window, focus moves to the message box when it opens and back to the bubble when it closes.',
+            'Incoming messages are read out by screen readers; what visitors type themselves is not read back to them.',
+            'Whatever your brand colour, the text on it is chosen automatically to give a contrast of at least 4.5:1.',
+            'Every button is at least 44×44 pixels. Visitors who turn on reduced motion on their device see no animation.',
+            'The bubble is also tested automatically on iPhone, Android phone and iPad screens.'
+          ]
+        },
+        {
+          h: 'The dashboard and this website',
+          p: [
+            'Every form field on the main pages of the dashboard and the website has a label.',
+            'Error and warning messages are read out by screen readers.'
+          ]
+        },
+        {
+          h: 'How we check',
+          p: [
+            'With every change, automated tests scan the chat bubble, the main dashboard pages and this website with axe. A serious or critical problem fails the tests.',
+            'The same tests also try keyboard use and what screen readers announce.'
+          ]
+        },
+        {
+          h: 'Known limitations',
+          p: [
+            'How clear the texts written by the site owner are, such as the welcome message, the FAQ and automatic replies, depends on the site owner.',
+            'Images sent in a chat by visitors or agents have no description; the file name is read out.',
+            'The analytics charts in the dashboard are not read out in detail; the key figures are written as text in the summary cards at the top of the page.',
+            'The dashboard on phone screens is not yet covered by automated tests.',
+            'No independent expert audit has been done yet; when it is, we will share the result on this page.'
+          ]
+        },
+        {
+          h: 'Contact us',
+          p: [
+            'If something gets in your way, write to {{supportEmail}}. Telling us the page, the device and the assistive technology you use helps us find the problem faster. We answer every report and let you know when it is fixed.'
+          ]
+        }
+      ]
+    },
+    aiUse: {
+      meta: 'What the Support.io AI assistant does, which data it works with, its limits, and how visitors reach a person.',
+      title: 'Use of AI',
+      updated: 'Last updated: 8 October 2026',
+      intro:
+        'At Support.io, AI does one job: when the site owner turns it on, it answers visitors’ questions from the site’s frequently asked questions (FAQ). This page explains how the assistant works, what it does not do and what visitors see.',
+      sections: [
+        {
+          h: 'Who turns it on',
+          p: [
+            'The assistant starts switched off on every site. When the site owner turns it on, they confirm that the FAQ and visitors’ questions, with personal details hidden, will be sent to our AI service provider; who confirmed it and when is written to the activity log.',
+            'The site owner can turn the assistant off in the settings at any time.'
+          ]
+        },
+        {
+          h: 'What visitors see',
+          p: [
+            'Every answer from the assistant is marked “AI assistant”, and the first answer says how to reach a person.',
+            'When a visitor types “agent” or taps the link in the window header, the conversation goes to the team.'
+          ]
+        },
+        {
+          h: 'What it answers from',
+          p: [
+            'The assistant answers only from the site’s FAQ. If the FAQ does not cover the question, or an answer does not rest on an FAQ entry, it does not answer and hands the conversation to the team.',
+            'The moment an agent writes in a conversation, the assistant goes quiet in it.',
+            'The assistant does not place orders, take payments or change accounts; it only gives information and shares only links that appear in the FAQ.'
+          ]
+        },
+        {
+          h: 'What data is sent',
+          p: [
+            'Only the site’s public FAQ entries and the visitor’s latest message are sent to the AI; not their name, e-mail, earlier messages or the pages they visited.',
+            'E-mail addresses, phone numbers and long numbers in the message are hidden before it is sent.',
+            'A message containing a card number, an IBAN or a Turkish ID number is not sent at all: the visitor is asked not to share these in chat and the conversation goes to a person.',
+            'Which service providers the data is shared with, and why, is set out in the Privacy Policy.'
+          ]
+        },
+        {
+          h: 'Limits and checks',
+          p: [
+            'AI can be wrong. A visitor who wants to be sure about something important can always reach an agent.',
+            'With every change, the assistant is tested against a set of questions: ones the FAQ answers and ones it does not, messages with personal details, attempts to redirect it and requests for an agent.'
+          ]
+        }
+      ]
     }
   }
 };

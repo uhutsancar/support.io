@@ -153,6 +153,9 @@ test('the panel: no serious axe problem on its main pages', async ({ browser }) 
     '/yapay-zeka',
     '/fiyatlandirma',
     '/dokumantasyon',
+    '/erisilebilirlik',
+    '/yapay-zeka-kullanimi',
+    '/en/accessibility',
     '/login',
     '/register'
   ]) {

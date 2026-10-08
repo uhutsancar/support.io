@@ -557,6 +557,102 @@ export default {
           ]
         }
       ]
+    },
+    accessibility: {
+      meta: 'Sohbet balonunu, paneli ve web sitesini herkesin kullanabilmesi için yaptıklarımız, bilinen eksikler ve bize nasıl ulaşacağınız.',
+      title: 'Erişilebilirlik Beyanı',
+      updated: 'Son güncelleme: 8 Ekim 2026',
+      intro:
+        'Support.io’yu görme, işitme, hareket ya da algı farkı olan herkesin rahatça kullanabilmesini istiyoruz. Hedefimiz WCAG 2.2 AA düzeyi. Bu beyan sohbet balonu, yönetim paneli ve bu web sitesi için geçerlidir.',
+      sections: [
+        {
+          h: 'Sohbet balonu',
+          p: [
+            'Balon ve sohbet penceresi yalnızca klavyeyle kullanılabilir: Esc pencereyi kapatır, pencere açılınca odak yazma alanına, kapanınca balona döner.',
+            'Gelen mesajlar ekran okuyucuya okunur; ziyaretçinin kendi yazdığı tekrar okunmaz.',
+            'Sitenizin ana rengi ne olursa olsun, üzerindeki yazının rengi en az 4,5:1 kontrast verecek biçimde kendiliğinden seçilir.',
+            'Dokunulan her düğme en az 44×44 pikseldir. Cihazında hareketi azaltmayı seçen ziyaretçiye animasyon gösterilmez.',
+            'Balon iPhone, Android telefon ve iPad ekranlarında da otomatik testlerle denenir.'
+          ]
+        },
+        {
+          h: 'Panel ve web sitesi',
+          p: [
+            'Panelin ve sitenin ana sayfalarındaki her form alanının bir etiketi vardır.',
+            'Hata ve uyarı mesajları ekran okuyucuya okunur.'
+          ]
+        },
+        {
+          h: 'Nasıl denetliyoruz',
+          p: [
+            'Her değişiklikte otomatik testler sohbet balonunu, panelin ana sayfalarını ve bu web sitesini axe ile tarar. Ciddi ya da kritik bir sorun bulunursa test başarısız olur.',
+            'Aynı testler klavyeyle kullanımı ve ekran okuyucuya okunan metinleri de dener.'
+          ]
+        },
+        {
+          h: 'Bilinen eksikler',
+          p: [
+            'Karşılama mesajı, SSS ve otomatik yanıtlar gibi site sahibinin yazdığı metinlerin anlaşılırlığı site sahibine bağlıdır.',
+            'Ziyaretçilerin ve temsilcilerin sohbette gönderdiği görsellerde açıklama metni bulunmaz; dosya adı okunur.',
+            'Paneldeki analiz grafikleri ekran okuyucuya ayrıntılı okunmaz; temel sayılar sayfanın üstündeki özet kartlarında metin olarak yazılıdır.',
+            'Panelin telefon ekranında kullanımı henüz otomatik testlerle denenmiyor.',
+            'Bağımsız bir uzman denetimi henüz yapılmadı; yapıldığında sonucunu bu sayfada paylaşacağız.'
+          ]
+        },
+        {
+          h: 'Bize ulaşın',
+          p: [
+            'Bir engelle karşılaşırsanız {{supportEmail}} adresine yazın. Hangi sayfada, hangi cihaz ve yardımcı teknolojiyle karşılaştığınızı belirtirseniz sorunu daha hızlı buluruz. Her bildirimi yanıtlar, düzeltildiğinde size haber veririz.'
+          ]
+        }
+      ]
+    },
+    aiUse: {
+      meta: 'Support.io’nun yapay zekâ asistanının ne yaptığı, hangi veriyle çalıştığı, sınırları ve ziyaretçinin bir insana nasıl ulaştığı.',
+      title: 'Yapay Zekâ Kullanımı',
+      updated: 'Son güncelleme: 8 Ekim 2026',
+      intro:
+        'Support.io’da yapay zekâ tek bir iş yapar: site sahibi açtığında, ziyaretçinin sorusunu sitenin sıkça sorulan sorular (SSS) içeriğinden yanıtlar. Bu sayfa asistanın nasıl çalıştığını, neyi yapmadığını ve ziyaretçiye ne gösterdiğini anlatır.',
+      sections: [
+        {
+          h: 'Kim açar',
+          p: [
+            'Asistan her sitede kapalı başlar. Site sahibi onu açarken, SSS içeriğinin ve kişisel bilgileri gizlenmiş ziyaretçi sorularının yapay zekâ hizmet sağlayıcımıza gönderileceğini onaylar; onaylayan kişi ve zaman işlem kayıtlarına yazılır.',
+            'Site sahibi asistanı ayarlardan istediği an kapatabilir.'
+          ]
+        },
+        {
+          h: 'Ziyaretçi ne görür',
+          p: [
+            'Asistanın her yanıtı “Yapay zekâ asistanı” olarak işaretlenir ve ilk yanıtın altında bir temsilciye nasıl ulaşılacağı yazar.',
+            'Ziyaretçi “temsilci” yazdığında ya da pencere başlığındaki bağlantıya dokunduğunda konuşma ekibe geçer.'
+          ]
+        },
+        {
+          h: 'Neye dayanarak yanıt verir',
+          p: [
+            'Asistan yalnızca sitenin SSS içeriğinden yanıt verir. Soru SSS’de yoksa ya da yanıt bir SSS kaydına dayanmıyorsa yanıt vermez, konuşmayı ekibe devreder.',
+            'Bir temsilci konuşmaya yazdığı anda asistan o konuşmada susar.',
+            'Asistan sipariş, ödeme ya da hesap işlemi yapmaz; yalnızca bilgi verir ve yalnızca SSS’de geçen bağlantıları paylaşır.'
+          ]
+        },
+        {
+          h: 'Hangi veri gönderilir',
+          p: [
+            'Yapay zekâya yalnızca sitenin herkese açık SSS kayıtları ve ziyaretçinin son mesajı gider; adı, e-postası, önceki mesajları ya da gezdiği sayfalar gitmez.',
+            'Mesajdaki e-posta adresleri, telefon numaraları ve uzun numaralar gönderilmeden önce gizlenir.',
+            'Kart numarası, IBAN ya da T.C. kimlik numarası içeren bir mesaj hiç gönderilmez: ziyaretçiye bu bilgileri sohbette paylaşmaması söylenir ve konuşma bir insana geçer.',
+            'Verinin hangi hizmet sağlayıcılarıyla, ne amaçla paylaşıldığı Gizlilik Politikası’nda yazar.'
+          ]
+        },
+        {
+          h: 'Sınırlar ve denetim',
+          p: [
+            'Yapay zekâ yanılabilir. Önemli bir konuda emin olmak isteyen ziyaretçi her zaman bir temsilciye bağlanabilir.',
+            'Asistan her değişiklikte; cevabı SSS’de olan ve olmayan sorular, kişisel bilgi içeren mesajlar, yönlendirme girişimleri ve temsilci istekleri içeren bir soru setiyle sınanır.'
+          ]
+        }
+      ]
     }
   }
 };

@@ -16,6 +16,8 @@ const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/yapay-zeka', '/en/ai-assistant'],
   ['/gizlilik', '/en/privacy'],
   ['/kullanim-sartlari', '/en/terms'],
+  ['/erisilebilirlik', '/en/accessibility'],
+  ['/yapay-zeka-kullanimi', '/en/ai-use'],
   ['/dokumantasyon', '/en/documentation'],
   ['/hakkimizda', '/en/about']
 ];
@@ -47,6 +49,8 @@ export function marketingRoutes(language: 'tr' | 'en') {
     ai,
     privacy: en ? '/en/privacy' : '/gizlilik',
     terms: en ? '/en/terms' : '/kullanim-sartlari',
+    accessibility: en ? '/en/accessibility' : '/erisilebilirlik',
+    aiUse: en ? '/en/ai-use' : '/yapay-zeka-kullanimi',
     /** A feature's page; the AI assistant has its own page. */
     feature: (id: string) => (id === 'ai-assistant' ? ai : `${features}/${id}`),
     docs: en ? '/en/documentation' : '/dokumantasyon',

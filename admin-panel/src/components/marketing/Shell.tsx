@@ -711,6 +711,12 @@ export const Footer = () => {
             <Link to={routes.terms} className="hover:text-gray-300 transition-colors">
               {t('legal.terms.title')}
             </Link>
+            <Link to={routes.accessibility} className="hover:text-gray-300 transition-colors">
+              {t('legal.accessibility.title')}
+            </Link>
+            <Link to={routes.aiUse} className="hover:text-gray-300 transition-colors">
+              {t('legal.aiUse.title')}
+            </Link>
             {STATUS_PAGE_URL && (
               <a
                 href={STATUS_PAGE_URL}

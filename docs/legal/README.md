@@ -7,12 +7,20 @@
 
 ## Yayındaki metinler
 
-Sitede şu an yalnızca iki metin var; panelin çeviri dosyalarından gelir:
+Sitedeki metinler panelin çeviri dosyalarından gelir:
 
 | Sayfa | Adres | Kaynak |
 |---|---|---|
 | Gizlilik Politikası | `/gizlilik`, `/en/privacy` | `admin-panel/src/locales/pages.{tr,en}.ts` → `legal.privacy` |
 | Kullanım Şartları | `/kullanim-sartlari`, `/en/terms` | `legal.terms` (içinde `#guvenlik` güvenlik açığı bildirimi, SEC-10) |
+| Erişilebilirlik Beyanı | `/erisilebilirlik`, `/en/accessibility` | `legal.accessibility` (LEG-07; UX-01/02 testlerine dayanır) |
+| Yapay Zekâ Kullanımı | `/yapay-zeka-kullanimi`, `/en/ai-use` | `legal.aiUse` (LEG-07, AI-03; sağlayıcı adı yok) |
+
+İki beyan sözleşme değil, ürünün bugün ne yaptığının tarifidir; her cümlesi
+koddaki ya da testlerdeki bir karşılığa dayanır (asistan:
+`backend/src/services/assistant/privacy.ts`, widget: `e2e/tests/accessibility.spec.ts`).
+Davranış değişirse metin aynı değişiklikte güncellenir. Yine de hukukçunun
+okumasında bu iki sayfa da listeye alınmalıdır.
 
 ## Taslaklar (LEG-01, LEG-03)
 
@@ -28,7 +36,7 @@ Sitede şu an yalnızca iki metin var; panelin çeviri dosyalarından gelir:
 | Künye / İletişim | [kunye.md](kunye.md) | yeni sayfa `/kunye` | 6563 s. Kanun m.3 hizmet sağlayıcı bilgileri |
 | Veri envanteri | [data-inventory.md](data-inventory.md) | iç belge | tablo tablo kişisel veri, amaç, süre, silme |
 | İlgili kişi başvuru süreci | [basvuru-sureci.md](basvuru-sureci.md) | iç belge | `kvkk@`, 30 gün, panel araçları |
-| Yapay zekâ şeffaflığı | [ai-transparency.md](ai-transparency.md) | LEG-07 ile | AI-03 |
+| Yapay zekâ şeffaflığı | [ai-transparency.md](ai-transparency.md) | iç not; yayındaki karşılığı `/yapay-zeka-kullanimi` | AI-03 |
 | İhlal prosedürü | [breach-procedure.md](breach-procedure.md) | iç belge | OBS |
 
 ## Onay ve yayın sırası

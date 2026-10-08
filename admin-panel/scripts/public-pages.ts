@@ -96,7 +96,13 @@ const pages: Array<{ tr: string; en: string; kind: string; meta: { tr: Meta; en:
     kind: 'legal',
     meta: meta('legal.privacy.title', 'legal.privacy.meta')
   },
-  { ...pair((x) => x.terms), kind: 'legal', meta: meta('legal.terms.title', 'legal.terms.meta') }
+  { ...pair((x) => x.terms), kind: 'legal', meta: meta('legal.terms.title', 'legal.terms.meta') },
+  {
+    ...pair((x) => x.accessibility),
+    kind: 'legal',
+    meta: meta('legal.accessibility.title', 'legal.accessibility.meta')
+  },
+  { ...pair((x) => x.aiUse), kind: 'legal', meta: meta('legal.aiUse.title', 'legal.aiUse.meta') }
 ];
 
 const here = path.dirname(fileURLToPath(import.meta.url));

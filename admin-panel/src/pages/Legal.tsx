@@ -1,7 +1,8 @@
 /**
- * Gizlilik Politikası ve Kullanım Şartları.
+ * Gizlilik Politikası, Kullanım Şartları ve iki beyan: erişilebilirlik ve
+ * yapay zekâ kullanımı (plan v10 LEG-07).
  *
- * İçerik çeviri dosyasındadır (`legal.privacy`, `legal.terms`) ve ürünün
+ * İçerik çeviri dosyasındadır (`legal.<tür>`) ve ürünün
  * gerçekten yaptığını anlatır: saklama süreleri retention sweep'iyle,
  * çerez adları kodla, yapay zekâya giden veri asistanın gizlilik kurallarıyla
  * aynıdır. Hukuki inceleme ayrıca yapılmalıdır; burası teknik doğruluğun
@@ -14,7 +15,10 @@ import Shell from '../components/marketing/Shell';
 import { Section, asList } from '../components/marketing/kit';
 import { withContacts } from '../lib/contact';
 
-type Kind = 'privacy' | 'terms';
+type Kind = 'privacy' | 'terms' | 'accessibility' | 'aiUse';
+
+// Sözleşme niteliğindeki metinlerin bölümleri numaralı, beyanlarınki değil.
+const NUMBERED: ReadonlySet<Kind> = new Set(['privacy', 'terms']);
 
 const Legal = ({ kind }: { kind: Kind }) => {
   const { t } = useTranslation();
@@ -32,7 +36,9 @@ const Legal = ({ kind }: { kind: Kind }) => {
           <h1 className="text-[36px] sm:text-[48px] font-bold tracking-[-0.035em] text-gray-950 dark:text-white">
             {t(`legal.${kind}.title`)}
           </h1>
-          <p className="mt-3 text-[14px] text-gray-500 dark:text-gray-400">{t('legal.updated')}</p>
+          <p className="mt-3 text-[14px] text-gray-500 dark:text-gray-400">
+            {t(`legal.${kind}.updated`, { defaultValue: t('legal.updated') })}
+          </p>
           <p className="mt-6 text-[17px] leading-[1.7] text-gray-700 dark:text-gray-300">
             {t(`legal.${kind}.intro`)}
           </p>
@@ -43,7 +49,7 @@ const Legal = ({ kind }: { kind: Kind }) => {
           {sections.map((section, i) => (
             <section key={section.h} id={section.id} className="scroll-mt-28">
               <h2 className="text-[20px] font-semibold text-gray-950 dark:text-white">
-                {i + 1}. {section.h}
+                {NUMBERED.has(kind) ? `${i + 1}. ${section.h}` : section.h}
               </h2>
               <div className="mt-3 space-y-3">
                 {section.p.map((paragraph) => (

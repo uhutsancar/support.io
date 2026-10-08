@@ -166,6 +166,8 @@ function App() {
                     <Route path="/yapay-zeka" element={<AiAssistant />} />
                     <Route path="/gizlilik" element={<Legal kind="privacy" />} />
                     <Route path="/kullanim-sartlari" element={<Legal kind="terms" />} />
+                    <Route path="/erisilebilirlik" element={<Legal kind="accessibility" />} />
+                    <Route path="/yapay-zeka-kullanimi" element={<Legal kind="aiUse" />} />
                     <Route path="/dokumantasyon" element={<Docs />} />
                     <Route path="/hakkimizda" element={<About />} />
                     <Route
@@ -205,6 +207,8 @@ function App() {
                     <Route path="/en/ai-assistant" element={<AiAssistant />} />
                     <Route path="/en/privacy" element={<Legal kind="privacy" />} />
                     <Route path="/en/terms" element={<Legal kind="terms" />} />
+                    <Route path="/en/accessibility" element={<Legal kind="accessibility" />} />
+                    <Route path="/en/ai-use" element={<Legal kind="aiUse" />} />
                     <Route path="/en/documentation" element={<Docs />} />
                     <Route path="/en/about" element={<About />} />
                     <Route
