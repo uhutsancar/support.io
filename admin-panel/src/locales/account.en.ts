@@ -175,7 +175,18 @@ export default {
       sound: 'Notification sound',
       activation: 'Account set-up e-mails (first month)',
       language: 'Language of e-mails',
-      saved: 'Notification preferences saved.'
+      saved: 'Notification preferences saved.',
+      pushTitle: 'Push notifications on this device',
+      pushHelp:
+        'Your phone or computer is notified even while the panel is closed, for the events chosen above.',
+      pushOn: 'Turn on for this device',
+      pushOff: 'Turn off for this device',
+      pushEnabled: 'This device receives notifications.',
+      pushDenied: 'Notifications were not allowed. You can allow them in the browser settings.',
+      pushUnavailable: 'This browser does not support push notifications.',
+      pushHomeScreen:
+        'On iPhone and iPad, first add the panel to the home screen (Safari → Share → Add to Home Screen) and open it from there.',
+      pushError: 'The notification setting could not be changed.'
     },
     rating: {
       title: 'Rate the conversation',

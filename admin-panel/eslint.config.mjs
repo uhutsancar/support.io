@@ -14,7 +14,15 @@ export default tseslint.config(
   {
     // Locale files are generated translation tables, and the config file
     // below is not part of any TypeScript project.
-    ignores: ['dist/**', 'node_modules/**', 'src/public/**', 'src/locales/**', 'eslint.config.mjs']
+    // public/ is served as it is (the service worker among it), not built.
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'public/**',
+      'src/public/**',
+      'src/locales/**',
+      'eslint.config.mjs'
+    ]
   },
 
   js.configs.recommended,

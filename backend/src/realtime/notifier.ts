@@ -21,6 +21,7 @@
 // rather than a message quietly delivered to nobody.
 
 import { conversationRoom, siteRoom, userRoom } from './rooms';
+import { pushConversationEvent } from '../services/push';
 import type { Namespace, Server } from 'socket.io';
 
 /** Anything that can be serialised to a client; documents are sent as plain objects. */
@@ -106,7 +107,8 @@ export class AdminNotifier {
     assignedBy: unknown
   ): void {
     // The assignee is told wherever they are; the site room is told so the
-    // inbox shows the new owner.
+    // inbox shows the new owner. With the panel closed, by push (PRD-09).
+    void pushConversationEvent('assigned', conversation, { assignee: agentId, actor: assignedBy });
     this.toUser(agentId, 'conversation-assigned', {
       conversationId: conversation._id,
       agentId,

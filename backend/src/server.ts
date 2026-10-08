@@ -19,6 +19,8 @@ import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
 import savedReplyRoutes from './routes/savedReplies';
 import conversationTagRoutes from './routes/conversationTags';
+import pushRoutes from './routes/push';
+import { pushOutbox, usePushRealtime } from './services/push';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
 import conversationRoutes from './routes/conversations';
@@ -208,6 +210,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.set('io', io);
 usePlanOverageRealtime(io);
+usePushRealtime(io);
 
 // Hiz sinirlari surec disinda (Redis) tutulur ve kimligi dogrulanmis
 // istekleri kullaniciya gore sayar; ayrintilar icin middleware/rateLimit.js.
@@ -271,6 +274,7 @@ app.use('/api/account/export', dataExportRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/saved-replies', savedReplyRoutes);
 app.use('/api/conversation-tags', conversationTagRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
@@ -279,6 +283,14 @@ app.use('/api/data-retention', dataRetentionRoutes);
 if (!isProduction && mailProvider() === 'console') {
   app.get('/api/dev/outbox', (req: Request, res: Response) => {
     res.json({ mails: outboxFor(String(req.query.to || '')) });
+  });
+}
+
+// The development push outbox (PUSH_TRANSPORT=memory): what would have been
+// pushed to the signed-in workspace's devices. Never mounted in production.
+if (!isProduction && process.env.PUSH_TRANSPORT === 'memory') {
+  app.get('/api/dev/push-outbox', auth, (req: Request, res: Response) => {
+    res.json({ pushes: pushOutbox(String(req.user.organizationId)) });
   });
 }
 

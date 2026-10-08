@@ -19,6 +19,12 @@ the LGPL's distribution terms are not triggered. Should the image ever be
 handed to a customer (an on-premises Enterprise deal), ship it with the
 libvips licence text and an offer of its source, as the LGPL asks.
 
+`web-push` (3.6.7, PRD-09) is **MPL-2.0**, looked at on 8 October 2026: a
+file-level copyleft. It is used unmodified as a library; MPL obligations
+attach only to changes made to its own files, and to making its source
+available when distributing it (it is on npm, and the image is not
+distributed). Accepted. Its dependencies are MIT/BSD/ISC.
+
 `@types/cookie-parser` sits in devDependencies (not shipped). Every install
 uses `npm ci` against the lock files.
 

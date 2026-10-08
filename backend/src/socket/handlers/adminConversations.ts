@@ -31,6 +31,7 @@ import {
   slaTargetsFor
 } from '../../domain';
 import { conversationRoom, siteRoom } from '../../realtime/rooms';
+import { pushConversationEvent } from '../../services/push';
 import type { Doc } from '../../db/model';
 import type { CreateInput } from '../../db/model';
 import type { ConversationDoc } from '../../models/Conversation';
@@ -347,6 +348,10 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       };
       ctx.toAdminSite(conversation.siteId, 'conversation-assigned', assignment);
       ctx.toAdminUser(agentId, 'conversation-assigned', assignment);
+      void pushConversationEvent('assigned', conversation, {
+        assignee: agentId,
+        actor: socket.userId
+      });
     })
   );
 

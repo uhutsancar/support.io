@@ -1,6 +1,7 @@
 /** What every consumer of useAuth() gets. */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { hasSession, purgeLegacyStorage } from '../lib/session';
+import { forgetPushOnSignOut } from '../lib/pushNotifications';
 import type { ReactNode } from 'react';
 import { authAPI, isPendingSecondStep } from '../services/api';
 import type { AuthResponse, LoginResponse, RegisterPayload } from '../services/api';
@@ -83,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   const signedIn = (data: AuthResponse) => setUser(toCurrentUser(data.user));
   const logout = async () => {
+    // While still signed in: this browser stops getting the account's pushes.
+    await forgetPushOnSignOut();
     try {
       await authAPI.logout();
     } catch {

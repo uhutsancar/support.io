@@ -202,6 +202,10 @@ services:
       GEMINI_TIER: ${GEMINI_TIER:-free}
       GEMINI_COST_PER_ANSWER: ${GEMINI_COST_PER_ANSWER:-}
       ASSISTANT_KILL_SWITCH: ${ASSISTANT_KILL_SWITCH:-false}
+      # Push notifications to the panel (PRD-09); empty keys turn push off.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       # Error tracking (OBS-01); empty DSN sends nothing.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}

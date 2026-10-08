@@ -177,7 +177,18 @@ export default {
       sound: 'Bildirim sesi',
       activation: 'Hesap kurulumu e-postaları (ilk ay)',
       language: 'E-postaların dili',
-      saved: 'Bildirim tercihleri kaydedildi.'
+      saved: 'Bildirim tercihleri kaydedildi.',
+      pushTitle: 'Bu cihazda anlık bildirim',
+      pushHelp:
+        'Panel kapalıyken de telefonunuza ya da bilgisayarınıza bildirim gelir; hangi olaylar için geleceği yukarıdaki seçimlere göredir.',
+      pushOn: 'Bu cihazda aç',
+      pushOff: 'Bu cihazda kapat',
+      pushEnabled: 'Bu cihaza bildirim gönderiliyor.',
+      pushDenied: 'Bildirim izni verilmedi. Tarayıcı ayarlarından açabilirsiniz.',
+      pushUnavailable: 'Bu tarayıcı anlık bildirimleri desteklemiyor.',
+      pushHomeScreen:
+        'iPhone ve iPad’de önce Safari’de Paylaş → Ana Ekrana Ekle ile paneli uygulama olarak ekleyin, sonra oradan açın.',
+      pushError: 'Bildirim ayarı değiştirilemedi.'
     },
     rating: {
       title: 'Görüşmeyi değerlendirin',

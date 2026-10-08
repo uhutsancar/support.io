@@ -154,6 +154,11 @@ export function productionConfigWarnings(): string[] {
       'GEMINI_TIER is free: the assistant does not answer visitors from the EEA, UK or Switzerland (AI-02, KARAR-AI-1)'
     );
   }
+  if (!value('VAPID_PUBLIC_KEY') || !value('VAPID_PRIVATE_KEY')) {
+    warnings.push(
+      'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are empty: no push notifications on phones or closed panels (PRD-09; npm run push:keys)'
+    );
+  }
   if (value('S3_ACL') && value('S3_ACL') !== 'private') {
     warnings.push(`S3_ACL=${value('S3_ACL')}: uploaded files must stay private (SEC-08)`);
   }

@@ -975,7 +975,7 @@ const Conversations = () => {
                 setSelectedSite(site ?? null);
                 setSelectedConversation(null);
               }}
-              className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200 w-full sm:w-auto flex-shrink-0"
+              className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200 w-full sm:w-auto flex-shrink-0"
             >
               {sites.map((site) => (
                 <option key={site._id} value={site._id}>
@@ -1161,11 +1161,12 @@ const Conversations = () => {
               <>
                 <div className="flex flex-1 flex-col w-full min-w-0 overflow-hidden min-h-0">
                   <div className="p-2 sm:p-2.5 lg:p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-colors duration-200 flex-shrink-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 overflow-hidden">
+                    <div className="flex flex-wrap items-center justify-between gap-y-2 mb-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-[12rem] overflow-hidden">
                         <button
                           onClick={() => setSelectedConversation(null)}
-                          className="lg:hidden p-1.5 sm:p-2 -ml-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex-shrink-0"
+                          aria-label={t('common.back')}
+                          className="lg:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-h-0 sm:min-w-0 p-1.5 sm:p-2 -ml-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex-shrink-0"
                         >
                           <svg
                             className="w-4 h-4 sm:w-5 sm:h-5"
@@ -1193,12 +1194,12 @@ const Conversations = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-1.5 sm:ml-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 flex-shrink-0 sm:ml-2">
                         <select
                           value={selectedConversation.priority}
                           onChange={(e) => handlePriorityChange(e.target.value)}
                           aria-label={t('conversations.setPriority', 'Önceliği değiştir')}
-                          className={`px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium ${getPriorityColor(selectedConversation.priority)}`}
+                          className={`min-h-[44px] sm:min-h-0 px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium ${getPriorityColor(selectedConversation.priority)}`}
                         >
                           <option value="low">{t('conversations.priorities.low', 'Düşük')}</option>
                           <option value="normal">
@@ -1215,7 +1216,7 @@ const Conversations = () => {
                           value={selectedConversation.status}
                           onChange={(e) => handleStatusChange(e.target.value)}
                           aria-label={t('conversations.setStatus', 'Durumu değiştir')}
-                          className={`px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}
+                          className={`min-h-[44px] sm:min-h-0 px-2 py-1 text-[10px] sm:text-xs rounded cursor-pointer border-0 font-medium whitespace-nowrap ${getStatusColor(selectedConversation.status)}`}
                         >
                           <option value="open">{t('conversations.statuses.open', 'Açık')}</option>
                           <option value="assigned">
@@ -1242,7 +1243,7 @@ const Conversations = () => {
                               type="button"
                               onClick={() => setMergeOpen(true)}
                               aria-label={t('inboxTools.merge.button')}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                              className="inline-flex items-center justify-center gap-1 min-w-[44px] min-h-[44px] sm:min-h-0 sm:min-w-0 px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
                               <GitMerge className="w-3.5 h-3.5" aria-hidden="true" />
                               <span className="hidden sm:inline" aria-hidden="true">
@@ -1254,7 +1255,7 @@ const Conversations = () => {
                         {canDeleteConversations && (
                           <button
                             onClick={() => openDeleteConfirm(selectedConversation._id)}
-                            className="p-1.5 sm:p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                            className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-h-0 sm:min-w-0 p-1.5 sm:p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
                             title={t('conversations.deleteConversationTooltip')}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -1305,7 +1306,7 @@ const Conversations = () => {
                           onChange={(e) =>
                             handleSetDepartment(selectedConversation!._id, e.target.value || null)
                           }
-                          className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300"
+                          className="min-h-[44px] sm:min-h-0 px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300"
                         >
                           <option value="">
                             {t('conversations.selectDepartment', 'Departman Seçiniz')}
@@ -1333,7 +1334,7 @@ const Conversations = () => {
                             Boolean(selectedConversation.assignedAgent) &&
                             String(selectedConversation.assignedAgent?._id) !== selfId
                           }
-                          className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="min-h-[44px] sm:min-h-0 px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           <option value="">{t('conversations.unassigned', 'Atanmamış')}</option>
                           {teamMembers

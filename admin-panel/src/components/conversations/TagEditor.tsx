@@ -99,7 +99,7 @@ const TagEditor = ({
             maxLength={32}
             placeholder={t('inboxTools.tags.placeholder')}
             aria-label={t('inboxTools.tags.add')}
-            className="min-w-0 flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="min-w-0 flex-1 min-h-[44px] sm:min-h-0 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
           />
           <datalist id={listId}>
             {catalog
@@ -112,7 +112,7 @@ const TagEditor = ({
             type="submit"
             disabled={!text.trim()}
             aria-label={t('inboxTools.tags.add')}
-            className="px-1.5 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="min-w-[44px] sm:min-w-0 min-h-[44px] sm:min-h-0 px-1.5 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           </button>

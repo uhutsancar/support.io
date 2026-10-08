@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { notifyDesktop, showUnreadInTab } from '../lib/desktopNotifications';
+import { resyncPush } from '../lib/pushNotifications';
 import { VerifyEmailBanner } from '../pages/AccountRecovery';
 import {
   MfaRequiredGate,
@@ -145,6 +146,12 @@ const DashboardLayout = () => {
   useEffect(() => {
     showUnreadInTab(unreadCount);
   }, [unreadCount]);
+
+  // The service worker, and this browser's push subscription saved again for
+  // whoever is signed in (PRD-09). Only the panel registers it.
+  useEffect(() => {
+    void resyncPush();
+  }, []);
 
   // Which events raise a desktop notification; read once per session.
   const desktopPrefs = useRef({ newConversation: true, assigned: true, allMessages: false });

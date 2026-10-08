@@ -38,6 +38,7 @@ import { hasLink, looksLikeSpam } from '../../services/visitorBlocks';
 import { spamModeQuota } from '../../middleware/rateLimit';
 import { query } from '../../db/pool';
 import { timed } from '../../config/metrics';
+import { pushConversationEvent } from '../../services/push';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
 import type { MessageDoc } from '../../models/Message';
@@ -181,6 +182,8 @@ async function openFirstConversation(
   ctx.toAdminSite(socket.siteId, 'new-conversation', {
     conversation: await opened.populate('department', 'name color icon')
   });
+  // Phones and closed panels hear about it too (PRD-09); not awaited.
+  void pushConversationEvent('newConversation', opened);
   runAutomation('conversation_created', opened, { content });
 }
 
@@ -370,6 +373,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       const assistant = assistantActiveFor(site, socket.country ?? null);
 
       // The first message opens the conversation; see conversationIntake.ts.
+      // Its push is the "new conversation" one, not a second for the message.
+      const opening = !socket.conversationId;
       if (!socket.conversationId) {
         // A site with a required pre-chat form or consent box hears nothing
         // before it is filled in (PRD-05).
@@ -520,6 +525,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           message: emitted,
           conversation
         });
+      }
+      if (!opening) {
+        void pushConversationEvent('message', conversation, { text: content.trim() });
       }
       ctx.toAdminSite(conversation.siteId, 'notification', {
         type: 'new-message',

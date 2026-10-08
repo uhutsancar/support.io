@@ -138,6 +138,13 @@ services:
       - PADDLE_PRICE_ENTERPRISE_YEARLY
       - PADDLE_API_KEY
       - PADDLE_CLIENT_TOKEN
+      # Web Push (PRD-09): a development pair in the root .env (npm run
+      # push:keys); never committed. Without it push is off.
+      - VAPID_PUBLIC_KEY
+      - VAPID_PRIVATE_KEY
+      - VAPID_SUBJECT
+      # Pushes are kept in memory (GET /api/dev/push-outbox), not sent.
+      - PUSH_TRANSPORT=${PUSH_TRANSPORT:-memory}
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:

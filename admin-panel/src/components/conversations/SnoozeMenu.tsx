@@ -77,7 +77,7 @@ const SnoozeMenu = ({
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => onOpenChange(!open)}
-        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="inline-flex items-center gap-1 min-h-[44px] sm:min-h-0 px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <AlarmClock className="w-3.5 h-3.5" aria-hidden="true" />
         {t('inboxTools.snooze.button')}

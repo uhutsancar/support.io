@@ -3,6 +3,7 @@ import Team from '../models/Team';
 import Conversation from '../models/Conversation';
 import Department from '../models/Department';
 import { isAwayPresence } from '../domain';
+import { pushConversationEvent } from './push';
 import type { Doc, Filter } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
 
@@ -129,6 +130,9 @@ async function autoAssignConversation(
         'stats.totalConversations': 1
       }
     });
+    // Nothing on the socket tells the agent (the inbox shows it); a closed
+    // panel hears it by push (PRD-09).
+    void pushConversationEvent('assigned', conversation, { assignee: bestAgent._id });
     return {
       success: true,
       agentId: bestAgent._id,

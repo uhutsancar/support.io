@@ -141,7 +141,9 @@ test('appendix C: what production can run without is warned about, never fatal',
     GEMINI_TIER: 'paid',
     S3_ACL: undefined,
     MAIL_ALLOWLIST_DOMAINS: undefined,
-    SITE_NOINDEX: 'false'
+    SITE_NOINDEX: 'false',
+    VAPID_PUBLIC_KEY: 'public',
+    VAPID_PRIVATE_KEY: 'private'
   };
   withEnv(quiet, () => assert.deepEqual(productionConfigWarnings(), []));
   withEnv(
@@ -152,7 +154,8 @@ test('appendix C: what production can run without is warned about, never fatal',
       GEMINI_TIER: 'free',
       S3_ACL: 'public-read',
       MAIL_ALLOWLIST_DOMAINS: 'example.com',
-      SITE_NOINDEX: 'true'
+      SITE_NOINDEX: 'true',
+      VAPID_PRIVATE_KEY: undefined
     },
     () => {
       const text = productionConfigWarnings().join('\n');
@@ -162,7 +165,8 @@ test('appendix C: what production can run without is warned about, never fatal',
         'GEMINI_TIER',
         'S3_ACL',
         'MAIL_ALLOWLIST_DOMAINS',
-        'SITE_NOINDEX'
+        'SITE_NOINDEX',
+        'VAPID_PRIVATE_KEY'
       ]) {
         assert.match(text, new RegExp(name), name);
       }

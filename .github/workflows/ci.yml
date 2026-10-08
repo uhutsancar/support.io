@@ -122,6 +122,8 @@ jobs:
       PADDLE_WEBHOOK_SECRET: ci-paddle-webhook-secret
       PADDLE_PRICE_PRO: pri_ci_pro
       PADDLE_PRICE_ENTERPRISE: pri_ci_enterprise
+      # Pushes are recorded by the API, never sent to a real push service.
+      PUSH_TRANSPORT: memory
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -131,6 +133,10 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
         working-directory: backend
+      - name: A throw-away Web Push key pair for this run (PRD-09)
+        # Generated here so no private key sits in the repository.
+        working-directory: backend
+        run: node -e "const k=require('web-push').generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+k.publicKey);console.log('VAPID_PRIVATE_KEY='+k.privateKey)" >> "$GITHUB_ENV"
       - name: Start the API, recording coverage
         # The suite calls a running API: the code it exercises runs there.
         # scripts/coverage-api.ts exits cleanly on a stop file, so V8 writes

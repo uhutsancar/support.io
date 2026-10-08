@@ -17,6 +17,13 @@ import {
   notificationPermission,
   requestNotificationPermission
 } from '../../lib/desktopNotifications';
+import {
+  disablePush,
+  enablePush,
+  needsHomeScreen,
+  pushAvailable,
+  pushEnabledHere
+} from '../../lib/pushNotifications';
 
 const select =
   'px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white';
@@ -25,6 +32,42 @@ const NotificationSettings = () => {
   const { t } = useTranslation();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [permission, setPermission] = useState(notificationPermission());
+  // Push on this device (PRD-09): null until known; 'unavailable' hides the block.
+  const [push, setPush] = useState<'on' | 'off' | 'unavailable' | null>(null);
+  const [pushNote, setPushNote] = useState<string | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      const available = await pushAvailable();
+      const on = available && (await pushEnabledHere().catch(() => false));
+      if (live) setPush(!available ? 'unavailable' : on ? 'on' : 'off');
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    setPushNote(null);
+    try {
+      if (push === 'on') {
+        await disablePush();
+        setPush('off');
+      } else {
+        const result = await enablePush();
+        if (result === 'enabled') setPush('on');
+        else if (result === 'denied') setPushNote(t('account.notifications.pushDenied'));
+        else setPushNote(t('account.notifications.pushUnavailable'));
+      }
+    } catch (error) {
+      toast.error(errorMessage(error, t('account.notifications.pushError')));
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   useEffect(() => {
     authAPI
@@ -126,6 +169,50 @@ const NotificationSettings = () => {
             ))}
           </div>
         </div>
+
+        {push && push !== 'unavailable' && (
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {t('account.notifications.pushTitle')}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              {t('account.notifications.pushHelp')}
+            </p>
+            {needsHomeScreen() ? (
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                {t('account.notifications.pushHomeScreen')}
+              </p>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={togglePush}
+                  disabled={pushBusy}
+                  aria-pressed={push === 'on'}
+                  className={
+                    push === 'on'
+                      ? 'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50'
+                      : 'px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700 disabled:opacity-50'
+                  }
+                >
+                  {push === 'on'
+                    ? t('account.notifications.pushOff')
+                    : t('account.notifications.pushOn')}
+                </button>
+                {push === 'on' && (
+                  <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-400">
+                    {t('account.notifications.pushEnabled')}
+                  </p>
+                )}
+                {pushNote && (
+                  <p className="mt-2 text-xs text-amber-800 dark:text-amber-300" role="status">
+                    {pushNote}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
           <input
