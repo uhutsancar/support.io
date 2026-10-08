@@ -387,3 +387,15 @@ and then when either holds for a week of normal traffic:
 
 Connection budget at every step: `DB_POOL_MAX` × backend processes + the
 backup + a psql session ≤ `max_connections` (50 now: 20 + spare).
+
+**Deploys without the 10–15 s gap (plan v10 INF-06, KARAR-INF-2).** Today a
+deploy restarts the one backend: sockets drop and reconnect on their own
+(jittered 1–30 s, messages queued and resent once — PERF-06), the panel
+shows "reconnecting", nothing is lost. Decision: **after the launch**, as
+step 3 above brings it for free. The shape, when it comes: a second service
+`backend-next` in the compose file; `deploy.sh` starts it on the new image,
+waits for its `/ready`, adds it to Caddy's upstreams (`reverse_proxy
+backend:3000 backend-next:3000 { health_uri /ready }`), stops the old one,
+and swaps the names for the next deploy. Migrations keep their rule — never
+breaking the previous release — which is what makes two versions side by
+side safe.
