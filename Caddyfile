@@ -42,6 +42,11 @@ handle /demo* {
     reverse_proxy backend:3000
 }
 
+# The public help centers (/help/<site>) are pages the backend writes.
+handle /help/* {
+    reverse_proxy backend:3000
+}
+
 handle {
     reverse_proxy admin:5173
 }

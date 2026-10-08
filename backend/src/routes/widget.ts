@@ -56,6 +56,7 @@ import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
 import { ioFrom, siteRoom } from '../realtime';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
+import { helpCenterUrl } from '../services/helpCenter';
 import type { SiteDoc } from '../models/Site';
 import type { SiteWidgetSettings } from '../domain';
 
@@ -329,7 +330,15 @@ router.post(
       // Forms and ratings (services/chatSettings.ts): what the widget shows,
       // nothing about who on the team gets mailed.
       chat: publicChatSettings(chatSettings(site.chatSettings)),
-      faqs: bundle.faqs
+      faqs: bundle.faqs,
+      // The site's public help center, when the owner turned it on (PRD-10).
+      helpUrl: helpCenterUrl(
+        site,
+        String(process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(
+          /\/+$/,
+          ''
+        )
+      )
     });
   })
 );

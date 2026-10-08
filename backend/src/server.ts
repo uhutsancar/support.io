@@ -20,6 +20,7 @@ import accountRoutes from './routes/account';
 import savedReplyRoutes from './routes/savedReplies';
 import conversationTagRoutes from './routes/conversationTags';
 import pushRoutes from './routes/push';
+import { helpPages, helpSettings } from './routes/helpCenter';
 import { pushOutbox, usePushRealtime } from './services/push';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
@@ -275,6 +276,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/saved-replies', savedReplyRoutes);
 app.use('/api/conversation-tags', conversationTagRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/sites', helpSettings);
 app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
@@ -327,6 +329,9 @@ if (!isProduction) {
 // path. Failures inside a route are answered by `errorHandler`, registered
 // after the static handlers at the bottom of this file.
 app.use('/api', apiNotFound);
+
+// Public help centers (PRD-10): server-written pages, before the SPA fallback.
+app.use(helpPages);
 
 // Liveness and readiness (plan §11.1).
 //

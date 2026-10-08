@@ -272,6 +272,53 @@ interface Window {
     return prefix + '_' + Date.now().toString(36) + '_' + rnd;
   }
 
+  // Common words that say nothing about what the visitor wants; left out
+  // when matching help articles to what they type (PRD-10).
+  var SUGGEST_STOP = [
+    've',
+    'ile',
+    'bir',
+    'için',
+    'icin',
+    'ama',
+    'çok',
+    'daha',
+    'nasıl',
+    'neden',
+    'nedir',
+    'var',
+    'yok',
+    'mi',
+    'mı',
+    'merhaba',
+    'selam',
+    'iyi',
+    'günler',
+    'teşekkür',
+    'lütfen',
+    'the',
+    'and',
+    'for',
+    'how',
+    'what',
+    'can',
+    'you',
+    'your',
+    'with',
+    'hello',
+    'please'
+  ];
+
+  /** The words of 3+ letters in a text, lower-cased the Turkish way. */
+  function suggestWords(text: string): string[] {
+    return String(text || '')
+      .toLocaleLowerCase('tr')
+      .split(/[^0-9a-zçğıöşüâîû]+/)
+      .filter(function (w) {
+        return w.length >= 3 && SUGGEST_STOP.indexOf(w) < 0;
+      });
+  }
+
   function escapeHtml(value: unknown): string {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -382,6 +429,8 @@ interface Window {
       greeting: 'Merhaba!',
       greetingSub: 'Size nasıl yardımcı olabiliriz?',
       searchHelp: 'Yardım konularında ara...',
+      suggestTitle: 'Bunlar yardımcı olabilir',
+      helpCenter: 'Yardım merkezinin tamamı',
       noResults: 'Sonuç bulunamadı',
       noFaqs: 'Henüz yardım içeriği eklenmemiş',
       emptyThread: 'Sohbeti başlatmak için bir mesaj yazın',
@@ -463,6 +512,8 @@ interface Window {
       greeting: 'Hi there!',
       greetingSub: 'How can we help you today?',
       searchHelp: 'Search help articles...',
+      suggestTitle: 'These might help',
+      helpCenter: 'Open the help center',
       noResults: 'No results found',
       noFaqs: 'No help articles yet',
       emptyThread: 'Send a message to start the conversation',
@@ -1676,6 +1727,25 @@ interface Window {
         colors.textSecondary +
         ';}',
       '.faq.open .faq-a{display:block;}',
+      '.help-all{display:block;margin:4px 8px 10px;padding:12px;min-height:44px;text-align:center;',
+      'border-radius:10px;font-size:13.5px;font-weight:600;text-decoration:none;color:' +
+        colors.text +
+        ';border:1px solid ' +
+        colors.border +
+        ';}',
+      '.help-all:hover{background:' + withAlpha(colors.textSecondary, 0.08) + ';}',
+      /* help suggestions while typing (PRD-10) */
+      '.suggest{padding:10px 12px 2px;border-top:1px solid ' + colors.border + ';}',
+      '.suggest[hidden]{display:none;}',
+      '.suggest-title{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.06em;',
+      'text-transform:uppercase;color:' + colors.textSecondary + ';}',
+      '.suggest-item{display:block;width:100%;min-height:44px;margin:0 0 6px;padding:10px 12px;',
+      'text-align:left;font:inherit;font-size:13.5px;cursor:pointer;border-radius:10px;background:transparent;color:' +
+        colors.text +
+        ';border:1px solid ' +
+        colors.border +
+        ';}',
+      '.suggest-item:hover{background:' + withAlpha(colors.textSecondary, 0.08) + ';}',
 
       /* thread */
       '.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;',
@@ -2027,6 +2097,11 @@ interface Window {
         ICONS.close +
         '</button>',
       '</div>',
+      // Help articles that match what the visitor is typing, before they
+      // send it (PRD-10): an answer found here needs no one, and no AI.
+      '<div class="suggest js-suggest" role="region" aria-live="polite" aria-label="' +
+        escapeHtml(t.suggestTitle) +
+        '" hidden></div>',
       '<div class="composer">',
       '<button class="icon-btn js-attach" aria-label="' +
         escapeHtml(t.attach) +
@@ -2068,6 +2143,13 @@ interface Window {
         escapeHtml(t.searchHelp) +
         '" /></div>',
       '<div class="faq-list js-faq-list"></div>',
+      this.remote && typeof this.remote.helpUrl === 'string'
+        ? '<a class="help-all" href="' +
+          escapeHtml(this.remote.helpUrl) +
+          '" target="_blank" rel="noopener">' +
+          escapeHtml(t.helpCenter) +
+          '</a>'
+        : '',
       '</section>',
 
       '</div>',
@@ -2132,6 +2214,7 @@ interface Window {
       typing: q('.js-typing'),
       assistantLine: q('.js-assistant'),
       input: q('.js-input'),
+      suggest: q('.js-suggest'),
       send: q('.js-send'),
       attach: q('.js-attach'),
       emoji: q('.js-emoji'),
@@ -2198,6 +2281,10 @@ interface Window {
       el.style.height = Math.min(el.scrollHeight, 120) + 'px';
       self.el!.send.disabled = !el.value.trim() && !self.selectedFile;
       self._emitTyping();
+      clearTimeout(self._suggestTimer);
+      self._suggestTimer = setTimeout(function () {
+        self._suggest(el.value);
+      }, 250);
     });
 
     this._listen(this.el.input, 'keydown', function (e) {
@@ -2463,6 +2550,83 @@ interface Window {
     for (var i = 0; i < buttons.length; i++) {
       this._listen(buttons[i], 'click', function () {
         self._setView('help');
+      });
+    }
+  };
+
+  /**
+   * Up to three help articles that share words with what the visitor is
+   * typing, shown above the box while no conversation has started (PRD-10).
+   * Words are compared by their first letters (four or five, as long as the
+   * shorter word allows), so "kargom" finds "kargo" and "iadeler" "iade".
+   */
+  Widget.prototype._suggest = function (this: WidgetInstance, text: string) {
+    var box = this.el && this.el.suggest;
+    if (!box) return;
+    var self = this;
+    var words = suggestWords(text);
+    if (this.conversationId || !this.faqs.length || !words.length) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    var scored = this.faqs
+      .map(function (f) {
+        var own = suggestWords(f.question + ' ' + f.answer);
+        var hits = 0;
+        // A match on a word of five letters or more is a real topic word.
+        var strong = false;
+        for (var i = 0; i < words.length; i++) {
+          for (var k = 0; k < own.length; k++) {
+            var n = Math.min(5, own[k].length, words[i].length);
+            if (n >= 4 && own[k].slice(0, n) === words[i].slice(0, n)) {
+              hits++;
+              if (words[i].length >= 5) strong = true;
+              break;
+            }
+          }
+        }
+        return { faq: f, score: hits / words.length, hits: hits, strong: strong };
+      })
+      .filter(function (s) {
+        return s.hits > 0 && (s.strong || s.score >= 0.5 || s.hits >= 2);
+      })
+      .sort(function (a, b) {
+        return b.hits - a.hits || b.score - a.score;
+      })
+      .slice(0, 3);
+    if (!scored.length) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    box.innerHTML =
+      '<p class="suggest-title">' +
+      escapeHtml(this.t.suggestTitle) +
+      '</p>' +
+      scored
+        .map(function (s, i) {
+          return (
+            '<button type="button" class="suggest-item" data-i="' +
+            i +
+            '">' +
+            escapeHtml(s.faq.question) +
+            '</button>'
+          );
+        })
+        .join('');
+    box.hidden = false;
+    var items = box.querySelectorAll('.suggest-item');
+    for (var j = 0; j < items.length; j++) {
+      this._listen(items[j], 'click', function (e) {
+        var pick = scored[Number((e.currentTarget as HTMLElement).getAttribute('data-i'))];
+        if (!pick) return;
+        box.hidden = true;
+        self._setView('help');
+        self.el!.search.value = pick.faq.question;
+        self._renderFaqs(pick.faq.question);
+        var first = self.el!.faqList.querySelector('.faq');
+        if (first) first.classList.add('open');
       });
     }
   };
@@ -2926,6 +3090,8 @@ interface Window {
     }
     var content = this.el!.input.value.trim();
     if (!content && !this.selectedFile) return;
+    clearTimeout(this._suggestTimer);
+    this._suggest('');
     if (content.length > MAX_MESSAGE_LENGTH) {
       this._notice(this.t.tooLong, 'error');
       return;

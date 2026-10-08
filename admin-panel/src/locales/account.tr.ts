@@ -279,7 +279,14 @@ export default {
   a11y: {
     siteSelect: 'Site',
     department: 'Departman',
-    assignee: 'Atanan temsilci'
+    assignee: 'Atanan temsilci',
+    statusFilter: 'Duruma göre filtrele',
+    roleFilter: 'Role göre filtrele',
+    memberStatus: 'Üyenin durumu',
+    usage: 'Bu ayki yapay zekâ kullanımı',
+    copySiteKey: 'Site anahtarını kopyala',
+    copyInstallCode: 'Kurulum kodunu kopyala',
+    timeRange: 'Zaman aralığı'
   },
   overage: {
     title: 'Plan sınırının üzerindekiler askıda',
@@ -371,6 +378,24 @@ export default {
     empty: 'Henüz hazır yanıt yok.',
     none: 'Eşleşen hazır yanıt yok',
     placeholder: 'Mesajınızı yazın… (hazır yanıt için /)'
+  },
+  helpCenter: {
+    title: 'Yardım merkezi',
+    description:
+      'Aktif ve tüm sayfalarda gösterilen SSS’leriniz herkese açık bir sayfada yayınlanır; müşterileriniz sorup beklemeden cevabı bulur.',
+    address: 'Adres',
+    pageTitle: 'Sayfa başlığı',
+    pageTitlePlaceholder: 'Örneğin: Yardım Merkezi',
+    language: 'Sayfanın dili',
+    noindex: 'Arama motorları listelemesin',
+    publish: 'Yayınla',
+    save: 'Kaydet',
+    unpublish: 'Yayından kaldır',
+    open: 'Sayfayı aç',
+    live: 'Yardım merkeziniz yayında; sohbet balonundaki Yardım sekmesi de ona bağlantı verir.',
+    off: 'Yardım merkeziniz yayında değil.',
+    saved: 'Yardım merkezi kaydedildi.',
+    error: 'Yardım merkezi kaydedilemedi.'
   },
   inboxTools: {
     attachFile: 'Dosya ekle',

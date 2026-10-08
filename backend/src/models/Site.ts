@@ -28,6 +28,10 @@ export interface SiteDoc {
   blockedAt: Date | null;
   /** Why, for the support trail; never sent to the panel. */
   blockedReason: string | null;
+  /** The public help center's address, /help/<helpSlug> (PRD-10). */
+  helpSlug: string | null;
+  /** { enabled, noindex, title }; see services/helpCenter.ts. */
+  helpCenter: Record<string, unknown>;
 }
 
 /** What the panel may know about the integrations: whether, never what. */
@@ -79,7 +83,9 @@ export default defineModel<SiteDoc>({
     chatSettings: { column: 'chat_settings', type: 'json', default: () => ({}) },
     suspendedAt: { column: 'suspended_at', type: 'date', default: null },
     blockedAt: { column: 'blocked_at', type: 'date', default: null },
-    blockedReason: { column: 'blocked_reason', type: 'string', default: null }
+    blockedReason: { column: 'blocked_reason', type: 'string', default: null },
+    helpSlug: { column: 'help_slug', type: 'string', default: null },
+    helpCenter: { column: 'help_center', type: 'json', default: () => ({}) }
   },
   methods: {
     // The integration secrets are sealed in the database and must never be

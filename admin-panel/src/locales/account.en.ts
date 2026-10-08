@@ -276,7 +276,14 @@ export default {
   a11y: {
     siteSelect: 'Site',
     department: 'Department',
-    assignee: 'Assigned agent'
+    assignee: 'Assigned agent',
+    statusFilter: 'Filter by status',
+    roleFilter: 'Filter by role',
+    memberStatus: 'Member status',
+    usage: 'AI usage this month',
+    copySiteKey: 'Copy the site key',
+    copyInstallCode: 'Copy the install code',
+    timeRange: 'Time range'
   },
   overage: {
     title: 'What is over your plan is on hold',
@@ -368,6 +375,24 @@ export default {
     empty: 'No saved replies yet.',
     none: 'No matching saved reply',
     placeholder: 'Type your message… (/ for saved replies)'
+  },
+  helpCenter: {
+    title: 'Help center',
+    description:
+      'Your active FAQ entries shown on every page are published on a public page, so customers find the answer without waiting.',
+    address: 'Address',
+    pageTitle: 'Page title',
+    pageTitlePlaceholder: 'For example: Help Center',
+    language: 'Page language',
+    noindex: 'Keep it out of search engines',
+    publish: 'Publish',
+    save: 'Save',
+    unpublish: 'Unpublish',
+    open: 'Open the page',
+    live: 'Your help center is live; the Help tab of the chat bubble links to it too.',
+    off: 'Your help center is not published.',
+    saved: 'Help center saved.',
+    error: 'The help center could not be saved.'
   },
   inboxTools: {
     attachFile: 'Attach a file',
