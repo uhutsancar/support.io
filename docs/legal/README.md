@@ -39,6 +39,17 @@ okumasında bu iki sayfa da listeye alınmalıdır.
 | Yapay zekâ şeffaflığı | [ai-transparency.md](ai-transparency.md) | iç not; yayındaki karşılığı `/yapay-zeka-kullanimi` | AI-03 |
 | İhlal prosedürü | [breach-procedure.md](breach-procedure.md) | iç belge | OBS |
 
+## Karşılaştırma sayfaları (MKT-04)
+
+`/karsilastirma/{tawk-to,crisp,intercom,tidio}` ↔ `/en/compare/…` hazır ama
+**yayında değil**: adresinden açılır, menüde ve site haritasında yok, arama
+motorlarına kapalı (noindex). Rakip sütunu her firmanın herkese açık fiyat
+sayfasından 8 Ekim 2026'da alındı, kaynak bağlantısı ve "bağlantılı değiliz"
+notu sayfada. Hukukçu karşılaştırmalı reklam ve marka kullanımı açısından
+onaylarsa [SAHİP]: `admin-panel/src/pages/marketing/features.ts` →
+`COMPARISONS_PUBLISHED = true`; fiyatlar yayından hemen önce yeniden
+kontrol edilir ve `compare.checked` tarihi güncellenir.
+
 ## Onay ve yayın sırası
 
 1. **[SAHİP]** Şirket bilgileri (LEG-02) ve `[SAHİP: …]` boşlukları.
