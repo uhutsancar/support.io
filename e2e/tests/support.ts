@@ -68,7 +68,7 @@ export async function mailedLink(
 export async function customerWebsite(port: number, installCode: string) {
   const page = `<!doctype html>
 <html lang="tr">
-<head><meta charset="utf-8"><link rel="icon" href="data:,"><title>Örnek Mağaza</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:,"><title>Örnek Mağaza</title></head>
 <body>
   <h1>Örnek Mağaza</h1>
   <p>Ürünlerimiz hakkında sorularınız için sağ alttaki balonu kullanın.</p>

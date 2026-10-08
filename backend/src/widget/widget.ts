@@ -183,6 +183,15 @@ interface WidgetInstance extends EmitterInstance {
   _bannerTimer: ReturnType<typeof setTimeout> | null;
   /** The original history methods, kept so destroy() can put them back. */
   _historyPatch: Record<string, (...args: any[]) => any> | null;
+  /** While the window fills a phone's screen: what to put back (UX-03). */
+  _phone: {
+    htmlOverflow: string;
+    bodyOverflow: string;
+    fit: (() => void) | null;
+    back: boolean;
+  } | null;
+  /** The next popstate is the one our own history.back() caused. */
+  _ignorePop: boolean;
   _lastTypingAt: number;
   _lightColors: boolean;
   _typingTimer: ReturnType<typeof setTimeout> | null;
@@ -648,6 +657,9 @@ interface Window {
             ? bool(attr('data-auto-open'), false)
             : modern.autoOpen,
       hidden: o.hidden !== undefined ? o.hidden : bool(attr('data-hidden'), false),
+      // On a phone the back button closes the open window (UX-03);
+      // data-back-button="false" leaves the page's history alone.
+      backButton: o.backButton !== undefined ? o.backButton : bool(attr('data-back-button'), true),
       user: o.user || modern.user || null,
       attributes: o.attributes || modern.attributes || null
     };
@@ -2074,6 +2086,16 @@ interface Window {
     this._listen(this.el.launcher, 'click', function () {
       self.toggle();
     });
+    this._listen(window, 'popstate', function (e: Event) {
+      if (self._ignorePop) {
+        self._ignorePop = false;
+        return;
+      }
+      var state = (e as PopStateEvent).state;
+      if (self.isOpen && self._phone && self._phone.back && !(state && state.supportChat)) {
+        self.close(true);
+      }
+    });
     var humanBtn = q('.js-human');
     if (humanBtn)
       this._listen(humanBtn, 'click', function () {
@@ -3223,6 +3245,7 @@ interface Window {
     this.isOpen = true;
     this.el.wrap.classList.add('open');
     this.el.launcher.setAttribute('aria-expanded', 'true');
+    this._enterPhoneScreen();
     this.unread = 0;
     this._renderBadge();
     if (this.view === 'messages') this._scrollToEnd();
@@ -3239,9 +3262,10 @@ interface Window {
     this.emit('open', {});
   };
 
-  Widget.prototype.close = function (this: WidgetInstance) {
+  Widget.prototype.close = function (this: WidgetInstance, fromBackButton?: boolean) {
     if (this.destroyed || !this.el) return;
     this.isOpen = false;
+    this._leavePhoneScreen(Boolean(fromBackButton));
     // Closed from inside (the close button, Esc): the keyboard goes back to
     // the bubble instead of the top of the page.
     var focusInside =
@@ -3250,6 +3274,95 @@ interface Window {
     this.el.launcher.setAttribute('aria-expanded', 'false');
     if (focusInside) this.el.launcher.focus();
     this.emit('close', {});
+  };
+
+  // -------------------------------------------------------- phone screen (UX-03)
+  //
+  // Under 480 px the window fills the screen (CSS). While it does: the page
+  // behind does not scroll, the window follows the visual viewport so the
+  // on-screen keyboard (iOS Safari) never covers the message box, and the
+  // back button (Android) closes the window instead of leaving the page.
+
+  Widget.prototype._enterPhoneScreen = function (this: WidgetInstance) {
+    if (this._phone || !this.el) return;
+    if (
+      typeof window.matchMedia !== 'function' ||
+      !window.matchMedia('(max-width:480px)').matches
+    ) {
+      return;
+    }
+    var html = document.documentElement;
+    var body = document.body;
+    var state: NonNullable<WidgetInstance['_phone']> = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body ? body.style.overflow : '',
+      fit: null,
+      back: false
+    };
+    html.style.overflow = 'hidden';
+    if (body) body.style.overflow = 'hidden';
+
+    var panel = this.el.panel as HTMLElement;
+    var vv = window.visualViewport;
+    if (vv) {
+      var fit = function () {
+        panel.style.top = vv!.offsetTop + 'px';
+        panel.style.bottom = 'auto';
+        panel.style.height = vv!.height + 'px';
+      };
+      fit();
+      vv.addEventListener('resize', fit);
+      vv.addEventListener('scroll', fit);
+      state.fit = fit;
+    }
+
+    if (this.config.backButton !== false) {
+      try {
+        // The page's own state is kept, so a router that reads it on the
+        // way back finds what it wrote.
+        var current = window.history.state;
+        var mine: Record<string, unknown> = { supportChat: true };
+        if (current && typeof current === 'object') {
+          for (var key in current) {
+            if (Object.prototype.hasOwnProperty.call(current, key)) mine[key] = current[key];
+          }
+          mine.supportChat = true;
+        }
+        var push = (this._historyPatch && this._historyPatch.pushState) || window.history.pushState;
+        push.call(window.history, mine, '');
+        state.back = true;
+      } catch (e) {
+        // A sandboxed frame without history: the close button still works.
+      }
+    }
+    this._phone = state;
+  };
+
+  Widget.prototype._leavePhoneScreen = function (this: WidgetInstance, fromBackButton: boolean) {
+    var state = this._phone;
+    if (!state) return;
+    this._phone = null;
+    document.documentElement.style.overflow = state.htmlOverflow;
+    if (document.body) document.body.style.overflow = state.bodyOverflow;
+    if (state.fit && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', state.fit);
+      window.visualViewport.removeEventListener('scroll', state.fit);
+    }
+    if (this.el) {
+      var panel = this.el.panel as HTMLElement;
+      panel.style.top = '';
+      panel.style.bottom = '';
+      panel.style.height = '';
+    }
+    // Closed with the close button: our history entry goes too, so the next
+    // back press leaves the page as the visitor expects.
+    if (state.back && !fromBackButton) {
+      var top = window.history.state;
+      if (top && top.supportChat) {
+        this._ignorePop = true;
+        window.history.back();
+      }
+    }
   };
 
   Widget.prototype.toggle = function (this: WidgetInstance) {
@@ -3403,6 +3516,8 @@ interface Window {
   Widget.prototype.destroy = function (this: WidgetInstance) {
     if (this.destroyed) return;
     this.destroyed = true;
+    // The page scrolls again and keeps its history as it was.
+    this._leavePhoneScreen(false);
 
     for (var i = 0; i < this._timers.length; i++) clearTimeout(this._timers[i]);
     this._timers = [];

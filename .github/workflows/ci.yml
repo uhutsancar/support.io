@@ -210,7 +210,9 @@ jobs:
         working-directory: admin-panel
       - run: npm ci
         working-directory: backend
-      - run: npm ci && npx playwright install --with-deps chromium
+      # Chromium for desktop Chrome and the Pixel 7, WebKit for the iPhone,
+      # iPad and desktop Safari, Firefox for desktop Firefox (UX-03).
+      - run: npm ci && npx playwright install --with-deps chromium webkit firefox
         working-directory: e2e
       - name: Start the API
         working-directory: backend

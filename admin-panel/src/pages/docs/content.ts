@@ -414,6 +414,13 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
     }
   },
   {
+    attr: 'data-back-button="false"',
+    text: {
+      tr: 'Telefonda geri tuşu açık pencereyi kapatır; sayfanızın geçmişine dokunulmasın isterseniz kapatın.',
+      en: 'On phones the back button closes the open window; turn it off to leave your page’s history alone.'
+    }
+  },
+  {
     attr: 'data-defer="true"',
     text: {
       tr: 'Çerez onayı için: balon, siz ["init"] çağırana kadar açılmaz.',
