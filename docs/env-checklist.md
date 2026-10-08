@@ -60,3 +60,16 @@ the `WALG_*` values (disaster-recovery.md).
 widget, a log or an error message; the only values built into the panel
 image are public (`VITE_*`: the support widget's site key, contact
 addresses, the status page URL).
+
+## Built into the image — GitHub repository variables
+
+The release workflow (`.github/workflows/release.yml`) passes these as build
+arguments; they are public and the same for staging and production. Set them
+under Settings → Secrets and variables → Actions → Variables [SAHİP].
+
+| Variable | Becomes | Without it |
+|---|---|---|
+| `SUPPORT_SITE_KEY` | `VITE_SUPPORT_SITE_KEY` | the marketing site has no chat bubble of its own (MKT-04 live demo). The key is a site in the owner's own Support.io account; its messages land in that inbox |
+| `SUPPORT_EMAIL` | `VITE_SUPPORT_EMAIL` | the site shows `destek@support.io` |
+| `SECURITY_EMAIL` | `VITE_SECURITY_EMAIL` | the site shows `security@support.io` |
+| `STATUS_PAGE_URL` | `VITE_STATUS_PAGE_URL` | no status link in the footer (OBS-06) |
