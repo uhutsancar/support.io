@@ -149,6 +149,9 @@ services:
       # Bot check on sign-up (SEC-06).
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+      # Self-hosted, cookieless visitor counts on the public pages (KARAR-MKT-3).
+      ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
+      ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-supportchat}

@@ -13,6 +13,7 @@ import fs from 'fs';
 import path from 'path';
 import { PLAN_TYPES } from '../domain';
 import { displayPrice } from './paddlePrices';
+import { analyticsTag } from './siteAnalytics';
 
 interface Meta {
   title: string;
@@ -128,6 +129,9 @@ export function seoHead(
       '<link rel="preload" as="image" href="/photos/agent-woman-700.webp" imagesrcset="/photos/agent-woman-700.webp 700w, /photos/agent-woman.webp 1400w" imagesizes="(min-width: 1024px) 50vw, 100vw" fetchpriority="high" />'
     );
   }
+  // Visitor counts, when the owner has switched them on (KARAR-MKT-3).
+  const analytics = analyticsTag(attr);
+  if (analytics) lines.push(analytics);
   return { html: lines.join('\n    '), lang };
 }
 

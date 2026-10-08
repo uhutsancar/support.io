@@ -5,8 +5,11 @@
 > çerez ve iki tercih anahtarı; sohbet balonu yalnız yerel depo kullanır.
 > Analitik ya da reklam çerezi **yok**; bu yüzden Kurul'un Çerez Uygulamaları
 > Hakkında Rehberi'ne göre onay paneli gerekmez, bu bilgilendirme yeterlidir.
-> Bir analitik aracı eklenirse (KARAR-MKT-3: çerezsiz Plausible/Umami
-> önerilir) bu metin ve gerekiyorsa onay paneli birlikte güncellenir.
+> Ziyaret sayımı (KARAR-MKT-3) kodda hazır ama **kapalı**: `ANALYTICS_SCRIPT_URL`
+> ve `ANALYTICS_WEBSITE_ID` doldurulursa yalnız herkese açık sayfalarda,
+> sahibin kendi sunucusundaki Umami çalışır; çerez kullanmaz, tarayıcının
+> "izleme" tercihine uyar, panel sayfalarını saymaz. Açılmadan önce bu metne
+> ve gizlilik politikasına eklenir (onay paneli gerekmez; hukukçu teyit eder).
 > Yayın yeri: `/cerez-politikasi`, `/en/cookie-policy`.
 
 ---

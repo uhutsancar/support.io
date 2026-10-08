@@ -26,6 +26,7 @@
 
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
+import { siteAnalytics } from '../services/siteAnalytics';
 
 /**
  * Where browsers report what the policy blocked (routes/cspReport.ts, SEC-11):
@@ -90,7 +91,10 @@ function turnstileHost(): string | null {
 const STRICT_BASE = (nonce: string): string[] => {
   const paddle = paddleHosts();
   const turnstile = turnstileHost();
-  const scripts = [paddle?.script, turnstile].filter(Boolean).join(' ');
+  // Self-hosted visitor counts (KARAR-MKT-3): the script and its reports
+  // share one origin.
+  const analytics = siteAnalytics()?.origin;
+  const scripts = [paddle?.script, turnstile, analytics].filter(Boolean).join(' ');
   const frames = [paddle?.frame, turnstile].filter(Boolean).join(' ');
   return [
     "default-src 'self'",
@@ -101,7 +105,7 @@ const STRICT_BASE = (nonce: string): string[] => {
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     `img-src 'self' data: blob: ${mediaHosts().join(' ')}`.trim(),
-    `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}`.trim(),
+    `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}${analytics ? ' ' + analytics : ''}`.trim(),
     ...(frames ? [`frame-src ${frames}`] : []),
     "object-src 'none'",
     "base-uri 'self'",

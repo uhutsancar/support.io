@@ -47,7 +47,9 @@ Tuning and switches with sensible defaults: `DB_POOL_MAX`,
 `ASSISTANT_KILL_SWITCH`, `SENTRY_ENVIRONMENT`, `WIDGET_TELEMETRY_SAMPLE`,
 `METRICS_TOKEN`, `LOG_REMOTE`, `SECURITY_TXT_EXPIRES`, the yearly Paddle
 prices, `BILLING_PAST_DUE_GRACE_DAYS`, `BACKUP_VERIFY`,
-`BACKUP_VERIFY_PING_URL`, and point-in-time recovery: `PG_ARCHIVE_MODE` with
+`BACKUP_VERIFY_PING_URL`, visitor counts on the public pages (`ANALYTICS_SCRIPT_URL` +
+`ANALYTICS_WEBSITE_ID`, a self-hosted Umami; KARAR-MKT-3, name it in the Privacy
+Policy first), and point-in-time recovery: `PG_ARCHIVE_MODE` with
 the `WALG_*` values (disaster-recovery.md).
 
 ## Secrets the backend alone holds

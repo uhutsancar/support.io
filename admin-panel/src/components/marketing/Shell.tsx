@@ -66,6 +66,7 @@ import {
   SOLUTIONS
 } from '../../pages/marketing/features';
 import { SUPPORT_EMAIL } from '../../lib/contact';
+import { countPageView } from '../../lib/siteAnalytics';
 
 /** The public status page (OBS-06), shown once one exists. */
 const STATUS_PAGE_URL = (import.meta.env.VITE_STATUS_PAGE_URL as string | undefined) || '';
@@ -763,6 +764,11 @@ const Shell = ({
   React.useEffect(() => {
     if (!location.hash) window.scrollTo(0, 0);
   }, [location.pathname, location.hash]);
+
+  // Ziyaret sayımı yalnızca herkese açık sayfalarda ve sahibi açtıysa (KARAR-MKT-3).
+  React.useEffect(() => {
+    countPageView();
+  }, [location.pathname]);
 
   return (
     // "Hareketi azalt" seçili sistemlerde kayma animasyonları kapanır, yalnızca
