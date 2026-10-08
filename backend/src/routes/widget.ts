@@ -238,7 +238,7 @@ router.post(
     // An invalid key, a disabled site and a site over the plan's limit after
     // a downgrade (BIL-04) answer identically, so probing keys cannot reveal
     // "this site exists but is switched off".
-    if (!site || site.suspendedAt) throw widgetNotFound();
+    if (!site || site.suspendedAt || site.blockedAt) throw widgetNotFound();
 
     // The widget goes live once the organization's owner has verified their
     // address (plan §7.2); until then the panel works but no page does.

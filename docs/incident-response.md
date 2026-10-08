@@ -40,7 +40,8 @@ A suspected personal-data breach is always SEV1 and also follows
    and a column is dropped one release after it stops being used.
 5. **Contain** what cannot wait:
    - AI assistant misbehaving or costing: `$C exec backend node dist/cli/assistantKill.js on`
-   - One abusive site: `$C exec backend node dist/cli/disableSite.js <site key>`
+   - One abusive site: `$C exec backend node dist/cli/disableSite.js <site key> --reason "…"`
+     (the owner cannot switch it back on; `--enable` lifts the block)
    - A leaked secret: rotate it now (runbook §8; for `JWT_SECRET` skip the
      overlap so every session ends).
 6. **Tell customers** if SEV1, or SEV2 lasting over 30 minutes: status page

@@ -39,6 +39,8 @@ export interface OverageChange {
 interface Row {
   id: string;
   suspended: boolean;
+  /** Blocked by the platform (LEG-05): never takes a slot from a working site. */
+  blocked?: boolean;
   kind?: 'user' | 'team';
 }
 
@@ -47,6 +49,8 @@ function ranked<T extends Row>(rows: T[], keep: Set<string>): T[] {
   return rows
     .map((row, index) => ({ row, index }))
     .sort((a, b) => {
+      const usable = Number(!a.row.blocked) - Number(!b.row.blocked);
+      if (usable) return -usable;
       const chosen = Number(keep.has(b.row.id)) - Number(keep.has(a.row.id));
       if (chosen) return chosen;
       const active = Number(!b.row.suspended) - Number(!a.row.suspended);
@@ -90,8 +94,8 @@ export async function reconcilePlanLimits(
     };
 
     const sites = await client.query<Row>(
-      `SELECT id, suspended_at IS NOT NULL AS suspended FROM sites
-        WHERE organization_id = $1 ORDER BY created_at, id`,
+      `SELECT id, suspended_at IS NOT NULL AS suspended, blocked_at IS NOT NULL AS blocked
+         FROM sites WHERE organization_id = $1 ORDER BY created_at, id`,
       [organizationId]
     );
     const keepSites = new Set(choice.keepSiteIds ?? []);
@@ -235,14 +239,19 @@ export async function reconcileAllPlanLimits(): Promise<number> {
   return changed;
 }
 
-/** Whether a site is over its plan's limit, so read-only (BIL-04). */
-export async function siteSuspended(siteId: unknown): Promise<boolean> {
-  if (!siteId) return false;
-  const { rows } = await getPool().query<{ suspended: boolean }>(
-    'SELECT suspended_at IS NOT NULL AS suspended FROM sites WHERE id = $1',
+/**
+ * Why nobody may reply on a site, if they may not: over its plan's limit
+ * (BIL-04) or blocked by the platform (LEG-05). Null when replies are fine.
+ */
+export async function siteHold(siteId: unknown): Promise<'SITE_SUSPENDED' | 'SITE_BLOCKED' | null> {
+  if (!siteId) return null;
+  const { rows } = await getPool().query<{ suspended: boolean; blocked: boolean }>(
+    `SELECT suspended_at IS NOT NULL AS suspended, blocked_at IS NOT NULL AS blocked
+       FROM sites WHERE id = $1`,
     [String(siteId)]
   );
-  return Boolean(rows[0]?.suspended);
+  if (rows[0]?.blocked) return 'SITE_BLOCKED';
+  return rows[0]?.suspended ? 'SITE_SUSPENDED' : null;
 }
 
 /** What the billing page shows when something is over the plan. */

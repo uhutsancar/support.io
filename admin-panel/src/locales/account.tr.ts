@@ -246,14 +246,18 @@ export default {
       'Planınızın sınırını aşan siteler veya ekip üyeleri askıda. Hangilerinin açık kalacağını seçin.',
     seatBanner:
       'Ekibin kişi sınırı aşıldığı için hesabınız şimdilik salt okunur: konuşmaları okuyabilirsiniz ama yanıt yazamazsınız. Hesap sahibi sizi yeniden açabilir.',
-    siteHint: 'Plan sınırının üzerinde: sohbet balonu gizli, ayarlar salt okunur.'
+    siteHint: 'Plan sınırının üzerinde: sohbet balonu gizli, ayarlar salt okunur.',
+    blocked: 'Kapatıldı',
+    blockedHint:
+      'Kullanım şartlarına aykırı kullanım nedeniyle Support.io tarafından kapatıldı. Ayrıntı için destek ekibimize yazın.'
   },
   errors: {
     seatSuspended:
       'Hesabınız plan sınırı nedeniyle salt okunur; yanıt yazamaz ve değişiklik yapamazsınız.',
     siteSuspended:
       'Bu site plan sınırının üzerinde olduğu için askıda; okunabilir ama değiştirilemez.',
-    overPlanLimit: 'Planınızın izin verdiğinden fazlasını seçtiniz.'
+    overPlanLimit: 'Planınızın izin verdiğinden fazlasını seçtiniz.',
+    siteBlocked: 'Bu site Support.io tarafından kapatıldı; açılması için destek ekibimize yazın.'
   },
   retention: {
     title: 'Konuşma saklama süresi',

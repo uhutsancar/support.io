@@ -34,7 +34,7 @@ import { conversationRoom, siteRoom } from '../../realtime/rooms';
 import type { Doc } from '../../db/model';
 import type { CreateInput } from '../../db/model';
 import type { ConversationDoc } from '../../models/Conversation';
-import { siteSuspended } from '../../services/planOverage';
+import { siteHold } from '../../services/planOverage';
 import type { MessageDoc } from '../../models/Message';
 import type { SocketContext } from '../context';
 import type {
@@ -194,10 +194,16 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       ctx.reject(socket);
       return ack?.({ ok: false, code: 'NOT_FOUND' });
     }
-    // A site over the plan's limit is read-only (BIL-04): its widget is
-    // hidden, so a reply would reach nobody.
-    if (await siteSuspended(conversation.siteId)) {
-      return refuse('SITE_SUSPENDED', 'This site is over the plan limit and is read-only');
+    // A site over the plan's limit (BIL-04) or blocked by the platform
+    // (LEG-05) is read-only: its widget is hidden, so a reply reaches nobody.
+    const hold = await siteHold(conversation.siteId);
+    if (hold) {
+      return refuse(
+        hold,
+        hold === 'SITE_BLOCKED'
+          ? 'This site was blocked by Support.io; contact support'
+          : 'This site is over the plan limit and is read-only'
+      );
     }
 
     // A resend after a dropped connection: the reply is already stored and

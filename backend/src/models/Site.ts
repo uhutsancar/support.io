@@ -24,6 +24,10 @@ export interface SiteDoc {
   chatSettings: Record<string, unknown>;
   /** Over the plan's site limit after a downgrade (BIL-04): widget silent. */
   suspendedAt: Date | null;
+  /** Switched off by the platform for abuse (LEG-05); only `site:disable` changes it. */
+  blockedAt: Date | null;
+  /** Why, for the support trail; never sent to the panel. */
+  blockedReason: string | null;
 }
 
 /** What the panel may know about the integrations: whether, never what. */
@@ -73,7 +77,9 @@ export default defineModel<SiteDoc>({
     allowedOrigins: { column: 'allowed_origins', type: 'stringArray', default: () => [] },
     isActive: { column: 'is_active', type: 'boolean', default: true },
     chatSettings: { column: 'chat_settings', type: 'json', default: () => ({}) },
-    suspendedAt: { column: 'suspended_at', type: 'date', default: null }
+    suspendedAt: { column: 'suspended_at', type: 'date', default: null },
+    blockedAt: { column: 'blocked_at', type: 'date', default: null },
+    blockedReason: { column: 'blocked_reason', type: 'string', default: null }
   },
   methods: {
     // The integration secrets are sealed in the database and must never be
@@ -83,6 +89,8 @@ export default defineModel<SiteDoc>({
     toJSON() {
       const obj = this.toObject();
       obj.integrations = publicIntegrations(obj.integrations as SiteIntegrations);
+      // The panel learns that the platform blocked the site, not the note.
+      delete obj.blockedReason;
       return obj;
     }
   }

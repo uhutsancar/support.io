@@ -45,8 +45,9 @@ export async function siteForWidgetSession(
 ): Promise<Doc<SiteDoc> | null> {
   const site = await Site.findOne({ _id: claims.siteId, isActive: true });
   if (!site || !siteKeyMatches(site.siteKey, claims.kv)) return null;
-  // Over the plan's site limit (BIL-04): the widget stays silent.
-  if (site.suspendedAt) return null;
+  // Over the plan's site limit (BIL-04), or blocked for abuse (LEG-05): the
+  // widget stays silent.
+  if (site.suspendedAt || site.blockedAt) return null;
   return site;
 }
 

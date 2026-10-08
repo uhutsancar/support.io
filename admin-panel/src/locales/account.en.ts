@@ -243,14 +243,18 @@ export default {
       'Some sites or team members are over your plan and on hold. Choose which ones stay active.',
     seatBanner:
       'The team is over its seat limit, so your account is read-only for now: you can read conversations but not reply. The account owner can bring you back.',
-    siteHint: 'Over the plan limit: chat bubble hidden, settings read-only.'
+    siteHint: 'Over the plan limit: chat bubble hidden, settings read-only.',
+    blocked: 'Blocked',
+    blockedHint:
+      'Blocked by Support.io for use against our terms. Write to our support team for details.'
   },
   errors: {
     seatSuspended:
       'Your account is read-only because of the plan limit; you cannot reply or make changes.',
     siteSuspended:
       'This site is over the plan limit and on hold; you can read it but not change it.',
-    overPlanLimit: 'You chose more than your plan allows.'
+    overPlanLimit: 'You chose more than your plan allows.',
+    siteBlocked: 'This site was blocked by Support.io; write to our support team to reopen it.'
   },
   retention: {
     title: 'Conversation retention',

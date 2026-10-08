@@ -65,6 +65,7 @@ const TRANSLATED_CODES: Record<string, string> = {
   PLAN_LIMIT_REACHED: 'upgrade.limitReached',
   SEAT_SUSPENDED: 'errors.seatSuspended',
   SITE_SUSPENDED: 'errors.siteSuspended',
+  SITE_BLOCKED: 'errors.siteBlocked',
   OVER_PLAN_LIMIT: 'errors.overPlanLimit'
 };
 

@@ -206,6 +206,14 @@ const Sites = () => {
                       >
                         {site.isActive ? t('sites.active') : t('sites.inactive')}
                       </span>
+                      {site.blockedAt && (
+                        <span
+                          title={t('overage.blockedHint')}
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                        >
+                          {t('overage.blocked')}
+                        </span>
+                      )}
                       {site.suspendedAt && (
                         <span
                           title={t('overage.siteHint')}

@@ -208,7 +208,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         const visitorId = socket.visitorId!;
 
         const site = await Site.findOne({ _id: socket.siteId, isActive: true });
-        if (!site || site.suspendedAt) {
+        if (!site || site.suspendedAt || site.blockedAt) {
           // Switched off, or suspended over the plan's limit, since the handshake.
           socket.emit('error', { message: 'Invalid widget session' });
           return;
@@ -360,7 +360,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       // authorize: the site of the signed session, still active
       const site = await Site.findOne({ _id: socket.siteId, isActive: true });
-      if (!site?.organizationId) {
+      // Suspended over the plan's limit or blocked since the handshake: a
+      // page left open stops here too (BIL-04, LEG-05).
+      if (!site?.organizationId || site.suspendedAt || site.blockedAt) {
         return refuse(socket, ack, 'SITE_NOT_FOUND', 'Site not found');
       }
       // The site's assistant answers when it is on; otherwise the FAQ keyword

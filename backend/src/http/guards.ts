@@ -111,8 +111,14 @@ export async function loadOwnedSite(req: Request, siteId: unknown): Promise<Doc<
   // A site over the plan's limit after a downgrade is read-only (BIL-04):
   // it can be looked at and deleted, not changed, until the owner keeps it
   // on the billing page or upgrades.
-  if (site.suspendedAt && req.method !== 'GET' && req.method !== 'HEAD') {
-    throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    // Blocked by the platform for abuse (LEG-05): only support lifts it.
+    if (site.blockedAt) {
+      throw forbidden('This site was blocked by Support.io; contact support', 'SITE_BLOCKED');
+    }
+    if (site.suspendedAt) {
+      throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
+    }
   }
   return site;
 }
