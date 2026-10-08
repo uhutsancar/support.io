@@ -33,7 +33,43 @@ export interface ProductStats {
   /** At monthly list prices (yearly plans are not told apart): an estimate. */
   estimatedMrr: { amount: number; currency: string };
   assistant: { conversations: number; resolved: number; resolvedRate: number };
+  /**
+   * The first-use path of the window's sign-ups, step by step (UX-05): how
+   * many got there and the median hours from sign-up. Each step is taken
+   * from the record it leaves, so nothing extra is tracked.
+   */
+  funnel: FunnelStep[];
 }
+
+export const FUNNEL_STEPS = [
+  'verified',
+  'site',
+  'installed',
+  'firstMessage',
+  'invited',
+  'faq',
+  'assistant',
+  'paid'
+] as const;
+
+export interface FunnelStep {
+  step: (typeof FUNNEL_STEPS)[number];
+  reached: number;
+  /** Of the window's sign-ups, %. */
+  rate: number;
+  medianHours: number | null;
+}
+
+const FUNNEL_LABEL: Record<FunnelStep['step'], string> = {
+  verified: 'E-postasını doğruladı',
+  site: 'Site ekledi',
+  installed: 'Kodu kurdu',
+  firstMessage: 'İlk ziyaretçi mesajı',
+  invited: 'Ekip daveti',
+  faq: 'SSS ekledi',
+  assistant: 'Asistanı açtı',
+  paid: 'Ücretli plana geçti'
+};
 
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 1000) / 10 : 0);
 
@@ -42,7 +78,7 @@ export async function productStats(days = 7, now = new Date()): Promise<ProductS
   const one = async <T>(sql: string, params: unknown[] = []): Promise<T> =>
     (await query<T & Record<string, unknown>>(sql, params)).rows[0] as T;
 
-  const [base, signups, activation, paying, moves, assistant] = await Promise.all([
+  const [base, signups, activation, paying, moves, assistant, funnel] = await Promise.all([
     one<{ workspaces: number; active: number; live: number }>(
       `SELECT (SELECT count(*)::int FROM organizations WHERE is_active) AS workspaces,
               (SELECT count(DISTINCT organization_id)::int FROM conversations
@@ -92,6 +128,35 @@ export async function productStats(days = 7, now = new Date()): Promise<ProductS
               count(*) FILTER (WHERE NOT handed_over)::int AS resolved
          FROM helped`,
       [since]
+    ),
+    query<{ step: FunnelStep['step']; reached: number; median_hours: number | null }>(
+      `WITH t AS (
+         SELECT o.created_at,
+                (SELECT u.email_verified_at FROM users u WHERE u.id = o.owner_user_id) AS verified,
+                (SELECT min(s.created_at) FROM sites s WHERE s.organization_id = o.id) AS site,
+                (SELECT min(CASE WHEN s.installation ->> 'verifiedAt' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}'
+                                 THEN (s.installation ->> 'verifiedAt')::timestamptz END)
+                   FROM sites s WHERE s.organization_id = o.id) AS installed,
+                (SELECT min(c.created_at) FROM conversations c
+                  WHERE c.organization_id = o.id) AS first_message,
+                (SELECT min(i.created_at) FROM invitations i WHERE i.organization_id = o.id) AS invited,
+                (SELECT min(f.created_at) FROM faqs f JOIN sites s ON s.id = f.site_id
+                  WHERE s.organization_id = o.id) AS faq,
+                (SELECT min(a.created_at) FROM audit_logs a
+                  WHERE a.organization_id = o.id AND a.action = 'ASSISTANT_ENABLED') AS assistant,
+                (SELECT min(sub.created_at) FROM subscriptions sub
+                  WHERE sub.organization_id = o.id) AS paid
+           FROM organizations o WHERE o.created_at > $1)
+       SELECT v.step, count(v.at)::int AS reached,
+              percentile_cont(0.5) WITHIN GROUP (
+                ORDER BY extract(epoch FROM v.at - t.created_at) / 3600
+              ) FILTER (WHERE v.at IS NOT NULL) AS median_hours
+         FROM t CROSS JOIN LATERAL (VALUES
+                ('verified', t.verified), ('site', t.site), ('installed', t.installed),
+                ('firstMessage', t.first_message), ('invited', t.invited), ('faq', t.faq),
+                ('assistant', t.assistant), ('paid', t.paid)) AS v(step, at)
+        GROUP BY v.step`,
+      [since]
     )
   ]);
 
@@ -122,7 +187,18 @@ export async function productStats(days = 7, now = new Date()): Promise<ProductS
       conversations: assistant.conversations,
       resolved: assistant.resolved,
       resolvedRate: pct(assistant.resolved, assistant.conversations)
-    }
+    },
+    funnel: FUNNEL_STEPS.map((step) => {
+      const row = funnel.rows.find((r) => r.step === step);
+      const hours = row?.median_hours;
+      return {
+        step,
+        reached: row?.reached ?? 0,
+        rate: pct(row?.reached ?? 0, signups.total),
+        medianHours:
+          hours === null || hours === undefined ? null : Math.round(Number(hours) * 10) / 10
+      };
+    })
   };
 }
 
@@ -137,7 +213,13 @@ export function statsText(s: ProductStats): string {
     `İlk ziyaretçi mesajına     %${s.activationRate} ulaştı, medyan ${s.medianHoursToFirstMessage ?? '-'} saat`,
     `Ücretli abonelik           PRO ${s.paying.PRO}, Kurumsal ${s.paying.ENTERPRISE} (yeni ${s.newPaying}, iptal ${s.canceled})`,
     `Tahmini MRR                ${s.estimatedMrr.amount} ${s.estimatedMrr.currency} (aylık liste fiyatıyla)`,
-    `Asistan                    ${s.assistant.conversations} konuşma, %${s.assistant.resolvedRate} temsilciye geçmeden`
+    `Asistan                    ${s.assistant.conversations} konuşma, %${s.assistant.resolvedRate} temsilciye geçmeden`,
+    '',
+    'İlk kullanım (bu dönemin kayıtları; ulaşan, medyan saat)',
+    ...s.funnel.map(
+      (f) =>
+        `  ${FUNNEL_LABEL[f.step].padEnd(24)} %${f.rate} (${f.reached}), ${f.medianHours ?? '-'} saat`
+    )
   ].join('\n');
 }
 

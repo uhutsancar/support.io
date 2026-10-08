@@ -13,7 +13,9 @@ import assert from 'node:assert/strict';
 import { getPool } from '../src/db/pool';
 import { closeRedisClient, getRedisClient } from '../src/config/redis';
 import { setMailTransport } from '../src/services/mail';
-import { productStats, statsText, weeklyReport } from '../src/services/productStats';
+import { FUNNEL_STEPS, productStats, statsText, weeklyReport } from '../src/services/productStats';
+import { BASE } from './helpers/widget';
+import { signUp } from './helpers/accounts';
 import type { OutgoingMail } from '../src/services/mail';
 
 const caught: OutgoingMail[] = [];
@@ -53,6 +55,36 @@ test('the numbers come back whole, and as text', async () => {
   assert.match(text, /Son 30 gün/);
   assert.match(text, /Tahmini MRR/);
   assert.doesNotMatch(text, /@/, 'no addresses in the report');
+  // The first-use path, step by step (UX-05).
+  assert.deepEqual(
+    stats.funnel.map((f) => f.step),
+    [...FUNNEL_STEPS]
+  );
+  for (const f of stats.funnel) {
+    assert.ok(f.reached >= 0 && f.reached <= stats.signups, f.step);
+    assert.ok(f.rate >= 0 && f.rate <= 100, f.step);
+    assert.ok(f.medianHours === null || f.medianHours >= 0, f.step);
+  }
+  assert.match(text, /İlk kullanım/);
+});
+
+test('a new workspace that adds a site shows up in the first-use path', async () => {
+  const before = (await productStats(1)).funnel.find((f) => f.step === 'site')!.reached;
+  const email = `funnel${Date.now()}@stats.test`;
+  const reg = await signUp({ name: 'Funnel Owner', email, password: 'E2ePassw0rd!' });
+  assert.equal(reg.status, 201);
+  const token = decodeURIComponent(
+    /(?:^|,\s*)sc_session=([^;]+)/.exec(reg.headers.get('set-cookie') || '')?.[1] || ''
+  );
+  const site = await fetch(`${BASE}/api/sites`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name: 'Huni', domain: `h${Date.now()}.example` })
+  });
+  assert.equal(site.status, 201);
+  const after = (await productStats(1)).funnel.find((f) => f.step === 'site')!;
+  assert.equal(after.reached, before + 1);
+  assert.ok(after.medianHours !== null && after.medianHours < 1);
 });
 
 test('the weekly report goes out on Monday morning, once', async () => {
