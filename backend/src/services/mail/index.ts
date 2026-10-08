@@ -84,8 +84,30 @@ export function setMailTransport(next: MailTransport | null): void {
   transport = next;
 }
 
+/**
+ * The recipient domains a staging server may write to (plan v10 INF-03):
+ * MAIL_ALLOWLIST_DOMAINS="example.com,ourcompany.com". Empty: every domain
+ * (production). Staging uses real SMTP but must never mail a real customer.
+ */
+export function mailAllowed(to: string, raw = process.env.MAIL_ALLOWLIST_DOMAINS): boolean {
+  const allowed = String(raw || '')
+    .split(',')
+    .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean);
+  if (!allowed.length) return true;
+  const domain = to.trim().toLowerCase().split('@').pop() || '';
+  return allowed.some((d) => domain === d || domain.endsWith(`.${d}`));
+}
+
 /** Sends one mail. True when the transport accepted it. */
 export async function sendMail(mail: OutgoingMail): Promise<boolean> {
+  if (!mailAllowed(mail.to)) {
+    // Withheld on purpose, not failed: counted, and the subject logged so a
+    // tester can see what would have gone out (never the address).
+    increment('supportio_mail_total', { outcome: 'withheld' });
+    console.log(`[mail] withheld by MAIL_ALLOWLIST_DOMAINS: "${mail.subject}"`);
+    return false;
+  }
   try {
     await currentTransport().send({ ...mail, from: mailFrom() });
     increment('supportio_mail_total', { outcome: 'sent' });

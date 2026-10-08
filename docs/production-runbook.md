@@ -313,18 +313,48 @@ $C logs --since 1m backend | grep -i redis     # "Redis is back"
 
 ## 10. Staging
 
-Same VPS, separate Compose project and data:
+A **separate small server** (plan v10 INF-03): same image, same scripts, its
+own secrets and data, so a mistake there never touches customers.
 
-```bash
-mkdir -p /opt/supportio-staging && cd /opt/supportio-staging
-# its own .env.production with APP_DOMAIN=staging.example.com,
-# its own DB_PASSWORD / JWT_SECRET, PADDLE_ENV=sandbox
-docker compose -p supportio-staging --env-file .env.production -f docker-compose.prod.yml up -d
-```
+1. Set it up exactly like production (§1, §3) with `APP_DOMAIN=staging.<domain>`.
+2. Its `.env.production` differs in:
 
-Caddy on the production project can only bind 80/443 once: either run
-staging on another machine, or add a `staging.example.com` site block to
-`Caddyfile.prod` pointing at the staging backend over a shared network.
+   | Variable | Staging |
+   |---|---|
+   | `DB_PASSWORD`, `JWT_SECRET`, `REDIS_PASSWORD`, all keys | its own, never production's |
+   | `PADDLE_ENV` | `sandbox` (sandbox keys, prices, webhook secret) |
+   | `MAIL_ALLOWLIST_DOMAINS` | your own domains, e.g. `ourcompany.com`: mail to anyone else is withheld and logged, never sent |
+   | `SITE_NOINDEX` | `true`: robots.txt disallows everything, every page says noindex |
+   | `GEMINI_TIER` | `free` is fine |
+
+3. Basic auth for everything but the widget, the health checks and Paddle's
+   webhook: copy `caddy/examples/staging-auth.caddy` to
+   `/opt/supportio/caddy/site.d/`, put a password hash in it
+   (`docker run --rm caddy:2.11.7-alpine caddy hash-password --plaintext '…'`),
+   `$C restart caddy`. Production's `caddy/site.d` stays empty.
+
+### Deploying from GitHub
+
+Every image built from main goes to staging by itself; production goes only
+when you start it and approve it (`.github/workflows/deploy.yml`).
+
+1. On each server, a deploy key that can only run the deploy script — in
+   `/home/deploy/.ssh/authorized_keys`:
+
+   ```
+   command="/opt/supportio/scripts/deploy-forced.sh",restrict ssh-ed25519 AAAA… ci-deploy-staging
+   ```
+
+   It accepts `deploy ghcr.io/<owner>/supportio:sha-<commit>` and nothing
+   else: no shell, no other command, no forwarding.
+2. **[you]** GitHub → Settings → Environments: `staging` and `production`,
+   each with the variable `DEPLOY_HOST` and the secrets `DEPLOY_SSH_KEY`
+   (that environment's private key) and `DEPLOY_KNOWN_HOSTS`
+   (`ssh-keyscan <host>`). On `production`, add yourself under
+   *Required reviewers*.
+3. Repository variable `STAGING_DEPLOY=true` turns on the automatic staging
+   deploy. Production: Actions → Deploy → Run workflow → production
+   (optionally an older `sha-…` tag to roll forward to), then approve.
 
 ## 11. Scaling later (not needed now)
 

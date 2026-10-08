@@ -28,6 +28,11 @@
 	# (runbook §2). An empty directory imports nothing.
 	import /etc/caddy/tls.d/*.caddy
 
+	# Per-server additions. Staging puts its basic auth and noindex header here
+	# (caddy/examples/staging-auth.caddy, plan v10 INF-03); production leaves
+	# the directory empty.
+	import /etc/caddy/site.d/*.caddy
+
 	# CF-IPCountry decides whether the assistant may answer a visitor while the
 	# free tier is in use (plan v10 AI-02), so only Cloudflare may set it: from
 	# any other peer the header is dropped. Same ranges as trusted_proxies

@@ -257,6 +257,7 @@ services:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
       # Optional Cloudflare Origin CA certificate (runbook §2, SEC-13).
       - ./caddy/tls.d:/etc/caddy/tls.d:ro
+      - ./caddy/site.d:/etc/caddy/site.d:ro
       - ./caddy/origin:/etc/caddy/origin:ro
       - caddy_data:/data
       - caddy_config:/config

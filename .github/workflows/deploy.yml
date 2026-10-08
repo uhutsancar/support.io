@@ -1,0 +1,79 @@
+# Deployments (plan v10 INF-03).
+#
+# Staging: every image built from main ("Release image" succeeded) goes to
+# staging on its own, once the repository variable STAGING_DEPLOY is "true".
+# Production: only by hand (Run workflow → production), and the GitHub
+# environment "production" requires the owner's approval before the job
+# starts (Settings → Environments → production → Required reviewers).
+#
+# Each environment ("staging", "production") holds its own:
+#   variable DEPLOY_HOST        the server's address
+#   secret   DEPLOY_SSH_KEY     a private key whose public half on the server
+#                               can only run scripts/deploy-forced.sh
+#   secret   DEPLOY_KNOWN_HOSTS that server's host key line (ssh-keyscan)
+# so a workflow cannot reach production with staging's key or the reverse.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ['Release image']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to
+        type: choice
+        options: [staging, production]
+        required: true
+      image_tag:
+        description: 'Image tag, sha-<commit> (default: the commit this runs on)'
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && vars.STAGING_DEPLOY == 'true')
+      || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event_name == 'workflow_run' && 'staging' || inputs.environment }}
+    steps:
+      - name: The exact image
+        id: image
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          TAG: ${{ inputs.image_tag }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          tag="${TAG:-sha-${SHA::7}}"
+          if [[ ! "$tag" =~ ^sha-[0-9a-f]{7,40}$ ]]; then
+            echo "not an exact image tag: $tag" >&2
+            exit 1
+          fi
+          echo "ref=ghcr.io/${OWNER,,}/supportio:$tag" >> "$GITHUB_OUTPUT"
+      - name: Deploy over SSH (the key can only run deploy.sh)
+        env:
+          HOST: ${{ vars.DEPLOY_HOST }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          IMAGE: ${{ steps.image.outputs.ref }}
+        run: |
+          if [[ -z "$HOST" || -z "$KEY" || -z "$KNOWN_HOSTS" ]]; then
+            echo "DEPLOY_HOST, DEPLOY_SSH_KEY or DEPLOY_KNOWN_HOSTS is not set for this environment" >&2
+            exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "deploy@$HOST" "deploy $IMAGE"
+      - name: Summary
+        run: echo "Deployed \`${{ steps.image.outputs.ref }}\`" >> "$GITHUB_STEP_SUMMARY"

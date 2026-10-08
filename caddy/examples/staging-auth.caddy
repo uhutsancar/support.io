@@ -1,0 +1,16 @@
+# Staging only (plan v10 INF-03, MKT-02): strangers and search engines stay
+# out; the widget, Paddle's sandbox webhook and the health checks stay open
+# so a test page and the uptime monitor still work.
+#
+# On the staging server:
+#   mkdir -p /opt/supportio/caddy/site.d
+#   cp caddy/examples/staging-auth.caddy /opt/supportio/caddy/site.d/
+#   docker run --rm caddy:2.11.7-alpine caddy hash-password --plaintext '<password>'
+#   → put the hash below in place of REPLACE_WITH_HASH, then restart caddy.
+# Production: never copy this file.
+
+@private not path /health /ready /widget.js /widget/* /widget-version.json /api/widget/* /socket.io/* /api/billing/paddle/webhook
+basic_auth @private {
+	tester REPLACE_WITH_HASH
+}
+header X-Robots-Tag "noindex, nofollow"
