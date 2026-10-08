@@ -5,9 +5,10 @@
 // conversation it draws changes, and the SLA logic below — three mutually
 // exclusive states that were written as a nested ternary chain — has a name.
 
-import { Clock, User, UserCheck } from 'lucide-react';
+import { AlarmClock, Clock, User, UserCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatMinutes, formatTime } from '../../lib/format';
+import { formatDateTime, formatMinutes, formatTime } from '../../lib/format';
+import { TagChip } from './TagEditor';
 import { conversationStatusBadge, priorityBadge, slaUrgencyClass } from '../../lib/statusStyles';
 import type { Conversation } from '../../types/api';
 
@@ -17,6 +18,11 @@ export interface ConversationListItemProps {
   onSelect: (conversation: Conversation) => void;
   /** The translated status name; the page owns that table. */
   statusLabel: (status: string) => string;
+  /** Ticked for a bulk move (PRD-07); no box is drawn without onToggleChecked. */
+  checked?: boolean;
+  onToggleChecked?: () => void;
+  /** A tag's colour from the workspace's list. */
+  tagColor?: (name: string) => string | undefined;
 }
 
 /**
@@ -43,7 +49,10 @@ const ConversationListItem = ({
   conversation,
   selected,
   onSelect,
-  statusLabel
+  statusLabel,
+  checked = false,
+  onToggleChecked,
+  tagColor
 }: ConversationListItemProps) => {
   const { t } = useTranslation();
   const sla = slaState(conversation.sla);
@@ -62,6 +71,18 @@ const ConversationListItem = ({
     >
       <div className="flex items-start justify-between mb-1.5 sm:mb-2 gap-2 min-w-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          {onToggleChecked && (
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={onToggleChecked}
+              onClick={(event) => event.stopPropagation()}
+              aria-label={t('inboxTools.bulk.select', {
+                ticket: conversation.ticketId || `#${conversation.ticketNumber}`
+              })}
+              className="w-4 h-4 flex-shrink-0 accent-indigo-600 cursor-pointer"
+            />
+          )}
           <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center transition-colors duration-200 flex-shrink-0">
             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-indigo-600 dark:text-indigo-400 transition-colors duration-200" />
           </div>
@@ -79,7 +100,7 @@ const ConversationListItem = ({
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 truncate">
               {conversation.visitorName}
             </p>
-            <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400 transition-colors duration-200 truncate">
+            <p className="text-[9px] sm:text-[10px] text-gray-600 dark:text-gray-400 transition-colors duration-200 truncate">
               {conversation.currentPage}
             </p>
           </div>
@@ -93,8 +114,8 @@ const ConversationListItem = ({
 
       {conversation.assignedAgent && (
         <div className="mb-1.5 flex items-center gap-1.5">
-          <UserCheck className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-          <span className="text-[9px] sm:text-[10px] text-blue-600 dark:text-blue-400 font-medium truncate">
+          <UserCheck className="w-3 h-3 text-blue-700 dark:text-blue-400" />
+          <span className="text-[9px] sm:text-[10px] text-blue-700 dark:text-blue-400 font-medium truncate">
             {conversation.assignedAgent.name}
           </span>
         </div>
@@ -103,7 +124,7 @@ const ConversationListItem = ({
       {sla && (
         <div className="mb-1.5 flex items-center gap-2">
           {sla === 'breached' && (
-            <span className="text-[9px] sm:text-[10px] text-red-600 dark:text-red-400 font-medium flex items-center gap-1 animate-pulse">
+            <span className="text-[9px] sm:text-[10px] text-red-700 dark:text-red-400 font-medium flex items-center gap-1 animate-pulse">
               <Clock className="w-3 h-3" />
               {t('conversations.slaBreach', 'SLA İhlali')}
             </span>
@@ -118,11 +139,31 @@ const ConversationListItem = ({
             </span>
           )}
           {sla === 'met' && (
-            <span className="text-[9px] sm:text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+            <span className="text-[9px] sm:text-[10px] text-green-800 dark:text-green-400 font-medium flex items-center gap-1">
               <Clock className="w-3 h-3" />✓ {t('conversations.responded', 'Yanıtlandı')}
             </span>
           )}
         </div>
+      )}
+
+      {(conversation.tags || []).length > 0 && (
+        <div className="mb-1.5 flex flex-wrap gap-1">
+          {conversation.tags.slice(0, 3).map((tag) => (
+            <TagChip key={tag} name={tag} color={tagColor?.(tag)} />
+          ))}
+          {conversation.tags.length > 3 && (
+            <span className="text-[10px] text-gray-600 dark:text-gray-400">
+              +{conversation.tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
+      {conversation.snoozedUntil && new Date(conversation.snoozedUntil) > new Date() && (
+        <p className="mb-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-amber-800 dark:text-amber-300">
+          <AlarmClock className="w-3 h-3" aria-hidden="true" />
+          {t('inboxTools.snooze.until', { time: formatDateTime(conversation.snoozedUntil) })}
+        </p>
       )}
 
       {conversation.lastMessage && (
@@ -131,7 +172,7 @@ const ConversationListItem = ({
         </p>
       )}
 
-      <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5 sm:mt-1 transition-colors duration-200">
+      <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1 transition-colors duration-200">
         {formatTime(conversation.lastMessageAt || conversation.createdAt)}
       </p>
     </div>

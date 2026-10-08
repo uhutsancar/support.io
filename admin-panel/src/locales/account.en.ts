@@ -358,6 +358,78 @@ export default {
     none: 'No matching saved reply',
     placeholder: 'Type your message… (/ for saved replies)'
   },
+  inboxTools: {
+    attachFile: 'Attach a file',
+    tags: {
+      label: 'Tags',
+      add: 'Add a tag',
+      placeholder: 'Type a tag…',
+      create: 'Create the tag “{{name}}”',
+      remove: 'Remove the tag {{name}}',
+      none: 'No tags',
+      filter: 'Filter by tag',
+      all: 'All tags',
+      saveError: 'The tags could not be saved'
+    },
+    snooze: {
+      button: 'Snooze',
+      title: 'Snooze until when?',
+      oneHour: 'In 1 hour',
+      threeHours: 'In 3 hours',
+      tomorrow: 'Tomorrow 09:00',
+      nextWeek: 'Monday 09:00',
+      custom: 'Date and time',
+      apply: 'Snooze',
+      until: 'Snoozed until {{time}}',
+      wake: 'Bring back now',
+      done: 'Conversation snoozed',
+      woken: 'The conversation is back in the inbox',
+      error: 'The conversation could not be snoozed',
+      viewLabel: 'View',
+      inbox: 'Inbox',
+      view: 'Snoozed ({{n}})'
+    },
+    merge: {
+      button: 'Merge',
+      title: 'Merge into another conversation',
+      description:
+        "This visitor's other conversations. Every message and note of this conversation moves into the one you pick, and this one closes.",
+      none: 'This visitor has no other conversation to merge with.',
+      confirm: 'Merge',
+      cancel: 'Cancel',
+      done: 'Conversations merged',
+      error: 'The conversations could not be merged',
+      loading: 'Loading…'
+    },
+    bulk: {
+      selected: '{{n}} selected',
+      select: 'Select {{ticket}}',
+      selectAll: 'Select everything shown',
+      clear: 'Clear the selection',
+      resolve: 'Resolve',
+      close: 'Close',
+      assignMe: 'Assign to me',
+      tag: 'Tag',
+      tagPlaceholder: 'Tag name',
+      snooze: 'Snooze',
+      done: '{{n}} conversations updated',
+      partial: '{{changed}} conversations updated, {{failed}} could not be',
+      error: 'The action failed'
+    },
+    shortcuts: {
+      title: 'Keyboard shortcuts',
+      open: 'Show the shortcuts',
+      next: 'Next conversation',
+      previous: 'Previous conversation',
+      resolve: 'Mark as resolved',
+      assign: 'Assign to yourself',
+      reply: 'Go to the reply box and open saved replies',
+      snooze: 'Snooze',
+      help: 'Show this list',
+      close: 'Close',
+      hint: 'Shortcuts do not work while you type in a text box; press Esc to leave it.'
+    }
+  },
   audit: {
     actions: {
       LOGIN_FAILED_LOCKED: 'Account Temporarily Locked',

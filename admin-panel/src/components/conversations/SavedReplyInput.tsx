@@ -101,6 +101,8 @@ const SavedReplyInput = ({ value, onChange, siteId, vars, ...input }: Props) => 
             e.preventDefault();
             insert(matches[active]);
           } else if (e.key === 'Escape') {
+            // Only the list closes; a second Esc leaves the box (inbox shortcuts).
+            e.preventDefault();
             setDismissed(true);
           }
         }}

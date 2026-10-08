@@ -386,8 +386,33 @@ export interface Conversation {
   visitorPhone?: string | null;
   prechat?: Record<string, string>;
   visitorConsentAt?: string | null;
+  /** Out of the inbox until then (PRD-07). */
   snoozedUntil?: string | null;
+  /** Set on a conversation that was merged into another. */
+  mergedIntoId?: string | null;
   [extra: string]: unknown;
+}
+
+/** One entry of the workspace's tag list (GET /api/conversation-tags). */
+export interface ConversationTag {
+  _id: string;
+  name: string;
+  color: string;
+}
+
+/** Another conversation of the same visitor, for the merge dialog. */
+export interface MergeCandidate {
+  _id: string;
+  ticketId?: string;
+  status: ConversationStatus;
+  lastMessageAt?: string;
+  createdAt?: string;
+}
+
+/** What a bulk move did to each conversation it was given. */
+export interface BulkResult {
+  results: Array<{ id: string; ok: boolean; code?: string }>;
+  changed: number;
 }
 
 /** What the FAQ assistant notes on its own messages. */

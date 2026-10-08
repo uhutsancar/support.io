@@ -20,8 +20,11 @@ import type {
   AgentPerformance,
   AnalyticsOverview,
   AuditLogEntry,
+  BulkResult,
   Conversation,
   ConversationPage,
+  ConversationTag,
+  MergeCandidate,
   CurrentUser,
   Deal,
   Department,
@@ -291,14 +294,20 @@ export interface ConversationQuery {
   departmentId?: string;
   assignedTo?: string;
   priority?: string;
+  /** Only conversations with this tag (PRD-07). */
+  tag?: string;
+  /** 'snoozed' lists only the snoozed ones; otherwise they are left out. */
+  view?: 'snoozed' | 'inbox';
   limit?: number | string;
   cursor?: string | null;
 }
 
 /** Drops the 'all' sentinels and the empty values, leaving what the API wants. */
 function inboxParams(query: ConversationQuery): Record<string, unknown> {
-  const { status, search, departmentId, assignedTo, priority, limit, cursor } = query;
+  const { status, search, departmentId, assignedTo, priority, tag, view, limit, cursor } = query;
   return {
+    ...(tag ? { tag } : {}),
+    ...(view === 'snoozed' ? { view } : {}),
     ...(status && status !== 'all' ? { status } : {}),
     ...(search ? { search } : {}),
     ...(departmentId && departmentId !== 'all' ? { departmentId } : {}),
@@ -400,7 +409,61 @@ export const conversationsAPI = {
 
   delete: mutates(CONVERSATIONS, (siteId: string, conversationId: string) =>
     api.delete(`${CONVERSATIONS}/${siteId}/${conversationId}`)
+  ),
+
+  // ------------------------------------------------- inbox tools (PRD-07)
+
+  setTags: mutates(CONVERSATIONS, (conversationId: string, tags: string[]) =>
+    api.put<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/tags`, { tags })
+  ),
+
+  /** Hides the conversation until `until` (ISO time); null wakes it. */
+  snooze: mutates(CONVERSATIONS, (conversationId: string, until: string | null) =>
+    api.put<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/snooze`, {
+      until
+    })
+  ),
+
+  mergeCandidates: (siteId: string, conversationId: string) =>
+    api.get<{ conversations: MergeCandidate[] }>(
+      `${CONVERSATIONS}/${siteId}/${conversationId}/merge-candidates`,
+      { cache: false }
+    ),
+
+  merge: mutates(CONVERSATIONS, (conversationId: string, intoId: string) =>
+    api.post<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/merge`, {
+      intoId
+    })
+  ),
+
+  /** The same move on several conversations; the answer says which failed. */
+  bulk: mutates(
+    CONVERSATIONS,
+    (
+      conversationIds: string[],
+      move:
+        | { action: 'status'; status: string }
+        | { action: 'assign'; agentId: string | null }
+        | { action: 'tag'; tag: string }
+        | { action: 'snooze'; until: string }
+    ) => api.post<BulkResult>(`${CONVERSATIONS}/bulk`, { conversationIds, ...move })
   )
+};
+
+// ------------------------------------------------------------------ tags
+
+const TAGS = '/conversation-tags';
+
+/** The workspace's conversation tags, with their colours (PRD-07). */
+export const tagsAPI = {
+  list: () => api.get<{ tags: ConversationTag[] }>(TAGS, { cache: false }),
+  create: mutates(TAGS, (name: string, color?: string) =>
+    api.post<{ tag: ConversationTag }>(TAGS, { name, ...(color ? { color } : {}) })
+  ),
+  update: mutates([TAGS, CONVERSATIONS], (id: string, data: { name?: string; color?: string }) =>
+    api.put<{ tag: ConversationTag }>(`${TAGS}/${id}`, data)
+  ),
+  remove: mutates([TAGS, CONVERSATIONS], (id: string) => api.delete(`${TAGS}/${id}`))
 };
 
 // --------------------------------------------------------------- departments

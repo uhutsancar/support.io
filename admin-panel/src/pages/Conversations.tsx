@@ -9,15 +9,32 @@ import VisitorFormDetails from '../components/conversations/VisitorFormDetails';
 import SavedReplyInput from '../components/conversations/SavedReplyInput';
 import BlockVisitor from '../components/conversations/BlockVisitor';
 import EraseVisitor from '../components/conversations/EraseVisitor';
+import TagEditor from '../components/conversations/TagEditor';
+import SnoozeMenu from '../components/conversations/SnoozeMenu';
+import MergeDialog from '../components/conversations/MergeDialog';
+import BulkBar from '../components/conversations/BulkBar';
+import ShortcutsHelp from '../components/conversations/ShortcutsHelp';
+import { useInboxShortcuts } from '../features/conversations/useInboxShortcuts';
+import type { BulkMove } from '../components/conversations/BulkBar';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { sitesAPI, conversationsAPI, departmentsAPI, filesAPI, teamAPI } from '../services/api';
+import {
+  sitesAPI,
+  conversationsAPI,
+  departmentsAPI,
+  filesAPI,
+  tagsAPI,
+  teamAPI
+} from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import {
+  AlarmClock,
   Bot,
   CheckCheck,
+  GitMerge,
+  Keyboard,
   Clock,
   ExternalLink,
   Folder,
@@ -29,13 +46,19 @@ import {
   Send,
   ShieldCheck,
   StickyNote,
-  Tag,
   Trash2,
   User,
   UserCheck,
   X
 } from 'lucide-react';
-import type { Conversation, Department, Message, Site, TeamMember } from '../types/api';
+import type {
+  Conversation,
+  ConversationTag,
+  Department,
+  Message,
+  Site,
+  TeamMember
+} from '../types/api';
 import { formatDateTime, formatFileSize } from '../lib/format';
 import {
   conversationStatusBadge as getStatusColor,
@@ -92,6 +115,16 @@ const Conversations = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [note, setNote] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
+  // Inbox tools (PRD-07): the workspace's tags, the tag filter, the snoozed
+  // view, the rows ticked for a bulk move, and the menus and dialogs.
+  const [tagCatalog, setTagCatalog] = useState<ConversationTag[]>([]);
+  const [tagFilter, setTagFilter] = useState('all');
+  const [view, setView] = useState<'inbox' | 'snoozed'>('inbox');
+  const [checked, setChecked] = useState<Set<string>>(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [snoozeOpen, setSnoozeOpen] = useState(false);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     conversationId: string | null;
@@ -132,9 +165,11 @@ const Conversations = () => {
   // in an effect rather than during render; see hooks/useAsync.ts.
   const selectedConversationRef = useRef<Conversation | null>(selectedConversation);
   const selectedSiteRef = useRef<Site | null>(selectedSite);
+  const viewRef = useRef(view);
   useEffect(() => {
     selectedConversationRef.current = selectedConversation;
     selectedSiteRef.current = selectedSite;
+    viewRef.current = view;
   });
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -147,6 +182,7 @@ const Conversations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     fetchSites();
+    loadTags();
   }, []);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
@@ -198,13 +234,32 @@ const Conversations = () => {
             }
           : current
       );
-      setConversations((current) =>
-        current.map((conversation) =>
-          String(conversation._id) === String(conversationId)
-            ? { ...conversation, ...patch }
-            : conversation
-        )
-      );
+      setConversations((current) => {
+        const known = current.some((c) => String(c._id) === String(conversationId));
+        // Woken from a snooze (PRD-07): back into the inbox view of its site.
+        if (!known) {
+          const woken =
+            viewRef.current === 'inbox' &&
+            'snoozedUntil' in patch &&
+            !patch.snoozedUntil &&
+            patch._id &&
+            String(patch.siteId) === siteIdOf(selectedSiteRef.current);
+          return woken ? [patch as Conversation, ...current].sort(byMostRecent) : current;
+        }
+        return current
+          .map((conversation) =>
+            String(conversation._id) === String(conversationId)
+              ? { ...conversation, ...patch }
+              : conversation
+          )
+          .filter((conversation) => {
+            // A snooze moves it out of the inbox view, a wake out of the snoozed one.
+            const asleep = Boolean(
+              conversation.snoozedUntil && new Date(conversation.snoozedUntil) > new Date()
+            );
+            return viewRef.current === 'snoozed' ? asleep : !asleep;
+          });
+      });
     },
 
     onConversationAdded: (conversation) => {
@@ -306,11 +361,12 @@ const Conversations = () => {
   // Filtreler sunucuda uygulandigi icin her degisiklik listeyi bastan ceker.
   // Ilk yukleme yukaridaki effect'te yapilir, bu yuzden burada site secimi
   // degistiginde tekrar cekilmez.
-  const filtersKey = `${statusFilter}|${departmentFilter}|${debouncedSearch}`;
+  const filtersKey = `${statusFilter}|${departmentFilter}|${debouncedSearch}|${tagFilter}|${view}`;
   const lastFiltersKey = useRef(filtersKey);
   useEffect(() => {
     if (lastFiltersKey.current === filtersKey) return;
     lastFiltersKey.current = filtersKey;
+    setChecked(new Set());
     if (!selectedSite) return;
     setNextCursor(null);
     fetchConversations(siteIdOf(selectedSite));
@@ -422,6 +478,8 @@ const Conversations = () => {
         status: statusFilter,
         departmentId: departmentFilter,
         search: debouncedSearch,
+        tag: tagFilter !== 'all' ? tagFilter : undefined,
+        view,
         limit: 30,
         cursor
       });
@@ -437,6 +495,13 @@ const Conversations = () => {
       setNextCursor(cursorAfter || null);
       if (pageCounts) setCounts(pageCounts);
       if (!cursor) {
+        // Ticks survive a refresh for the rows still listed; a tick made
+        // while this page was on its way is not lost.
+        setChecked((current) =>
+          current.size
+            ? new Set([...current].filter((id) => page.some((c) => String(c._id) === id)))
+            : current
+        );
         fetchDepartments(siteId);
         fetchTeamMembers(siteId);
         if (socket) {
@@ -475,7 +540,19 @@ const Conversations = () => {
       toast.error(errorMessage(error, t('conversations.fetchError', 'Konuşmalar yüklenemedi')));
     }
   };
-  const fetchConversationMessages = async (siteId: string, conversationId: string) => {
+  /**
+   * Loads a conversation and its thread into the pane.
+   *
+   * `open` is for a conversation that is not on screen yet (one just handed
+   * to this agent). Otherwise the answer is dropped when another conversation
+   * was opened meanwhile: moving quickly with j/k used to put the slower,
+   * older answer back on screen.
+   */
+  const fetchConversationMessages = async (
+    siteId: string,
+    conversationId: string,
+    { open = false }: { open?: boolean } = {}
+  ) => {
     const resolvedSiteId =
       siteId ||
       siteIdOf(selectedSiteRef.current) ||
@@ -484,6 +561,7 @@ const Conversations = () => {
 
     try {
       const { data } = await conversationsAPI.getOne(resolvedSiteId, conversationId);
+      if (!open && selectedConversationRef.current?._id !== conversationId) return;
       setSelectedConversation(data.conversation);
       // An empty page with a `lastMessage` on the conversation means the
       // transcript has not loaded yet; showing that one line beats an empty
@@ -541,7 +619,7 @@ const Conversations = () => {
       }
 
       await fetchConversations(targetSiteId);
-      await fetchConversationMessages(targetSiteId, conversationId);
+      await fetchConversationMessages(targetSiteId, conversationId, { open: true });
       toast.success(t('conversations.assignedNotification', 'Conversation assigned to you'));
     } catch (error) {
       toast.error(errorMessage(error, t('conversations.openError', 'Konuşma açılamadı')));
@@ -724,6 +802,140 @@ const Conversations = () => {
       setNoteSaving(false);
     }
   };
+  // ------------------------------------------------ inbox tools (PRD-07)
+
+  /** The workspace's tags; secondary, so a failure is logged, not shown. */
+  const loadTags = async () => {
+    try {
+      const { data } = await tagsAPI.list();
+      setTagCatalog(data.tags);
+    } catch (error) {
+      console.error('[inbox] could not load tags', error);
+    }
+  };
+  const tagColor = (name: string) => tagCatalog.find((tag) => tag.name === name)?.color;
+
+  /** Puts a conversation the server sent back into the list and the open pane. */
+  const applyConversation = (updated: Conversation) => {
+    setSelectedConversation((current) =>
+      current && current._id === updated._id ? { ...current, ...updated } : current
+    );
+    setConversations((current) =>
+      current.map((conversation) =>
+        conversation._id === updated._id ? { ...conversation, ...updated } : conversation
+      )
+    );
+  };
+
+  const handleSetTags = async (tags: string[]) => {
+    if (!selectedConversation) return;
+    try {
+      const { data } = await conversationsAPI.setTags(selectedConversation._id, tags);
+      applyConversation(data.conversation);
+      // A tag coined here joins the workspace's list.
+      if (tags.some((tag) => !tagCatalog.some((entry) => entry.name === tag))) void loadTags();
+    } catch (error) {
+      toast.error(errorMessage(error, t('inboxTools.tags.saveError')));
+    }
+  };
+
+  const handleSnooze = async (until: string | null) => {
+    const conversation = selectedConversation;
+    if (!conversation) return;
+    try {
+      const { data } = await conversationsAPI.snooze(conversation._id, until);
+      applyConversation(data.conversation);
+      if (until) {
+        // Out of the inbox view; the pane closes like after a resolve.
+        if (view === 'inbox') {
+          setConversations((current) => current.filter((c) => c._id !== conversation._id));
+          setSelectedConversation(null);
+        }
+        toast.success(t('inboxTools.snooze.done'));
+      } else {
+        if (view === 'snoozed') {
+          setConversations((current) => current.filter((c) => c._id !== conversation._id));
+        }
+        toast.success(t('inboxTools.snooze.woken'));
+      }
+    } catch (error) {
+      toast.error(errorMessage(error, t('inboxTools.snooze.error')));
+    }
+  };
+
+  const toggleChecked = (conversationId: string) =>
+    setChecked((current) => {
+      const next = new Set(current);
+      if (next.has(conversationId)) next.delete(conversationId);
+      else next.add(conversationId);
+      return next;
+    });
+
+  const runBulk = async (move: BulkMove) => {
+    if (!checked.size || bulkBusy) return;
+    setBulkBusy(true);
+    try {
+      const { data } = await conversationsAPI.bulk([...checked], move);
+      const failed = data.results.filter((result) => !result.ok).length;
+      if (failed) {
+        toast.error(t('inboxTools.bulk.partial', { changed: data.changed, failed }));
+      } else {
+        toast.success(t('inboxTools.bulk.done', { n: data.changed }));
+      }
+      setChecked(new Set());
+      if (move.action === 'tag') void loadTags();
+      if (selectedSite) await fetchConversations(siteIdOf(selectedSite));
+    } catch (error) {
+      toast.error(errorMessage(error, t('inboxTools.bulk.error')));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleMerged = (merged: Conversation) => {
+    setSelectedConversation(merged);
+    if (selectedSite) void fetchConversations(siteIdOf(selectedSite));
+  };
+
+  /** Moves the selection one row down (+1) or up (-1) the list. */
+  const step = (delta: number) => {
+    if (!conversations.length) return;
+    const index = conversations.findIndex((c) => c._id === selectedConversation?._id);
+    const next = index < 0 ? 0 : Math.min(Math.max(index + delta, 0), conversations.length - 1);
+    setSelectedConversation(conversations[next]);
+  };
+
+  useInboxShortcuts({
+    next: () => step(1),
+    previous: () => step(-1),
+    resolve: () => {
+      if (selectedConversation) void handleStatusChange('resolved');
+    },
+    assign: () => {
+      if (selectedConversation && selfId) {
+        void handleAssignConversation(selectedConversation._id, selfId);
+      }
+    },
+    snooze: () => {
+      if (selectedConversation) setSnoozeOpen(true);
+    },
+    reply: () => {
+      const box = document.getElementById('inbox-reply') as HTMLInputElement | null;
+      if (!box) return;
+      box.focus();
+      // "/" opens the saved replies, as typing it would.
+      if (!newMessage) setNewMessage('/');
+    },
+    help: () => setHelpOpen(true)
+  });
+
+  const snoozedUntil =
+    selectedConversation?.snoozedUntil && new Date(selectedConversation.snoozedUntil) > new Date()
+      ? selectedConversation.snoozedUntil
+      : null;
+  const allShownChecked =
+    conversations.length > 0 && conversations.every((c) => checked.has(c._id));
+
   // Sunucu zaten filtreledi. Burada tekrar filtrelemek, mesaj icerigiyle
   // eslesen konusmalari listeden atardi: o metin `lastMessage` icinde
   // olmayabilir ve tarayici konusmanin tum mesajlarini gormez.
@@ -738,7 +950,7 @@ const Conversations = () => {
       {/* The page fills the panel's main area instead of the screen: h-screen
           plus the panel's own header made the main area scroll, so the title
           slid out of view. */}
-      <div className="w-full h-full max-w-full overflow-hidden">
+      <div className="w-full h-full max-w-full overflow-hidden" data-inbox>
         <div className="w-full h-full min-h-[560px] overflow-hidden flex flex-col">
           {sites.length === 0 && (
             <div className="p-4 mb-4 border border-yellow-400 bg-yellow-50 text-yellow-600 rounded">
@@ -816,30 +1028,92 @@ const Conversations = () => {
                       </option>
                     ))}
                   </select>
+                  <select
+                    value={tagFilter}
+                    onChange={(event) => setTagFilter(event.target.value)}
+                    aria-label={t('inboxTools.tags.filter')}
+                    className="min-w-0 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="all">{t('inboxTools.tags.all')}</option>
+                    {tagCatalog.map((tag) => (
+                      <option key={tag._id} value={tag.name}>
+                        {tag.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={view}
+                    onChange={(event) => setView(event.target.value as 'inbox' | 'snoozed')}
+                    aria-label={t('inboxTools.snooze.viewLabel')}
+                    className="min-w-0 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="inbox">{t('inboxTools.snooze.inbox')}</option>
+                    <option value="snoozed">
+                      {t('inboxTools.snooze.view', { n: counts?.snoozed ?? 0 })}
+                    </option>
+                  </select>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-                  <span>
+                <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                  {conversations.length > 0 && (
+                    <input
+                      type="checkbox"
+                      checked={allShownChecked}
+                      onChange={() =>
+                        setChecked(
+                          allShownChecked ? new Set() : new Set(conversations.map((c) => c._id))
+                        )
+                      }
+                      aria-label={t('inboxTools.bulk.selectAll')}
+                      className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                    />
+                  )}
+                  <span className="mr-auto">
                     {counts
                       ? t('conversations.shownOfTotal', '{{shown}} / {{total}} konuşma')
                           .replace('{{shown}}', String(conversations.length))
                           .replace('{{total}}', String(counts.total))
                       : conversations.length}
                   </span>
-                  {(searchTerm || statusFilter !== 'all' || departmentFilter !== 'all') && (
+                  {(searchTerm ||
+                    statusFilter !== 'all' ||
+                    departmentFilter !== 'all' ||
+                    tagFilter !== 'all' ||
+                    view !== 'inbox') && (
                     <button
                       type="button"
                       onClick={() => {
                         setSearchTerm('');
                         setStatusFilter('all');
                         setDepartmentFilter('all');
+                        setTagFilter('all');
+                        setView('inbox');
                       }}
                       className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                     >
                       {t('common.clear', 'Temizle')}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setHelpOpen(true)}
+                    aria-label={t('inboxTools.shortcuts.open')}
+                    title={t('inboxTools.shortcuts.open')}
+                    className="p-1 rounded text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <Keyboard className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
                 </div>
               </div>
+              {checked.size > 0 && (
+                <BulkBar
+                  count={checked.size}
+                  selfId={selfId}
+                  catalog={tagCatalog}
+                  busy={bulkBusy}
+                  onMove={(move) => void runBulk(move)}
+                  onClear={() => setChecked(new Set())}
+                />
+              )}
               <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 modal-scrollbar pr-2">
                 {filteredConversations.length === 0 ? (
                   <div className="p-4 sm:p-6 text-center text-gray-500 dark:text-gray-400 transition-colors duration-200">
@@ -861,6 +1135,11 @@ const Conversations = () => {
                       selected={selectedConversation?._id === conv._id}
                       onSelect={setSelectedConversation}
                       statusLabel={statusLabel}
+                      checked={checked.has(conv._id)}
+                      onToggleChecked={
+                        user?.role === 'viewer' ? undefined : () => toggleChecked(conv._id)
+                      }
+                      tagColor={tagColor}
                     />
                   ))
                 )}
@@ -952,6 +1231,26 @@ const Conversations = () => {
                             {t('conversations.statuses.closed', 'Kapalı')}
                           </option>
                         </select>
+                        {user?.role !== 'viewer' && (
+                          <>
+                            <SnoozeMenu
+                              open={snoozeOpen}
+                              onOpenChange={setSnoozeOpen}
+                              onSnooze={(until) => void handleSnooze(until)}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setMergeOpen(true)}
+                              aria-label={t('inboxTools.merge.button')}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              <GitMerge className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span className="hidden sm:inline" aria-hidden="true">
+                                {t('inboxTools.merge.button')}
+                              </span>
+                            </button>
+                          </>
+                        )}
                         {canDeleteConversations && (
                           <button
                             onClick={() => openDeleteConfirm(selectedConversation._id)}
@@ -963,6 +1262,19 @@ const Conversations = () => {
                         )}
                       </div>
                     </div>
+                    {snoozedUntil && (
+                      <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2 py-1 text-xs text-amber-800 dark:text-amber-200">
+                        <AlarmClock className="w-3.5 h-3.5" aria-hidden="true" />
+                        {t('inboxTools.snooze.until', { time: formatDateTime(snoozedUntil) })}
+                        <button
+                          type="button"
+                          onClick={() => void handleSnooze(null)}
+                          className="ml-auto font-semibold underline underline-offset-2"
+                        >
+                          {t('inboxTools.snooze.wake')}
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 flex-wrap">
                       {selectedConversation.metadata?.verifiedUserId ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400">
@@ -1040,6 +1352,14 @@ const Conversations = () => {
                         </select>
                       </div>
                     </div>
+                    <div className="mt-2">
+                      <TagEditor
+                        tags={selectedConversation.tags || []}
+                        catalog={tagCatalog}
+                        onChange={handleSetTags}
+                        disabled={user?.role === 'viewer'}
+                      />
+                    </div>
                   </div>
                   <div
                     ref={threadRef}
@@ -1101,71 +1421,80 @@ const Conversations = () => {
                   </div>
                   <form
                     onSubmit={handleSendMessage}
-                    className={`p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0 ${isUnclaimed(selectedConversation) ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`p-2 sm:p-2.5 lg:p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors duration-200 flex-shrink-0 ${isUnclaimed(selectedConversation) ? 'opacity-50' : ''}`}
                   >
-                    {selectedFile && (
-                      <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center gap-2">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded">
-                          {attachmentIcon(selectedFile.type)}
+                    {/* Until somebody takes the conversation the box is disabled,
+                        not only faded: no typing, no Tab stop. */}
+                    <fieldset
+                      disabled={isUnclaimed(selectedConversation)}
+                      className="min-w-0 border-0 p-0 m-0"
+                    >
+                      {selectedFile && (
+                        <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center gap-2">
+                          <div className="p-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded">
+                            {attachmentIcon(selectedFile.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                              {selectedFile.name}
+                            </p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                              {formatFileSize(selectedFile.size)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={clearFileSelection}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          >
+                            <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          </button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
-                            {selectedFile.name}
-                          </p>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                            {formatFileSize(selectedFile.size)}
-                          </p>
-                        </div>
+                      )}
+                      <div className="flex gap-1.5 sm:gap-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          onChange={handleFileSelect}
+                          accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                          className="hidden"
+                        />
                         <button
                           type="button"
-                          onClick={clearFileSelection}
-                          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-2 py-1.5 sm:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title={t('inboxTools.attachFile')}
+                          aria-label={t('inboxTools.attachFile')}
                         >
-                          <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </button>
+                        <SavedReplyInput
+                          id="inbox-reply"
+                          type="text"
+                          value={newMessage}
+                          onChange={setNewMessage}
+                          siteId={selectedSite ? siteIdOf(selectedSite) : null}
+                          vars={{
+                            visitorName: selectedConversation.visitorName,
+                            agentName: user?.name,
+                            siteName: selectedSite?.name
+                          }}
+                          placeholder={t('savedReplies.placeholder')}
+                          aria-label={t('conversations.messagePlaceholder')}
+                          className="px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm lg:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newMessage.trim() && !selectedFile}
+                          className="px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-1.5 flex-shrink-0"
+                        >
+                          <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
+                          <span className="hidden sm:inline text-xs sm:text-sm lg:text-base">
+                            {t('conversations.send')}
+                          </span>
                         </button>
                       </div>
-                    )}
-                    <div className="flex gap-1.5 sm:gap-2">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        onChange={handleFileSelect}
-                        accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                        className="hidden"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-2 py-1.5 sm:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        title="Dosya Ekle"
-                      >
-                        <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-                      <SavedReplyInput
-                        type="text"
-                        value={newMessage}
-                        onChange={setNewMessage}
-                        siteId={selectedSite ? siteIdOf(selectedSite) : null}
-                        vars={{
-                          visitorName: selectedConversation.visitorName,
-                          agentName: user?.name,
-                          siteName: selectedSite?.name
-                        }}
-                        placeholder={t('savedReplies.placeholder')}
-                        aria-label={t('conversations.messagePlaceholder')}
-                        className="px-2 sm:px-2.5 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 text-xs sm:text-sm lg:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!newMessage.trim() && !selectedFile}
-                        className="px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-1.5 flex-shrink-0"
-                      >
-                        <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                        <span className="hidden sm:inline text-xs sm:text-sm lg:text-base">
-                          {t('conversations.send')}
-                        </span>
-                      </button>
-                    </div>
+                    </fieldset>
                   </form>
                 </div>
                 <aside className="hidden xl:flex w-72 flex-shrink-0 flex-col border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
@@ -1232,23 +1561,6 @@ const Conversations = () => {
                     <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
                       <Clock className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
                       <span>{formatDateTime(selectedConversation.createdAt)}</span>
-                    </div>
-                    <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
-                      <Tag className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
-                      <div className="flex flex-wrap gap-1">
-                        {(selectedConversation.tags || []).length > 0 ? (
-                          selectedConversation.tags.map((item: any) => (
-                            <span
-                              key={item}
-                              className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700"
-                            >
-                              {item}
-                            </span>
-                          ))
-                        ) : (
-                          <span>{t('conversations.noTags', 'Etiket yok')}</span>
-                        )}
-                      </div>
                     </div>
                     {Boolean(selectedConversation.metadata?.browser) && (
                       <div className="rounded-lg bg-gray-50 dark:bg-gray-700/60 p-2.5 text-[11px] text-gray-600 dark:text-gray-300">
@@ -1344,6 +1656,17 @@ const Conversations = () => {
             )}
           </div>
         </div>
+        {selectedConversation && selectedSite && (
+          <MergeDialog
+            open={mergeOpen}
+            siteId={String(selectedConversation.siteId || siteIdOf(selectedSite))}
+            conversation={selectedConversation}
+            statusLabel={statusLabel}
+            onClose={() => setMergeOpen(false)}
+            onMerged={handleMerged}
+          />
+        )}
+        <ShortcutsHelp open={helpOpen} onClose={() => setHelpOpen(false)} />
         <ConfirmDialog
           isOpen={confirmDialog.isOpen}
           onClose={() => setConfirmDialog({ isOpen: false, conversationId: null })}

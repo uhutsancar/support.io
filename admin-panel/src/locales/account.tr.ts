@@ -361,6 +361,78 @@ export default {
     none: 'Eşleşen hazır yanıt yok',
     placeholder: 'Mesajınızı yazın… (hazır yanıt için /)'
   },
+  inboxTools: {
+    attachFile: 'Dosya ekle',
+    tags: {
+      label: 'Etiketler',
+      add: 'Etiket ekle',
+      placeholder: 'Etiket yazın…',
+      create: '“{{name}}” etiketini oluştur',
+      remove: '{{name}} etiketini kaldır',
+      none: 'Etiket yok',
+      filter: 'Etikete göre filtrele',
+      all: 'Tüm etiketler',
+      saveError: 'Etiketler kaydedilemedi'
+    },
+    snooze: {
+      button: 'Ertele',
+      title: 'Ne zamana kadar ertelensin?',
+      oneHour: '1 saat sonra',
+      threeHours: '3 saat sonra',
+      tomorrow: 'Yarın 09:00',
+      nextWeek: 'Pazartesi 09:00',
+      custom: 'Tarih ve saat',
+      apply: 'Ertele',
+      until: '{{time}} tarihine kadar ertelendi',
+      wake: 'Şimdi geri al',
+      done: 'Konuşma ertelendi',
+      woken: 'Konuşma gelen kutusuna döndü',
+      error: 'Konuşma ertelenemedi',
+      viewLabel: 'Görünüm',
+      inbox: 'Gelen kutusu',
+      view: 'Ertelenenler ({{n}})'
+    },
+    merge: {
+      button: 'Birleştir',
+      title: 'Başka bir konuşmayla birleştir',
+      description:
+        'Bu ziyaretçinin diğer konuşmaları. Seçtiğiniz konuşmaya bu konuşmanın bütün mesajları ve notları taşınır, bu konuşma kapanır.',
+      none: 'Bu ziyaretçinin birleştirilebilecek başka konuşması yok.',
+      confirm: 'Birleştir',
+      cancel: 'Vazgeç',
+      done: 'Konuşmalar birleştirildi',
+      error: 'Konuşmalar birleştirilemedi',
+      loading: 'Yükleniyor…'
+    },
+    bulk: {
+      selected: '{{n}} konuşma seçildi',
+      select: '{{ticket}} konuşmasını seç',
+      selectAll: 'Görünenlerin tümünü seç',
+      clear: 'Seçimi kaldır',
+      resolve: 'Çözüldü',
+      close: 'Kapat',
+      assignMe: 'Bana ata',
+      tag: 'Etiketle',
+      tagPlaceholder: 'Etiket adı',
+      snooze: 'Ertele',
+      done: '{{n}} konuşma güncellendi',
+      partial: '{{changed}} konuşma güncellendi, {{failed}} konuşma güncellenemedi',
+      error: 'İşlem yapılamadı'
+    },
+    shortcuts: {
+      title: 'Klavye kısayolları',
+      open: 'Kısayolları göster',
+      next: 'Sonraki konuşma',
+      previous: 'Önceki konuşma',
+      resolve: 'Çözüldü olarak işaretle',
+      assign: 'Kendinize atayın',
+      reply: 'Yanıt kutusuna geçin, hazır yanıtları açın',
+      snooze: 'Ertele',
+      help: 'Bu listeyi göster',
+      close: 'Kapat',
+      hint: 'Bir metin kutusuna yazarken kısayollar çalışmaz; Esc ile kutudan çıkabilirsiniz.'
+    }
+  },
   audit: {
     actions: {
       LOGIN_FAILED_LOCKED: 'Hesap Geçici Olarak Kilitlendi',
