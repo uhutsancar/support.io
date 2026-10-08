@@ -1,0 +1,51 @@
+# OWASP ZAP baseline scan of staging (plan v10 TST-03): weekly, and by hand
+# before a release. Passive only — it browses the site and reads what comes
+# back (headers, cookies, leaks), it does not attack.
+#
+# Needs the repository variable STAGING_URL (https://staging.<domain>). Staging
+# sits behind HTTP basic auth (INF-03): the secret STAGING_BASIC_AUTH holds
+# "user:password" and is sent as an Authorization header. Without STAGING_URL
+# the job does nothing.
+#
+# Results: the HTML/Markdown report is a workflow artifact. Whoever reads it
+# writes docs/security/zap-<date>.md (docs/security/zap.md says how) — a
+# finding is fixed, or accepted with a reason in accepted-risks.md.
+name: ZAP baseline
+
+on:
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Address to scan (default: the STAGING_URL variable)'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-24.04
+    if: ${{ vars.STAGING_URL != '' || inputs.target != '' }}
+    steps:
+      - name: Basic auth header for staging
+        id: auth
+        env:
+          BASIC: ${{ secrets.STAGING_BASIC_AUTH }}
+        run: |
+          if [ -n "$BASIC" ]; then
+            value="Basic $(printf '%s' "$BASIC" | base64 -w0)"
+            echo "::add-mask::$value"
+            echo "header=$value" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        env:
+          ZAP_AUTH_HEADER: Authorization
+          ZAP_AUTH_HEADER_VALUE: ${{ steps.auth.outputs.header }}
+        with:
+          target: ${{ inputs.target || vars.STAGING_URL }}
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: zap-baseline
+          cmd_options: '-a -j'

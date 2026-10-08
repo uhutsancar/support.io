@@ -184,11 +184,13 @@ router.post(
   checkPermission('respond'),
   asyncHandler(async (req: Request, res: Response) => {
     const id = requireObjectId(req.params.id, 'reply id');
-    await query(
+    const { rowCount } = await query(
       `UPDATE saved_replies SET usage_count = usage_count + 1
         WHERE id = $1 AND organization_id = $2`,
       [id, orgId(req)]
     );
+    // Another workspace's reply is not found here, like everywhere else.
+    if (!rowCount) throw notFound('Saved reply');
     res.status(204).end();
   })
 );
