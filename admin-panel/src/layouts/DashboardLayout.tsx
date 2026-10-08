@@ -470,7 +470,7 @@ const DashboardLayout = () => {
       <nav className="flex-1 overflow-y-auto modal-scrollbar px-3 py-4 space-y-5">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <h2 className="px-3 mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <h2 className="px-3 mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               {group.label}
             </h2>
             <div className="space-y-0.5">

@@ -171,7 +171,7 @@ const Docs = () => {
           {/* ------------------------------------------------- bu sayfada */}
           <nav className="hidden lg:block" aria-label={t('docsPage.onThisPage')}>
             <div className="sticky top-28">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">
                 {t('docsPage.onThisPage')}
               </p>
               <ul className="mt-3 border-l border-gray-200 dark:border-white/10">
@@ -201,16 +201,19 @@ const Docs = () => {
               <H2 id="install">{t('docsPage.install.title')}</H2>
               <ol className="mt-8 grid sm:grid-cols-3 gap-4">
                 {steps.map((step, i) => (
-                  <Reveal key={i} delay={i * 0.05}>
-                    <li className="h-full list-none rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-5">
-                      <StepNumber n={i + 1} />
-                      <p className="mt-4 text-[15px] font-semibold text-gray-900 dark:text-white">
-                        {step.title}
-                      </p>
-                      <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
-                        {step.body}
-                      </p>
-                    </li>
+                  <Reveal
+                    key={i}
+                    delay={i * 0.05}
+                    as="li"
+                    className="h-full list-none rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-5"
+                  >
+                    <StepNumber n={i + 1} />
+                    <p className="mt-4 text-[15px] font-semibold text-gray-900 dark:text-white">
+                      {step.title}
+                    </p>
+                    <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                      {step.body}
+                    </p>
                   </Reveal>
                 ))}
               </ol>

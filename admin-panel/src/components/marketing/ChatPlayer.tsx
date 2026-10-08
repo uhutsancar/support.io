@@ -90,7 +90,7 @@ const Bubble = ({
         {line.text}
       </div>
       {line.source && (
-        <span className="mt-1 flex items-center gap-1 text-[9.5px] text-gray-400">
+        <span className="mt-1 flex items-center gap-1 text-[9.5px] text-gray-500 dark:text-gray-400">
           <BookOpen className="w-3 h-3" /> {line.source}
         </span>
       )}
@@ -224,7 +224,9 @@ export const ChatPlayer = ({
       </div>
 
       <div className="px-3.5 py-3 border-t border-gray-200 dark:border-white/[0.07] flex items-center gap-2">
-        <span className="flex-1 text-[11.5px] text-gray-400">{t('viz.widget.composer')}</span>
+        <span className="flex-1 text-[11.5px] text-gray-500 dark:text-gray-400">
+          {t('viz.widget.composer')}
+        </span>
         <span className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center">
           <Send className="w-3.5 h-3.5 text-white" />
         </span>

@@ -682,7 +682,7 @@ export const Footer = () => {
 
           {columns.map((column) => (
             <div key={column.title}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
                 {column.title}
               </h3>
               <ul className="mt-4 space-y-2.5">
@@ -702,8 +702,8 @@ export const Footer = () => {
         </div>
 
         <div className="mt-16 pt-6 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[12.5px] text-gray-500">© {new Date().getFullYear()} Support.io</p>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-gray-500">
+          <p className="text-[12.5px] text-gray-400">© {new Date().getFullYear()} Support.io</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-gray-400">
             <Link to={routes.privacy} className="hover:text-gray-300 transition-colors">
               {t('legal.privacy.title')}
             </Link>

@@ -52,7 +52,10 @@ test('password change and two-step sign-in, from the settings page', async ({ br
     await expect(page.getByText('Kurtarma kodlarınız')).toBeVisible();
     await expect(page.locator('ul li')).toHaveCount(10);
     await page.getByRole('button', { name: 'Kaydettim' }).click();
-    await expect(page.getByText('Açık', { exact: true })).toBeVisible();
+    // On: the status badge and the recovery codes left (the page also has
+    // an "Açık" theme button, so the badge is found next to its count).
+    await expect(page.getByText('10 kurtarma kodu kaldı.')).toBeVisible();
+    await expect(page.locator('span.rounded-full').filter({ hasText: /^Açık$/ })).toBeVisible();
   });
 
   await test.step('sign-in now asks for the code', async () => {

@@ -344,7 +344,7 @@ const Pricing = () => {
 
                         <p
                           className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                          text-gray-400 dark:text-gray-500"
+                          text-gray-500 dark:text-gray-400"
                         >
                           {t('pricingPage.plans.' + id + '.includes')}
                         </p>
@@ -416,7 +416,7 @@ const Pricing = () => {
                   <th
                     scope="col"
                     className="pb-4 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                    text-gray-400 dark:text-gray-500"
+                    text-gray-500 dark:text-gray-400"
                   >
                     {t('pricingPage.feature')}
                   </th>

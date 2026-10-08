@@ -225,6 +225,11 @@ export default {
       INVALID_TOKEN: 'This link is invalid or has expired.'
     }
   },
+  a11y: {
+    siteSelect: 'Site',
+    department: 'Department',
+    assignee: 'Assigned agent'
+  },
   overage: {
     title: 'What is over your plan is on hold',
     description:

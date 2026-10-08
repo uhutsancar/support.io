@@ -51,7 +51,7 @@ const Invoices = ({ locale }: { locale: string }) => {
     >
       <h2
         id="invoices-title"
-        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400"
+        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
       >
         <FileText className="w-4 h-4" />
         {t('billing.invoices.title')}

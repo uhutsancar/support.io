@@ -43,7 +43,7 @@ export const ACCENTS = {
     dot: 'bg-violet-500'
   },
   sky: {
-    text: 'text-sky-600 dark:text-sky-400',
+    text: 'text-sky-700 dark:text-sky-400',
     bg: 'bg-sky-600',
     soft: 'bg-sky-50 dark:bg-sky-500/10',
     softText: 'text-sky-700 dark:text-sky-300',
@@ -52,7 +52,7 @@ export const ACCENTS = {
     dot: 'bg-sky-500'
   },
   emerald: {
-    text: 'text-emerald-600 dark:text-emerald-400',
+    text: 'text-emerald-700 dark:text-emerald-400',
     bg: 'bg-emerald-600',
     soft: 'bg-emerald-50 dark:bg-emerald-500/10',
     softText: 'text-emerald-700 dark:text-emerald-300',
@@ -61,7 +61,7 @@ export const ACCENTS = {
     dot: 'bg-emerald-500'
   },
   amber: {
-    text: 'text-amber-600 dark:text-amber-400',
+    text: 'text-amber-700 dark:text-amber-400',
     bg: 'bg-amber-500',
     soft: 'bg-amber-50 dark:bg-amber-500/10',
     softText: 'text-amber-700 dark:text-amber-300',
@@ -592,7 +592,7 @@ export const Accordion = ({
               focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded"
           >
             {numbered && (
-              <span className="w-6 pt-0.5 text-[11.5px] font-medium tabular-nums text-gray-400 shrink-0">
+              <span className="w-6 pt-0.5 text-[11.5px] font-medium tabular-nums text-gray-500 dark:text-gray-400 shrink-0">
                 {String(i + 1).padStart(2, '0')}
               </span>
             )}
@@ -738,7 +738,7 @@ export const AppFrame = ({
         {label && (
           <span
             className="absolute left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 text-[10px] font-semibold
-            uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500 whitespace-nowrap"
+            uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400 whitespace-nowrap"
           >
             <span className={['w-1.5 h-1.5 rounded-full', a.dot].join(' ')} />
             {label}
@@ -777,7 +777,7 @@ export const BrowserFrame = ({
       <span
         className="ml-2 flex-1 h-6 rounded-md bg-white dark:bg-white/[0.05]
         border border-gray-200 dark:border-white/[0.07] flex items-center px-2.5
-        text-[10.5px] text-gray-400 dark:text-gray-500 truncate"
+        text-[10.5px] text-gray-500 dark:text-gray-400 truncate"
       >
         {url}
       </span>

@@ -129,7 +129,7 @@ const Billing = () => {
           <div className="grid gap-6 md:grid-cols-2">
             {/* ------------------------------------------------ mevcut plan */}
             <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 {t('billing.currentPlan')}
               </p>
               <div className="mt-3 flex items-center gap-3">
@@ -209,7 +209,7 @@ const Billing = () => {
 
             {/* ------------------------------------------------- kullanım */}
             <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 {t('billing.usageTitle')}
               </p>
               <div className="mt-4 space-y-4">

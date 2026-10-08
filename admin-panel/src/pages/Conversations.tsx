@@ -758,6 +758,7 @@ const Conversations = () => {
             </div>
             <select
               value={selectedSite?._id || ''}
+              aria-label={t('a11y.siteSelect')}
               onChange={(e) => {
                 const site = sites.find((s) => s._id === e.target.value);
                 setSelectedSite(site ?? null);
@@ -989,6 +990,7 @@ const Conversations = () => {
                         <Folder className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                         <select
                           value={selectedConversation.department?._id || ''}
+                          aria-label={t('a11y.department')}
                           onChange={(e) =>
                             handleSetDepartment(selectedConversation!._id, e.target.value || null)
                           }
@@ -1008,6 +1010,7 @@ const Conversations = () => {
                         <UserCheck className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                         <select
                           value={selectedConversation.assignedAgent?._id || ''}
+                          aria-label={t('a11y.assignee')}
                           onChange={(e) =>
                             handleAssignConversation(
                               selectedConversation!._id,

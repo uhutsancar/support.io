@@ -228,6 +228,11 @@ export default {
       INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
     }
   },
+  a11y: {
+    siteSelect: 'Site',
+    department: 'Departman',
+    assignee: 'Atanan temsilci'
+  },
   overage: {
     title: 'Plan sınırının üzerindekiler askıda',
     description:
