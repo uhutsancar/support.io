@@ -12,6 +12,7 @@ import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-do
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
+  Plug,
   Sparkles,
   CreditCard,
   LayoutDashboard,
@@ -410,6 +411,12 @@ const DashboardLayout = () => {
         icon: Briefcase,
         label: t('sidebar.crm'),
         locked: locked('crm')
+      });
+      workspace.items.push({
+        path: p('/integrations'),
+        icon: Plug,
+        label: t('sidebar.integrations'),
+        locked: locked('integrations')
       });
     }
 

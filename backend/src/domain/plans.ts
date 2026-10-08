@@ -19,7 +19,9 @@ export const FEATURES = [
   'export',
   'audit',
   // Requiring two-step verification of every member (SEC-04).
-  'security'
+  'security',
+  // Slack, Telegram and outgoing webhooks (PRD-11).
+  'integrations'
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 
@@ -95,7 +97,15 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       answerChars: 600,
       sentences: 3
     },
-    features: ['departments', 'automation', 'proactive', 'visitors', 'crm', 'export'],
+    features: [
+      'departments',
+      'automation',
+      'proactive',
+      'visitors',
+      'crm',
+      'export',
+      'integrations'
+    ],
     price: { monthly: 490, yearly: 392, currency: 'TRY' }
   },
   ENTERPRISE: {

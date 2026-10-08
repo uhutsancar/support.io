@@ -20,6 +20,7 @@ import { updateAgentLoad } from './autoAssignment';
 import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
 import { logAction } from './auditService';
 import { logger } from '../config/logger';
+import { forgetDeliveryPayloads, purgeDeliveryLog } from './integrations';
 import type { PlanType } from '../domain';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -108,6 +109,8 @@ export async function deleteConversations(organizationId: string, ids: string[])
     // eslint-disable-next-line no-await-in-loop
     await updateAgentLoad(agent, -1).catch(() => undefined);
   }
+  // A webhook still waiting to deliver one of them does not carry it on.
+  await forgetDeliveryPayloads(ids).catch(() => undefined);
   let files = 0;
   try {
     files = await deleteStoredFiles(keys);
@@ -205,6 +208,9 @@ export async function nightlyPurge(now = new Date()): Promise<void> {
       const removed = await purgeExpiredConversations({ now });
       if (removed.conversations)
         logger.info({ retention: removed }, 'expired conversations deleted');
+      // The integrations' delivery log is kept for 30 days (PRD-11).
+      const deliveries = await purgeDeliveryLog();
+      if (deliveries) logger.info({ deliveries }, 'old integration deliveries deleted');
     } finally {
       await client.query("SELECT pg_advisory_unlock(hashtext('retention-purge'))");
     }

@@ -21,6 +21,8 @@ import savedReplyRoutes from './routes/savedReplies';
 import conversationTagRoutes from './routes/conversationTags';
 import pushRoutes from './routes/push';
 import { helpPages, helpSettings } from './routes/helpCenter';
+import integrationRoutes from './routes/integrations';
+import { integrationOutbox } from './services/integrations';
 import { pushOutbox, usePushRealtime } from './services/push';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
@@ -277,6 +279,7 @@ app.use('/api/saved-replies', savedReplyRoutes);
 app.use('/api/conversation-tags', conversationTagRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/sites', helpSettings);
+app.use('/api/integrations', integrationRoutes);
 app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
@@ -285,6 +288,14 @@ app.use('/api/data-retention', dataRetentionRoutes);
 if (!isProduction && mailProvider() === 'console') {
   app.get('/api/dev/outbox', (req: Request, res: Response) => {
     res.json({ mails: outboxFor(String(req.query.to || '')) });
+  });
+}
+
+// The development integration outbox (INTEGRATION_TRANSPORT=memory): what
+// Slack, Telegram or a webhook of the signed-in workspace would have received.
+if (!isProduction && process.env.INTEGRATION_TRANSPORT === 'memory') {
+  app.get('/api/dev/integration-outbox', auth, (req: Request, res: Response) => {
+    res.json({ calls: integrationOutbox(String(req.user.organizationId)) });
   });
 }
 

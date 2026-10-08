@@ -376,6 +376,80 @@ export default {
     none: 'No matching saved reply',
     placeholder: 'Type your message… (/ for saved replies)'
   },
+  integrations: {
+    title: 'Integrations',
+    subtitle:
+      'Send new conversations and messages to Slack, Telegram or your own systems the moment they happen.',
+    add: 'Add an integration',
+    empty: 'No integrations yet. Add one to notify your team where it already looks.',
+    kinds: {
+      slack: 'Slack',
+      telegram: 'Telegram',
+      webhook: 'Webhook'
+    },
+    kindHelp: {
+      slack: 'Add an “Incoming Webhook” to a Slack channel and paste the address it gives you.',
+      telegram:
+        'Create a bot with BotFather and add it to your group; enter the bot token and the group’s chat id.',
+      webhook:
+        'Events are sent to your address as signed requests. It must be https and reachable from the internet.'
+    },
+    name: 'Name',
+    namePlaceholder: 'For example: Support channel',
+    site: 'Site',
+    allSites: 'All sites',
+    events: 'Which events should be sent?',
+    eventNames: {
+      'conversation.created': 'New conversation',
+      'message.created': 'New message',
+      'conversation.closed': 'Conversation closed',
+      'rating.created': 'New satisfaction rating'
+    },
+    url: 'Address',
+    slackUrl: 'Slack webhook address',
+    botToken: 'Bot token',
+    chatId: 'Chat id',
+    language: 'Language of the messages',
+    save: 'Add',
+    cancel: 'Cancel',
+    created: 'Integration added.',
+    error: 'The integration could not be saved.',
+    secretTitle: 'Your signing secret',
+    secretHelp:
+      'This secret is shown only now. Keep it in your system to check that requests come from us.',
+    copy: 'Copy',
+    copied: 'Copied',
+    done: 'Done',
+    test: 'Send a test',
+    testOk: 'The test message arrived.',
+    testFailed: 'The test message did not arrive: {{reason}}',
+    deliveries: 'Delivery history',
+    noDeliveries: 'Nothing sent yet.',
+    rotate: 'New signing secret',
+    rotateConfirm: 'Requests signed with the old secret will no longer verify. Go ahead?',
+    remove: 'Delete',
+    removeTitle: 'Delete the integration?',
+    removeMessage: '“{{name}}” will be deleted; no more events will be sent.',
+    removed: 'Integration deleted.',
+    active: 'On',
+    paused: 'Paused',
+    pause: 'Pause',
+    resume: 'Resume',
+    lastOk: 'Last delivery succeeded',
+    lastError: 'Last delivery failed',
+    neverSent: 'Nothing sent yet',
+    status: {
+      delivered: 'Delivered',
+      pending: 'Will retry',
+      failed: 'Failed'
+    },
+    eventTest: 'Test',
+    attempts: 'try {{n}}',
+    when: 'When',
+    event: 'Event',
+    result: 'Result',
+    docs: 'The webhook request format and checking the signature are in the documentation.'
+  },
   helpCenter: {
     title: 'Help center',
     description:

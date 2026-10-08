@@ -1889,7 +1889,20 @@ export default {
       identify: 'Identify users',
       privacy: 'Your privacy notice',
       commands: 'Control from code',
+      webhooks: 'Webhooks',
       help: 'Troubleshooting'
+    },
+    webhooks: {
+      title: 'Connect your own systems with webhooks',
+      desc: 'Send what happens in conversations to your CRM, order system or automation tool the moment it happens. Add a webhook on the Integrations page of the panel and pick the events to send. On the Pro and Enterprise plans.',
+      event: 'Event',
+      when: 'When it comes',
+      payloadTitle: 'The request you receive',
+      signatureTitle: 'Check that the request comes from us',
+      signatureDesc:
+        'Every request carries an X-SupportIO-Signature header: t=<time>,v1=<signature>. The signature is the HMAC-SHA256 of “time.body” with the secret shown once when you add the webhook. Reject a request older than five minutes or whose signature does not match.',
+      retries:
+        'When your address answers with anything but 2xx, or does not answer, the request is tried again after 1, 5, 15 and 30 minutes, then every few hours, for 24 hours. The outcome of every delivery shows in the panel’s delivery history.'
     },
     install: {
       title: 'Install in three steps',
@@ -2116,6 +2129,11 @@ export default {
       security: {
         name: 'Required two-step verification',
         benefit: 'Make everyone on your team enter the code from their phone at sign-in.'
+      },
+      integrations: {
+        name: 'Integrations',
+        benefit:
+          'Send new conversations to Slack and Telegram, and connect your own systems with webhooks.'
       }
     }
   },

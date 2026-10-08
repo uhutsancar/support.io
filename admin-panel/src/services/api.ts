@@ -24,6 +24,8 @@ import type {
   Conversation,
   ConversationPage,
   ConversationTag,
+  Integration,
+  IntegrationDelivery,
   MergeCandidate,
   CurrentUser,
   Deal,
@@ -448,6 +450,32 @@ export const conversationsAPI = {
         | { action: 'snooze'; until: string }
     ) => api.post<BulkResult>(`${CONVERSATIONS}/bulk`, { conversationIds, ...move })
   )
+};
+
+// --------------------------------------------------------- integrations
+
+const INTEGRATIONS = '/integrations';
+
+/** Slack, Telegram and webhooks (PRD-11). */
+export const integrationsAPI = {
+  list: () =>
+    api.get<{ integrations: Integration[]; events: string[] }>(INTEGRATIONS, { cache: false }),
+  create: mutates(INTEGRATIONS, (data: Record<string, unknown>) =>
+    api.post<{ integration: Integration; signingSecret?: string }>(INTEGRATIONS, data)
+  ),
+  update: mutates(INTEGRATIONS, (id: string, data: Record<string, unknown>) =>
+    api.put<{ integration: Integration }>(`${INTEGRATIONS}/${id}`, data)
+  ),
+  remove: mutates(INTEGRATIONS, (id: string) => api.delete(`${INTEGRATIONS}/${id}`)),
+  test: (id: string) =>
+    api.post<{ delivered: boolean; status: number | null; error: string | null }>(
+      `${INTEGRATIONS}/${id}/test`
+    ),
+  rotateSecret: (id: string) => api.post<{ signingSecret: string }>(`${INTEGRATIONS}/${id}/secret`),
+  deliveries: (id: string) =>
+    api.get<{ deliveries: IntegrationDelivery[] }>(`${INTEGRATIONS}/${id}/deliveries`, {
+      cache: false
+    })
 };
 
 // ------------------------------------------------------------------ tags

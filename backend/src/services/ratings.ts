@@ -10,6 +10,7 @@ import Conversation from '../models/Conversation';
 import events from '../events';
 import { AdminNotifier } from '../realtime';
 import { HttpError } from '../http/errors';
+import { notifyIntegrations } from './integrations';
 import type { Server } from 'socket.io';
 
 const CHANGE_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -64,6 +65,7 @@ export async function recordRating(io: Server | null | undefined, input: RatingI
       });
     }
   }
+  notifyIntegrations('rating.created', conversation, { rating: { score, comment: feedback } });
   events.emit('rating.created', {
     organizationId: conversation.organizationId,
     siteId: conversation.siteId,

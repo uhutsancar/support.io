@@ -116,6 +116,10 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   'conversation.assigned': { action: 'CONVERSATION_ASSIGNED', entityType: 'ticket' },
   // Which conversation went into which (PRD-07); the target is the entity.
   'conversation.merged': { action: 'CONVERSATIONS_MERGED', entityType: 'ticket' },
+  // Slack, Telegram and webhooks (PRD-11): kind and events, never an address or a key.
+  'integration.created': { action: 'WEBHOOK_CREATED', entityType: 'integration' },
+  'integration.updated': { action: 'WEBHOOK_UPDATED', entityType: 'integration' },
+  'integration.deleted': { action: 'WEBHOOK_DELETED', entityType: 'integration' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // Account security. The metadata never carries a token or a password.
   'auth.email.verified': {

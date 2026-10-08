@@ -1895,7 +1895,20 @@ export default {
       identify: 'Kullanıcıyı tanıtma',
       commands: 'Koddan kontrol',
       privacy: 'Gizlilik metniniz',
+      webhooks: 'Webhook',
       help: 'Sorun giderme'
+    },
+    webhooks: {
+      title: 'Webhook ile kendi sisteminize bağlayın',
+      desc: 'Konuşmalarda olan her şeyi CRM’inize, sipariş sisteminize ya da otomasyon aracınıza anında aktarın. Panelde Entegrasyonlar sayfasından bir webhook ekleyin, hangi olayların gönderileceğini seçin. Pro ve Kurumsal planlarda.',
+      event: 'Olay',
+      when: 'Ne zaman gelir',
+      payloadTitle: 'Gelen istek',
+      signatureTitle: 'İsteğin bizden geldiğini doğrulayın',
+      signatureDesc:
+        'Her istek X-SupportIO-Signature başlığıyla gelir: t=<zaman>,v1=<imza>. İmza, “zaman.gövde” metninin, webhook’u eklerken bir kez gösterilen anahtarla HMAC-SHA256’sıdır. Beş dakikadan eski ya da imzası tutmayan isteği reddedin.',
+      retries:
+        'Adresiniz 2xx dışında bir yanıt verir ya da yanıt vermezse istek 1, 5, 15 ve 30 dakika sonra, ardından birkaç saatte bir, 24 saat boyunca yeniden denenir. Her gönderimin sonucu panelde gönderim geçmişinde görünür.'
     },
     install: {
       title: 'Üç adımda kurulum',
@@ -2121,6 +2134,11 @@ export default {
       security: {
         name: 'Zorunlu iki adımlı doğrulama',
         benefit: 'Ekibinizdeki herkesin girişte telefonundaki kodu da girmesini şart koşun.'
+      },
+      integrations: {
+        name: 'Entegrasyonlar',
+        benefit:
+          'Yeni konuşmaları Slack’e ve Telegram’a gönderin, kendi sistemlerinize webhook ile bağlayın.'
       }
     }
   },

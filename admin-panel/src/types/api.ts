@@ -393,6 +393,33 @@ export interface Conversation {
   [extra: string]: unknown;
 }
 
+/** A Slack, Telegram or webhook integration (PRD-11); the address is masked. */
+export interface Integration {
+  _id: string;
+  siteId: string | null;
+  kind: 'webhook' | 'slack' | 'telegram';
+  name: string;
+  events: string[];
+  hint: string | null;
+  isActive: boolean;
+  lastStatus: 'ok' | 'error' | null;
+  lastDeliveryAt: string | null;
+  createdAt: string;
+}
+
+/** One try of an integration (GET /api/integrations/:id/deliveries). */
+export interface IntegrationDelivery {
+  _id: string;
+  event: string;
+  status: 'pending' | 'delivered' | 'failed';
+  attempts: number;
+  statusCode: number | null;
+  error: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  nextAttemptAt: string | null;
+}
+
 /** One entry of the workspace's tag list (GET /api/conversation-tags). */
 export interface ConversationTag {
   _id: string;

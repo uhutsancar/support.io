@@ -39,6 +39,7 @@ import { spamModeQuota } from '../../middleware/rateLimit';
 import { query } from '../../db/pool';
 import { timed } from '../../config/metrics';
 import { pushConversationEvent } from '../../services/push';
+import { notifyIntegrations } from '../../services/integrations';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
 import type { MessageDoc } from '../../models/Message';
@@ -539,6 +540,12 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       // ACK
       ack?.({ ok: true, message: emitted });
+
+      // Slack, Telegram, webhooks (PRD-11): the first message comes with the
+      // conversation, later ones on their own.
+      notifyIntegrations(opening ? 'conversation.created' : 'message.created', conversation, {
+        message
+      });
 
       runAutomation('message_received', conversation, { content, message });
       if (assistant) {

@@ -32,6 +32,7 @@ import {
 } from '../../domain';
 import { conversationRoom, siteRoom } from '../../realtime/rooms';
 import { pushConversationEvent } from '../../services/push';
+import { notifyIntegrations } from '../../services/integrations';
 import type { Doc } from '../../db/model';
 import type { CreateInput } from '../../db/model';
 import type { ConversationDoc } from '../../models/Conversation';
@@ -297,6 +298,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
 
     // ACK
     ack?.({ ok: true, message: emitted });
+    notifyIntegrations('message.created', conversation, { message });
   };
 
   socket.on(

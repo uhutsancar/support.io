@@ -880,6 +880,7 @@ export default {
       export: 'Data export',
       audit: 'Audit logs',
       security: 'Two-step verification required for the team',
+      integrations: 'Slack, Telegram and webhook notifications',
       noBranding: 'No “Support.io” mark in the bubble'
     }
   },

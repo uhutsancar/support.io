@@ -36,10 +36,21 @@ import {
   embedSnippet,
   privacyParagraph,
   identifySnippet,
+  WEBHOOK_EVENTS,
+  WEBHOOK_PAYLOAD,
+  WEBHOOK_VERIFY,
   userHashSnippet
 } from './docs/content';
 
-const SECTIONS = ['install', 'platforms', 'identify', 'commands', 'privacy', 'help'] as const;
+const SECTIONS = [
+  'install',
+  'platforms',
+  'identify',
+  'commands',
+  'privacy',
+  'webhooks',
+  'help'
+] as const;
 
 /* ------------------------------------------------------------------ parçalar */
 
@@ -420,6 +431,55 @@ const Docs = () => {
                   </tbody>
                 </table>
               </div>
+            </section>
+
+            {/* ------------------------------------------------------- webhook */}
+            <section>
+              <H2 id="webhooks">{t('docsPage.webhooks.title')}</H2>
+              <Lead>{t('docsPage.webhooks.desc')}</Lead>
+              <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/[0.08]">
+                <table className="w-full min-w-[520px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-white/[0.03]">
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                        {t('docsPage.webhooks.event')}
+                      </th>
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                        {t('docsPage.webhooks.when')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {WEBHOOK_EVENTS.map((e) => (
+                      <tr
+                        key={e.name}
+                        className="border-t border-gray-100 dark:border-white/[0.06]"
+                      >
+                        <td className="px-4 py-3 align-top">
+                          <Mono>{e.name}</Mono>
+                        </td>
+                        <td className="px-4 py-3 text-[13.5px] text-gray-700 dark:text-gray-300">
+                          {e.text[lang]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <h3 className="mt-10 text-[17px] font-semibold text-gray-900 dark:text-white">
+                {t('docsPage.webhooks.payloadTitle')}
+              </h3>
+              <div className="mt-4">
+                <CodeBlock code={WEBHOOK_PAYLOAD} filename="JSON" />
+              </div>
+              <h3 className="mt-10 text-[17px] font-semibold text-gray-900 dark:text-white">
+                {t('docsPage.webhooks.signatureTitle')}
+              </h3>
+              <Lead>{t('docsPage.webhooks.signatureDesc')}</Lead>
+              <div className="mt-4">
+                <CodeBlock code={WEBHOOK_VERIFY} filename="Node.js" />
+              </div>
+              <Lead>{t('docsPage.webhooks.retries')}</Lead>
             </section>
 
             {/* ------------------------------------------------ sorun giderme */}

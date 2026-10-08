@@ -379,6 +379,81 @@ export default {
     none: 'Eşleşen hazır yanıt yok',
     placeholder: 'Mesajınızı yazın… (hazır yanıt için /)'
   },
+  integrations: {
+    title: 'Entegrasyonlar',
+    subtitle:
+      'Yeni konuşmaları ve mesajları Slack’e, Telegram’a ya da kendi sistemlerinize anında gönderin.',
+    add: 'Entegrasyon ekle',
+    empty:
+      'Henüz entegrasyon yok. Ekibinizin zaten baktığı yere bildirim göndermek için bir tane ekleyin.',
+    kinds: {
+      slack: 'Slack',
+      telegram: 'Telegram',
+      webhook: 'Webhook'
+    },
+    kindHelp: {
+      slack: 'Slack’te bir kanala “Incoming Webhook” ekleyin ve verdiği adresi buraya yapıştırın.',
+      telegram:
+        'BotFather’dan bir bot açın, botu grubunuza ekleyin; bot anahtarını ve grubun sohbet numarasını yazın.',
+      webhook:
+        'Olaylar sizin adresinize imzalı bir istekle gönderilir. Adres https olmalı ve internetten erişilebilmelidir.'
+    },
+    name: 'Ad',
+    namePlaceholder: 'Örneğin: Destek kanalı',
+    site: 'Site',
+    allSites: 'Tüm siteler',
+    events: 'Hangi olaylar gönderilsin?',
+    eventNames: {
+      'conversation.created': 'Yeni konuşma',
+      'message.created': 'Yeni mesaj',
+      'conversation.closed': 'Konuşma kapandı',
+      'rating.created': 'Yeni memnuniyet puanı'
+    },
+    url: 'Adres',
+    slackUrl: 'Slack webhook adresi',
+    botToken: 'Bot anahtarı',
+    chatId: 'Sohbet numarası',
+    language: 'Mesajların dili',
+    save: 'Ekle',
+    cancel: 'Vazgeç',
+    created: 'Entegrasyon eklendi.',
+    error: 'Entegrasyon kaydedilemedi.',
+    secretTitle: 'İmza anahtarınız',
+    secretHelp:
+      'Bu anahtar yalnızca şimdi gösterilir. Gelen isteklerin bizden geldiğini doğrulamak için kendi sisteminize kaydedin.',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı',
+    done: 'Tamam',
+    test: 'Deneme gönder',
+    testOk: 'Deneme mesajı ulaştı.',
+    testFailed: 'Deneme mesajı ulaşmadı: {{reason}}',
+    deliveries: 'Gönderim geçmişi',
+    noDeliveries: 'Henüz gönderim yok.',
+    rotate: 'İmza anahtarını yenile',
+    rotateConfirm: 'Eski anahtarla imzalanmış istekler artık doğrulanmaz. Devam edilsin mi?',
+    remove: 'Sil',
+    removeTitle: 'Entegrasyon silinsin mi?',
+    removeMessage: '“{{name}}” silinecek; bundan sonra hiçbir olay gönderilmez.',
+    removed: 'Entegrasyon silindi.',
+    active: 'Açık',
+    paused: 'Duraklatıldı',
+    pause: 'Duraklat',
+    resume: 'Sürdür',
+    lastOk: 'Son gönderim başarılı',
+    lastError: 'Son gönderim başarısız',
+    neverSent: 'Henüz gönderim yok',
+    status: {
+      delivered: 'Ulaştı',
+      pending: 'Yeniden denenecek',
+      failed: 'Başarısız'
+    },
+    eventTest: 'Deneme',
+    attempts: '{{n}}. deneme',
+    when: 'Zaman',
+    event: 'Olay',
+    result: 'Sonuç',
+    docs: 'Webhook isteklerinin biçimi ve imzanın doğrulanması belgelerde.'
+  },
   helpCenter: {
     title: 'Yardım merkezi',
     description:

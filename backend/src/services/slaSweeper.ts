@@ -33,6 +33,7 @@ import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
 import { AdminNotifier } from '../realtime';
 import { runConversationMail } from './conversationMail';
 import { query } from '../db/pool';
+import { runIntegrationDeliveries } from './integrations';
 import type { Server } from 'socket.io';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -233,6 +234,12 @@ function startSlaSweeper(
       await wakeSnoozed(io);
     } catch (error) {
       console.error('[sla] waking snoozed conversations failed', error);
+    }
+    try {
+      // Webhook, Slack and Telegram retries (PRD-11) ride on this pass too.
+      await runIntegrationDeliveries();
+    } catch (error) {
+      console.error('[sla] integration deliveries failed', error);
     }
     try {
       // Unanswered-chat, reply and rating mails ride on the same pass, so

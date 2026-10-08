@@ -145,6 +145,9 @@ services:
       - VAPID_SUBJECT
       # Pushes are kept in memory (GET /api/dev/push-outbox), not sent.
       - PUSH_TRANSPORT=${PUSH_TRANSPORT:-memory}
+      # Slack, Telegram and webhook calls are kept in memory too
+      # (GET /api/dev/integration-outbox), never made, in development.
+      - INTEGRATION_TRANSPORT=${INTEGRATION_TRANSPORT:-memory}
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:

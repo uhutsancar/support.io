@@ -53,7 +53,8 @@ export const PLAN_FEATURE_ORDER = [
   'crm',
   'export',
   'audit',
-  'security'
+  'security',
+  'integrations'
 ] as const;
 
 /** Lower-case plan id used in translation keys: FREE → free. */

@@ -55,6 +55,7 @@ const AutomationRules = lazy(() => import('./pages/AutomationRules'));
 const ProactiveRules = lazy(() => import('./pages/ProactiveRules'));
 const FeatureDetail = lazy(() => import('./pages/FeatureDetail'));
 const Solution = lazy(() => import('./pages/Solution'));
+const Integrations = lazy(() => import('./pages/Integrations'));
 const Compare = lazy(() => import('./pages/Compare'));
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -291,6 +292,16 @@ function App() {
                           <PlanGate feature="departments">
                             <Departments />
                           </PlanGate>
+                        }
+                      />
+                      <Route
+                        path="integrations"
+                        element={
+                          <AdminRoute>
+                            <PlanGate feature="integrations">
+                              <Integrations />
+                            </PlanGate>
+                          </AdminRoute>
                         }
                       />
                       <Route

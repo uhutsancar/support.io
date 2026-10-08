@@ -494,3 +494,84 @@ export const STORAGE_KEYS: Array<{ key: string; text: Text }> = [
     }
   }
 ];
+
+// ------------------------------------------------------------- webhooks
+
+/** The events a webhook can ask for (backend services/integrations.ts). */
+export const WEBHOOK_EVENTS: Array<{ name: string; text: Text }> = [
+  {
+    name: 'conversation.created',
+    text: {
+      tr: 'Ziyaretçi yeni bir konuşma başlattı; ilk mesajı da içindedir.',
+      en: 'A visitor started a conversation; its first message is included.'
+    }
+  },
+  {
+    name: 'message.created',
+    text: {
+      tr: 'Ziyaretçi ya da ekibiniz konuşmaya yeni bir mesaj yazdı.',
+      en: 'The visitor or your team wrote a new message.'
+    }
+  },
+  {
+    name: 'conversation.closed',
+    text: {
+      tr: 'Konuşma çözüldü ya da kapatıldı.',
+      en: 'The conversation was resolved or closed.'
+    }
+  },
+  {
+    name: 'rating.created',
+    text: {
+      tr: 'Ziyaretçi konuşmayı 1–5 arasında puanladı.',
+      en: 'The visitor rated the conversation from 1 to 5.'
+    }
+  }
+];
+
+/** What a webhook receives: one JSON object per event. */
+export const WEBHOOK_PAYLOAD = `{
+  "id": "6727a1c0e4b0f3a9d1c2b3a4",
+  "event": "message.created",
+  "createdAt": "2026-10-09T10:15:00.000Z",
+  "data": {
+    "site": { "id": "6727a0f1e4b0f3a9d1c2b100", "name": "Örnek Mağaza" },
+    "conversation": {
+      "id": "6727a19ee4b0f3a9d1c2b2f0",
+      "ticketId": "#0042",
+      "status": "open",
+      "visitorName": "Ayşe",
+      "visitorEmail": null
+    },
+    "message": {
+      "id": "6727a1c0e4b0f3a9d1c2b3a5",
+      "senderType": "visitor",
+      "senderName": "Ayşe",
+      "content": "Kargom nerede?",
+      "createdAt": "2026-10-09T10:15:00.000Z"
+    }
+  }
+}`;
+
+/** Checking the signature in Node.js (Express), with the secret shown once. */
+export const WEBHOOK_VERIFY = `import crypto from 'node:crypto';
+import express from 'express';
+
+const app = express();
+const SECRET = process.env.SUPPORTIO_WEBHOOK_SECRET; // whsec_…
+
+app.post('/supportio', express.raw({ type: 'application/json' }), (req, res) => {
+  const header = req.get('X-SupportIO-Signature') || '';
+  const [, t, v1] = /^t=(\\d+),v1=([0-9a-f]{64})$/.exec(header) || [];
+  const expected = crypto
+    .createHmac('sha256', SECRET)
+    .update(t + '.' + req.body)
+    .digest('hex');
+  const fresh = Math.abs(Date.now() / 1000 - Number(t)) < 300;
+  if (!v1 || !fresh || !crypto.timingSafeEqual(Buffer.from(v1), Buffer.from(expected))) {
+    return res.status(401).end();
+  }
+  const event = JSON.parse(req.body);
+  console.log(event.event, event.data.conversation.id);
+  res.status(200).end();
+});`;

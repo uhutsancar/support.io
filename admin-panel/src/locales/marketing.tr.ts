@@ -903,6 +903,7 @@ export default {
       export: 'Dışa aktarma',
       audit: 'Denetim kayıtları',
       security: 'Ekip için zorunlu iki adımlı doğrulama',
+      integrations: 'Slack, Telegram ve webhook bildirimleri',
       noBranding: 'Balonda “Support.io” yazısı olmadan'
     }
   },

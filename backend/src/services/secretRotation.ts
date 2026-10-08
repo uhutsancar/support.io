@@ -48,7 +48,16 @@ async function sealedValues(organizationId: string | null): Promise<Sealed[]> {
     );
     accounts.push(...rows.map((r) => ({ table, ...r })));
   }
-  return [...sites.map((r) => ({ table: 'sites', ...r })), ...accounts];
+  // Slack addresses, Telegram tokens and webhook secrets (PRD-11).
+  const { rows: integrations } = await query<{ id: string; value: string }>(
+    `SELECT id, config AS value FROM integrations WHERE ${scoped('organization_id')}`,
+    [organizationId]
+  );
+  return [
+    ...sites.map((r) => ({ table: 'sites', ...r })),
+    ...accounts,
+    ...integrations.map((r) => ({ table: 'integrations', ...r }))
+  ];
 }
 
 async function store({ table, id }: Sealed, value: string): Promise<void> {
@@ -58,6 +67,8 @@ async function store({ table, id }: Sealed, value: string): Promise<void> {
         WHERE id = $1`,
       [id, value]
     );
+  } else if (table === 'integrations') {
+    await query('UPDATE integrations SET config = $2 WHERE id = $1', [id, value]);
   } else {
     await query(`UPDATE ${table} SET totp_secret_enc = $2 WHERE id = $1`, [id, value]);
   }

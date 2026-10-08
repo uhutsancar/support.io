@@ -188,6 +188,7 @@ test('the panel: no serious axe problem on its pages', async ({ browser }) => {
     '/dashboard/my-performance',
     '/dashboard/visitors',
     '/dashboard/crm',
+    '/dashboard/integrations',
     '/dashboard/automation-rules',
     '/dashboard/proactive-rules',
     '/dashboard/audit-logs'
