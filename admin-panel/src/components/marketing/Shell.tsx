@@ -668,6 +668,7 @@ export const Footer = () => {
                   border border-white/15 text-gray-300 hover:bg-white/[0.06] transition"
               >
                 <Languages className="w-3.5 h-3.5" />
+                {/* i18n-ignore: each language by its own name */}
                 {language === 'tr' ? 'Türkçe' : 'English'}
               </button>
               <a

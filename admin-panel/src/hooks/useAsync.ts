@@ -66,6 +66,8 @@ const TRANSLATED_CODES: Record<string, string> = {
   SEAT_SUSPENDED: 'errors.seatSuspended',
   SITE_SUSPENDED: 'errors.siteSuspended',
   SITE_BLOCKED: 'errors.siteBlocked',
+  EMAIL_IN_USE: 'errors.emailInUse',
+  UPLOAD_FAILED: 'errors.uploadFailed',
   OVER_PLAN_LIMIT: 'errors.overPlanLimit'
 };
 

@@ -434,6 +434,7 @@ export const AnalyticsVisual = () => {
   const incoming = [18, 24, 21, 32, 38, 27, 34];
   const solved = [15, 21, 20, 28, 34, 25, 31];
   const days = t('viz.analytics.days', { returnObjects: true });
+  // i18n-ignore: only if the locale lacks the day names
   const labels = Array.isArray(days) ? days : ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
   const W = 460,

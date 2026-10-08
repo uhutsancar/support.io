@@ -1,5 +1,6 @@
 /** The accents a dialog can be rendered with. */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, AlertTriangle } from 'lucide-react';
 
 /** The accent a dialog is drawn with. */
@@ -11,8 +12,8 @@ const ConfirmDialog = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Tamam',
-  cancelText = 'İptal',
+  confirmText,
+  cancelText,
   type = 'danger'
 }: {
   isOpen: boolean;
@@ -25,7 +26,10 @@ const ConfirmDialog = ({
   /** Picks the accent: danger, warning or info. */
   type?: ConfirmDialogTone;
 }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
+  const confirmLabel = confirmText ?? t('common.ok');
+  const cancelLabel = cancelText ?? t('common.cancel');
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -64,13 +68,13 @@ const ConfirmDialog = ({
             onClick={onClose}
             className="px-6 py-2.5 rounded-lg font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            {cancelText}
+            {cancelLabel}
           </button>
           <button
             onClick={handleConfirm}
             className={`px-6 py-2.5 rounded-lg font-medium text-white ${typeColors[type]} transition-colors shadow-lg shadow-${type === 'danger' ? 'red' : type === 'warning' ? 'yellow' : 'blue'}-500/30`}
           >
-            {confirmText}
+            {confirmLabel}
           </button>
         </div>
       </div>

@@ -698,13 +698,10 @@ const TeamChatPage = () => {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, messageId: null })}
         onConfirm={handleDeleteMessage}
-        title={t('teamChat.deleteTitle') || 'Mesajı Sil'}
-        message={
-          t('teamChat.deleteMessage') ||
-          'Bu mesajı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
-        }
-        confirmText={t('teamChat.deleteConfirm') || 'Evet, Sil'}
-        cancelText={t('common.cancel') || 'İptal'}
+        title={t('teamChat.deleteTitle')}
+        message={t('teamChat.deleteMessage')}
+        confirmText={t('teamChat.deleteConfirm')}
+        cancelText={t('common.cancel')}
         type="danger"
       />
     </div>

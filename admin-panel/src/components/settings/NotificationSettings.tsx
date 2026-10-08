@@ -154,6 +154,7 @@ const NotificationSettings = () => {
             value={prefs.locale}
             onChange={(e) => save({ locale: e.target.value as 'tr' | 'en' })}
           >
+            {/* i18n-ignore: each language by its own name */}
             <option value="tr">Türkçe</option>
             <option value="en">English</option>
           </select>

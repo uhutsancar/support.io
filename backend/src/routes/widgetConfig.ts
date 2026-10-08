@@ -131,7 +131,7 @@ router.post(
   uploadLogo.single('logo'),
   asyncHandler(async (req: Request, res: Response) => {
     const site = await loadOwnedSite(req, req.params.siteId);
-    if (!req.file) throw badRequest('Dosya yüklenemedi');
+    if (!req.file) throw badRequest('No file was uploaded', 'UPLOAD_FAILED');
 
     // Checked and re-encoded like every image (middleware/upload.ts); a
     // logo is public by nature and is stored as such.

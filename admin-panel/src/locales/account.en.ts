@@ -225,6 +225,43 @@ export default {
       INVALID_TOKEN: 'This link is invalid or has expired.'
     }
   },
+  stats: {
+    pickMember: 'Pick a team member first.',
+    resolved: 'Resolved',
+    resolvedTickets: 'Resolved Tickets',
+    avgMinutes: 'Average Time (min)',
+    noSla: 'No SLA data yet',
+    noSlaHint: 'Data appears here as conversations are answered',
+    slaMet: 'SLA Met',
+    slaBreached: 'SLA Breached',
+    noData: 'No data yet',
+    avgTime: 'Avg. Time',
+    allAgents: 'All Agents',
+    activeConversations: 'Active Conversations',
+    avgResponse: 'Avg. Response Time',
+    analyticsLoadError: 'Analytics could not be loaded.',
+    loadError: 'Performance data could not be loaded.',
+    slaCompliance: 'SLA Compliance',
+    csat: 'Customer Satisfaction (CSAT)',
+    openChats: 'Open Chats',
+    assigned: 'Assigned',
+    avgReply: 'Average Reply',
+    retry: 'Try again',
+    mineSubtitle: 'Your own support numbers and success rates.',
+    mineEmptyTitle: 'No tickets assigned to you in this period',
+    mineEmptyBody: 'Your numbers appear here as tickets are assigned to you.',
+    mineDaily: 'Daily Activity',
+    mineDailyHint: 'Tickets assigned to you and resolved in the last {{range}}',
+    mineTrend: 'Response Time Trend (min)',
+    mineTrendHint: 'How fast you have replied over time',
+    incomingTickets: 'Incoming Tickets',
+    targetMin: 'Target (min)',
+    pending: 'Pending',
+    department: 'Department',
+    tickets: 'Tickets',
+    satisfaction: 'Satisfaction',
+    satisfaction2: 'Satisfaction %'
+  },
   a11y: {
     siteSelect: 'Site',
     department: 'Department',
@@ -259,6 +296,8 @@ export default {
     siteSuspended:
       'This site is over the plan limit and on hold; you can read it but not change it.',
     overPlanLimit: 'You chose more than your plan allows.',
+    emailInUse: 'This e-mail address is already in use.',
+    uploadFailed: 'The file could not be uploaded; please try again.',
     siteBlocked: 'This site was blocked by Support.io; write to our support team to reopen it.'
   },
   retention: {

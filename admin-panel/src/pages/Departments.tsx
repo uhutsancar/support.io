@@ -403,7 +403,7 @@ const AddEditDepartmentModal = ({
   const [saving, setSaving] = useState(false);
   const handleAddMember = () => {
     if (!selectedMember) {
-      toast.error('Lütfen bir ekip üyesi seçin!');
+      toast.error(t('stats.pickMember'));
       return;
     }
     const newMember = { userId: selectedMember, role: memberRole };

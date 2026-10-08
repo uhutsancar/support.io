@@ -11,7 +11,7 @@ import { errorMessage } from '../hooks/useAsync';
 import { VerifyEmailBanner } from './AccountRecovery';
 
 const Onboarding = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { language } = useLanguage();
   const { user } = useAuth();
   const [step, setStep] = useState(1);
@@ -61,7 +61,8 @@ const Onboarding = () => {
         country,
         welcomeMessage,
         title,
-        color
+        color,
+        locale: i18n.language === 'en' ? 'en' : 'tr'
       });
       // Sayfa aşağıda tamamen yeniden yükleniyor ve profil /api/auth/me'den
       // güncel isOnboarded ile geliyor; tarayıcıda tutulan bir kopyayı
@@ -103,14 +104,17 @@ const Onboarding = () => {
             <div className="space-y-4">
               {[
                 {
+                  // i18n-ignore: the stored answer; shown through t(key)
                   val: 'Daha fazla potansiyel müşteri çekmek için',
                   key: 'onboarding.purposes.leads'
                 },
                 {
+                  // i18n-ignore: the stored answer; shown through t(key)
                   val: 'Mevcut müşterilerden daha fazla satış elde etmek için',
                   key: 'onboarding.purposes.sales'
                 },
                 {
+                  // i18n-ignore: the stored answer; shown through t(key)
                   val: 'Müşteri hizmetlerimizi iyileştirmek için',
                   key: 'onboarding.purposes.support'
                 }
@@ -228,8 +232,11 @@ const Onboarding = () => {
               </p>
               <div className="space-y-4">
                 {[
+                  // i18n-ignore: the stored answer; shown through t(key)
                   { val: 'Biraz yardım sunun 👋', key: 'onboarding.triggers.help' },
+                  // i18n-ignore: the stored answer; shown through t(key)
                   { val: 'Sıcak bir karşılama yapın 🤗', key: 'onboarding.triggers.welcome' },
+                  // i18n-ignore: the stored answer; shown through t(key)
                   { val: 'İndirimlerinizden bahsedin 🎁', key: 'onboarding.triggers.discount' }
                 ].map((msgObj) => {
                   const translatedMsg = t(msgObj.key, msgObj.val);

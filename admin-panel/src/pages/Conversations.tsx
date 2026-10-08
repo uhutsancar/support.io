@@ -48,12 +48,12 @@ import ConversationListItem from '../components/conversations/ConversationListIt
 import MessageBubble, { attachmentIcon } from '../components/conversations/MessageBubble';
 
 const STATUS_LABELS = {
-  open: ['conversations.statuses.open', 'Açık'],
-  unassigned: ['conversations.unassigned', 'Atanmamış'],
-  assigned: ['conversations.statuses.assigned', 'Atandı'],
-  pending: ['conversations.statuses.pending', 'Bekliyor'],
-  resolved: ['conversations.statuses.resolved', 'Çözüldü'],
-  closed: ['conversations.statuses.closed', 'Kapalı']
+  open: 'conversations.statuses.open',
+  unassigned: 'conversations.unassigned',
+  assigned: 'conversations.statuses.assigned',
+  pending: 'conversations.statuses.pending',
+  resolved: 'conversations.statuses.resolved',
+  closed: 'conversations.statuses.closed'
 };
 
 // Henuz kimseye atanmamis konusma: hem 'open' hem 'unassigned' bu anlama gelir.
@@ -66,8 +66,7 @@ const byMostRecent = (a: Conversation, b: Conversation): number =>
 const Conversations = () => {
   const { t } = useTranslation();
   const statusLabel = (status: string) => {
-    const entry = STATUS_LABELS[status as keyof typeof STATUS_LABELS] || STATUS_LABELS.closed;
-    return t(entry[0], entry[1]);
+    return t(STATUS_LABELS[status as keyof typeof STATUS_LABELS] || STATUS_LABELS.closed);
   };
   /** The selected site's id, whichever shape the selection was stored in. */
   const siteIdOf = (site: Site | string | null | undefined): string =>

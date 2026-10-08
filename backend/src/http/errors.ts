@@ -61,7 +61,8 @@ export const forbidden = (message: string, code = 'FORBIDDEN'): HttpError =>
 export const notFound = (what = 'Resource', code = 'NOT_FOUND'): HttpError =>
   new HttpError(404, `${what} not found`, code);
 
-export const conflict = (message: string): HttpError => new HttpError(409, message, 'CONFLICT');
+export const conflict = (message: string, code = 'CONFLICT'): HttpError =>
+  new HttpError(409, message, code);
 
 export const unavailable = (message: string, code = 'UNAVAILABLE'): HttpError =>
   new HttpError(503, message, code);

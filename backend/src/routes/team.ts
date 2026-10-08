@@ -221,7 +221,7 @@ router.post(
     if (!departmentEntries) throw badRequest('Unknown department');
 
     if (await Team.findOne({ email, isActive: true })) {
-      throw conflict('Bu e-posta adresi zaten kullanılıyor');
+      throw conflict('This e-mail address is already in use', 'EMAIL_IN_USE');
     }
 
     const teamMember = new Team({

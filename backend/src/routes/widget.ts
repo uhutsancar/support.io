@@ -443,7 +443,12 @@ router.get(
       res
         .status(400)
         .type('html')
-        .send(page('Bağlantı geçersiz', 'Bu bağlantı geçersiz ya da süresi dolmuş.'));
+        .send(
+          page(
+            'Bağlantı geçersiz / Invalid link',
+            'Bu bağlantı geçersiz ya da süresi dolmuş. / This link is invalid or has expired.'
+          )
+        );
       return;
     }
     await Conversation.updateOne(
@@ -454,7 +459,7 @@ router.get(
       .type('html')
       .send(
         page(
-          'E-postalar durduruldu',
+          'E-postalar durduruldu / E-mails stopped',
           'Bu sohbetle ilgili size artık e-posta gönderilmeyecek. / You will get no more e-mails about this chat.'
         )
       );

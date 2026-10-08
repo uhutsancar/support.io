@@ -62,6 +62,9 @@ jobs:
       - name: Translations have the same keys in Turkish and English
         run: npx tsx scripts/check-locales.ts
         working-directory: admin-panel
+      - name: No text written into components (UX-06)
+        run: npx tsx scripts/check-hardcoded-text.ts
+        working-directory: admin-panel
       - name: Production dependencies have no high or critical advisory
         # Development-only tooling is reported in docs/security/accepted-risks.md;
         # what ships in the image must be clean.

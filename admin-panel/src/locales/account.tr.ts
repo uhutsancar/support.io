@@ -228,6 +228,43 @@ export default {
       INVALID_TOKEN: 'Bu bağlantı geçersiz ya da süresi dolmuş.'
     }
   },
+  stats: {
+    pickMember: 'Önce bir ekip üyesi seçin.',
+    resolved: 'Çözülen',
+    resolvedTickets: 'Çözülen Talepler',
+    avgMinutes: 'Ortalama Süre (dk)',
+    noSla: 'Henüz SLA verisi yok',
+    noSlaHint: 'Konuşmalar yanıtlandıkça veriler burada görünecek',
+    slaMet: 'SLA Karşılandı',
+    slaBreached: 'SLA İhlal Edildi',
+    noData: 'Henüz veri yok',
+    avgTime: 'Ort. Süre',
+    allAgents: 'Tüm Temsilciler',
+    activeConversations: 'Aktif Konuşmalar',
+    avgResponse: 'Ort. Yanıt Süresi',
+    analyticsLoadError: 'Analitik verileri yüklenemedi.',
+    loadError: 'Performans verileri yüklenemedi.',
+    slaCompliance: 'SLA Uyumluluğu',
+    csat: 'Müşteri Memnuniyeti (CSAT)',
+    openChats: 'Açık Sohbetler',
+    assigned: 'Atanan',
+    avgReply: 'Ortalama Yanıt',
+    retry: 'Tekrar dene',
+    mineSubtitle: 'Kendi destek metriklerinizi ve başarı oranlarınızı inceleyin.',
+    mineEmptyTitle: 'Bu dönemde size atanmış talep yok',
+    mineEmptyBody: 'Size talep atandıkça performans metrikleriniz burada görünecek.',
+    mineDaily: 'Günlük Aktivite',
+    mineDailyHint: 'Son {{range}} içerisindeki atanan ve çözülen talep dengeniz',
+    mineTrend: 'Yanıt Süresi Trendi (dk)',
+    mineTrendHint: 'Zaman içindeki geri dönüş performansınız',
+    incomingTickets: 'Gelen Talepler',
+    targetMin: 'Hedef (dk)',
+    pending: 'Beklemede',
+    department: 'Departman',
+    tickets: 'Talepler',
+    satisfaction: 'Memnuniyet',
+    satisfaction2: 'Memnuniyet %'
+  },
   a11y: {
     siteSelect: 'Site',
     department: 'Departman',
@@ -262,6 +299,8 @@ export default {
     siteSuspended:
       'Bu site plan sınırının üzerinde olduğu için askıda; okunabilir ama değiştirilemez.',
     overPlanLimit: 'Planınızın izin verdiğinden fazlasını seçtiniz.',
+    emailInUse: 'Bu e-posta adresi zaten kullanılıyor.',
+    uploadFailed: 'Dosya yüklenemedi, tekrar deneyin.',
     siteBlocked: 'Bu site Support.io tarafından kapatıldı; açılması için destek ekibimize yazın.'
   },
   retention: {
