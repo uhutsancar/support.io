@@ -51,6 +51,16 @@ async function sweepOnce() {
     console.error('Retention sweep failed for personal data:', errorText(error));
   }
   try {
+    // An invitation names a person by e-mail; once it is accepted, revoked or
+    // expired it is history, kept 90 days for "who invited whom" (LEG-03).
+    await query(
+      `DELETE FROM invitations
+        WHERE coalesce(accepted_at, revoked_at, expires_at) < now() - interval '${PERSONAL_DATA_DAYS} days'`
+    );
+  } catch (error) {
+    console.error('Retention sweep failed for invitations:', errorText(error));
+  }
+  try {
     // A paid period that ended after cancellation, or a payment grace period
     // that ran out, changes the plan with no webhook; write it down.
     await reconcileSubscriptions();

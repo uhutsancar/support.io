@@ -5,6 +5,8 @@
 //  - the owner can download everything the organization stored, without
 //    password hashes or sealed keys
 //  - a visitor's IP and device details are dropped 90 days after the visit
+//  - an invitation (an e-mail address) is dropped 90 days after it was
+//    accepted, revoked or expired (LEG-03)
 //
 // Needs the running API. Run: npm run test:compose
 
@@ -86,5 +88,37 @@ test(`a visitor’s IP and device are dropped ${PERSONAL_DATA_DAYS} days after t
     assert.equal(recent?.ip, '203.0.113.8', 'a recent visit keeps its details');
   } finally {
     await query('DELETE FROM visitors WHERE id = ANY($1)', [[oldId, recentId]]);
+  }
+});
+
+test(`a finished invitation is dropped ${PERSONAL_DATA_DAYS} days later; an open one stays`, async () => {
+  const { rows: orgs } = await query('SELECT id FROM organizations LIMIT 1');
+  assert.ok(orgs[0], 'an organization exists');
+  const ids = {
+    accepted: generateId(),
+    revoked: generateId(),
+    expired: generateId(),
+    open: generateId(),
+    recent: generateId()
+  };
+  const row = (id: string, accepted: string | null, revoked: string | null, expires: string) =>
+    query(
+      `INSERT INTO invitations (id, organization_id, email, role, token_hash, expires_at, accepted_at, revoked_at)
+       VALUES ($1, $2, $3, 'agent', $4, now() + $7::interval, now() + $5::interval, now() + $6::interval)`,
+      [id, orgs[0].id, `inv${stamp()}@privacy.test`, `hash_${id}`, accepted, revoked, expires]
+    );
+  await row(ids.accepted, '-91 days', null, '-80 days');
+  await row(ids.revoked, null, '-92 days', '-85 days');
+  await row(ids.expired, null, null, '-91 days');
+  await row(ids.open, null, null, '6 days');
+  await row(ids.recent, '-3 days', null, '4 days');
+  try {
+    await sweepOnce();
+    const { rows } = await query('SELECT id FROM invitations WHERE id = ANY($1)', [
+      Object.values(ids)
+    ]);
+    assert.deepEqual(rows.map((r) => r.id).sort(), [ids.open, ids.recent].sort());
+  } finally {
+    await query('DELETE FROM invitations WHERE id = ANY($1)', [Object.values(ids)]);
   }
 });
