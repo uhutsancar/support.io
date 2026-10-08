@@ -18,6 +18,8 @@ const router = express.Router();
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
+/** The deepest page the audit log serves: 1000 × 100 rows. */
+const MAX_PAGE = 1000;
 
 /** A positive integer from the query string, clamped to a sane range. */
 function boundedInt(value: unknown, fallback: number, max: number): number {
@@ -44,7 +46,10 @@ router.get(
       };
     }
 
-    const page = boundedInt(req.query.page, 1, Number.MAX_SAFE_INTEGER);
+    // Pages are numbered for the panel's pager; the cap keeps one request
+    // from asking the database to skip millions of rows (plan v10 PERF-03).
+    // Conversations and messages page by cursor instead.
+    const page = boundedInt(req.query.page, 1, MAX_PAGE);
     const limit = boundedInt(req.query.limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
 
     const [total, docs] = await Promise.all([
