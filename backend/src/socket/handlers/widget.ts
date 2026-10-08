@@ -386,7 +386,18 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         }
       }
 
-      const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+      let conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+      // The team merged this conversation into another of the same visitor
+      // (PRD-07): the widget carries on there.
+      if (conversation?.mergedIntoId) {
+        const into = await ctx.widgetConversationFor(socket, conversation.mergedIntoId);
+        if (into) {
+          await socket.leave(conversationRoom(conversation._id));
+          await socket.join(conversationRoom(into._id));
+          socket.conversationId = into._id;
+          conversation = into;
+        }
+      }
       if (!conversation) {
         ctx.reject(socket);
         return ack?.({ ok: false, code: 'NOT_FOUND' });
@@ -466,7 +477,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       // read the old count and write it back plus one.
       const counted = await Conversation.findByIdAndUpdate(
         conversation._id,
-        { $inc: { unreadCount: 1 }, lastMessageAt: new Date() },
+        // A visitor writing again wakes a snoozed conversation (PRD-07).
+        { $inc: { unreadCount: 1 }, lastMessageAt: new Date(), snoozedUntil: null },
         { new: true }
       );
       if (counted) {

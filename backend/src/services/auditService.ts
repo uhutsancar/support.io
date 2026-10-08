@@ -114,6 +114,8 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   'site.widget.updated': { action: 'WIDGET_SETTINGS_UPDATED', entityType: 'site' },
   // Who moved a conversation to whom: agent ids only, never the conversation.
   'conversation.assigned': { action: 'CONVERSATION_ASSIGNED', entityType: 'ticket' },
+  // Which conversation went into which (PRD-07); the target is the entity.
+  'conversation.merged': { action: 'CONVERSATIONS_MERGED', entityType: 'ticket' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // Account security. The metadata never carries a token or a password.
   'auth.email.verified': {

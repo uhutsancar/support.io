@@ -208,6 +208,18 @@ export async function loadAccessibleConversation(
   if (!mayAccessSite(req.user?.role, req.user?.assignedSites, conversation.siteId)) {
     throw notFound('Conversation');
   }
+  // The inbox of a blocked site, or of one over the plan's limit, is
+  // read-only here as on the socket (BIL-04, LEG-05): the REST moves —
+  // assign, status, tags, snooze, merge — refused it no more than a reply.
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    const site = await Site.findById(conversation.siteId).select('blockedAt suspendedAt');
+    if (site?.blockedAt) {
+      throw forbidden('This site was blocked by Support.io; contact support', 'SITE_BLOCKED');
+    }
+    if (site?.suspendedAt) {
+      throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
+    }
+  }
   return conversation;
 }
 

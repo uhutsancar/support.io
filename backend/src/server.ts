@@ -18,6 +18,7 @@ import SocketHandler from './socket';
 import authRoutes from './routes/auth';
 import accountRoutes from './routes/account';
 import savedReplyRoutes from './routes/savedReplies';
+import conversationTagRoutes from './routes/conversationTags';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
 import conversationRoutes from './routes/conversations';
@@ -269,6 +270,7 @@ app.use('/api/account/export', dataExportRoutes);
 
 app.use('/api/audit', auditRoutes);
 app.use('/api/saved-replies', savedReplyRoutes);
+app.use('/api/conversation-tags', conversationTagRoutes);
 app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
