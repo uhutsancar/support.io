@@ -131,32 +131,42 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
         working-directory: backend
-      - name: Start the API
+      - name: Start the API, recording coverage
+        # The suite calls a running API: the code it exercises runs there.
+        # scripts/coverage-api.ts exits cleanly on a stop file, so V8 writes
+        # what ran (TST-02).
         working-directory: backend
         run: |
           npm run build:widget
-          nohup npx tsx src/server.ts > /tmp/api.log 2>&1 &
+          NODE_V8_COVERAGE=/tmp/v8 COVERAGE_STOP_FILE=/tmp/stop-api \
+            nohup node --import tsx scripts/coverage-api.ts > /tmp/api.log 2>&1 &
           for i in $(seq 1 60); do
             curl -fs http://localhost:5000/ready && exit 0
             sleep 2
           done
           cat /tmp/api.log
           exit 1
-      - name: e2e suite, with line coverage of the test process
-        # Coverage covers the code the tests import in-process (helpers,
-        # policies, unit-level checks); the API under test is a separate
-        # process. The report is uploaded for reading, not gated.
-        run: |
-          node --import tsx --test --experimental-test-coverage \
-            --test-reporter=spec --test-reporter-destination=stdout \
-            --test-reporter=lcov --test-reporter-destination=coverage.lcov \
-            "tests/**/*.test.ts"
+      - name: e2e suite
+        run: NODE_V8_COVERAGE=/tmp/v8 node --import tsx --test --test-reporter=spec "tests/**/*.test.ts"
         working-directory: backend
+      - name: Coverage of the API and the suite together
+        # Visibility, not a gate: the security and billing modules aim at 80 %
+        # (scripts/coverage-summary.ts marks those under it).
+        if: always()
+        working-directory: backend
+        run: |
+          touch /tmp/stop-api
+          for i in $(seq 1 30); do curl -fs http://localhost:5000/ready > /dev/null || break; sleep 1; done
+          sleep 3
+          npx c8 report --temp-directory /tmp/v8 --src src --include 'src/**' --exclude 'src/widget/**' \
+            --exclude-after-remap --reporter=lcov --reporter=json-summary --reporter=text-summary \
+            --report-dir coverage
+          npx tsx scripts/coverage-summary.ts coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: backend-coverage
-          path: backend/coverage.lcov
+          path: backend/coverage
           retention-days: 14
       - name: API log
         if: failure()

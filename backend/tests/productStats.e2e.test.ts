@@ -83,7 +83,8 @@ test('a new workspace that adds a site shows up in the first-use path', async ()
   });
   assert.equal(site.status, 201);
   const after = (await productStats(1)).funnel.find((f) => f.step === 'site')!;
-  assert.equal(after.reached, before + 1);
+  // Other suites sign up in parallel: at least this one, maybe more.
+  assert.ok(after.reached >= before + 1, `${after.reached} after ${before}`);
   assert.ok(after.medianHours !== null && after.medianHours < 1);
 });
 
