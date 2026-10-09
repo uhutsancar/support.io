@@ -5,7 +5,17 @@ import crypto from 'crypto';
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
+import { test } from '@playwright/test';
 import type { APIRequestContext } from '@playwright/test';
+
+// Specs open their own browser contexts (an owner, a visitor, a phone…).
+// Closed after every test, so one test's pages — their sockets and polling —
+// do not live on into the next: a long run otherwise carries dozens of them,
+// and on Docker Desktop they saturate the published API port until requests
+// time out. Every spec imports this module, so the hook applies everywhere.
+test.afterEach(async ({ browser }) => {
+  await Promise.all(browser.contexts().map((context) => context.close().catch(() => {})));
+});
 
 const ROOT = path.join(__dirname, '..', '..');
 
