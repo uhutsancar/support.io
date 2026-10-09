@@ -140,10 +140,14 @@ test('the four events reach a webhook (signed), Slack and Telegram; keys never c
   const all = await calls(t.token, 7);
   assert.equal(all.length, 7, JSON.stringify(all.map((c) => c.url)));
   const webhook = all.filter((c) => c.url === 'https://1.1.1.1/support-hook');
-  assert.deepEqual(
-    webhook.map((c) => c.headers['X-SupportIO-Event']),
-    ['conversation.created', 'message.created', 'conversation.closed', 'rating.created']
-  );
+  // Each event is its own delivery, so they may arrive in any order (a
+  // receiver orders them by the payload's time); all four arrive, once.
+  assert.deepEqual(webhook.map((c) => c.headers['X-SupportIO-Event']).sort(), [
+    'conversation.closed',
+    'conversation.created',
+    'message.created',
+    'rating.created'
+  ]);
   for (const delivery of webhook) {
     const [, at, mac] = /^t=(\d+),v1=([0-9a-f]{64})$/.exec(
       delivery.headers['X-SupportIO-Signature']
