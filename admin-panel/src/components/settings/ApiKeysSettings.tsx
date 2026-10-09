@@ -15,6 +15,8 @@ import ConfirmDialog from '../ConfirmDialog';
 import { errorMessage } from '../../hooks/useAsync';
 import { formatDateTime } from '../../lib/format';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePlans } from '../../hooks/usePlans';
 import { marketingRoutes } from '../../lib/marketingPaths';
 
 interface ApiKey {
@@ -33,8 +35,14 @@ const field =
 const ApiKeysSettings = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const { plans } = usePlans();
   const [keys, setKeys] = useState<ApiKey[] | null>(null);
-  const [locked, setLocked] = useState(false);
+  // Asked of the plan list, not of the API: a refused request would open the
+  // upgrade dialog the moment Settings opens.
+  const current = plans?.find((p) => p.type === (user?.organization?.planType || 'FREE'));
+  const allowed = current ? current.features.includes('api') : null;
+  const locked = allowed === false;
   const [name, setName] = useState('');
   const [write, setWrite] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,16 +54,14 @@ const ApiKeysSettings = () => {
     try {
       const { data } = await api.get<{ keys: ApiKey[] }>('/api-keys', { cache: false });
       setKeys(data.keys);
-    } catch (error) {
-      const code = (error as { response?: { data?: { code?: string } } }).response?.data?.code;
-      if (code === 'PLAN_UPGRADE_REQUIRED') setLocked(true);
+    } catch {
       setKeys([]);
     }
   };
 
   useEffect(() => {
-    void load();
-  }, []);
+    if (allowed) void load();
+  }, [allowed]);
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault();
