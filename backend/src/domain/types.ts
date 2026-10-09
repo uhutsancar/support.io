@@ -116,6 +116,8 @@ export interface UserPreferences {
   locale?: 'tr' | 'en';
   /** The set-up mails of the first month (PRD-08). */
   activationEmails?: boolean;
+  /** Monday's summary of the week, for owners and managers (PRD-22). */
+  weeklyReport?: boolean;
 }
 
 /** Notification preferences as both account tables keep them. */

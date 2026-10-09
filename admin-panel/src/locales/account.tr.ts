@@ -205,6 +205,7 @@ export default {
       allMessages: 'Tüm yeni mesajlar',
       sound: 'Bildirim sesi',
       activation: 'Hesap kurulumu e-postaları (ilk ay)',
+      weeklyReport: 'Haftalık rapor e-postası (her pazartesi)',
       language: 'E-postaların dili',
       saved: 'Bildirim tercihleri kaydedildi.',
       pushTitle: 'Bu cihazda anlık bildirim',
@@ -573,6 +574,43 @@ export default {
       hint: 'Bir metin kutusuna yazarken kısayollar çalışmaz; Esc ile kutudan çıkabilirsiniz.'
     }
   },
+  reports: {
+    export: {
+      which: 'İndirilecek rapor',
+      conversations: 'Konuşmalar',
+      agents: 'Temsilciler',
+      sla: 'SLA ihlalleri',
+      csv: 'CSV',
+      xlsx: 'Excel',
+      error: 'Rapor indirilemedi, lütfen tekrar deneyin'
+    },
+    heatmap: {
+      title: 'Konuşmalar hangi gün ve saatte başlıyor',
+      hint: 'Koyu kareler en yoğun saatler; vardiyaları buna göre planlayın. Saatler bu cihazın saat dilimine göre.',
+      day: 'Gün',
+      days: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
+      cell: '{{day}} {{hour}}: {{count}} konuşma'
+    },
+    sla: {
+      title: 'Geç yanıtlanan konuşmalar',
+      hint: 'İlk yanıtı SLA süresini aşan konuşmalar, en yenisi üstte.',
+      none: 'Bu dönemde geç yanıtlanan konuşma yok.',
+      ticket: 'Talep',
+      started: 'Başladı',
+      waited: 'Bekleme',
+      agent: 'Temsilci',
+      department: 'Departman'
+    },
+    agents: {
+      caption: 'Temsilci karşılaştırması',
+      name: 'Temsilci',
+      total: 'Konuşma',
+      resolved: 'Çözülen',
+      sla: 'Zamanında',
+      firstResponse: 'İlk yanıt',
+      rating: 'Puan'
+    }
+  },
   apiKeys: {
     title: 'API anahtarları',
     description:
@@ -624,6 +662,7 @@ export default {
       API_KEY_REVOKED: 'API Anahtarı İptal Edildi',
       GOOGLE_LINKED: 'Google Hesabı Bağlandı',
       GOOGLE_UNLINKED: 'Google Bağlantısı Kaldırıldı',
+      REPORT_EXPORTED: 'Rapor İndirildi',
       WEBHOOK_CREATED: 'Webhook Eklendi',
       WEBHOOK_UPDATED: 'Webhook Değişti',
       WEBHOOK_DELETED: 'Webhook Silindi',

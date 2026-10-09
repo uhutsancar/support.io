@@ -7,6 +7,7 @@ import { query } from './pool';
 import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
 import { sweepTrials } from '../services/trial';
+import { sweepWeeklyReports } from '../services/weeklyReport';
 import { reconcileAllPlanLimits } from '../services/planOverage';
 import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
@@ -79,6 +80,12 @@ async function sweepOnce() {
     await reconcileAllPlanLimits();
   } catch (error) {
     console.error('Plan limit reconciliation failed:', errorText(error));
+  }
+  try {
+    // Monday's summary of the week for owners and managers (PRD-22).
+    await sweepWeeklyReports();
+  } catch (error) {
+    console.error('Weekly report sweep failed:', errorText(error));
   }
   try {
     // The set-up mails of the first month (PRD-08).

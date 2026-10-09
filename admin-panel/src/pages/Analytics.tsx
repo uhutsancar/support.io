@@ -25,6 +25,12 @@ import { analyticsAPI } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
 import { formatMinutes } from '../lib/format';
 import { errorMessage } from '../hooks/useAsync';
+import {
+  AgentTable,
+  ExportMenu,
+  SlaBreachList,
+  WeekHeatmap
+} from '../components/analytics/ReportTools';
 const Analytics = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -173,14 +179,15 @@ const Analytics = () => {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('analytics.title')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">{t('analytics.subtitle')}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <ExportMenu range={timeRange} />
             <select
               aria-label={t('a11y.timeRange')}
               value={timeRange}
@@ -380,6 +387,8 @@ const Analytics = () => {
             )}
           </div>
         </div>
+        <WeekHeatmap range={timeRange} />
+        <SlaBreachList range={timeRange} />
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -536,6 +545,7 @@ const Analytics = () => {
               </ComposedChart>
             </ResponsiveContainer>
           )}
+          <AgentTable agents={agentPerformance} />
         </div>
       </div>
     </>

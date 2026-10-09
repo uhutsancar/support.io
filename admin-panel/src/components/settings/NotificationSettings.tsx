@@ -13,6 +13,7 @@ import { Bell } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import type { NotificationPreferences } from '../../services/api';
 import { errorMessage } from '../../hooks/useAsync';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   notificationPermission,
   requestNotificationPermission
@@ -29,6 +30,7 @@ const select =
   'px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white';
 
 const NotificationSettings = () => {
+  const { user } = useAuth();
   const { t } = useTranslation();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [permission, setPermission] = useState(notificationPermission());
@@ -231,6 +233,17 @@ const NotificationSettings = () => {
           />
           {t('account.notifications.activation')}
         </label>
+
+        {['owner', 'admin', 'manager'].includes(String(user?.role)) && (
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={prefs.weeklyReport !== false}
+              onChange={(e) => save({ weeklyReport: e.target.checked })}
+            />
+            {t('account.notifications.weeklyReport')}
+          </label>
+        )}
 
         <label className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <span className="text-sm font-medium text-gray-900 dark:text-white">

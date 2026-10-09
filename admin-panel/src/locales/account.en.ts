@@ -204,6 +204,7 @@ export default {
       allMessages: 'Every new message',
       sound: 'Notification sound',
       activation: 'Account set-up e-mails (first month)',
+      weeklyReport: 'Weekly report e-mail (every Monday)',
       language: 'Language of e-mails',
       saved: 'Notification preferences saved.',
       pushTitle: 'Push notifications on this device',
@@ -570,6 +571,43 @@ export default {
       hint: 'Shortcuts do not work while you type in a text box; press Esc to leave it.'
     }
   },
+  reports: {
+    export: {
+      which: 'Report to download',
+      conversations: 'Conversations',
+      agents: 'Agents',
+      sla: 'SLA breaches',
+      csv: 'CSV',
+      xlsx: 'Excel',
+      error: 'The report could not be downloaded, please try again'
+    },
+    heatmap: {
+      title: 'When conversations start',
+      hint: 'Darker squares are your busiest hours; plan shifts around them. Hours follow this device’s time zone.',
+      day: 'Day',
+      days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      cell: '{{day}} {{hour}}: {{count}} conversations'
+    },
+    sla: {
+      title: 'Conversations answered late',
+      hint: 'Conversations whose first answer took longer than the SLA allowed, newest first.',
+      none: 'No conversation was answered late in this period.',
+      ticket: 'Ticket',
+      started: 'Started',
+      waited: 'Waited',
+      agent: 'Agent',
+      department: 'Department'
+    },
+    agents: {
+      caption: 'Agent comparison',
+      name: 'Agent',
+      total: 'Conversations',
+      resolved: 'Resolved',
+      sla: 'On time',
+      firstResponse: 'First response',
+      rating: 'Rating'
+    }
+  },
   apiKeys: {
     title: 'API keys',
     description:
@@ -620,6 +658,7 @@ export default {
       API_KEY_REVOKED: 'API Key Revoked',
       GOOGLE_LINKED: 'Google Account Connected',
       GOOGLE_UNLINKED: 'Google Disconnected',
+      REPORT_EXPORTED: 'Report Downloaded',
       WEBHOOK_CREATED: 'Webhook Added',
       WEBHOOK_UPDATED: 'Webhook Changed',
       WEBHOOK_DELETED: 'Webhook Deleted',

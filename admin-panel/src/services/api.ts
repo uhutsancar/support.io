@@ -113,6 +113,8 @@ export interface NotificationPreferences {
   notificationSound: boolean;
   /** The set-up mails of the first month (PRD-08). */
   activationEmails: boolean;
+  /** Monday's summary of the week (owners, admins, managers; PRD-22). */
+  weeklyReport: boolean;
   locale: 'tr' | 'en';
 }
 
@@ -680,8 +682,41 @@ export const analyticsAPI = {
   // Never cached: the page also refreshes it from realtime socket events, so a
   // cached answer would fight with the live one.
   getOverview: (range: string, siteId?: string | null) =>
-    api.get<AnalyticsOverview>('/analytics/overview', { params: { range, siteId }, cache: false })
+    api.get<AnalyticsOverview>('/analytics/overview', { params: { range, siteId }, cache: false }),
+  /** Conversations started per weekday (Monday first) and hour, in `tz` (PRD-22). */
+  heatmap: (range: string, tz: string) =>
+    api.get<{ timeZone: string; grid: number[][] }>('/analytics/heatmap', {
+      params: { range, tz },
+      cache: false
+    }),
+  slaBreaches: (range: string) =>
+    api.get<{ breaches: SlaBreach[] }>('/analytics/sla-breaches', {
+      params: { range },
+      cache: false
+    }),
+  /** A report as a file; a Blob, with its name in Content-Disposition. */
+  exportReport: (params: {
+    report: string;
+    format: 'csv' | 'xlsx';
+    range: string;
+    tz: string;
+    lang: string;
+  }) => api.get<Blob>('/analytics/export', { params, responseType: 'blob', cache: false })
 };
+
+/** A conversation whose first answer came later than the SLA allowed. */
+export interface SlaBreach {
+  id: string;
+  ticketId: string | null;
+  siteId: string;
+  site: string;
+  createdAt: string;
+  waitedMinutes: number | null;
+  status: string;
+  priority: string;
+  agent: string | null;
+  department: string | null;
+}
 
 export const auditAPI = {
   getAll: (params?: Record<string, unknown>) =>

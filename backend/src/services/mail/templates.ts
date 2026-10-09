@@ -477,6 +477,104 @@ export function activationMail({
   };
 }
 
+/** The figures of one week, for the weekly report mail (PRD-22). */
+export interface WeeklyFigures {
+  conversations: number;
+  resolved: number;
+  avgFirstResponseMinutes: number | null;
+  slaPercent: number | null;
+  csat: number | null;
+  rated: number;
+  assistantAnswered: number;
+  busiestHour: number | null;
+  topAgent: { name: string; resolved: number } | null;
+}
+
+/** Monday's summary of the last seven days for the workspace's managers. */
+export function weeklyReportMail({
+  name,
+  workspace,
+  figures,
+  link,
+  settingsLink,
+  locale
+}: {
+  name: string;
+  workspace: string;
+  figures: WeeklyFigures;
+  link: string;
+  settingsLink: string;
+  locale?: MailLocale;
+}): Rendered {
+  const en = locale === 'en';
+  const minutes = (m: number | null) =>
+    m === null
+      ? '—'
+      : m < 60
+        ? `${m} ${en ? 'min' : 'dk'}`
+        : `${Math.round(m / 6) / 10} ${en ? 'h' : 'sa'}`;
+  const hour = (h: number | null) =>
+    h === null
+      ? '—'
+      : `${String(h).padStart(2, '0')}:00–${String((h + 1) % 24).padStart(2, '0')}:00`;
+  const rows: Array<[string, string, string]> = [
+    ['Konuşma', 'Conversations', String(figures.conversations)],
+    ['Çözülen', 'Resolved', String(figures.resolved)],
+    ['Ortalama ilk yanıt', 'Average first response', minutes(figures.avgFirstResponseMinutes)],
+    [
+      'Zamanında ilk yanıt (SLA)',
+      'First answers on time (SLA)',
+      figures.slaPercent === null ? '—' : `%${figures.slaPercent}`
+    ],
+    [
+      'Memnuniyet',
+      'Satisfaction',
+      figures.csat === null
+        ? '—'
+        : `${figures.csat} / 5 (${figures.rated} ${en ? 'ratings' : 'puan'})`
+    ],
+    [
+      'Asistanın yanıtladığı konuşma',
+      'Conversations the assistant answered',
+      String(figures.assistantAnswered)
+    ],
+    ['En yoğun saat', 'Busiest hour', hour(figures.busiestHour)],
+    [
+      'En çok çözen',
+      'Most resolved',
+      figures.topAgent ? `${figures.topAgent.name} (${figures.topAgent.resolved})` : '—'
+    ]
+  ];
+  const subject = pick(
+    locale,
+    `${workspace}: geçen haftanın özeti`,
+    `${workspace}: last week in short`
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [`Merhaba ${name},`, 'Son yedi günde sohbetlerinizde olanlar:'],
+        [`Hi ${name},`, 'What happened in your chats over the last seven days:']
+      ),
+      quotes: rows.map(([tr, english, value]) => ({ who: en ? english : tr, text: value })),
+      action: pick(locale, 'Raporların tamamı', 'The full reports'),
+      link,
+      footer: pick(
+        locale,
+        'Bu e-posta her pazartesi hesabın sahibine ve yöneticilerine gider.',
+        'This e-mail goes to the account owner and managers every Monday.'
+      ),
+      footerLink: {
+        label: pick(locale, 'Haftalık raporu kapat', 'Turn off the weekly report'),
+        href: settingsLink
+      }
+    })
+  };
+}
+
 export function quotaWarningMail({
   organization,
   used,

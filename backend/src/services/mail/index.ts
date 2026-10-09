@@ -33,6 +33,7 @@ import {
   quotaWarningMail,
   securityNoticeMail,
   trialEndedMail,
+  weeklyReportMail,
   trialEndingMail,
   verificationMail
 } from './templates';
@@ -242,6 +243,9 @@ export const mail = {
     }
   ) {
     return sendMail({ to, ...transcriptMail(args) });
+  },
+  sendWeeklyReport(to: string, args: Parameters<typeof weeklyReportMail>[0]) {
+    return sendMail({ to, ...weeklyReportMail(args) });
   },
   sendActivation(
     to: string,

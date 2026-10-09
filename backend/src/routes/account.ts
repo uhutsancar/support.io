@@ -356,6 +356,7 @@ router.put(
       },
       notificationSound: pickBool(body.notificationSound, current.notificationSound),
       activationEmails: pickBool(body.activationEmails, current.activationEmails),
+      weeklyReport: pickBool(body.weeklyReport, current.weeklyReport),
       locale: body.locale === 'en' || body.locale === 'tr' ? body.locale : current.locale
     };
     req.user.preferences = {
@@ -380,6 +381,7 @@ function notificationPreferences(stored: unknown) {
     },
     notificationSound: prefs.notificationSound !== false,
     activationEmails: prefs.activationEmails !== false,
+    weeklyReport: prefs.weeklyReport !== false,
     locale: (prefs.locale === 'en' ? 'en' : 'tr') as 'tr' | 'en'
   };
 }

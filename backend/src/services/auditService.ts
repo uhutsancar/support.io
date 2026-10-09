@@ -166,6 +166,11 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
     entityType: 'user',
     entityId: (p) => p.userId
   },
+  'report.exported': {
+    action: 'REPORT_EXPORTED',
+    entityType: 'organization',
+    entityId: (p) => p.organizationId
+  },
   'auth.google.unlinked': {
     action: 'GOOGLE_UNLINKED',
     entityType: 'user',
