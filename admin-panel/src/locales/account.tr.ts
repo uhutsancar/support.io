@@ -544,6 +544,35 @@ export default {
       hint: 'Bir metin kutusuna yazarken kısayollar çalışmaz; Esc ile kutudan çıkabilirsiniz.'
     }
   },
+  apiKeys: {
+    title: 'API anahtarları',
+    description:
+      'Konuşmalarınızı, ziyaretçilerinizi ve SSS’nizi kendi sistemlerinizden okuyun; sipariş ya da CRM sisteminizden ziyaretçiye yanıt verin.',
+    docs: 'API belgeleri',
+    planOnly:
+      'API, Kurumsal planda. Planınızı yükselttiğinizde anahtarlarınızı buradan oluşturursunuz.',
+    name: 'Anahtarın adı',
+    namePlaceholder: 'Örn. Sipariş sistemi',
+    write: 'Yazabilsin (yanıt, durum, SSS)',
+    create: 'Anahtar oluştur',
+    readWrite: 'Okuma ve yazma',
+    readOnly: 'Yalnızca okuma',
+    revokedAt: '{{time}} tarihinde iptal edildi',
+    lastUsed: 'Son kullanım {{time}}',
+    neverUsed: 'Henüz kullanılmadı',
+    revoke: 'İptal et',
+    secretTitle: 'Anahtarınız hazır',
+    secretHelp:
+      'Anahtarı şimdi kopyalayıp güvenli bir yerde saklayın. Bu pencere kapandıktan sonra bir daha gösterilmez; kaybederseniz yenisini oluşturursunuz.',
+    copy: 'Kopyala',
+    copied: 'Anahtar kopyalandı',
+    done: 'Kopyaladım',
+    revokeTitle: 'Anahtar iptal edilsin mi?',
+    revokeMessage:
+      '“{{name}}” anahtarını kullanan sistemler hemen erişimini kaybeder. Bu işlem geri alınamaz.',
+    revoked: 'Anahtar iptal edildi',
+    error: 'İşlem tamamlanamadı, lütfen tekrar deneyin'
+  },
   audit: {
     actions: {
       LOGIN_FAILED_LOCKED: 'Hesap Geçici Olarak Kilitlendi',

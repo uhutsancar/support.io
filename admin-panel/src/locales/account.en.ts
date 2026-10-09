@@ -540,6 +540,34 @@ export default {
       hint: 'Shortcuts do not work while you type in a text box; press Esc to leave it.'
     }
   },
+  apiKeys: {
+    title: 'API keys',
+    description:
+      'Read your conversations, visitors and FAQ from your own systems, and answer visitors from your order system or CRM.',
+    docs: 'API documentation',
+    planOnly:
+      'The API is part of the Enterprise plan. Once you upgrade, you create your keys here.',
+    name: 'Key name',
+    namePlaceholder: 'e.g. Order system',
+    write: 'Can write (replies, status, FAQ)',
+    create: 'Create key',
+    readWrite: 'Read and write',
+    readOnly: 'Read only',
+    revokedAt: 'Revoked on {{time}}',
+    lastUsed: 'Last used {{time}}',
+    neverUsed: 'Not used yet',
+    revoke: 'Revoke',
+    secretTitle: 'Your key is ready',
+    secretHelp:
+      'Copy the key now and keep it somewhere safe. It is not shown again once this window closes; if you lose it, create a new one.',
+    copy: 'Copy',
+    copied: 'Key copied',
+    done: 'I have copied it',
+    revokeTitle: 'Revoke this key?',
+    revokeMessage: 'Systems using “{{name}}” lose access at once. This cannot be undone.',
+    revoked: 'Key revoked',
+    error: 'That did not work, please try again'
+  },
   audit: {
     actions: {
       LOGIN_FAILED_LOCKED: 'Account Temporarily Locked',

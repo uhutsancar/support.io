@@ -1896,7 +1896,13 @@ export default {
       commands: 'Koddan kontrol',
       privacy: 'Gizlilik metniniz',
       webhooks: 'Webhook',
+      api: 'API',
       help: 'Sorun giderme'
+    },
+    api: {
+      title: 'API ile her şeyi kendi sisteminizden yönetin',
+      desc: 'Konuşmaları ve ziyaretçileri okuyun, sipariş sisteminizden ziyaretçiye yanıt verin, SSS’nizi kendi kaynağınızdan güncel tutun. Anahtarınızı Ayarlar → API anahtarları bölümünden oluşturun. Kurumsal planda.',
+      cta: 'API belgelerini açın'
     },
     webhooks: {
       title: 'Webhook ile kendi sisteminize bağlayın',
@@ -2139,6 +2145,11 @@ export default {
         name: 'Entegrasyonlar',
         benefit:
           'Yeni konuşmaları Slack’e ve Telegram’a gönderin, kendi sistemlerinize webhook ile bağlayın.'
+      },
+      api: {
+        name: 'API erişimi',
+        benefit:
+          'Konuşmaları ve SSS’yi kendi sistemlerinizden okuyun, sipariş sisteminizden ziyaretçiye yanıt verin.'
       }
     }
   },

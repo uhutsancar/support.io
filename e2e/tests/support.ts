@@ -102,13 +102,16 @@ export function paidSubscription(
     status = 'active',
     eventType = 'subscription.created',
     occurredAt = Date.now(),
-    periodEnd = Date.now() + 30 * 24 * 3600 * 1000
+    periodEnd = Date.now() + 30 * 24 * 3600 * 1000,
+    price = shared('PADDLE_PRICE_PRO', 'pri_local_pro')
   }: {
     id?: string;
     status?: string;
     eventType?: string;
     occurredAt?: number;
     periodEnd?: number;
+    /** The plan's price; Pro unless given. */
+    price?: string;
   } = {}
 ) {
   const jwtSecret = shared('JWT_SECRET');
@@ -127,7 +130,7 @@ export function paidSubscription(
       id,
       status,
       customer_id: `ctm_${id}`,
-      items: [{ price: { id: shared('PADDLE_PRICE_PRO', 'pri_local_pro') }, quantity: 1 }],
+      items: [{ price: { id: price }, quantity: 1 }],
       current_billing_period: {
         starts_at: new Date(periodEnd - 30 * 24 * 3600 * 1000).toISOString(),
         ends_at: new Date(periodEnd).toISOString()

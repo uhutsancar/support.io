@@ -1890,7 +1890,13 @@ export default {
       privacy: 'Your privacy notice',
       commands: 'Control from code',
       webhooks: 'Webhooks',
+      api: 'API',
       help: 'Troubleshooting'
+    },
+    api: {
+      title: 'Run it all from your own systems with the API',
+      desc: 'Read conversations and visitors, answer visitors from your order system, and keep your FAQ in step with your own source. Create your key under Settings → API keys. On the Enterprise plan.',
+      cta: 'Open the API documentation'
     },
     webhooks: {
       title: 'Connect your own systems with webhooks',
@@ -2134,6 +2140,11 @@ export default {
         name: 'Integrations',
         benefit:
           'Send new conversations to Slack and Telegram, and connect your own systems with webhooks.'
+      },
+      api: {
+        name: 'API access',
+        benefit:
+          'Read conversations and FAQ from your own systems, and answer visitors from your order system.'
       }
     }
   },

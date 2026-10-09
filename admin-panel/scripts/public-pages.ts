@@ -92,6 +92,11 @@ const pages: Array<{ tr: string; en: string; kind: string; meta: { tr: Meta; en:
     meta: meta('docsPage.meta.title', 'docsPage.meta.description')
   },
   {
+    ...pair((x) => x.apiDocs),
+    kind: 'docs',
+    meta: meta('apiDocs.meta.title', 'apiDocs.meta.description')
+  },
+  {
     ...pair((x) => x.about),
     kind: 'about',
     meta: meta('aboutPage.meta.title', 'aboutPage.meta.description')

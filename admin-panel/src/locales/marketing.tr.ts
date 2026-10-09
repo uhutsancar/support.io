@@ -904,6 +904,7 @@ export default {
       audit: 'Denetim kayıtları',
       security: 'Ekip için zorunlu iki adımlı doğrulama',
       integrations: 'Slack, Telegram ve webhook bildirimleri',
+      api: 'Konuşma, ziyaretçi ve SSS için API',
       noBranding: 'Balonda “Support.io” yazısı olmadan'
     }
   },

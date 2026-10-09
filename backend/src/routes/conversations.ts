@@ -11,7 +11,6 @@
 //     persistent update happens in services/slaSweeper.ts, so opening an inbox
 //     no longer issues fifty UPDATEs.
 
-import { announceConversationEnded } from '../services/conversationEnd';
 import { takeOver } from '../services/assistant';
 import express from 'express';
 import Conversation from '../models/Conversation';
@@ -23,6 +22,7 @@ import { auth } from '../middleware/auth';
 import { checkPermission, hasPermission, seatPermits, SEAT_SUSPENDED } from '../middleware/rbac';
 import { withTransaction } from '../db/pool';
 import { ensureTags, tagName } from './conversationTags';
+import { setConversationStatus } from '../services/conversationStatus';
 import events from '../events';
 import {
   latestMessagesByConversation,
@@ -33,12 +33,7 @@ import { listConversations, conversationCounts, messageMatchesForSearch } from '
 import { updateAgentLoad } from '../services/autoAssignment';
 import { deleteConversations } from '../services/dataRetention';
 import { refreshSla, refreshSlaAll } from '../services/conversationSla';
-import {
-  recordAgentAssignment,
-  recordAgentResolution,
-  recordDepartmentChange,
-  recordResolution
-} from '../services/departmentStats';
+import { recordAgentAssignment, recordDepartmentChange } from '../services/departmentStats';
 import {
   CONVERSATION_STATUSES,
   PRIORITIES,
@@ -537,55 +532,18 @@ router.post(
   })
 );
 
-/**
- * Moves a conversation to a new status with everything that follows from it:
- * the agent's load, the resolution figures, the visitor's end-of-chat card
- * and the audit entry. The single route and the bulk one both come here.
- */
+/** The panel's status change: services/conversationStatus.ts, with the caller as the actor. */
 async function changeStatus(
   req: Request,
   conversation: Doc<ConversationDoc>,
   status: ConversationDoc['status']
 ): Promise<Doc<ConversationDoc>> {
-  await conversation.populate('department');
-
-  const previousStatus = conversation.status;
-  const wasActive = isActiveConversationStatus(previousStatus);
-  const willBeActive = isActiveConversationStatus(status);
-
-  // An agent's load follows the conversation in and out of the active set.
-  if (conversation.assignedAgent && wasActive !== willBeActive) {
-    await updateAgentLoad(conversation.assignedAgent, willBeActive ? 1 : -1);
-  }
-
-  conversation.status = status;
-
-  if (status === 'closed') {
-    conversation.closedAt = new Date();
-  } else if (status === 'resolved') {
-    conversation.resolvedAt = new Date();
-    refreshSla(conversation);
-    if (wasActive) {
-      // The same rollup the socket handler performs; see
-      // services/departmentStats.ts for why it is not written out twice.
-      await recordResolution(conversation);
-      await recordAgentResolution(conversation.assignedAgent);
-    }
-  }
-
-  await conversation.save();
-  await conversation.populate('assignedAgent', AGENT_FIELDS);
-
-  const notifier = notifyAdmin(req);
-  notifier?.conversationUpdated(conversation, conversation);
-  if (status === 'resolved') notifier?.conversationResolved(conversation, conversation);
-  if (wasActive && (status === 'resolved' || status === 'closed')) {
-    await announceConversationEnded(req.app.get('io'), conversation);
-  }
-
-  emitStatusEvent(req, conversation, previousStatus, status);
-
-  return conversation;
+  return setConversationStatus(ioFrom(req), conversation, status, {
+    organizationId: orgId(req),
+    userId: req.user?._id ? String(req.user._id) : null,
+    ip: req.ip,
+    ua: req.get('user-agent')
+  });
 }
 
 // -------------------------------------------------------------------- status
@@ -603,37 +561,6 @@ router.put(
     res.json({ conversation: await changeStatus(req, conversation, status) });
   })
 );
-
-/**
- * Records a close or a reopen in the audit trail.
- *
- * Isolated from the request it follows: the status change is already committed,
- * so a failure here must not turn a successful write into an error response.
- * The reason is logged rather than discarded.
- */
-function emitStatusEvent(
-  req: Request,
-  conversation: Doc<ConversationDoc>,
-  previousStatus: string,
-  status: string
-): void {
-  const name =
-    status === 'closed' ? 'ticket.closed' : previousStatus === 'closed' ? 'ticket.reopened' : null;
-  if (!name) return;
-
-  try {
-    events.emit(name, {
-      organizationId: orgId(req),
-      userId: req.user?._id ?? null,
-      entityId: conversation._id,
-      metadata: { previousStatus },
-      ip: req.ip,
-      ua: req.get('user-agent')
-    });
-  } catch (error) {
-    console.error(`[conversations] could not emit ${name}`, error);
-  }
-}
 
 // --------------------------------------------------------------------- tags
 

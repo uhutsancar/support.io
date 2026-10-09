@@ -57,6 +57,7 @@ export function marketingRoutes(language: 'tr' | 'en') {
     /** A feature's page; the AI assistant has its own page. */
     feature: (id: string) => (id === 'ai-assistant' ? ai : `${features}/${id}`),
     docs: en ? '/en/documentation' : '/dokumantasyon',
+    apiDocs: en ? '/en/documentation/api' : '/dokumantasyon/api',
     about: en ? '/en/about' : '/hakkimizda',
     login: langPrefix + '/login',
     register: langPrefix + '/register',

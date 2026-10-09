@@ -881,6 +881,7 @@ export default {
       audit: 'Audit logs',
       security: 'Two-step verification required for the team',
       integrations: 'Slack, Telegram and webhook notifications',
+      api: 'API for conversations, visitors and FAQ',
       noBranding: 'No “Support.io” mark in the bubble'
     }
   },

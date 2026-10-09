@@ -22,6 +22,8 @@ import conversationTagRoutes from './routes/conversationTags';
 import pushRoutes from './routes/push';
 import { helpPages, helpSettings } from './routes/helpCenter';
 import integrationRoutes from './routes/integrations';
+import apiKeyRoutes from './routes/apiKeys';
+import publicApiRoutes from './routes/publicApi';
 import { integrationOutbox } from './services/integrations';
 import { pushOutbox, usePushRealtime } from './services/push';
 import siteRoutes from './routes/sites';
@@ -280,6 +282,9 @@ app.use('/api/conversation-tags', conversationTagRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/sites', helpSettings);
 app.use('/api/integrations', integrationRoutes);
+app.use('/api/api-keys', apiKeyRoutes);
+// The public API (PRD-12): its own key, its own limit, no session.
+app.use('/api/v1', publicApiRoutes);
 app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the

@@ -21,7 +21,9 @@ export const FEATURES = [
   // Requiring two-step verification of every member (SEC-04).
   'security',
   // Slack, Telegram and outgoing webhooks (PRD-11).
-  'integrations'
+  'integrations',
+  // The public REST API with keys (PRD-12): Enterprise.
+  'api'
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 

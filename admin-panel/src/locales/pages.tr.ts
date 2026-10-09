@@ -654,5 +654,69 @@ export default {
         }
       ]
     }
+  },
+  apiDocs: {
+    meta: {
+      title: 'API belgeleri',
+      description:
+        'Support.io API: konuşmaları, mesajları, ziyaretçileri ve SSS’yi kendi sistemlerinizden okuyun, ziyaretçilere yanıt verin.'
+    },
+    eyebrow: 'Geliştiriciler',
+    title: 'Support.io API',
+    description:
+      'Sipariş sisteminiz, CRM’iniz ya da kendi panonuz Support.io ile konuşsun: konuşmaları okuyun, ziyaretçiye yanıt verin, SSS’nizi kendi kaynağınızdan güncel tutun.',
+    authTitle: 'Kimlik doğrulama',
+    auth: 'Her istek, Ayarlar → API anahtarları bölümünden oluşturduğunuz anahtarla yapılır. Anahtarı Authorization başlığında Bearer olarak gönderin. Anahtar yalnızca kendi çalışma alanınızın verisini açar; sunucunuzda saklayın, tarayıcıya ya da uygulama koduna koymayın.',
+    rulesTitle: 'Kurallar',
+    rules: {
+      scopes:
+        'Okuma yetkili anahtar yalnızca GET isteklerini yapar; yanıt yazmak, konuşma durumunu ve SSS’yi değiştirmek için yazma yetkisi gerekir.',
+      limit:
+        'Her anahtar dakikada 300 istek yapabilir. Sınırı aşan istek 429 yanıtı alır; RateLimit başlıkları ne zaman yeniden deneyeceğinizi söyler.',
+      paging:
+        'Listeler en fazla 100 kayıt döndürür. Konuşma listesinin devamı için yanıttaki nextCursor değerini cursor parametresiyle gönderin.',
+      errors:
+        'Hatalar her zaman aynı biçimdedir: { "error": "…", "code": "…" }. 401 geçersiz ya da iptal edilmiş anahtar, 403 yetki ya da plan, 404 bu çalışma alanında olmayan kayıt demektir.',
+      privacy: 'Ziyaretçilerin IP adresi ve ekibinizin iç notları API’den dönmez.'
+    },
+    endpointsTitle: 'Uç noktalar',
+    loadError:
+      'Uç nokta listesi şu anda yüklenemedi. Sayfayı yenileyin ya da openapi.json dosyasını doğrudan açın.',
+    tags: {
+      Sites: 'Siteler',
+      Conversations: 'Konuşmalar',
+      Messages: 'Mesajlar',
+      Visitors: 'Ziyaretçiler',
+      FAQ: 'SSS'
+    },
+    ops: {
+      listSites: 'Çalışma alanınızdaki siteler.',
+      listConversations: 'Konuşmalar, son hareketi en yeni olan önce.',
+      getConversation: 'Tek bir konuşma: ziyaretçi, durum, etiketler, değerlendirme.',
+      updateConversation: 'Konuşmayı kapatın, yeniden açın ya da etiketleyin.',
+      listMessages: 'Konuşmanın mesajları, en eskisi önce.',
+      createMessage:
+        'Ziyaretçiye yanıt verin. Yanıt ekibinizden gelen mesaj olarak görünür ve asistan bu konuşmada susar.',
+      listVisitors: 'Sitenin ziyaretçileri, en son etkin olan önce.',
+      listFaqs: 'Sitenin SSS kayıtları.',
+      createFaq: 'SSS kaydı ekleyin.',
+      updateFaq: 'SSS kaydını değiştirin.',
+      deleteFaq: 'SSS kaydını silin.'
+    },
+    params: {
+      id: 'Kaydın kimliği',
+      siteId: 'Site kimliği',
+      status: 'Yalnızca bu durumdakiler',
+      updatedSince: 'Son mesajı bu andan sonra olanlar (ISO 8601)',
+      limit: 'Sayfa boyutu',
+      cursor: 'Önceki sayfanın nextCursor değeri',
+      after: 'Yalnızca bu mesajdan sonrakiler'
+    },
+    required: 'zorunlu',
+    body: 'Gövde:',
+    answers: 'Yanıtlar:',
+    openapiTitle: 'OpenAPI tanımı',
+    openapi:
+      'Tüm uç noktalar, alanlar ve hata kodları OpenAPI 3.1 biçiminde de yayımlanır. Postman, Insomnia ya da kendi istemci üreticinize doğrudan aktarabilirsiniz.'
   }
 };

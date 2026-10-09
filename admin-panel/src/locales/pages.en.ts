@@ -643,5 +643,69 @@ export default {
         }
       ]
     }
+  },
+  apiDocs: {
+    meta: {
+      title: 'API documentation',
+      description:
+        'The Support.io API: read conversations, messages, visitors and FAQ from your own systems, and reply to visitors.'
+    },
+    eyebrow: 'Developers',
+    title: 'Support.io API',
+    description:
+      'Let your order system, CRM or own dashboard talk to Support.io: read conversations, reply to visitors and keep your FAQ in step with your own source.',
+    authTitle: 'Authentication',
+    auth: 'Every request uses a key you create under Settings → API keys. Send it in the Authorization header as a Bearer token. A key opens only your own workspace’s data; keep it on your server, never in a browser or app bundle.',
+    rulesTitle: 'Rules',
+    rules: {
+      scopes:
+        'A read key makes GET requests only; replying, changing a conversation’s status and editing the FAQ need the write scope.',
+      limit:
+        'Each key can make 300 requests a minute. Beyond that a request gets 429, and the RateLimit headers say when to try again.',
+      paging:
+        'Lists return at most 100 records. For the next page of conversations, send the nextCursor value from the response as cursor.',
+      errors:
+        'Errors always look the same: { "error": "…", "code": "…" }. 401 means an invalid or revoked key, 403 a missing scope or plan, 404 a record that is not in this workspace.',
+      privacy: 'Visitors’ IP addresses and your team’s internal notes are never returned.'
+    },
+    endpointsTitle: 'Endpoints',
+    loadError:
+      'The endpoint list could not be loaded just now. Reload the page or open openapi.json directly.',
+    tags: {
+      Sites: 'Sites',
+      Conversations: 'Conversations',
+      Messages: 'Messages',
+      Visitors: 'Visitors',
+      FAQ: 'FAQ'
+    },
+    ops: {
+      listSites: 'The sites in your workspace.',
+      listConversations: 'Conversations, most recent activity first.',
+      getConversation: 'One conversation: visitor, status, tags, rating.',
+      updateConversation: 'Close, reopen or tag a conversation.',
+      listMessages: 'A conversation’s messages, oldest first.',
+      createMessage:
+        'Reply to the visitor. The reply appears as a message from your team, and the assistant stays quiet in this conversation.',
+      listVisitors: 'A site’s visitors, most recently active first.',
+      listFaqs: 'A site’s FAQ entries.',
+      createFaq: 'Add an FAQ entry.',
+      updateFaq: 'Change an FAQ entry.',
+      deleteFaq: 'Delete an FAQ entry.'
+    },
+    params: {
+      id: 'The record’s ID',
+      siteId: 'The site’s ID',
+      status: 'Only this status',
+      updatedSince: 'Last message at or after this time (ISO 8601)',
+      limit: 'Page size',
+      cursor: 'nextCursor of the previous page',
+      after: 'Only messages after this one'
+    },
+    required: 'required',
+    body: 'Body:',
+    answers: 'Responses:',
+    openapiTitle: 'OpenAPI definition',
+    openapi:
+      'Every endpoint, field and error code is also published in OpenAPI 3.1. Import it straight into Postman, Insomnia or your own client generator.'
   }
 };

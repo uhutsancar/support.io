@@ -15,6 +15,7 @@ const AiAssistant = lazy(() => import('./pages/AiAssistant'));
 const Legal = lazy(() => import('./pages/Legal'));
 const About = lazy(() => import('./pages/About'));
 const Docs = lazy(() => import('./pages/Docs'));
+const ApiDocs = lazy(() => import('./pages/ApiDocs'));
 const Login = lazy(() => import('./pages/Login'));
 const AcceptInvitation = lazy(() => import('./pages/AcceptInvitation'));
 const ForgotPassword = lazy(() =>
@@ -172,6 +173,7 @@ function App() {
                     <Route path="/erisilebilirlik" element={<Legal kind="accessibility" />} />
                     <Route path="/yapay-zeka-kullanimi" element={<Legal kind="aiUse" />} />
                     <Route path="/dokumantasyon" element={<Docs />} />
+                    <Route path="/dokumantasyon/api" element={<ApiDocs />} />
                     <Route path="/hakkimizda" element={<About />} />
                     <Route
                       path="/login"
@@ -214,6 +216,7 @@ function App() {
                     <Route path="/en/accessibility" element={<Legal kind="accessibility" />} />
                     <Route path="/en/ai-use" element={<Legal kind="aiUse" />} />
                     <Route path="/en/documentation" element={<Docs />} />
+                    <Route path="/en/documentation/api" element={<ApiDocs />} />
                     <Route path="/en/about" element={<About />} />
                     <Route
                       path="/en/login"

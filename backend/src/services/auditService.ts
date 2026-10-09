@@ -120,6 +120,9 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   'integration.created': { action: 'WEBHOOK_CREATED', entityType: 'integration' },
   'integration.updated': { action: 'WEBHOOK_UPDATED', entityType: 'integration' },
   'integration.deleted': { action: 'WEBHOOK_DELETED', entityType: 'integration' },
+  // Public API keys (PRD-12): the name and scopes, never the key.
+  'api_key.created': { action: 'API_KEY_CREATED', entityType: 'api_key' },
+  'api_key.revoked': { action: 'API_KEY_REVOKED', entityType: 'api_key' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // Account security. The metadata never carries a token or a password.
   'auth.email.verified': {
