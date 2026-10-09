@@ -12,5 +12,7 @@ declare module 'axios' {
     cache?: boolean;
     /** The cache key this request was resolved under, set by the interceptor. */
     __cacheKey?: string;
+    /** Sent again once after the session was renewed under it (services/http.ts). */
+    __renewed?: boolean;
   }
 }

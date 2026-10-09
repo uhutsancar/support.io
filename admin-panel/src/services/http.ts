@@ -95,6 +95,22 @@ api.interceptors.response.use(
       /^\/auth\/(login|register|verify-email|resend-verification-link|confirm-email-change)/.test(
         url
       );
+    // A request sent with the session a password change or a second-step set-up
+    // has just replaced: the browser already holds the new one (the CSRF
+    // cookie changed with it), so the request is sent again once instead of
+    // signing the person out in the middle of what they were doing.
+    const sentWith = error.config?.headers?.[CSRF_HEADER];
+    const current = csrfToken();
+    if (
+      error.response?.status === 401 &&
+      !signingIn &&
+      sentWith &&
+      current &&
+      sentWith !== current &&
+      !error.config.__renewed
+    ) {
+      return api.request({ ...error.config, __renewed: true });
+    }
     if (error.response?.status === 401 && !signingIn) {
       // The session is gone: drop everything held for it before leaving, or the
       // login page would be served this tenant's cached data on the way back.
