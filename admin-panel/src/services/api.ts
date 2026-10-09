@@ -84,6 +84,8 @@ export const isPendingSecondStep = (
 export interface AuthConfig {
   turnstileSiteKey: string | null;
   passwordMinLength: number;
+  /** "Continue with Google" is offered (PRD-14). */
+  googleSignIn?: boolean;
 }
 
 /** A site's chat behaviour (backend services/chatSettings.ts). */
@@ -127,6 +129,10 @@ export interface LoginPayload {
 
 export const authAPI = {
   config: () => api.get<AuthConfig>('/auth/config'),
+  /** Where to send the browser to connect a Google account (PRD-14). */
+  googleLink: (lang: string) => api.post<{ url: string }>('/auth/google/link', { lang }),
+  // The account read (/auth/me) is cached; disconnecting must not show the old one.
+  googleUnlink: mutates('/auth/me', () => api.delete('/auth/google')),
   // E-mail first: the answer is the same for every address and starts no
   // session; the link in the mail does (verifyEmail below).
   register: (data: RegisterPayload) => api.post<{ verificationSent: true }>('/auth/register', data),

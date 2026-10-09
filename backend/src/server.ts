@@ -16,6 +16,7 @@ import connectDB from './config/database';
 import { isConnected } from './config/database';
 import SocketHandler from './socket';
 import authRoutes from './routes/auth';
+import googleAuthRoutes, { standInGoogle } from './routes/googleAuth';
 import accountRoutes from './routes/account';
 import savedReplyRoutes from './routes/savedReplies';
 import conversationTagRoutes from './routes/conversationTags';
@@ -250,6 +251,8 @@ app.post('/api/auth/login', loginLimiter, loginAccountLimiter);
 app.use('/api/auth/register', registerLimiter);
 app.use('/api', apiLimiter);
 
+// Sign-in with Google (PRD-14) before the rest of /api/auth.
+app.use('/api/auth/google', googleAuthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', accountRoutes);
 app.use('/api/sites', siteRoutes);
@@ -302,6 +305,12 @@ if (!isProduction && process.env.INTEGRATION_TRANSPORT === 'memory') {
   app.get('/api/dev/integration-outbox', auth, (req: Request, res: Response) => {
     res.json({ calls: integrationOutbox(String(req.user.organizationId)) });
   });
+}
+
+// The stand-in for Google's account chooser (GOOGLE_SIGN_IN_TRANSPORT=memory):
+// sign-in with Google without Google, for the browser tests. Never in production.
+if (!isProduction && process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory') {
+  app.use('/api/dev/google', standInGoogle);
 }
 
 // The development push outbox (PUSH_TRANSPORT=memory): what would have been

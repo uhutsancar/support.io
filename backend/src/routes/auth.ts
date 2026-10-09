@@ -48,6 +48,7 @@ import { mfaEnabled, recoveryCodesLeft, verifySecondStep } from '../services/mfa
 import { turnstileSiteKey, verifyTurnstile } from '../services/turnstile';
 import { startTrial, trialRunning } from '../services/trial';
 import { sendActivation } from '../services/activation';
+import { googleConfig } from '../services/googleSignIn';
 import { getPlan } from '../services/entitlements';
 import { subscriptionSummary } from '../services/billing';
 import type { PlanType } from '../domain';
@@ -117,6 +118,8 @@ export function accountResponse(
     organizationId: user.organizationId ?? null,
     userType,
     mfaEnabled: mfaEnabled(user),
+    // The Google account it signs in with (PRD-14); only its address is shown.
+    google: user.googleSub ? { email: user.googleEmail } : null,
     // Over the plan's seats after a downgrade (BIL-04): the panel shows a
     // read-only notice and hides the reply box.
     seatSuspended: Boolean(user.seatSuspendedAt),
@@ -179,7 +182,7 @@ async function sendVerification(
 }
 
 /** The active account behind an address, in either table. */
-async function accountByEmail(
+export async function accountByEmail(
   email: string
 ): Promise<{ user: AuthenticatedUser; userType: UserType } | null> {
   const user = await User.findOne({ email, isActive: true });
@@ -226,8 +229,35 @@ async function organizationForHost(host: string | undefined): Promise<unknown> {
   }
 }
 
-/** Starts a session for an account that has passed every step. */
-async function completeSignIn(
+/**
+ * A new owner with a workspace of their own, on the free trial of the paid
+ * plan (PRD-15). The address is unproven unless `fields` says otherwise.
+ */
+export async function createWorkspace(fields: {
+  email: string;
+  password: string;
+  name: string;
+  emailVerifiedAt?: Date;
+  googleSub?: string;
+  googleEmail?: string;
+}) {
+  const organization = new Organization({
+    name: `${fields.name}'s Organization`,
+    planType: 'FREE'
+  });
+  await organization.save();
+  const user = await User.create({ ...fields, role: 'owner', organizationId: organization._id });
+  organization.ownerUserId = user._id;
+  await organization.save();
+  await startTrial(String(organization._id));
+  return user;
+}
+
+/**
+ * Starts a session for an account that has passed every step: the session
+ * cookie is set and the account, as the panel reads it, is returned.
+ */
+export async function openSession(
   req: Request,
   res: Response,
   user: AuthenticatedUser,
@@ -250,10 +280,20 @@ async function completeSignIn(
     ? await Organization.findOne({ _id: user.organizationId, isActive: true })
     : null;
   const plan = organization ? await getPlan(String(organization._id)) : undefined;
-  res.json({
+  return {
     user: accountResponse(user, userType, organization, plan),
     csrfToken: startSession(res, signSession(sessionClaims(user, userType), SESSION_TTL_SECONDS))
-  });
+  };
+}
+
+async function completeSignIn(
+  req: Request,
+  res: Response,
+  user: AuthenticatedUser,
+  userType: UserType,
+  how: Record<string, unknown> = {}
+) {
+  res.json(await openSession(req, res, user, userType, how));
 }
 
 /**
@@ -263,7 +303,8 @@ async function completeSignIn(
 router.get('/config', (_req: Request, res: Response) => {
   res.set('Cache-Control', 'public, max-age=300').json({
     turnstileSiteKey: turnstileSiteKey() || null,
-    passwordMinLength: PASSWORD_MIN_LENGTH
+    passwordMinLength: PASSWORD_MIN_LENGTH,
+    googleSignIn: Boolean(googleConfig())
   });
 });
 
@@ -305,19 +346,7 @@ router.post(
         locale: mailLocale(req)
       });
     } else {
-      const organization = new Organization({ name: `${name}'s Organization`, planType: 'FREE' });
-      await organization.save();
-      const user = await User.create({
-        email,
-        password,
-        name,
-        role: 'owner',
-        organizationId: organization._id
-      });
-      organization.ownerUserId = user._id;
-      await organization.save();
-      // The free trial of the paid plan starts with the workspace (PRD-15).
-      await startTrial(String(organization._id));
+      const user = await createWorkspace({ email, password, name });
       await sendVerification(req, user, 'user');
     }
 
@@ -671,6 +700,9 @@ router.delete(
     req.user.totpSecretEnc = null;
     req.user.totpEnabledAt = null;
     req.user.recoveryCodes = [];
+    // The Google account is released too: it may sign up again, afresh.
+    req.user.googleSub = null;
+    req.user.googleEmail = null;
     await req.user.save();
     endSession(res);
     res.json({ message: 'Account deleted successfully' });

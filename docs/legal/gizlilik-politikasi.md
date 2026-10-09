@@ -80,6 +80,7 @@ liste: [Alt İşleyenler](/alt-isleyenler).
 | [SAHİP: Cloudflare R2 / Amazon S3] | Dosya ve şifreli yedek depolama | Gönderilen dosyalar, şifreli veritabanı yedeği | [SAHİP] |
 | [SAHİP: e-posta sağlayıcı] | E-posta gönderimi | Ad, e-posta, e-posta içeriği | [SAHİP] |
 | Google LLC (Gemini API) | Yapay zekâ asistanının yanıtı (yalnız işletme açarsa) | Gizlenmiş ziyaretçi sorusu, herkese açık SSS içeriği | ABD / küresel |
+| Google LLC (Google ile giriş) [taslak — hukukçu onayı] | Kullanıcı “Google ile devam et”i seçerse kimlik doğrulama | Google’ın bize ilettiği hesap kimliği, e-posta adresi ve ad; şifre bize gelmez | ABD / küresel |
 | Paddle.com Market Ltd. | Ödeme, fatura, vergi (satıcı) | Fatura bilgileri, e-posta, ülke | Birleşik Krallık / küresel |
 | [SAHİP: hata izleme, kurulursa] | Hata kaydı | Teknik veri (e-posta, çerez, IP temizlenmiş) | AB |
 
@@ -221,6 +222,7 @@ providers below, and only as far as the service needs. Current list:
 | [OWNER: Cloudflare R2 / Amazon S3] | File and encrypted backup storage | Files sent, encrypted database backup | [OWNER] |
 | [OWNER: e-mail provider] | Sending e-mail | Name, e-mail, e-mail content | [OWNER] |
 | Google LLC (Gemini API) | The AI assistant's answer (only if the business turns it on) | Masked visitor question, public FAQ content | USA / global |
+| Google LLC (Sign in with Google) [draft — lawyer approval] | Authentication, when the user chooses “Continue with Google” | The account id, e-mail address and name Google passes to us; no password reaches us | USA / global |
 | Paddle.com Market Ltd. | Payment, invoicing, tax (merchant of record) | Billing details, e-mail, country | UK / global |
 | [OWNER: error tracking, if set up] | Error reports | Technical data (e-mail, cookies, IP removed) | EU |
 

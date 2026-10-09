@@ -17,7 +17,7 @@
 
 | Tablo | Kişisel veri | Amaç | Hukuki sebep | Süre | Silme |
 |---|---|---|---|---|---|
-| `users` | ad, e-posta, şifre özeti (bcrypt), profil fotoğrafı, iki adımlı sır (şifreli), kurtarma kodu özetleri, tercih, son durum | Hesap, giriş, güvenlik | Sözleşme | Hesap silinene kadar; doğrulanmamış kayıt 7 gün | Hesap silmede anonimleştirilir (ad, e-posta, şifre, 2FA silinir), oturumlar kapanır |
+| `users` | ad, e-posta, şifre özeti (bcrypt), profil fotoğrafı, iki adımlı sır (şifreli), kurtarma kodu özetleri, bağlı Google hesabının kimliği ve e-postası (PRD-14, kullanıcı bağlarsa), tercih, son durum | Hesap, giriş, güvenlik | Sözleşme | Hesap silinene kadar; doğrulanmamış kayıt 7 gün | Hesap silmede anonimleştirilir (ad, e-posta, şifre, 2FA, Google bağlantısı silinir), oturumlar kapanır |
 | `teams` | `users` ile aynı + telefon, kısa tanıtım, beceriler | Ekip üyesi hesabı | Sözleşme | Üye çıkarılana / hesap silinene kadar | `users` ile aynı; telefon ve tanıtım da silinir |
 | `invitations` | davet edilen e-posta, rol | Ekip daveti | Sözleşme | Kabul, iptal ya da süre dolumundan 90 gün sonra | Saatlik tarama siler; organizasyonla birlikte silinir |
 | `auth_tokens` | e-posta bağlantılarının özeti, (e-posta değişikliğinde) yeni adres | Doğrulama, şifre sıfırlama, e-posta değişikliği | Sözleşme | Süre dolumundan 7 gün sonra | Saatlik tarama |

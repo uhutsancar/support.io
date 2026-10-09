@@ -150,7 +150,8 @@ export const mail = {
     to: string,
     args: {
       name: string;
-      event: 'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked';
+      event:
+        'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked' | 'google_linked';
       link: string;
       locale?: MailLocale;
     }

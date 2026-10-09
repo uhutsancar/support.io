@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useMarketingRoutes } from '../components/marketing/Shell';
 import AuthLayout, { Field } from '../components/marketing/AuthLayout';
+import GoogleButton from '../components/auth/GoogleButton';
 import Turnstile from '../components/marketing/Turnstile';
 import { Button } from '../components/marketing/kit';
 import { errorMessage } from '../hooks/useAsync';
@@ -29,6 +30,7 @@ import { authAPI } from '../services/api';
 
 const Register = () => {
   const marketing = useMarketingRoutes();
+  const [google, setGoogle] = useState(false);
   const { t, i18n } = useTranslation();
   const { language } = useLanguage();
   const [name, setName] = useState('');
@@ -51,6 +53,7 @@ const Register = () => {
       .then((res) => {
         setSiteKey(res.data.turnstileSiteKey);
         setMinLength(res.data.passwordMinLength || 10);
+        setGoogle(Boolean(res.data.googleSignIn));
       })
       .catch(() => {
         /* the form still works; the server decides */
@@ -140,69 +143,72 @@ const Register = () => {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Field
-              label={t('register.name')}
-              type="text"
-              value={name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-              placeholder={t('register.namePlaceholder')}
-              autoComplete="name"
-              required
-            />
-            <Field
-              label={t('register.email')}
-              type="email"
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              placeholder={t('register.emailPlaceholder')}
-              autoComplete="email"
-              required
-            />
-            <Field
-              label={t('register.password')}
-              type="password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              placeholder={t('register.passwordPlaceholder')}
-              autoComplete="new-password"
-              hint={t('register.passwordHint')}
-              required
-              minLength={minLength}
-            />
-            {siteKey && (
-              <Turnstile
-                siteKey={siteKey}
-                language={language}
-                onToken={setCaptcha}
-                resetSignal={captchaReset}
+          <div className="space-y-5">
+            {google && <GoogleButton lang={language === 'en' ? 'en' : 'tr'} />}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <Field
+                label={t('register.name')}
+                type="text"
+                value={name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                placeholder={t('register.namePlaceholder')}
+                autoComplete="name"
+                required
               />
-            )}
-            <Button
-              type="submit"
-              size="lg"
-              disabled={loading || Boolean(siteKey && !captcha)}
-              className="w-full"
-            >
-              {loading ? t('common.loading') : t('register.registerButton')}
-            </Button>
-            <p className="text-[12.5px] leading-relaxed text-gray-500 dark:text-gray-400 text-center">
-              {t('account.register.trialNote')} {t('register.noCard')}{' '}
-              <Link
-                to={marketing.terms}
-                className="underline hover:text-gray-700 dark:hover:text-gray-200"
+              <Field
+                label={t('register.email')}
+                type="email"
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                placeholder={t('register.emailPlaceholder')}
+                autoComplete="email"
+                required
+              />
+              <Field
+                label={t('register.password')}
+                type="password"
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                placeholder={t('register.passwordPlaceholder')}
+                autoComplete="new-password"
+                hint={t('register.passwordHint')}
+                required
+                minLength={minLength}
+              />
+              {siteKey && (
+                <Turnstile
+                  siteKey={siteKey}
+                  language={language}
+                  onToken={setCaptcha}
+                  resetSignal={captchaReset}
+                />
+              )}
+              <Button
+                type="submit"
+                size="lg"
+                disabled={loading || Boolean(siteKey && !captcha)}
+                className="w-full"
               >
-                {t('legal.terms.title')}
-              </Link>
-              {' · '}
-              <Link
-                to={marketing.privacy}
-                className="underline hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                {t('legal.privacy.title')}
-              </Link>
-            </p>
-          </form>
+                {loading ? t('common.loading') : t('register.registerButton')}
+              </Button>
+              <p className="text-[12.5px] leading-relaxed text-gray-500 dark:text-gray-400 text-center">
+                {t('account.register.trialNote')} {t('register.noCard')}{' '}
+                <Link
+                  to={marketing.terms}
+                  className="underline hover:text-gray-700 dark:hover:text-gray-200"
+                >
+                  {t('legal.terms.title')}
+                </Link>
+                {' · '}
+                <Link
+                  to={marketing.privacy}
+                  className="underline hover:text-gray-700 dark:hover:text-gray-200"
+                >
+                  {t('legal.privacy.title')}
+                </Link>
+              </p>
+            </form>
+          </div>
         )}
       </AuthLayout>
     </>

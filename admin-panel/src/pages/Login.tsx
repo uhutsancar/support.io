@@ -11,18 +11,23 @@
  * açık hesap şifreden sonra uygulamadaki kodu (ya da bir kurtarma kodunu)
  * girer.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import AuthLayout, { Field } from '../components/marketing/AuthLayout';
+import GoogleButton, { useGoogleSignIn } from '../components/auth/GoogleButton';
+import { marketingRoutes } from '../lib/marketingPaths';
 import { Button } from '../components/marketing/kit';
 import { errorMessage } from '../hooks/useAsync';
 import { authAPI, isPendingSecondStep } from '../services/api';
 import type { AuthResponse } from '../services/api';
+
+/** What the API says when it sends the browser back from Google (PRD-14). */
+const GOOGLE_OUTCOMES = ['exists', 'failed', 'expired', 'cancelled', 'unavailable', 'disposable'];
 
 const errorCode = (error: unknown): string =>
   String((error as { response?: { data?: { code?: unknown } } })?.response?.data?.code || '');
@@ -39,6 +44,19 @@ const Login = () => {
   const [code, setCode] = useState('');
   const { login, loginSecondStep } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const google = useGoogleSignIn();
+  const googleOutcome = new URLSearchParams(location.search).get('google');
+  const marketing = marketingRoutes(language === 'en' ? 'en' : 'tr');
+
+  // Back from Google with two-step sign-in on: the pending sign-in arrives in
+  // the fragment, which no server ever sees, and is cleared from the address.
+  useEffect(() => {
+    const pending = /^#mfa=(.+)$/.exec(location.hash)?.[1];
+    if (!pending) return;
+    setMfaToken(decodeURIComponent(pending));
+    window.history.replaceState(null, '', location.pathname + location.search);
+  }, [location.hash, location.pathname, location.search]);
 
   const langPrefix = language === 'en' ? '/en' : '';
   const routes = {
@@ -179,52 +197,85 @@ const Login = () => {
             </div>
           </form>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {unverified && (
+          <div className="space-y-5">
+            {googleOutcome && GOOGLE_OUTCOMES.includes(googleOutcome) && (
               <div
                 role="alert"
-                className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-4 text-[14px] text-amber-900 dark:text-amber-200 space-y-3"
+                className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-4 text-[14px] text-amber-900 dark:text-amber-200"
               >
-                <p>{t('account.login.notVerified')}</p>
-                <button
-                  type="button"
-                  onClick={sendLink}
-                  className="font-semibold underline hover:no-underline"
-                >
-                  {t('account.login.sendLink')}
-                </button>
+                {t(`account.google.outcome.${googleOutcome}`)}
               </div>
             )}
-            <Field
-              label={t('login.email')}
-              type="email"
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              placeholder={t('login.emailPlaceholder')}
-              autoComplete="email"
-              required
-            />
-            <Field
-              label={t('login.password')}
-              type="password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              placeholder={t('login.passwordPlaceholder')}
-              autoComplete="current-password"
-              required
-            />
-            <div className="flex justify-end -mt-2">
-              <Link
-                to={langPrefix + '/forgot-password'}
-                className="text-[13px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                {t('login.forgotPassword')}
-              </Link>
-            </div>
-            <Button type="submit" size="lg" disabled={loading} className="w-full">
-              {loading ? t('common.loading') : t('login.loginButton')}
-            </Button>
-          </form>
+            {google && (
+              <GoogleButton
+                lang={language === 'en' ? 'en' : 'tr'}
+                note={
+                  <p className="text-[12.5px] leading-relaxed text-gray-500 dark:text-gray-400 text-center">
+                    {t('account.google.newAccountNote')}{' '}
+                    <Link
+                      to={marketing.terms}
+                      className="underline hover:text-gray-700 dark:hover:text-gray-200"
+                    >
+                      {t('legal.terms.title')}
+                    </Link>
+                    {' · '}
+                    <Link
+                      to={marketing.privacy}
+                      className="underline hover:text-gray-700 dark:hover:text-gray-200"
+                    >
+                      {t('legal.privacy.title')}
+                    </Link>
+                  </p>
+                }
+              />
+            )}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {unverified && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-4 text-[14px] text-amber-900 dark:text-amber-200 space-y-3"
+                >
+                  <p>{t('account.login.notVerified')}</p>
+                  <button
+                    type="button"
+                    onClick={sendLink}
+                    className="font-semibold underline hover:no-underline"
+                  >
+                    {t('account.login.sendLink')}
+                  </button>
+                </div>
+              )}
+              <Field
+                label={t('login.email')}
+                type="email"
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                placeholder={t('login.emailPlaceholder')}
+                autoComplete="email"
+                required
+              />
+              <Field
+                label={t('login.password')}
+                type="password"
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                placeholder={t('login.passwordPlaceholder')}
+                autoComplete="current-password"
+                required
+              />
+              <div className="flex justify-end -mt-2">
+                <Link
+                  to={langPrefix + '/forgot-password'}
+                  className="text-[13px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  {t('login.forgotPassword')}
+                </Link>
+              </div>
+              <Button type="submit" size="lg" disabled={loading} className="w-full">
+                {loading ? t('common.loading') : t('login.loginButton')}
+              </Button>
+            </form>
+          </div>
         )}
       </AuthLayout>
     </>

@@ -52,7 +52,7 @@ export async function deleteOrganization(organizationId: string): Promise<{ file
       password = '!', avatar = NULL, is_active = false, status = 'offline',
       email_verified_at = NULL, session_version = session_version + 1,
       totp_secret_enc = NULL, totp_enabled_at = NULL, totp_last_step = NULL,
-      recovery_codes = '[]'::jsonb`;
+      recovery_codes = '[]'::jsonb, google_sub = NULL, google_email = NULL`;
     await client.query(`UPDATE users SET ${anonymous} WHERE organization_id = $1`, [
       organizationId
     ]);

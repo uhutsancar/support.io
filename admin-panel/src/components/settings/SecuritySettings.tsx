@@ -18,6 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { authAPI } from '../../services/api';
 import type { MfaStatus } from '../../services/api';
 import { errorMessage } from '../../hooks/useAsync';
+import { GoogleMark, useGoogleSignIn } from '../auth/GoogleButton';
 
 const input =
   'w-full px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500';
@@ -235,6 +236,85 @@ const Sessions = () => {
         {t('account.security.sessions.button')}
       </button>
     </Card>
+  );
+};
+
+/**
+ * Sign-in with Google (PRD-14): connecting is the account owner's consent,
+ * given signed in. The API sends the browser to Google and back here with
+ * ?google=linked|taken|failed|expired|cancelled.
+ */
+const GOOGLE_OUTCOMES = ['linked', 'taken', 'failed', 'expired', 'cancelled'];
+
+const GoogleSignIn = () => {
+  const { t, i18n } = useTranslation();
+  const { user, refresh } = useAuth();
+  const enabled = useGoogleSignIn();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const outcome = params.get('google');
+    if (!outcome || !GOOGLE_OUTCOMES.includes(outcome)) return;
+    if (outcome === 'linked') toast.success(t('account.google.settings.linked'));
+    else toast.error(t(`account.google.settings.${outcome}`));
+    params.delete('google');
+    const rest = params.toString();
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash
+    );
+    void refresh();
+  }, [t, refresh]);
+
+  if (!enabled && !user?.google) return null;
+
+  const connect = async () => {
+    setBusy(true);
+    try {
+      const { data } = await authAPI.googleLink(i18n.language);
+      window.location.assign(data.url);
+    } catch (error) {
+      toast.error(errorMessage(error, t('account.google.settings.failed')));
+      setBusy(false);
+    }
+  };
+  const disconnect = async () => {
+    setBusy(true);
+    try {
+      await authAPI.googleUnlink();
+      await refresh();
+      toast.success(t('account.google.settings.disconnected'));
+    } catch (error) {
+      toast.error(errorMessage(error, t('recovery.error')));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
+      <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-3">
+        <GoogleMark className="w-5 h-5" />
+        {t('account.google.settings.title')}
+      </h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        {user?.google
+          ? t('account.google.settings.connectedAs', { email: user.google.email ?? '' })
+          : t('account.google.settings.body')}
+      </p>
+      {user?.google ? (
+        <button type="button" onClick={disconnect} className={secondary} disabled={busy}>
+          {t('account.google.settings.disconnect')}
+        </button>
+      ) : (
+        <button type="button" onClick={connect} className={secondary} disabled={busy}>
+          <GoogleMark />
+          {t('account.google.settings.connect')}
+        </button>
+      )}
+    </section>
   );
 };
 
@@ -591,7 +671,7 @@ const TeamRequirement = () => {
 const SecuritySettings = () => {
   const { t } = useTranslation();
   return (
-    <div className="mt-6 space-y-6">
+    <div id="security" className="mt-6 space-y-6 scroll-mt-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           {t('account.security.title')}
@@ -602,6 +682,7 @@ const SecuritySettings = () => {
       </div>
       <ChangePassword />
       <ChangeEmail />
+      <GoogleSignIn />
       <TwoStep />
       <TeamRequirement />
       <Sessions />

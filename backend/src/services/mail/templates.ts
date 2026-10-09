@@ -700,7 +700,7 @@ export function emailChangeNoticeMail({
   };
 }
 
-/** Two-step sign-in was switched on or off, or a recovery code was used. */
+/** Two-step sign-in was switched on or off, a recovery code was used, a Google account was connected. */
 export function securityNoticeMail({
   name,
   event,
@@ -708,7 +708,7 @@ export function securityNoticeMail({
   locale
 }: {
   name: string;
-  event: 'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked';
+  event: 'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked' | 'google_linked';
   link: string;
   locale?: MailLocale;
 }): Rendered {
@@ -716,7 +716,11 @@ export function securityNoticeMail({
     mfa_enabled: ['İki adımlı doğrulama açıldı', 'Two-step verification is on'],
     mfa_disabled: ['İki adımlı doğrulama kapatıldı', 'Two-step verification is off'],
     recovery_used: ['Bir kurtarma kodu kullanıldı', 'A recovery code was used'],
-    sessions_revoked: ['Tüm cihazlardan çıkış yapıldı', 'You were signed out everywhere']
+    sessions_revoked: ['Tüm cihazlardan çıkış yapıldı', 'You were signed out everywhere'],
+    google_linked: [
+      'Hesabınıza Google ile giriş eklendi',
+      'Google sign-in was added to your account'
+    ]
   } as const;
   const bodies = {
     mfa_enabled: [
@@ -734,6 +738,10 @@ export function securityNoticeMail({
     sessions_revoked: [
       'Hesabınızın açık olduğu tüm cihazlarda oturum kapatıldı.',
       'Every session of your account was ended, on every device.'
+    ],
+    google_linked: [
+      'Hesabınıza bir Google hesabı bağlandı; artık onunla da giriş yapılabilir. Bağlantıyı Ayarlar → Güvenlik bölümünden kaldırabilirsiniz.',
+      'A Google account was connected to your account and can now be used to sign in. You can remove it under Settings → Security.'
     ]
   } as const;
   const [titleTr, titleEn] = titles[event];

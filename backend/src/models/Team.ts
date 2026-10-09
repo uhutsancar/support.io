@@ -43,6 +43,9 @@ export interface TeamDoc {
   totpSecretEnc: string | null;
   totpEnabledAt: Date | null;
   totpLastStep: number | null;
+  /** The connected Google account (0021); see models/User.ts. */
+  googleSub: string | null;
+  googleEmail: string | null;
   /** Over the plan's seats after a downgrade (0015); see models/User.ts. */
   seatSuspendedAt: Date | null;
   recoveryCodes: string[];
@@ -106,7 +109,9 @@ export default defineModel<TeamDoc>({
     totpEnabledAt: { column: 'totp_enabled_at', type: 'date', default: null },
     seatSuspendedAt: { column: 'seat_suspended_at', type: 'date', default: null },
     totpLastStep: { column: 'totp_last_step', type: 'number', default: null },
-    recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] }
+    recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] },
+    googleSub: { column: 'google_sub', type: 'string', default: null },
+    googleEmail: { column: 'google_email', type: 'string', default: null }
   },
   children: {
     assignedSites: {
@@ -141,6 +146,7 @@ export default defineModel<TeamDoc>({
       delete obj.totpSecretEnc;
       delete obj.totpLastStep;
       delete obj.recoveryCodes;
+      delete obj.googleSub;
       return obj;
     }
   }

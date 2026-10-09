@@ -148,6 +148,9 @@ services:
       # Slack, Telegram and webhook calls are kept in memory too
       # (GET /api/dev/integration-outbox), never made, in development.
       - INTEGRATION_TRANSPORT=${INTEGRATION_TRANSPORT:-memory}
+      # Sign-in with Google (PRD-14) goes to a stand-in account chooser at
+      # /api/dev/google, never to Google, in development.
+      - GOOGLE_SIGN_IN_TRANSPORT=${GOOGLE_SIGN_IN_TRANSPORT:-memory}
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:

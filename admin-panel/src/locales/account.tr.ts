@@ -18,6 +18,35 @@ export default {
       trialNote: '14 gün boyunca Pro özellikleri ücretsiz; kredi kartı gerekmez.',
       securityCheck: 'Güvenlik doğrulaması yükleniyor…'
     },
+    google: {
+      continue: 'Google ile devam et',
+      or: 'veya e-postayla',
+      newAccountNote:
+        'Google ile ilk kez giriyorsanız sizin için bir hesap açılır; Kullanım Şartları ve Gizlilik Politikası geçerlidir.',
+      outcome: {
+        exists:
+          'Bu e-posta adresiyle zaten bir hesabınız var. Şifrenizle giriş yapın; Google’ı Ayarlar → Hesap güvenliği bölümünden bağlayabilirsiniz.',
+        failed:
+          'Google ile giriş tamamlanamadı. Lütfen tekrar deneyin ya da şifrenizle giriş yapın.',
+        expired: 'Giriş süresi doldu. Lütfen tekrar deneyin.',
+        cancelled: 'Google ile giriş iptal edildi.',
+        unavailable: 'Google ile giriş şu anda kullanılamıyor. Şifrenizle giriş yapabilirsiniz.',
+        disposable: 'Bu e-posta adresiyle hesap açılamıyor. Lütfen kalıcı bir adres kullanın.'
+      },
+      settings: {
+        title: 'Google ile giriş',
+        connectedAs: 'Bağlı Google hesabı: {{email}}',
+        body: 'Google hesabınızı bağlayın; şifre yazmadan tek tıkla giriş yapın. Şifreniz de geçerli kalır.',
+        connect: 'Google hesabını bağla',
+        disconnect: 'Bağlantıyı kaldır',
+        disconnected: 'Google bağlantısı kaldırıldı.',
+        linked: 'Google hesabınız bağlandı. Artık Google ile giriş yapabilirsiniz.',
+        taken: 'Bu Google hesabı başka bir hesaba bağlı.',
+        failed: 'Google hesabı bağlanamadı. Lütfen tekrar deneyin.',
+        expired: 'Bağlantı süresi doldu. Lütfen tekrar deneyin.',
+        cancelled: 'Google bağlantısı iptal edildi.'
+      }
+    },
     login: {
       notVerified:
         'E-posta adresiniz henüz doğrulanmadı. Size yeni bir doğrulama bağlantısı gönderebiliriz.',
@@ -593,6 +622,8 @@ export default {
       ASSISTANT_KILL_SWITCH: 'Asistan Platform Genelinde Durduruldu',
       API_KEY_CREATED: 'API Anahtarı Oluşturuldu',
       API_KEY_REVOKED: 'API Anahtarı İptal Edildi',
+      GOOGLE_LINKED: 'Google Hesabı Bağlandı',
+      GOOGLE_UNLINKED: 'Google Bağlantısı Kaldırıldı',
       WEBHOOK_CREATED: 'Webhook Eklendi',
       WEBHOOK_UPDATED: 'Webhook Değişti',
       WEBHOOK_DELETED: 'Webhook Silindi',

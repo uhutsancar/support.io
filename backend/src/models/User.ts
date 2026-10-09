@@ -46,6 +46,9 @@ export interface UserDoc {
   seatSuspendedAt: Date | null;
   /** The last 30-second step a code was accepted for; replays are refused. */
   totpLastStep: number | null;
+  /** The connected Google account's subject id, and its address for display (0021). */
+  googleSub: string | null;
+  googleEmail: string | null;
   /** Keyed hashes of the unused recovery codes. */
   recoveryCodes: string[];
   assignedSites: Array<Ref<SiteDoc>>;
@@ -72,6 +75,8 @@ export default defineModel<UserDoc>({
     seatSuspendedAt: { column: 'seat_suspended_at', type: 'date', default: null },
     totpLastStep: { column: 'totp_last_step', type: 'number', default: null },
     recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] },
+    googleSub: { column: 'google_sub', type: 'string', default: null },
+    googleEmail: { column: 'google_email', type: 'string', default: null },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },
     status: { column: 'status', type: 'string', enum: PRESENCE_STATUSES, default: 'offline' },
     permissions: {
@@ -143,6 +148,7 @@ export default defineModel<UserDoc>({
       delete obj.totpSecretEnc;
       delete obj.totpLastStep;
       delete obj.recoveryCodes;
+      delete obj.googleSub;
       return obj;
     }
   }

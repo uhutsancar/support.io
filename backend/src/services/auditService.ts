@@ -161,6 +161,16 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
     entityId: (p) => p.userId
   },
   'auth.mfa.enabled': { action: 'MFA_ENABLED', entityType: 'user', entityId: (p) => p.userId },
+  'auth.google.linked': {
+    action: 'GOOGLE_LINKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.google.unlinked': {
+    action: 'GOOGLE_UNLINKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
   'auth.mfa.disabled': { action: 'MFA_DISABLED', entityType: 'user', entityId: (p) => p.userId },
   'auth.mfa.recovery_used': {
     action: 'MFA_RECOVERY_USED',

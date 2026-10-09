@@ -15,6 +15,36 @@ export default {
       trialNote: 'Pro features free for 14 days; no credit card needed.',
       securityCheck: 'Loading the security check…'
     },
+    google: {
+      continue: 'Continue with Google',
+      or: 'or with e-mail',
+      newAccountNote:
+        'If this is your first time with Google, an account is created for you; the Terms of Service and Privacy Policy apply.',
+      outcome: {
+        exists:
+          'You already have an account with this e-mail address. Sign in with your password; you can connect Google under Settings → Account security.',
+        failed:
+          'Signing in with Google did not work. Please try again or sign in with your password.',
+        expired: 'The sign-in timed out. Please try again.',
+        cancelled: 'Signing in with Google was cancelled.',
+        unavailable:
+          'Signing in with Google is not available right now. You can sign in with your password.',
+        disposable: 'An account cannot be opened with this address. Please use a permanent one.'
+      },
+      settings: {
+        title: 'Sign in with Google',
+        connectedAs: 'Connected Google account: {{email}}',
+        body: 'Connect your Google account and sign in with one click, no password to type. Your password keeps working too.',
+        connect: 'Connect Google account',
+        disconnect: 'Disconnect',
+        disconnected: 'Google was disconnected.',
+        linked: 'Your Google account is connected. You can now sign in with Google.',
+        taken: 'This Google account is connected to another account.',
+        failed: 'The Google account could not be connected. Please try again.',
+        expired: 'The connection timed out. Please try again.',
+        cancelled: 'Connecting Google was cancelled.'
+      }
+    },
     login: {
       notVerified:
         'Your e-mail address is not verified yet. We can send you a new verification link.',
@@ -588,6 +618,8 @@ export default {
       ASSISTANT_KILL_SWITCH: 'Assistant Stopped Platform-Wide',
       API_KEY_CREATED: 'API Key Created',
       API_KEY_REVOKED: 'API Key Revoked',
+      GOOGLE_LINKED: 'Google Account Connected',
+      GOOGLE_UNLINKED: 'Google Disconnected',
       WEBHOOK_CREATED: 'Webhook Added',
       WEBHOOK_UPDATED: 'Webhook Changed',
       WEBHOOK_DELETED: 'Webhook Deleted',

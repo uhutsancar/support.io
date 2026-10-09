@@ -69,6 +69,8 @@ export interface CurrentUser {
   } | null;
   /** Two-step sign-in is on for this account. */
   mfaEnabled?: boolean;
+  /** The Google account it can sign in with (PRD-14). */
+  google?: { email: string | null } | null;
   /** The organization requires it and this account has none yet. */
   mfaSetupRequired?: boolean;
   /** Over the plan's seats after a downgrade: reads, cannot reply (BIL-04). */
