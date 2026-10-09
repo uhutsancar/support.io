@@ -17,6 +17,7 @@
 // instead of each waiting out the timeout.
 
 import { createQuota } from '../../middleware/rateLimit';
+import { increment } from '../../config/metrics';
 import type { AssistantConfig } from '../../config/assistant';
 
 export type GeminiErrorCode =
@@ -86,6 +87,20 @@ export async function generateJson(
   config: AssistantConfig,
   request: GenerateRequest
 ): Promise<unknown> {
+  try {
+    const result = await callModel(config, request);
+    increment('supportio_assistant_calls_total', { outcome: 'ok' });
+    return result;
+  } catch (error) {
+    if (!request.signal?.aborted) {
+      const outcome = error instanceof GeminiError ? error.code : 'unavailable';
+      increment('supportio_assistant_calls_total', { outcome });
+    }
+    throw error;
+  }
+}
+
+async function callModel(config: AssistantConfig, request: GenerateRequest): Promise<unknown> {
   if (Date.now() < openUntil) throw new GeminiError(openCode, 'breaker open');
 
   const { minute, day } = budgetsFor(config);

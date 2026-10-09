@@ -148,6 +148,7 @@ const Departments = () => {
         </div>
         <div className="mt-4 flex gap-4">
           <select
+            aria-label={t('a11y.siteSelect')}
             value={selectedSite || ''}
             onChange={(e) => setSelectedSite(e.target.value)}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -403,7 +404,7 @@ const AddEditDepartmentModal = ({
   const [saving, setSaving] = useState(false);
   const handleAddMember = () => {
     if (!selectedMember) {
-      toast.error('Lütfen bir ekip üyesi seçin!');
+      toast.error(t('stats.pickMember'));
       return;
     }
     const newMember = { userId: selectedMember, role: memberRole };

@@ -20,6 +20,18 @@ export interface SiteDoc {
   /** The exact origins the widget may run on; see config/siteOrigins.ts. */
   allowedOrigins: string[];
   isActive: boolean;
+  /** Missed chats, forms, ratings (services/chatSettings.ts); stored sparse. */
+  chatSettings: Record<string, unknown>;
+  /** Over the plan's site limit after a downgrade (BIL-04): widget silent. */
+  suspendedAt: Date | null;
+  /** Switched off by the platform for abuse (LEG-05); only `site:disable` changes it. */
+  blockedAt: Date | null;
+  /** Why, for the support trail; never sent to the panel. */
+  blockedReason: string | null;
+  /** The public help center's address, /help/<helpSlug> (PRD-10). */
+  helpSlug: string | null;
+  /** { enabled, noindex, title }; see services/helpCenter.ts. */
+  helpCenter: Record<string, unknown>;
 }
 
 /** What the panel may know about the integrations: whether, never what. */
@@ -67,7 +79,13 @@ export default defineModel<SiteDoc>({
     //   { verifiedAt, lastSeenAt, url, origin, sdkVersion, userAgent }
     installation: { column: 'installation', type: 'json', default: () => ({}) },
     allowedOrigins: { column: 'allowed_origins', type: 'stringArray', default: () => [] },
-    isActive: { column: 'is_active', type: 'boolean', default: true }
+    isActive: { column: 'is_active', type: 'boolean', default: true },
+    chatSettings: { column: 'chat_settings', type: 'json', default: () => ({}) },
+    suspendedAt: { column: 'suspended_at', type: 'date', default: null },
+    blockedAt: { column: 'blocked_at', type: 'date', default: null },
+    blockedReason: { column: 'blocked_reason', type: 'string', default: null },
+    helpSlug: { column: 'help_slug', type: 'string', default: null },
+    helpCenter: { column: 'help_center', type: 'json', default: () => ({}) }
   },
   methods: {
     // The integration secrets are sealed in the database and must never be
@@ -77,6 +95,8 @@ export default defineModel<SiteDoc>({
     toJSON() {
       const obj = this.toObject();
       obj.integrations = publicIntegrations(obj.integrations as SiteIntegrations);
+      // The panel learns that the platform blocked the site, not the note.
+      delete obj.blockedReason;
       return obj;
     }
   }

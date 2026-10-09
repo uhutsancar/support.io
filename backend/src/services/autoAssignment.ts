@@ -3,6 +3,7 @@ import Team from '../models/Team';
 import Conversation from '../models/Conversation';
 import Department from '../models/Department';
 import { isAwayPresence } from '../domain';
+import { pushConversationEvent } from './push';
 import type { Doc, Filter } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
 
@@ -56,7 +57,14 @@ function loadAgents(filter: Filter) {
  */
 async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId: string) {
   const { requiredSkills = [], department } = conversation;
-  const onlineInOrg: Filter = { organizationId, isActive: true, status: 'online' };
+  // A seat over the plan's limit reads but does not reply (BIL-04): it is
+  // never handed a conversation.
+  const onlineInOrg: Filter = {
+    organizationId,
+    isActive: true,
+    status: 'online',
+    seatSuspendedAt: null
+  };
 
   let candidates: Awaited<ReturnType<typeof loadAgents>> = [];
   if (department) {
@@ -122,6 +130,9 @@ async function autoAssignConversation(
         'stats.totalConversations': 1
       }
     });
+    // Nothing on the socket tells the agent (the inbox shows it); a closed
+    // panel hears it by push (PRD-09).
+    void pushConversationEvent('assigned', conversation, { assignee: bestAgent._id });
     return {
       success: true,
       agentId: bestAgent._id,

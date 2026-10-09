@@ -1,0 +1,73 @@
+# Weekly re-scan of what production runs (plan v10 SUP-03 step 5).
+#
+# A new advisory can land on an image that was clean the day it shipped.
+# This scans the image built from main's HEAD and the pinned third-party
+# images with today's database, and opens an issue when one of them now has
+# a fixable high or critical finding.
+name: Weekly image scan
+
+on:
+  schedule:
+    - cron: '23 5 * * 3'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+      issues: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [app, proxy, postgres, redis]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - id: ref
+        run: |
+          if [ "${{ matrix.target }}" = app ]; then
+            echo "image=ghcr.io/${{ github.repository_owner }}/supportio:sha-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            image=$(awk -v svc="  ${{ matrix.target }}:" '$0==svc{f=1;next} f&&/image:/{print $2; exit}' docker-compose.prod.yml)
+            echo "image=$image" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        if: matrix.target == 'app'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        continue-on-error: true
+        with:
+          image-ref: ${{ steps.ref.outputs.image }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          format: table
+          output: trivy.txt
+          exit-code: '1'
+      - name: Open an issue for new findings
+        if: steps.scan.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ steps.ref.outputs.image }}
+        run: |
+          {
+            echo "The weekly scan found fixable high or critical vulnerabilities in \`$IMAGE\`."
+            echo
+            echo '```'
+            head -c 60000 trivy.txt
+            echo '```'
+            echo
+            echo "Rebuild or move the pinned digest (Dependabot may already have a PR),"
+            echo "or record a reasoned exception in docs/security/accepted-risks.md and .trivyignore."
+          } > body.md
+          gh issue create --title "Image scan: ${{ matrix.target }} has new findings" --body-file body.md --label security || \
+          gh issue create --title "Image scan: ${{ matrix.target }} has new findings" --body-file body.md

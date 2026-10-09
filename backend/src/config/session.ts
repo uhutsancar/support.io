@@ -64,6 +64,38 @@ export function startSession(res: Response, token: string): string {
   return csrfToken;
 }
 
+/**
+ * A short httpOnly cookie that carries one sign-in attempt across a
+ * provider's redirect (Google sign-in). Always SameSite=Lax: it must come
+ * back on the provider's top-level redirect to us, and only on that.
+ */
+export function setFlowCookie(
+  res: Response,
+  name: string,
+  value: string,
+  maxAgeMs: number,
+  path: string
+): void {
+  res.cookie(name, value, {
+    sameSite: 'lax',
+    secure: secure(),
+    httpOnly: true,
+    path,
+    maxAge: maxAgeMs,
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {})
+  });
+}
+
+export function clearFlowCookie(res: Response, name: string, path: string): void {
+  res.clearCookie(name, {
+    sameSite: 'lax',
+    secure: secure(),
+    httpOnly: true,
+    path,
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {})
+  });
+}
+
 export function endSession(res: Response): void {
   const { maxAge, ...clearing } = base();
   void maxAge;

@@ -138,9 +138,11 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
 
       {/* ---- iki taraf birden: sohbeti yanıtlayan kişi ve ziyaretçinin balonu ---- */}
       <div className="relative mx-auto w-full max-w-[600px] lg:max-w-none">
+        {/* Grows in, never fades in: a transparent picture is not painted,
+            and it is the largest thing on the page (LCP). */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ scale: 0.97 }}
+          animate={{ scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <Photo
@@ -562,20 +564,33 @@ const StoryStepBlock = ({
       >
         {active && <span className="absolute inset-[3px] rounded-full bg-indigo-600" />}
       </span>
-      <div
-        className={[
-          'transition-opacity duration-500',
-          active ? 'opacity-100' : 'lg:opacity-35'
-        ].join(' ')}
-      >
-        <Eyebrow tone={tone}>· {String(i + 1).padStart(2, '0')}</Eyebrow>
-        <h3 className="mt-2 text-[24px] sm:text-[28px] font-bold tracking-[-0.03em] leading-[1.15] text-gray-950 dark:text-white">
+      {/* The step being read stands out by colour, not by fading the others:
+          faded text fell below a readable contrast (UX-02). */}
+      <div>
+        <div
+          className={['transition-[filter] duration-500', active ? '' : 'lg:grayscale'].join(' ')}
+        >
+          <Eyebrow tone={tone}>· {String(i + 1).padStart(2, '0')}</Eyebrow>
+        </div>
+        <h3
+          className={[
+            'mt-2 text-[24px] sm:text-[28px] font-bold tracking-[-0.03em] leading-[1.15] transition-colors duration-500',
+            active
+              ? 'text-gray-950 dark:text-white'
+              : 'text-gray-950 lg:text-gray-500 dark:text-white dark:lg:text-gray-400'
+          ].join(' ')}
+        >
           {step.title}
         </h3>
         <p className="mt-3 text-[15.5px] leading-[1.65] text-gray-600 dark:text-gray-400 max-w-[46ch]">
           {step.body}
         </p>
-        <div className="mt-4 flex flex-wrap gap-1.5">
+        <div
+          className={[
+            'mt-4 flex flex-wrap gap-1.5 transition-[filter] duration-500',
+            active ? '' : 'lg:grayscale'
+          ].join(' ')}
+        >
           {(step.chips || []).map((c) => (
             <Chip key={c}>{c}</Chip>
           ))}
@@ -836,7 +851,7 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
                   (src) => (
                     <img
                       key={src}
-                      src={src}
+                      src={src.replace('.webp', '-700.webp')}
                       alt=""
                       loading="lazy"
                       className="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-[#12141f]"
@@ -1073,7 +1088,7 @@ const Faq = ({ t, routes }: { t: T; routes: Routes }) => {
                 const count = c === 'all' ? items.length : items.filter((i) => i.cat === c).length;
                 const on = c === cat;
                 return (
-                  <li key={c}>
+                  <li key={c} role="presentation">
                     <button
                       type="button"
                       role="tab"
@@ -1087,7 +1102,9 @@ const Faq = ({ t, routes }: { t: T; routes: Routes }) => {
                       ].join(' ')}
                     >
                       {t('homePage.faq.cat.' + c)}
-                      <span className="text-[11.5px] tabular-nums text-gray-400">· {count}</span>
+                      <span className="text-[11.5px] tabular-nums text-gray-500 dark:text-gray-400">
+                        · {count}
+                      </span>
                     </button>
                   </li>
                 );

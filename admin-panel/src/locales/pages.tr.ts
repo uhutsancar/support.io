@@ -390,7 +390,7 @@ export default {
     faq: [
       {
         q: 'Asistan yanlış bir şey söylerse?',
-        a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
+        a: 'Asistan yalnızca SSS kayıtlarınızdan ve eklediğiniz sayfa ve PDF’lerden yanıt verir, her yanıtta hangi kaynağa dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
       },
       {
         q: 'Kurmak için ne gerekiyor?',
@@ -413,8 +413,8 @@ export default {
   },
 
   legal: {
-    updated: 'Son güncelleme: 6 Ekim 2026',
-    contact: 'Sorularınız için: destek@support.io',
+    updated: 'Son güncelleme: 7 Ekim 2026',
+    contact: 'Sorularınız için: {{supportEmail}}',
     privacy: {
       meta: 'Support.io’nun hangi verileri neden işlediği, ne kadar sakladığı ve haklarınız.',
       title: 'Gizlilik Politikası',
@@ -455,7 +455,7 @@ export default {
         {
           h: 'Saklama süreleri',
           p: [
-            'Sohbetler, hesap açık kaldığı sürece ya da işletme silene kadar saklanır.',
+            'Sohbetler son mesajlarından sonra işletmenin seçtiği süre boyunca saklanır: Ücretsiz planda 90 gün, ücretli planlarda 30 gün ile 5 yıl arası. Süre dolan sohbetler ekleriyle birlikte her gece silinir; işletme bir sohbeti daha önce de silebilir.',
             'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretten 90 gün sonra; işlem kayıtlarındaki IP adresleri 90 gün sonra silinir.',
             'Hesap silindiğinde tüm verileri silinir; şifreli yedeklerden en geç üç ay içinde düşer.'
           ]
@@ -477,7 +477,7 @@ export default {
           h: 'Haklarınız',
           p: [
             'KVKK ve GDPR kapsamında verilerinize erişme, düzeltilmesini, silinmesini ve aktarılmasını isteme, işlenmesine itiraz etme haklarınız vardır.',
-            'Hesap sahipleri tüm veriyi panelde Ayarlar → Veri ve gizlilik bölümünden indirebilir ve hesabı silebilir. Ziyaretçiler taleplerini ilgili işletmeye ya da bize iletebilir.'
+            'Hesap sahipleri tüm veriyi panelde Ayarlar → Veri ve gizlilik bölümünden indirebilir ve hesabı silebilir. Ziyaretçiler taleplerini ilgili işletmeye ya da bize iletebilir; işletme bir ziyaretçinin o sitedeki tüm verisini panelden tek adımda silebilir.'
           ]
         }
       ]
@@ -489,7 +489,9 @@ export default {
       sections: [
         {
           h: 'Hizmet',
-          p: ['Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.']
+          p: [
+            'Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.'
+          ]
         },
         {
           h: 'Hesap',
@@ -539,6 +541,15 @@ export default {
           ]
         },
         {
+          id: 'guvenlik',
+          h: 'Güvenlik açığı bildirimi',
+          p: [
+            'Hizmetimizde bir güvenlik açığı bulduğunuzu düşünüyorsanız {{securityEmail}} adresine yazın. Açığı nasıl tekrarlayabileceğimizi ve hangi adresi etkilediğini ekleyin. Aynı bilgiler /.well-known/security.txt dosyasında da yer alır.',
+            'Bildiriminizi 3 iş günü içinde aldığımızı yanıtlarız ve açığı en geç 90 gün içinde kapatmayı hedefleriz. Düzeltme yayına girene kadar ayrıntıları herkese açık paylaşmamanızı rica ederiz.',
+            'Lütfen yalnızca kendi hesabınızda deneme yapın; başkalarının verisine erişmeyin, hizmeti yavaşlatacak yük testleri ve sosyal mühendislik denemeleri yapmayın. Şu an bir ödül programımız yok.'
+          ]
+        },
+        {
           h: 'Değişiklikler ve hukuk',
           p: [
             'Şartları değiştirirsek önemli değişiklikleri e-postayla bildiririz.',
@@ -546,6 +557,166 @@ export default {
           ]
         }
       ]
+    },
+    accessibility: {
+      meta: 'Sohbet balonunu, paneli ve web sitesini herkesin kullanabilmesi için yaptıklarımız, bilinen eksikler ve bize nasıl ulaşacağınız.',
+      title: 'Erişilebilirlik Beyanı',
+      updated: 'Son güncelleme: 8 Ekim 2026',
+      intro:
+        'Support.io’yu görme, işitme, hareket ya da algı farkı olan herkesin rahatça kullanabilmesini istiyoruz. Hedefimiz WCAG 2.2 AA düzeyi. Bu beyan sohbet balonu, yönetim paneli ve bu web sitesi için geçerlidir.',
+      sections: [
+        {
+          h: 'Sohbet balonu',
+          p: [
+            'Balon ve sohbet penceresi yalnızca klavyeyle kullanılabilir: Esc pencereyi kapatır, pencere açılınca odak yazma alanına, kapanınca balona döner.',
+            'Gelen mesajlar ekran okuyucuya okunur; ziyaretçinin kendi yazdığı tekrar okunmaz.',
+            'Sitenizin ana rengi ne olursa olsun, üzerindeki yazının rengi en az 4,5:1 kontrast verecek biçimde kendiliğinden seçilir.',
+            'Dokunulan her düğme en az 44×44 pikseldir. Cihazında hareketi azaltmayı seçen ziyaretçiye animasyon gösterilmez.',
+            'Balon iPhone, Android telefon ve iPad ekranlarında da otomatik testlerle denenir.'
+          ]
+        },
+        {
+          h: 'Panel ve web sitesi',
+          p: [
+            'Panelin ve sitenin ana sayfalarındaki her form alanının bir etiketi vardır.',
+            'Hata ve uyarı mesajları ekran okuyucuya okunur.'
+          ]
+        },
+        {
+          h: 'Nasıl denetliyoruz',
+          p: [
+            'Her değişiklikte otomatik testler sohbet balonunu, panelin ana sayfalarını ve bu web sitesini axe ile tarar. Ciddi ya da kritik bir sorun bulunursa test başarısız olur.',
+            'Aynı testler klavyeyle kullanımı ve ekran okuyucuya okunan metinleri de dener.'
+          ]
+        },
+        {
+          h: 'Bilinen eksikler',
+          p: [
+            'Karşılama mesajı, SSS ve otomatik yanıtlar gibi site sahibinin yazdığı metinlerin anlaşılırlığı site sahibine bağlıdır.',
+            'Ziyaretçilerin ve temsilcilerin sohbette gönderdiği görsellerde açıklama metni bulunmaz; dosya adı okunur.',
+            'Paneldeki analiz grafikleri ekran okuyucuya ayrıntılı okunmaz; temel sayılar sayfanın üstündeki özet kartlarında metin olarak yazılıdır.',
+            'Panelin telefon ekranında kullanımı henüz otomatik testlerle denenmiyor.',
+            'Bağımsız bir uzman denetimi henüz yapılmadı; yapıldığında sonucunu bu sayfada paylaşacağız.'
+          ]
+        },
+        {
+          h: 'Bize ulaşın',
+          p: [
+            'Bir engelle karşılaşırsanız {{supportEmail}} adresine yazın. Hangi sayfada, hangi cihaz ve yardımcı teknolojiyle karşılaştığınızı belirtirseniz sorunu daha hızlı buluruz. Her bildirimi yanıtlar, düzeltildiğinde size haber veririz.'
+          ]
+        }
+      ]
+    },
+    aiUse: {
+      meta: 'Support.io’nun yapay zekâ asistanının ne yaptığı, hangi veriyle çalıştığı, sınırları ve ziyaretçinin bir insana nasıl ulaştığı.',
+      title: 'Yapay Zekâ Kullanımı',
+      updated: 'Son güncelleme: 8 Ekim 2026',
+      intro:
+        'Support.io’da yapay zekâ tek bir iş yapar: site sahibi açtığında, ziyaretçinin sorusunu sitenin sıkça sorulan sorular (SSS) içeriğinden yanıtlar. Bu sayfa asistanın nasıl çalıştığını, neyi yapmadığını ve ziyaretçiye ne gösterdiğini anlatır.',
+      sections: [
+        {
+          h: 'Kim açar',
+          p: [
+            'Asistan her sitede kapalı başlar. Site sahibi onu açarken, SSS içeriğinin ve kişisel bilgileri gizlenmiş ziyaretçi sorularının yapay zekâ hizmet sağlayıcımıza gönderileceğini onaylar; onaylayan kişi ve zaman işlem kayıtlarına yazılır.',
+            'Site sahibi asistanı ayarlardan istediği an kapatabilir.'
+          ]
+        },
+        {
+          h: 'Ziyaretçi ne görür',
+          p: [
+            'Asistanın her yanıtı “Yapay zekâ asistanı” olarak işaretlenir ve ilk yanıtın altında bir temsilciye nasıl ulaşılacağı yazar.',
+            'Ziyaretçi “temsilci” yazdığında ya da pencere başlığındaki bağlantıya dokunduğunda konuşma ekibe geçer.'
+          ]
+        },
+        {
+          h: 'Neye dayanarak yanıt verir',
+          p: [
+            'Asistan yalnızca sitenin SSS içeriğinden ve işletmenin eklediği kaynaklardan (sitenin kendi sayfaları ve yüklediği belgeler) yanıt verir. Soru bunlarda yoksa ya da yanıt bunlardan birine dayanmıyorsa yanıt vermez, konuşmayı ekibe devreder.',
+            'Bir temsilci konuşmaya yazdığı anda asistan o konuşmada susar.',
+            'Asistan sipariş, ödeme ya da hesap işlemi yapmaz; yalnızca bilgi verir ve yalnızca bu kaynaklarda geçen bağlantıları paylaşır.'
+          ]
+        },
+        {
+          h: 'Hangi veri gönderilir',
+          p: [
+            'Yapay zekâya yalnızca sitenin herkese açık SSS kayıtları, işletmenin eklediği sayfa ve belgelerden soruyla ilgili bölümler ve ziyaretçinin son mesajı gider; ziyaretçinin adı, e-postası, önceki mesajları ya da gezdiği sayfalar gitmez.',
+            'Mesajdaki e-posta adresleri, telefon numaraları ve uzun numaralar gönderilmeden önce gizlenir.',
+            'Kart numarası, IBAN ya da T.C. kimlik numarası içeren bir mesaj hiç gönderilmez: ziyaretçiye bu bilgileri sohbette paylaşmaması söylenir ve konuşma bir insana geçer.',
+            'Verinin hangi hizmet sağlayıcılarıyla, ne amaçla paylaşıldığı Gizlilik Politikası’nda yazar.'
+          ]
+        },
+        {
+          h: 'Sınırlar ve denetim',
+          p: [
+            'Yapay zekâ yanılabilir. Önemli bir konuda emin olmak isteyen ziyaretçi her zaman bir temsilciye bağlanabilir.',
+            'Asistan her değişiklikte; cevabı SSS’de olan ve olmayan sorular, kişisel bilgi içeren mesajlar, yönlendirme girişimleri ve temsilci istekleri içeren bir soru setiyle sınanır.'
+          ]
+        }
+      ]
     }
+  },
+  apiDocs: {
+    meta: {
+      title: 'API belgeleri',
+      description:
+        'Support.io API: konuşmaları, mesajları, ziyaretçileri ve SSS’yi kendi sistemlerinizden okuyun, ziyaretçilere yanıt verin.'
+    },
+    eyebrow: 'Geliştiriciler',
+    title: 'Support.io API',
+    description:
+      'Sipariş sisteminiz, CRM’iniz ya da kendi panonuz Support.io ile konuşsun: konuşmaları okuyun, ziyaretçiye yanıt verin, SSS’nizi kendi kaynağınızdan güncel tutun.',
+    authTitle: 'Kimlik doğrulama',
+    auth: 'Her istek, Ayarlar → API anahtarları bölümünden oluşturduğunuz anahtarla yapılır. Anahtarı Authorization başlığında Bearer olarak gönderin. Anahtar yalnızca kendi çalışma alanınızın verisini açar; sunucunuzda saklayın, tarayıcıya ya da uygulama koduna koymayın.',
+    rulesTitle: 'Kurallar',
+    rules: {
+      scopes:
+        'Okuma yetkili anahtar yalnızca GET isteklerini yapar; yanıt yazmak, konuşma durumunu ve SSS’yi değiştirmek için yazma yetkisi gerekir.',
+      limit:
+        'Her anahtar dakikada 300 istek yapabilir. Sınırı aşan istek 429 yanıtı alır; RateLimit başlıkları ne zaman yeniden deneyeceğinizi söyler.',
+      paging:
+        'Listeler en fazla 100 kayıt döndürür. Konuşma listesinin devamı için yanıttaki nextCursor değerini cursor parametresiyle gönderin.',
+      errors:
+        'Hatalar her zaman aynı biçimdedir: { "error": "…", "code": "…" }. 401 geçersiz ya da iptal edilmiş anahtar, 403 yetki ya da plan, 404 bu çalışma alanında olmayan kayıt demektir.',
+      privacy: 'Ziyaretçilerin IP adresi ve ekibinizin iç notları API’den dönmez.'
+    },
+    endpointsTitle: 'Uç noktalar',
+    loadError:
+      'Uç nokta listesi şu anda yüklenemedi. Sayfayı yenileyin ya da openapi.json dosyasını doğrudan açın.',
+    tags: {
+      Sites: 'Siteler',
+      Conversations: 'Konuşmalar',
+      Messages: 'Mesajlar',
+      Visitors: 'Ziyaretçiler',
+      FAQ: 'SSS'
+    },
+    ops: {
+      listSites: 'Çalışma alanınızdaki siteler.',
+      listConversations: 'Konuşmalar, son hareketi en yeni olan önce.',
+      getConversation: 'Tek bir konuşma: ziyaretçi, durum, etiketler, değerlendirme.',
+      updateConversation: 'Konuşmayı kapatın, yeniden açın ya da etiketleyin.',
+      listMessages: 'Konuşmanın mesajları, en eskisi önce.',
+      createMessage:
+        'Ziyaretçiye yanıt verin. Yanıt ekibinizden gelen mesaj olarak görünür ve asistan bu konuşmada susar.',
+      listVisitors: 'Sitenin ziyaretçileri, en son etkin olan önce.',
+      listFaqs: 'Sitenin SSS kayıtları.',
+      createFaq: 'SSS kaydı ekleyin.',
+      updateFaq: 'SSS kaydını değiştirin.',
+      deleteFaq: 'SSS kaydını silin.'
+    },
+    params: {
+      id: 'Kaydın kimliği',
+      siteId: 'Site kimliği',
+      status: 'Yalnızca bu durumdakiler',
+      updatedSince: 'Son mesajı bu andan sonra olanlar (ISO 8601)',
+      limit: 'Sayfa boyutu',
+      cursor: 'Önceki sayfanın nextCursor değeri',
+      after: 'Yalnızca bu mesajdan sonrakiler'
+    },
+    required: 'zorunlu',
+    body: 'Gövde:',
+    answers: 'Yanıtlar:',
+    openapiTitle: 'OpenAPI tanımı',
+    openapi:
+      'Tüm uç noktalar, alanlar ve hata kodları OpenAPI 3.1 biçiminde de yayımlanır. Postman, Insomnia ya da kendi istemci üreticinize doğrudan aktarabilirsiniz.'
   }
 };

@@ -35,6 +35,10 @@ export interface WidgetSocketState {
   visitorId?: string;
   /** The widget session's `sid`; keys the per-session event limit. */
   widgetSessionId?: string;
+  /** The visitor's address as the proxy saw it (not the proxy's own). */
+  clientIp?: string | null;
+  /** Cloudflare's CF-IPCountry for the handshake, or null (AI-02). */
+  country?: string | null;
   visitorName?: string;
   visitorEmail?: string | null;
   currentPage?: string;
@@ -50,6 +54,8 @@ export interface WidgetSocketState {
   verifiedUserId?: string | null;
   /** The message being handled; the next one waits for it (handlers/widget.ts). */
   sending?: Promise<unknown>;
+  /** What the visitor left in the pre-chat / offline form (PRD-05). */
+  contact?: import('../services/visitorContact').VisitorContact;
 }
 
 export type WidgetSocket = Socket & WidgetSocketState;
@@ -60,6 +66,8 @@ export interface AdminSocketState {
   userName: string;
   organizationId: string;
   role: string;
+  /** Over the plan's seats (BIL-04): reads only; see middleware/rbac.ts. */
+  seatSuspended: boolean;
   userType: UserType;
   /** Empty for an account that is not restricted to specific sites. */
   allowedSiteIds: Set<string>;
@@ -176,6 +184,8 @@ export interface TeamChatSendPayload extends TeamChatPayload {
 
 /** A file that passed token verification and is safe to store on a message. */
 export interface VerifiedFile {
+  /** The storage key (the same as filename); see models/Message.ts. */
+  key: string;
   filename: string;
   originalName: string;
   mimeType: string;

@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { signUploadProof } from '../src/config/tokens';
 import User from '../src/models/User';
+import { signUp } from './helpers/accounts';
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 const PASSWORD = 'E2ePassw0rd!';
@@ -47,12 +48,14 @@ const sessionKey = () =>
 
 async function register() {
   const email = `auth${Date.now()}${Math.floor(Math.random() * 100000)}@auth-security.test`;
-  const res = await call('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'auth owner', email, password: PASSWORD, companyName: 'auth co' })
+  // The session starts from the verification link (plan v10 SEC-06); its
+  // answer carries the cookies the tests below inspect.
+  const res = await signUp({
+    name: 'auth owner',
+    email,
+    password: PASSWORD,
+    companyName: 'auth co'
   });
-  assert.ok(res.status === 200 || res.status === 201, JSON.stringify(res.body));
   return { email, res };
 }
 

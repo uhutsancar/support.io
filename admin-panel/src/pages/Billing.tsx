@@ -17,6 +17,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePlans } from '../hooks/usePlans';
 import { formatDateTime } from '../lib/format';
+import PlanOverage from '../components/billing/PlanOverage';
+import Invoices from '../components/billing/Invoices';
 import type { BillingOverview } from '../types/api';
 
 const PLAN_ICON = { FREE: Store, PRO: Rocket, ENTERPRISE: Building2 } as const;
@@ -127,7 +129,7 @@ const Billing = () => {
           <div className="grid gap-6 md:grid-cols-2">
             {/* ------------------------------------------------ mevcut plan */}
             <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 {t('billing.currentPlan')}
               </p>
               <div className="mt-3 flex items-center gap-3">
@@ -139,9 +141,11 @@ const Billing = () => {
                     {t('pricingPage.plans.' + data.plan.toLowerCase() + '.name')}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {price === null || price === 0
-                      ? t('billing.free')
-                      : `${money(price, planInfo!.price.currency)} ${t('billing.perMonth')}`}
+                    {data.trial
+                      ? t('account.trial.label')
+                      : price === null || price === 0
+                        ? t('billing.free')
+                        : `${money(price, planInfo!.price.currency)} ${t('billing.perMonth')}`}
                   </p>
                 </div>
                 {sub && (
@@ -162,6 +166,11 @@ const Billing = () => {
                   {sub.cancelAtPeriodEnd || sub.status === 'canceled'
                     ? t('billing.endsAt', { date: date(sub.currentPeriodEnd) })
                     : t('billing.renews', { date: date(sub.currentPeriodEnd) })}
+                </p>
+              )}
+              {data.trial && (
+                <p className="mt-4 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2 text-sm text-indigo-800 dark:text-indigo-200">
+                  {t('account.trial.billingNote', { date: date(data.trial.endsAt) })}
                 </p>
               )}
               {sub?.status === 'past_due' && sub.graceEndsAt && (
@@ -200,7 +209,7 @@ const Billing = () => {
 
             {/* ------------------------------------------------- kullanım */}
             <section className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 {t('billing.usageTitle')}
               </p>
               <div className="mt-4 space-y-4">
@@ -232,6 +241,12 @@ const Billing = () => {
               <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">{t('billing.resets')}</p>
             </section>
           </div>
+        )}
+        {sub?.manageable && <Invoices locale={locale} />}
+        {data && (
+          <PlanOverage
+            upgradeLink={`${base}/upgrade?plan=${data.plan === 'PRO' ? 'ENTERPRISE' : 'PRO'}`}
+          />
         )}
       </div>
     </>

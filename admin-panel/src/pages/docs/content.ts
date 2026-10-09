@@ -112,6 +112,80 @@ export const PLATFORMS: Platform[] = [
       }
     ]
   },
+  // Türk e-ticaret altyapıları (PRD-13). Menü adları altyapıların kendi yardım
+  // sayfalarından alındı; panelleri değişirse burası da güncellenir.
+  {
+    id: 'ikas',
+    label: 'ikas',
+    steps: [
+      {
+        tr: 'ikas panelinde Satış Kanalı → Eklentiler’i açın; Yüklü Uygulamalar altında Scripts’e girin.',
+        en: 'In the ikas dashboard open Sales Channel → Extensions, then Scripts under Installed Apps.'
+      },
+      {
+        tr: 'Yeni script ekleyin, başlığa “Support.io” yazın ve kodu script içeriği alanına yapıştırın.',
+        en: 'Add a script, name it “Support.io” and paste the code into the script content box.'
+      },
+      {
+        tr: 'Kaydedin ve scriptin listede etkin olduğundan emin olun.',
+        en: 'Save, and make sure the script is enabled in the list.'
+      }
+    ]
+  },
+  {
+    id: 'ticimax',
+    label: 'Ticimax',
+    steps: [
+      {
+        tr: 'Ticimax yönetim panelinde Script Yönetimi sayfasını açın.',
+        en: 'In the Ticimax admin open the Script Management (Script Yönetimi) page.'
+      },
+      {
+        tr: 'Yeni bir kod ekleyin, sayfa olarak “Tüm Sayfalar”ı seçin ve kodu yapıştırın.',
+        en: 'Add a new code, choose “All Pages” (Tüm Sayfalar) and paste the code.'
+      },
+      {
+        tr: 'Kaydedin; balon mağazanızın her sayfasında görünür.',
+        en: 'Save; the bubble appears on every page of your store.'
+      }
+    ]
+  },
+  {
+    id: 'ideasoft',
+    label: 'IdeaSoft',
+    steps: [
+      {
+        tr: 'IdeaSoft yönetim panelinde Ayarlar → Genel Ayarlar → SEO Ayarları’nı açın.',
+        en: 'In the IdeaSoft admin open Settings → General Settings → SEO Settings (Ayarlar → Genel Ayarlar → SEO Ayarları).'
+      },
+      {
+        tr: 'Kodu “Site İzleme & Remarketing Kodu” alanına, varsa mevcut kodların altına yapıştırın.',
+        en: 'Paste the code into the “Site İzleme & Remarketing Kodu” box, below any code already there.'
+      },
+      {
+        tr: 'Kaydedin; bu alandaki kod mağazanın tüm sayfalarında çalışır.',
+        en: 'Save; code in this box runs on every page of the store.'
+      }
+    ]
+  },
+  {
+    id: 'tsoft',
+    label: 'T-Soft',
+    steps: [
+      {
+        tr: 'T-Soft yönetim panelinde Ayarlar → İzleme Kodları sayfasını açın ve artı düğmesiyle yeni kod ekleyin.',
+        en: 'In the T-Soft admin open Settings → Tracking Codes (Ayarlar → İzleme Kodları) and add a new code with the plus button.'
+      },
+      {
+        tr: 'Tip olarak “HTML Öncesi İzleme Kodu”nu seçin ve kodu Kod alanına yapıştırın.',
+        en: 'Choose “HTML Öncesi İzleme Kodu” as the type and paste the code into the Code box.'
+      },
+      {
+        tr: 'Kaydedin. Balon hemen görünmezse panelin sağ üstündeki “Ön Bellek Temizle”ye basın.',
+        en: 'Save. If the bubble does not show right away, press “Ön Bellek Temizle” (clear cache) at the top right of the admin.'
+      }
+    ]
+  },
   {
     id: 'wix',
     label: 'Wix',
@@ -377,8 +451,8 @@ export const COMMANDS: Array<{ call: string; text: Text }> = [
   {
     call: "['setLocale', 'en']",
     text: {
-      tr: 'Balonun dilini değiştirir: tr veya en.',
-      en: 'Switches the bubble language: tr or en.'
+      tr: 'Balonun dilini değiştirir: tr, en, de, fr, es, nl, ru ya da ar (Arapça sağdan sola).',
+      en: 'Switches the bubble language: tr, en, de, fr, es, nl, ru or ar (Arabic, right to left).'
     }
   },
   {
@@ -386,6 +460,13 @@ export const COMMANDS: Array<{ call: string; text: Text }> = [
     text: {
       tr: 'Balonu belirli sayfalarda gizler ya da yeniden gösterir.',
       en: 'Hides the bubble on certain pages or shows it again.'
+    }
+  },
+  {
+    call: "['on', 'message', (e) => …]",
+    text: {
+      tr: 'Ekibiniz ya da asistan yazdığında çağrılır; e.message mesajın kendisidir. Diğer olaylar: open, close, unread, ready.',
+      en: 'Called when your team or the assistant writes; e.message is the message. Other events: open, close, unread, ready.'
     }
   }
 ];
@@ -395,8 +476,8 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
   {
     attr: 'data-locale="en"',
     text: {
-      tr: 'Dili sabitler. Verilmezse sayfanızın dili kullanılır.',
-      en: 'Fixes the language. Without it, your page’s language is used.'
+      tr: 'Bu sayfada dili sabitler. Verilmezse Widget Studio’da seçtiğiniz dil, o da “Otomatik” ise sayfanızın ve ziyaretçinin tarayıcısının dili kullanılır.',
+      en: 'Fixes the language on this page. Without it, the language chosen in Widget Studio is used, and when that is “Automatic”, your page’s and the visitor’s browser language.'
     }
   },
   {
@@ -414,6 +495,13 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
     }
   },
   {
+    attr: 'data-back-button="false"',
+    text: {
+      tr: 'Telefonda geri tuşu açık pencereyi kapatır; sayfanızın geçmişine dokunulmasın isterseniz kapatın.',
+      en: 'On phones the back button closes the open window; turn it off to leave your page’s history alone.'
+    }
+  },
+  {
     attr: 'data-defer="true"',
     text: {
       tr: 'Çerez onayı için: balon, siz ["init"] çağırana kadar açılmaz.',
@@ -421,3 +509,143 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
     }
   }
 ];
+
+/* ------------------------------------------------- gizlilik metni (LEG-04) */
+
+/**
+ * The paragraph a customer adds to their own privacy notice. The customer is
+ * the controller of their visitors' data; the brackets are theirs to fill.
+ * The AI provider is never named here (its name appears only in our own
+ * sub-processor list).
+ */
+export const privacyParagraph = (lang: 'tr' | 'en', origin: string) =>
+  lang === 'en'
+    ? [
+        'Live chat',
+        'The chat window on this site is provided by Support.io. When you use it, the messages you write, any files you send and the name, e-mail address or phone number you choose to give are processed to answer your questions, together with the page you are on, your browser and operating system, your IP address and country.',
+        '[Your company name] is the controller of this data; Support.io processes it only on our behalf and instructions. Conversations are kept for [retention period] after the last message.',
+        '[If you use the AI assistant:] Some questions may be answered by an AI assistant; its answers are marked as such in the chat window and you can ask for a person at any time.',
+        "The chat window keeps a few entries in your browser's local storage so the conversation continues when you change page; it sets no advertising or tracking cookies.",
+        `Support.io's privacy policy: ${origin}/en/privacy`
+      ].join('\n\n')
+    : [
+        'Canlı destek',
+        'Sitemizdeki sohbet penceresi Support.io tarafından sağlanır. Sohbet penceresini kullandığınızda yazdığınız mesajlar, gönderdiğiniz dosyalar ve kendi isteğinizle verdiğiniz ad, e-posta adresi ya da telefon numarası; bulunduğunuz sayfa, tarayıcınız ve işletim sisteminiz, IP adresiniz ve ülkeniz ile birlikte sorularınızı yanıtlamak amacıyla işlenir.',
+        'Bu verilerin sorumlusu [Şirket adınız]’dır; Support.io bu verileri yalnızca bizim adımıza ve talimatımızla işler. Sohbetler son mesajdan sonra [saklama süresi] boyunca saklanır.',
+        '[Yapay zekâ asistanını kullanıyorsanız:] Sorularınızın bir kısmı yapay zekâ destekli bir asistan tarafından yanıtlanabilir; bu yanıtlar sohbet penceresinde ayrıca belirtilir ve dilediğiniz an bir temsilciye bağlanabilirsiniz.',
+        'Sohbet penceresi, sayfa değiştirdiğinizde konuşmanın sürmesi için tarayıcınızın yerel deposunu kullanır; reklam ya da izleme çerezi kullanmaz.',
+        `Support.io gizlilik politikası: ${origin}/gizlilik`
+      ].join('\n\n');
+
+/** What the chat bubble keeps in the visitor's browser (local storage only). */
+export const STORAGE_KEYS: Array<{ key: string; text: Text }> = [
+  {
+    key: 'sc_widget_session:<site>',
+    text: {
+      tr: 'İmzalı ziyaretçi oturumu: sayfa değişince aynı konuşmaya dönmek için.',
+      en: 'Signed visitor session: to return to the same conversation after a page change.'
+    }
+  },
+  {
+    key: 'sc_contact_<site>',
+    text: {
+      tr: 'İletişim formunun doldurulduğu; form tekrar sorulmasın diye.',
+      en: 'That the contact form was filled in, so it is not asked again.'
+    }
+  },
+  {
+    key: 'sc_visitor_name',
+    text: {
+      tr: 'Ziyaretçinin kendi yazdığı ad.',
+      en: 'The name the visitor typed.'
+    }
+  },
+  {
+    key: 'sc_visitor_email',
+    text: {
+      tr: 'Ziyaretçinin kendi yazdığı e-posta adresi.',
+      en: 'The e-mail address the visitor typed.'
+    }
+  }
+];
+
+// ------------------------------------------------------------- webhooks
+
+/** The events a webhook can ask for (backend services/integrations.ts). */
+export const WEBHOOK_EVENTS: Array<{ name: string; text: Text }> = [
+  {
+    name: 'conversation.created',
+    text: {
+      tr: 'Ziyaretçi yeni bir konuşma başlattı; ilk mesajı da içindedir.',
+      en: 'A visitor started a conversation; its first message is included.'
+    }
+  },
+  {
+    name: 'message.created',
+    text: {
+      tr: 'Ziyaretçi ya da ekibiniz konuşmaya yeni bir mesaj yazdı.',
+      en: 'The visitor or your team wrote a new message.'
+    }
+  },
+  {
+    name: 'conversation.closed',
+    text: {
+      tr: 'Konuşma çözüldü ya da kapatıldı.',
+      en: 'The conversation was resolved or closed.'
+    }
+  },
+  {
+    name: 'rating.created',
+    text: {
+      tr: 'Ziyaretçi konuşmayı 1–5 arasında puanladı.',
+      en: 'The visitor rated the conversation from 1 to 5.'
+    }
+  }
+];
+
+/** What a webhook receives: one JSON object per event. */
+export const WEBHOOK_PAYLOAD = `{
+  "id": "6727a1c0e4b0f3a9d1c2b3a4",
+  "event": "message.created",
+  "createdAt": "2026-10-09T10:15:00.000Z",
+  "data": {
+    "site": { "id": "6727a0f1e4b0f3a9d1c2b100", "name": "Örnek Mağaza" },
+    "conversation": {
+      "id": "6727a19ee4b0f3a9d1c2b2f0",
+      "ticketId": "#0042",
+      "status": "open",
+      "visitorName": "Ayşe",
+      "visitorEmail": null
+    },
+    "message": {
+      "id": "6727a1c0e4b0f3a9d1c2b3a5",
+      "senderType": "visitor",
+      "senderName": "Ayşe",
+      "content": "Kargom nerede?",
+      "createdAt": "2026-10-09T10:15:00.000Z"
+    }
+  }
+}`;
+
+/** Checking the signature in Node.js (Express), with the secret shown once. */
+export const WEBHOOK_VERIFY = `import crypto from 'node:crypto';
+import express from 'express';
+
+const app = express();
+const SECRET = process.env.SUPPORTIO_WEBHOOK_SECRET; // whsec_…
+
+app.post('/supportio', express.raw({ type: 'application/json' }), (req, res) => {
+  const header = req.get('X-SupportIO-Signature') || '';
+  const [, t, v1] = /^t=(\\d+),v1=([0-9a-f]{64})$/.exec(header) || [];
+  const expected = crypto
+    .createHmac('sha256', SECRET)
+    .update(t + '.' + req.body)
+    .digest('hex');
+  const fresh = Math.abs(Date.now() / 1000 - Number(t)) < 300;
+  if (!v1 || !fresh || !crypto.timingSafeEqual(Buffer.from(v1), Buffer.from(expected))) {
+    return res.status(401).end();
+  }
+  const event = JSON.parse(req.body);
+  console.log(event.event, event.data.conversation.id);
+  res.status(200).end();
+});`;

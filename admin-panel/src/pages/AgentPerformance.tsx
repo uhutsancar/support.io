@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import {
-  TrendingUp,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -26,13 +25,14 @@ import {
 } from 'recharts';
 import { errorMessage } from '../hooks/useAsync';
 
-const formatDay = (iso: any) => {
+const formatDay = (iso: any, locale: string) => {
   const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+  return d.toLocaleDateString(locale, { day: '2-digit', month: 'short' });
 };
 
 const AgentPerformance = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'en' ? 'en-GB' : 'tr-TR';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Must stay in step with the ranges the API accepts; anything else is a 400.
@@ -69,11 +69,15 @@ const AgentPerformance = () => {
           slaCompliance: p.slaCompliance,
           activeChats: p.activeChats
         });
-        setDailyActivity(p.dailyActivity.map((d: any) => ({ ...d, label: formatDay(d.day) })));
-        setResponseTrend(p.responseTrend.map((d: any) => ({ ...d, label: formatDay(d.day) })));
+        setDailyActivity(
+          p.dailyActivity.map((d: any) => ({ ...d, label: formatDay(d.day, locale) }))
+        );
+        setResponseTrend(
+          p.responseTrend.map((d: any) => ({ ...d, label: formatDay(d.day, locale) }))
+        );
       } catch (err) {
         if (cancelled) return;
-        setError(errorMessage(err, 'Performans verileri yüklenemedi.'));
+        setError(errorMessage(err, t('stats.loadError')));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -85,7 +89,7 @@ const AgentPerformance = () => {
     return () => {
       cancelled = true;
     };
-  }, [timeRange, reloadToken]);
+  }, [timeRange, reloadToken, locale, t]);
 
   // A metric is null when nothing in the window could produce it (no rated
   // conversation, no reply yet). Showing a dash is honest; showing 0 is not.
@@ -99,8 +103,7 @@ const AgentPerformance = () => {
     value,
     subValue,
     icon: Icon,
-    color,
-    trend
+    color
   }: {
     title: string;
     /** Already formatted for display, so a dash is as valid as a number. */
@@ -108,8 +111,6 @@ const AgentPerformance = () => {
     subValue?: React.ReactNode;
     icon: React.ElementType;
     color: string;
-    /** Percentage change against the previous period. */
-    trend?: number;
   }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
       <div className="flex items-start justify-between">
@@ -123,18 +124,6 @@ const AgentPerformance = () => {
               <span className="text-sm text-gray-500 dark:text-gray-400">{subValue}</span>
             )}
           </div>
-          {trend && (
-            <div
-              className={`flex items-center mt-2 text-sm ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
-            >
-              {trend > 0 ? (
-                <TrendingUp className="w-4 h-4 mr-1" />
-              ) : (
-                <TrendingUp className="w-4 h-4 mr-1 rotate-180" />
-              )}
-              <span>{Math.abs(trend)}% vs last period</span>
-            </div>
-          )}
         </div>
         <div
           className={`p-3 rounded-lg bg-${color}-50 dark:bg-${color}-900/40 border border-${color}-100 dark:border-${color}-900/60`}
@@ -158,7 +147,7 @@ const AgentPerformance = () => {
               {t('sidebar.myPerformance')}
             </h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-              Kendi destek metriklerinizi ve başarı oranlarınızı inceleyin.
+              {t('stats.mineSubtitle')}
             </p>
           </div>
           <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 shadow-sm">
@@ -190,33 +179,33 @@ const AgentPerformance = () => {
               onClick={() => setReloadToken((n) => n + 1)}
               className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
             >
-              Tekrar dene
+              {t('stats.retry')}
             </button>
           </div>
         ) : (
           <div className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               <StatCard
-                title="Çözülen Talepler"
+                title={t('stats.resolvedTickets')}
                 value={stats.totalResolved}
                 icon={CheckCircle2}
                 color="green"
               />
               <StatCard
-                title="SLA Uyumluluğu"
+                title={t('stats.slaCompliance')}
                 value={show(stats.slaCompliance, '%')}
                 icon={Award}
                 color="indigo"
               />
               <StatCard
-                title="Ort. Yanıt Süresi"
+                title={t('stats.avgResponse')}
                 value={show(stats.avgResponseTime)}
                 subValue="dk"
                 icon={Zap}
                 color="purple"
               />
               <StatCard
-                title="Müşteri Memnuniyeti (CSAT)"
+                title={t('stats.csat')}
                 value={show(stats.csatScore)}
                 subValue="/ 5.0"
                 icon={MessageSquare}
@@ -224,7 +213,7 @@ const AgentPerformance = () => {
               />
 
               <StatCard
-                title="Açık Sohbetler"
+                title={t('stats.openChats')}
                 value={stats.activeChats}
                 icon={MessageSquare}
                 color="blue"
@@ -235,10 +224,10 @@ const AgentPerformance = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-8 text-center">
                 <MessageSquare className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                 <h3 className="text-gray-900 dark:text-white font-medium">
-                  Bu dönemde size atanmış talep yok
+                  {t('stats.mineEmptyTitle')}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Size talep atandıkça performans metrikleriniz burada görünecek.
+                  {t('stats.mineEmptyBody')}
                 </p>
               </div>
             )}
@@ -248,10 +237,10 @@ const AgentPerformance = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                      Günlük Aktivite
+                      {t('stats.mineDaily')}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Son {timeRange} içerisindeki atanan ve çözülen talep dengeniz
+                      {t('stats.mineDailyHint', { range: timeRange })}
                     </p>
                   </div>
                   <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
@@ -295,14 +284,14 @@ const AgentPerformance = () => {
                       />
                       <Bar
                         dataKey="assigned"
-                        name="Atanan"
+                        name={t('stats.assigned')}
                         fill="#818CF8"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
                       />
                       <Bar
                         dataKey="resolved"
-                        name="Çözülen"
+                        name={t('stats.resolved')}
                         fill="#34D399"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
@@ -316,10 +305,10 @@ const AgentPerformance = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                      Yanıt Süresi Trendi (Dk)
+                      {t('stats.mineTrend')}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Zaman içindeki geri dönüş performansınız
+                      {t('stats.mineTrendHint')}
                     </p>
                   </div>
                   <div className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
@@ -363,7 +352,7 @@ const AgentPerformance = () => {
                       <Line
                         type="monotone"
                         dataKey="avgMinutes"
-                        name="Ortalama Yanıt"
+                        name={t('stats.avgReply')}
                         stroke="#A78BFA"
                         strokeWidth={4}
                         dot={{ r: 5, strokeWidth: 2, fill: '#1F2937' }}

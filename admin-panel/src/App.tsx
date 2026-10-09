@@ -15,6 +15,7 @@ const AiAssistant = lazy(() => import('./pages/AiAssistant'));
 const Legal = lazy(() => import('./pages/Legal'));
 const About = lazy(() => import('./pages/About'));
 const Docs = lazy(() => import('./pages/Docs'));
+const ApiDocs = lazy(() => import('./pages/ApiDocs'));
 const Login = lazy(() => import('./pages/Login'));
 const AcceptInvitation = lazy(() => import('./pages/AcceptInvitation'));
 const ForgotPassword = lazy(() =>
@@ -26,6 +27,10 @@ const ResetPassword = lazy(() =>
 const VerifyEmail = lazy(() =>
   import('./pages/AccountRecovery').then((m) => ({ default: m.VerifyEmail }))
 );
+const ConfirmEmail = lazy(() =>
+  import('./pages/AccountRecovery').then((m) => ({ default: m.ConfirmEmail }))
+);
+const RateConversation = lazy(() => import('./pages/RateConversation'));
 const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Sites = lazy(() => import('./pages/Sites'));
@@ -51,6 +56,8 @@ const AutomationRules = lazy(() => import('./pages/AutomationRules'));
 const ProactiveRules = lazy(() => import('./pages/ProactiveRules'));
 const FeatureDetail = lazy(() => import('./pages/FeatureDetail'));
 const Solution = lazy(() => import('./pages/Solution'));
+const Integrations = lazy(() => import('./pages/Integrations'));
+const Compare = lazy(() => import('./pages/Compare'));
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -158,11 +165,15 @@ function App() {
                     <Route path="/ozellikler" element={<Features />} />
                     <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
                     <Route path="/cozumler/:slug" element={<Solution />} />
+                    <Route path="/karsilastirma/:slug" element={<Compare />} />
                     <Route path="/fiyatlandirma" element={<Pricing />} />
                     <Route path="/yapay-zeka" element={<AiAssistant />} />
                     <Route path="/gizlilik" element={<Legal kind="privacy" />} />
                     <Route path="/kullanim-sartlari" element={<Legal kind="terms" />} />
+                    <Route path="/erisilebilirlik" element={<Legal kind="accessibility" />} />
+                    <Route path="/yapay-zeka-kullanimi" element={<Legal kind="aiUse" />} />
                     <Route path="/dokumantasyon" element={<Docs />} />
+                    <Route path="/dokumantasyon/api" element={<ApiDocs />} />
                     <Route path="/hakkimizda" element={<About />} />
                     <Route
                       path="/login"
@@ -190,16 +201,22 @@ function App() {
                     />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/confirm-email" element={<ConfirmEmail />} />
+                    <Route path="/rate" element={<RateConversation />} />
                     <Route path="/invite/accept" element={<AcceptInvitation />} />
                     <Route path="/en" element={<Home />} />
                     <Route path="/en/features" element={<Features />} />
                     <Route path="/en/features/:slug" element={<FeatureDetail />} />
                     <Route path="/en/solutions/:slug" element={<Solution />} />
+                    <Route path="/en/compare/:slug" element={<Compare />} />
                     <Route path="/en/pricing" element={<Pricing />} />
                     <Route path="/en/ai-assistant" element={<AiAssistant />} />
                     <Route path="/en/privacy" element={<Legal kind="privacy" />} />
                     <Route path="/en/terms" element={<Legal kind="terms" />} />
+                    <Route path="/en/accessibility" element={<Legal kind="accessibility" />} />
+                    <Route path="/en/ai-use" element={<Legal kind="aiUse" />} />
                     <Route path="/en/documentation" element={<Docs />} />
+                    <Route path="/en/documentation/api" element={<ApiDocs />} />
                     <Route path="/en/about" element={<About />} />
                     <Route
                       path="/en/login"
@@ -227,6 +244,8 @@ function App() {
                     />
                     <Route path="/en/reset-password" element={<ResetPassword />} />
                     <Route path="/en/verify-email" element={<VerifyEmail />} />
+                    <Route path="/en/confirm-email" element={<ConfirmEmail />} />
+                    <Route path="/en/rate" element={<RateConversation />} />
                     <Route path="/en/invite/accept" element={<AcceptInvitation />} />
                     <Route
                       path="/onboarding"
@@ -276,6 +295,16 @@ function App() {
                           <PlanGate feature="departments">
                             <Departments />
                           </PlanGate>
+                        }
+                      />
+                      <Route
+                        path="integrations"
+                        element={
+                          <AdminRoute>
+                            <PlanGate feature="integrations">
+                              <Integrations />
+                            </PlanGate>
+                          </AdminRoute>
                         }
                       />
                       <Route

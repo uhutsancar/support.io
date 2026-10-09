@@ -26,6 +26,15 @@
 
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
+import { siteAnalytics } from '../services/siteAnalytics';
+
+/**
+ * Where browsers report what the policy blocked (routes/cspReport.ts, SEC-11):
+ * report-uri for the browsers that only know it, report-to with the
+ * Reporting-Endpoints header for the rest.
+ */
+export const CSP_REPORT_PATH = '/api/csp-report';
+const REPORTING = [`report-uri ${CSP_REPORT_PATH}`, 'report-to csp'];
 
 /** Hosts that uploaded files may be served from. */
 function mediaHosts(): string[] {
@@ -69,25 +78,42 @@ function paddleHosts(): { script: string; frame: string; connect: string } | nul
   };
 }
 
+/**
+ * Cloudflare Turnstile on the sign-up form (SEC-06), only when a site key is
+ * configured: its script and its challenge frame come from one host.
+ */
+function turnstileHost(): string | null {
+  return String(process.env.TURNSTILE_SITE_KEY || '').trim()
+    ? 'https://challenges.cloudflare.com'
+    : null;
+}
+
 const STRICT_BASE = (nonce: string): string[] => {
   const paddle = paddleHosts();
+  const turnstile = turnstileHost();
+  // Self-hosted visitor counts (KARAR-MKT-3): the script and its reports
+  // share one origin.
+  const analytics = siteAnalytics()?.origin;
+  const scripts = [paddle?.script, turnstile, analytics].filter(Boolean).join(' ');
+  const frames = [paddle?.frame, turnstile].filter(Boolean).join(' ');
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${paddle ? ' ' + paddle.script : ''}`,
+    `script-src 'self' 'nonce-${nonce}'${scripts ? ' ' + scripts : ''}`,
     // Inline style attributes are everywhere in a React tree (style={{…}}), and
     // they cannot carry a nonce. Styles cannot read localStorage, so this is the
     // one relaxation worth making.
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
     `img-src 'self' data: blob: ${mediaHosts().join(' ')}`.trim(),
-    `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}`.trim(),
-    ...(paddle ? [`frame-src ${paddle.frame}`] : []),
+    `connect-src 'self' ${connectHosts().join(' ')}${paddle ? ' ' + paddle.connect : ''}${analytics ? ' ' + analytics : ''}`.trim(),
+    ...(frames ? [`frame-src ${frames}`] : []),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
     "worker-src 'self' blob:",
-    'upgrade-insecure-requests'
+    'upgrade-insecure-requests',
+    ...REPORTING
   ];
 };
 
@@ -96,13 +122,14 @@ const STRICT_BASE = (nonce: string): string[] => {
 const RELAXED = (): string[] => [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "img-src 'self' data: blob:",
   `connect-src 'self' ${connectHosts().join(' ')}`.trim(),
   "object-src 'none'",
   "base-uri 'self'",
-  "frame-ancestors 'none'"
+  "frame-ancestors 'none'",
+  ...REPORTING
 ];
 
 /**
@@ -128,6 +155,7 @@ export function contentSecurityPolicy(options: { isProduction: boolean }) {
       .join('; ');
 
     res.setHeader('Content-Security-Policy', policy);
+    res.setHeader('Reporting-Endpoints', `csp="${CSP_REPORT_PATH}"`);
     next();
   };
 }

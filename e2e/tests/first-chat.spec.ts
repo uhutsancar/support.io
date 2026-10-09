@@ -1,5 +1,6 @@
 // A new customer, from sign-up to a paid plan, in real browsers (plan §18):
-// register → verify by the mailed link → onboarding creates the site → the
+// register → "check your inbox" → the mailed link signs in → onboarding
+// creates the site → the
 // install code goes on a separate website → a visitor writes → the agent sees
 // it and answers → the visitor sees the answer → after a reload the history
 // is still there → the agent closes the conversation → a paid upgrade raises
@@ -33,16 +34,17 @@ test('a new customer answers their first visitor and upgrades', async ({ browser
       await panel.locator('input[type="email"]').fill(email);
       await panel.locator('input[type="password"]').fill(PASSWORD);
       await panel.locator('form button[type="submit"]').click();
+      // Sign-up is e-mail first: no session until the link is opened.
+      await expect(panel.getByText('Gelen kutunuzu kontrol edin')).toBeVisible();
+    });
+
+    await test.step('the mailed link verifies the address and signs in', async () => {
+      await panel.goto(await mailedLink(panel.request, email, '/verify-email'));
+      await expect(panel.getByText('E-posta adresiniz doğrulandı')).toBeVisible();
       await panel.waitForURL(/\/onboarding/);
     });
 
-    await test.step('verify the address from the mailed link', async () => {
-      await panel.goto(await mailedLink(panel.request, email, '/verify-email'));
-      await expect(panel.getByText('E-posta adresiniz doğrulandı')).toBeVisible();
-    });
-
     await test.step('onboarding creates the site', async () => {
-      await panel.goto('/onboarding');
       await panel.getByText('Müşteri hizmetlerimizi iyileştirmek için').click();
       await panel.getByRole('button', { name: /İlerle/ }).click();
       await panel.locator('input[type="url"]').fill(`http://127.0.0.1:${SHOP_PORT}`);
@@ -109,8 +111,8 @@ test('a new customer answers their first visitor and upgrades', async ({ browser
       const claim = panel.getByRole('button', { name: 'Talebi Üzerime Al' });
       if (await claim.isVisible().catch(() => false)) await claim.click();
       await expect(panel.getByText(question).last()).toBeVisible();
-      await panel.getByPlaceholder('Mesajınızı yazın...').fill(answer);
-      await panel.getByPlaceholder('Mesajınızı yazın...').press('Enter');
+      await panel.getByPlaceholder(/^Mesajınızı yazın/).fill(answer);
+      await panel.getByPlaceholder(/^Mesajınızı yazın/).press('Enter');
     });
 
     await test.step('the visitor sees the answer live', async () => {
@@ -135,8 +137,18 @@ test('a new customer answers their first visitor and upgrades', async ({ browser
       await expect(item).toContainText('Kapalı');
     });
 
-    await test.step('upgrading to Pro raises the limits', async () => {
+    await test.step('the trial ends in Free; paying for Pro raises the limits again', async () => {
+      // A new workspace starts on the free Pro trial (PRD-15).
       await panel.goto('/dashboard/billing');
+      await expect(panel.getByText('Ücretsiz deneme').first()).toBeVisible();
+      await expect(panel.getByText('1 / 3').first()).toBeVisible();
+      // The trial runs out; the plan in force is Free again.
+      const cookies = await agentContext.cookies();
+      const ended = await panel.request.post('/api/dev/end-trial', {
+        headers: { 'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? '' }
+      });
+      expect(ended.status()).toBe(204);
+      await panel.reload();
       await expect(panel.getByText('1 / 1').first()).toBeVisible();
 
       await panel.goto('/dashboard/upgrade?plan=PRO');

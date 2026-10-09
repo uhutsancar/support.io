@@ -203,7 +203,7 @@ export default {
         {
           cat: 'setup',
           q: 'Hangi sitelerde çalışır?',
-          a: 'Bir satır HTML ekleyebildiğiniz her sitede: WordPress, Shopify, Wix, Webflow, Ticimax, İdeasoft ya da React, Vue, Angular ve Next.js ile yazılmış uygulamalar. Rehberde her biri için kopyalanabilir kod var.'
+          a: 'Bir satır HTML ekleyebildiğiniz her sitede: WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow ya da React, Vue, Angular ve Next.js ile yazılmış uygulamalar. Rehberde her biri için kopyalanabilir kod var.'
         },
         {
           cat: 'setup',
@@ -213,7 +213,7 @@ export default {
         {
           cat: 'ai',
           q: 'Yapay zekâ asistanı yanlış bir şey söylerse?',
-          a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
+          a: 'Asistan yalnızca SSS kayıtlarınızdan ve eklediğiniz sayfa ve PDF’lerden yanıt verir, her yanıtta hangi kaynağa dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
         },
         {
           cat: 'ai',
@@ -351,8 +351,10 @@ export default {
           'WooCommerce',
           'Wix',
           'Webflow',
+          'ikas',
           'Ticimax',
-          'İdeasoft',
+          'IdeaSoft',
+          'T-Soft',
           'Google Tag Manager',
           'React',
           'Next.js',
@@ -405,6 +407,7 @@ export default {
 
       footerDesc:
         'Sitenize eklenen canlı destek. Müşteriniz yazar, ekibiniz tek ekrandan yanıtlar.',
+      footerStatus: 'Sistem durumu',
       footerMade: 'Türkiye’de geliştirildi',
       footerProduct: 'Ürün',
       footerFeatures: 'Özellikler',
@@ -483,7 +486,7 @@ export default {
       },
       sdk: {
         title: 'Her altyapıda',
-        body: 'WordPress, Shopify, Wix, Webflow ya da React, Vue, Angular — rehberde hepsi için hazır adımlar var.'
+        body: 'WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow ya da React, Vue, Angular — rehberde hepsi için hazır adımlar var.'
       },
       isolation: {
         title: 'Sitenizi yavaşlatmaz',
@@ -564,7 +567,7 @@ export default {
           'Rengi, yazısı ve konumu panelden ayarlanır',
           'Telefonda ve bilgisayarda aynı şekilde çalışır',
           'Sitenizin tasarımını bozmaz, yavaşlatmaz',
-          'Aynı kod WordPress’te de React’te de çalışır'
+          'Ziyaretçinin dilinde konuşur: Türkçe, İngilizce, Almanca, Fransızca, İspanyolca, Felemenkçe, Rusça ve Arapça'
         ],
         steps: [
           { title: 'Sitenizi ekleyin', body: 'Panelden site adresinizi tanımlayın.' },
@@ -781,6 +784,7 @@ export default {
     custom: 'Size özel',
     freeNote: 'Süresiz ücretsiz, faturalandırma yok',
     contactNote: 'İhtiyacınıza göre belirlenir',
+    taxNote: 'KDV ödeme sırasında hesaplanır.',
     loadError: 'Plan bilgileri şu an yüklenemedi. Sayfayı yenileyip tekrar deneyin.',
 
     units: {
@@ -790,7 +794,12 @@ export default {
       agents_other: '{{count}} kullanıcı',
       conversations: 'Ayda {{n}} yeni konuşma',
       assistant: 'Ayda {{n}} yapay zekâ yanıtı',
-      assistantDepth: 'Konuşma başına {{count}} yapay zekâ yanıtı'
+      assistantDepth: 'Konuşma başına {{count}} yapay zekâ yanıtı',
+      history: '{{period}} konuşma geçmişi',
+      days_one: '{{count}} gün',
+      days_other: '{{count}} gün',
+      years_one: '{{count}} yıl',
+      years_other: '{{count}} yıl'
     },
 
     chooseEyebrow: 'Karar verirken',
@@ -827,6 +836,10 @@ export default {
       {
         q: 'Planımı sonradan değiştirebilir miyim?',
         a: 'Evet, istediğiniz zaman yükseltip düşürebilirsiniz. Değişiklik kalan sürenize göre oranlanır.'
+      },
+      {
+        q: 'KDV fiyata dâhil mi?',
+        a: 'KDV ödeme sırasında, fatura bilgilerinize göre hesaplanır ve ödemeden önce ödeme sayfasında ayrıca gösterilir.'
       },
       {
         q: 'Taahhüt var mı?',
@@ -877,6 +890,7 @@ export default {
       sites: 'Site sayısı',
       agents: 'Kullanıcı sayısı',
       conversations: 'Aylık yeni konuşma',
+      history: 'Konuşma geçmişi',
       widget: 'Sohbet balonu ve görünüm ayarları',
       faq: 'Yardım içeriği (SSS)',
       assistant: 'Yapay zekâ asistanı',
@@ -890,6 +904,10 @@ export default {
       crm: 'Fırsat takibi',
       export: 'Dışa aktarma',
       audit: 'Denetim kayıtları',
+      security: 'Ekip için zorunlu iki adımlı doğrulama',
+      integrations: 'Slack, Telegram ve webhook bildirimleri',
+      knowledge: 'Asistan sayfalarınızdan ve PDF’lerinizden de yanıt verir',
+      api: 'Konuşma, ziyaretçi ve SSS için API',
       noBranding: 'Balonda “Support.io” yazısı olmadan'
     }
   },
@@ -975,7 +993,7 @@ export default {
     title: 'Ücretsiz hesap açın',
     subtitle: 'E-posta ve şifre yeterli. Kredi kartı istemiyoruz.',
     metaTitle: 'Ücretsiz hesap açın — Support.io',
-    passwordHint: 'En az 8 karakter',
+    passwordHint: 'En az 10 karakter, tahmin edilmesi kolay olmasın',
     noCard: 'Kayıt olarak kullanım koşullarını kabul etmiş olursunuz.',
     hasAccount: 'Zaten hesabınız var mı?',
     login: 'Giriş yapın'
@@ -1185,6 +1203,133 @@ export default {
         { name: 'Pazarlık', count: '2', cards: [{ title: 'Kaya İnşaat', value: '₺112.000' }] },
         { name: 'Kazanıldı', count: '6', cards: [{ title: 'Deniz Gıda', value: '₺31.000' }] }
       ]
+    }
+  },
+
+  compare: {
+    eyebrow: 'Karşılaştırma',
+    title: 'Support.io ve {{name}}',
+    metaTitle: 'Support.io ve {{name}} karşılaştırması',
+    whoEyebrow: 'Kısa cevap',
+    whoTitle: 'Hangisi size uygun?',
+    chooseUs: 'Support.io’yu seçin, eğer',
+    chooseThem: '{{name}} daha uygun olabilir, eğer',
+    tableEyebrow: 'Yan yana',
+    tableTitle: 'Fiyat ve yapay zekâ',
+    tableDesc: 'Support.io sütunu, panelde uygulanan plan tablosundan gelir.',
+    rowLabel: 'Konu',
+    rows: {
+      model: 'Fiyat modeli',
+      start: 'Ücretli başlangıç',
+      free: 'Ücretsiz plan',
+      ai: 'Yapay zekâ'
+    },
+    us: {
+      model: 'Plan başına sabit aylık ücret; kullanıcı başına ödemezsiniz.',
+      start: 'Pro: ayda {{price}}; {{agents}} ve {{sites}} dâhil.',
+      free: 'Süresiz: {{limits}}.',
+      ai: 'Her planda dâhil, ek ücret yok: ücretsiz planda ayda {{free}}, Pro’da ayda {{pro}} yanıt.',
+      seePricing: 'Güncel bilgi fiyatlandırma sayfasında.'
+    },
+    checked: '8 Ekim 2026',
+    note: '{{name}} bilgileri {{date}} tarihinde firmanın herkese açık fiyat sayfasından alınmıştır; fiyatlar ABD doları cinsindendir ve o tarihten sonra değişmiş olabilir.',
+    source: '{{name}} fiyat sayfası',
+    trademark:
+      '{{name}} adı ve markası sahibine aittir; Support.io bu firmayla bağlantılı değildir.',
+    gapsEyebrow: 'Açık konuşalım',
+    gapsTitle: 'Support.io’da bugün olmayanlar',
+    gapsDesc: 'Karar verirken bilmeniz gerekenler.',
+    gaps: [
+      'Konuşmalar web sitenizdeki sohbet balonundan gelir; e-posta, WhatsApp ve sosyal medya mesajları aynı kutuya düşmez.',
+      'Ayrı bir mobil uygulama yok; panel tarayıcıda çalışır.',
+      'Yapay zekâ asistanı yalnızca sitenizin SSS içeriğinden ve eklediğiniz sayfa ve PDF’lerden yanıt verir; sipariş sorgulama gibi işlemler yapmaz.'
+    ],
+    othersTitle: 'Diğer karşılaştırmalar',
+    ctaTitle: 'Farkı kendi sitenizde görün',
+    ctaDesc:
+      'Ücretsiz hesap açın, sohbet balonunu sitenize ekleyin, asistanı SSS’nizle açın. Kredi kartı istemiyoruz.',
+    items: {
+      'tawk-to': {
+        name: 'Tawk.to',
+        summary:
+          'İkisi de sitenize ücretsiz canlı sohbet ekler. Fark yapay zekâda ve fiyatın kuruluşunda: Tawk.to’da sohbet ücretsiz, yapay zekâ ve marka yazısını kaldırmak ayrı ücretli eklenti; Support.io’da asistan her planda dâhil, ücretli planlar Türk lirasıyla sabit aylık.',
+        us: [
+          'Yapay zekâ asistanının ek ücret istemeden planın içinde gelmesini istiyorsanız.',
+          'Fiyatı Türk lirasıyla görmek ve sabit bir aylık tutar ödemek istiyorsanız.',
+          'Sohbet balonundaki marka yazısının ücretli planda kendiliğinden kalkmasını istiyorsanız.'
+        ],
+        them: [
+          'Tek ihtiyacınız ücretsiz canlı sohbetse ve yapay zekâ kullanmayacaksanız.',
+          'Ücretsiz sürümde geniş bir ekiple çalışmanız gerekiyorsa.'
+        ],
+        rows: {
+          model: 'Canlı sohbet ücretsiz; bazı özellikler ücretli eklenti.',
+          start: '“Powered by tawk.to” yazısını kaldırmak ayda 29 $.',
+          free: 'Var; canlı sohbet, bilet sistemi ve bilgi bankası ücretsiz.',
+          ai: 'Ayrı eklenti (AI Assist): az hacimli siteler için ücretsiz katman, standart plan ayda 29 $’dan başlıyor.'
+        }
+      },
+      crisp: {
+        name: 'Crisp',
+        summary:
+          'Crisp ve Support.io’nun ikisi de kişi başı değil, plan başına ücret alır. Crisp birçok kanalı tek kutuda toplar; Support.io web sitenizdeki sohbete ve SSS’nizden yanıt veren asistana odaklanır ve Türk lirasıyla satılır.',
+        us: [
+          'Yapay zekâ yanıtlarının kredi hesabı olmadan, planda yazan sabit bir hakla gelmesini istiyorsanız.',
+          'Yapay zekâ asistanını ücretsiz planda da denemek istiyorsanız.',
+          'Fiyatı Türk lirasıyla görmek ve ödemek istiyorsanız.'
+        ],
+        them: [
+          'Web sohbetinin yanında e-posta ve mesajlaşma uygulamalarını da tek kutuda toplamak istiyorsanız.',
+          'Ücretsiz planda iki kişiyle çalışmanız gerekiyorsa.'
+        ],
+        rows: {
+          model:
+            'Çalışma alanı başına aylık ücret; her planda belirli sayıda kullanıcı, fazlası kullanıcı başına ayda 10 $.',
+          start: 'Mini: ayda 45 $, 4 kullanıcı.',
+          free: 'Var: 2 kullanıcı, en fazla 100 müşteri profili.',
+          ai: 'Ücretli planlarda aylık yapay zekâ kredisi (Mini’de yaklaşık 90 otomatik konuşma); ücretsiz planda yok.'
+        }
+      },
+      intercom: {
+        name: 'Intercom',
+        summary:
+          'Intercom büyük destek ekipleri için kapsamlı bir platform: kullanıcı başına ücret alır, yapay zekâ ajanı ise her başarılı sonuç için ayrıca ücretlendirilir. Support.io küçük ve orta ölçekli ekipler için: plan başına sabit fiyat, yapay zekâ yanıtları planın içinde.',
+        us: [
+          'Ekibiniz büyüdükçe faturanın kişi sayısıyla artmasını istemiyorsanız.',
+          'Yapay zekâ maliyetini önceden bilmek, sonuç başına ödememek istiyorsanız.',
+          'Süresi dolmayan ücretsiz bir planla, kredi kartı vermeden başlamak istiyorsanız.'
+        ],
+        them: [
+          'Büyük bir destek ekibiniz ve çok adımlı iş akışlarınız varsa.',
+          'Destek, satış ve ürün içi mesajları tek platformda yönetmek istiyorsanız.'
+        ],
+        rows: {
+          model: 'Kullanıcı (koltuk) başına aylık ücret.',
+          start: 'Essential: kullanıcı başına ayda 29 $’dan başlıyor.',
+          free: 'Yok; 14 günlük ücretsiz deneme.',
+          ai: 'Fin yapay zekâ ajanı: her başarılı sonuç başına 0,99 $.'
+        }
+      },
+      tidio: {
+        name: 'Tidio',
+        summary:
+          'Tidio ve Support.io’nun ikisi de ücretsiz planla başlar. Tidio’da ücret faturalanan konuşma sayısına göre artar, yapay zekâ ajanı Lyro ayrıca ücretlendirilir; Support.io’da yapay zekâ yanıtları her planda dâhil, ücretli planlar Türk lirasıyla sabit aylık.',
+        us: [
+          'Yapay zekâ asistanının ek ücret istemeden planın içinde gelmesini istiyorsanız.',
+          'Ücretsiz planda her ay yenilenen bir yapay zekâ hakkı istiyorsanız.',
+          'Fiyatı Türk lirasıyla görmek ve ödemek istiyorsanız.'
+        ],
+        them: [
+          'E-ticaret sitenizde görsel bir düzenleyiciyle sohbet akışları kurmak istiyorsanız.',
+          'Hazır e-ticaret altyapısı entegrasyonları arıyorsanız.'
+        ],
+        rows: {
+          model: 'Plan başına aylık ücret; faturalanan konuşma sayısına göre artar.',
+          start: 'Starter: ayda 24,17 $’dan başlıyor, 100 faturalanan konuşma.',
+          free: 'Var: ayda 50 faturalanan konuşma.',
+          ai: 'Lyro yapay zekâ ajanı: 50 konuşmalık tek seferlik hak; sonrası ek ücretli.'
+        }
+      }
     }
   }
 };

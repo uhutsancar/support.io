@@ -51,7 +51,7 @@ echo "==> pull"
 $C pull backend
 
 echo "==> migrations"
-$C run --rm --no-deps backend npm run db:migrate:prod
+$C run --rm --no-deps backend node dist/db/migrate.js
 
 echo "==> restart"
 $C up -d --remove-orphans

@@ -14,6 +14,7 @@ import { isPlanType } from '../domain';
 import { asyncMiddleware } from '../http/asyncHandler';
 import { HttpError, forbidden } from '../http/errors';
 import { orgId } from '../http/guards';
+import { trialRunning } from './trial';
 import type { Feature, PlanLimits } from '../domain/plans';
 import type { PlanType } from '../domain';
 import type { PoolClient, QueryResultRow } from 'pg';
@@ -34,7 +35,11 @@ async function rows<R extends QueryResultRow>(
 
 /** A limit of the plan was reached; the panel shows the upgrade path. */
 export class PlanLimitError extends HttpError {
-  constructor(resource: 'sites' | 'agents' | 'conversations', limit: number, used: number) {
+  constructor(
+    resource: 'sites' | 'agents' | 'conversations' | 'knowledgeSources',
+    limit: number,
+    used: number
+  ) {
     super(403, `Your plan allows ${limit} ${resource}; upgrade to add more`, 'PLAN_LIMIT_REACHED', {
       resource,
       limit,
@@ -80,19 +85,25 @@ export function currentPeriod(at: Date = new Date()): string {
 export async function getPlan(organizationId: string, client?: Runner | null): Promise<PlanType> {
   const [row] = await rows<{
     plan_type: string;
+    billing_exempt: boolean;
+    trial_ends_at: Date | null;
     sub_plan: string | null;
     status: string | null;
     current_period_end: Date | null;
     past_due_since: Date | null;
   }>(
     client,
-    `SELECT o.plan_type, s.plan_type AS sub_plan, s.status, s.current_period_end, s.past_due_since
+    `SELECT o.plan_type, o.billing_exempt, o.trial_ends_at,
+            s.plan_type AS sub_plan, s.status, s.current_period_end, s.past_due_since
        FROM organizations o
        LEFT JOIN subscriptions s ON s.organization_id = o.id
       WHERE o.id = $1`,
     [organizationId]
   );
   if (!row) return 'FREE';
+  // A hand-set plan that billing may not move (SEC-05): the platform owner's
+  // workspace, beta customers.
+  if (row.billing_exempt) return isPlanType(row.plan_type) ? row.plan_type : 'FREE';
   if (isPlanType(row.sub_plan) && isSubscriptionStatus(row.status)) {
     return effectivePlan(
       {
@@ -105,7 +116,10 @@ export async function getPlan(organizationId: string, client?: Runner | null): P
       billingConfig().pastDueGraceDays
     );
   }
-  return isPlanType(row.plan_type) ? row.plan_type : 'FREE';
+  const base: PlanType = isPlanType(row.plan_type) ? row.plan_type : 'FREE';
+  // The free trial (PRD-15) lifts a Free workspace to Pro until it ends.
+  if (base === 'FREE' && trialRunning(row.trial_ends_at)) return 'PRO';
+  return base;
 }
 
 export async function limitsFor(organizationId: string, client?: Runner | null) {

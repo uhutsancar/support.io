@@ -107,12 +107,22 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
   // Whether the FAQ assistant answers on a site, and the site's identity
   // key. The metadata names what changed, never a secret.
   'site.assistant.updated': { action: 'SITE_ASSISTANT_UPDATED', entityType: 'site' },
+  'site.assistant.enabled': { action: 'ASSISTANT_ENABLED', entityType: 'site' },
   'site.created': { action: 'SITE_CREATED', entityType: 'site' },
   'site.updated': { action: 'SITE_UPDATED', entityType: 'site' },
   'site.deleted': { action: 'SITE_DELETED', entityType: 'site' },
   'site.widget.updated': { action: 'WIDGET_SETTINGS_UPDATED', entityType: 'site' },
   // Who moved a conversation to whom: agent ids only, never the conversation.
   'conversation.assigned': { action: 'CONVERSATION_ASSIGNED', entityType: 'ticket' },
+  // Which conversation went into which (PRD-07); the target is the entity.
+  'conversation.merged': { action: 'CONVERSATIONS_MERGED', entityType: 'ticket' },
+  // Slack, Telegram and webhooks (PRD-11): kind and events, never an address or a key.
+  'integration.created': { action: 'WEBHOOK_CREATED', entityType: 'integration' },
+  'integration.updated': { action: 'WEBHOOK_UPDATED', entityType: 'integration' },
+  'integration.deleted': { action: 'WEBHOOK_DELETED', entityType: 'integration' },
+  // Public API keys (PRD-12): the name and scopes, never the key.
+  'api_key.created': { action: 'API_KEY_CREATED', entityType: 'api_key' },
+  'api_key.revoked': { action: 'API_KEY_REVOKED', entityType: 'api_key' },
   'site.integration.updated': { action: 'SITE_INTEGRATION_UPDATED', entityType: 'site' },
   // Account security. The metadata never carries a token or a password.
   'auth.email.verified': {
@@ -129,6 +139,75 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
     action: 'PASSWORD_RESET',
     entityType: 'user',
     entityId: (p) => p.userId
+  },
+  'auth.login.locked': {
+    action: 'LOGIN_FAILED_LOCKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.password.changed': {
+    action: 'PASSWORD_CHANGED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.email.change_requested': {
+    action: 'EMAIL_CHANGE_REQUESTED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.email.changed': {
+    action: 'EMAIL_CHANGED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.mfa.enabled': { action: 'MFA_ENABLED', entityType: 'user', entityId: (p) => p.userId },
+  'auth.google.linked': {
+    action: 'GOOGLE_LINKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  // The free month a referral earned, given by the system (PRD-23).
+  'referral.rewarded': {
+    action: 'REFERRAL_REWARDED',
+    entityType: 'organization',
+    entityId: (p) => p.organizationId,
+    systemActor: true
+  },
+  'report.exported': {
+    action: 'REPORT_EXPORTED',
+    entityType: 'organization',
+    entityId: (p) => p.organizationId
+  },
+  'auth.google.unlinked': {
+    action: 'GOOGLE_UNLINKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.mfa.disabled': { action: 'MFA_DISABLED', entityType: 'user', entityId: (p) => p.userId },
+  'auth.mfa.recovery_used': {
+    action: 'MFA_RECOVERY_USED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'auth.sessions.revoked': {
+    action: 'SESSIONS_REVOKED',
+    entityType: 'user',
+    entityId: (p) => p.userId
+  },
+  'organization.security.updated': {
+    action: 'SECURITY_SETTINGS_UPDATED',
+    entityType: 'organization',
+    entityId: (p) => p.organizationId
+  },
+  'saved_reply.created': { action: 'SAVED_REPLY_CREATED', entityType: 'saved_reply' },
+  'saved_reply.updated': { action: 'SAVED_REPLY_UPDATED', entityType: 'saved_reply' },
+  'saved_reply.deleted': { action: 'SAVED_REPLY_DELETED', entityType: 'saved_reply' },
+  'visitor.blocked': { action: 'VISITOR_BLOCKED', entityType: 'visitor' },
+  'visitor.unblocked': { action: 'VISITOR_UNBLOCKED', entityType: 'visitor' },
+  'visitor.data_deleted': { action: 'VISITOR_DATA_DELETED', entityType: 'visitor' },
+  'organization.retention.updated': {
+    action: 'RETENTION_SETTINGS_UPDATED',
+    entityType: 'organization'
   },
   'invitation.sent': { action: 'INVITATION_SENT', entityType: 'invitation' },
   'invitation.revoked': { action: 'INVITATION_REVOKED', entityType: 'invitation' },

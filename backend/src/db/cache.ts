@@ -49,4 +49,16 @@ async function cached<T>(
   return pending;
 }
 
-export { cached };
+/** Drops a key, so the next read computes it again (after a change). */
+async function forget(key: string): Promise<void> {
+  if (!isEnabled()) return;
+  const client = await getRedisClient();
+  if (!client) return;
+  try {
+    await client.del(key);
+  } catch {
+    // The TTL ends it anyway.
+  }
+}
+
+export { cached, forget };

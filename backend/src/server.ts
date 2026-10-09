@@ -16,6 +16,19 @@ import connectDB from './config/database';
 import { isConnected } from './config/database';
 import SocketHandler from './socket';
 import authRoutes from './routes/auth';
+import googleAuthRoutes, { standInGoogle } from './routes/googleAuth';
+import knowledgeRoutes from './routes/knowledge';
+import { standInPage } from './services/knowledgeSources';
+import accountRoutes from './routes/account';
+import savedReplyRoutes from './routes/savedReplies';
+import conversationTagRoutes from './routes/conversationTags';
+import pushRoutes from './routes/push';
+import { helpPages, helpSettings } from './routes/helpCenter';
+import integrationRoutes from './routes/integrations';
+import apiKeyRoutes from './routes/apiKeys';
+import publicApiRoutes from './routes/publicApi';
+import { integrationOutbox } from './services/integrations';
+import { pushOutbox, usePushRealtime } from './services/push';
 import siteRoutes from './routes/sites';
 import faqRoutes from './routes/faqs';
 import conversationRoutes from './routes/conversations';
@@ -38,30 +51,46 @@ import analyticsRoutes from './routes/analytics';
 import assistantRoutes from './routes/assistant';
 import billingRoutes, { webhookRouter as billingWebhookRoutes } from './routes/billing';
 import dataExportRoutes from './routes/dataExport';
+import wellKnownRoutes, { robotsHeader } from './routes/wellKnown';
+import cspReportRoutes from './routes/cspReport';
+import { panelTelemetry, widgetTelemetry } from './routes/telemetry';
+import { internalMetricsRoutes } from './routes/internalMetrics';
+import { withSeoHead } from './services/seoHead';
+import { appBaseUrl } from './services/mail';
+import { captureError } from './services/errorReporting';
+import { usePlanOverageRealtime } from './services/planOverage';
+import { startPaddlePriceSync, stopPaddlePriceSync } from './services/paddlePrices';
+import dataRetentionRoutes from './routes/dataRetention';
 import { initialize as initializeAutomationEngine } from './services/automationEngine';
 import { initialize as initializeProactiveEngine } from './services/proactiveEngine';
 import { startSlaSweeper, stopSlaSweeper } from './services/slaSweeper';
 import { stopRetentionSweeps } from './db/retention';
 import { assertProductionConfig } from './config/productionChecks';
-import { logger, requestLogging } from './config/logger';
+import { installConsoleRedaction, logger, requestLogging } from './config/logger';
 import { metricsSnapshot, resetMetrics } from './config/metrics';
 import { closeRedisClient, getRedisClient, isEnabled as redisEnabled } from './config/redis';
-import { pool } from './db/pool';
 import { closeRedisAdapter } from './socket/adapter';
 import { mailProvider } from './services/mail';
 import { outboxFor } from './services/mail/console';
 import { stopAssistant } from './services/assistant';
+import { startAssistantWatch, stopAssistantWatch } from './services/assistant/availability';
 import {
   loginLimiter,
   loginAccountLimiter,
   registerLimiter,
   apiLimiter
 } from './middleware/rateLimit';
-import { apiNotFound, errorHandler } from './http';
+import { apiNotFound, asyncHandler, errorHandler } from './http';
+import { auth } from './middleware/auth';
+import { pool, query } from './db/pool';
 import { IMAGE_TYPES, UPLOAD_ROOT, UPLOAD_URL_PREFIX, describeStorage } from './middleware/upload';
 import './services/auditService';
 import { attachRedisAdapter } from './socket/adapter';
 import type { Request, Response, NextFunction } from 'express';
+
+// Whatever older code still writes with console.* is scrubbed of e-mail
+// addresses, tokens and keys (config/logger.ts, plan v10 SEC-16).
+installConsoleRedaction();
 
 // --- Route Tanımları ---
 
@@ -96,7 +125,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  maxHttpBufferSize: 1024 * 1024,
+  // The largest thing a client sends is a 5 000-character message (SEC-15);
+  // files go over HTTP. A polling request may carry a few packets at once.
+  maxHttpBufferSize: Number(process.env.SOCKET_MAX_PAYLOAD_BYTES) || 256 * 1024,
   pingInterval: 25000,
   pingTimeout: 20000
 });
@@ -158,15 +189,21 @@ app.use(
 app.use(contentSecurityPolicy({ isProduction }));
 
 // --- ⚙️ 2. ARA KATMANLAR (MIDDLEWARES) ---
-app.use(
-  compression({
-    filter: (req: Request, res: Response) => {
-      if (req.headers['x-no-compression']) return false;
-      return compression.filter(req, res);
-    },
-    level: 6
-  })
-);
+// Behind Caddy (production) compression is Caddy's job: it compresses in Go,
+// off this process's event loop, and skips a response that is already
+// encoded — so compressing here too only spent Node's CPU (PERF-04).
+// HTTP_COMPRESSION=off there; on its own (development, tests) Express does it.
+if (process.env.HTTP_COMPRESSION !== 'off') {
+  app.use(
+    compression({
+      filter: (req: Request, res: Response) => {
+        if (req.headers['x-no-compression']) return false;
+        return compression.filter(req, res);
+      },
+      level: 6
+    })
+  );
+}
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.url.includes('/widget.js')) {
@@ -180,6 +217,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.set('io', io);
+usePlanOverageRealtime(io);
+usePushRealtime(io);
 
 // Hiz sinirlari surec disinda (Redis) tutulur ve kimligi dogrulanmis
 // istekleri kullaniciya gore sayar; ayrintilar icin middleware/rateLimit.js.
@@ -190,6 +229,12 @@ app.use(requestLogging);
 // Paddle's webhook is signed over the exact bytes it sent, so it is mounted
 // before the JSON parser, the sanitizer and the API rate limit (routes/billing.ts).
 app.use('/api/billing/paddle/webhook', billingWebhookRoutes);
+// Browsers' CSP reports come as application/csp-report or reports+json, read
+// by the route itself with an 8 KB cap (routes/cspReport.ts).
+app.use('/api/csp-report', cspReportRoutes);
+// Panel and widget errors, read with an 8 KB cap (routes/telemetry.ts).
+app.use('/api/telemetry/panel', panelTelemetry);
+app.use('/api/widget/telemetry', widgetTelemetry);
 
 // Oturum httpOnly cerezde tasinir; auth ara katmani onu buradan okur.
 app.use(cookieParser());
@@ -200,11 +245,18 @@ app.use(sanitizeInput);
 
 // --- 🛣️ 3. API ROUTELARI ---
 // IP başına ve hesap başına iki ayrı sayaç; ayrıntı middleware/rateLimit.ts
-app.use('/api/auth/login', loginLimiter, loginAccountLimiter);
+// Exactly POST /api/auth/login: app.use would also catch /login/2fa, whose
+// requests carry no e-mail, so every second-step attempt from one address
+// would land in a single per-IP bucket of the account lock. The second step
+// has its own limit (mfaLimiter in routes/auth.ts).
+app.post('/api/auth/login', loginLimiter, loginAccountLimiter);
 app.use('/api/auth/register', registerLimiter);
 app.use('/api', apiLimiter);
 
+// Sign-in with Google (PRD-14) before the rest of /api/auth.
+app.use('/api/auth/google', googleAuthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', accountRoutes);
 app.use('/api/sites', siteRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/conversations', conversationRoutes);
@@ -230,6 +282,17 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/account/export', dataExportRoutes);
 
 app.use('/api/audit', auditRoutes);
+app.use('/api/saved-replies', savedReplyRoutes);
+app.use('/api/conversation-tags', conversationTagRoutes);
+app.use('/api/push', pushRoutes);
+app.use('/api/sites', helpSettings);
+// Pages and PDFs the assistant also answers from (PRD-21).
+app.use('/api/sites', knowledgeRoutes);
+app.use('/api/integrations', integrationRoutes);
+app.use('/api/api-keys', apiKeyRoutes);
+// The public API (PRD-12): its own key, its own limit, no session.
+app.use('/api/v1', publicApiRoutes);
+app.use('/api/data-retention', dataRetentionRoutes);
 
 // The development mail outbox: what the console transport "sent", so the
 // verification and reset links can be followed without a mail server. Never
@@ -238,6 +301,59 @@ if (!isProduction && mailProvider() === 'console') {
   app.get('/api/dev/outbox', (req: Request, res: Response) => {
     res.json({ mails: outboxFor(String(req.query.to || '')) });
   });
+}
+
+// The development integration outbox (INTEGRATION_TRANSPORT=memory): what
+// Slack, Telegram or a webhook of the signed-in workspace would have received.
+if (!isProduction && process.env.INTEGRATION_TRANSPORT === 'memory') {
+  app.get('/api/dev/integration-outbox', auth, (req: Request, res: Response) => {
+    res.json({ calls: integrationOutbox(String(req.user.organizationId)) });
+  });
+}
+
+// The stand-in for Google's account chooser (GOOGLE_SIGN_IN_TRANSPORT=memory):
+// sign-in with Google without Google, for the browser tests. Never in production.
+if (!isProduction && process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory') {
+  app.use('/api/dev/google', standInGoogle);
+}
+
+// The stand-in for the web the knowledge sources read (KNOWLEDGE_TRANSPORT=
+// memory): a test says what an address answers. Never in production.
+if (!isProduction && process.env.KNOWLEDGE_TRANSPORT === 'memory') {
+  app.post('/api/dev/knowledge-pages', auth, (req: Request, res: Response) => {
+    const { url, body, status, contentType } = req.body || {};
+    standInPage(String(url), {
+      body: String(body ?? ''),
+      status: typeof status === 'number' ? status : undefined,
+      contentType: typeof contentType === 'string' ? contentType : undefined
+    });
+    res.status(204).end();
+  });
+}
+
+// The development push outbox (PUSH_TRANSPORT=memory): what would have been
+// pushed to the signed-in workspace's devices. Never mounted in production.
+if (!isProduction && process.env.PUSH_TRANSPORT === 'memory') {
+  app.get('/api/dev/push-outbox', auth, (req: Request, res: Response) => {
+    res.json({ pushes: pushOutbox(String(req.user.organizationId)) });
+  });
+}
+
+// Development only: ends the signed-in workspace's free trial at once, so the
+// browser tests can walk from the trial to Free to a paid plan without
+// waiting two weeks. Never mounted in production.
+if (!isProduction) {
+  app.post(
+    '/api/dev/end-trial',
+    auth,
+    asyncHandler(async (req: Request, res: Response) => {
+      await query(
+        `UPDATE organizations SET trial_ends_at = now() - interval '1 second' WHERE id = $1`,
+        [String(req.user.organizationId)]
+      );
+      res.status(204).end();
+    })
+  );
 }
 
 // Load-test measurements (config/metrics.ts, scripts/loadtest.ts). Outside
@@ -256,6 +372,9 @@ if (!isProduction) {
 // path. Failures inside a route are answered by `errorHandler`, registered
 // after the static handlers at the bottom of this file.
 app.use('/api', apiNotFound);
+
+// Public help centers (PRD-10): server-written pages, before the SPA fallback.
+app.use(helpPages);
 
 // Liveness and readiness (plan §11.1).
 //
@@ -286,6 +405,14 @@ app.get('/ready', async (_req: Request, res: Response) => {
   res.json({ status: 'ready' });
 });
 
+// /.well-known/security.txt, /robots.txt and /sitemap.xml, before the panel's
+// static files and the SPA fallback would answer them; X-Robots-Tag on the
+// private pages (MKT-02).
+app.use(robotsHeader);
+app.use(wellKnownRoutes);
+// Prometheus metrics for the Docker network only (routes/internalMetrics.ts).
+app.use(internalMetricsRoutes(io));
+
 // --- 📦 4. STATİK DOSYALAR ---
 //
 // Yollar __dirname'e göre çözülür. Eskiden `express.static('public')` yazıyordu:
@@ -300,17 +427,28 @@ app.use(
   express.static(adminPanelPath, {
     maxAge: '1h',
     etag: true,
-    lastModified: true
+    lastModified: true,
+    // "/" must reach the page handler below, which writes the home page's
+    // own head (title, canonical, Open Graph, the hero preload); served from
+    // here it went out with the shell's defaults.
+    index: false
   })
 );
 
 // --- Widget dağıtımı ve sürümleme ---
 //
-//   /widget.js              → her zaman en güncel sürüm, kısa önbellek
-//   /widget/v4/widget.js    → sabitlenmiş sürüm, uzun ve değişmez önbellek
+//   /widget.js                    → her zaman en güncel sürüm
+//   /widget/v4/widget.js          → v4'ün en güncel sürümü
+//   /widget/v4/widget.<hash>.js   → tam olarak o içerik, bir yıl değişmez
+//                                   önbellek (plan v10 PERF-02)
 //
-// Müşteri sabitlenmiş yolu kullanıyorsa yeni bir dağıtım onun sayfasını
-// bozamaz. Kök yolu kullanıyorsa güncellemeleri otomatik alır.
+// İlk ikisi 5 dakika önbellekte kalır, sonra ETag ile yeniden doğrulanır;
+// `stale-while-revalidate` sayesinde müşteri sayfası bu sırada beklemez.
+// Eskiden /widget/v4/widget.js bir yıl `immutable` gönderiliyordu: içeriği
+// her dağıtımda değiştiği için o yolu kullanan sayfalar bir yıl eski widget'ta
+// kalabilirdi. Değişmez önbellek artık yalnızca adında içerik özeti olan
+// dosyada; özet derlemede yazılır (scripts/minify-widget.ts). Eski bir özetle
+// gelen istek de çalışır: güncel dosya kısa önbellekle döner.
 //
 // v4 imzalı widget oturumuyla konuşur (POST /api/widget/session); v3'ün
 // kendi ürettiği visitorId ile katılma akışını sunucu artık kabul etmez.
@@ -318,29 +456,64 @@ app.use(
 // verir: o yolu gömmüş bir sayfa kendiliğinden v4'e geçer.
 const WIDGET_MAJOR = 'v4';
 const widgetFile = path.join(publicPath, 'widget.js');
+const SHORT_CACHE = 'public, max-age=300, stale-while-revalidate=86400';
 
-function serveWidget(immutable: boolean) {
-  return (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    // Widget herhangi bir müşteri alan adından yüklenir; bu dosya için * doğru
-    // olan tek değerdir. Dosya publictir, kimlik taşımaz.
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader(
-      'Cache-Control',
-      immutable ? 'public, max-age=31536000, immutable' : 'public, max-age=300, must-revalidate'
-    );
-    res.sendFile(widgetFile);
-  };
+let widgetHashCache: string | null = null;
+/** The content hash the build wrote; re-read outside production. */
+function widgetHash(): string | null {
+  if (widgetHashCache && isProduction) return widgetHashCache;
+  try {
+    const { hash } = JSON.parse(
+      fs.readFileSync(path.join(publicPath, 'widget-version.json'), 'utf8')
+    ) as { hash?: string };
+    widgetHashCache = typeof hash === 'string' ? hash : null;
+  } catch {
+    widgetHashCache = null;
+  }
+  return widgetHashCache;
 }
 
-app.get('/widget.js', serveWidget(false));
-app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget(true));
-app.get('/widget/v3/widget.js', serveWidget(false));
+function sendWidget(res: Response, cacheControl: string): void {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  // Widget herhangi bir müşteri alan adından yüklenir; bu dosya için * doğru
+  // olan tek değerdir. Dosya publictir, kimlik taşımaz.
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', cacheControl);
+  res.sendFile(widgetFile);
+}
+
+const serveWidget = () => (_req: Request, res: Response) => sendWidget(res, SHORT_CACHE);
+
+app.get('/widget.js', serveWidget());
+app.get(`/widget/${WIDGET_MAJOR}/widget.js`, serveWidget());
+app.get(`/widget/${WIDGET_MAJOR}/widget.:hash([0-9a-f]{12}).js`, (req: Request, res: Response) => {
+  const current = widgetHash();
+  sendWidget(
+    res,
+    current && req.params.hash === current ? 'public, max-age=31536000, immutable' : SHORT_CACHE
+  );
+});
+// The widget's languages beyond Turkish and English (PRD-16), fetched by the
+// widget from any customer's page only when a visitor reads one.
+const widgetLocales = path.join(publicPath, 'widget-locales');
+app.get('/widget/v4/locales/:code([a-z]{2}).json', (req: Request, res: Response) => {
+  const file = path.join(widgetLocales, `${req.params.code}.json`);
+  if (!fs.existsSync(file)) {
+    res.status(404).json({ error: 'No such language', code: 'NOT_FOUND' });
+    return;
+  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', SHORT_CACHE);
+  res.sendFile(file);
+});
+app.get('/widget/v3/widget.js', serveWidget());
 // Yaygın yazım varyantları da aynı dosyaya düşer; kurulum talimatını yanlış
 // kopyalayan bir müşteri 404 yerine çalışan bir widget alır.
-app.get('/widget/widget.js', serveWidget(false));
-app.get('/embed.js', serveWidget(false));
+app.get('/widget/widget.js', serveWidget());
+app.get('/embed.js', serveWidget());
 
 app.use(
   express.static(publicPath, {
@@ -366,6 +539,12 @@ if (!isProduction) {
 // declared type is never re-sniffed, and anything that is not an image
 // downloads instead of rendering — an uploaded .html must not be openable as a
 // page on our own origin, where it would run with our cookies in scope.
+// Private attachments (uploads/org/...) are never served from here; they open
+// only through a signed link (routes/files.ts). Logos and files stored before
+// that change still are.
+app.use(`${UPLOAD_URL_PREFIX}/org`, (_req: Request, res: Response) => {
+  res.status(404).end();
+});
 app.use(
   UPLOAD_URL_PREFIX,
   express.static(UPLOAD_ROOT, {
@@ -416,7 +595,10 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
           : 'Panel derlemesi yok (admin-panel/dist). Gelistirmede panel Vite tarafindan sunulur: http://localhost'
       );
   }
-  res.type('html').send(withNonce(shellCache, res.locals.cspNonce));
+  // A public page gets its own title, description, Open Graph, canonical and
+  // JSON-LD on this domain (services/seoHead.ts, MKT-03).
+  const base = appBaseUrl() || `${req.protocol}://${req.get('host')}`;
+  res.type('html').send(withNonce(withSeoHead(shellCache, req.path, base), res.locals.cspNonce));
 });
 
 // The error handler must come after EVERY route and static handler. Declared
@@ -459,6 +641,11 @@ connectDB()
       startSlaSweeper(io);
     }
 
+    // The model check and the kill switch (services/assistant/availability.ts).
+    startAssistantWatch();
+    // Paddle's prices for the pricing page, with billing on (BIL-03).
+    startPaddlePriceSync();
+
     server.listen(PORT, () => {
       logger.info({ port: Number(PORT) }, 'server listening');
       console.log(`🚀 Sunucu ${PORT} portunda ve bulutlarda uçuyor!`);
@@ -491,6 +678,8 @@ ${signal} alındı, kapatılıyor...`);
       // Timers first, so nothing new starts while connections drain. Answers
       // still being written are abandoned rather than left holding timers.
       stopAssistant();
+      stopAssistantWatch();
+      stopPaddlePriceSync();
       stopSlaSweeper();
       stopRetentionSweeps();
       try {
@@ -522,4 +711,5 @@ ${signal} alındı, kapatılıyor...`);
 // Hata Yönetimi
 process.on('unhandledRejection', (err) => {
   console.error('Beklenmedik Hata:', err);
+  captureError(err, { source: 'process' });
 });

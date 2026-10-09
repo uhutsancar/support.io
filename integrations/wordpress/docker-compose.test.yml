@@ -1,0 +1,58 @@
+# A throw-away WordPress for trying the plugin against the local stack.
+#
+#   docker compose -f integrations/wordpress/docker-compose.test.yml -p sio-wp up -d
+#   docker compose -f integrations/wordpress/docker-compose.test.yml -p sio-wp run --rm cli wp core install \
+#     --url=http://localhost:8089 --title="Support.io WP" --admin_user=admin \
+#     --admin_password=WpTestPassw0rd! --admin_email=admin@wp.test --skip-email
+#   docker compose -f integrations/wordpress/docker-compose.test.yml -p sio-wp run --rm cli wp plugin activate support-io-live-chat
+#   WP_URL=http://localhost:8089 npx playwright test tests/wordpress-plugin.spec.ts   (in e2e/)
+#
+# The plugin folder is mounted read-only, so what runs is what is in the repo.
+# Remove everything with `... -p sio-wp down -v`.
+
+services:
+  db:
+    image: mariadb:11.4.8
+    environment:
+      MARIADB_ROOT_PASSWORD: wp-test-root
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wp-test
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 3s
+      retries: 20
+
+  wordpress:
+    image: wordpress:7.1.0-php8.3-apache
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8089:80'
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wp-test
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp:/var/www/html
+      - ./support-io-live-chat:/var/www/html/wp-content/plugins/support-io-live-chat:ro
+
+  cli:
+    image: wordpress:cli-2.12.0-php8.3
+    profiles: ['cli']
+    user: '33:33'
+    depends_on:
+      - wordpress
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wp-test
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp:/var/www/html
+      - ./support-io-live-chat:/var/www/html/wp-content/plugins/support-io-live-chat:ro
+
+volumes:
+  wp:

@@ -100,6 +100,26 @@ function hasPermission(role: string, permission: string): boolean {
 }
 
 /**
+ * What a seat over the plan's limit keeps after a downgrade (BIL-04): it can
+ * sign in and read, but not reply or change anything, until the owner picks
+ * it or upgrades (services/planOverage.ts).
+ */
+const SEAT_SUSPENDED_PERMISSIONS = [
+  'view_assigned',
+  'view_all_tickets',
+  'view_analytics',
+  'view_reports',
+  'read_only'
+];
+
+const SEAT_SUSPENDED = 'SEAT_SUSPENDED';
+
+/** hasPermission for an account that may be over the plan's seats. */
+function seatPermits(seatSuspended: boolean, permission: string): boolean {
+  return !seatSuspended || SEAT_SUSPENDED_PERMISSIONS.includes(permission);
+}
+
+/**
  * Requires a named permission, and the plan that backs it where one applies.
  *
  * Naming the missing permission in the message is deliberate: it turns "why
@@ -117,6 +137,13 @@ const checkPermission = (permission: string) =>
       );
     }
 
+    if (!seatPermits(Boolean(req.user?.seatSuspendedAt), permission)) {
+      throw forbidden(
+        'Your seat is over the plan limit; you can read but not make changes',
+        SEAT_SUSPENDED
+      );
+    }
+
     const gatedFeature = PLAN_GATED_PERMISSIONS[permission];
     if (gatedFeature && req.organization) {
       // The plan table in domain/plans.ts decides, through the entitlement
@@ -129,4 +156,12 @@ const checkPermission = (permission: string) =>
     next();
   });
 
-export { checkPermission, hasPermission, rolePermissions, planFeatures, ALL_PERMISSIONS };
+export {
+  checkPermission,
+  hasPermission,
+  seatPermits,
+  rolePermissions,
+  planFeatures,
+  ALL_PERMISSIONS,
+  SEAT_SUSPENDED
+};

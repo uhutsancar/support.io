@@ -268,7 +268,8 @@ export default {
     openMenu: 'Menüyü aç',
     closeMenu: 'Menüyü kapat',
     mobileMenu: 'Mobil menü',
-    switchToEnglish: 'Switch to English'
+    switchToEnglish: 'Switch to English',
+    switchToTurkish: "Türkçe'ye geç"
   },
   sidebar: {
     groups: {
@@ -629,7 +630,7 @@ export default {
     invalid:
       'Bu davet geçersiz, süresi dolmuş ya da daha önce kullanılmış. Sizi davet eden kişiden yenisini isteyin.',
     name: 'Adınız',
-    password: 'Şifreniz (en az 8 karakter)',
+    password: 'Şifreniz (en az 10 karakter)',
     join: 'Daveti kabul et',
     welcome: 'Hoş geldiniz!',
     error: 'Davet kabul edilemedi'
@@ -642,7 +643,8 @@ export default {
     sendLink: 'Bağlantı gönder',
     backToLogin: 'Girişe dön',
     resetTitle: 'Yeni şifre belirleyin',
-    resetSubtitle: 'En az 8 karakter. Kaydettiğinizde tüm cihazlardaki oturumlarınız kapanır.',
+    resetSubtitle:
+      'En az 10 karakter, yaygın bir şifre olmasın. Kaydettiğinizde tüm cihazlardaki oturumlarınız kapanır.',
     newPassword: 'Yeni şifre',
     confirmPassword: 'Yeni şifre (tekrar)',
     savePassword: 'Şifreyi kaydet',
@@ -938,7 +940,7 @@ export default {
       title: 'Veri ve gizlilik',
       body: 'Hesabınızdaki tüm veriyi (siteler, konuşmalar, mesajlar, ziyaretçiler, SSS, ekip) tek bir dosya olarak indirebilirsiniz. Şifreler ve gizli anahtarlar dosyaya girmez.',
       retention:
-        'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir.',
+        'Ziyaretçilerin IP adresi ve cihaz bilgisi son ziyaretlerinden 90 gün sonra kendiliğinden silinir. Konuşmalar aşağıdaki saklama süresi dolunca silinir.',
       export: 'Verilerimi indir',
       ownerOnly: 'Verileri yalnızca hesap sahibi indirebilir.'
     },
@@ -1768,7 +1770,27 @@ export default {
       delay: 'Gecikme',
       unreadBadge: 'Okunmamış rozeti',
       sound: 'Bildirim sesi',
-      soundHint: 'Yeni mesaj geldiğinde kısa bir ton çalar'
+      soundHint: 'Yeni mesaj geldiğinde kısa bir ton çalar',
+      titleAlert: 'Sekme başlığında uyarı',
+      titleAlertHint: 'Ziyaretçi başka sekmedeyken gelen yanıtı “(1) Sayfa adı” olarak gösterir',
+      hideOnMobile: 'Telefonda gizle',
+      hideOnMobileHint: 'Sohbet balonu 480 px’ten dar ekranlarda görünmez',
+      language: 'Widget dili',
+      languageHint:
+        'Otomatik: ziyaretçinin sayfa ve tarayıcı diline göre Türkçe, İngilizce, Almanca, Fransızca, İspanyolca, Felemenkçe, Rusça ya da Arapça konuşur. Bir dil seçerseniz her ziyaretçi o dili görür.',
+      languageAuto: 'Otomatik (ziyaretçinin dili)',
+      languageNames: {
+        tr: 'Türkçe',
+        en: 'English',
+        de: 'Deutsch',
+        fr: 'Français',
+        es: 'Español',
+        nl: 'Nederlands',
+        ru: 'Русский',
+        ar: 'العربية'
+      },
+      hideOnPages: 'Şu sayfalarda gösterme',
+      hideOnPagesHint: 'Her satıra bir adres yolu; * her şeyle eşleşir (ör. /checkout/*)'
     },
     advanced: {
       window: 'Pencere ölçüleri',
@@ -1874,7 +1896,7 @@ export default {
     meta: {
       title: 'Kurulum rehberi',
       description:
-        'Support.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
+        'Support.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
     },
     eyebrow: 'Kurulum rehberi',
     title: 'Support.io’yu sitenize ekleyin',
@@ -1886,7 +1908,27 @@ export default {
       platforms: 'Platformlar',
       identify: 'Kullanıcıyı tanıtma',
       commands: 'Koddan kontrol',
+      privacy: 'Gizlilik metniniz',
+      webhooks: 'Webhook',
+      api: 'API',
       help: 'Sorun giderme'
+    },
+    api: {
+      title: 'API ile her şeyi kendi sisteminizden yönetin',
+      desc: 'Konuşmaları ve ziyaretçileri okuyun, sipariş sisteminizden ziyaretçiye yanıt verin, SSS’nizi kendi kaynağınızdan güncel tutun. Anahtarınızı Ayarlar → API anahtarları bölümünden oluşturun. Kurumsal planda.',
+      cta: 'API belgelerini açın'
+    },
+    webhooks: {
+      title: 'Webhook ile kendi sisteminize bağlayın',
+      desc: 'Konuşmalarda olan her şeyi CRM’inize, sipariş sisteminize ya da otomasyon aracınıza anında aktarın. Panelde Entegrasyonlar sayfasından bir webhook ekleyin, hangi olayların gönderileceğini seçin. Pro ve Kurumsal planlarda.',
+      event: 'Olay',
+      when: 'Ne zaman gelir',
+      payloadTitle: 'Gelen istek',
+      signatureTitle: 'İsteğin bizden geldiğini doğrulayın',
+      signatureDesc:
+        'Her istek X-SupportIO-Signature başlığıyla gelir: t=<zaman>,v1=<imza>. İmza, “zaman.gövde” metninin, webhook’u eklerken bir kez gösterilen anahtarla HMAC-SHA256’sıdır. Beş dakikadan eski ya da imzası tutmayan isteği reddedin.',
+      retries:
+        'Adresiniz 2xx dışında bir yanıt verir ya da yanıt vermezse istek 1, 5, 15 ve 30 dakika sonra, ardından birkaç saatte bir, 24 saat boyunca yeniden denenir. Her gönderimin sonucu panelde gönderim geçmişinde görünür.'
     },
     install: {
       title: 'Üç adımda kurulum',
@@ -1927,12 +1969,23 @@ export default {
       optionsTitle: 'Kod etiketine eklenebilen seçenekler',
       option: 'Seçenek'
     },
+    privacy: {
+      title: 'Gizlilik metniniz için',
+      desc: 'Ziyaretçilerinizin verisinde sorumlu sizsiniz. Aşağıdaki paragrafı kendi gizlilik metninize ekleyin ve köşeli parantezleri doldurun; ziyaretçileriniz sohbet penceresinin nasıl çalıştığını sizden öğrensin.',
+      thisLanguage: 'Türkçe',
+      otherLanguage: 'English',
+      storageTitle: 'Sohbet balonunun tarayıcıda tuttukları',
+      storageDesc:
+        'Balon çerez kullanmaz; yalnızca sitenizin yerel deposuna şu anahtarları yazar. Çerez bildiriminizde ya da onay aracınızda bunları zorunlu olarak listeleyebilirsiniz.',
+      key: 'Anahtar',
+      purpose: 'Ne için'
+    },
     help: {
       title: 'Sorun giderme',
       items: [
         {
           q: 'Sitemin gizlilik metnine ne yazmalıyım?',
-          a: 'Canlı destek için Support.io kullandığınızı belirtin. Balon, sayfa değişse de konuşmanın sürmesi için tarayıcının yerel deposunda sc_widget_session anahtarını, ziyaretçi yazdıysa sc_visitor_name ve sc_visitor_email anahtarlarını tutar. Reklam ya da izleme çerezi kullanmaz.'
+          a: 'Canlı destek için Support.io kullandığınızı belirtin. Yukarıdaki “Gizlilik metniniz için” bölümünde Türkçe ve İngilizce hazır bir paragraf ve balonun tarayıcıda tuttuğu anahtarların listesi var. Balon reklam ya da izleme çerezi kullanmaz.'
         },
         {
           q: 'Yapay zekâ asistanını nasıl açarım?',
@@ -2063,7 +2116,8 @@ export default {
       sites: 'Planınızdaki site sayısının tamamını kullanıyorsunuz.',
       agents:
         'Planınızdaki kullanıcı sayısının tamamını kullanıyorsunuz (bekleyen davetler dâhil).',
-      conversations: 'Bu ayın yeni konuşma hakkı doldu.'
+      conversations: 'Bu ayın yeni konuşma hakkı doldu.',
+      knowledgeSources: 'Planınızdaki bilgi kaynağı sayısının tamamını kullanıyorsunuz.'
     },
     body: 'Daha yüksek bir plana geçince hemen açılır; verileriniz olduğu gibi kalır.',
     askOwner: 'Planı yalnızca hesap sahibi değiştirebilir. Hesap sahibinden yükseltmesini isteyin.',
@@ -2097,6 +2151,25 @@ export default {
       audit: {
         name: 'Denetim kayıtları',
         benefit: 'Ekibinizde kimin neyi ne zaman değiştirdiğini görün.'
+      },
+      security: {
+        name: 'Zorunlu iki adımlı doğrulama',
+        benefit: 'Ekibinizdeki herkesin girişte telefonundaki kodu da girmesini şart koşun.'
+      },
+      integrations: {
+        name: 'Entegrasyonlar',
+        benefit:
+          'Yeni konuşmaları Slack’e ve Telegram’a gönderin, kendi sistemlerinize webhook ile bağlayın.'
+      },
+      knowledge: {
+        name: 'Sayfa ve PDF’ten öğrenen asistan',
+        benefit:
+          'Asistan SSS’nin yanında sitenizin sayfalarından ve PDF belgelerinizden de yanıt verir.'
+      },
+      api: {
+        name: 'API erişimi',
+        benefit:
+          'Konuşmaları ve SSS’yi kendi sistemlerinizden okuyun, sipariş sisteminizden ziyaretçiye yanıt verin.'
       }
     }
   },
@@ -2120,6 +2193,15 @@ export default {
       'Ödeme bilgilerinizi {{date}} tarihine kadar güncelleyin; aksi hâlde plan Ücretsiz’e döner.',
     manage: 'Aboneliği yönet',
     manageHelp: 'Ödeme yöntemi, faturalar ve iptal Paddle müşteri portalında.',
+    invoices: {
+      title: 'Faturalar',
+      empty: 'Henüz kesilmiş bir fatura yok.',
+      pending: 'Fatura hazırlanıyor',
+      download: 'PDF indir',
+      loadError: 'Faturalar yüklenemedi.',
+      openError: 'Fatura açılamadı, biraz sonra tekrar deneyin.',
+      note: 'Faturaları satıcı olarak Paddle düzenler; ödeme sırasında girdiğiniz şirket adı ve vergi numarası faturada yer alır. Her fatura ayrıca e-postanıza gönderilir.'
+    },
     portalError: 'Müşteri portalı açılamadı',
     upgrade: 'Planı yükselt',
     changePlan: 'Plan değiştir',
@@ -2181,12 +2263,17 @@ export default {
     takeOverError: 'Konuşma devralınamadı',
     verifiedCustomer: 'Doğrulanmış müşteri',
     sources: 'Kaynak',
+    flag: 'Yanlış yanıt',
+    flagged: 'Yanlış olarak işaretlendi',
+    unflag: 'İşareti kaldır',
+    flagHint: 'Yanlış yanıtlar, asistanın kalitesini izlemek için kaydedilir.',
     handoffReason: 'Temsilciye aktarma nedeni',
     reasons: {
       requested: 'Ziyaretçi temsilci istedi',
       sensitive: 'Hassas bilgi paylaşıldı',
       limit: 'Konuşma başına yanıt sınırı doldu',
       plan_quota: 'Aylık yapay zekâ yanıt hakkı doldu',
+      daily_cap: 'Günlük yapay zekâ yanıt sınırı doldu',
       no_faq: 'Sitede SSS yok',
       no_answer: 'SSS’de cevabı yok',
       unsupported: 'Cevap SSS’ye dayanmıyordu',
@@ -2251,6 +2338,17 @@ export default {
       usageNear: 'Bu ayın yanıt hakkının çoğu kullanıldı.',
       upgrade: 'Daha fazla yanıt için planı yükseltin'
     },
+    consent: {
+      title: 'Yapay zekâ asistanını açın',
+      point1:
+        'Sitenizin herkese açık SSS içeriği ve ziyaretçilerin soruları, yanıt üretilmesi için yapay zekâ hizmet sağlayıcımıza iletilir; bu işlem yurt dışında gerçekleşebilir.',
+      point2:
+        'Sorulardaki e-posta adresleri ve telefon numaraları gönderilmeden önce maskelenir; kart, IBAN veya kimlik numarası içeren sorular hiç gönderilmez.',
+      point3:
+        'Ziyaretçilerinize yapay zekâ ile yazıştıkları açıkça gösterilir. Sitenizin gizlilik metninde bunu belirtmenizi öneririz.',
+      box: 'SSS içeriğimin ve ziyaretçi sorularının, kişisel veriler maskelenerek yapay zekâ hizmet sağlayıcısına iletileceğini anladım ve onaylıyorum.',
+      confirm: 'Onayla ve aç'
+    },
     settings: {
       button: 'Asistan',
       title: 'SSS asistanı',
@@ -2262,6 +2360,8 @@ export default {
       rule2:
         'Ziyaretçinin adı, e-postası ve önceki mesajları yapay zekâya gönderilmez; kart, IBAN gibi bilgiler görülürse soru hiç gönderilmeden temsilciye aktarılır.',
       rule3: 'Bir temsilci yazdığı ya da “Devral” dediği anda asistan o konuşmada susar.',
+      rule4:
+        'Asistanın yanıtları ziyaretçiye “Yapay zekâ asistanı” olarak işaretlenir ve ilk yanıtın altında temsilciye nasıl ulaşılacağı yazar.',
       faqAutoReply: 'Anahtar kelimeyle SSS cevabı',
       faqAutoReplyHelp:
         'Asistan kapalıyken, mesaj bir SSS kaydıyla güçlü biçimde eşleşirse o kaydı “Yardım makalesi” olarak gönderir.',
@@ -2283,6 +2383,7 @@ export default {
   },
 
   errors: {
+    supportCode: '(Destek kodu: {{code}})',
     tooManyRequests: 'Kısa sürede çok fazla istek gönderildi. Birkaç dakika sonra tekrar deneyin.',
     tooManyLogins: 'Çok fazla giriş denemesi yapıldı. Lütfen biraz bekleyip tekrar deneyin.',
     tooManyRegistrations: 'Çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',

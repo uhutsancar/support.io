@@ -4,6 +4,8 @@ build
 coverage
 *.log
 backend/public/widget.js
+backend/public/widget-version.json
+backend/public/widget-locales
 admin-panel/src/public
 admin-panel/src/locales
 package-lock.json

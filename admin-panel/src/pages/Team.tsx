@@ -180,6 +180,7 @@ const Team = () => {
         </div>
         <div className="mt-4">
           <select
+            aria-label={t('a11y.siteSelect')}
             value={selectedSite || ''}
             onChange={(e) => setSelectedSite(e.target.value)}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -207,6 +208,7 @@ const Team = () => {
           </div>
         </div>
         <select
+          aria-label={t('a11y.statusFilter')}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -218,6 +220,7 @@ const Team = () => {
           <option value="away">{t('team.filters.away')}</option>
         </select>
         <select
+          aria-label={t('a11y.roleFilter')}
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -290,6 +293,7 @@ const Team = () => {
                     {t('team.status', 'Durum')}
                   </span>
                   <select
+                    aria-label={t('a11y.memberStatus')}
                     value={member.status}
                     onChange={(e) => handleStatusChange(member._id, e.target.value)}
                     className="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"

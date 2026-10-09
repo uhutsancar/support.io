@@ -65,7 +65,39 @@ const ACTIONS = [
   'PASSWORD_RESET',
   'INVITATION_SENT',
   'INVITATION_REVOKED',
-  'INVITATION_ACCEPTED'
+  'INVITATION_ACCEPTED',
+  'LOGIN_FAILED_LOCKED',
+  'PASSWORD_CHANGED',
+  'EMAIL_CHANGE_REQUESTED',
+  'EMAIL_CHANGED',
+  'MFA_ENABLED',
+  'MFA_DISABLED',
+  'MFA_RECOVERY_USED',
+  'SESSIONS_REVOKED',
+  'SECURITY_SETTINGS_UPDATED',
+  'VISITOR_BLOCKED',
+  'VISITOR_UNBLOCKED',
+  'VISITOR_DATA_DELETED',
+  'RETENTION_PURGE',
+  'RETENTION_SETTINGS_UPDATED',
+  'ASSISTANT_ENABLED',
+  'API_KEY_CREATED',
+  'API_KEY_REVOKED',
+  'GOOGLE_LINKED',
+  'GOOGLE_UNLINKED',
+  'REPORT_EXPORTED',
+  'REFERRAL_REWARDED',
+  'WEBHOOK_CREATED',
+  'WEBHOOK_UPDATED',
+  'WEBHOOK_DELETED',
+  'SITE_SUSPENDED',
+  'SITE_REACTIVATED',
+  'TRIAL_STARTED',
+  'TRIAL_ENDED',
+  'SAVED_REPLY_CREATED',
+  'SAVED_REPLY_UPDATED',
+  'SAVED_REPLY_DELETED',
+  'CONVERSATIONS_MERGED'
 ];
 
 const getActionConfig = (action: any) => {
@@ -210,11 +242,9 @@ export default function AuditLogs() {
         <div>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
             <TerminalSquare className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            {t('audit.title') || 'İşlem Kayıtları'}
+            {t('audit.title')}
           </h2>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            {t('audit.subtitle') || 'Sistem içindeki tüm kritik işlemleri İzleyin'}
-          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('audit.subtitle')}</p>
         </div>
       </div>
 

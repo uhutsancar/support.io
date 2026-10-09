@@ -4,10 +4,21 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
-import { Plus, Globe, Copy, Check, Trash2, Palette, Sparkles, ShieldCheck } from 'lucide-react';
+import {
+  Plus,
+  Globe,
+  Copy,
+  Check,
+  Trash2,
+  Palette,
+  Sparkles,
+  ShieldCheck,
+  MessageSquare
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import SiteAssistant from '../components/sites/SiteAssistant';
+import SiteChatSettings from '../components/sites/SiteChatSettings';
 import SiteAccess, { InstallBadge } from '../components/sites/SiteAccess';
 import type { Site } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
@@ -41,6 +52,7 @@ const Sites = () => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [assistantSite, setAssistantSite] = useState<Site | null>(null);
   const [accessSite, setAccessSite] = useState<Site | null>(null);
+  const [chatSite, setChatSite] = useState<Site | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<DeleteTarget>({
     isOpen: false,
     siteId: null,
@@ -194,6 +206,22 @@ const Sites = () => {
                       >
                         {site.isActive ? t('sites.active') : t('sites.inactive')}
                       </span>
+                      {site.blockedAt && (
+                        <span
+                          title={t('overage.blockedHint')}
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                        >
+                          {t('overage.blocked')}
+                        </span>
+                      )}
+                      {site.suspendedAt && (
+                        <span
+                          title={t('overage.siteHint')}
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                        >
+                          {t('overage.suspended')}
+                        </span>
+                      )}
                       {/* Kurulum dogrulamasi: widget her sayfa acilisinda kendini
                            bildirir (POST /api/widget/installed). Boylece "kodu
                            koydum ama calisiyor mu?" sorusu panelden cevaplanir. */}
@@ -221,6 +249,7 @@ const Sites = () => {
                       </code>
                       <button
                         onClick={() => copyToClipboard(site.siteKey, site._id)}
+                        aria-label={t('a11y.copySiteKey')}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                         {copiedKey === site._id ? (
@@ -244,6 +273,7 @@ const Sites = () => {
                         onClick={() =>
                           copyToClipboard(getInstallCode(site.siteKey), `code-${site._id}`)
                         }
+                        aria-label={t('a11y.copyInstallCode')}
                         className="absolute top-2 right-2 p-1.5 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
                       >
                         {copiedKey === `code-${site._id}` ? (
@@ -279,6 +309,13 @@ const Sites = () => {
                     >
                       <Sparkles className="w-4 h-4 shrink-0 text-violet-500" />
                       <span className="truncate">{t('assistant.settings.button')}</span>
+                    </button>
+                    <button
+                      onClick={() => setChatSite(site)}
+                      className="col-span-2 flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm"
+                    >
+                      <MessageSquare className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{t('account.chatSettings.button')}</span>
                     </button>
                   </div>
                 </div>
@@ -350,6 +387,8 @@ const Sites = () => {
             }}
           />
         )}
+
+        {chatSite && <SiteChatSettings site={chatSite} onClose={() => setChatSite(null)} />}
 
         {assistantSite && (
           <SiteAssistant

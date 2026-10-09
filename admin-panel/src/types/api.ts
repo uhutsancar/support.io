@@ -61,8 +61,22 @@ export interface CurrentUser {
   organization?: {
     id: string;
     name: string;
+    /** The plan in force: the free trial counts as PRO while it runs. */
     planType: PlanType;
+    enforce2fa?: boolean;
+    /** When the free Pro trial ends; null without a running trial. */
+    trialEndsAt?: string | null;
   } | null;
+  /** Two-step sign-in is on for this account. */
+  mfaEnabled?: boolean;
+  /** The Google account it can sign in with (PRD-14). */
+  google?: { email: string | null } | null;
+  /** The organization requires it and this account has none yet. */
+  mfaSetupRequired?: boolean;
+  /** Over the plan's seats after a downgrade: reads, cannot reply (BIL-04). */
+  seatSuspended?: boolean;
+  /** The owner's subscription payment failed; the plan holds until then (BIL-05). */
+  paymentIssue?: { graceEndsAt: string | null } | null;
   permissions?: Record<string, boolean>;
   [extra: string]: unknown;
 }
@@ -114,6 +128,10 @@ export interface Site {
   /** The keyword FAQ reply, sent as a help article. */
   faqAutoReply?: boolean;
   integrations?: SiteIntegrationsView;
+  /** Over the plan's site limit after a downgrade: widget hidden, read-only. */
+  suspendedAt?: string | null;
+  /** Blocked by Support.io for abuse: widget off; only support lifts it. */
+  blockedAt?: string | null;
   installation?: {
     verifiedAt?: string | null;
     lastSeenAt?: string | null;
@@ -147,12 +165,45 @@ export interface PlanInfo {
   branding: boolean;
   features: string[];
   assistant: { monthlyReplies: number; repliesPerConversation: number };
+  /** How long conversations are kept after their last message (SEC-17). */
+  retention?: { defaultDays: number; minDays: number; maxDays: number };
   price: { monthly: number | null; yearly: number | null; currency: string };
 }
 
 /** GET /api/billing — the owner's billing page. */
+/** One Paddle invoice of the subscription (GET /api/billing/invoices). */
+export interface Invoice {
+  id: string;
+  number: string | null;
+  billedAt: string | null;
+  total: number | null;
+  currency: string;
+  status: string;
+}
+
+/** GET /api/billing/overage: what is over the plan, and on hold (BIL-04). */
+export interface PlanOverage {
+  plan: PlanType;
+  limits: { sites: number; agents: number };
+  sites: Array<{ id: string; name: string; domain: string; suspendedAt: string | null }>;
+  members: Array<{
+    id: string;
+    kind: 'user' | 'team';
+    name: string;
+    email: string;
+    role: string;
+    owner: boolean;
+    suspendedAt: string | null;
+  }>;
+  over: boolean;
+}
+
 export interface BillingOverview {
   plan: PlanType;
+  /** The free Pro trial while it runs and no plan was bought (PRD-15). */
+  trial?: { plan: PlanType; endsAt: string } | null;
+  /** A hand-set plan no subscription event moves (beta, platform owner). */
+  billingExempt?: boolean;
   limits: {
     sites: number;
     agents: number;
@@ -286,6 +337,7 @@ export interface ConversationRating {
   score: number | null;
   feedback: string | null;
   ratedAt: string | null;
+  channel?: 'widget' | 'email';
 }
 
 export interface InternalNote {
@@ -332,7 +384,64 @@ export interface Conversation {
   updatedAt?: string;
   /** Added by the list endpoint so the row can show a preview. */
   lastMessage?: Message | null;
+  /** From the pre-chat form (PRD-05). */
+  visitorPhone?: string | null;
+  prechat?: Record<string, string>;
+  visitorConsentAt?: string | null;
+  /** Out of the inbox until then (PRD-07). */
+  snoozedUntil?: string | null;
+  /** Set on a conversation that was merged into another. */
+  mergedIntoId?: string | null;
   [extra: string]: unknown;
+}
+
+/** A Slack, Telegram or webhook integration (PRD-11); the address is masked. */
+export interface Integration {
+  _id: string;
+  siteId: string | null;
+  kind: 'webhook' | 'slack' | 'telegram';
+  name: string;
+  events: string[];
+  hint: string | null;
+  isActive: boolean;
+  lastStatus: 'ok' | 'error' | null;
+  lastDeliveryAt: string | null;
+  createdAt: string;
+}
+
+/** One try of an integration (GET /api/integrations/:id/deliveries). */
+export interface IntegrationDelivery {
+  _id: string;
+  event: string;
+  status: 'pending' | 'delivered' | 'failed';
+  attempts: number;
+  statusCode: number | null;
+  error: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+  nextAttemptAt: string | null;
+}
+
+/** One entry of the workspace's tag list (GET /api/conversation-tags). */
+export interface ConversationTag {
+  _id: string;
+  name: string;
+  color: string;
+}
+
+/** Another conversation of the same visitor, for the merge dialog. */
+export interface MergeCandidate {
+  _id: string;
+  ticketId?: string;
+  status: ConversationStatus;
+  lastMessageAt?: string;
+  createdAt?: string;
+}
+
+/** What a bulk move did to each conversation it was given. */
+export interface BulkResult {
+  results: Array<{ id: string; ok: boolean; code?: string }>;
+  changed: number;
 }
 
 /** What the FAQ assistant notes on its own messages. */
@@ -341,6 +450,8 @@ export interface MessageAssistantNote {
   sources: string[];
   /** Why it handed the conversation to a person; null on an answer. */
   handoff: string | null;
+  /** An agent marked the answer as wrong (AI-06). */
+  flagged?: boolean;
 }
 
 export interface MessageFile {
@@ -566,6 +677,12 @@ export interface WidgetBehavior {
   showUnreadBadge: boolean;
   enableSound: boolean;
   enableNotifications: boolean;
+  /** "(1) …" in the page's tab while an answer waits unread. */
+  titleAlert?: boolean;
+  /** No bubble on phone-sized screens. */
+  hideOnMobile?: boolean;
+  /** 'auto' follows the visitor; a code fixes the widget's language (PRD-16). */
+  language?: string;
 }
 
 export interface WidgetTypography {

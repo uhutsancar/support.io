@@ -13,7 +13,9 @@ import { isOriginAllowed } from '../config/origins';
 import { sessionIsCurrent, verifySession, verifyWidgetSession } from '../config/tokens';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { siteForWidgetSession, WIDGET_SESSION_INVALID } from '../middleware/widgetSession';
-import { handshakeIp, socketConnectQuota } from '../middleware/rateLimit';
+import { clientAddress, handshakeIp, socketConnectQuota } from '../middleware/rateLimit';
+import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
+import { visitorCountry } from '../services/assistant/region';
 import type { Namespace, Socket } from 'socket.io';
 import type { AdminSocket, WidgetSocket } from './types';
 
@@ -88,11 +90,17 @@ export function installAdminAuthentication(admin: Namespace): void {
         isActive: true
       });
       if (!organization) return next(new Error(AUTH_FAILED));
+      // The REST rule for organizations that require two-step sign-in
+      // (middleware/auth.ts): a member without it gets no live inbox either.
+      if (organization.enforce2fa && !(account.totpEnabledAt && account.totpSecretEnc)) {
+        return next(new Error(AUTH_FAILED));
+      }
 
       socket.userId = String(account._id);
       socket.userName = account.name || 'Support';
       socket.organizationId = String(account.organizationId);
       socket.role = account.role;
+      socket.seatSuspended = Boolean(account.seatSuspendedAt);
       socket.userType = decoded.userType === 'team' ? 'team' : 'user';
       // Empty means "every site"; see SocketContext.siteFor.
       socket.allowedSiteIds = new Set((account.assignedSites || []).map(String));
@@ -138,7 +146,16 @@ export function installWidgetAuthentication(widget: Namespace): void {
         return next(new Error(WIDGET_SESSION_INVALID));
       }
 
+      // A visitor the team blocked (SEC-09) keeps a session that is still
+      // valid for a while; it no longer opens a socket.
+      const address = clientAddress(socket.handshake.headers, socket.handshake.address);
+      if (await isBlocked({ siteId: String(site._id), visitorId: claims.visitorId, ip: address })) {
+        return next(new Error(VISITOR_BLOCKED));
+      }
+
       socket.siteId = String(site._id);
+      socket.clientIp = address || null;
+      socket.country = visitorCountry(socket.handshake.headers['cf-ipcountry']);
       socket.organizationId = String(site.organizationId);
       socket.visitorId = claims.visitorId;
       socket.widgetSessionId = claims.sid;

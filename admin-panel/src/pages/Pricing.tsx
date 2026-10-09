@@ -42,6 +42,15 @@ const look = (plan: PlanInfo) => PLAN_LOOK[plan.type] || PLAN_LOOK.FREE;
 /** "Hangi plan size uygun" kartları sunucuya bakmadan da yazılabilir. */
 const PLAN_IDS = ['free', 'pro', 'enterprise'];
 
+/** "90 gün", "1 yıl", "5 yıl": bir planın en uzun konuşma geçmişi. */
+function historyPeriod(plan: PlanInfo, t: T): string | null {
+  const days = plan.retention?.maxDays;
+  if (!days) return null;
+  return days % 365 === 0 || days === 1830
+    ? t('pricingPage.units.years', { count: Math.round(days / 365) })
+    : t('pricingPage.units.days', { count: days });
+}
+
 /**
  * Bir kartın maddeleri: sınırlar, bir önceki planda olmayan özellikler ve
  * çeviride duran ek maddeler ("kurulumda birebir destek" gibi hizmetler).
@@ -58,6 +67,8 @@ function planItems(
     t('pricingPage.units.conversations', { n: number.format(plan.monthlyConversations) }),
     t('pricingPage.units.assistant', { n: number.format(plan.assistant.monthlyReplies) })
   ];
+  const history = historyPeriod(plan, t);
+  if (history) items.push(t('pricingPage.units.history', { period: history }));
   for (const feature of PLAN_FEATURE_ORDER) {
     if (plan.features.includes(feature) && !previous?.features.includes(feature)) {
       items.push(t('pricingPage.matrix.' + feature));
@@ -72,11 +83,12 @@ function planItems(
 }
 
 /** Karşılaştırma tablosu — satır: özellik, sütun: plan. */
-function matrixRows(number: Intl.NumberFormat) {
+function matrixRows(number: Intl.NumberFormat, t: T) {
   return [
     { key: 'sites', value: (p: PlanInfo) => number.format(p.sites) },
     { key: 'agents', value: (p: PlanInfo) => number.format(p.agents) },
     { key: 'conversations', value: (p: PlanInfo) => number.format(p.monthlyConversations) },
+    { key: 'history', value: (p: PlanInfo) => historyPeriod(p, t) ?? '–' },
     { key: 'widget', value: () => true },
     { key: 'faq', value: () => true },
     { key: 'assistant', value: () => true },
@@ -169,7 +181,7 @@ const Pricing = () => {
     : 0;
 
   const faq = t('pricingPage.faqItems', { returnObjects: true });
-  const rows = matrixRows(number);
+  const rows = matrixRows(number, t);
 
   return (
     <Shell>
@@ -332,7 +344,7 @@ const Pricing = () => {
 
                         <p
                           className="mt-6 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                          text-gray-400 dark:text-gray-500"
+                          text-gray-500 dark:text-gray-400"
                         >
                           {t('pricingPage.plans.' + id + '.includes')}
                         </p>
@@ -351,6 +363,16 @@ const Pricing = () => {
                   );
                 })}
           </div>
+        )}
+        {/*
+          KARAR-MKT-2: Paddle vergiyi ödeme penceresinde, alıcının ülkesine
+          ve fatura bilgisine göre hesaplayıp gösterir; buradaki satır onunla
+          çelişmeyen tek ifadedir.
+        */}
+        {!failed && (
+          <p className="mt-8 text-center text-[13px] text-gray-500 dark:text-gray-400">
+            {t('pricingPage.taxNote')}
+          </p>
         )}
       </Section>
 
@@ -404,7 +426,7 @@ const Pricing = () => {
                   <th
                     scope="col"
                     className="pb-4 text-[11.5px] font-semibold uppercase tracking-[0.08em]
-                    text-gray-400 dark:text-gray-500"
+                    text-gray-500 dark:text-gray-400"
                   >
                     {t('pricingPage.feature')}
                   </th>

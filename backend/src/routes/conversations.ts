@@ -1,5 +1,6 @@
 // The inbox: listing conversations, reading one, and the moves an agent makes
-// on it (assign, claim, route to a department, reprioritise, resolve, delete).
+// on it (assign, claim, route to a department, reprioritise, resolve, delete),
+// one at a time or several at once, plus tags, snoozing and merging (PRD-07).
 //
 // Two rules hold throughout:
 //
@@ -18,7 +19,10 @@ import Team from '../models/Team';
 import User from '../models/User';
 import Department from '../models/Department';
 import { auth } from '../middleware/auth';
-import { checkPermission, hasPermission } from '../middleware/rbac';
+import { checkPermission, hasPermission, seatPermits, SEAT_SUSPENDED } from '../middleware/rbac';
+import { withTransaction } from '../db/pool';
+import { ensureTags, tagName } from './conversationTags';
+import { setConversationStatus } from '../services/conversationStatus';
 import events from '../events';
 import {
   latestMessagesByConversation,
@@ -27,13 +31,9 @@ import {
 } from '../db/queries';
 import { listConversations, conversationCounts, messageMatchesForSearch } from '../db/inboxQueries';
 import { updateAgentLoad } from '../services/autoAssignment';
+import { deleteConversations } from '../services/dataRetention';
 import { refreshSla, refreshSlaAll } from '../services/conversationSla';
-import {
-  recordAgentAssignment,
-  recordAgentResolution,
-  recordDepartmentChange,
-  recordResolution
-} from '../services/departmentStats';
+import { recordAgentAssignment, recordDepartmentChange } from '../services/departmentStats';
 import {
   CONVERSATION_STATUSES,
   PRIORITIES,
@@ -42,12 +42,13 @@ import {
   isPriority,
   slaTargetsFor
 } from '../domain';
-import { ioFrom, notifyAdmin } from '../realtime';
+import { WidgetNotifier, ioFrom, notifyAdmin } from '../realtime';
 import {
   asyncHandler,
   badRequest,
   conflict,
   forbidden,
+  HttpError,
   loadAccessibleConversation,
   loadAccessibleSite,
   notFound,
@@ -75,6 +76,11 @@ const MAX_MESSAGE_LIMIT = 200;
 const MAX_SEARCH_LENGTH = 120;
 const MAX_NOTE_LENGTH = 5000;
 const MAX_ASSIGNED_PAGE = 100;
+const MAX_TAGS_PER_CONVERSATION = 10;
+/** A snooze longer than this is a closed conversation in disguise. */
+const MAX_SNOOZE_DAYS = 90;
+/** Conversations one bulk request may change. */
+const MAX_BULK = 100;
 
 /** Adds the populated relations the panel renders a conversation row from. */
 function withRelations<T extends { populate(path: string, select?: string): T }>(query: T): T {
@@ -166,7 +172,10 @@ router.get(
       assignedAgentId,
       unassigned: assignedTo === 'unassigned',
       search,
-      searchMessageMatches
+      searchMessageMatches,
+      tag: queryString(req.query.tag)?.trim() || null,
+      // The snoozed view lists only them; every other view leaves them out.
+      snoozed: req.query.view === 'snoozed' ? 'only' : 'hide'
     };
 
     const [page, counts] = await Promise.all([
@@ -249,10 +258,16 @@ router.get(
     const hasMore = newestFirst.length > limit;
     const messages = newestFirst.slice(0, limit).reverse();
 
-    await Message.updateMany(
+    const readAt = new Date();
+    const read = await Message.updateMany(
       { conversationId: conversation._id, senderType: 'visitor', isRead: false },
-      { isRead: true, readAt: new Date() }
+      { isRead: true, readAt }
     );
+    // The visitor sees "seen" under their messages (UX-04).
+    if (read.modifiedCount) {
+      const io = ioFrom(req);
+      if (io) new WidgetNotifier(io).messagesSeen(conversation._id, readAt);
+    }
     conversation.unreadCount = 0;
     await conversation.save();
 
@@ -289,6 +304,72 @@ router.get(
   })
 );
 
+/**
+ * Gives a conversation to an agent, or puts it back in the queue (agentId
+ * empty), with the load counters, the audit entry and the broadcasts. The
+ * single route and the bulk one both come here.
+ */
+async function assignConversation(
+  req: Request,
+  conversation: Doc<ConversationDoc>,
+  agentId: unknown
+): Promise<Doc<ConversationDoc> | null> {
+  const organizationId = orgId(req);
+  // Assigning to somebody else, or taking somebody else's conversation, needs
+  // `assign_tickets` (owner/admin/manager). An agent without it may only pick
+  // up an unassigned conversation or put their own down — they cannot close a
+  // colleague's thread or push work onto them.
+  if (!hasPermission(req.user.role, 'assign_tickets')) {
+    const self = String(req.userId);
+    const current = conversation.assignedAgent ? String(conversation.assignedAgent) : null;
+    const takingUnassigned = !current && agentId && String(agentId) === self;
+    const releasingOwn = current === self && !agentId;
+    if (!takingUnassigned && !releasingOwn) {
+      throw forbidden('You cannot reassign this conversation');
+    }
+  }
+
+  const target = agentId
+    ? await findOrganizationAgent(agentId, organizationId, conversation.siteId)
+    : null;
+  if (agentId && !target) throw notFound('Agent');
+
+  const previousAgentId = conversation.assignedAgent;
+  const update: UpdateSpec = {
+    assignedAgent: agentId || null,
+    assignedBy: req.userId,
+    status: agentId ? 'assigned' : 'unassigned',
+    assignedAt: agentId ? new Date() : null
+  };
+
+  const updated = await withRelations(
+    Conversation.findByIdAndUpdate(conversation._id, update, { new: true })
+  );
+
+  const changed = String(previousAgentId || '') !== String(agentId || '');
+  if (changed) {
+    if (previousAgentId) await updateAgentLoad(previousAgentId, -1);
+    if (agentId) {
+      await updateAgentLoad(agentId, 1);
+      await recordAgentAssignment(target!.Model, agentId, organizationId);
+    }
+    events.emit('conversation.assigned', {
+      organizationId,
+      userId: req.user?._id ?? null,
+      entityId: conversation._id,
+      metadata: { from: previousAgentId ? String(previousAgentId) : null, to: agentId || null },
+      ip: req.ip,
+      ua: req.get('user-agent')
+    });
+  }
+
+  const notifier = notifyAdmin(req);
+  if (agentId) notifier?.conversationAssigned(conversation, agentId, req.userId);
+  notifier?.conversationUpdated(conversation, updated);
+
+  return updated;
+}
+
 // ---------------------------------------------------------------- assignment
 
 // Every write below needs a role that may work conversations at all; a viewer
@@ -298,63 +379,8 @@ router.put(
   '/:conversationId/assign',
   checkPermission('respond'),
   asyncHandler(async (req: Request, res: Response) => {
-    const { agentId } = req.body;
-    const organizationId = orgId(req);
     const conversation = await loadAccessibleConversation(req, req.params.conversationId);
-
-    // Assigning to somebody else, or taking somebody else's conversation, needs
-    // `assign_tickets` (owner/admin/manager). An agent without it may only pick
-    // up an unassigned conversation or put their own down — they cannot close a
-    // colleague's thread or push work onto them.
-    if (!hasPermission(req.user.role, 'assign_tickets')) {
-      const self = String(req.userId);
-      const current = conversation.assignedAgent ? String(conversation.assignedAgent) : null;
-      const takingUnassigned = !current && agentId && String(agentId) === self;
-      const releasingOwn = current === self && !agentId;
-      if (!takingUnassigned && !releasingOwn) {
-        throw forbidden('You cannot reassign this conversation');
-      }
-    }
-
-    const target = agentId
-      ? await findOrganizationAgent(agentId, organizationId, conversation.siteId)
-      : null;
-    if (agentId && !target) throw notFound('Agent');
-
-    const previousAgentId = conversation.assignedAgent;
-    const update: UpdateSpec = {
-      assignedAgent: agentId || null,
-      assignedBy: req.userId,
-      status: agentId ? 'assigned' : 'unassigned',
-      assignedAt: agentId ? new Date() : null
-    };
-
-    const updated = await withRelations(
-      Conversation.findByIdAndUpdate(conversation._id, update, { new: true })
-    );
-
-    const changed = String(previousAgentId || '') !== String(agentId || '');
-    if (changed) {
-      if (previousAgentId) await updateAgentLoad(previousAgentId, -1);
-      if (agentId) {
-        await updateAgentLoad(agentId, 1);
-        await recordAgentAssignment(target!.Model, agentId, organizationId);
-      }
-      events.emit('conversation.assigned', {
-        organizationId,
-        userId: req.user?._id ?? null,
-        entityId: conversation._id,
-        metadata: { from: previousAgentId ? String(previousAgentId) : null, to: agentId || null },
-        ip: req.ip,
-        ua: req.get('user-agent')
-      });
-    }
-
-    const notifier = notifyAdmin(req);
-    if (agentId) notifier?.conversationAssigned(conversation, agentId, req.userId);
-    notifier?.conversationUpdated(conversation, updated);
-
-    res.json({ conversation: updated });
+    res.json({ conversation: await assignConversation(req, conversation, req.body?.agentId) });
   })
 );
 
@@ -506,6 +532,20 @@ router.post(
   })
 );
 
+/** The panel's status change: services/conversationStatus.ts, with the caller as the actor. */
+async function changeStatus(
+  req: Request,
+  conversation: Doc<ConversationDoc>,
+  status: ConversationDoc['status']
+): Promise<Doc<ConversationDoc>> {
+  return setConversationStatus(ioFrom(req), conversation, status, {
+    organizationId: orgId(req),
+    userId: req.user?._id ? String(req.user._id) : null,
+    ip: req.ip,
+    ua: req.get('user-agent')
+  });
+}
+
 // -------------------------------------------------------------------- status
 
 router.put(
@@ -518,75 +558,307 @@ router.put(
     }
 
     const conversation = await loadAccessibleConversation(req, req.params.conversationId);
-    await conversation.populate('department');
+    res.json({ conversation: await changeStatus(req, conversation, status) });
+  })
+);
 
-    const previousStatus = conversation.status;
-    const wasActive = isActiveConversationStatus(previousStatus);
-    const willBeActive = isActiveConversationStatus(status);
+// --------------------------------------------------------------------- tags
 
-    // An agent's load follows the conversation in and out of the active set.
-    if (conversation.assignedAgent && wasActive !== willBeActive) {
-      await updateAgentLoad(conversation.assignedAgent, willBeActive ? 1 : -1);
-    }
+/**
+ * Sets a conversation's tags. Names new to the organization join its tag
+ * list on the way (any agent may coin one); names it knows keep the list's
+ * spelling, so "İade" and "iade" are one tag.
+ */
+async function setTags(
+  req: Request,
+  conversation: Doc<ConversationDoc>,
+  requested: unknown
+): Promise<Doc<ConversationDoc> | null> {
+  if (!Array.isArray(requested)) throw badRequest('tags must be a list of names');
+  const names: string[] = [];
+  for (const value of requested) {
+    const name = tagName(value);
+    if (!name) throw badRequest('A tag is 1-32 letters, digits, spaces, - or _');
+    names.push(name);
+  }
+  // Refused before anything is added to the organization's list.
+  if (new Set(names).size > MAX_TAGS_PER_CONVERSATION) {
+    throw badRequest(`A conversation carries at most ${MAX_TAGS_PER_CONVERSATION} tags`);
+  }
+  // The catalog's spelling, so "kargo" and "Kargo" end up as one tag.
+  const spelling = await ensureTags(orgId(req), [...new Set(names)]);
+  const tags = [...new Set(names.map((n) => spelling.get(n) ?? n))];
 
-    conversation.status = status;
+  const updated = await withRelations(
+    Conversation.findByIdAndUpdate(conversation._id, { tags }, { new: true })
+  );
+  notifyAdmin(req)?.conversationUpdated(conversation, updated);
+  return updated;
+}
 
-    if (status === 'closed') {
-      conversation.closedAt = new Date();
-    } else if (status === 'resolved') {
-      conversation.resolvedAt = new Date();
-      refreshSla(conversation);
-      if (wasActive) {
-        // The same rollup the socket handler performs; see
-        // services/departmentStats.ts for why it is not written out twice.
-        await recordResolution(conversation);
-        await recordAgentResolution(conversation.assignedAgent);
-      }
-    }
+router.put(
+  '/:conversationId/tags',
+  checkPermission('respond'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
+    res.json({ conversation: await setTags(req, conversation, req.body?.tags) });
+  })
+);
 
-    await conversation.save();
-    await conversation.populate('assignedAgent', AGENT_FIELDS);
+// ------------------------------------------------------------------ snooze
 
-    const notifier = notifyAdmin(req);
-    notifier?.conversationUpdated(conversation, conversation);
-    if (status === 'resolved') notifier?.conversationResolved(conversation, conversation);
+/** The time a snooze ends, from the request; null lifts it. */
+function snoozeUntil(value: unknown): Date | null {
+  if (value === null) return null;
+  const at = typeof value === 'string' ? new Date(value) : null;
+  if (!at || Number.isNaN(at.getTime())) throw badRequest('until is a date and time, or null');
+  const now = Date.now();
+  if (at.getTime() <= now + 60_000) throw badRequest('The snooze must end in the future');
+  if (at.getTime() > now + MAX_SNOOZE_DAYS * 24 * 60 * 60 * 1000) {
+    throw badRequest(`A conversation can be snoozed for at most ${MAX_SNOOZE_DAYS} days`);
+  }
+  return at;
+}
 
-    emitStatusEvent(req, conversation, previousStatus, status);
+/**
+ * Hides an open conversation from the inbox until the given time; the sweep
+ * brings it back (services/slaSweeper.ts), and so does a new message from the
+ * visitor (socket/handlers/widget.ts).
+ */
+async function snoozeConversation(
+  req: Request,
+  conversation: Doc<ConversationDoc>,
+  until: Date | null
+): Promise<Doc<ConversationDoc> | null> {
+  if (until && !isActiveConversationStatus(conversation.status)) {
+    throw conflict('Only an open conversation can be snoozed', 'NOT_ACTIVE');
+  }
+  const updated = await withRelations(
+    Conversation.findByIdAndUpdate(conversation._id, { snoozedUntil: until }, { new: true })
+  );
+  notifyAdmin(req)?.conversationUpdated(conversation, updated);
+  return updated;
+}
 
-    res.json({ conversation });
+router.put(
+  '/:conversationId/snooze',
+  checkPermission('update_status'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const until = snoozeUntil(req.body?.until);
+    const conversation = await loadAccessibleConversation(req, req.params.conversationId);
+    res.json({ conversation: await snoozeConversation(req, conversation, until) });
+  })
+);
+
+// ------------------------------------------------------------------- merge
+
+/**
+ * Two conversations the same visitor started — the same browser, and the same
+ * signed-in customer if the site identifies them. Merging anyone else's would
+ * show one visitor's messages to another in the widget.
+ */
+function sameVisitor(a: Doc<ConversationDoc>, b: Doc<ConversationDoc>): boolean {
+  const holder = (c: Doc<ConversationDoc>) =>
+    typeof c.metadata?.verifiedUserId === 'string' ? c.metadata.verifiedUserId : null;
+  return a.visitorId === b.visitorId && holder(a) === holder(b);
+}
+
+/** The visitor's other conversations on this site that this one could be merged into. */
+router.get(
+  '/:siteId/:conversationId/merge-candidates',
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadAccessibleSite(req, req.params.siteId);
+    const conversationId = requireObjectId(req.params.conversationId, 'conversation id');
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      siteId: site._id,
+      organizationId: orgId(req)
+    });
+    if (!conversation) throw notFound('Conversation');
+
+    const others = await Conversation.find({
+      siteId: site._id,
+      organizationId: orgId(req),
+      visitorId: conversation.visitorId,
+      mergedIntoId: null,
+      _id: { $ne: conversation._id }
+    })
+      .sort({ lastMessageAt: -1 })
+      .limit(20);
+    res.json({
+      conversations: others
+        .filter((c) => sameVisitor(c, conversation))
+        .map((c) => ({
+          _id: c._id,
+          ticketId: c.ticketId,
+          status: c.status,
+          lastMessageAt: c.lastMessageAt,
+          createdAt: c.createdAt
+        }))
+    });
   })
 );
 
 /**
- * Records a close or a reopen in the audit trail.
- *
- * Isolated from the request it follows: the status change is already committed,
- * so a failure here must not turn a successful write into an error response.
- * The reason is logged rather than discarded.
+ * Moves every message and note of this conversation into another one of the
+ * same visitor, then closes this one with a pointer to where it went. The
+ * visitor's widget follows on its next message (socket/handlers/widget.ts).
  */
-function emitStatusEvent(
-  req: Request,
-  conversation: Doc<ConversationDoc>,
-  previousStatus: string,
-  status: string
-): void {
-  const name =
-    status === 'closed' ? 'ticket.closed' : previousStatus === 'closed' ? 'ticket.reopened' : null;
-  if (!name) return;
+router.post(
+  '/:conversationId/merge',
+  checkPermission('update_status'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const source = await loadAccessibleConversation(req, req.params.conversationId);
+    const target = await loadAccessibleConversation(req, req.body?.intoId);
+    if (source._id === target._id) throw badRequest('A conversation cannot be merged into itself');
+    if (String(source.siteId) !== String(target.siteId)) {
+      throw badRequest('Only conversations of the same site can be merged');
+    }
+    if (!sameVisitor(source, target)) {
+      throw new HttpError(
+        400,
+        'Only conversations of the same visitor can be merged',
+        'NOT_SAME_VISITOR'
+      );
+    }
 
-  try {
-    events.emit(name, {
+    const wasActive = isActiveConversationStatus(source.status);
+    await withTransaction(async (client) => {
+      // Both rows locked in a fixed order; a second merge of either waits and
+      // then finds it already merged.
+      const { rows } = await client.query<{ id: string; merged_into_id: string | null }>(
+        'SELECT id, merged_into_id FROM conversations WHERE id = ANY($1) ORDER BY id FOR UPDATE',
+        [[source._id, target._id]]
+      );
+      if (rows.length !== 2 || rows.some((r) => r.merged_into_id)) {
+        throw conflict('This conversation was already merged', 'ALREADY_MERGED');
+      }
+      for (const table of ['messages', 'conversation_internal_notes', 'assistant_feedback']) {
+        // eslint-disable-next-line no-await-in-loop -- one transaction, one client
+        await client.query(`UPDATE ${table} SET conversation_id = $1 WHERE conversation_id = $2`, [
+          target._id,
+          source._id
+        ]);
+      }
+      await client.query(
+        `UPDATE conversations t
+            SET last_message_at = GREATEST(t.last_message_at, s.last_message_at),
+                unread_count = t.unread_count + s.unread_count,
+                tags = ARRAY(SELECT DISTINCT unnest(t.tags || s.tags)),
+                updated_at = now()
+           FROM conversations s
+          WHERE t.id = $1 AND s.id = $2`,
+        [target._id, source._id]
+      );
+      await client.query(
+        `UPDATE conversations
+            SET status = 'closed', closed_at = coalesce(closed_at, now()),
+                merged_into_id = $2, unread_count = 0, snoozed_until = NULL,
+                updated_at = now()
+          WHERE id = $1`,
+        [source._id, target._id]
+      );
+    });
+
+    if (wasActive && source.assignedAgent) await updateAgentLoad(source.assignedAgent, -1);
+    events.emit('conversation.merged', {
       organizationId: orgId(req),
       userId: req.user?._id ?? null,
-      entityId: conversation._id,
-      metadata: { previousStatus },
+      entityId: target._id,
+      metadata: { merged: source._id, into: target._id },
       ip: req.ip,
       ua: req.get('user-agent')
     });
-  } catch (error) {
-    console.error(`[conversations] could not emit ${name}`, error);
-  }
-}
+
+    const [closed, merged] = await Promise.all([
+      withRelations(Conversation.findById(source._id)),
+      withRelations(Conversation.findById(target._id))
+    ]);
+    const notifier = notifyAdmin(req);
+    if (closed) notifier?.conversationUpdated(closed, closed);
+    if (merged) notifier?.conversationUpdated(merged, merged);
+    res.json({ conversation: merged });
+  })
+);
+
+// -------------------------------------------------------------------- bulk
+
+const BULK_ACTIONS = ['status', 'assign', 'tag', 'snooze'] as const;
+type BulkAction = (typeof BULK_ACTIONS)[number];
+
+/** The permission each bulk action needs, as its single route does. */
+const BULK_PERMISSION: Record<BulkAction, string> = {
+  status: 'update_status',
+  assign: 'respond',
+  tag: 'respond',
+  snooze: 'update_status'
+};
+
+/**
+ * The same move on several conversations of the inbox: close, assign, tag or
+ * snooze. Each one goes through the single route's own rules — a conversation
+ * the caller may not touch fails alone and the rest go ahead; the answer says
+ * which.
+ */
+router.post(
+  '/bulk',
+  checkPermission('respond'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const action = req.body?.action as BulkAction;
+    if (!BULK_ACTIONS.includes(action)) {
+      throw badRequest(`action must be one of: ${BULK_ACTIONS.join(', ')}`);
+    }
+    const permission = BULK_PERMISSION[action];
+    if (!hasPermission(req.user.role, permission)) {
+      throw forbidden(`Insufficient role permissions: '${permission}' required`);
+    }
+    if (!seatPermits(Boolean(req.user?.seatSuspendedAt), permission)) {
+      throw forbidden(
+        'Your seat is over the plan limit; you can read but not make changes',
+        SEAT_SUSPENDED
+      );
+    }
+
+    const ids: unknown = req.body?.conversationIds;
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > MAX_BULK) {
+      throw badRequest(`conversationIds is a list of 1-${MAX_BULK} ids`);
+    }
+
+    // Checked once, before anything changes.
+    const status = req.body?.status;
+    if (action === 'status' && !isConversationStatus(status)) {
+      throw badRequest(`status must be one of: ${CONVERSATION_STATUSES.join(', ')}`);
+    }
+    const tag = action === 'tag' ? tagName(req.body?.tag) : null;
+    if (action === 'tag' && !tag) throw badRequest('A tag is 1-32 letters, digits, spaces, - or _');
+    const until = action === 'snooze' ? snoozeUntil(req.body?.until) : null;
+
+    const one = async (id: string): Promise<{ id: string; ok: boolean; code?: string }> => {
+      try {
+        const conversation = await loadAccessibleConversation(req, id);
+        if (action === 'status') await changeStatus(req, conversation, status);
+        else if (action === 'assign')
+          await assignConversation(req, conversation, req.body?.agentId);
+        else if (action === 'tag') {
+          await setTags(req, conversation, [...(conversation.tags || []), tag]);
+        } else await snoozeConversation(req, conversation, until);
+        return { id, ok: true };
+      } catch (error) {
+        if (!(error instanceof HttpError)) throw error;
+        return { id, ok: false, code: error.code };
+      }
+    };
+
+    const results: Array<{ id: string; ok: boolean; code?: string }> = [];
+    for (const id of [...new Set(ids.map(String))]) {
+      // One after another: an agent's load and the audit trail follow the
+      // order, and two moves never race on the same counters.
+      // eslint-disable-next-line no-await-in-loop
+      results.push(await one(id));
+    }
+    res.json({ results, changed: results.filter((r) => r.ok).length });
+  })
+);
 
 // ------------------------------------------------------------------ deletion
 
@@ -606,15 +878,10 @@ router.delete(
     });
     if (!conversation) throw notFound('Conversation');
 
-    if (conversation.assignedAgent && isActiveConversationStatus(conversation.status)) {
-      // Only release the agent's slot if the conversation was actually holding
-      // one; decrementing for an already-closed thread drove the counter
-      // negative.
-      await updateAgentLoad(conversation.assignedAgent, -1);
-    }
-
-    await Message.deleteMany({ conversationId });
-    await Conversation.findByIdAndDelete(conversationId);
+    // Messages, notes and the stored attachments go with it; the agent's slot
+    // is released only if the conversation was still holding one
+    // (services/dataRetention.ts).
+    await deleteConversations(orgId(req), [conversationId]);
 
     notifyAdmin(req)?.conversationDeleted(site._id, conversationId);
     res.json({ message: 'Conversation deleted successfully' });

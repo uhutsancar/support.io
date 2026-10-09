@@ -34,7 +34,7 @@ const connectDB = async () => {
       if (pending.length) {
         console.error(
           `Pending migrations: ${pending.join(', ')}. ` +
-            'Run `npm run db:migrate:prod` before starting this release.'
+            'Run `node dist/db/migrate.js` (scripts/deploy.sh does) before starting this release.'
         );
         process.exit(1);
       }

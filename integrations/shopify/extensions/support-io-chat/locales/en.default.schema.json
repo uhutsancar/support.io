@@ -1,0 +1,11 @@
+{
+  "name": "Support.io chat",
+  "site_key": {
+    "label": "Site key",
+    "info": "In your Support.io dashboard, open Sites: the site key is in your site's installation code, after data-site-key."
+  },
+  "identify": {
+    "label": "Introduce signed-in customers",
+    "info": "Passes a signed-in customer's name and e-mail to the chat, so your team knows who they are talking to. Mention it in your privacy policy."
+  }
+}

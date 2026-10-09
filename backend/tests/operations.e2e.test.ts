@@ -13,7 +13,7 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE } from './helpers/widget';
-import { productionConfigProblems } from '../src/config/productionChecks';
+import { productionConfigProblems, productionConfigWarnings } from '../src/config/productionChecks';
 
 test('/health and /ready answer with nothing but their status', async () => {
   const health = await fetch(`${BASE}/health`);
@@ -49,6 +49,9 @@ const COMPLETE = {
   CORS_ORIGINS: 'https://app.example.com',
   DATABASE_URL: undefined,
   DB_PASSWORD: 'a-long-random-database-password',
+  REDIS_URL: 'redis://:0123456789abcdef0123456789abcdef@redis:6379',
+  REDIS_PASSWORD: '0123456789abcdef0123456789abcdef',
+  ALLOW_LOCAL_UPLOADS: undefined,
   APP_BASE_URL: 'https://app.example.com',
   MAIL_PROVIDER: 'smtp',
   SMTP_HOST: 'smtp.example.com',
@@ -95,9 +98,79 @@ test('an incomplete one is refused with every problem listed', () => {
   );
 });
 
+const problemText = () => productionConfigProblems().join('\n');
+
+test('Redis needs a real password, and the URL must carry it', () => {
+  withEnv({ ...COMPLETE, REDIS_PASSWORD: 'short', REDIS_URL: 'redis://:short@redis:6379' }, () =>
+    assert.match(problemText(), /REDIS_PASSWORD/)
+  );
+  withEnv({ ...COMPLETE, REDIS_URL: 'redis://redis:6379' }, () =>
+    assert.match(problemText(), /REDIS_URL must carry the password/)
+  );
+});
+
+test('local uploads are refused unless asked for explicitly', () => {
+  withEnv({ ...COMPLETE, UPLOAD_STORAGE: 'local' }, () =>
+    assert.match(problemText(), /UPLOAD_STORAGE=local/)
+  );
+  withEnv({ ...COMPLETE, UPLOAD_STORAGE: 'local', ALLOW_LOCAL_UPLOADS: 'true' }, () =>
+    assert.deepEqual(productionConfigProblems(), [])
+  );
+});
+
 test('R2 or Hetzner storage through S3_ENDPOINT counts as configured', () => {
   withEnv(
     { ...COMPLETE, AWS_REGION: undefined, S3_ENDPOINT: 'https://acc.r2.cloudflarestorage.com' },
     () => assert.deepEqual(productionConfigProblems(), [])
+  );
+});
+
+test('appendix C: what production can run without is warned about, never fatal', () => {
+  const quiet = {
+    ...COMPLETE,
+    TURNSTILE_SITE_KEY: 'site',
+    TURNSTILE_SECRET: 'secret',
+    SENTRY_DSN: 'https://key@o1.ingest.de.sentry.io/1',
+    ALERT_WEBHOOK_URL: 'https://hooks.example.com/x',
+    BACKUP_REMOTE: 'r2:backups',
+    BACKUP_AGE_RECIPIENT: 'age1example',
+    BACKUP_PING_URL: 'https://hc-ping.com/x',
+    SECURITY_CONTACT_EMAIL: 'security@example.com',
+    OPS_REPORT_EMAIL: 'ops@example.com',
+    GEMINI_API_KEY: 'test-key-not-a-real-one',
+    GEMINI_TIER: 'paid',
+    S3_ACL: undefined,
+    MAIL_ALLOWLIST_DOMAINS: undefined,
+    SITE_NOINDEX: 'false',
+    VAPID_PUBLIC_KEY: 'public',
+    VAPID_PRIVATE_KEY: 'private'
+  };
+  withEnv(quiet, () => assert.deepEqual(productionConfigWarnings(), []));
+  withEnv(
+    {
+      ...quiet,
+      SENTRY_DSN: undefined,
+      BACKUP_PING_URL: undefined,
+      GEMINI_TIER: 'free',
+      S3_ACL: 'public-read',
+      MAIL_ALLOWLIST_DOMAINS: 'example.com',
+      SITE_NOINDEX: 'true',
+      VAPID_PRIVATE_KEY: undefined
+    },
+    () => {
+      const text = productionConfigWarnings().join('\n');
+      for (const name of [
+        'SENTRY_DSN',
+        'BACKUP_PING_URL',
+        'GEMINI_TIER',
+        'S3_ACL',
+        'MAIL_ALLOWLIST_DOMAINS',
+        'SITE_NOINDEX',
+        'VAPID_PRIVATE_KEY'
+      ]) {
+        assert.match(text, new RegExp(name), name);
+      }
+      assert.deepEqual(productionConfigProblems(), [], 'warnings do not stop the boot');
+    }
   );
 });

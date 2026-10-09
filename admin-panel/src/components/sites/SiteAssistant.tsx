@@ -13,6 +13,7 @@ import { Bot, X } from 'lucide-react';
 import { assistantAPI, sitesAPI } from '../../services/api';
 import { errorMessage } from '../../hooks/useAsync';
 import type { AssistantStatus, Site } from '../../types/api';
+import AssistantConsent from './AssistantConsent';
 
 export interface SiteAssistantProps {
   site: Site;
@@ -60,6 +61,7 @@ const SiteAssistant = ({ site, onClose, onSaved }: SiteAssistantProps) => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<AssistantStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     assistantAPI
@@ -68,7 +70,11 @@ const SiteAssistant = ({ site, onClose, onSaved }: SiteAssistantProps) => {
       .catch(() => setStatus({ available: false }));
   }, []);
 
-  const save = async (fields: Partial<Pick<Site, 'assistantEnabled' | 'faqAutoReply'>>) => {
+  const save = async (
+    fields: Partial<Pick<Site, 'assistantEnabled' | 'faqAutoReply'>> & {
+      assistantConsent?: boolean;
+    }
+  ) => {
     setBusy(true);
     try {
       const { data } = await sitesAPI.update(site._id, fields);
@@ -117,7 +123,7 @@ const SiteAssistant = ({ site, onClose, onSaved }: SiteAssistantProps) => {
             id="assistant-enabled"
             checked={site.assistantEnabled === true}
             disabled={busy || (!available && site.assistantEnabled !== true)}
-            onChange={(value) => save({ assistantEnabled: value })}
+            onChange={(value) => (value ? setAsking(true) : save({ assistantEnabled: false }))}
             label={t('assistant.settings.assistant')}
             help={t('assistant.settings.assistantHelp')}
           />
@@ -130,6 +136,7 @@ const SiteAssistant = ({ site, onClose, onSaved }: SiteAssistantProps) => {
             <li>{t('assistant.settings.rule1')}</li>
             <li>{t('assistant.settings.rule2')}</li>
             <li>{t('assistant.settings.rule3')}</li>
+            <li>{t('assistant.settings.rule4')}</li>
           </ul>
 
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -144,6 +151,16 @@ const SiteAssistant = ({ site, onClose, onSaved }: SiteAssistantProps) => {
           </div>
         </div>
       </div>
+      {asking && (
+        <AssistantConsent
+          siteName={site.name}
+          onCancel={() => setAsking(false)}
+          onConfirm={() => {
+            setAsking(false);
+            void save({ assistantEnabled: true, assistantConsent: true });
+          }}
+        />
+      )}
     </div>
   );
 };

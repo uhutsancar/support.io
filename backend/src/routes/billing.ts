@@ -26,9 +26,20 @@ import {
   subscriptionSummary,
   verifyWebhook
 } from '../services/billing';
-import { HttpError, asyncHandler, orgId, requireOrganization, unavailable } from '../http';
+import {
+  HttpError,
+  asyncHandler,
+  badRequest,
+  orgId,
+  requireOrganization,
+  unavailable
+} from '../http';
 import { errorText } from '../http/errors';
 import { logger } from '../config/logger';
+import { increment } from '../config/metrics';
+import { trialRunning } from '../services/trial';
+import { overageSummary, reconcilePlanLimits } from '../services/planOverage';
+import { invoicePdf, listInvoices } from '../services/paddleInvoices';
 import type { Request, Response } from 'express';
 
 // ------------------------------------------------------------------ webhook
@@ -54,6 +65,12 @@ webhookRouter.post(
       );
     } catch (error) {
       if (error instanceof InvalidWebhookError || error instanceof SyntaxError) {
+        // A wrong secret or a forged call: worth seeing, never the body.
+        increment('supportio_billing_webhook_rejected_total');
+        logger.warn(
+          { reason: error instanceof SyntaxError ? 'malformed' : 'signature' },
+          'paddle webhook rejected'
+        );
         res.status(400).json({ error: 'Invalid webhook' });
         return;
       }
@@ -113,8 +130,65 @@ router.get(
           }
         }
       },
-      emailVerified: Boolean(req.user.emailVerifiedAt)
+      emailVerified: Boolean(req.user.emailVerifiedAt),
+      // The free Pro trial (PRD-15), while it runs and no plan was bought.
+      trial:
+        !subscription &&
+        usage.plan === 'PRO' &&
+        req.organization?.planType === 'FREE' &&
+        trialRunning(req.organization?.trialEndsAt)
+          ? { plan: 'PRO', endsAt: req.organization?.trialEndsAt }
+          : null,
+      billingExempt: Boolean(req.organization?.billingExempt)
     });
+  })
+);
+
+// -------------------------------------------- over the plan's limits (BIL-04)
+
+// The sites and members, and which of them are on hold after a downgrade.
+router.get(
+  '/overage',
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json(await overageSummary(orgId(req)));
+  })
+);
+
+const idList = (value: unknown): string[] | null =>
+  Array.isArray(value) && value.length <= 500 && value.every((v) => typeof v === 'string')
+    ? [...new Set(value as string[])]
+    : null;
+
+// The owner picks which sites and members stay active; the rest go on hold.
+router.post(
+  '/overage',
+  asyncHandler(async (req: Request, res: Response) => {
+    const organizationId = orgId(req);
+    const keepSiteIds = idList(req.body?.keepSiteIds ?? []);
+    const keepMemberIds = idList(req.body?.keepMemberIds ?? []);
+    if (!keepSiteIds || !keepMemberIds) throw badRequest('Lists of ids expected');
+    const summary = await overageSummary(organizationId);
+    const siteIds = new Set(summary.sites.map((s) => s.id));
+    const memberIds = new Set(summary.members.filter((m) => !m.owner).map((m) => m.id));
+    if (
+      !keepSiteIds.every((id) => siteIds.has(id)) ||
+      !keepMemberIds.every((id) => memberIds.has(id))
+    ) {
+      throw badRequest('Unknown site or member');
+    }
+    // The owner's seat is always kept and counts towards the limit.
+    if (
+      keepSiteIds.length > summary.limits.sites ||
+      keepMemberIds.length > summary.limits.agents - 1
+    ) {
+      throw new HttpError(400, 'More than the plan allows', 'OVER_PLAN_LIMIT', {
+        sites: summary.limits.sites,
+        agents: summary.limits.agents
+      });
+    }
+    // Chosen ones first; any room left goes to what is active now.
+    const change = await reconcilePlanLimits(organizationId, { keepSiteIds, keepMemberIds });
+    res.json({ change, ...(await overageSummary(organizationId)) });
   })
 );
 
@@ -151,6 +225,48 @@ router.post(
       // organization id only together with the reference signed here.
       customData: { organizationId, ref: checkoutReference(organizationId) }
     });
+  })
+);
+
+// ------------------------------------------------------- invoices (BIL-06)
+
+// Paddle issues the invoices (with the company and tax number entered at
+// checkout); the page lists them and opens Paddle's PDF.
+router.get(
+  '/invoices',
+  asyncHandler(async (req: Request, res: Response) => {
+    const subscription = await subscriptionSummary(orgId(req));
+    if (!subscription?.customerId) {
+      res.json({ invoices: [] });
+      return;
+    }
+    if (!billingConfig().apiKey) throw unavailable('Billing is not configured');
+    try {
+      res.json({ invoices: await listInvoices(subscription.customerId) });
+    } catch (error) {
+      console.error('[billing] invoice list failed:', errorText(error));
+      throw unavailable('Invoices could not be loaded; try again shortly');
+    }
+  })
+);
+
+router.get(
+  '/invoices/:transactionId/pdf',
+  asyncHandler(async (req: Request, res: Response) => {
+    const transactionId = String(req.params.transactionId);
+    if (!/^txn_[a-z0-9]{10,40}$/.test(transactionId)) throw badRequest('Unknown invoice');
+    const subscription = await subscriptionSummary(orgId(req));
+    if (!subscription?.customerId) throw new HttpError(404, 'Invoice not found', 'NOT_FOUND');
+    if (!billingConfig().apiKey) throw unavailable('Billing is not configured');
+    let url: string | null;
+    try {
+      url = await invoicePdf(subscription.customerId, transactionId);
+    } catch (error) {
+      console.error('[billing] invoice pdf failed:', errorText(error));
+      throw unavailable('The invoice could not be opened; try again shortly');
+    }
+    if (!url) throw new HttpError(404, 'Invoice not found', 'NOT_FOUND');
+    res.json({ url });
   })
 );
 

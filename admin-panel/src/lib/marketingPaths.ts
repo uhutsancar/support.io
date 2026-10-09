@@ -12,10 +12,13 @@
 const PAIRS: ReadonlyArray<readonly [string, string]> = [
   ['/ozellikler', '/en/features'],
   ['/cozumler', '/en/solutions'],
+  ['/karsilastirma', '/en/compare'],
   ['/fiyatlandirma', '/en/pricing'],
   ['/yapay-zeka', '/en/ai-assistant'],
   ['/gizlilik', '/en/privacy'],
   ['/kullanim-sartlari', '/en/terms'],
+  ['/erisilebilirlik', '/en/accessibility'],
+  ['/yapay-zeka-kullanimi', '/en/ai-use'],
   ['/dokumantasyon', '/en/documentation'],
   ['/hakkimizda', '/en/about']
 ];
@@ -43,13 +46,18 @@ export function marketingRoutes(language: 'tr' | 'en') {
     home: langPrefix || '/',
     features,
     solutions: en ? '/en/solutions' : '/cozumler',
+    /** Karşılaştırmaların öneki; sayfa `${compare}/<rakip>`. */
+    compare: en ? '/en/compare' : '/karsilastirma',
     pricing: en ? '/en/pricing' : '/fiyatlandirma',
     ai,
     privacy: en ? '/en/privacy' : '/gizlilik',
     terms: en ? '/en/terms' : '/kullanim-sartlari',
+    accessibility: en ? '/en/accessibility' : '/erisilebilirlik',
+    aiUse: en ? '/en/ai-use' : '/yapay-zeka-kullanimi',
     /** A feature's page; the AI assistant has its own page. */
     feature: (id: string) => (id === 'ai-assistant' ? ai : `${features}/${id}`),
     docs: en ? '/en/documentation' : '/dokumantasyon',
+    apiDocs: en ? '/en/documentation/api' : '/dokumantasyon/api',
     about: en ? '/en/about' : '/hakkimizda',
     login: langPrefix + '/login',
     register: langPrefix + '/register',

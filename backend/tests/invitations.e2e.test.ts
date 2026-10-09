@@ -11,7 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getPool, query } from '../src/db/pool';
 import { BASE } from './helpers/widget';
-import { setPlan, tokenFromMail } from './helpers/accounts';
+import { setPlan, tokenFromMail, signUp } from './helpers/accounts';
 
 const PASSWORD = 'E2ePassw0rd!';
 
@@ -53,10 +53,7 @@ const unique = (label: string) =>
 
 async function owner(plan: 'FREE' | 'PRO' | 'ENTERPRISE' = 'PRO') {
   const email = unique('owner');
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Invite Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Invite Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201);
   await setPlan(reg.body.user.organizationId, plan);
   const site = await api('/api/sites', {

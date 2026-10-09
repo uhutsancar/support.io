@@ -20,11 +20,17 @@ import {
   ResponsiveContainer,
   ComposedChart
 } from 'recharts';
-import { TrendingUp, Clock, AlertCircle, CheckCircle2, BarChart3 } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle2, BarChart3 } from 'lucide-react';
 import { analyticsAPI } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
 import { formatMinutes } from '../lib/format';
 import { errorMessage } from '../hooks/useAsync';
+import {
+  AgentTable,
+  ExportMenu,
+  SlaBreachList,
+  WeekHeatmap
+} from '../components/analytics/ReportTools';
 const Analytics = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -113,7 +119,7 @@ const Analytics = () => {
         }))
       );
     } catch (err) {
-      setError(errorMessage(err, 'Analitik verileri yüklenemedi.'));
+      setError(errorMessage(err, t('stats.analyticsLoadError')));
     } finally {
       setLoading(false);
     }
@@ -136,7 +142,7 @@ const Analytics = () => {
           onClick={fetchAnalytics}
           className="mt-5 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
         >
-          {language === 'tr' ? 'Tekrar dene' : 'Retry'}
+          {t('stats.retry')}
         </button>
       </div>
     );
@@ -173,15 +179,17 @@ const Analytics = () => {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('analytics.title')}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">{t('analytics.subtitle')}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <ExportMenu range={timeRange} />
             <select
+              aria-label={t('a11y.timeRange')}
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
               className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
@@ -198,10 +206,6 @@ const Analytics = () => {
               <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                +12%
-              </span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
               {stats.openTickets}
@@ -240,10 +244,6 @@ const Analytics = () => {
               <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                +3%
-              </span>
             </div>
             <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
               {stats.satisfaction}%
@@ -278,7 +278,7 @@ const Analytics = () => {
                 <Area
                   type="monotone"
                   dataKey="tickets"
-                  name={language === 'tr' ? 'Gelen Talepler' : 'Incoming Tickets'}
+                  name={t('stats.incomingTickets')}
                   stroke="#8B5CF6"
                   fillOpacity={1}
                   fill="url(#colorTickets)"
@@ -286,7 +286,7 @@ const Analytics = () => {
                 <Area
                   type="monotone"
                   dataKey="resolved"
-                  name={language === 'tr' ? 'Çözülen' : 'Resolved'}
+                  name={t('stats.resolved')}
                   stroke="#10B981"
                   fillOpacity={1}
                   fill="url(#colorResolved)"
@@ -308,7 +308,7 @@ const Analytics = () => {
                 <Line
                   type="monotone"
                   dataKey="avgTime"
-                  name={language === 'tr' ? 'Ortalama Süre (dk)' : 'Average Time (min)'}
+                  name={t('stats.avgMinutes')}
                   stroke="#3B82F6"
                   strokeWidth={2}
                   dot={{ fill: '#3B82F6', r: 4 }}
@@ -317,7 +317,7 @@ const Analytics = () => {
                 <Line
                   type="monotone"
                   dataKey="target"
-                  name={language === 'tr' ? 'Hedef (dk)' : 'Target (min)'}
+                  name={t('stats.targetMin')}
                   stroke="#EF4444"
                   strokeWidth={2}
                   strokeDasharray="5 5"
@@ -362,14 +362,8 @@ const Analytics = () => {
             ) ? (
               <div className="h-[250px] flex items-center justify-center text-gray-500 dark:text-gray-400">
                 <div className="text-center">
-                  <p className="text-lg mb-2">
-                    {language === 'tr' ? 'Henüz SLA verisi yok' : 'No SLA data yet'}
-                  </p>
-                  <p className="text-sm">
-                    {language === 'tr'
-                      ? 'Konuşmalar yanıtlandıkça veriler burada görünecek'
-                      : 'Data will appear as conversations are responded to'}
-                  </p>
+                  <p className="text-lg mb-2">{t('stats.noSla')}</p>
+                  <p className="text-sm">{t('stats.noSlaHint')}</p>
                 </div>
               </div>
             ) : (
@@ -380,21 +374,11 @@ const Analytics = () => {
                   <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar
-                    dataKey="met"
-                    name={language === 'tr' ? 'SLA Karşılandı' : 'SLA Met'}
-                    fill="#10B981"
-                    stackId="a"
-                  />
-                  <Bar
-                    dataKey="pending"
-                    name={language === 'tr' ? 'Beklemede' : 'Pending'}
-                    fill="#F59E0B"
-                    stackId="a"
-                  />
+                  <Bar dataKey="met" name={t('stats.slaMet')} fill="#10B981" stackId="a" />
+                  <Bar dataKey="pending" name={t('stats.pending')} fill="#F59E0B" stackId="a" />
                   <Bar
                     dataKey="breached"
-                    name={language === 'tr' ? 'SLA İhlal Edildi' : 'SLA Breached'}
+                    name={t('stats.slaBreached')}
                     fill="#EF4444"
                     stackId="a"
                   />
@@ -403,6 +387,8 @@ const Analytics = () => {
             )}
           </div>
         </div>
+        <WeekHeatmap range={timeRange} />
+        <SlaBreachList range={timeRange} />
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -412,26 +398,26 @@ const Analytics = () => {
           <div className="overflow-x-auto">
             {departmentStats.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                {language === 'tr' ? 'Henüz veri yok' : 'No data yet'}
+                {t('stats.noData')}
               </div>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      {language === 'tr' ? 'Departman' : 'Department'}
+                      {t('stats.department')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      {language === 'tr' ? 'Talepler' : 'Tickets'}
+                      {t('stats.tickets')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      {language === 'tr' ? 'Çözülen' : 'Resolved'}
+                      {t('stats.resolved')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       SLA %
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      {language === 'tr' ? 'Ort. Süre' : 'Avg. Time'}
+                      {t('stats.avgTime')}
                     </th>
                   </tr>
                 </thead>
@@ -483,7 +469,7 @@ const Analytics = () => {
                 onChange={(e) => setSelectedAgent(e.target.value)}
                 className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white"
               >
-                <option value="all">{language === 'tr' ? 'Tüm Temsilciler' : 'All Agents'}</option>
+                <option value="all">{t('stats.allAgents')}</option>
                 {agentPerformance.map((agent, idx) => (
                   <option key={idx} value={agent.name}>
                     {agent.name}
@@ -494,7 +480,7 @@ const Analytics = () => {
           </div>
           {agentPerformance.length === 0 ? (
             <div className="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
-              {language === 'tr' ? 'Henüz veri yok' : 'No data yet'}
+              {t('stats.noData')}
             </div>
           ) : selectedAgent !== 'all' ? (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -508,7 +494,7 @@ const Analytics = () => {
                         {agent.resolved}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {language === 'tr' ? 'Çözülen Talepler' : 'Resolved Tickets'}
+                        {t('stats.resolvedTickets')}
                       </div>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -516,7 +502,7 @@ const Analytics = () => {
                         {agent.active}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {language === 'tr' ? 'Aktif Konuşmalar' : 'Active Conversations'}
+                        {t('stats.activeConversations')}
                       </div>
                     </div>
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
@@ -524,7 +510,7 @@ const Analytics = () => {
                         {agent.satisfaction}%
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {language === 'tr' ? 'Memnuniyet' : 'Satisfaction'}
+                        {t('stats.satisfaction')}
                       </div>
                     </div>
                     <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
@@ -532,7 +518,7 @@ const Analytics = () => {
                         {formatMinutes(agent.avgTime)}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {language === 'tr' ? 'Ort. Yanıt Süresi' : 'Avg Response Time'}
+                        {t('stats.avgResponse')}
                       </div>
                     </div>
                   </>
@@ -547,15 +533,11 @@ const Analytics = () => {
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Bar
-                  dataKey="resolved"
-                  name={language === 'tr' ? 'Çözülen Talepler' : 'Resolved Tickets'}
-                  fill="#8B5CF6"
-                />
+                <Bar dataKey="resolved" name={t('stats.resolvedTickets')} fill="#8B5CF6" />
                 <Line
                   type="monotone"
                   dataKey="satisfaction"
-                  name={language === 'tr' ? 'Memnuniyet %' : 'Satisfaction %'}
+                  name={t('stats.satisfaction2')}
                   stroke="#10B981"
                   strokeWidth={2}
                   dot={{ fill: '#10B981', r: 4 }}
@@ -563,6 +545,7 @@ const Analytics = () => {
               </ComposedChart>
             </ResponsiveContainer>
           )}
+          <AgentTable agents={agentPerformance} />
         </div>
       </div>
     </>

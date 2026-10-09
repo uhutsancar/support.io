@@ -8,6 +8,15 @@ import { HttpError } from '../http/errors';
 import type { AuthenticatedUser } from '../types/auth';
 import type { NextFunction, Request, Response } from 'express';
 
+/** What a member without two-step sign-in may still call while it is required. */
+const MFA_SETUP_PATHS = [
+  '/api/auth/me',
+  '/api/auth/logout',
+  '/api/auth/2fa',
+  '/api/auth/status',
+  '/api/auth/change-password'
+];
+
 /**
  * Establishes who is calling.
  *
@@ -62,6 +71,17 @@ const auth = async (req: Request, _res: Response, next: NextFunction) => {
       if (!organization) {
         throw forbidden('Organization not found or inactive', 'ORGANIZATION_INACTIVE');
       }
+    }
+    // An organization that requires two-step verification lets a member
+    // without it reach only what setting it up needs (SEC-04).
+    if (
+      organization?.enforce2fa &&
+      !(user.totpEnabledAt && user.totpSecretEnc) &&
+      !MFA_SETUP_PATHS.some(
+        (path) => req.originalUrl.split('?')[0] === path || req.originalUrl.startsWith(`${path}/`)
+      )
+    ) {
+      throw forbidden('Your organization requires two-step verification', 'MFA_SETUP_REQUIRED');
     }
     req.user = user;
     req.userId = user._id;

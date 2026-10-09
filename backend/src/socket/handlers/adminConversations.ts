@@ -5,8 +5,9 @@
 // the organization *and* the agent's site allow-list. A handler never queries a
 // conversation by id on its own.
 
+import { announceConversationEnded } from '../../services/conversationEnd';
 import Department from '../../models/Department';
-import { hasPermission } from '../../middleware/rbac';
+import { SEAT_SUSPENDED, hasPermission, seatPermits } from '../../middleware/rbac';
 import { countMessage } from '../../services/entitlements';
 import Message from '../../models/Message';
 import Team from '../../models/Team';
@@ -30,9 +31,12 @@ import {
   slaTargetsFor
 } from '../../domain';
 import { conversationRoom, siteRoom } from '../../realtime/rooms';
+import { pushConversationEvent } from '../../services/push';
+import { notifyIntegrations } from '../../services/integrations';
 import type { Doc } from '../../db/model';
 import type { CreateInput } from '../../db/model';
 import type { ConversationDoc } from '../../models/Conversation';
+import { siteHold } from '../../services/planOverage';
 import type { MessageDoc } from '../../models/Message';
 import type { SocketContext } from '../context';
 import type {
@@ -58,7 +62,7 @@ const DEFAULT_CAPACITY = 10;
  * conversation over REST cannot close it over the socket either.
  */
 const may = (socket: AdminSocket, permission: string): boolean =>
-  hasPermission(socket.role, permission);
+  hasPermission(socket.role, permission) && seatPermits(socket.seatSuspended, permission);
 
 const NOT_PERMITTED = { message: 'Insufficient role permissions' };
 
@@ -138,10 +142,15 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       if (!conversation) return ctx.reject(socket);
 
       await socket.join(conversationRoom(conversation._id));
-      await Message.updateMany(
+      const readAt = new Date();
+      const read = await Message.updateMany(
         { conversationId: conversation._id, isRead: false, senderType: 'visitor' },
-        { isRead: true, readAt: new Date() }
+        { isRead: true, readAt }
       );
+      // The visitor sees "seen" under their messages (UX-04).
+      if (read.modifiedCount) {
+        ctx.toWidgetConversation(conversation._id, 'messages-seen', { readAt });
+      }
     })
   );
 
@@ -167,6 +176,9 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     };
 
     // validate
+    if (socket.seatSuspended) {
+      return refuse(SEAT_SUSPENDED, 'Your seat is over the plan limit; you can read but not reply');
+    }
     if (!may(socket, 'respond')) return refuse('FORBIDDEN', NOT_PERMITTED.message);
     if (typeof content !== 'string' || !content.trim() || content.length > MAX_MESSAGE_LENGTH) {
       return refuse('INVALID_MESSAGE', 'Invalid message content');
@@ -188,6 +200,17 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     if (!conversation) {
       ctx.reject(socket);
       return ack?.({ ok: false, code: 'NOT_FOUND' });
+    }
+    // A site over the plan's limit (BIL-04) or blocked by the platform
+    // (LEG-05) is read-only: its widget is hidden, so a reply reaches nobody.
+    const hold = await siteHold(conversation.siteId);
+    if (hold) {
+      return refuse(
+        hold,
+        hold === 'SITE_BLOCKED'
+          ? 'This site was blocked by Support.io; contact support'
+          : 'This site is over the plan limit and is read-only'
+      );
     }
 
     // A resend after a dropped connection: the reply is already stored and
@@ -275,6 +298,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
 
     // ACK
     ack?.({ ok: true, message: emitted });
+    notifyIntegrations('message.created', conversation, { message });
   };
 
   socket.on(
@@ -326,6 +350,10 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       };
       ctx.toAdminSite(conversation.siteId, 'conversation-assigned', assignment);
       ctx.toAdminUser(agentId, 'conversation-assigned', assignment);
+      void pushConversationEvent('assigned', conversation, {
+        assignee: agentId,
+        actor: socket.userId
+      });
     })
   );
 
@@ -481,6 +509,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         conversationId: conversation._id,
         conversation
       });
+      await announceConversationEnded(ctx.io, conversation);
     })
   );
 }

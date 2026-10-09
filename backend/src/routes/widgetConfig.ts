@@ -4,13 +4,14 @@
 // customer's page reads a reduced, whitelisted view of it (`publicConfig` in
 // ./widget.ts) that carries no internal fields.
 
+import { forgetSiteBundle } from '../services/widgetBundle';
 import express from 'express';
 import events from '../events';
 import WidgetConfig from '../models/WidgetConfig';
 import { auth } from '../middleware/auth';
 import { requireWidgetSession } from '../middleware/widgetSession';
 import { checkPermission } from '../middleware/rbac';
-import { describeUpload, uploadLogo } from '../middleware/upload';
+import { storeUpload, uploadLogo } from '../middleware/upload';
 import { publicConfig } from './widget';
 import {
   asyncHandler,
@@ -108,6 +109,7 @@ router.put(
     }
 
     await config.save();
+    await forgetSiteBundle(site._id);
     // Which sections changed, not their contents.
     events.emit('site.widget.updated', {
       organizationId: orgId(req),
@@ -129,14 +131,16 @@ router.post(
   uploadLogo.single('logo'),
   asyncHandler(async (req: Request, res: Response) => {
     const site = await loadOwnedSite(req, req.params.siteId);
-    if (!req.file) throw badRequest('Dosya yüklenemedi');
+    if (!req.file) throw badRequest('No file was uploaded', 'UPLOAD_FAILED');
 
-    const stored = describeUpload(req, req.file);
-    if (!stored) throw badRequest('Logo yüklenemedi');
+    // Checked and re-encoded like every image (middleware/upload.ts); a
+    // logo is public by nature and is stored as such.
+    const stored = await storeUpload(req, req.file, { kind: 'logo' });
 
     const config = await configForSite(site, orgId(req));
     config.branding.logo = stored.url;
     await config.save();
+    await forgetSiteBundle(site._id);
 
     res.json({ success: true, config, logoUrl: stored.url });
   })
@@ -156,6 +160,7 @@ router.delete(
     // Only the reference is dropped; the object itself stays in the bucket.
     config.branding.logo = null;
     await config.save();
+    await forgetSiteBundle(site._id);
     res.json({ config });
   })
 );

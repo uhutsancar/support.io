@@ -14,12 +14,19 @@ import type {
   AssistantOverview,
   BillingOverview,
   CheckoutSession,
+  PlanOverage,
+  Invoice,
   AssistantStatus,
   AgentPerformance,
   AnalyticsOverview,
   AuditLogEntry,
+  BulkResult,
   Conversation,
   ConversationPage,
+  ConversationTag,
+  Integration,
+  IntegrationDelivery,
+  MergeCandidate,
   CurrentUser,
   Deal,
   Department,
@@ -58,6 +65,65 @@ export interface RegisterPayload {
   email: string;
   password: string;
   companyName?: string;
+  /** The Cloudflare Turnstile answer, when the server asks for one. */
+  turnstileToken?: string;
+  locale?: string;
+  /** A referral link's code (PRD-23). */
+  referralCode?: string;
+}
+
+/**
+ * What /auth/login answers: a session, or — with two-step sign-in on — a
+ * five-minute token to trade for one at /auth/login/2fa.
+ */
+export type LoginResponse = AuthResponse | { mfaRequired: true; mfaToken: string };
+
+export const isPendingSecondStep = (
+  data: LoginResponse
+): data is { mfaRequired: true; mfaToken: string } => 'mfaRequired' in data && data.mfaRequired;
+
+/** Public settings the sign-up and sign-in forms read before anything else. */
+export interface AuthConfig {
+  turnstileSiteKey: string | null;
+  passwordMinLength: number;
+  /** "Continue with Google" is offered (PRD-14). */
+  googleSignIn?: boolean;
+}
+
+/** A site's chat behaviour (backend services/chatSettings.ts). */
+export interface ChatSettings {
+  missedChat: { delayMinutes: number; notify: 'all' | 'assigned' | 'off' };
+  offlineForm: boolean;
+  emailReplies: boolean;
+  preChat: {
+    mode: 'off' | 'optional' | 'required';
+    name: boolean;
+    email: boolean;
+    phone: boolean;
+    customFields: string[];
+    department: boolean;
+    consent: { mode: 'off' | 'optional' | 'required'; policyUrl: string };
+  };
+  csat: { enabled: boolean; style: 'thumbs' | 'stars'; askByEmail: boolean };
+  transcript: boolean;
+  spamMode: boolean;
+}
+
+export interface NotificationPreferences {
+  missedChatEmail: 'instant' | 'hourly' | 'off';
+  desktop: { newConversation: boolean; assigned: boolean; allMessages: boolean };
+  notificationSound: boolean;
+  /** The set-up mails of the first month (PRD-08). */
+  activationEmails: boolean;
+  /** Monday's summary of the week (owners, admins, managers; PRD-22). */
+  weeklyReport: boolean;
+  locale: 'tr' | 'en';
+}
+
+export interface MfaStatus {
+  enabled: boolean;
+  recoveryCodesLeft: number;
+  enforcedByOrganization: boolean;
 }
 
 export interface LoginPayload {
@@ -66,8 +132,25 @@ export interface LoginPayload {
 }
 
 export const authAPI = {
-  register: (data: RegisterPayload) => api.post<AuthResponse>('/auth/register', data),
-  login: (data: LoginPayload) => api.post<AuthResponse>('/auth/login', data),
+  config: () => api.get<AuthConfig>('/auth/config'),
+  /** Where to send the browser to connect a Google account (PRD-14). */
+  googleLink: (lang: string) => api.post<{ url: string }>('/auth/google/link', { lang }),
+  // The account read (/auth/me) is cached; disconnecting must not show the old one.
+  googleUnlink: mutates('/auth/me', () => api.delete('/auth/google')),
+  /** The owner's referral link and its results (PRD-23). */
+  referral: () =>
+    api.get<{ code: string; link: string; joined: number; qualified: number; rewarded: number }>(
+      '/auth/referral',
+      { cache: false }
+    ),
+  // E-mail first: the answer is the same for every address and starts no
+  // session; the link in the mail does (verifyEmail below).
+  register: (data: RegisterPayload) => api.post<{ verificationSent: true }>('/auth/register', data),
+  login: (data: LoginPayload) => api.post<LoginResponse>('/auth/login', data),
+  loginSecondStep: (data: { mfaToken: string; code?: string; recoveryCode?: string }) =>
+    api.post<AuthResponse>('/auth/login/2fa', data),
+  resendVerificationLink: (email: string, locale?: string) =>
+    api.post<{ verificationSent: true }>('/auth/resend-verification-link', { email, locale }),
   me: () => api.get<{ user: CurrentUser }>('/auth/me'),
   logout: () => api.post('/auth/logout'),
   updateStatus: (data: { status: string }) => api.put('/auth/status', data),
@@ -81,7 +164,39 @@ export const authAPI = {
     api.post<{ message: string }>('/auth/forgot-password', { email, locale }),
   resetPassword: (token: string, password: string) =>
     api.post<{ reset: boolean }>('/auth/reset-password', { token, password }),
-  verifyEmail: (token: string) => api.post<{ verified: boolean }>('/auth/verify-email', { token }),
+  // Opening the link signs the browser in (unless the account has two-step
+  // sign-in, which then goes through the ordinary sign-in).
+  verifyEmail: (token: string) =>
+    api.post<Partial<AuthResponse> & { verified?: boolean }>('/auth/verify-email', { token }),
+  confirmEmailChange: (token: string) =>
+    api.post<{ changed: boolean; email: string }>('/auth/confirm-email-change', { token }),
+
+  // The signed-in account's own security (routes/account.ts).
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post<{ changed: boolean; csrfToken: string }>('/auth/change-password', {
+      currentPassword,
+      newPassword
+    }),
+  changeEmail: (newEmail: string, password: string, locale?: string) =>
+    api.post<{ message: string }>('/auth/change-email', { newEmail, password, locale }),
+  revokeSessions: () => api.post<{ revoked: boolean; csrfToken: string }>('/auth/sessions/revoke'),
+  mfaStatus: () => api.get<MfaStatus>('/auth/2fa', { cache: false }),
+  mfaSetup: (password: string) =>
+    api.post<{ secret: string; otpauthUri: string }>('/auth/2fa/setup', { password }),
+  mfaConfirm: (code: string) =>
+    api.post<{ enabled: true; recoveryCodes: string[]; csrfToken: string }>('/auth/2fa/confirm', {
+      code
+    }),
+  mfaDisable: (data: { password: string; code?: string; recoveryCode?: string }) =>
+    api.post<{ enabled: false }>('/auth/2fa/disable', data),
+  mfaRecoveryCodes: (data: { password: string; code?: string; recoveryCode?: string }) =>
+    api.post<{ recoveryCodes: string[] }>('/auth/2fa/recovery-codes', data),
+  preferences: () =>
+    api.get<{ preferences: NotificationPreferences }>('/auth/preferences', { cache: false }),
+  updatePreferences: (prefs: Partial<NotificationPreferences>) =>
+    api.put<{ preferences: NotificationPreferences }>('/auth/preferences', prefs),
+  setOrganizationSecurity: (enforce2fa: boolean) =>
+    api.put<{ enforce2fa: boolean }>('/auth/organization-security', { enforce2fa }),
   resendVerification: (locale?: string) =>
     api.post<{ sent?: boolean; alreadyVerified?: boolean }>('/auth/resend-verification', {
       locale
@@ -94,13 +209,21 @@ export const sitesAPI = {
   getAll: () => api.get<{ sites: Site[] }>('/sites'),
   getOne: (siteId: string) => api.get<{ site: Site }>(`/sites/${siteId}`),
   create: mutates('/sites', (data: Partial<Site>) => api.post<{ site: Site }>('/sites', data)),
-  update: mutates('/sites', (siteId: string, data: Partial<Site>) =>
-    api.put<{ site: Site }>(`/sites/${siteId}`, data)
+  update: mutates(
+    '/sites',
+    (siteId: string, data: Partial<Site> & { assistantConsent?: boolean }) =>
+      api.put<{ site: Site }>(`/sites/${siteId}`, data)
   ),
   delete: mutates('/sites', (siteId: string) => api.delete(`/sites/${siteId}`)),
   regenerateKey: mutates('/sites', (siteId: string) =>
     api.post<{ site: Site }>(`/sites/${siteId}/regenerate-key`)
   ),
+
+  // Missed-chat mails, the offline and pre-chat forms, ratings, transcripts.
+  getChatSettings: (siteId: string) =>
+    api.get<{ settings: ChatSettings }>(`/sites/${siteId}/chat-settings`, { cache: false }),
+  updateChatSettings: (siteId: string, settings: Partial<ChatSettings>) =>
+    api.put<{ settings: ChatSettings }>(`/sites/${siteId}/chat-settings`, settings),
 
   // The integration secrets come back once, in the response that creates them;
   // the site itself only ever says whether one is set.
@@ -131,11 +254,31 @@ export const filesAPI = {
 
 // ------------------------------------------------------------------ visitors
 
+/** A block still in force on a site (SEC-09). */
+export interface VisitorBlock {
+  _id: string;
+  visitorId: string | null;
+  reason: string | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export const visitorsAPI = {
   // Never cached: this is a live presence list, and a thirty-second-old answer
   // is worse than none.
   getAll: (siteId: string, active = true) =>
-    api.get<Visitor[]>(`/visitors/site/${siteId}`, { params: { active }, cache: false })
+    api.get<Visitor[]>(`/visitors/site/${siteId}`, { params: { active }, cache: false }),
+  block: (body: { conversationId: string; days: number; reason?: string }) =>
+    api.post<{ id: string; days: number }>('/visitors/block', body),
+  blocks: (siteId: string) =>
+    api.get<{ blocks: VisitorBlock[] }>(`/visitors/blocks/${siteId}`, { cache: false }),
+  unblock: (id: string) => api.delete(`/visitors/blocks/${id}`),
+  /** KVKK m.11: every conversation of this conversation's visitor on its site (SEC-17). */
+  erase: (conversationId: string) =>
+    api.post<{ conversations: number; messages: number; files: number; events: number }>(
+      '/visitors/erase',
+      { conversationId }
+    )
 };
 
 // --------------------------------------------------------------------- deals
@@ -169,14 +312,20 @@ export interface ConversationQuery {
   departmentId?: string;
   assignedTo?: string;
   priority?: string;
+  /** Only conversations with this tag (PRD-07). */
+  tag?: string;
+  /** 'snoozed' lists only the snoozed ones; otherwise they are left out. */
+  view?: 'snoozed' | 'inbox';
   limit?: number | string;
   cursor?: string | null;
 }
 
 /** Drops the 'all' sentinels and the empty values, leaving what the API wants. */
 function inboxParams(query: ConversationQuery): Record<string, unknown> {
-  const { status, search, departmentId, assignedTo, priority, limit, cursor } = query;
+  const { status, search, departmentId, assignedTo, priority, tag, view, limit, cursor } = query;
   return {
+    ...(tag ? { tag } : {}),
+    ...(view === 'snoozed' ? { view } : {}),
     ...(status && status !== 'all' ? { status } : {}),
     ...(search ? { search } : {}),
     ...(departmentId && departmentId !== 'all' ? { departmentId } : {}),
@@ -278,7 +427,87 @@ export const conversationsAPI = {
 
   delete: mutates(CONVERSATIONS, (siteId: string, conversationId: string) =>
     api.delete(`${CONVERSATIONS}/${siteId}/${conversationId}`)
+  ),
+
+  // ------------------------------------------------- inbox tools (PRD-07)
+
+  setTags: mutates(CONVERSATIONS, (conversationId: string, tags: string[]) =>
+    api.put<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/tags`, { tags })
+  ),
+
+  /** Hides the conversation until `until` (ISO time); null wakes it. */
+  snooze: mutates(CONVERSATIONS, (conversationId: string, until: string | null) =>
+    api.put<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/snooze`, {
+      until
+    })
+  ),
+
+  mergeCandidates: (siteId: string, conversationId: string) =>
+    api.get<{ conversations: MergeCandidate[] }>(
+      `${CONVERSATIONS}/${siteId}/${conversationId}/merge-candidates`,
+      { cache: false }
+    ),
+
+  merge: mutates(CONVERSATIONS, (conversationId: string, intoId: string) =>
+    api.post<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/merge`, {
+      intoId
+    })
+  ),
+
+  /** The same move on several conversations; the answer says which failed. */
+  bulk: mutates(
+    CONVERSATIONS,
+    (
+      conversationIds: string[],
+      move:
+        | { action: 'status'; status: string }
+        | { action: 'assign'; agentId: string | null }
+        | { action: 'tag'; tag: string }
+        | { action: 'snooze'; until: string }
+    ) => api.post<BulkResult>(`${CONVERSATIONS}/bulk`, { conversationIds, ...move })
   )
+};
+
+// --------------------------------------------------------- integrations
+
+const INTEGRATIONS = '/integrations';
+
+/** Slack, Telegram and webhooks (PRD-11). */
+export const integrationsAPI = {
+  list: () =>
+    api.get<{ integrations: Integration[]; events: string[] }>(INTEGRATIONS, { cache: false }),
+  create: mutates(INTEGRATIONS, (data: Record<string, unknown>) =>
+    api.post<{ integration: Integration; signingSecret?: string }>(INTEGRATIONS, data)
+  ),
+  update: mutates(INTEGRATIONS, (id: string, data: Record<string, unknown>) =>
+    api.put<{ integration: Integration }>(`${INTEGRATIONS}/${id}`, data)
+  ),
+  remove: mutates(INTEGRATIONS, (id: string) => api.delete(`${INTEGRATIONS}/${id}`)),
+  test: (id: string) =>
+    api.post<{ delivered: boolean; status: number | null; error: string | null }>(
+      `${INTEGRATIONS}/${id}/test`
+    ),
+  rotateSecret: (id: string) => api.post<{ signingSecret: string }>(`${INTEGRATIONS}/${id}/secret`),
+  deliveries: (id: string) =>
+    api.get<{ deliveries: IntegrationDelivery[] }>(`${INTEGRATIONS}/${id}/deliveries`, {
+      cache: false
+    })
+};
+
+// ------------------------------------------------------------------ tags
+
+const TAGS = '/conversation-tags';
+
+/** The workspace's conversation tags, with their colours (PRD-07). */
+export const tagsAPI = {
+  list: () => api.get<{ tags: ConversationTag[] }>(TAGS, { cache: false }),
+  create: mutates(TAGS, (name: string, color?: string) =>
+    api.post<{ tag: ConversationTag }>(TAGS, { name, ...(color ? { color } : {}) })
+  ),
+  update: mutates([TAGS, CONVERSATIONS], (id: string, data: { name?: string; color?: string }) =>
+    api.put<{ tag: ConversationTag }>(`${TAGS}/${id}`, data)
+  ),
+  remove: mutates([TAGS, CONVERSATIONS], (id: string) => api.delete(`${TAGS}/${id}`))
 };
 
 // --------------------------------------------------------------- departments
@@ -374,7 +603,20 @@ export const billingAPI = {
   checkout: (plan: 'PRO' | 'ENTERPRISE', cycle: 'monthly' | 'yearly') =>
     api.post<CheckoutSession>('/billing/checkout', { plan, cycle }),
   /** A one-off link to Paddle's customer portal. */
-  portal: () => api.post<{ url: string }>('/billing/portal')
+  portal: () => api.post<{ url: string }>('/billing/portal'),
+  /** The subscription's invoices, issued by Paddle (BIL-06). */
+  invoices: () => api.get<{ invoices: Invoice[] }>('/billing/invoices', { cache: false }),
+  /** A short-lived link to one invoice's PDF. */
+  invoicePdf: (transactionId: string) =>
+    api.get<{ url: string }>(`/billing/invoices/${encodeURIComponent(transactionId)}/pdf`, {
+      cache: false
+    }),
+  /** Sites and members, and which are on hold over the plan (BIL-04). */
+  overage: () => api.get<PlanOverage>('/billing/overage', { cache: false }),
+  /** The owner's choice of what stays active; the rest goes on hold. */
+  keep: mutates(['/sites', '/team'], (keepSiteIds: string[], keepMemberIds: string[]) =>
+    api.post<PlanOverage>('/billing/overage', { keepSiteIds, keepMemberIds })
+  )
 };
 
 // ----------------------------------------------------------------- team chat
@@ -435,7 +677,11 @@ export const assistantAPI = {
   /** Whether this server has a Gemini key; the site switch depends on it. */
   status: () => api.get<AssistantStatus>('/assistant/status', { cache: false }),
   /** Every site's switch, FAQ count and the last 30 days of activity. */
-  overview: () => api.get<AssistantOverview>('/assistant/overview', { cache: false })
+  overview: () => api.get<AssistantOverview>('/assistant/overview', { cache: false }),
+  /** Marks one of the assistant's answers as wrong, or takes the mark back (AI-06). */
+  flag: (messageId: string) => api.post<{ flagged: boolean }>('/assistant/feedback', { messageId }),
+  unflag: (messageId: string) =>
+    api.delete<{ flagged: boolean }>(`/assistant/feedback/${messageId}`)
 };
 
 // ----------------------------------------------------------------- reporting
@@ -444,8 +690,41 @@ export const analyticsAPI = {
   // Never cached: the page also refreshes it from realtime socket events, so a
   // cached answer would fight with the live one.
   getOverview: (range: string, siteId?: string | null) =>
-    api.get<AnalyticsOverview>('/analytics/overview', { params: { range, siteId }, cache: false })
+    api.get<AnalyticsOverview>('/analytics/overview', { params: { range, siteId }, cache: false }),
+  /** Conversations started per weekday (Monday first) and hour, in `tz` (PRD-22). */
+  heatmap: (range: string, tz: string) =>
+    api.get<{ timeZone: string; grid: number[][] }>('/analytics/heatmap', {
+      params: { range, tz },
+      cache: false
+    }),
+  slaBreaches: (range: string) =>
+    api.get<{ breaches: SlaBreach[] }>('/analytics/sla-breaches', {
+      params: { range },
+      cache: false
+    }),
+  /** A report as a file; a Blob, with its name in Content-Disposition. */
+  exportReport: (params: {
+    report: string;
+    format: 'csv' | 'xlsx';
+    range: string;
+    tz: string;
+    lang: string;
+  }) => api.get<Blob>('/analytics/export', { params, responseType: 'blob', cache: false })
 };
+
+/** A conversation whose first answer came later than the SLA allowed. */
+export interface SlaBreach {
+  id: string;
+  ticketId: string | null;
+  siteId: string;
+  site: string;
+  createdAt: string;
+  waitedMinutes: number | null;
+  status: string;
+  priority: string;
+  agent: string | null;
+  department: string | null;
+}
 
 export const auditAPI = {
   getAll: (params?: Record<string, unknown>) =>

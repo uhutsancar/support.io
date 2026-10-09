@@ -25,7 +25,7 @@ import { getPool, query } from '../src/db/pool';
 import { checkoutReference, reconcileSubscriptions } from '../src/services/billing';
 import { effectivePlan } from '../src/domain/subscription';
 import { BASE } from './helpers/widget';
-import { verifyEmail } from './helpers/accounts';
+import { outbox, setPlan, signUp } from './helpers/accounts';
 
 const PASSWORD = 'E2ePassw0rd!';
 const SECRET = process.env.PADDLE_WEBHOOK_SECRET || 'local-dev-paddle-webhook-secret';
@@ -60,12 +60,8 @@ function sessionCookie(res: { headers: Headers }): string {
 
 async function owner() {
   const email = `owner${stamp()}@billing.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Billing Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Billing Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   return { token: sessionCookie(reg), email, organizationId: String(reg.body.user.organizationId) };
 }
 
@@ -219,6 +215,37 @@ test('a signed subscription opens the plan once, and a repeat is a no-op', async
   assert.equal(page.body.limits.sites, 3);
 });
 
+test('a billing-exempt workspace keeps its hand-set plan whatever Paddle says', async () => {
+  const org = await owner();
+  await query(
+    `UPDATE organizations SET plan_type = 'ENTERPRISE', billing_exempt = true, trial_ends_at = NULL
+      WHERE id = $1`,
+    [org.organizationId]
+  );
+  const subscriptionId = `sub_${stamp()}`;
+  const ref = checkoutReference(org.organizationId);
+  const created = subscriptionEvent('subscription.created', {
+    subscriptionId,
+    status: 'active',
+    organizationId: org.organizationId,
+    ref
+  });
+  assert.equal(await deliver(created), 200);
+  assert.equal(await planOf(org.organizationId), 'ENTERPRISE');
+  const canceled = subscriptionEvent('subscription.canceled', {
+    subscriptionId,
+    status: 'canceled',
+    organizationId: org.organizationId,
+    ref,
+    occurredAt: iso(1000),
+    periodEnd: iso(-DAY)
+  });
+  assert.equal(await deliver(canceled), 200);
+  assert.equal(await planOf(org.organizationId), 'ENTERPRISE');
+  const page = await api('/api/billing', { token: org.token });
+  assert.equal(page.body.plan, 'ENTERPRISE', 'the plan in force is the hand-set one');
+});
+
 test('a subscription naming another organization without its reference is ignored', async () => {
   const victim = await owner();
   const forged = subscriptionEvent('subscription.created', {
@@ -342,12 +369,74 @@ test('canceled keeps the plan until the period ends; past_due for the grace peri
   assert.equal(await planOf(org.organizationId), 'FREE', 'after the grace period');
 });
 
+test('a failed payment mails the owner once and shows them a strip', async () => {
+  const org = await owner();
+  const subscriptionId = `sub_${stamp()}`;
+  const ref = checkoutReference(org.organizationId);
+  assert.equal(
+    await deliver(
+      subscriptionEvent('subscription.activated', {
+        subscriptionId,
+        status: 'active',
+        organizationId: org.organizationId,
+        ref,
+        occurredAt: iso(-3000)
+      })
+    ),
+    200
+  );
+  const failedMails = async () =>
+    (await outbox(org.email)).filter((m) => /ödemeniz alınamadı/.test(m.subject));
+  assert.equal((await failedMails()).length, 0);
+  let me = await api('/api/auth/me', { token: org.token });
+  assert.equal(me.body.user.paymentIssue, null);
+
+  for (const occurredAt of [iso(-2000), iso(-1000)]) {
+    assert.equal(
+      await deliver(
+        subscriptionEvent('subscription.past_due', {
+          subscriptionId,
+          status: 'past_due',
+          occurredAt
+        })
+      ),
+      200
+    );
+  }
+  const mails = await failedMails();
+  assert.equal(mails.length, 1, 'one mail for one failed payment, not one per event');
+  assert.ok(mails[0].text.includes('/dashboard/billing'), mails[0].text);
+  me = await api('/api/auth/me', { token: org.token });
+  assert.ok(me.body.user.paymentIssue?.graceEndsAt, JSON.stringify(me.body.user.paymentIssue));
+
+  // Paid after all: the strip goes.
+  assert.equal(
+    await deliver(
+      subscriptionEvent('subscription.updated', {
+        subscriptionId,
+        status: 'active',
+        occurredAt: iso(0)
+      })
+    ),
+    200
+  );
+  me = await api('/api/auth/me', { token: org.token });
+  assert.equal(me.body.user.paymentIssue, null);
+});
+
 test('the billing page is the owner’s, and checkout stays shut while billing is off', async () => {
   const org = await owner();
   const page = await api('/api/billing', { token: org.token });
   assert.equal(page.status, 200);
-  assert.equal(page.body.plan, 'FREE');
+  // A new workspace is on the free Pro trial (PRD-15), with no subscription.
+  assert.equal(page.body.plan, 'PRO');
+  assert.equal(page.body.trial.plan, 'PRO');
+  assert.ok(new Date(page.body.trial.endsAt).getTime() > Date.now() + 13 * DAY);
   assert.equal(page.body.subscription, null);
+  await setPlan(org.organizationId, 'FREE');
+  const afterTrial = await api('/api/billing', { token: org.token });
+  assert.equal(afterTrial.body.plan, 'FREE');
+  assert.equal(afterTrial.body.trial, null);
   assert.equal(typeof page.body.usage.conversations, 'number');
   // Server-side Paddle values never reach the browser.
   const text = JSON.stringify(page.body);

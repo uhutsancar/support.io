@@ -106,7 +106,7 @@ const AcceptInvitation = () => {
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               autoComplete="new-password"
-              minLength={8}
+              minLength={10}
               required
             />
             <Button type="submit" size="lg" disabled={loading} className="w-full">

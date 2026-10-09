@@ -13,6 +13,7 @@ import { normalizeOriginList, originsFromDomain } from '../config/siteOrigins';
 import { withTransaction } from '../db/pool';
 import { assertCanCreateSite, lockOrganization } from '../services/entitlements';
 import { assistantAvailable } from '../services/assistant';
+import { chatSettings, sanitizeChatSettings } from '../services/chatSettings';
 import { auth } from '../middleware/auth';
 import { checkPermission } from '../middleware/rbac';
 import { siteCreateLimiter } from '../middleware/rateLimit';
@@ -150,7 +151,10 @@ router.put(
     // `pickStrict` rejects an unknown key rather than dropping it, which is what
     // this endpoint did before — a caller sending a field this route does not own
     // gets told so instead of watching it vanish.
-    const updates = pickStrict<SiteDoc>(req.body, WRITABLE_FIELDS);
+    // The consent box that comes with switching the assistant on (AI-04) is
+    // not a site field; it is read here and recorded in the audit trail.
+    const { assistantConsent, ...fields } = (req.body || {}) as Record<string, unknown>;
+    const updates = pickStrict<SiteDoc>(fields, WRITABLE_FIELDS);
     if (updates.name !== undefined) updates.name = siteText(updates.name, 'name', 100);
     if (updates.domain !== undefined) updates.domain = siteText(updates.domain, 'domain', 253);
     if (updates.allowedOrigins !== undefined) {
@@ -164,15 +168,24 @@ router.put(
         throw badRequest(`${flag} must be a boolean`);
       }
     }
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const assistantBefore = site.assistantEnabled;
+    // Switching it on means the site's FAQ and its visitors' questions (with
+    // personal data masked) go to the AI service provider: the owner says so
+    // first, every time it is switched on (AI-04).
+    if (updates.assistantEnabled === true && !assistantBefore && assistantConsent !== true) {
+      throw new HttpError(
+        400,
+        'Confirm that FAQ content and visitor questions are sent to the AI service',
+        'ASSISTANT_CONSENT_REQUIRED'
+      );
+    }
     // The assistant needs a Gemini key on this server; switching it on
     // without one would promise visitors answers that never come. The answer
     // names no provider: the panel may show it to the customer.
     if (updates.assistantEnabled === true && !assistantAvailable()) {
       throw new HttpError(400, 'The AI assistant is not available yet', 'ASSISTANT_UNAVAILABLE');
     }
-
-    const site = await loadOwnedSite(req, req.params.siteId);
-    const assistantBefore = site.assistantEnabled;
     const writable = site as unknown as Record<string, unknown>;
     for (const [key, value] of Object.entries(updates)) {
       writable[key] = MERGED_FIELDS.has(key)
@@ -182,9 +195,13 @@ router.put(
     await site.save();
 
     if (updates.assistantEnabled !== undefined && updates.assistantEnabled !== assistantBefore) {
-      events.emit('site.assistant.updated', {
+      // On: ASSISTANT_ENABLED with who confirmed the notice and when. Off:
+      // SITE_ASSISTANT_UPDATED, as before.
+      events.emit(site.assistantEnabled ? 'site.assistant.enabled' : 'site.assistant.updated', {
         ...auditContext(req, site),
-        metadata: { enabled: site.assistantEnabled }
+        metadata: site.assistantEnabled
+          ? { enabled: true, consent: true, consentedAt: new Date().toISOString(), notice: 'v1' }
+          : { enabled: false }
       });
     }
     // Which settings changed, not their values.
@@ -193,6 +210,33 @@ router.put(
       events.emit('site.updated', { ...auditContext(req, site), metadata: { fields: changed } });
     }
     res.json({ site });
+  })
+);
+
+// The site's chat behaviour (services/chatSettings.ts): unanswered-chat mails,
+// the offline and pre-chat forms, ratings, transcripts, spam mode. Every
+// field is optional; what is sent is merged over what is stored and checked.
+router.get(
+  '/:siteId/chat-settings',
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    res.json({ settings: chatSettings(site.chatSettings) });
+  })
+);
+
+router.put(
+  '/:siteId/chat-settings',
+  checkPermission('manage_sites'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = await loadOwnedSite(req, req.params.siteId);
+    const settings = sanitizeChatSettings(req.body, chatSettings(site.chatSettings));
+    site.chatSettings = settings as unknown as Record<string, unknown>;
+    await site.save();
+    events.emit('site.updated', {
+      ...auditContext(req, site),
+      metadata: { fields: ['chatSettings'] }
+    });
+    res.json({ settings });
   })
 );
 

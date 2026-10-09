@@ -43,7 +43,7 @@ export const ACCENTS = {
     dot: 'bg-violet-500'
   },
   sky: {
-    text: 'text-sky-600 dark:text-sky-400',
+    text: 'text-sky-700 dark:text-sky-400',
     bg: 'bg-sky-600',
     soft: 'bg-sky-50 dark:bg-sky-500/10',
     softText: 'text-sky-700 dark:text-sky-300',
@@ -52,7 +52,7 @@ export const ACCENTS = {
     dot: 'bg-sky-500'
   },
   emerald: {
-    text: 'text-emerald-600 dark:text-emerald-400',
+    text: 'text-emerald-700 dark:text-emerald-400',
     bg: 'bg-emerald-600',
     soft: 'bg-emerald-50 dark:bg-emerald-500/10',
     softText: 'text-emerald-700 dark:text-emerald-300',
@@ -61,7 +61,7 @@ export const ACCENTS = {
     dot: 'bg-emerald-500'
   },
   amber: {
-    text: 'text-amber-600 dark:text-amber-400',
+    text: 'text-amber-700 dark:text-amber-400',
     bg: 'bg-amber-500',
     soft: 'bg-amber-50 dark:bg-amber-500/10',
     softText: 'text-amber-700 dark:text-amber-300',
@@ -392,6 +392,10 @@ export const Section = ({
         pad,
         'px-5 sm:px-8',
         bordered ? 'border-t border-gray-200/70 dark:border-white/[0.06]' : '',
+        // Laid out only when near the screen (plan v10 PERF-08): the long
+        // marketing pages spent two seconds of a phone's CPU on style and
+        // layout of sections nobody had scrolled to yet.
+        '[content-visibility:auto] [contain-intrinsic-size:auto_900px]',
         className
       ].join(' ')}
     >
@@ -527,29 +531,45 @@ export const Pill = ({
  * Fotoğraf. Genişlik/yükseklik verilir ki yüklenirken sayfa zıplamasın;
  * ekranın altındakiler tembel yüklenir.
  */
+/**
+ * The photos ship at 1400 px and 700 px (public/photos/*-700.webp): a phone
+ * downloads the small one (plan v10 PERF-08).
+ */
+export const photoSrcSet = (src: string): string | undefined =>
+  /^\/photos\/[^/]+\.webp$/.test(src)
+    ? `${src.replace(/\.webp$/, '-700.webp')} 700w, ${src} 1400w`
+    : undefined;
+
 export const Photo = ({
   src,
   alt,
   className = '',
   imgClassName = '',
   eager = false,
+  sizes = '(min-width: 1024px) 50vw, 100vw',
   children
 }: {
   src: string;
   alt: string;
   className?: string;
   imgClassName?: string;
+  /** The first picture on the page: loaded at once, ahead of everything. */
   eager?: boolean;
+  sizes?: string;
   children?: React.ReactNode;
 }) => (
   <div className={['relative overflow-hidden', className].join(' ')}>
     <img
       src={src}
+      srcSet={photoSrcSet(src)}
+      sizes={sizes}
       alt={alt}
       width={1400}
       height={934}
       loading={eager ? 'eager' : 'lazy'}
-      decoding="async"
+      decoding={eager ? 'sync' : 'async'}
+      // React 18 knows no fetchPriority prop; the lower-case attribute passes as is.
+      {...(eager ? { fetchpriority: 'high' } : {})}
       className={['absolute inset-0 w-full h-full object-cover', imgClassName].join(' ')}
     />
     {children}
@@ -592,7 +612,7 @@ export const Accordion = ({
               focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:rounded"
           >
             {numbered && (
-              <span className="w-6 pt-0.5 text-[11.5px] font-medium tabular-nums text-gray-400 shrink-0">
+              <span className="w-6 pt-0.5 text-[11.5px] font-medium tabular-nums text-gray-500 dark:text-gray-400 shrink-0">
                 {String(i + 1).padStart(2, '0')}
               </span>
             )}
@@ -738,7 +758,7 @@ export const AppFrame = ({
         {label && (
           <span
             className="absolute left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 text-[10px] font-semibold
-            uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500 whitespace-nowrap"
+            uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400 whitespace-nowrap"
           >
             <span className={['w-1.5 h-1.5 rounded-full', a.dot].join(' ')} />
             {label}
@@ -777,7 +797,7 @@ export const BrowserFrame = ({
       <span
         className="ml-2 flex-1 h-6 rounded-md bg-white dark:bg-white/[0.05]
         border border-gray-200 dark:border-white/[0.07] flex items-center px-2.5
-        text-[10.5px] text-gray-400 dark:text-gray-500 truncate"
+        text-[10.5px] text-gray-500 dark:text-gray-400 truncate"
       >
         {url}
       </span>

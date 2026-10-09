@@ -19,17 +19,19 @@ function looksPlaceholder(raw: string): boolean {
   return !raw || PLACEHOLDER.test(raw);
 }
 
+/** The password inside a connection URL, or '' when there is none. */
+function urlPassword(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).password);
+  } catch {
+    return '';
+  }
+}
+
 /** The database password, whether given on its own or inside DATABASE_URL. */
 function databasePassword(): string {
   const url = value('DATABASE_URL');
-  if (url) {
-    try {
-      return decodeURIComponent(new URL(url).password);
-    } catch {
-      return '';
-    }
-  }
-  return value('DB_PASSWORD');
+  return url ? urlPassword(url) : value('DB_PASSWORD');
 }
 
 export function productionConfigProblems(): string[] {
@@ -39,6 +41,11 @@ export function productionConfigProblems(): string[] {
   if (jwt.length < 32 || looksPlaceholder(jwt)) {
     problems.push('JWT_SECRET must be a random value of at least 32 characters');
   }
+  // During a rotation (SEC-18) the old secret is still trusted for checking.
+  const previous = value('JWT_SECRET_PREVIOUS');
+  if (previous && (previous.length < 32 || looksPlaceholder(previous))) {
+    problems.push('JWT_SECRET_PREVIOUS, when set, must be the old secret (32+ characters)');
+  }
   if (!value('CORS_ORIGINS')) {
     problems.push('CORS_ORIGINS must list the panel’s origin');
   }
@@ -46,6 +53,18 @@ export function productionConfigProblems(): string[] {
     problems.push(
       'DB_PASSWORD (or the password in DATABASE_URL) is empty or still the example value'
     );
+  }
+
+  // Redis is reachable only on the Docker network and still asks for a
+  // password (SEC-12), so a neighbour container cannot read or wipe it.
+  const redisUrl = value('REDIS_URL');
+  if (redisUrl) {
+    const redisPassword = value('REDIS_PASSWORD') || urlPassword(redisUrl);
+    if (redisPassword.length < 24 || looksPlaceholder(redisPassword)) {
+      problems.push('REDIS_PASSWORD must be a random value of at least 24 characters');
+    } else if (!urlPassword(redisUrl)) {
+      problems.push('REDIS_URL must carry the password: redis://:<REDIS_PASSWORD>@redis:6379');
+    }
   }
 
   const base = value('APP_BASE_URL');
@@ -71,8 +90,14 @@ export function productionConfigProblems(): string[] {
   }
 
   // Upload decision A (plan §12): files live in S3-compatible storage. Local
-  // disk inside the container is lost on every deploy.
-  if (value('UPLOAD_STORAGE') !== 'local') {
+  // disk is a volume nothing backs up (DR-04), so it needs saying twice.
+  if (value('UPLOAD_STORAGE') === 'local') {
+    if (value('ALLOW_LOCAL_UPLOADS') !== 'true') {
+      problems.push(
+        'UPLOAD_STORAGE=local keeps attachments on a volume the backups do not cover; use s3, or set ALLOW_LOCAL_UPLOADS=true and back up the uploads volume yourself'
+      );
+    }
+  } else {
     const bucket = value('S3_BUCKET') || value('AWS_BUCKET_NAME');
     const keys = value('AWS_ACCESS_KEY_ID') && value('AWS_SECRET_ACCESS_KEY');
     const region = value('AWS_REGION') || value('S3_REGION') || value('S3_ENDPOINT');
@@ -86,10 +111,74 @@ export function productionConfigProblems(): string[] {
   return problems;
 }
 
+/**
+ * What production can run without but should not: logged once at boot, never
+ * fatal. Each line says what is missing and what it costs.
+ */
+export function productionConfigWarnings(): string[] {
+  const warnings: string[] = [];
+  if (!value('TURNSTILE_SECRET') || !value('TURNSTILE_SITE_KEY')) {
+    warnings.push(
+      'TURNSTILE_SITE_KEY / TURNSTILE_SECRET are empty: the sign-up form has no bot check (SEC-06)'
+    );
+  }
+  // The rest of plan v10 appendix C (INF-04): each one costs something when
+  // empty, nothing breaks.
+  if (!value('SENTRY_DSN')) {
+    warnings.push('SENTRY_DSN is empty: errors stay in the server log only (OBS-01)');
+  }
+  if (!value('ALERT_WEBHOOK_URL')) {
+    warnings.push('ALERT_WEBHOOK_URL is empty: the watchdog has nobody to tell (OBS-04)');
+  }
+  if (!value('BACKUP_REMOTE') || !value('BACKUP_AGE_RECIPIENT')) {
+    warnings.push(
+      'BACKUP_REMOTE / BACKUP_AGE_RECIPIENT are empty: backups stay on this server (DR-01)'
+    );
+  }
+  if (!value('BACKUP_PING_URL')) {
+    warnings.push('BACKUP_PING_URL is empty: a night without a backup goes unnoticed (DR-01)');
+  }
+  if (!value('SECURITY_CONTACT_EMAIL')) {
+    warnings.push(
+      'SECURITY_CONTACT_EMAIL is empty: security.txt names security@ on the panel domain'
+    );
+  }
+  if (!value('OPS_REPORT_EMAIL')) {
+    warnings.push('OPS_REPORT_EMAIL is empty: no weekly product report (OBS-07)');
+  }
+  const tier = value('GEMINI_TIER').toLowerCase();
+  if (tier && tier !== 'free' && tier !== 'paid') {
+    warnings.push(`GEMINI_TIER=${tier} is not free or paid; free applies (AI-02)`);
+  } else if (value('GEMINI_API_KEY') && tier !== 'paid') {
+    warnings.push(
+      'GEMINI_TIER is free: the assistant does not answer visitors from the EEA, UK or Switzerland (AI-02, KARAR-AI-1)'
+    );
+  }
+  if (!value('VAPID_PUBLIC_KEY') || !value('VAPID_PRIVATE_KEY')) {
+    warnings.push(
+      'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are empty: no push notifications on phones or closed panels (PRD-09; npm run push:keys)'
+    );
+  }
+  if (value('S3_ACL') && value('S3_ACL') !== 'private') {
+    warnings.push(`S3_ACL=${value('S3_ACL')}: uploaded files must stay private (SEC-08)`);
+  }
+  // Staging settings on a server that may be production.
+  if (value('MAIL_ALLOWLIST_DOMAINS')) {
+    warnings.push(
+      'MAIL_ALLOWLIST_DOMAINS is set: mail to every other domain is withheld — right for staging only (INF-03)'
+    );
+  }
+  if (String(process.env.SITE_NOINDEX).toLowerCase() === 'true') {
+    warnings.push('SITE_NOINDEX=true: search engines are told to skip every page — staging only');
+  }
+  return warnings;
+}
+
 /** Throws with every problem at once; the server calls it in production. */
 export function assertProductionConfig(): void {
   const problems = productionConfigProblems();
   if (problems.length) {
     throw new Error(`Production configuration is incomplete:\n  - ${problems.join('\n  - ')}`);
   }
+  for (const warning of productionConfigWarnings()) console.warn(`[config] ${warning}`);
 }

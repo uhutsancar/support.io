@@ -6,11 +6,22 @@
 import { query } from './pool';
 import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
+import { sweepTrials } from '../services/trial';
+import { sweepWeeklyReports } from '../services/weeklyReport';
+import { resumePendingPages } from '../services/knowledgeSources';
+import { sweepReferralRewards } from '../services/referrals';
+import { reconcileAllPlanLimits } from '../services/planOverage';
+import { sweepActivation } from '../services/activation';
+import { deleteOrganization } from '../services/organizationDeletion';
+import { nightlyPurge } from '../services/dataRetention';
+import { weeklyReport } from '../services/productStats';
 
 const RETENTION_DAYS = 30;
 /** How long a visitor's IP and device details are kept after their last visit. */
 const PERSONAL_DATA_DAYS = 90;
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+/** How long a sign-up may wait for its verification link to be opened. */
+const UNVERIFIED_SIGNUP_DAYS = 7;
 
 const TARGETS = [
   { table: 'event_logs', column: 'timestamp' },
@@ -43,11 +54,89 @@ async function sweepOnce() {
     console.error('Retention sweep failed for personal data:', errorText(error));
   }
   try {
+    // An invitation names a person by e-mail; once it is accepted, revoked or
+    // expired it is history, kept 90 days for "who invited whom" (LEG-03).
+    await query(
+      `DELETE FROM invitations
+        WHERE coalesce(accepted_at, revoked_at, expires_at) < now() - interval '${PERSONAL_DATA_DAYS} days'`
+    );
+  } catch (error) {
+    console.error('Retention sweep failed for invitations:', errorText(error));
+  }
+  try {
     // A paid period that ended after cancellation, or a payment grace period
     // that ran out, changes the plan with no webhook; write it down.
     await reconcileSubscriptions();
   } catch (error) {
     console.error('Subscription reconciliation failed:', errorText(error));
+  }
+  try {
+    // The free trial's reminder and its "it has ended" mail (PRD-15).
+    await sweepTrials();
+  } catch (error) {
+    console.error('Trial sweep failed:', errorText(error));
+  }
+  try {
+    // Sites and seats over the plan in force, which can change by the clock
+    // alone (a trial or a paid period ending): on hold, or back (BIL-04).
+    await reconcileAllPlanLimits();
+  } catch (error) {
+    console.error('Plan limit reconciliation failed:', errorText(error));
+  }
+  try {
+    // Referral months that could not be given yet (PRD-23).
+    await sweepReferralRewards();
+  } catch (error) {
+    console.error('Referral reward sweep failed:', errorText(error));
+  }
+  try {
+    // Knowledge pages a restart left half-fetched (PRD-21).
+    await resumePendingPages();
+  } catch (error) {
+    console.error('Knowledge resume failed:', errorText(error));
+  }
+  try {
+    // Monday's summary of the week for owners and managers (PRD-22).
+    await sweepWeeklyReports();
+  } catch (error) {
+    console.error('Weekly report sweep failed:', errorText(error));
+  }
+  try {
+    // The set-up mails of the first month (PRD-08).
+    await sweepActivation();
+  } catch (error) {
+    console.error('Activation sweep failed:', errorText(error));
+  }
+  try {
+    // A sign-up nobody confirmed within a week is not an account (SEC-06):
+    // its workspace goes, so an address typed by someone else does not stay
+    // reserved. Such a workspace never had a session, so it holds nothing.
+    const { rows } = await query<{ organization_id: string }>(
+      `SELECT u.organization_id FROM users u
+         JOIN organizations o ON o.id = u.organization_id AND o.owner_user_id = u.id
+        WHERE u.role = 'owner' AND u.is_active AND u.email_verified_at IS NULL
+          AND u.created_at < now() - interval '${UNVERIFIED_SIGNUP_DAYS} days'
+        LIMIT 200`
+    );
+    for (const { organization_id: organizationId } of rows) {
+      // eslint-disable-next-line no-await-in-loop
+      await deleteOrganization(organizationId);
+    }
+  } catch (error) {
+    console.error('Retention sweep failed for unconfirmed sign-ups:', errorText(error));
+  }
+  try {
+    // Conversations past the workspace's retention window, with their
+    // attachments, once a night (SEC-17).
+    await nightlyPurge();
+  } catch (error) {
+    console.error('Retention purge failed:', errorText(error));
+  }
+  try {
+    // The owner's weekly numbers, Monday morning (OBS-07).
+    await weeklyReport();
+  } catch (error) {
+    console.error('Weekly report failed:', errorText(error));
   }
   for (const target of TARGETS) {
     try {

@@ -38,6 +38,19 @@ export interface UserDoc {
   emailVerifiedAt: Date | null;
   /** Signed into every session; raising it ends them all (migration 0002). */
   sessionVersion: number;
+  /** Two-step sign-in (migration 0009): the sealed TOTP secret, set while enrolling. */
+  totpSecretEnc: string | null;
+  /** When two-step sign-in was switched on; null while off. */
+  totpEnabledAt: Date | null;
+  /** Over the plan's seats after a downgrade: reads, cannot write (0015, BIL-04). */
+  seatSuspendedAt: Date | null;
+  /** The last 30-second step a code was accepted for; replays are refused. */
+  totpLastStep: number | null;
+  /** The connected Google account's subject id, and its address for display (0021). */
+  googleSub: string | null;
+  googleEmail: string | null;
+  /** Keyed hashes of the unused recovery codes. */
+  recoveryCodes: string[];
   assignedSites: Array<Ref<SiteDoc>>;
   departments: UserDepartmentMembership[];
   /** Added by the model's own methods. */
@@ -57,6 +70,13 @@ export default defineModel<UserDoc>({
     isOnboarded: { column: 'is_onboarded', type: 'boolean', default: false },
     emailVerifiedAt: { column: 'email_verified_at', type: 'date', default: null },
     sessionVersion: { column: 'session_version', type: 'number', default: 0 },
+    totpSecretEnc: { column: 'totp_secret_enc', type: 'string', default: null },
+    totpEnabledAt: { column: 'totp_enabled_at', type: 'date', default: null },
+    seatSuspendedAt: { column: 'seat_suspended_at', type: 'date', default: null },
+    totpLastStep: { column: 'totp_last_step', type: 'number', default: null },
+    recoveryCodes: { column: 'recovery_codes', type: 'json', default: () => [] },
+    googleSub: { column: 'google_sub', type: 'string', default: null },
+    googleEmail: { column: 'google_email', type: 'string', default: null },
     organizationId: { column: 'organization_id', type: 'id', ref: 'Organization', default: null },
     status: { column: 'status', type: 'string', enum: PRESENCE_STATUSES, default: 'offline' },
     permissions: {
@@ -125,6 +145,10 @@ export default defineModel<UserDoc>({
     toJSON() {
       const obj = this.toObject();
       delete obj.password;
+      delete obj.totpSecretEnc;
+      delete obj.totpLastStep;
+      delete obj.recoveryCodes;
+      delete obj.googleSub;
       return obj;
     }
   }

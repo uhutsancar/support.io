@@ -1,9 +1,18 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { notifyDesktop, showUnreadInTab } from '../lib/desktopNotifications';
+import { resyncPush } from '../lib/pushNotifications';
 import { VerifyEmailBanner } from '../pages/AccountRecovery';
+import {
+  MfaRequiredGate,
+  PaymentIssueBanner,
+  PlanOverageBanner,
+  TrialBanner
+} from '../components/settings/AccountGates';
 import { Outlet, NavLink, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
+  Plug,
   Sparkles,
   CreditCard,
   LayoutDashboard,
@@ -134,6 +143,28 @@ const DashboardLayout = () => {
     }
   }, []);
 
+  // The tab's title and favicon carry the unread count (PRD-02).
+  useEffect(() => {
+    showUnreadInTab(unreadCount);
+  }, [unreadCount]);
+
+  // The service worker, and this browser's push subscription saved again for
+  // whoever is signed in (PRD-09). Only the panel registers it.
+  useEffect(() => {
+    void resyncPush();
+  }, []);
+
+  // Which events raise a desktop notification; read once per session.
+  const desktopPrefs = useRef({ newConversation: true, assigned: true, allMessages: false });
+  useEffect(() => {
+    authAPI
+      .preferences()
+      .then(({ data }) => {
+        desktopPrefs.current = data.preferences.desktop;
+      })
+      .catch(() => undefined);
+  }, []);
+
   /* ---------------------------------------------------------------- soket */
 
   useEffect(() => {
@@ -152,11 +183,42 @@ const DashboardLayout = () => {
       );
       fetchUnreadCount();
     };
+    const openConversation = (id: unknown) => () =>
+      navigate(
+        `${langPrefix}/dashboard/conversations?conversation=${encodeURIComponent(String(id))}`
+      );
     const onNewMessage = (payload: any) => {
       relay('new-message')(payload);
       fetchUnreadCount();
+      const message = payload?.message;
+      if (desktopPrefs.current.allMessages && message?.senderType === 'visitor') {
+        notifyDesktop({
+          title: payload?.conversation?.visitorName || message.senderName || 'Support.io',
+          body: String(message.content || ''),
+          tag: `message:${message._id}`,
+          onClick: openConversation(message.conversationId)
+        });
+      }
+    };
+    const onNewConversation = (payload: any) => {
+      const conversation = payload?.conversation;
+      if (!conversation || !desktopPrefs.current.newConversation) return;
+      notifyDesktop({
+        title: t('account.notifications.newConversation'),
+        body: conversation.visitorName || '',
+        tag: `conversation:${conversation._id}`,
+        onClick: openConversation(conversation._id)
+      });
     };
     const onAssigned = (payload: any) => {
+      if (desktopPrefs.current.assigned && payload?.conversationId) {
+        notifyDesktop({
+          title: t('account.notifications.assigned'),
+          body: payload?.conversation?.visitorName || '',
+          tag: `assigned:${payload.conversationId}`,
+          onClick: openConversation(payload.conversationId)
+        });
+      }
       relay('conversation-assigned')(payload);
       setNotifications((prev) =>
         [{ type: 'assigned', ...payload, receivedAt: Date.now() }, ...prev].slice(0, 12)
@@ -173,6 +235,7 @@ const DashboardLayout = () => {
     socket.on('notification', onNotification);
     socket.on('messages-read', fetchUnreadCount);
     socket.on('new-message', onNewMessage);
+    socket.on('new-conversation', onNewConversation);
     socket.on('conversation-assigned', onAssigned);
     socket.on('conversation-claimed', onClaimed);
     socket.on('agent-status-changed', onAgentStatusChanged);
@@ -182,11 +245,12 @@ const DashboardLayout = () => {
       socket.off('notification', onNotification);
       socket.off('messages-read', fetchUnreadCount);
       socket.off('new-message', onNewMessage);
+      socket.off('new-conversation', onNewConversation);
       socket.off('conversation-assigned', onAssigned);
       socket.off('conversation-claimed', onClaimed);
       socket.off('agent-status-changed', onAgentStatusChanged);
     };
-  }, [fetchUnreadCount, socket]);
+  }, [fetchUnreadCount, socket, navigate, langPrefix, t]);
 
   /* --------------------------------------------------- dışarı tıkla-kapat */
 
@@ -348,6 +412,12 @@ const DashboardLayout = () => {
         label: t('sidebar.crm'),
         locked: locked('crm')
       });
+      workspace.items.push({
+        path: p('/integrations'),
+        icon: Plug,
+        label: t('sidebar.integrations'),
+        locked: locked('integrations')
+      });
     }
 
     if (['owner', 'admin', 'viewer'].includes(role)) {
@@ -414,7 +484,7 @@ const DashboardLayout = () => {
       <nav className="flex-1 overflow-y-auto modal-scrollbar px-3 py-4 space-y-5">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <h2 className="px-3 mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <h2 className="px-3 mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               {group.label}
             </h2>
             <div className="space-y-0.5">
@@ -696,7 +766,12 @@ const DashboardLayout = () => {
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <VerifyEmailBanner />
-          <Outlet />
+          <TrialBanner base={`${langPrefix}/dashboard`} />
+          <PaymentIssueBanner base={`${langPrefix}/dashboard`} />
+          <PlanOverageBanner base={`${langPrefix}/dashboard`} />
+          <MfaRequiredGate>
+            <Outlet />
+          </MfaRequiredGate>
         </main>
       </div>
 

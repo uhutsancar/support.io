@@ -22,7 +22,7 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { widgetSocket, widgetToken } from './helpers/widget';
-import { setPlan, verifyEmail } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 import { query } from '../src/db/pool';
 import { getPool } from '../src/db/pool';
 
@@ -111,15 +111,10 @@ async function createTenant(label: string) {
   const email = `${label}${stamp}@automation.test`;
   const password = 'E2ePassw0rd!';
 
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: `${label} owner`, email, password, companyName: `${label} co` }
-  });
+  const reg = await signUp({ name: `${label} owner`, email, password, companyName: `${label} co` });
   assert.ok(reg.status === 200 || reg.status === 201, `register failed: ${JSON.stringify(reg)}`);
   const token = sessionToken(reg);
   assert.ok(token, 'register returned no token');
-  // The widget goes live only for a verified owner.
-  await verifyEmail(email);
   // This suite exercises paid features (members, departments, rules), not the
   // plan limits themselves; tests/planLimits.e2e.test.ts covers those.
   await setPlan(reg.body.user.organizationId, 'PRO');

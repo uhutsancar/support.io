@@ -19,11 +19,15 @@ import crypto from 'crypto';
 import { NodeRuntime, Webhooks } from '@paddle/paddle-node-sdk';
 import { getPool, withTransaction } from '../db/pool';
 import { generateId } from '../db/objectId';
-import { derivedKey } from '../config/tokens';
+import { derivedKey, derivedKeys } from '../config/tokens';
 import { billingConfig, planForPrice } from '../config/billing';
 import { isPlanType } from '../domain';
 import { LIVE_STATUSES, effectivePlan, isSubscriptionStatus } from '../domain/subscription';
 import { lockOrganization } from './entitlements';
+import { reconcilePlanLimits } from './planOverage';
+import { appBaseUrl, mail } from './mail';
+import { errorText } from '../http/errors';
+import { qualifyReferral } from './referrals';
 import type { PlanType } from '../domain';
 import type { SubscriptionState, SubscriptionStatus } from '../domain/subscription';
 import type { PoolClient } from 'pg';
@@ -31,19 +35,21 @@ import type { PoolClient } from 'pg';
 // -------------------------------------------------------------- checkout ref
 
 /** Ties a checkout to the organization that asked for it; see the header. */
-export function checkoutReference(organizationId: string): string {
-  return crypto
-    .createHmac('sha256', derivedKey('billing-checkout'))
-    .update(organizationId)
-    .digest('hex')
-    .slice(0, 32);
+export function checkoutReference(
+  organizationId: string,
+  secret = derivedKey('billing-checkout')
+): string {
+  return crypto.createHmac('sha256', secret).update(organizationId).digest('hex').slice(0, 32);
 }
 
 function referenceMatches(organizationId: unknown, reference: unknown): boolean {
   if (typeof organizationId !== 'string' || typeof reference !== 'string') return false;
-  const expected = Buffer.from(checkoutReference(organizationId));
   const given = Buffer.from(reference);
-  return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+  // A checkout started before a JWT_SECRET rotation still completes (SEC-18).
+  return derivedKeys('billing-checkout').some((secret) => {
+    const expected = Buffer.from(checkoutReference(organizationId, secret));
+    return expected.length === given.length && crypto.timingSafeEqual(expected, given);
+  });
 }
 
 // ------------------------------------------------------------------ webhook
@@ -115,7 +121,10 @@ export type WebhookOutcome = 'processed' | 'duplicate' | 'ignored' | 'stale';
 /** Applies one verified event, exactly once. */
 export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<WebhookOutcome> {
   const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
-  return withTransaction(async (client) => {
+  const changed: { organizationId: string | null; pastDueStarted?: Date; active?: boolean } = {
+    organizationId: null
+  };
+  const result = await withTransaction(async (client) => {
     // A concurrent delivery of the same id waits here on the primary key and
     // then finds the row, so only one of them applies the event.
     const inserted = await client.query(
@@ -130,7 +139,9 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
     let outcome: Exclude<WebhookOutcome, 'duplicate'> = 'ignored';
     let organizationId: string | null = null;
     if (event.event_type.startsWith('subscription.')) {
-      ({ outcome, organizationId } = await applySubscriptionEvent(client, event));
+      const applied = await applySubscriptionEvent(client, event);
+      ({ outcome, organizationId } = applied);
+      changed.pastDueStarted = applied.pastDueStarted;
     }
 
     await client.query(
@@ -138,7 +149,53 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
         WHERE provider_event_id = $1`,
       [event.event_id, outcome, organizationId]
     );
+    if (outcome === 'processed') {
+      changed.organizationId = organizationId;
+      changed.active = event.data?.status === 'active';
+    }
     return outcome;
+  });
+  // Sites and seats over a smaller plan go on hold, and come back with a
+  // bigger one (BIL-04) — after the commit, in their own transaction.
+  if (changed.organizationId) {
+    await reconcilePlanLimits(changed.organizationId).catch((error: unknown) => {
+      console.error('Plan limit reconciliation failed:', errorText(error));
+    });
+    // Paddle sends its own dunning mails; ours is the one that says what
+    // happens to the workspace and when (BIL-05). Once per failed payment:
+    // only the event that moved the subscription into past_due sends it.
+    // A referred workspace that now pays earns its referrer a month (PRD-23).
+    if (changed.active) {
+      await qualifyReferral(changed.organizationId).catch((error: unknown) =>
+        console.error('Referral qualification failed:', errorText(error))
+      );
+    }
+    if (changed.pastDueStarted) {
+      await tellOwnerPaymentFailed(changed.organizationId, changed.pastDueStarted).catch(
+        (error: unknown) => console.error('Payment failure mail failed:', errorText(error))
+      );
+    }
+  }
+  return result;
+}
+
+async function tellOwnerPaymentFailed(organizationId: string, since: Date): Promise<void> {
+  const { rows } = await getPool().query<{ email: string; name: string; org: string }>(
+    `SELECT u.email, u.name, o.name AS org FROM organizations o
+       JOIN users u ON u.id = o.owner_user_id AND u.is_active
+      WHERE o.id = $1`,
+    [organizationId]
+  );
+  const owner = rows[0];
+  if (!owner) return;
+  const graceEndsAt = new Date(
+    new Date(since).getTime() + billingConfig().pastDueGraceDays * 24 * 60 * 60 * 1000
+  );
+  await mail.sendPaymentFailed(owner.email, {
+    name: owner.name || '',
+    organization: owner.org,
+    graceEndsAt,
+    link: `${appBaseUrl()}/dashboard/billing`
   });
 }
 
@@ -157,7 +214,12 @@ interface SubscriptionRow {
 async function applySubscriptionEvent(
   client: PoolClient,
   event: PaddleEvent
-): Promise<{ outcome: Exclude<WebhookOutcome, 'duplicate'>; organizationId: string | null }> {
+): Promise<{
+  outcome: Exclude<WebhookOutcome, 'duplicate'>;
+  organizationId: string | null;
+  /** This event is the first of a failed payment: the owner is told (BIL-05). */
+  pastDueStarted?: Date;
+}> {
   const data = event.data || {};
   const subscriptionId = data.id;
   const status = data.status;
@@ -257,7 +319,11 @@ async function applySubscriptionEvent(
     eventId: event.event_id,
     status
   });
-  return { outcome: 'processed', organizationId };
+  const pastDueStarted =
+    status === 'past_due' && !(sameSubscription && current!.status === 'past_due')
+      ? (pastDueSince ?? occurredAt)
+      : undefined;
+  return { outcome: 'processed', organizationId, pastDueStarted };
 }
 
 // ------------------------------------------------------------ plan in force
@@ -307,12 +373,14 @@ export async function syncOrganizationPlan(
 ): Promise<{ from: PlanType; to: PlanType } | null> {
   const result = await client.query<{
     current: string;
+    billing_exempt: boolean;
     plan_type: string | null;
     status: string | null;
     current_period_end: Date | null;
     past_due_since: Date | null;
   }>(
-    `SELECT o.plan_type AS current, s.plan_type, s.status, s.current_period_end, s.past_due_since
+    `SELECT o.plan_type AS current, o.billing_exempt,
+            s.plan_type, s.status, s.current_period_end, s.past_due_since
        FROM organizations o
        LEFT JOIN subscriptions s ON s.organization_id = o.id
       WHERE o.id = $1
@@ -320,7 +388,8 @@ export async function syncOrganizationPlan(
     [organizationId]
   );
   const row = result.rows[0];
-  if (!row) return null;
+  // A hand-set plan (SEC-05) is never moved by a subscription event.
+  if (!row || row.billing_exempt) return null;
   const from: PlanType = isPlanType(row.current) ? row.current : 'FREE';
   const to = subscriptionPlan(row) ?? from;
   if (to === from) return null;

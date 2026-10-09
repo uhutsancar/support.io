@@ -28,13 +28,14 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { usePlans, PLAN_FEATURE_ORDER } from '../hooks/usePlans';
 import { openCheckout, releaseCheckout } from '../lib/paddle';
 import type { BillingOverview, PlanInfo } from '../types/api';
+import { SUPPORT_EMAIL } from '../lib/contact';
 
 type Paid = 'PRO' | 'ENTERPRISE';
 type Cycle = 'monthly' | 'yearly';
 type Phase = 'idle' | 'opening' | 'waiting' | 'done' | 'slow';
 
 const ICON = { PRO: Rocket, ENTERPRISE: Building2 } as const;
-const CONTACT = 'mailto:destek@support.io?subject=Plan%20y%C3%BCkseltme';
+const CONTACT = `mailto:${SUPPORT_EMAIL}?subject=Plan%20y%C3%BCkseltme`;
 
 const Upgrade = () => {
   const { t } = useTranslation();
@@ -231,7 +232,7 @@ const Upgrade = () => {
                   >
                     {t('checkout.' + c)}
                     {c === 'yearly' && selected && saving(selected) > 0 && (
-                      <span className="ml-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span className="ml-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
                         {t('checkout.save', { percent: saving(selected) })}
                       </span>
                     )}

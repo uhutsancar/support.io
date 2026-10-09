@@ -16,7 +16,7 @@ import { openConversation } from '../../services/conversationIntake';
 import { refreshSla } from '../../services/conversationSla';
 import { tryFaqAutoResponse } from '../../services/faqAutoResponse';
 import { runAutomation } from '../../services/automationTrigger';
-import { assistantActive, requestHuman, scheduleAssistantReply } from '../../services/assistant';
+import { assistantActiveFor, requestHuman, scheduleAssistantReply } from '../../services/assistant';
 import { verifiedIdentity } from '../../services/identity';
 import {
   ACTIVE_CONVERSATION_STATUSES,
@@ -28,12 +28,22 @@ import {
 } from '../../domain';
 import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
+import { validateEvents, WIDGET_EVENTS } from '../schema';
 import { ConversationQuotaError, countMessage } from '../../services/entitlements';
-import { conversationRoom } from '../../realtime/rooms';
+import { conversationRoom, siteRoom } from '../../realtime/rooms';
+import { installWidgetExtras, applyContact } from './widgetExtras';
+import { preChatSatisfied } from '../../services/visitorContact';
+import { chatSettings } from '../../services/chatSettings';
+import { hasLink, looksLikeSpam } from '../../services/visitorBlocks';
+import { spamModeQuota } from '../../middleware/rateLimit';
+import { query } from '../../db/pool';
 import { timed } from '../../config/metrics';
+import { pushConversationEvent } from '../../services/push';
+import { notifyIntegrations } from '../../services/integrations';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
 import type { MessageDoc } from '../../models/Message';
+import { ownWidgetText } from '../../domain/widgetTexts';
 import type { SiteDoc } from '../../models/Site';
 import type { SocketContext } from '../context';
 import type {
@@ -158,12 +168,24 @@ async function openFirstConversation(
   socket.conversationId = opened._id;
   if (!created) return;
 
+  // What the visitor filled in before writing (PRD-05) goes on the new
+  // conversation; a department they picked routes it.
+  if (socket.contact) {
+    applyContact(opened, socket.contact);
+    if (socket.contact.departmentId && !opened.department) {
+      opened.department = socket.contact.departmentId;
+    }
+    await opened.save();
+  }
+
   if (greeting) {
     ctx.toWidgetConversation(opened._id, 'new-message', { message: greeting });
   }
   ctx.toAdminSite(socket.siteId, 'new-conversation', {
     conversation: await opened.populate('department', 'name color icon')
   });
+  // Phones and closed panels hear about it too (PRD-09); not awaited.
+  void pushConversationEvent('newConversation', opened);
   runAutomation('conversation_created', opened, { content });
 }
 
@@ -173,6 +195,12 @@ export function installWidgetHandlers(ctx: SocketContext): void {
     const socket = rawSocket as WidgetSocket;
     // Counted per widget session, before any handler runs; see ../limits.ts.
     limit(socket, `v:${socket.widgetSessionId}`);
+    // Then every payload is checked against its event's shape; see ../schema.ts.
+    validateEvents(socket, WIDGET_EVENTS);
+    installWidgetExtras(ctx, socket);
+    // Every visitor of one site, so a site suspended over the plan's limit
+    // (services/planOverage.ts) can close them all at once.
+    if (socket.siteId) void socket.join(siteRoom(socket.siteId));
 
     // ---------------------------------------------------------------- joining
 
@@ -185,8 +213,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         const visitorId = socket.visitorId!;
 
         const site = await Site.findOne({ _id: socket.siteId, isActive: true });
-        if (!site) {
-          // Switched off since the handshake.
+        if (!site || site.suspendedAt || site.blockedAt) {
+          // Switched off, or suspended over the plan's limit, since the handshake.
           socket.emit('error', { message: 'Invalid widget session' });
           return;
         }
@@ -254,7 +282,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           socket.emit('conversation-joined', {
             conversation: null,
             messages: [],
-            welcomeMessage: site.widgetSettings.welcomeMessage || 'Hi! How can we help you today?'
+            // Empty unless the owner wrote one: the widget then greets in
+            // the visitor's own language (PRD-16).
+            welcomeMessage: ownWidgetText(site.widgetSettings.welcomeMessage)
           });
         }
 
@@ -262,7 +292,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           { visitorId, siteId: site._id },
           {
             organizationId: site.organizationId,
-            ip: socket.handshake.address || null,
+            // The visitor's address, not Caddy's: the handshake read it from
+            // X-Forwarded-For (socket/auth.ts).
+            ip: socket.clientIp ?? null,
             country: socket.metadata.country,
             browser: socket.metadata.browser,
             os: socket.metadata.os,
@@ -335,15 +367,24 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       // authorize: the site of the signed session, still active
       const site = await Site.findOne({ _id: socket.siteId, isActive: true });
-      if (!site?.organizationId) {
+      // Suspended over the plan's limit or blocked since the handshake: a
+      // page left open stops here too (BIL-04, LEG-05).
+      if (!site?.organizationId || site.suspendedAt || site.blockedAt) {
         return refuse(socket, ack, 'SITE_NOT_FOUND', 'Site not found');
       }
       // The site's assistant answers when it is on; otherwise the FAQ keyword
       // bot below does, as before. Never both.
-      const assistant = assistantActive(site);
+      const assistant = assistantActiveFor(site, socket.country ?? null);
 
       // The first message opens the conversation; see conversationIntake.ts.
+      // Its push is the "new conversation" one, not a second for the message.
+      const opening = !socket.conversationId;
       if (!socket.conversationId) {
+        // A site with a required pre-chat form or consent box hears nothing
+        // before it is filled in (PRD-05).
+        if (!preChatSatisfied(site.chatSettings, socket.contact, Boolean(socket.verifiedUserId))) {
+          return refuse(socket, ack, 'PRECHAT_REQUIRED', 'Please fill in the form first');
+        }
         try {
           await openFirstConversation(ctx, socket, site, content, assistant);
         } catch (error) {
@@ -354,7 +395,18 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         }
       }
 
-      const conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+      let conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
+      // The team merged this conversation into another of the same visitor
+      // (PRD-07): the widget carries on there.
+      if (conversation?.mergedIntoId) {
+        const into = await ctx.widgetConversationFor(socket, conversation.mergedIntoId);
+        if (into) {
+          await socket.leave(conversationRoom(conversation._id));
+          await socket.join(conversationRoom(into._id));
+          socket.conversationId = into._id;
+          conversation = into;
+        }
+      }
       if (!conversation) {
         ctx.reject(socket);
         return ack?.({ ok: false, code: 'NOT_FOUND' });
@@ -370,6 +422,26 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         });
         if (existing) return delivered(socket, ack, existing.toObject(), true);
       }
+
+      // Spam mode (SEC-09): until somebody on the team has answered, the
+      // visitor writes at a slower pace, and a link waits its turn.
+      if (chatSettings(site.chatSettings).spamMode && !conversation.firstResponseAt) {
+        const key = `${socket.siteId}:${socket.visitorId}`;
+        const allowed =
+          (await spamModeQuota.messages.take(key)) &&
+          (!hasLink(content) || (await spamModeQuota.links.take(key)));
+        if (!allowed) {
+          return refuse(socket, ack, 'SLOW_DOWN', 'Please wait a moment before the next message');
+        }
+      }
+
+      // The visitor's last two messages, to notice the same text a third time.
+      const { rows: earlier } = await query<{ content: string }>(
+        `SELECT content FROM messages
+          WHERE conversation_id = $1 AND sender_type = 'visitor'
+          ORDER BY created_at DESC LIMIT 2`,
+        [conversation._id]
+      );
 
       const needsAttachment = messageType === 'file' || messageType === 'image';
       const verifiedFile = needsAttachment
@@ -414,12 +486,29 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       // read the old count and write it back plus one.
       const counted = await Conversation.findByIdAndUpdate(
         conversation._id,
-        { $inc: { unreadCount: 1 }, lastMessageAt: new Date() },
+        // A visitor writing again wakes a snoozed conversation (PRD-07).
+        { $inc: { unreadCount: 1 }, lastMessageAt: new Date(), snoozedUntil: null },
         { new: true }
       );
       if (counted) {
         conversation.unreadCount = counted.unreadCount;
         conversation.lastMessageAt = counted.lastMessageAt;
+      }
+
+      // More than three links, or the same text three times running: the
+      // conversation is tagged so the inbox can filter it out (SEC-09).
+      const tags = conversation.tags || [];
+      if (
+        !tags.includes('spam') &&
+        looksLikeSpam(content, earlier.map((m) => m.content).reverse())
+      ) {
+        // Plain SQL: the model's $addToSet covers child tables, not array columns.
+        await query(
+          `UPDATE conversations SET tags = array_append(tags, 'spam')
+            WHERE id = $1 AND NOT ('spam' = ANY(tags))`,
+          [conversation._id]
+        );
+        conversation.tags = [...tags, 'spam'];
       }
 
       // The assigned agent has gone away since they took this: hand it on
@@ -441,6 +530,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           conversation
         });
       }
+      if (!opening) {
+        void pushConversationEvent('message', conversation, { text: content.trim() });
+      }
       ctx.toAdminSite(conversation.siteId, 'notification', {
         type: 'new-message',
         message: `New message from ${conversation.visitorName}`,
@@ -451,6 +543,12 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       // ACK
       ack?.({ ok: true, message: emitted });
+
+      // Slack, Telegram, webhooks (PRD-11): the first message comes with the
+      // conversation, later ones on their own.
+      notifyIntegrations(opening ? 'conversation.created' : 'message.created', conversation, {
+        message
+      });
 
       runAutomation('message_received', conversation, { content, message });
       if (assistant) {

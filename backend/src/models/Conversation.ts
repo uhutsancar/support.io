@@ -78,6 +78,23 @@ export interface ConversationDoc {
   /** Who answers the visitor right now: the FAQ assistant or a person. */
   responseOwner: ResponseOwner;
   internalNotes: ConversationInternalNote[];
+  /** From the pre-chat form (PRD-05). */
+  visitorPhone: string | null;
+  prechat: Record<string, string>;
+  /** When the visitor ticked the site's privacy notice box. */
+  visitorConsentAt: Date | null;
+  /** When the unanswered-chat mail went out (PRD-01). */
+  missedNotifiedAt: Date | null;
+  /** The visitor asked for no e-mailed replies. */
+  emailRepliesOptOut: boolean;
+  /** When a satisfaction request was mailed (PRD-04). */
+  csatRequestedAt: Date | null;
+  /** Out of the open inbox until then (PRD-07). */
+  snoozedUntil: Date | null;
+  /** Set on a conversation merged into another. */
+  mergedIntoId: string | null;
+  /** The last time agent replies were mailed to the away visitor (PRD-01). */
+  visitorReplyMailedAt: Date | null;
 
   /** Virtuals: minutes elapsed, or null while the milestone has not happened. */
   readonly responseTime: number | null;
@@ -172,7 +189,16 @@ const Conversation = defineModel<ConversationDoc, ConversationStatics>({
       type: 'string',
       enum: RESPONSE_OWNERS,
       default: 'human'
-    }
+    },
+    visitorPhone: { column: 'visitor_phone', type: 'string', default: null },
+    prechat: { column: 'prechat', type: 'json', default: () => ({}) },
+    visitorConsentAt: { column: 'visitor_consent_at', type: 'date', default: null },
+    missedNotifiedAt: { column: 'missed_notified_at', type: 'date', default: null },
+    emailRepliesOptOut: { column: 'email_replies_opt_out', type: 'boolean', default: false },
+    csatRequestedAt: { column: 'csat_requested_at', type: 'date', default: null },
+    snoozedUntil: { column: 'snoozed_until', type: 'date', default: null },
+    mergedIntoId: { column: 'merged_into_id', type: 'string', default: null },
+    visitorReplyMailedAt: { column: 'visitor_reply_mailed_at', type: 'date', default: null }
   },
   children: {
     internalNotes: {

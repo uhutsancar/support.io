@@ -1053,3 +1053,692 @@ ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
   'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
   'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
   'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED'));
+
+-- ===========================================================================
+-- 0009_account_security.sql
+-- ===========================================================================
+-- 0009 — account security (plan v10 SEC-03, SEC-04, SEC-05, SEC-06).
+--
+-- auth_tokens gains a third purpose, `email_change`: the link sent to a new
+-- address before it replaces the old one. The new address travels in
+-- `payload`, so the token row says what it confirms. A verification link
+-- also records the password hash it was issued for (payload.pw): a link
+-- mailed for one sign-up attempt cannot verify an account whose password
+-- someone else has set since.
+ALTER TABLE auth_tokens ADD COLUMN IF NOT EXISTS payload jsonb;
+ALTER TABLE auth_tokens DROP CONSTRAINT IF EXISTS auth_tokens_purpose_check;
+ALTER TABLE auth_tokens ADD CONSTRAINT auth_tokens_purpose_check
+  CHECK (purpose IN ('verify', 'reset', 'email_change'));
+
+-- Two-step sign-in with an authenticator app (TOTP, RFC 6238). The secret
+-- is sealed (config/secretBox.ts) before it is stored; recovery codes are
+-- kept only as keyed hashes; totp_last_step refuses a code that was already
+-- used once, within its own 30-second window or a later one.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret_enc text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled_at timestamptz;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_last_step bigint;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_codes jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS totp_secret_enc text;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS totp_enabled_at timestamptz;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS totp_last_step bigint;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS recovery_codes jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+-- billing_exempt: the plan is the one set by hand (scripts/updatePlan.ts
+-- --exempt) and no subscription event moves it — the platform owner's own
+-- workspace, beta customers. enforce_2fa: every member must sign in with a
+-- second step (an Enterprise setting).
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS billing_exempt boolean NOT NULL DEFAULT false;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS enforce_2fa boolean NOT NULL DEFAULT false;
+
+-- Audited actions added by this release and the ones right after it. Only
+-- the list widens; no row changes.
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGIN_FAILED_LOCKED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED',
+  -- Kept so the history written before 0005 stays valid.
+  'SITE_AI_SETTINGS_UPDATED',
+  'SITE_INTEGRATION_UPDATED', 'SITE_ASSISTANT_UPDATED',
+  'EMAIL_VERIFIED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET',
+  'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
+  'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
+  'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED',
+  -- account security
+  'PASSWORD_CHANGED', 'EMAIL_CHANGE_REQUESTED', 'EMAIL_CHANGED',
+  'MFA_ENABLED', 'MFA_DISABLED', 'MFA_RECOVERY_USED', 'SESSIONS_REVOKED',
+  'SECURITY_SETTINGS_UPDATED',
+  -- visitors and retention
+  'VISITOR_BLOCKED', 'VISITOR_UNBLOCKED', 'VISITOR_DATA_DELETED',
+  'RETENTION_PURGE', 'RETENTION_SETTINGS_UPDATED',
+  -- assistant
+  'ASSISTANT_ENABLED', 'ASSISTANT_KILL_SWITCH',
+  -- integrations and plan
+  'API_KEY_CREATED', 'API_KEY_REVOKED',
+  'WEBHOOK_CREATED', 'WEBHOOK_UPDATED', 'WEBHOOK_DELETED',
+  'SITE_SUSPENDED', 'SITE_REACTIVATED',
+  'TRIAL_STARTED', 'TRIAL_ENDED',
+  'SAVED_REPLY_CREATED', 'SAVED_REPLY_UPDATED', 'SAVED_REPLY_DELETED',
+  'CONVERSATIONS_MERGED'));
+
+-- ===========================================================================
+-- 0010_trial.sql
+-- ===========================================================================
+-- 0010 — free trial of the paid plan (plan v10 PRD-15).
+--
+-- A new workspace gets Pro for TRIAL_DAYS (14) without a card. Nothing is
+-- written when it ends: the plan in force is computed from the clock
+-- (services/entitlements.ts#getPlan), exactly like a cancelled subscription
+-- that runs out. The two timestamps only remember which mails went out.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_ends_at timestamptz;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_reminder_sent_at timestamptz;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_ended_notified_at timestamptz;
+CREATE INDEX IF NOT EXISTS idx_organizations_trial_ends_at
+  ON organizations (trial_ends_at) WHERE trial_ends_at IS NOT NULL;
+
+-- ===========================================================================
+-- 0011_conversation_features.sql
+-- ===========================================================================
+-- 0011 — what the inbox needs before launch (plan v10 PRD-01…08, SEC-09,
+-- SEC-17, BIL-04).
+
+-- A site's chat behaviour beyond the bubble's look: missed-chat mails, the
+-- offline form, e-mailed replies, the pre-chat form and its consent box,
+-- satisfaction ratings, transcripts, spam mode. One jsonb, read with the site;
+-- the defaults live in services/chatSettings.ts.
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS chat_settings jsonb NOT NULL DEFAULT '{}'::jsonb;
+-- Set when a plan downgrade leaves more sites than the plan allows (BIL-04):
+-- the widget stays silent and the panel shows the site read-only.
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS suspended_at timestamptz;
+
+-- Conversations: what the visitor left in the forms, and the mails sent.
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS visitor_phone text;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS prechat jsonb NOT NULL DEFAULT '{}'::jsonb;
+-- When the visitor ticked the site's privacy notice box (PRD-05).
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS visitor_consent_at timestamptz;
+-- When the "unanswered chat" mail went out for it (PRD-01); once only.
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS missed_notified_at timestamptz;
+-- The visitor asked not to get e-mailed replies for this conversation.
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS email_replies_opt_out boolean NOT NULL DEFAULT false;
+-- When a satisfaction request was mailed (PRD-04).
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS csat_requested_at timestamptz;
+-- Hidden from the open inbox until then (PRD-07).
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS snoozed_until timestamptz;
+-- Set on the conversation that was merged into another one.
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS merged_into_id varchar(24);
+
+CREATE INDEX IF NOT EXISTS idx_conversations_missed_due
+  ON conversations (created_at)
+  WHERE missed_notified_at IS NULL AND first_response_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_conversations_snoozed
+  ON conversations (snoozed_until)
+  WHERE snoozed_until IS NOT NULL;
+
+-- Unanswered-chat notices waiting to be mailed, one row per person and site:
+-- the first goes out at once, the ones within the next ten minutes (or the
+-- hour, for an hourly digest) go out together (PRD-01).
+CREATE TABLE IF NOT EXISTS missed_chat_notices (
+  account_type   text NOT NULL,
+  account_id     varchar(24) NOT NULL,
+  site_id        varchar(24) NOT NULL REFERENCES sites (id) ON DELETE CASCADE,
+  pending        jsonb NOT NULL DEFAULT '[]'::jsonb,
+  last_sent_at   timestamptz,
+  updated_at     timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (account_type, account_id, site_id),
+  CONSTRAINT missed_chat_notices_account_type_check CHECK (account_type IN ('user', 'team'))
+);
+
+-- Saved replies an agent drops in with "/" (PRD-03). site_id NULL: every site
+-- of the organization.
+CREATE TABLE IF NOT EXISTS saved_replies (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  site_id          varchar(24) REFERENCES sites (id) ON DELETE CASCADE,
+  shortcut         text NOT NULL,
+  title            text NOT NULL,
+  body             text NOT NULL,
+  created_by       varchar(24),
+  usage_count      integer NOT NULL DEFAULT 0,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT saved_replies_shortcut_check CHECK (shortcut ~ '^[a-z0-9][a-z0-9_-]{0,31}$')
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_saved_replies_shortcut ON saved_replies (organization_id, shortcut);
+
+-- The organization's list of conversation tags, with a colour (PRD-07).
+-- conversations.tags keeps the names.
+CREATE TABLE IF NOT EXISTS conversation_tag_catalog (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  name             text NOT NULL,
+  color            text NOT NULL DEFAULT '#6366F1',
+  created_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_conversation_tag_catalog_name
+  ON conversation_tag_catalog (organization_id, lower(name));
+
+-- Visitors an agent blocked (SEC-09): by visitor id and by a hash of the IP,
+-- for 30 days unless lifted earlier.
+CREATE TABLE IF NOT EXISTS visitor_blocks (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  site_id          varchar(24) NOT NULL REFERENCES sites (id) ON DELETE CASCADE,
+  visitor_id       text,
+  ip_hash          text,
+  reason           text,
+  blocked_by       varchar(24),
+  expires_at       timestamptz NOT NULL,
+  created_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_visitor_blocks_site_visitor ON visitor_blocks (site_id, visitor_id);
+CREATE INDEX IF NOT EXISTS idx_visitor_blocks_site_ip ON visitor_blocks (site_id, ip_hash);
+
+-- How long conversations are kept (SEC-17): NULL means the plan's default.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS retention_days integer;
+ALTER TABLE organizations DROP CONSTRAINT IF EXISTS organizations_retention_days_check;
+ALTER TABLE organizations ADD CONSTRAINT organizations_retention_days_check
+  CHECK (retention_days IS NULL OR retention_days BETWEEN 30 AND 1830);
+
+-- The set-up mails a new owner gets (PRD-08): which went out, and when the
+-- widget was first seen on a page.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS activation jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+-- ===========================================================================
+-- 0012_notifications.sql
+-- ===========================================================================
+-- 0012 — notifications (plan v10 PRD-01, PRD-02, PRD-09).
+
+-- Team accounts get the preferences users already have: how they hear about
+-- unanswered chats, which events raise a desktop notification, the language
+-- their mails go out in.
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS preferences jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+-- The last time an agent's reply went to the visitor by e-mail (PRD-01): only
+-- replies written after it, while the visitor is away, are mailed next.
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS visitor_reply_mailed_at timestamptz;
+
+-- Web Push subscriptions of the panel (PRD-09): one per browser an agent
+-- allowed. The endpoint is the push service's address; the keys encrypt.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id            varchar(24) PRIMARY KEY,
+  account_type  text NOT NULL,
+  account_id    varchar(24) NOT NULL,
+  organization_id varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  endpoint      text NOT NULL,
+  p256dh        text NOT NULL,
+  auth          text NOT NULL,
+  user_agent    text,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  last_used_at  timestamptz,
+  CONSTRAINT push_subscriptions_account_type_check CHECK (account_type IN ('user', 'team'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_push_subscriptions_endpoint ON push_subscriptions (endpoint);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_account ON push_subscriptions (account_type, account_id);
+
+-- ===========================================================================
+-- 0013_assistant_feedback.sql
+-- ===========================================================================
+-- 0013 — An agent marks an assistant answer as wrong (plan v10 AI-06).
+--
+-- One row per answer flagged: who, when and an optional note. Read for the
+-- assistant's quality report (P2); the conversation going away takes it
+-- with it. The answer itself also carries `flagged` in messages.assistant,
+-- so the inbox shows it without a join.
+
+CREATE TABLE IF NOT EXISTS assistant_feedback (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  site_id          varchar(24) NOT NULL REFERENCES sites (id) ON DELETE CASCADE,
+  conversation_id  varchar(24) NOT NULL REFERENCES conversations (id) ON DELETE CASCADE,
+  message_id       varchar(24) NOT NULL REFERENCES messages (id) ON DELETE CASCADE,
+  user_id          varchar(24),
+  verdict          text NOT NULL DEFAULT 'wrong',
+  note             text,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT assistant_feedback_verdict_check CHECK (verdict IN ('wrong')),
+  CONSTRAINT assistant_feedback_message_unique UNIQUE (message_id)
+);
+CREATE INDEX IF NOT EXISTS idx_assistant_feedback_org_created
+  ON assistant_feedback (organization_id, created_at DESC);
+
+-- ===========================================================================
+-- 0014_assistant_and_retention_indexes.sql
+-- ===========================================================================
+-- 0014 — Two indexes the new reports and the nightly purge need (plan v10
+-- OBS-07, SEC-17, PERF-03).
+--
+-- The assistant's own messages, by time: the assistant overview, org:stats
+-- and the weekly report count them for the last 7-30 days. Without it every
+-- one of those reads the whole messages table.
+--
+-- A conversation's last activity per organization: the nightly retention
+-- purge looks up conversations whose last message is older than the
+-- workspace's window, organization by organization.
+--
+-- Plain CREATE INDEX (migrations run in a transaction). At launch the
+-- tables are small; on a large table this would be a CONCURRENTLY build by
+-- hand first (docs/production-runbook.md).
+
+CREATE INDEX IF NOT EXISTS idx_messages_assistant_created
+  ON messages (created_at)
+  WHERE sender_id = 'assistant';
+
+CREATE INDEX IF NOT EXISTS idx_conversations_org_last_activity
+  ON conversations (organization_id, (coalesce(last_message_at, created_at)));
+
+-- ===========================================================================
+-- 0015_plan_overage.sql
+-- ===========================================================================
+-- 0015 — Over the plan after a downgrade (plan v10 BIL-04, KARAR-BIL-1).
+--
+-- Nothing is deleted when a workspace moves to a smaller plan. Sites over
+-- the new limit are suspended (sites.suspended_at, since 0011): their widget
+-- answers like a switched-off site, their conversations stay readable. Team
+-- members over the seat limit keep signing in and reading, but cannot write
+-- or change anything until the owner picks who keeps a seat or upgrades.
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS seat_suspended_at timestamptz;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS seat_suspended_at timestamptz;
+
+CREATE INDEX IF NOT EXISTS idx_sites_org_suspended
+  ON sites (organization_id) WHERE suspended_at IS NOT NULL;
+
+-- Audit trail: seats taken away and given back. Only the action list widens.
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGIN_FAILED_LOCKED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED',
+  -- Kept so the history written before 0005 stays valid.
+  'SITE_AI_SETTINGS_UPDATED',
+  'SITE_INTEGRATION_UPDATED', 'SITE_ASSISTANT_UPDATED',
+  'EMAIL_VERIFIED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET',
+  'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
+  'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
+  'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED',
+  -- account security
+  'PASSWORD_CHANGED', 'EMAIL_CHANGE_REQUESTED', 'EMAIL_CHANGED',
+  'MFA_ENABLED', 'MFA_DISABLED', 'MFA_RECOVERY_USED', 'SESSIONS_REVOKED',
+  'SECURITY_SETTINGS_UPDATED',
+  -- visitors and retention
+  'VISITOR_BLOCKED', 'VISITOR_UNBLOCKED', 'VISITOR_DATA_DELETED',
+  'RETENTION_PURGE', 'RETENTION_SETTINGS_UPDATED',
+  -- assistant
+  'ASSISTANT_ENABLED', 'ASSISTANT_KILL_SWITCH',
+  -- integrations and plan
+  'API_KEY_CREATED', 'API_KEY_REVOKED',
+  'WEBHOOK_CREATED', 'WEBHOOK_UPDATED', 'WEBHOOK_DELETED',
+  'SITE_SUSPENDED', 'SITE_REACTIVATED',
+  'TRIAL_STARTED', 'TRIAL_ENDED',
+  'SAVED_REPLY_CREATED', 'SAVED_REPLY_UPDATED', 'SAVED_REPLY_DELETED',
+  'CONVERSATIONS_MERGED',
+  -- over the plan after a downgrade (0015)
+  'SEAT_SUSPENDED', 'SEAT_RESTORED'));
+
+-- ===========================================================================
+-- 0016_site_block.sql
+-- ===========================================================================
+-- 0016 — a site switched off by the platform (plan v10 LEG-05).
+--
+-- `site:disable` used to set sites.is_active = false, which the owner can
+-- turn back on from the panel: a phishing or fraud site was off only until
+-- its owner noticed. blocked_at is the platform's own switch — set and
+-- cleared only by the support command, never by the panel or by the plan
+-- limits (BIL-04). The reason is for the support trail; the owner sees only
+-- that the site was blocked and whom to write to.
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS blocked_at timestamptz;
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS blocked_reason text;
+
+-- ===========================================================================
+-- 0017_inbox_search_and_tags.sql
+-- ===========================================================================
+-- 0017 — the inbox's word search and its tag filter (plan v10 PRD-07).
+--
+-- Message text is searched by words with Turkish stemming as well as by
+-- substring: "siparişim" finds a message that says "siparişimi", which the
+-- trigram index alone (idx_messages_content_trgm, 0000) does not. The
+-- expression is the one db/inboxQueries.ts writes, so the planner uses it.
+--
+-- Conversations are filtered by tag (conversations.tags, a text array).
+--
+-- Plain CREATE INDEX (migrations run in a transaction). At launch the tables
+-- are small; on a large table this would be a CONCURRENTLY build by hand
+-- first (docs/production-runbook.md).
+
+CREATE INDEX IF NOT EXISTS idx_messages_content_fts
+  ON messages USING gin (to_tsvector('turkish'::regconfig, coalesce(content, '')));
+
+CREATE INDEX IF NOT EXISTS idx_conversations_tags
+  ON conversations USING gin (tags);
+
+-- ===========================================================================
+-- 0018_help_center.sql
+-- ===========================================================================
+-- 0018 — a public help center per site (plan v10 PRD-10).
+--
+-- The site's active FAQ entries, published at /help/<help_slug> when the
+-- owner turns it on. The address is chosen once and is unique on the
+-- platform, upper or lower case alike. help_center holds the switches:
+--   { enabled: boolean, noindex: boolean, title: string | null }
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS help_slug text;
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS help_center jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE sites DROP CONSTRAINT IF EXISTS sites_help_slug_check;
+ALTER TABLE sites ADD CONSTRAINT sites_help_slug_check
+  CHECK (help_slug IS NULL OR help_slug ~ '^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$');
+CREATE UNIQUE INDEX IF NOT EXISTS uq_sites_help_slug ON sites (lower(help_slug))
+  WHERE help_slug IS NOT NULL;
+
+-- ===========================================================================
+-- 0019_integrations.sql
+-- ===========================================================================
+-- 0019 — notifications to Slack and Telegram, and outgoing webhooks (plan v10
+-- PRD-11).
+--
+-- An integration belongs to a workspace and, optionally, to one site
+-- (site_id NULL: every site). Its address and keys — the Slack URL, the
+-- Telegram bot token, the webhook's signing secret — are sealed together in
+-- `config` (config/secretBox.ts) and never leave the server in the clear
+-- again; the panel sees a masked form.
+--
+-- Each event becomes a delivery row: tried at once, then again with growing
+-- waits for up to 24 hours. The payload, which carries visitor data, is
+-- dropped as soon as the delivery succeeds or is given up; the row stays as
+-- the delivery log for 30 days (services/dataRetention.ts).
+
+CREATE TABLE IF NOT EXISTS integrations (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  site_id          varchar(24) REFERENCES sites (id) ON DELETE CASCADE,
+  kind             text NOT NULL,
+  name             text NOT NULL,
+  events           text[] NOT NULL DEFAULT '{}',
+  config           text NOT NULL,
+  hint             text,
+  is_active        boolean NOT NULL DEFAULT true,
+  created_by       varchar(24),
+  last_status      text,
+  last_delivery_at timestamptz,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT integrations_kind_check CHECK (kind IN ('webhook', 'slack', 'telegram'))
+);
+CREATE INDEX IF NOT EXISTS idx_integrations_org ON integrations (organization_id);
+
+CREATE TABLE IF NOT EXISTS integration_deliveries (
+  id               varchar(24) PRIMARY KEY,
+  integration_id   varchar(24) NOT NULL REFERENCES integrations (id) ON DELETE CASCADE,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  event            text NOT NULL,
+  payload          jsonb,
+  status           text NOT NULL DEFAULT 'pending',
+  attempts         integer NOT NULL DEFAULT 0,
+  next_attempt_at  timestamptz NOT NULL DEFAULT now(),
+  last_status_code integer,
+  last_error       text,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  finished_at      timestamptz,
+  CONSTRAINT integration_deliveries_status_check CHECK (status IN ('pending', 'delivered', 'failed'))
+);
+CREATE INDEX IF NOT EXISTS idx_integration_deliveries_due
+  ON integration_deliveries (next_attempt_at) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_integration_deliveries_log
+  ON integration_deliveries (integration_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_integration_deliveries_created
+  ON integration_deliveries (created_at);
+
+-- ===========================================================================
+-- 0020_api_keys.sql
+-- ===========================================================================
+-- 0020 — the workspace's keys for the public API (plan v10 PRD-12).
+--
+-- A key is shown once, when it is made; only its SHA-256 is kept (the key is
+-- 40 random characters, so a plain hash is as strong as a slow one would
+-- be), with its first characters to recognise it in the panel. A revoked key
+-- stays as a row, so the log keeps saying who used what.
+CREATE TABLE IF NOT EXISTS api_keys (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  name             text NOT NULL,
+  prefix           text NOT NULL,
+  key_hash         text NOT NULL,
+  scopes           text[] NOT NULL DEFAULT '{read}',
+  created_by       varchar(24),
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  last_used_at     timestamptz,
+  revoked_at       timestamptz,
+  CONSTRAINT api_keys_scopes_check CHECK (scopes <@ ARRAY['read', 'write']::text[] AND cardinality(scopes) > 0)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_api_keys_hash ON api_keys (key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_org ON api_keys (organization_id);
+
+-- ===========================================================================
+-- 0021_google_sign_in.sql
+-- ===========================================================================
+-- 0021 — sign-in with Google (plan v10 PRD-14).
+--
+-- An account is tied to a Google account by Google's own subject id (`sub`),
+-- which never changes; the address is kept only to show which Google account
+-- is connected. An account is found by its `sub` and never by its address:
+-- someone who controls a Google account with the same address does not get
+-- into an existing account unless its owner connected it while signed in.
+-- A Google account opens one account at most, in either table; the indexes
+-- hold that within a table and services/googleSignIn.ts across the two.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_email text;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS google_sub text;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS google_email text;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_users_google_sub ON users (google_sub)
+  WHERE google_sub IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_teams_google_sub ON teams (google_sub)
+  WHERE google_sub IS NOT NULL;
+
+-- Audit trail: a Google account connected or disconnected. Only the action
+-- list widens.
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGIN_FAILED_LOCKED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED',
+  -- Kept so the history written before 0005 stays valid.
+  'SITE_AI_SETTINGS_UPDATED',
+  'SITE_INTEGRATION_UPDATED', 'SITE_ASSISTANT_UPDATED',
+  'EMAIL_VERIFIED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET',
+  'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
+  'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
+  'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED',
+  -- account security
+  'PASSWORD_CHANGED', 'EMAIL_CHANGE_REQUESTED', 'EMAIL_CHANGED',
+  'MFA_ENABLED', 'MFA_DISABLED', 'MFA_RECOVERY_USED', 'SESSIONS_REVOKED',
+  'SECURITY_SETTINGS_UPDATED',
+  -- visitors and retention
+  'VISITOR_BLOCKED', 'VISITOR_UNBLOCKED', 'VISITOR_DATA_DELETED',
+  'RETENTION_PURGE', 'RETENTION_SETTINGS_UPDATED',
+  -- assistant
+  'ASSISTANT_ENABLED', 'ASSISTANT_KILL_SWITCH',
+  -- integrations and plan
+  'API_KEY_CREATED', 'API_KEY_REVOKED',
+  'WEBHOOK_CREATED', 'WEBHOOK_UPDATED', 'WEBHOOK_DELETED',
+  'SITE_SUSPENDED', 'SITE_REACTIVATED',
+  'TRIAL_STARTED', 'TRIAL_ENDED',
+  'SAVED_REPLY_CREATED', 'SAVED_REPLY_UPDATED', 'SAVED_REPLY_DELETED',
+  'CONVERSATIONS_MERGED',
+  -- over the plan after a downgrade (0015)
+  'SEAT_SUSPENDED', 'SEAT_RESTORED',
+  -- sign-in with Google (0021)
+  'GOOGLE_LINKED', 'GOOGLE_UNLINKED'));
+
+-- ===========================================================================
+-- 0022_reports.sql
+-- ===========================================================================
+-- 0022 — reports (plan v10 PRD-22): the weekly summary mail and report files.
+--
+-- The weekly mail goes out once per week and workspace; this column says when
+-- it last did, so a sweep that runs every hour sends it only once. A report
+-- downloaded as a file carries visitors' names and addresses, so each
+-- download is audited; only the action list widens.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS weekly_report_sent_at timestamptz;
+
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGIN_FAILED_LOCKED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED',
+  -- Kept so the history written before 0005 stays valid.
+  'SITE_AI_SETTINGS_UPDATED',
+  'SITE_INTEGRATION_UPDATED', 'SITE_ASSISTANT_UPDATED',
+  'EMAIL_VERIFIED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET',
+  'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
+  'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
+  'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED',
+  -- account security
+  'PASSWORD_CHANGED', 'EMAIL_CHANGE_REQUESTED', 'EMAIL_CHANGED',
+  'MFA_ENABLED', 'MFA_DISABLED', 'MFA_RECOVERY_USED', 'SESSIONS_REVOKED',
+  'SECURITY_SETTINGS_UPDATED',
+  -- visitors and retention
+  'VISITOR_BLOCKED', 'VISITOR_UNBLOCKED', 'VISITOR_DATA_DELETED',
+  'RETENTION_PURGE', 'RETENTION_SETTINGS_UPDATED',
+  -- assistant
+  'ASSISTANT_ENABLED', 'ASSISTANT_KILL_SWITCH',
+  -- integrations and plan
+  'API_KEY_CREATED', 'API_KEY_REVOKED',
+  'WEBHOOK_CREATED', 'WEBHOOK_UPDATED', 'WEBHOOK_DELETED',
+  'SITE_SUSPENDED', 'SITE_REACTIVATED',
+  'TRIAL_STARTED', 'TRIAL_ENDED',
+  'SAVED_REPLY_CREATED', 'SAVED_REPLY_UPDATED', 'SAVED_REPLY_DELETED',
+  'CONVERSATIONS_MERGED',
+  -- over the plan after a downgrade (0015)
+  'SEAT_SUSPENDED', 'SEAT_RESTORED',
+  -- sign-in with Google (0021)
+  'GOOGLE_LINKED', 'GOOGLE_UNLINKED',
+  -- a report downloaded as a file (0022)
+  'REPORT_EXPORTED'));
+
+-- ===========================================================================
+-- 0023_knowledge.sql
+-- ===========================================================================
+-- 0023 — what the assistant may answer from besides the FAQ (plan v10
+-- PRD-21, AI-08): pages of the site itself and PDF documents the business
+-- uploads. Only their text is kept, cut into passages the assistant searches
+-- with PostgreSQL's full-text search — no vector database (plan §21). A PDF
+-- is not stored; its text is.
+CREATE TABLE IF NOT EXISTS knowledge_sources (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  site_id          varchar(24) NOT NULL REFERENCES sites (id) ON DELETE CASCADE,
+  kind             text NOT NULL,
+  -- The page's address; null for a PDF.
+  url              text,
+  title            text NOT NULL,
+  status           text NOT NULL DEFAULT 'pending',
+  -- Why the last fetch or read failed, in a word the panel translates.
+  error            text,
+  chars            integer NOT NULL DEFAULT 0,
+  created_by       varchar(24),
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  refreshed_at     timestamptz,
+  CONSTRAINT knowledge_sources_kind_check CHECK (kind IN ('page', 'pdf')),
+  CONSTRAINT knowledge_sources_status_check CHECK (status IN ('pending', 'ready', 'failed'))
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_sources_site ON knowledge_sources (site_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_knowledge_sources_org ON knowledge_sources (organization_id);
+-- A page is added once per site.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_knowledge_sources_site_url ON knowledge_sources (site_id, url)
+  WHERE url IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS knowledge_chunks (
+  id          varchar(24) PRIMARY KEY,
+  source_id   varchar(24) NOT NULL REFERENCES knowledge_sources (id) ON DELETE CASCADE,
+  site_id     varchar(24) NOT NULL REFERENCES sites (id) ON DELETE CASCADE,
+  position    integer NOT NULL,
+  content     text NOT NULL,
+  -- 'simple': the text is mostly Turkish, and the search matches word
+  -- prefixes instead of trusting a stemmer (services/helpCenter.ts#prefixQuery).
+  search      tsvector GENERATED ALWAYS AS (to_tsvector('simple'::regconfig, content)) STORED
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_search ON knowledge_chunks USING gin (search);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_source ON knowledge_chunks (source_id, position);
+CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_site ON knowledge_chunks (site_id);
+
+-- ===========================================================================
+-- 0024_referrals.sql
+-- ===========================================================================
+-- 0024 — the referral programme (plan v10 PRD-23).
+--
+-- Every workspace gets a code of its own the first time it asks for its link.
+-- A workspace that signs up with a code is recorded once, as referred by the
+-- code's owner; it qualifies when its first paid subscription becomes
+-- active, and the referrer is then given a free month (a one-time Paddle
+-- discount on their next bill) — once per referred workspace.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS referral_code text;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_organizations_referral_code ON organizations (referral_code)
+  WHERE referral_code IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS referrals (
+  id                        varchar(24) PRIMARY KEY,
+  referrer_organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  referred_organization_id  varchar(24) NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+  created_at                timestamptz NOT NULL DEFAULT now(),
+  -- The referred workspace's first paid subscription became active.
+  qualified_at              timestamptz,
+  -- The referrer's free month was given; what it was given with.
+  rewarded_at               timestamptz,
+  reward_reference          text,
+  CONSTRAINT referrals_not_self CHECK (referrer_organization_id <> referred_organization_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_referrals_referred ON referrals (referred_organization_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals (referrer_organization_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_unrewarded ON referrals (qualified_at)
+  WHERE qualified_at IS NOT NULL AND rewarded_at IS NULL;
+
+-- Audit trail: a free month given. Only the action list widens.
+ALTER TABLE audit_logs DROP CONSTRAINT IF EXISTS audit_logs_action_check;
+ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
+  'LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGIN_FAILED_LOCKED',
+  'CREATE_AGENT', 'DELETE_AGENT', 'UPDATE_AGENT_ROLE',
+  'PLAN_CHANGED', 'UPDATE_SLA',
+  'TICKET_CLOSED', 'TICKET_REOPENED', 'SLA_BREACH',
+  'AUTOMATION_RULE_CREATED', 'AUTOMATION_RULE_UPDATED',
+  'AUTOMATION_RULE_DELETED', 'AUTOMATION_EXECUTED',
+  -- Kept so the history written before 0005 stays valid.
+  'SITE_AI_SETTINGS_UPDATED',
+  'SITE_INTEGRATION_UPDATED', 'SITE_ASSISTANT_UPDATED',
+  'EMAIL_VERIFIED', 'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET',
+  'INVITATION_SENT', 'INVITATION_REVOKED', 'INVITATION_ACCEPTED',
+  'SITE_CREATED', 'SITE_UPDATED', 'SITE_DELETED',
+  'WIDGET_SETTINGS_UPDATED', 'CONVERSATION_ASSIGNED',
+  -- account security
+  'PASSWORD_CHANGED', 'EMAIL_CHANGE_REQUESTED', 'EMAIL_CHANGED',
+  'MFA_ENABLED', 'MFA_DISABLED', 'MFA_RECOVERY_USED', 'SESSIONS_REVOKED',
+  'SECURITY_SETTINGS_UPDATED',
+  -- visitors and retention
+  'VISITOR_BLOCKED', 'VISITOR_UNBLOCKED', 'VISITOR_DATA_DELETED',
+  'RETENTION_PURGE', 'RETENTION_SETTINGS_UPDATED',
+  -- assistant
+  'ASSISTANT_ENABLED', 'ASSISTANT_KILL_SWITCH',
+  -- integrations and plan
+  'API_KEY_CREATED', 'API_KEY_REVOKED',
+  'WEBHOOK_CREATED', 'WEBHOOK_UPDATED', 'WEBHOOK_DELETED',
+  'SITE_SUSPENDED', 'SITE_REACTIVATED',
+  'TRIAL_STARTED', 'TRIAL_ENDED',
+  'SAVED_REPLY_CREATED', 'SAVED_REPLY_UPDATED', 'SAVED_REPLY_DELETED',
+  'CONVERSATIONS_MERGED',
+  -- over the plan after a downgrade (0015)
+  'SEAT_SUSPENDED', 'SEAT_RESTORED',
+  -- sign-in with Google (0021)
+  'GOOGLE_LINKED', 'GOOGLE_UNLINKED',
+  -- a report downloaded as a file (0022)
+  'REPORT_EXPORTED',
+  -- a referral's free month given (0024)
+  'REFERRAL_REWARDED'));

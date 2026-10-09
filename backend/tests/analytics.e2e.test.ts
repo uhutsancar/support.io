@@ -13,7 +13,7 @@
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
-import { setPlan } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
@@ -79,14 +79,11 @@ async function api(
 
 async function createTenant(label: string) {
   const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: {
-      name: `${label} owner`,
-      email: `${label}${stamp}@analytics.test`,
-      password: 'E2ePassw0rd!',
-      companyName: `${label} co`
-    }
+  const reg = await signUp({
+    name: `${label} owner`,
+    email: `${label}${stamp}@analytics.test`,
+    password: 'E2ePassw0rd!',
+    companyName: `${label} co`
   });
   assert.ok(reg.status === 200 || reg.status === 201, `register failed: ${JSON.stringify(reg)}`);
   // This suite exercises paid features (members, departments, rules), not the

@@ -55,6 +55,8 @@ export interface ConversationRating {
   score: number | null;
   feedback: string | null;
   ratedAt: Date | null;
+  /** Where the visitor rated it (PRD-04). */
+  channel?: 'widget' | 'email';
 }
 
 export interface AgentStats {
@@ -106,7 +108,20 @@ export interface UserPreferences {
   autoAcceptAssignments: boolean;
   maxActiveConversations: number;
   notificationSound: boolean;
+  /** Unanswered-chat mails: at once (grouped per 10 min), hourly, or never (PRD-01). */
+  missedChatEmail?: 'instant' | 'hourly' | 'off';
+  /** Desktop notifications (PRD-02). */
+  desktop?: { newConversation: boolean; assigned: boolean; allMessages: boolean };
+  /** The language the account's mails go out in. */
+  locale?: 'tr' | 'en';
+  /** The set-up mails of the first month (PRD-08). */
+  activationEmails?: boolean;
+  /** Monday's summary of the week, for owners and managers (PRD-22). */
+  weeklyReport?: boolean;
 }
+
+/** Notification preferences as both account tables keep them. */
+export type NotificationPreferences = Partial<UserPreferences>;
 
 /** The widget settings kept on the site row (the widget's own config is richer). */
 export interface SiteWidgetSettings {
@@ -134,6 +149,8 @@ export interface MessageAssistantNote {
   sources: string[];
   /** Why it handed the conversation to a person; null on an answer. */
   handoff: string | null;
+  /** An agent marked the answer as wrong (AI-06). */
+  flagged?: boolean;
 }
 
 /** Proof that the widget really loaded on the customer's site. */

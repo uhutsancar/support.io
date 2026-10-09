@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import HelpCenterCard from '../components/faqs/HelpCenterCard';
+import KnowledgeCard from '../components/faqs/KnowledgeCard';
 import { sitesAPI, faqsAPI, clearCache } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -141,6 +143,7 @@ const FAQs = () => {
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <select
+              aria-label={t('a11y.siteSelect')}
               value={selectedSite?._id || ''}
               onChange={(e) => {
                 const site = sites.find((s) => s._id === e.target.value);
@@ -166,6 +169,14 @@ const FAQs = () => {
             </button>
           </div>
         </div>
+        {selectedSite && <HelpCenterCard key={selectedSite._id} siteId={selectedSite._id} />}
+        {selectedSite && (
+          <KnowledgeCard
+            key={`k-${selectedSite._id}`}
+            siteId={selectedSite._id}
+            domain={selectedSite.domain}
+          />
+        )}
         {faqs.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
             <HelpCircle className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
@@ -241,12 +252,14 @@ const FAQs = () => {
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => handleEdit(faq)}
+                            aria-label={`${t('faqs.edit')}: ${faq.question}`}
                             className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => openDeleteConfirm(faq._id, faq.question)}
+                            aria-label={`${t('faqs.delete')}: ${faq.question}`}
                             className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -277,12 +290,14 @@ const FAQs = () => {
                     <div className="flex items-center space-x-2 ml-3">
                       <button
                         onClick={() => handleEdit(faq)}
+                        aria-label={`${t('faqs.edit')}: ${faq.question}`}
                         className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => openDeleteConfirm(faq._id, faq.question)}
+                        aria-label={`${t('faqs.delete')}: ${faq.question}`}
                         className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                       >
                         <Trash2 className="w-4 h-4" />

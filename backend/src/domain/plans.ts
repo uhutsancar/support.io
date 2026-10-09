@@ -17,7 +17,15 @@ export const FEATURES = [
   'visitors',
   'crm',
   'export',
-  'audit'
+  'audit',
+  // Requiring two-step verification of every member (SEC-04).
+  'security',
+  // Slack, Telegram and outgoing webhooks (PRD-11).
+  'integrations',
+  // The public REST API with keys (PRD-12): Enterprise.
+  'api',
+  // The assistant also answers from the site's pages and PDFs (PRD-21).
+  'knowledge'
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 
@@ -37,6 +45,8 @@ export interface AssistantLimits {
   answerChars: number;
   /** How long its answers are asked to be, in sentences. */
   sentences: number;
+  /** Pages and PDFs it may also answer from, per organization (PRD-21). */
+  knowledgeSources: number;
 }
 
 export interface PlanLimits {
@@ -48,6 +58,13 @@ export interface PlanLimits {
   monthlyConversations: number;
   /** Whether the widget must show "Powered by Support.io". */
   branding: boolean;
+  /** Saved replies the organization may keep (PRD-03). */
+  savedReplies: number;
+  /**
+   * How long a conversation is kept after its last message (SEC-17): the
+   * owner chooses within min–max; Free has no choice.
+   */
+  retention: { defaultDays: number; minDays: number; maxDays: number };
   assistant: AssistantLimits;
   features: readonly Feature[];
   /** Display prices; what is charged is the Paddle price behind the plan. */
@@ -60,12 +77,15 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 1,
     monthlyConversations: 100,
     branding: true,
+    savedReplies: 10,
+    retention: { defaultDays: 90, minDays: 90, maxDays: 90 },
     assistant: {
       monthlyReplies: 50,
       repliesPerConversation: 3,
       sources: 5,
       answerChars: 400,
-      sentences: 2
+      sentences: 2,
+      knowledgeSources: 0
     },
     features: [],
     price: { monthly: 0, yearly: 0, currency: 'TRY' }
@@ -75,14 +95,26 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 5,
     monthlyConversations: 2_000,
     branding: false,
+    savedReplies: 200,
+    retention: { defaultDays: 365, minDays: 30, maxDays: 365 },
     assistant: {
       monthlyReplies: 1_000,
       repliesPerConversation: 6,
       sources: 8,
       answerChars: 600,
-      sentences: 3
+      sentences: 3,
+      knowledgeSources: 50
     },
-    features: ['departments', 'automation', 'proactive', 'visitors', 'crm', 'export'],
+    features: [
+      'departments',
+      'automation',
+      'proactive',
+      'visitors',
+      'crm',
+      'export',
+      'integrations',
+      'knowledge'
+    ],
     price: { monthly: 490, yearly: 392, currency: 'TRY' }
   },
   ENTERPRISE: {
@@ -90,12 +122,15 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
     agents: 20,
     monthlyConversations: 20_000,
     branding: false,
+    savedReplies: 100_000,
+    retention: { defaultDays: 365, minDays: 30, maxDays: 1830 },
     assistant: {
       monthlyReplies: 5_000,
       repliesPerConversation: 12,
       sources: 15,
       answerChars: 900,
-      sentences: 5
+      sentences: 5,
+      knowledgeSources: 500
     },
     features: [...FEATURES],
     price: { monthly: 1_449, yearly: 1_159, currency: 'TRY' }

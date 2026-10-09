@@ -194,6 +194,7 @@ const AutomationRules = () => {
           {t('automation.selectSite', 'Select Site')}
         </label>
         <select
+          aria-label={t('a11y.siteSelect')}
           value={formData.siteId}
           onChange={handleSiteChange}
           className="w-full md:w-1/3 px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"

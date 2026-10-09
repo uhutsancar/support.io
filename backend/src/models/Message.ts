@@ -2,6 +2,7 @@ import { defineModel } from '../db/model';
 import type { Ref } from '../db/model';
 import type { ConversationDoc } from './Conversation';
 import { MESSAGE_SENDER_TYPES, MESSAGE_TYPES } from '../domain';
+import { PRIVATE_KEY, signedAttachmentUrl } from '../middleware/upload';
 import type {
   MessageAssistantNote,
   MessageFileData,
@@ -49,5 +50,18 @@ export default defineModel<MessageDoc>({
     readAt: { column: 'read_at', type: 'date', default: null },
     clientMessageId: { column: 'client_message_id', type: 'string', default: null },
     assistant: { column: 'assistant', type: 'json', default: null }
+  },
+  options: {
+    // A private attachment (plan v10 SEC-08) leaves the server as a link
+    // signed at that moment, valid for twelve hours; the stored address
+    // opens nothing by itself.
+    present(row) {
+      const file = row.fileData as { key?: string; filename?: string; url?: string } | null;
+      const key = file?.key || file?.filename;
+      if (file && key && PRIVATE_KEY.test(key)) {
+        row.fileData = { ...file, url: signedAttachmentUrl(key) };
+      }
+      return row;
+    }
   }
 });

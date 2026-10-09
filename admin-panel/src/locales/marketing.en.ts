@@ -203,7 +203,7 @@ export default {
         {
           cat: 'ai',
           q: 'What if the AI assistant says something wrong?',
-          a: 'It answers only from your FAQ entries and notes which entry each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.'
+          a: 'It answers only from your FAQ entries and the pages and PDFs you add, and notes which source each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.'
         },
         {
           cat: 'ai',
@@ -389,6 +389,7 @@ export default {
 
       footerDesc:
         'Live chat for your website. Your customer writes, your team answers from one screen.',
+      footerStatus: 'System status',
       footerMade: 'Built in Türkiye',
       footerProduct: 'Product',
       footerFeatures: 'Features',
@@ -544,7 +545,7 @@ export default {
           'Colour, wording and position set from the dashboard',
           'Behaves the same on phones and desktops',
           'Will not break your styling or slow your pages',
-          'The same code works on WordPress and on React'
+          'Speaks the visitor’s language: Turkish, English, German, French, Spanish, Dutch, Russian and Arabic'
         ],
         steps: [
           { title: 'Add your site', body: 'Register your site address in the dashboard.' },
@@ -758,6 +759,7 @@ export default {
     custom: 'Custom',
     freeNote: 'Free forever, nothing to bill',
     contactNote: 'Set to fit your needs',
+    taxNote: 'VAT is calculated at checkout.',
     loadError: 'The plans could not be loaded just now. Refresh the page to try again.',
 
     units: {
@@ -767,7 +769,12 @@ export default {
       agents_other: '{{count}} users',
       conversations: '{{n}} new conversations a month',
       assistant: '{{n}} AI answers a month',
-      assistantDepth: 'Up to {{count}} AI answers per conversation'
+      assistantDepth: 'Up to {{count}} AI answers per conversation',
+      history: '{{period}} of conversation history',
+      days_one: '{{count}} day',
+      days_other: '{{count}} days',
+      years_one: '{{count}} year',
+      years_other: '{{count}} years'
     },
 
     chooseEyebrow: 'Deciding',
@@ -804,6 +811,10 @@ export default {
       {
         q: 'Can I change plan later?',
         a: 'Yes, up or down whenever you like. The change is prorated against your remaining time.'
+      },
+      {
+        q: 'Is VAT included in the price?',
+        a: 'VAT is calculated at checkout from your billing details and shown separately on the payment page before you pay.'
       },
       {
         q: 'Is there a commitment?',
@@ -854,6 +865,7 @@ export default {
       sites: 'Sites',
       agents: 'Users',
       conversations: 'New conversations a month',
+      history: 'Conversation history',
       widget: 'Chat bubble and appearance',
       faq: 'Help content (FAQ)',
       assistant: 'AI assistant',
@@ -867,6 +879,10 @@ export default {
       crm: 'Deal tracking',
       export: 'Data export',
       audit: 'Audit logs',
+      security: 'Two-step verification required for the team',
+      integrations: 'Slack, Telegram and webhook notifications',
+      knowledge: 'The assistant also answers from your pages and PDFs',
+      api: 'API for conversations, visitors and FAQ',
       noBranding: 'No “Support.io” mark in the bubble'
     }
   },
@@ -952,7 +968,7 @@ export default {
     title: 'Create a free account',
     subtitle: 'An email and a password is all it takes. No card required.',
     metaTitle: 'Create a free account — Support.io',
-    passwordHint: 'At least 8 characters',
+    passwordHint: 'At least 10 characters, not a common one',
     noCard: 'By signing up you accept the terms of use.',
     hasAccount: 'Already have an account?',
     login: 'Log in'
@@ -1156,6 +1172,133 @@ export default {
         },
         { name: 'Won', count: '6', cards: [{ title: 'Deniz Foods', value: '₺31,000' }] }
       ]
+    }
+  },
+
+  compare: {
+    eyebrow: 'Comparison',
+    title: 'Support.io and {{name}}',
+    metaTitle: 'Support.io vs {{name}}',
+    whoEyebrow: 'The short answer',
+    whoTitle: 'Which one fits you?',
+    chooseUs: 'Choose Support.io if',
+    chooseThem: '{{name}} may suit you better if',
+    tableEyebrow: 'Side by side',
+    tableTitle: 'Price and AI',
+    tableDesc: 'The Support.io column comes from the plan table the dashboard enforces.',
+    rowLabel: 'Topic',
+    rows: {
+      model: 'Pricing model',
+      start: 'Paid plans from',
+      free: 'Free plan',
+      ai: 'AI'
+    },
+    us: {
+      model: 'A fixed monthly price per plan; you do not pay per user.',
+      start: 'Pro: {{price}} a month; {{agents}} and {{sites}} included.',
+      free: 'Free forever: {{limits}}.',
+      ai: 'Included in every plan at no extra cost: {{free}} answers a month on Free, {{pro}} on Pro.',
+      seePricing: 'See the pricing page for current details.'
+    },
+    checked: '8 October 2026',
+    note: 'The {{name}} details were taken from its public pricing page on {{date}}; prices are in US dollars and may have changed since.',
+    source: '{{name}} pricing page',
+    trademark:
+      'The {{name}} name and brand belong to their owner; Support.io is not affiliated with them.',
+    gapsEyebrow: 'In fairness',
+    gapsTitle: 'What Support.io does not do today',
+    gapsDesc: 'Worth knowing before you decide.',
+    gaps: [
+      'Conversations come from the chat bubble on your website; e-mail, WhatsApp and social media messages do not land in the same inbox.',
+      'There is no separate mobile app; the dashboard runs in the browser.',
+      'The AI assistant answers only from your site’s FAQ; it does not look up orders or take actions.'
+    ],
+    othersTitle: 'Other comparisons',
+    ctaTitle: 'See the difference on your own site',
+    ctaDesc:
+      'Open a free account, add the chat bubble to your site and turn the assistant on with your FAQ. No credit card needed.',
+    items: {
+      'tawk-to': {
+        name: 'Tawk.to',
+        summary:
+          'Both add free live chat to your site. The difference is in AI and in how the price is built: on Tawk.to chat is free while AI and removing the brand line are paid add-ons; on Support.io the assistant is included in every plan and paid plans are a fixed monthly price in Turkish lira.',
+        us: [
+          'You want the AI assistant included in the plan at no extra cost.',
+          'You want to see prices in Turkish lira and pay a fixed monthly amount.',
+          'You want the brand line in the chat bubble to go away by itself on a paid plan.'
+        ],
+        them: [
+          'All you need is free live chat and you will not use AI.',
+          'You need a large team on the free version.'
+        ],
+        rows: {
+          model: 'Live chat is free; some features are paid add-ons.',
+          start: 'Removing “Powered by tawk.to” costs $29 a month.',
+          free: 'Yes; live chat, ticketing and a knowledge base are free.',
+          ai: 'A separate add-on (AI Assist): a free tier for low-volume sites, the standard plan from $29 a month.'
+        }
+      },
+      crisp: {
+        name: 'Crisp',
+        summary:
+          'Crisp and Support.io both charge per plan, not per person. Crisp gathers many channels in one inbox; Support.io focuses on the chat on your website and an assistant that answers from your FAQ, and is sold in Turkish lira.',
+        us: [
+          'You want AI answers as a fixed allowance written in the plan, with no credits to track.',
+          'You want to try the AI assistant on the free plan too.',
+          'You want to see and pay prices in Turkish lira.'
+        ],
+        them: [
+          'Besides web chat, you want e-mail and messaging apps in the same inbox.',
+          'You need two people on the free plan.'
+        ],
+        rows: {
+          model:
+            'A monthly price per workspace; each plan includes a number of users, extra users $10 a month each.',
+          start: 'Mini: $45 a month, 4 users.',
+          free: 'Yes: 2 users, up to 100 customer profiles.',
+          ai: 'Monthly AI credits on paid plans (about 90 automated conversations on Mini); none on the free plan.'
+        }
+      },
+      intercom: {
+        name: 'Intercom',
+        summary:
+          'Intercom is a broad platform for large support teams: it charges per user, and its AI agent is billed separately for every successful outcome. Support.io is for small and mid-sized teams: a fixed price per plan, with AI answers included.',
+        us: [
+          'You do not want the bill to grow with every person you add.',
+          'You want to know your AI cost in advance rather than pay per outcome.',
+          'You want to start on a free plan that does not expire, without a credit card.'
+        ],
+        them: [
+          'You have a large support team and multi-step workflows.',
+          'You want support, sales and in-product messages on one platform.'
+        ],
+        rows: {
+          model: 'A monthly price per user (seat).',
+          start: 'Essential: from $29 per user a month.',
+          free: 'No; a 14-day free trial.',
+          ai: 'Fin AI agent: $0.99 per successful outcome.'
+        }
+      },
+      tidio: {
+        name: 'Tidio',
+        summary:
+          'Tidio and Support.io both start with a free plan. On Tidio the price grows with the number of billable conversations and the Lyro AI agent is charged separately; on Support.io AI answers are included in every plan and paid plans are a fixed monthly price in Turkish lira.',
+        us: [
+          'You want the AI assistant included in the plan at no extra cost.',
+          'You want an AI allowance that renews every month on the free plan.',
+          'You want to see and pay prices in Turkish lira.'
+        ],
+        them: [
+          'You want to build chat flows with a visual editor on your online shop.',
+          'You are looking for ready-made e-commerce platform integrations.'
+        ],
+        rows: {
+          model: 'A monthly price per plan; it grows with billable conversations.',
+          start: 'Starter: from $24.17 a month, 100 billable conversations.',
+          free: 'Yes: 50 billable conversations a month.',
+          ai: 'Lyro AI agent: a one-off allowance of 50 conversations; extra cost after that.'
+        }
+      }
     }
   }
 };

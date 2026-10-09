@@ -1,0 +1,68 @@
+# Dependency updates (plan v10 SEC-02 / SUP-02).
+#
+# npm: weekly, patch and minor releases grouped into one PR per package so
+# the queue stays short; majors arrive one by one and are read before merge.
+# docker: the digests pinned in the Dockerfiles and Compose files.
+# github-actions: the commit SHAs the workflows are pinned to.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      backend-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /admin-panel
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      panel-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Pinned on purpose: later releases assume React 19 (see
+      # admin-panel/package.json and the marketing-site notes).
+      - dependency-name: '@radix-ui/react-navigation-menu'
+
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      e2e-all:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directories:
+      - /backend
+      - /admin-panel
+    schedule:
+      interval: weekly
+      day: tuesday
+    groups:
+      node-image:
+        patterns: ['node']
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+    groups:
+      service-images:
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

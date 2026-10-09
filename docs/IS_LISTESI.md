@@ -5,8 +5,9 @@ asistanı" ve sohbette verilen ek istekler. Her madde bitince işaretlenir ve
 hangi commit'te yapıldığı yazılır. `[ ]` bekliyor · `[~]` yarım · `[x]` bitti ·
 `[!]` kullanıcı adımı gerekiyor (sunucu, DNS, ödeme hesabı gibi dış dünya).
 
-Not: Hiçbir commit uzak depoya **push edilmedi**; hepsi yerel
-`feat/production-saas` dalında. Push ve main'e birleştirme sizin onayınızla yapılır.
+Not: Plan (8)/(9) işleri `feat/production-saas` dalında yapıldı. Plan v10
+işleri (bölüm E) `feat/prod-readiness-v10` dalında; push ve `main`'e
+birleştirme sahibin talimatıyla, tüm doğrulamalar geçtikten sonra yapılır.
 
 ## A. Plan (8) — production SaaS
 
@@ -137,3 +138,172 @@ yapılmadı ve "bitti" sayılmadı. Ayrıntılı adımlar: `docs/production-runb
 
 Not: `Downloads/plan (6).md` planın eski (v6) sürümüdür; yerini plan (8)
 (v7) aldı. Bu liste plan (8) ve plan (9)'a göre tutulur.
+
+## E. Plan v10 — Production'a çıkış planı
+
+Dal: `feat/prod-readiness-v10`. `[x]` kodda yapıldı ve test edildi ·
+`[!]` kod/belge hazır, son adım sizin (hesap, ödeme, hukukçu, sunucu) ·
+`[ ]` yapılmadı (gerekçesi yanında).
+
+### Başlangıç durumu (F0-01)
+
+`main` 1d9c050 (6 Ekim 2026): backend testleri 141/141 geçiyordu; planın
+B-01…B-20 bulguları (bağımlılık açıkları, eksik oturum yönetimi, dosya imzası
+denetimi yok, yedek doğrulaması yok, hukuk sayfaları eksik…) tek tek
+doğrulandı ve aşağıdaki görevlerle kapatıldı.
+
+### Görevler
+
+| Görev | Durum | Commit |
+|---|---|---|
+| F0-01 Başlangıç ölçümü | [x] | bu bölüm |
+| F0-02 İş listesi | [x] | bu bölüm |
+| SEC-01 Üretim bağımlılık açıkları | [x] | 62d04b9 |
+| SEC-02 CI bağımlılık kapısı | [x] | c851bde |
+| SEC-03 Şifre/e-posta değiştirme, tüm cihazlardan çıkış | [x] | 8fb6e5a, b5c71b7 |
+| SEC-04 İki adımlı doğrulama | [x] | 8fb6e5a, b5c71b7 |
+| SEC-05 Platform yöneticisi ayrımı | [!] | 8fb6e5a (2FA); canlıda `plan:set:prod … --exempt` ve 2FA açma sizde (SAHİP-16) |
+| SEC-06 Kayıt kötüye kullanımı (Turnstile, tek kullanımlık e-posta) | [x] | 8fb6e5a, f2ee414 |
+| SEC-07 Dosya içerik imzası | [x] | ac1c78b |
+| SEC-08 Özel dosyalar, imzalı bağlantı | [x] | ac1c78b |
+| SEC-09 Ziyaretçi engelleme, spam | [x] | 3283fbd |
+| SEC-10 security.txt | [x] | 48e5ddd, f12b920 |
+| SEC-11 CSP raporlama | [x] | d8fbfef |
+| SEC-12 Redis savunması | [x] | 9dde8b0 |
+| SEC-13 Cloudflare sertleştirme | [!] | f72e339 (betik ve runbook); Cloudflare panelinde uygulama sizde |
+| SEC-14 VPS sertleştirme | [!] | f72e339, ae7305b; sunucuda çalıştırma sizde |
+| SEC-15 Socket olay şeması | [x] | cb565a8 |
+| SEC-16 Loglarda kişisel veri | [x] | 89e0012 |
+| SEC-17 Saklama süreleri | [x] | ef0502a |
+| SEC-18 Sır döndürme | [x] | 381e392 |
+| SUP-01 Caddy sürümü | [x] | 9dde8b0 |
+| SUP-02 İmajlar digest ile | [x] | 9dde8b0 |
+| SUP-03 İmaj taraması, SBOM | [x] | c851bde |
+| SUP-04 Runtime imajı sertleştirme | [x] | 9dde8b0 |
+| SUP-05 Lisanslar | [x] | d888739 |
+| SUP-06 GitHub depo ayarları | [!] | d888739 (belge); ayarları açmak sizde (SAHİP-10) |
+| SUP-07 Sürüm planı | [x] | d888739 |
+| DOC-01 SECURITY.md | [x] | f12b920 |
+| AI-01 Model adı ve açılış denetimi | [x] | ea13a8f |
+| AI-02 Bölgesel kullanım | [x] | dec6d5b |
+| AI-03 Şeffaflık etiketi | [x] | 5eb560c |
+| AI-04 KVKK ve sözleşme zemini | [!] | 5eb560c (onay penceresi); hukukçu ve aktarım sözleşmeleri sizde |
+| AI-05 Değerlendirme seti | [x] | c691d55 |
+| AI-06 Çıktı güvenliği | [x] | c691d55 |
+| AI-07 Maliyet, kapatma düğmesi | [x] | ea13a8f |
+| AI-08 Sayfa/PDF bilgi kaynağı | [x] | 37fac53 — yanıt önerisi, özet, ton, çeviri PRD-20 ile (aşağıda) |
+| OBS-01 Hata izleme | [!] | 1273534 (SDK'sız, Sentry protokolü); DSN için hesap sizde |
+| OBS-03 Operasyon metrikleri | [x] | 80c4430 |
+| OBS-04 Eşik alarmları | [x] | 5afdab0, 80c4430 |
+| OBS-05 Log toplama | [x] | 5afdab0 |
+| OBS-06 Durum sayfası, olay yönetimi | [x] | 1bc96df |
+| OBS-07 Ürün raporu | [x] | 6b13f49 |
+| PERF-01 Performans bütçeleri | [x] | 40b03e9, c851bde |
+| PERF-02 Widget yükleme | [x] | d9c298d |
+| PERF-03 Veritabanı | [x] | 86297f5 |
+| PERF-04 Uygulama içi önbellek | [x] | ea7e0ab |
+| PERF-06 Yeniden bağlanma fırtınası | [x] | af2135a |
+| PERF-07 24 saatlik dayanıklılık | [x] | af2135a (betik); staging'de çalıştırma sizde |
+| PERF-08 Pazarlama sitesi performansı | [x] | 40b03e9 |
+| DR-01 RPO/RTO hedefleri | [!] | 2194004; hedefleri onaylamak sizde (KARAR-DR-1) |
+| DR-02 PITR (WAL-G) | [x] | 2194004 |
+| DR-03 Yedek doğrulama | [x] | a92c248 |
+| DR-04 Dosya ve Caddy verisi | [!] | 9dde8b0 (yerel yükleme açılışta reddedilir), 2194004 (bucket sürümleme adımı); bucket ayarı sizde |
+| DR-05 "Sunucu yandı" tatbikatı | [!] | 2194004 (prosedür); staging'de tatbikat sizde |
+| DR-06 Sırların saklanması | [!] | 2194004 (belge); parola yöneticisi sizde |
+| UX-01 Widget erişilebilirliği | [x] | acf873c |
+| UX-02 Panel erişilebilirliği | [x] | 64d7730, 09021ec |
+| UX-03 Mobil widget | [x] | 3335903 |
+| UX-04 Widget kullanılabilirliği | [x] | 7b544ac |
+| UX-05 Panel kullanılabilirlik incelemesi | [x] | 737b199 |
+| UX-06 i18n | [x] | 594510d |
+| MKT-01 Alan adı bağımsız SEO | [x] | 5b195cc, ec159b5 |
+| MKT-02 robots, sitemap | [x] | 5b195cc |
+| MKT-03 Sayfa başlıkları, önizleme | [x] | ec159b5 |
+| MKT-04 İçerik, karşılaştırma, KDV notu | [x] | c642ce8, 502c654, a0f4f04, 9589af0 — karşılaştırmalar hukukçu onayına kadar yayında değil |
+| MKT-05 Marka ve alan adı | [!] | sizde (SAHİP-05) |
+| LEG-01 Hukuk sayfaları | [!] | 04a910c, 488dcec (taslaklar); hukukçu onayı sizde |
+| LEG-02 Şirket ve vergi | [!] | sizde |
+| LEG-03 KVKK işlemleri | [!] | 04a910c (envanter, aktarım listesi); başvurular sizde |
+| LEG-04 Müşteri sitesi gizlilik paragrafı | [x] | 97e5db2 |
+| LEG-05 Kabul edilebilir kullanım | [!] | 488dcec; hukukçu onayı sizde |
+| LEG-06 Ticari elektronik ileti | [!] | sizde |
+| LEG-07 Erişilebilirlik ve yapay zekâ beyanı | [x] | 9e443d3 — yayın hukukçu onayıyla |
+| BIL-01 Paddle hesabı | [!] | 37bba3d (kontrol listesi); hesap sizde |
+| BIL-02 Sandbox kabul senaryoları | [!] | 37bba3d; sandbox kartıyla deneme sizde |
+| BIL-03 Fiyat kaynağının tekliği | [x] | 3d26b8f |
+| BIL-04 Plan düşürmede limit aşımı | [x] | f342229 |
+| BIL-05 Başarısız ödeme | [x] | a8af727 |
+| BIL-06 Kurumsal fatura | [x] | 6758f34 |
+| TST-01 Playwright senaryoları | [x] | da207c8, 5072da5 ve her PRD'nin kendi senaryosu |
+| TST-02 Backend kapsamı | [x] | 9937ebf |
+| TST-03 Güvenlik testleri | [x] | 8dffeef |
+| TST-04 Bağımsız sızma testi | [!] | 5df7356 (kapsam); firma sizde (SAHİP-15) |
+| TST-05 Sürüm duman testi | [x] | 0beefdf |
+| INF-01 Sunucu ve bölge | [!] | 31e075c; seçim sizde (KARAR-INF-1) |
+| INF-02 Kurulum betiği | [x] | ae7305b |
+| INF-03 Staging | [x] | 31e075c |
+| INF-04 `.env.production` denetimi | [x] | 9e02e4d |
+| INF-05 Harici servis hesapları | [!] | sizde |
+| INF-06 Kesintisiz dağıtım | [!] | 4d17f9a — lansman sonrası (KARAR-INF-2) |
+| PRD-01…06 Çevrimdışı akış, bildirimler, hazır yanıtlar, puan, ön form, döküm | [x] | 862eae6, ea8fcb2 |
+| PRD-07 Gelen kutusu araçları | [x] | bf6c2fd, 16a6692 |
+| PRD-08 Aktivasyon akışı | [x] | ea8fcb2 |
+| PRD-09 PWA ve anlık bildirim | [x] | 596f236 |
+| PRD-10 Yardım merkezi | [x] | 5adcf75 |
+| PRD-11 Slack, Telegram, webhook | [x] | 4f00421 |
+| PRD-12 Açık API | [x] | 94252e8, cbc4c5a |
+| PRD-13 Kurulum kanalları | [!] | 070bdb6; WordPress.org, GTM galerisi, Shopify hesapları sizde |
+| PRD-14 Google ile giriş | [!] | 08bfb3d; Google Cloud OAuth istemcisi sizde |
+| PRD-15 Ücretsiz deneme | [x] | 8fb6e5a, 3d618f5 |
+| PRD-16 Widget dilleri | [x] | 8674181 |
+| PRD-17 E-posta kanalı | [ ] | lansman sonrası (L-03); gelen e-posta sağlayıcısı seçimi ve hesabı sizde |
+| PRD-18 WhatsApp | [ ] | lansman sonrası; Meta doğrulaması ve KARAR-PRD-1 sizde |
+| PRD-19 Instagram, Messenger, Telegram kanalı | [ ] | lansman sonrası; Meta hesapları sizde |
+| PRD-20 Yapay zekâ yardımcı pilot | [ ] | plan §21 gereği KARAR-AI-2 ve ayrı tasarım olmadan yapılmaz |
+| PRD-21 Sayfa ve PDF bilgi kaynakları | [x] | 37fac53 |
+| PRD-22 Raporlar | [x] | 37ec031 |
+| PRD-23 Tavsiye programı | [!] | d399917; Paddle indirimi (`PADDLE_REFERRAL_DISCOUNT_ID`) sizde |
+
+### Kararlar
+
+Her karar için seçenekler ilgili belgede; ajan varsayılanı (önerileni) uyguladı.
+
+| Karar | Uygulanan | Nerede |
+|---|---|---|
+| KARAR-AI-1 Ücretsiz/ücretli katman | ücretsiz katman, AEA/İngiltere/İsviçre ziyaretçisine yanıt yok | `GEMINI_TIER`, docs/env-checklist.md — **sizin kararınız** |
+| KARAR-AI-2 Yardımcı pilot | yapılmadı | PRD-20 |
+| KARAR-BIL-1 Düşürmede fazlalık | askıya alma, silme yok; sahip seçer | migration 0015 |
+| KARAR-DR-1 RPO/RTO | RPO ≤ 15 dk (WAL-G açıkken; kapalı betada ≤ 24 saat), RTO ≤ 2 saat | docs/disaster-recovery.md — onay sizde |
+| KARAR-DR-2 PITR aracı | WAL-G | 2194004 |
+| KARAR-INF-1 Sunucu ve bölge | açık | sizde |
+| KARAR-INF-2 Kesintisiz dağıtım | lansman sonrası | docs/production-runbook.md |
+| KARAR-LEG-1 İade penceresi | taslakta seçenekler | docs/legal/iade-ve-iptal.md — hukukçu |
+| KARAR-LEG-2 Yetkili mahkeme | İstanbul (Çağlayan) taslağı | docs/legal/kullanim-sartlari.md — hukukçu |
+| KARAR-MKT-1 Ön-oluşturma | sunucu `<head>`'i sayfaya göre yazar (headless tarayıcı yok) | backend/src/services/seoHead.ts |
+| KARAR-MKT-2 KDV notu | "KDV ödeme sırasında hesaplanır" | Pricing |
+| KARAR-MKT-3 Ziyaret sayımı | Umami hazır, kapalı | docs/env-checklist.md |
+| KARAR-OBS-1 Hata izleme | Sentry protokolü, SDK'sız; DSN boşsa kapalı | 1273534 |
+| KARAR-OBS-2 Pano | yalnız eşik alarmları | 5afdab0 |
+| KARAR-OBS-3 Log | son 24 saat gzip ile yedek bucket'ına, 30 gün | 5afdab0 |
+| KARAR-PRD-1 WhatsApp ücretleri | açık | PRD-18 ile |
+| KARAR-SEC-1 Bot denetimi | Cloudflare Turnstile | 8fb6e5a |
+| KARAR-SEC-2 Resim EXIF | `sharp` ile yeniden kodlama | ac1c78b |
+| KARAR-SEC-3 ZIP/RAR | varsayılan kapalı (`ALLOW_ARCHIVE_UPLOADS`) | ac1c78b |
+| KARAR-SUP-1 Redis sürümü | 7.4'te kal | docs/upgrade-roadmap.md |
+| KARAR-SUP-2 İmaj imzası | cosign açık | c851bde |
+| KARAR-SUP-3 Distroless | Alpine + sertleştirme | 9dde8b0 |
+| KARAR-UX-1 Saat dilimi | görüntüleyenin cihazı | docs/ux-review.md |
+| PRD-12 API hangi planda | Kurumsal (plan "Kurumsal veya Pro+" diyordu) | 94252e8 |
+| PRD-13 Alan adı belli değil | eklenti kurulum kodunu okur; GTM/Shopify/readme'de `__APP_DOMAIN__`, `integrations/release.mjs` doldurur | 070bdb6 |
+| PRD-16 Asistanın sabit cümleleri | Türkçe kalır (plan 9) | 8674181 |
+| PRD-21 Kaynak sınırı | Pro 50, Kurumsal 500, Free yok | 37fac53 |
+| PRD-22 Haftalık rapor | pazartesi 08:00 (İstanbul), boş haftada yok | 37ec031 |
+
+### Sizin yapacaklarınız (plan §20, SAHİP-01…16)
+
+Plan §20'deki sıra geçerli. Bu çalışmanın eklediği hesaplar: Google Cloud
+OAuth istemcisi (`GOOGLE_CLIENT_ID/SECRET`), Paddle'da tavsiye indirimi
+(`PADDLE_REFERRAL_DISCOUNT_ID`), WordPress.org / GTM galerisi / Shopify
+Partner hesapları (`integrations/README.md`), alan adı belli olunca
+`node integrations/release.mjs <alan-adı>`.

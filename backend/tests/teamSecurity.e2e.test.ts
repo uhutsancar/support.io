@@ -23,7 +23,7 @@
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';
-import { setPlan } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
@@ -70,9 +70,11 @@ const unique = (label: string) => `${label}${Date.now()}${Math.floor(Math.random
 /** Sahibi, sitesi ve bir departmanı olan yeni bir şirket. */
 async function createTenant(label: string) {
   const email = `${unique(label)}@team-security.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: `${label} owner`, email, password: PASSWORD, companyName: `${label} co` }
+  const reg = await signUp({
+    name: `${label} owner`,
+    email,
+    password: PASSWORD,
+    companyName: `${label} co`
   });
   assert.ok(
     reg.status === 200 || reg.status === 201,

@@ -411,7 +411,7 @@ const TeamChatPage = () => {
           )}
           <div className="flex-1 overflow-y-auto modal-scrollbar pr-2">
             {filteredChats.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400 p-6">
+              <div className="flex flex-col items-center justify-center h-full text-gray-600 dark:text-gray-400 p-6">
                 <MessageSquare className="w-12 h-12 mb-2 opacity-50" />
                 <p className="text-sm">{t('teamChat.noChats')}</p>
               </div>
@@ -627,7 +627,9 @@ const TeamChatPage = () => {
               <p className="text-lg font-medium text-gray-600 dark:text-gray-300">
                 {t('teamChat.selectChat')}
               </p>
-              <p className="text-sm mt-1">{t('teamChat.selectChatDesc')}</p>
+              <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">
+                {t('teamChat.selectChatDesc')}
+              </p>
             </div>
           )}
         </div>
@@ -698,13 +700,10 @@ const TeamChatPage = () => {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, messageId: null })}
         onConfirm={handleDeleteMessage}
-        title={t('teamChat.deleteTitle') || 'Mesajı Sil'}
-        message={
-          t('teamChat.deleteMessage') ||
-          'Bu mesajı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
-        }
-        confirmText={t('teamChat.deleteConfirm') || 'Evet, Sil'}
-        cancelText={t('common.cancel') || 'İptal'}
+        title={t('teamChat.deleteTitle')}
+        message={t('teamChat.deleteMessage')}
+        confirmText={t('teamChat.deleteConfirm')}
+        cancelText={t('common.cancel')}
         type="danger"
       />
     </div>

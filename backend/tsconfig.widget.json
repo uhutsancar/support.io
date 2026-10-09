@@ -7,6 +7,7 @@
 
     "rootDir": "src/widget",
     "outDir": "public",
+    "resolveJsonModule": true,
 
     "strict": true,
     "noImplicitAny": true,
@@ -14,8 +15,10 @@
 
     "removeComments": false,
     "sourceMap": false,
+    "noEmitOnError": true,
+    "noEmit": true,
     "declaration": false,
     "types": []
   },
-  "include": ["src/widget/**/*.ts"]
+  "include": ["src/widget/**/*.ts", "src/widget/locales/*.json"]
 }

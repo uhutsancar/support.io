@@ -269,7 +269,8 @@ export default {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     mobileMenu: 'Mobile menu',
-    switchToTurkish: "Türkçe'ye Geç"
+    switchToEnglish: 'Switch to English',
+    switchToTurkish: "Türkçe'ye geç"
   },
   sidebar: {
     groups: {
@@ -629,7 +630,7 @@ export default {
     invalid:
       'This invitation is invalid, expired or already used. Ask the person who invited you for a new one.',
     name: 'Your name',
-    password: 'Your password (at least 8 characters)',
+    password: 'Your password (at least 10 characters)',
     join: 'Accept the invitation',
     welcome: 'Welcome aboard!',
     error: 'The invitation could not be accepted'
@@ -642,7 +643,8 @@ export default {
     sendLink: 'Send the link',
     backToLogin: 'Back to sign in',
     resetTitle: 'Choose a new password',
-    resetSubtitle: 'At least 8 characters. Saving it signs you out on every device.',
+    resetSubtitle:
+      'At least 10 characters, not a common one. Saving it signs you out on every device.',
     newPassword: 'New password',
     confirmPassword: 'New password (again)',
     savePassword: 'Save password',
@@ -936,7 +938,7 @@ export default {
       title: 'Data and privacy',
       body: 'Download everything in your account (sites, conversations, messages, visitors, FAQ, team) as one file. Passwords and secret keys are left out.',
       retention:
-        'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit.',
+        'Visitors’ IP addresses and device details are deleted automatically 90 days after their last visit. Conversations are deleted once the retention period below has passed.',
       export: 'Download my data',
       ownerOnly: 'Only the account owner can download the data.'
     },
@@ -1762,7 +1764,28 @@ export default {
       delay: 'Delay',
       unreadBadge: 'Unread badge',
       sound: 'Notification sound',
-      soundHint: 'Plays a short tone when a new message arrives'
+      soundHint: 'Plays a short tone when a new message arrives',
+      titleAlert: 'Alert in the tab title',
+      titleAlertHint:
+        'Shows an answer that arrives while the visitor is on another tab as “(1) Page name”',
+      hideOnMobile: 'Hide on phones',
+      hideOnMobileHint: 'No chat bubble on screens narrower than 480 px',
+      language: 'Widget language',
+      languageHint:
+        'Automatic: it speaks Turkish, English, German, French, Spanish, Dutch, Russian or Arabic, following the visitor’s page and browser language. Pick a language and every visitor sees that one.',
+      languageAuto: 'Automatic (the visitor’s language)',
+      languageNames: {
+        tr: 'Türkçe',
+        en: 'English',
+        de: 'Deutsch',
+        fr: 'Français',
+        es: 'Español',
+        nl: 'Nederlands',
+        ru: 'Русский',
+        ar: 'العربية'
+      },
+      hideOnPages: 'Do not show on these pages',
+      hideOnPagesHint: 'One path per line; * matches anything (e.g. /checkout/*)'
     },
     advanced: {
       window: 'Window size',
@@ -1867,7 +1890,7 @@ export default {
     meta: {
       title: 'Setup guide',
       description:
-        'Add the Support.io chat bubble to your site: steps for HTML, WordPress, Shopify, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
+        'Add the Support.io chat bubble to your site: steps for HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
     },
     eyebrow: 'Setup guide',
     title: 'Add Support.io to your site',
@@ -1878,8 +1901,28 @@ export default {
       install: 'Install',
       platforms: 'Platforms',
       identify: 'Identify users',
+      privacy: 'Your privacy notice',
       commands: 'Control from code',
+      webhooks: 'Webhooks',
+      api: 'API',
       help: 'Troubleshooting'
+    },
+    api: {
+      title: 'Run it all from your own systems with the API',
+      desc: 'Read conversations and visitors, answer visitors from your order system, and keep your FAQ in step with your own source. Create your key under Settings → API keys. On the Enterprise plan.',
+      cta: 'Open the API documentation'
+    },
+    webhooks: {
+      title: 'Connect your own systems with webhooks',
+      desc: 'Send what happens in conversations to your CRM, order system or automation tool the moment it happens. Add a webhook on the Integrations page of the panel and pick the events to send. On the Pro and Enterprise plans.',
+      event: 'Event',
+      when: 'When it comes',
+      payloadTitle: 'The request you receive',
+      signatureTitle: 'Check that the request comes from us',
+      signatureDesc:
+        'Every request carries an X-SupportIO-Signature header: t=<time>,v1=<signature>. The signature is the HMAC-SHA256 of “time.body” with the secret shown once when you add the webhook. Reject a request older than five minutes or whose signature does not match.',
+      retries:
+        'When your address answers with anything but 2xx, or does not answer, the request is tried again after 1, 5, 15 and 30 minutes, then every few hours, for 24 hours. The outcome of every delivery shows in the panel’s delivery history.'
     },
     install: {
       title: 'Install in three steps',
@@ -1920,12 +1963,23 @@ export default {
       optionsTitle: 'Options for the script tag',
       option: 'Option'
     },
+    privacy: {
+      title: 'For your privacy notice',
+      desc: 'You are the controller of your visitors’ data. Add the paragraph below to your own privacy notice and fill in the brackets, so your visitors learn from you how the chat window works.',
+      thisLanguage: 'English',
+      otherLanguage: 'Türkçe',
+      storageTitle: 'What the chat bubble keeps in the browser',
+      storageDesc:
+        'The bubble sets no cookies; it writes only these keys to your site’s local storage. List them as essential in your cookie notice or consent tool.',
+      key: 'Key',
+      purpose: 'What for'
+    },
     help: {
       title: 'Troubleshooting',
       items: [
         {
           q: 'What should my privacy notice say?',
-          a: 'State that you use Support.io for live chat. So a conversation survives page changes, the bubble keeps sc_widget_session in the browser’s local storage, plus sc_visitor_name and sc_visitor_email if the visitor typed them. No advertising or tracking cookies.'
+          a: 'State that you use Support.io for live chat. “For your privacy notice” above has a ready-made paragraph in English and Turkish and the list of keys the bubble keeps in the browser. No advertising or tracking cookies.'
         },
         {
           q: 'How do I switch on the AI assistant?',
@@ -2057,7 +2111,8 @@ export default {
     limit: {
       sites: 'You are using every site your plan includes.',
       agents: 'You are using every seat your plan includes (open invitations count).',
-      conversations: 'This month’s new conversations are used up.'
+      conversations: 'This month’s new conversations are used up.',
+      knowledgeSources: 'You are using every knowledge source your plan includes.'
     },
     body: 'Move to a higher plan and it opens at once; your data stays exactly as it is.',
     askOwner: 'Only the account owner can change the plan. Ask them to upgrade.',
@@ -2091,7 +2146,26 @@ export default {
         benefit: 'Follow conversations that turn into sales, stage by stage.'
       },
       export: { name: 'Data export', benefit: 'Download your conversations as a file.' },
-      audit: { name: 'Audit logs', benefit: 'See who on your team changed what, and when.' }
+      audit: { name: 'Audit logs', benefit: 'See who on your team changed what, and when.' },
+      security: {
+        name: 'Required two-step verification',
+        benefit: 'Make everyone on your team enter the code from their phone at sign-in.'
+      },
+      integrations: {
+        name: 'Integrations',
+        benefit:
+          'Send new conversations to Slack and Telegram, and connect your own systems with webhooks.'
+      },
+      knowledge: {
+        name: 'An assistant that learns from pages and PDFs',
+        benefit:
+          'Besides the FAQ, the assistant answers from your site’s pages and your PDF documents.'
+      },
+      api: {
+        name: 'API access',
+        benefit:
+          'Read conversations and FAQ from your own systems, and answer visitors from your order system.'
+      }
     }
   },
   billing: {
@@ -2113,6 +2187,15 @@ export default {
     graceUntil: 'Update your payment details by {{date}}, or the plan returns to Free.',
     manage: 'Manage subscription',
     manageHelp: 'Payment method, invoices and cancellation are in the Paddle customer portal.',
+    invoices: {
+      title: 'Invoices',
+      empty: 'No invoices yet.',
+      pending: 'Invoice being prepared',
+      download: 'Download PDF',
+      loadError: 'Invoices could not be loaded.',
+      openError: 'The invoice could not be opened; try again shortly.',
+      note: 'Paddle issues the invoices as the seller; the company name and tax number you entered at checkout appear on them. Each invoice is also e-mailed to you.'
+    },
     portalError: 'The customer portal could not be opened',
     upgrade: 'Upgrade plan',
     changePlan: 'Change plan',
@@ -2173,12 +2256,17 @@ export default {
     takeOverError: 'The conversation could not be taken over',
     verifiedCustomer: 'Verified customer',
     sources: 'Source',
+    flag: 'Wrong answer',
+    flagged: 'Marked as wrong',
+    unflag: 'Remove mark',
+    flagHint: 'Wrong answers are recorded to keep an eye on the assistant’s quality.',
     handoffReason: 'Handed over because',
     reasons: {
       requested: 'The visitor asked for a person',
       sensitive: 'Sensitive data was shared',
       limit: 'Per-conversation answer limit reached',
       plan_quota: 'Monthly AI answers used up',
+      daily_cap: 'Daily AI answer limit reached',
       no_faq: 'The site has no FAQ',
       no_answer: 'Not answered by the FAQ',
       unsupported: 'The answer was not backed by the FAQ',
@@ -2243,6 +2331,17 @@ export default {
       usageNear: 'Most of this month’s answers have been used.',
       upgrade: 'Upgrade for more answers'
     },
+    consent: {
+      title: 'Switch on the AI assistant',
+      point1:
+        'Your site’s public FAQ content and your visitors’ questions are sent to our AI service provider to produce answers; this may happen outside Türkiye.',
+      point2:
+        'E-mail addresses and phone numbers in questions are masked before they are sent; questions containing a card, IBAN or ID number are not sent at all.',
+      point3:
+        'Your visitors are clearly shown that they are writing with an AI. We recommend saying so in your site’s privacy notice.',
+      box: 'I understand and agree that my FAQ content and visitor questions, with personal data masked, are sent to the AI service provider.',
+      confirm: 'Agree and switch on'
+    },
     settings: {
       button: 'Assistant',
       title: 'FAQ assistant',
@@ -2255,6 +2354,8 @@ export default {
         'The visitor’s name, e-mail and earlier messages are never sent to the AI; a card number or IBAN is handed to a person without sending the question.',
       rule3:
         'The moment an agent writes or presses “Take over”, the assistant stays silent in that conversation.',
+      rule4:
+        'The assistant’s answers are marked “AI assistant” for the visitor, and the first one says how to reach a person.',
       faqAutoReply: 'Keyword FAQ reply',
       faqAutoReplyHelp:
         'While the assistant is off, a message that strongly matches an FAQ entry gets that entry back as a “help article”.',
@@ -2275,6 +2376,7 @@ export default {
   },
 
   errors: {
+    supportCode: '(Support code: {{code}})',
     tooManyRequests: 'Too many requests in a short time. Please try again in a few minutes.',
     tooManyLogins: 'Too many sign-in attempts. Please wait a little and try again.',
     tooManyRegistrations: 'Too many sign-up attempts. Please try again later.',

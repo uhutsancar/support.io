@@ -23,6 +23,7 @@ import {
   Reveal
 } from '../components/marketing/kit';
 import { openSiteChat, siteChatAvailable } from '../components/marketing/siteChat';
+import { SUPPORT_EMAIL } from '../lib/contact';
 
 const PRINCIPLES = [
   { key: 'own', icon: Wallet, tone: 'text-indigo-600 dark:text-indigo-400' },
@@ -125,10 +126,10 @@ const About = () => {
                 </Button>
               )}
               <Button
-                href="mailto:destek@support.io"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="bg-white/10 text-white border border-white/20 hover:bg-white/[0.16] shadow-none"
               >
-                <Mail className="w-4 h-4" /> destek@support.io
+                <Mail className="w-4 h-4" /> {SUPPORT_EMAIL}
               </Button>
               <Button
                 to={routes.docs}

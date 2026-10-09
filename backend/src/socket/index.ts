@@ -28,6 +28,7 @@ import { installAdminPresenceHandlers } from './handlers/adminPresence';
 import { installAdminTeamChatHandlers } from './handlers/adminTeamChat';
 import { userRoom } from '../realtime/rooms';
 import { AGENT_BUDGET, eventLimiter } from './limits';
+import { ADMIN_EVENTS, validateEvents } from './schema';
 import type { Server, Socket } from 'socket.io';
 import type { AdminSocket } from './types';
 
@@ -52,6 +53,8 @@ export class SocketHandler {
       const socket = rawSocket as AdminSocket;
       // Counted per account across all its tabs; see ./limits.ts.
       limit(socket, `a:${socket.userId}`);
+      // Then every payload is checked against its event's shape; see ./schema.ts.
+      validateEvents(socket, ADMIN_EVENTS);
 
       // Joined before any event: the per-user room is how a message reaches an
       // agent wherever they are in the app, and the org room is how a broadcast

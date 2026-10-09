@@ -1,6 +1,10 @@
 {
+  "id": "/dashboard",
   "name": "Support.io",
   "short_name": "Support.io",
+  "description": "Canlı destek gelen kutusu",
+  "lang": "tr",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -18,5 +22,6 @@
   "theme_color": "#4F46E5",
   "background_color": "#ffffff",
   "display": "standalone",
+  "scope": "/",
   "start_url": "/dashboard"
 }

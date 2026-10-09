@@ -24,16 +24,55 @@
 
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { jwtSecret } from './jwt';
+import { jwtSecret, previousJwtSecret } from './jwt';
 import { isValidObjectId } from '../db/objectId';
 import type { AuthTokenPayload } from '../types/auth';
 
 const SESSION_AUDIENCE = 'support-chat:session';
 const UPLOAD_AUDIENCE = 'support-chat:upload-proof';
 
+function keyFrom(secret: string, purpose: string): Buffer {
+  return crypto.createHmac('sha256', secret).update(`support-chat/${purpose}/v1`).digest();
+}
+
 /** Tek kök gizli anahtardan amaca özgü bir anahtar türetir (HMAC-SHA256). */
 export function derivedKey(purpose: string): Buffer {
-  return crypto.createHmac('sha256', jwtSecret()).update(`support-chat/${purpose}/v1`).digest();
+  return keyFrom(jwtSecret(), purpose);
+}
+
+/**
+ * The keys a signature or a sealed value may have been made with: the
+ * current one first, then — while JWT_SECRET_PREVIOUS is set during a
+ * rotation (SEC-18) — the one it replaced. Anything new uses derivedKey().
+ */
+export function derivedKeys(purpose: string): Buffer[] {
+  const previous = previousJwtSecret();
+  return previous ? [derivedKey(purpose), keyFrom(previous, purpose)] : [derivedKey(purpose)];
+}
+
+/** A short, non-secret name for a key: which secret sealed a value. */
+export function keyId(key: Buffer): string {
+  return crypto.createHash('sha256').update(key).digest('hex').slice(0, 8);
+}
+
+/**
+ * jwt.verify against the current key and, during a rotation, the previous
+ * one. Only a bad signature moves on to the next key; an expired or
+ * otherwise invalid token fails as it is.
+ */
+function verifyJwt(token: string, purpose: string, options: jwt.VerifyOptions): unknown {
+  let failure: unknown = null;
+  for (const key of derivedKeys(purpose)) {
+    try {
+      return jwt.verify(token, key, options);
+    } catch (error) {
+      failure = error;
+      if (!(error instanceof jwt.JsonWebTokenError) || error.message !== 'invalid signature') {
+        throw error;
+      }
+    }
+  }
+  throw failure;
 }
 
 // ------------------------------------------------------------------ oturum
@@ -51,7 +90,7 @@ export function signSession(payload: AuthTokenPayload, expiresInSeconds: number)
  * birlikte kontrol edilir; herhangi biri tutmazsa fırlatır.
  */
 export function verifySession(token: string): AuthTokenPayload {
-  const decoded = jwt.verify(token, derivedKey('session'), {
+  const decoded = verifyJwt(token, 'session', {
     algorithms: ['HS256'],
     audience: SESSION_AUDIENCE
   }) as AuthTokenPayload & { aud?: unknown };
@@ -92,6 +131,101 @@ export function sessionIsCurrent(
   return (decoded.sv ?? 0) === (account.sessionVersion ?? 0);
 }
 
+// ------------------------------------------------------------ e-mailed links
+
+/**
+ * Links mailed to a visitor (plan v10 PRD-01, PRD-04): back to the chat,
+ * no more e-mails about it, rate it. Each purpose has its own key and
+ * audience, so one can never be traded for another — or for a session.
+ */
+export type VisitorLinkPurpose = 'resume' | 'email-optout' | 'csat';
+
+export interface VisitorLinkClaims {
+  siteId: string;
+  conversationId: string;
+  visitorId: string;
+}
+
+const VISITOR_LINK_TTL: Record<VisitorLinkPurpose, number> = {
+  resume: 14 * 24 * 60 * 60,
+  'email-optout': 90 * 24 * 60 * 60,
+  csat: 7 * 24 * 60 * 60
+};
+
+export function signVisitorLink(purpose: VisitorLinkPurpose, claims: VisitorLinkClaims): string {
+  return jwt.sign({ ...claims, purpose }, derivedKey(`visitor-link-${purpose}`), {
+    algorithm: 'HS256',
+    audience: `support-chat:${purpose}`,
+    expiresIn: VISITOR_LINK_TTL[purpose]
+  });
+}
+
+export function verifyVisitorLink(
+  purpose: VisitorLinkPurpose,
+  token: unknown
+): VisitorLinkClaims | null {
+  if (typeof token !== 'string' || !token || token.length > 2048) return null;
+  try {
+    const decoded = verifyJwt(token, `visitor-link-${purpose}`, {
+      algorithms: ['HS256'],
+      audience: `support-chat:${purpose}`
+    }) as VisitorLinkClaims & { purpose?: string };
+    if (decoded.purpose !== purpose) return null;
+    if (!isValidObjectId(decoded.siteId) || !isValidObjectId(decoded.conversationId)) return null;
+    if (typeof decoded.visitorId !== 'string' || !WIDGET_VISITOR_ID.test(decoded.visitorId)) {
+      return null;
+    }
+    return {
+      siteId: decoded.siteId,
+      conversationId: decoded.conversationId,
+      visitorId: decoded.visitorId
+    };
+  } catch {
+    return null;
+  }
+}
+
+// -------------------------------------------------- two-step sign-in pending
+
+const MFA_AUDIENCE = 'support-chat:mfa-pending';
+export const MFA_PENDING_TTL_SECONDS = 5 * 60;
+
+/**
+ * What a correct password earns when the account has two-step sign-in on:
+ * not a session, only five minutes to present the second step. Signed with
+ * its own key and audience, so it can never pass as a session.
+ */
+export interface MfaPendingClaims {
+  purpose: 'mfa';
+  userId: string;
+  userType: 'user' | 'team';
+  sv: number;
+}
+
+export function signMfaPending(claims: Omit<MfaPendingClaims, 'purpose'>): string {
+  return jwt.sign({ ...claims, purpose: 'mfa' }, derivedKey('mfa-pending'), {
+    algorithm: 'HS256',
+    audience: MFA_AUDIENCE,
+    expiresIn: MFA_PENDING_TTL_SECONDS
+  });
+}
+
+export function verifyMfaPending(token: unknown): MfaPendingClaims | null {
+  if (typeof token !== 'string' || !token || token.length > 2048) return null;
+  try {
+    const decoded = verifyJwt(token, 'mfa-pending', {
+      algorithms: ['HS256'],
+      audience: MFA_AUDIENCE
+    }) as MfaPendingClaims;
+    if (decoded.purpose !== 'mfa' || !isValidObjectId(decoded.userId)) return null;
+    if (decoded.userType !== 'user' && decoded.userType !== 'team') return null;
+    if (!Number.isInteger(decoded.sv)) return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------- yükleme kanıtı
 
 export interface UploadProofClaims {
@@ -112,7 +246,7 @@ export function signUploadProof(claims: UploadProofClaims): string {
 }
 
 export function verifyUploadProof(token: string): UploadProofClaims {
-  const decoded = jwt.verify(token, derivedKey('upload-proof'), {
+  const decoded = verifyJwt(token, 'upload-proof', {
     algorithms: ['HS256'],
     audience: UPLOAD_AUDIENCE
   }) as UploadProofClaims;
@@ -177,13 +311,24 @@ export function newWidgetSessionId(): string {
   return crypto.randomBytes(12).toString('hex');
 }
 
+function fingerprint(key: Buffer, siteKey: string): string {
+  return crypto.createHmac('sha256', key).update(siteKey).digest('hex').slice(0, 16);
+}
+
 /** The site-key fingerprint a widget token is bound to. */
 export function siteKeyVersion(siteKey: string): string {
-  return crypto
-    .createHmac('sha256', derivedKey('widget-site-key'))
-    .update(siteKey)
-    .digest('hex')
-    .slice(0, 16);
+  return fingerprint(derivedKey('widget-site-key'), siteKey);
+}
+
+/**
+ * Whether a token's fingerprint still names this site key — under the
+ * current secret, or the previous one during a rotation.
+ */
+export function siteKeyMatches(siteKey: string, kv: unknown): boolean {
+  return (
+    typeof kv === 'string' &&
+    derivedKeys('widget-site-key').some((key) => fingerprint(key, siteKey) === kv)
+  );
 }
 
 export function signWidgetSession(claims: Omit<WidgetSessionClaims, 'purpose'>): {
@@ -218,7 +363,7 @@ function checkWidgetClaims(decoded: VerifiedWidgetSession): VerifiedWidgetSessio
  * an admin session (or an upload proof) can never pass as one, and the reverse.
  */
 export function verifyWidgetSession(token: string): VerifiedWidgetSession {
-  const decoded = jwt.verify(token, derivedKey('widget-session'), {
+  const decoded = verifyJwt(token, 'widget-session', {
     algorithms: ['HS256'],
     audience: WIDGET_AUDIENCE
   }) as VerifiedWidgetSession;
@@ -233,7 +378,7 @@ export function verifyWidgetSession(token: string): VerifiedWidgetSession {
 export function renewableWidgetSession(token: unknown): VerifiedWidgetSession | null {
   if (typeof token !== 'string' || !token || token.length > 2048) return null;
   try {
-    const decoded = jwt.verify(token, derivedKey('widget-session'), {
+    const decoded = verifyJwt(token, 'widget-session', {
       algorithms: ['HS256'],
       audience: WIDGET_AUDIENCE,
       ignoreExpiration: true

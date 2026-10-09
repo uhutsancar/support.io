@@ -31,6 +31,9 @@ import { shouldCalculateSLA } from './businessHours';
 import { refreshSla } from './conversationSla';
 import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
 import { AdminNotifier } from '../realtime';
+import { runConversationMail } from './conversationMail';
+import { query } from '../db/pool';
+import { runIntegrationDeliveries } from './integrations';
 import type { Server } from 'socket.io';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -190,6 +193,26 @@ async function sweepOnce(
   return { checked: due.length, written, breached };
 }
 
+/**
+ * Brings snoozed conversations back into the inbox when their time comes
+ * (PRD-07). One UPDATE picks them; each one is announced to its site so an
+ * open inbox shows it again without a refresh.
+ */
+async function wakeSnoozed(io: Server | null): Promise<number> {
+  const { rows } = await query<{ id: string }>(
+    `UPDATE conversations SET snoozed_until = NULL, updated_at = now()
+      WHERE snoozed_until <= now()
+      RETURNING id`
+  );
+  if (!rows.length || !io) return rows.length;
+  const notifier = new AdminNotifier(io);
+  const woken = await Conversation.find({ _id: { $in: rows.map((r) => r.id) } })
+    .populate('assignedAgent', 'name avatar status')
+    .populate('department', 'name color icon');
+  for (const conversation of woken) notifier.conversationUpdated(conversation, conversation);
+  return rows.length;
+}
+
 function startSlaSweeper(
   io: Server,
   {
@@ -206,6 +229,24 @@ function startSlaSweeper(
       await sweepOnce(io);
     } catch (error) {
       console.error('[sla] sweep pass failed', error);
+    }
+    try {
+      await wakeSnoozed(io);
+    } catch (error) {
+      console.error('[sla] waking snoozed conversations failed', error);
+    }
+    try {
+      // Webhook, Slack and Telegram retries (PRD-11) ride on this pass too.
+      await runIntegrationDeliveries();
+    } catch (error) {
+      console.error('[sla] integration deliveries failed', error);
+    }
+    try {
+      // Unanswered-chat, reply and rating mails ride on the same pass, so
+      // SLA_SWEEPER=off keeps them to one process as well (PRD-01).
+      await runConversationMail();
+    } catch (error) {
+      console.error('[sla] conversation mail pass failed', error);
     } finally {
       running = false;
     }
@@ -222,4 +263,4 @@ function stopSlaSweeper(): void {
   timer = null;
 }
 
-export { startSlaSweeper, stopSlaSweeper, sweepOnce };
+export { startSlaSweeper, stopSlaSweeper, sweepOnce, wakeSnoozed };

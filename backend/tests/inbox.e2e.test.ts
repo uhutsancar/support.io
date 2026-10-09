@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 import { query } from '../src/db/pool';
 import { generateId } from '../src/db/objectId';
 import Conversation from '../src/models/Conversation';
+import { signUp } from './helpers/accounts';
 
 const BASE = process.env.E2E_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 
@@ -78,14 +79,11 @@ async function api(
 
 async function createTenant(label: string) {
   const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: {
-      name: `${label} owner`,
-      email: `${label}${stamp}@inbox.test`,
-      password: 'E2ePassw0rd!',
-      companyName: `${label} co`
-    }
+  const reg = await signUp({
+    name: `${label} owner`,
+    email: `${label}${stamp}@inbox.test`,
+    password: 'E2ePassw0rd!',
+    companyName: `${label} co`
   });
   assert.ok(
     reg.status === 200 || reg.status === 201,

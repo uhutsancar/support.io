@@ -7,35 +7,148 @@
 // it is echoed in the response header and in every error answer, so a
 // customer's "it failed" can be found in the log.
 //
-// Never logged: passwords, tokens, cookies, message contents, full database
-// URLs. Paths are logged without their query string, which can carry tokens
-// (verification and reset links).
+// Never logged: passwords, tokens, cookies, API keys, message contents, full
+// database URLs. Paths are logged without their query string, which can carry
+// tokens (verification and reset links). An e-mail address that ends up in a
+// logged object is masked to u***@d***.com (plan v10 SEC-16):
+// enough to tell two apart, not enough to write to.
 //
 // The rest of the code still uses console.* in places; those calls are moved
 // here as they are touched.
 
 import crypto from 'crypto';
+import util from 'util';
 import pino from 'pino';
 import type { NextFunction, Request, Response } from 'express';
 
-export const logger = pino({
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
-  base: undefined,
-  timestamp: pino.stdTimeFunctions.isoTime,
-  redact: {
-    paths: [
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'password',
-      'token',
-      '*.password',
-      '*.token',
-      'content',
-      '*.content'
-    ],
-    censor: '[redacted]'
+/** u***@d***.com: the first letter of each part and the top-level domain. */
+export function maskEmail(value: string): string {
+  const at = value.lastIndexOf('@');
+  if (at < 1) return '[redacted]';
+  const domain = value.slice(at + 1);
+  const dot = domain.lastIndexOf('.');
+  const host = dot > 0 ? domain.slice(0, dot) : domain;
+  const tld = dot > 0 ? domain.slice(dot) : '';
+  return `${value[0]}***@${host[0] || ''}***${tld}`;
+}
+
+// Keys whose value never reaches a log line, at the top level and one level
+// down (pino's redact is path based; `*.x` is "x inside any object").
+const SECRET_KEYS = [
+  'password',
+  'currentPassword',
+  'newPassword',
+  'token',
+  'apiKey',
+  'secret',
+  'content',
+  'text',
+  'feedback',
+  'phone',
+  'email'
+];
+const HEADER_PATHS = ['authorization', 'cookie', '["set-cookie"]', '["x-goog-api-key"]'].flatMap(
+  (header) =>
+    [`req.headers.${header}`, `headers.${header}`, `*.headers.${header}`].map((path) =>
+      path.replace('.[', '[')
+    )
+);
+
+/** Where lines go: stdout, unless a test is collecting them (captureLogs). */
+const stdout = pino.destination({ dest: 1, sync: false });
+let collector: string[] | null = null;
+const destination = {
+  write(line: string) {
+    if (collector) collector.push(line);
+    else stdout.write(line);
   }
-});
+};
+
+export const logger = pino(
+  {
+    level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
+    base: undefined,
+    timestamp: pino.stdTimeFunctions.isoTime,
+    // An error's message and a database error's detail can carry the value
+    // that failed, an e-mail address among them; scrubbed like console output.
+    serializers: {
+      err: (error: Error) => {
+        const out = pino.stdSerializers.err(error) as unknown as Record<string, unknown>;
+        for (const key of ['message', 'stack', 'detail', 'hint', 'where']) {
+          if (typeof out[key] === 'string') out[key] = scrubText(out[key] as string);
+        }
+        return out;
+      }
+    },
+    redact: {
+      paths: [...HEADER_PATHS, ...SECRET_KEYS.flatMap((key) => [key, `*.${key}`])],
+      censor: (value: unknown, path: string[]) =>
+        path[path.length - 1] === 'email' && typeof value === 'string'
+          ? maskEmail(value)
+          : '[redacted]'
+    }
+  },
+  destination
+);
+
+/**
+ * For tests: every line from here on is kept in memory instead of printed,
+ * until `stop()`. The level is lifted to `info` meanwhile, so a suite run with
+ * NODE_ENV=test sees what production would write.
+ */
+export function captureLogs(): { lines: string[]; stop(): void } {
+  const lines: string[] = [];
+  const level = logger.level;
+  collector = lines;
+  if (logger.level === 'silent') logger.level = 'info';
+  return {
+    lines,
+    stop() {
+      collector = null;
+      logger.level = level;
+    }
+  };
+}
+
+// ---------------------------------------------------------------- console
+//
+// Older code still writes with console.*, often a whole Error. A database
+// error carries the offending value in its `detail` ("Key (email)=(…) already
+// exists"), and anything can end up in a template string. Whatever goes
+// through console is therefore scrubbed on the way out: e-mail addresses are
+// masked, and session tokens (JWTs) and Google API keys are replaced.
+
+const EMAIL_RX = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
+const JWT_RX = /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g;
+const GOOGLE_KEY_RX = /\bAIza[0-9A-Za-z_-]{35}\b/g;
+
+/** The text with addresses masked and tokens and keys removed. */
+export function scrubText(text: string): string {
+  return text
+    .replace(JWT_RX, '[jwt]')
+    .replace(GOOGLE_KEY_RX, '[api-key]')
+    .replace(EMAIL_RX, (address) => maskEmail(address));
+}
+
+function scrubArg(arg: unknown): unknown {
+  if (typeof arg === 'string') return scrubText(arg);
+  if (arg instanceof Error || (arg !== null && typeof arg === 'object')) {
+    return scrubText(util.inspect(arg, { depth: 4, breakLength: Infinity }));
+  }
+  return arg;
+}
+
+let consoleScrubbed = false;
+
+/** Scrubs every console.* call from here on; server.ts calls it first thing. */
+export function installConsoleRedaction(): void {
+  if (consoleScrubbed) return;
+  consoleScrubbed = true;
+  for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
+    const original = console[method].bind(console);
+    console[method] = (...args: unknown[]) => original(...args.map(scrubArg));
+  }
+}
 
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,128}$/;
 

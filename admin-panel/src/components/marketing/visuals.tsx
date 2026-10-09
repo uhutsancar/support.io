@@ -103,6 +103,8 @@ export const InboxVisual = ({ compact = false }) => {
 
   return (
     <div
+      data-mockup=""
+      aria-hidden="true"
       className={[
         'grid grid-cols-[minmax(0,.85fr)_minmax(0,1.3fr)]',
         compact ? 'h-[300px]' : 'h-[372px]'
@@ -272,7 +274,7 @@ export const InboxVisual = ({ compact = false }) => {
 export const WidgetVisual = ({ className = '', launcher = true }) => {
   const { t } = useTranslation();
   return (
-    <div className={['relative w-[268px]', className].join(' ')}>
+    <div data-mockup="" aria-hidden="true" className={['relative w-[268px]', className].join(' ')}>
       <div
         className="w-[268px] rounded-2xl overflow-hidden bg-white dark:bg-[#171a29]
         border border-gray-200 dark:border-white/[0.09] shadow-panel-lg"
@@ -373,7 +375,7 @@ export const MetricsVisual = () => {
   const tones = ['violet', 'emerald', 'sky', 'amber'];
 
   return (
-    <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div data-mockup="" aria-hidden="true" className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
       {list.map((card, i) => {
         const a = accent(tones[i % 4]);
         return (
@@ -432,6 +434,7 @@ export const AnalyticsVisual = () => {
   const incoming = [18, 24, 21, 32, 38, 27, 34];
   const solved = [15, 21, 20, 28, 34, 25, 31];
   const days = t('viz.analytics.days', { returnObjects: true });
+  // i18n-ignore: only if the locale lacks the day names
   const labels = Array.isArray(days) ? days : ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
   const W = 460,
@@ -457,7 +460,7 @@ export const AnalyticsVisual = () => {
     ' Z';
 
   return (
-    <div className="viz p-4">
+    <div data-mockup="" aria-hidden="true" className="viz p-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[13px] font-semibold text-gray-900 dark:text-white">
@@ -598,7 +601,7 @@ export const RoutingVisual = () => {
   const tones = ['violet', 'sky', 'emerald'];
 
   return (
-    <div className="p-5">
+    <div data-mockup="" aria-hidden="true" className="p-5">
       <div
         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl
         border border-gray-200 dark:border-white/[0.08] bg-gray-50 dark:bg-white/[0.03]"
@@ -681,7 +684,7 @@ export const AutomationVisual = () => {
   const actions = t('viz.automation.actions', { returnObjects: true });
 
   return (
-    <div className="p-5 space-y-3">
+    <div data-mockup="" aria-hidden="true" className="p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-gray-900 dark:text-white">
           <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -766,7 +769,7 @@ export const ProactiveVisual = () => {
   const triggers = t('viz.proactive.triggers', { returnObjects: true });
 
   return (
-    <div className="p-5">
+    <div data-mockup="" aria-hidden="true" className="p-5">
       <div className="flex flex-wrap gap-1.5">
         {(Array.isArray(triggers) ? triggers : []).map((tr, i) => (
           <span
@@ -823,7 +826,7 @@ export const KnowledgeVisual = () => {
   const results = t('viz.knowledge.results', { returnObjects: true });
 
   return (
-    <div className="p-5">
+    <div data-mockup="" aria-hidden="true" className="p-5">
       <div
         className="flex items-center gap-2 px-3 h-10 rounded-xl
         border border-amber-200 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/[0.07]"
@@ -875,7 +878,7 @@ export const TeamVisual = () => {
   const toneFor = { online: 'emerald', away: 'amber', busy: 'rose', offline: 'indigo' };
 
   return (
-    <div className="p-4 space-y-1.5">
+    <div data-mockup="" aria-hidden="true" className="p-4 space-y-1.5">
       {(Array.isArray(members) ? members : []).map((m, i) => (
         <div
           key={i}
@@ -915,7 +918,7 @@ export const VisitorsVisual = () => {
   const rows = t('viz.visitors.rows', { returnObjects: true });
 
   return (
-    <div className="p-4">
+    <div data-mockup="" aria-hidden="true" className="p-4">
       <div className="flex items-center gap-2 mb-2.5">
         <Dot tone="emerald" pulse />
         <span className="text-[12px] font-semibold text-gray-900 dark:text-white">
@@ -973,7 +976,7 @@ export const CrmVisual = () => {
   const tones = ['sky', 'indigo', 'violet', 'emerald'];
 
   return (
-    <div className="p-4 grid grid-cols-4 gap-2">
+    <div data-mockup="" aria-hidden="true" className="p-4 grid grid-cols-4 gap-2">
       {(Array.isArray(stages) ? stages : []).map((s, i) => {
         const a = accent(tones[i % 4]);
         return (
@@ -1022,7 +1025,7 @@ export const CrmVisual = () => {
 export const AssistantVisual = () => {
   const { t } = useTranslation();
   return (
-    <div className="p-5 space-y-3">
+    <div data-mockup="" aria-hidden="true" className="p-5 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-semibold bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
           <Sparkles className="w-3.5 h-3.5" /> {t('viz.assistant.badge')}

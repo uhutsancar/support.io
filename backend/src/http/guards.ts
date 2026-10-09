@@ -108,6 +108,18 @@ export async function findOwnedSite(req: Request, siteId: unknown): Promise<Doc<
 export async function loadOwnedSite(req: Request, siteId: unknown): Promise<Doc<SiteDoc>> {
   const site = await findOwnedSite(req, siteId);
   if (!site) throw notFound('Site');
+  // A site over the plan's limit after a downgrade is read-only (BIL-04):
+  // it can be looked at and deleted, not changed, until the owner keeps it
+  // on the billing page or upgrades.
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    // Blocked by the platform for abuse (LEG-05): only support lifts it.
+    if (site.blockedAt) {
+      throw forbidden('This site was blocked by Support.io; contact support', 'SITE_BLOCKED');
+    }
+    if (site.suspendedAt) {
+      throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
+    }
+  }
   return site;
 }
 
@@ -195,6 +207,18 @@ export async function loadAccessibleConversation(
   const conversation = await loadOwnedConversation(req, conversationId);
   if (!mayAccessSite(req.user?.role, req.user?.assignedSites, conversation.siteId)) {
     throw notFound('Conversation');
+  }
+  // The inbox of a blocked site, or of one over the plan's limit, is
+  // read-only here as on the socket (BIL-04, LEG-05): the REST moves —
+  // assign, status, tags, snooze, merge — refused it no more than a reply.
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    const site = await Site.findById(conversation.siteId).select('blockedAt suspendedAt');
+    if (site?.blockedAt) {
+      throw forbidden('This site was blocked by Support.io; contact support', 'SITE_BLOCKED');
+    }
+    if (site?.suspendedAt) {
+      throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
+    }
   }
   return conversation;
 }

@@ -62,16 +62,35 @@ const TRANSLATED_CODES: Record<string, string> = {
   PASSWORD_INCORRECT: 'errors.passwordIncorrect',
   SUBSCRIPTION_ACTIVE: 'errors.subscriptionActive',
   PLAN_UPGRADE_REQUIRED: 'upgrade.featureLocked',
-  PLAN_LIMIT_REACHED: 'upgrade.limitReached'
+  PLAN_LIMIT_REACHED: 'upgrade.limitReached',
+  SEAT_SUSPENDED: 'errors.seatSuspended',
+  SITE_SUSPENDED: 'errors.siteSuspended',
+  SITE_BLOCKED: 'errors.siteBlocked',
+  EMAIL_IN_USE: 'errors.emailInUse',
+  UPLOAD_FAILED: 'errors.uploadFailed',
+  OVER_PLAN_LIMIT: 'errors.overPlanLimit'
 };
 
 export function errorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {
     const response = (
-      error as { response?: { data?: { error?: unknown; message?: unknown; code?: unknown } } }
+      error as {
+        response?: {
+          status?: number;
+          data?: { error?: unknown; message?: unknown; code?: unknown; requestId?: unknown };
+        };
+      }
     ).response;
+    // An unexpected failure carries the request id the server logged it
+    // under (OBS-05): shown as a support code the customer can quote.
+    const requestId = typeof response?.data?.requestId === 'string' ? response.data.requestId : '';
+    if (requestId && (response?.status ?? 500) >= 500) {
+      return `${fallback} ${i18n.t('errors.supportCode', { code: requestId.slice(0, 8) })}`;
+    }
     const code = typeof response?.data?.code === 'string' ? response.data.code : '';
     if (TRANSLATED_CODES[code]) return i18n.t(TRANSLATED_CODES[code]);
+    // Account and sign-up codes (locales/account.*.ts) by their own name.
+    if (code && i18n.exists(`account.errors.${code}`)) return i18n.t(`account.errors.${code}`);
     const fromBody = response?.data?.error ?? response?.data?.message;
     if (typeof fromBody === 'string' && fromBody) return fromBody;
   }

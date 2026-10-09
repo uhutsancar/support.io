@@ -14,8 +14,8 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
+import { CodeBlock, H2, Lead, Mono } from '../components/docs/DocsBlocks';
 import {
   Accordion,
   Button,
@@ -32,74 +32,26 @@ import {
   KEY_PLACEHOLDER,
   OPTIONS,
   PLATFORMS,
+  STORAGE_KEYS,
   embedSnippet,
+  privacyParagraph,
   identifySnippet,
+  WEBHOOK_EVENTS,
+  WEBHOOK_PAYLOAD,
+  WEBHOOK_VERIFY,
   userHashSnippet
 } from './docs/content';
 
-const SECTIONS = ['install', 'platforms', 'identify', 'commands', 'help'] as const;
-
-/* ------------------------------------------------------------------ parçalar */
-
-const CodeBlock = ({ code, filename }: { code: string; filename?: string }) => {
-  const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Pano izni yoksa sessiz kal: kod zaten ekranda ve seçilebilir.
-    }
-  };
-
-  return (
-    <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/[0.08] bg-gray-950">
-      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-white/[0.07]">
-        <span className="text-[11.5px] font-mono text-gray-400 truncate">{filename || ''}</span>
-        <button
-          type="button"
-          onClick={copy}
-          className="shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] font-medium
-            text-gray-300 hover:text-white hover:bg-white/10 transition"
-        >
-          {copied ? (
-            <Check className="w-3.5 h-3.5 text-green-400" />
-          ) : (
-            <Copy className="w-3.5 h-3.5" />
-          )}
-          {copied ? t('common.copied') : t('common.copy')}
-        </button>
-      </div>
-      <pre className="overflow-x-auto p-4 text-[12.5px] leading-[1.7] text-gray-200">
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
-};
-
-const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
-  <h2
-    id={id}
-    className="scroll-mt-28 text-[26px] sm:text-[30px] font-bold tracking-[-0.03em] text-gray-950 dark:text-white"
-  >
-    {children}
-  </h2>
-);
-
-const Lead = ({ children }: { children: React.ReactNode }) => (
-  <p className="mt-3 text-[15.5px] leading-relaxed text-gray-600 dark:text-gray-400 max-w-[64ch]">
-    {children}
-  </p>
-);
-
-const Mono = ({ children }: { children: React.ReactNode }) => (
-  <code className="px-1.5 py-0.5 rounded-md text-[12.5px] font-mono bg-gray-100 dark:bg-white/[0.07] text-indigo-700 dark:text-indigo-300">
-    {children}
-  </code>
-);
+const SECTIONS = [
+  'install',
+  'platforms',
+  'identify',
+  'commands',
+  'privacy',
+  'webhooks',
+  'api',
+  'help'
+] as const;
 
 /* --------------------------------------------------------------------- sayfa */
 
@@ -154,7 +106,7 @@ const Docs = () => {
           {/* ------------------------------------------------- bu sayfada */}
           <nav className="hidden lg:block" aria-label={t('docsPage.onThisPage')}>
             <div className="sticky top-28">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">
                 {t('docsPage.onThisPage')}
               </p>
               <ul className="mt-3 border-l border-gray-200 dark:border-white/10">
@@ -184,16 +136,19 @@ const Docs = () => {
               <H2 id="install">{t('docsPage.install.title')}</H2>
               <ol className="mt-8 grid sm:grid-cols-3 gap-4">
                 {steps.map((step, i) => (
-                  <Reveal key={i} delay={i * 0.05}>
-                    <li className="h-full list-none rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-5">
-                      <StepNumber n={i + 1} />
-                      <p className="mt-4 text-[15px] font-semibold text-gray-900 dark:text-white">
-                        {step.title}
-                      </p>
-                      <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
-                        {step.body}
-                      </p>
-                    </li>
+                  <Reveal
+                    key={i}
+                    delay={i * 0.05}
+                    as="li"
+                    className="h-full list-none rounded-2xl border border-gray-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-5"
+                  >
+                    <StepNumber n={i + 1} />
+                    <p className="mt-4 text-[15px] font-semibold text-gray-900 dark:text-white">
+                      {step.title}
+                    </p>
+                    <p className="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
+                      {step.body}
+                    </p>
                   </Reveal>
                 ))}
               </ol>
@@ -351,6 +306,114 @@ const Docs = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </section>
+
+            {/* ------------------------------------- gizlilik metniniz için */}
+            <section>
+              <H2 id="privacy">{t('docsPage.privacy.title')}</H2>
+              <Lead>{t('docsPage.privacy.desc')}</Lead>
+              <div className="mt-6 space-y-5">
+                <CodeBlock
+                  prose
+                  code={privacyParagraph(lang, origin)}
+                  filename={t('docsPage.privacy.thisLanguage')}
+                />
+                <CodeBlock
+                  prose
+                  code={privacyParagraph(lang === 'en' ? 'tr' : 'en', origin)}
+                  filename={t('docsPage.privacy.otherLanguage')}
+                />
+              </div>
+              <h3 className="mt-10 text-[17px] font-semibold text-gray-900 dark:text-white">
+                {t('docsPage.privacy.storageTitle')}
+              </h3>
+              <Lead>{t('docsPage.privacy.storageDesc')}</Lead>
+              <div className="mt-4 overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/[0.08]">
+                <table className="w-full min-w-[520px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-white/[0.03]">
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-500">
+                        {t('docsPage.privacy.key')}
+                      </th>
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-500">
+                        {t('docsPage.privacy.purpose')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {STORAGE_KEYS.map((s) => (
+                      <tr key={s.key} className="border-t border-gray-100 dark:border-white/[0.06]">
+                        <td className="px-4 py-3 align-top">
+                          <Mono>{s.key}</Mono>
+                        </td>
+                        <td className="px-4 py-3 text-[13.5px] text-gray-700 dark:text-gray-300">
+                          {s.text[lang]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* ------------------------------------------------------- webhook */}
+            <section>
+              <H2 id="webhooks">{t('docsPage.webhooks.title')}</H2>
+              <Lead>{t('docsPage.webhooks.desc')}</Lead>
+              <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/[0.08]">
+                <table className="w-full min-w-[520px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-white/[0.03]">
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                        {t('docsPage.webhooks.event')}
+                      </th>
+                      <th className="px-4 py-2.5 text-[11.5px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+                        {t('docsPage.webhooks.when')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {WEBHOOK_EVENTS.map((e) => (
+                      <tr
+                        key={e.name}
+                        className="border-t border-gray-100 dark:border-white/[0.06]"
+                      >
+                        <td className="px-4 py-3 align-top">
+                          <Mono>{e.name}</Mono>
+                        </td>
+                        <td className="px-4 py-3 text-[13.5px] text-gray-700 dark:text-gray-300">
+                          {e.text[lang]}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <h3 className="mt-10 text-[17px] font-semibold text-gray-900 dark:text-white">
+                {t('docsPage.webhooks.payloadTitle')}
+              </h3>
+              <div className="mt-4">
+                <CodeBlock code={WEBHOOK_PAYLOAD} filename="JSON" />
+              </div>
+              <h3 className="mt-10 text-[17px] font-semibold text-gray-900 dark:text-white">
+                {t('docsPage.webhooks.signatureTitle')}
+              </h3>
+              <Lead>{t('docsPage.webhooks.signatureDesc')}</Lead>
+              <div className="mt-4">
+                <CodeBlock code={WEBHOOK_VERIFY} filename="Node.js" />
+              </div>
+              <Lead>{t('docsPage.webhooks.retries')}</Lead>
+            </section>
+
+            {/* ----------------------------------------------------------- API */}
+            <section>
+              <H2 id="api">{t('docsPage.api.title')}</H2>
+              <Lead>{t('docsPage.api.desc')}</Lead>
+              <div className="mt-6">
+                <Button to={routes.apiDocs} variant="secondary" arrow>
+                  {t('docsPage.api.cta')}
+                </Button>
               </div>
             </section>
 

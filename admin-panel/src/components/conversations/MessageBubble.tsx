@@ -6,7 +6,11 @@
 // visitor, agent, bot — legible, and moves the `getFileIcon` helper that lived
 // in the page body next to the only markup that uses it.
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import { assistantAPI } from '../../services/api';
+import { errorMessage } from '../../hooks/useAsync';
 import { Bot, CheckCheck, File, FileText, Image as ImageIcon } from 'lucide-react';
 import { formatFileSize, formatTime } from '../../lib/format';
 import { apiAssetUrl } from '../../lib/runtime';
@@ -54,6 +58,23 @@ export function handoffReasonKey(reason: string): string {
 const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
   const { t } = useTranslation();
   const note = message.assistant;
+  // An answer the assistant wrote (not its handoff note) can be marked wrong.
+  const aiAnswer = message.senderId === 'assistant' && Boolean(note) && !note?.handoff;
+  const [flagged, setFlagged] = useState(Boolean(note?.flagged));
+  const [flagBusy, setFlagBusy] = useState(false);
+  const toggleFlag = async () => {
+    setFlagBusy(true);
+    try {
+      const { data } = flagged
+        ? await assistantAPI.unflag(message._id)
+        : await assistantAPI.flag(message._id);
+      setFlagged(data.flagged);
+    } catch (error) {
+      toast.error(errorMessage(error, t('recovery.error')));
+    } finally {
+      setFlagBusy(false);
+    }
+  };
   // The visitor's messages sit on the left; everything we send — an agent's
   // reply or the bot's — sits on the right.
   const fromVisitor = message.senderType === 'visitor';
@@ -124,6 +145,22 @@ const MessageBubble = ({ message, onRetry }: MessageBubbleProps) => {
         {note?.sources?.length ? (
           <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 text-right">
             {t('assistant.sources')}: {note.sources.join(' · ')}
+          </p>
+        ) : null}
+        {aiAnswer ? (
+          <p className="mt-1 text-[10px] text-right">
+            {flagged && (
+              <span className="mr-2 text-red-600 dark:text-red-400">{t('assistant.flagged')}</span>
+            )}
+            <button
+              type="button"
+              disabled={flagBusy}
+              onClick={toggleFlag}
+              title={t('assistant.flagHint')}
+              className="underline text-gray-500 dark:text-gray-400 hover:text-red-600 disabled:opacity-50"
+            >
+              {flagged ? t('assistant.unflag') : t('assistant.flag')}
+            </button>
           </p>
         ) : null}
         {note?.handoff ? (

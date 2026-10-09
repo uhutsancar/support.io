@@ -14,7 +14,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor, widgetSession } from './helpers/widget';
-import { setPlan, verifyEmail } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 import crypto from 'crypto';
 
 const PASSWORD = 'Wq7!delete-me';
@@ -49,12 +49,8 @@ function sessionCookie(res: { headers: Headers }): string {
 /** A verified owner with one site and one visitor conversation. */
 async function workspace() {
   const email = `owner${stamp()}@deletion.test`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: { name: 'Deletion Owner', email, password: PASSWORD }
-  });
+  const reg = await signUp({ name: 'Deletion Owner', email, password: PASSWORD });
   assert.equal(reg.status, 201);
-  await verifyEmail(email);
   const token = sessionCookie(reg);
   const organizationId = String(reg.body.user.organizationId);
   const site = await api('/api/sites', {

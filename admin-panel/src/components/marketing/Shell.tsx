@@ -58,11 +58,18 @@ import { FEATURE_VISUAL, WidgetVisual } from './visuals';
 import { marketingRoutes } from '../../lib/marketingPaths';
 import { useSiteChat, openSiteChat } from './siteChat';
 import {
+  COMPARISONS,
+  COMPARISONS_PUBLISHED,
   FEATURE_GROUPS,
   FEATURE_ICON,
   FEATURE_TONE,
   SOLUTIONS
 } from '../../pages/marketing/features';
+import { SUPPORT_EMAIL } from '../../lib/contact';
+import { countPageView } from '../../lib/siteAnalytics';
+
+/** The public status page (OBS-06), shown once one exists. */
+const STATUS_PAGE_URL = (import.meta.env.VITE_STATUS_PAGE_URL as string | undefined) || '';
 
 export const FEATURE_ICONS: Record<string, React.ElementType> = {
   MessageSquare,
@@ -272,7 +279,7 @@ const ResourcesMenu = ({ routes }: { routes: Routes }) => {
             type="button"
             className={itemClass}
             onClick={() => {
-              if (!openSiteChat()) window.location.href = 'mailto:destek@support.io';
+              if (!openSiteChat()) window.location.href = `mailto:${SUPPORT_EMAIL}`;
             }}
           >
             <AccentIcon icon={LifeBuoy} size="sm" tone="emerald" className="mt-0.5" />
@@ -631,7 +638,13 @@ export const Footer = () => {
       title: t('nav.resourcesLabel'),
       links: [
         { label: t('landing.home.footerDocs'), to: routes.docs },
-        { label: t('landing.home.footerAbout'), to: routes.about }
+        { label: t('landing.home.footerAbout'), to: routes.about },
+        ...(COMPARISONS_PUBLISHED
+          ? COMPARISONS.map((c) => ({
+              label: t('compare.title', { name: t('compare.items.' + c.id + '.name') }),
+              to: routes.compare + '/' + c.id
+            }))
+          : [])
       ]
     },
     {
@@ -664,21 +677,22 @@ export const Footer = () => {
                   border border-white/15 text-gray-300 hover:bg-white/[0.06] transition"
               >
                 <Languages className="w-3.5 h-3.5" />
+                {/* i18n-ignore: each language by its own name */}
                 {language === 'tr' ? 'Türkçe' : 'English'}
               </button>
               <a
-                href="mailto:destek@support.io"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-medium
                   border border-white/15 text-gray-300 hover:bg-white/[0.06] transition"
               >
-                <Mail className="w-3.5 h-3.5" /> destek@support.io
+                <Mail className="w-3.5 h-3.5" /> {SUPPORT_EMAIL}
               </a>
             </div>
           </div>
 
           {columns.map((column) => (
             <div key={column.title}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
                 {column.title}
               </h3>
               <ul className="mt-4 space-y-2.5">
@@ -698,14 +712,30 @@ export const Footer = () => {
         </div>
 
         <div className="mt-16 pt-6 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[12.5px] text-gray-500">© {new Date().getFullYear()} Support.io</p>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-gray-500">
+          <p className="text-[12.5px] text-gray-400">© {new Date().getFullYear()} Support.io</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-gray-400">
             <Link to={routes.privacy} className="hover:text-gray-300 transition-colors">
               {t('legal.privacy.title')}
             </Link>
             <Link to={routes.terms} className="hover:text-gray-300 transition-colors">
               {t('legal.terms.title')}
             </Link>
+            <Link to={routes.accessibility} className="hover:text-gray-300 transition-colors">
+              {t('legal.accessibility.title')}
+            </Link>
+            <Link to={routes.aiUse} className="hover:text-gray-300 transition-colors">
+              {t('legal.aiUse.title')}
+            </Link>
+            {STATUS_PAGE_URL && (
+              <a
+                href={STATUS_PAGE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-gray-300 transition-colors"
+              >
+                {t('landing.home.footerStatus')}
+              </a>
+            )}
             <span>{t('landing.home.footerMade')}</span>
           </div>
         </div>
@@ -734,6 +764,11 @@ const Shell = ({
   React.useEffect(() => {
     if (!location.hash) window.scrollTo(0, 0);
   }, [location.pathname, location.hash]);
+
+  // Ziyaret sayımı yalnızca herkese açık sayfalarda ve sahibi açtıysa (KARAR-MKT-3).
+  React.useEffect(() => {
+    countPageView();
+  }, [location.pathname]);
 
   return (
     // "Hareketi azalt" seçili sistemlerde kayma animasyonları kapanır, yalnızca

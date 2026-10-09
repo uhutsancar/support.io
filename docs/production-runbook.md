@@ -13,7 +13,9 @@ Files on the server, in `/opt/supportio`:
 
 ```text
 docker-compose.prod.yml   Caddyfile.prod   .env.production (chmod 600)
+caddy/tls.d/  caddy/origin/   (only with a Cloudflare Origin CA certificate)
 scripts/deploy.sh  rollback.sh  smoke.sh  backup-postgres.sh  restore-postgres.sh
+        bootstrap-server.sh  ufw-cloudflare.sh
 ```
 
 Steps marked **[you]** need an account, a payment or a decision only the
@@ -24,57 +26,106 @@ owner can make; nothing in the repository does them.
 ## 1. One-time server setup
 
 1. **[you]** Rent a VPS: Ubuntu 24.04, 2 vCPU / 4 GB is enough for the first
-   customers (4 vCPU / 8 GB if staging shares the machine). Note its IP.
-2. Log in as root once, then:
+   customers (4 vCPU / 8 GB if staging shares the machine). Turn on disk
+   encryption if the provider offers it. Note its IP.
+2. Copy the repository's `scripts/` to the server, log in as root once and run
 
    ```bash
-   adduser deploy && usermod -aG sudo deploy
-   mkdir -p /home/deploy/.ssh && cp ~/.ssh/authorized_keys /home/deploy/.ssh/
-   chown -R deploy:deploy /home/deploy/.ssh
-   timedatectl set-timezone UTC
-   apt update && apt -y upgrade && apt -y install unattended-upgrades ufw rclone age curl
+   ./scripts/bootstrap-server.sh
    ```
 
-3. After logging in as `deploy` with the key works, in `/etc/ssh/sshd_config`:
-   `PermitRootLogin no`, `PasswordAuthentication no`, then `systemctl restart ssh`.
-4. Firewall — only SSH, HTTP and HTTPS:
-
-   ```bash
-   ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw enable
-   ```
+   It is safe to run again (plan v10 INF-02). It creates the `deploy` user
+   with root's SSH key, sets up automatic security updates with reboots only
+   on Sunday 04:00 UTC, fail2ban for SSH, chrony, SSH with keys only and no
+   root login, UFW (SSH, HTTP, HTTPS), Docker Engine with the Compose plugin
+   and the daemon settings (live restore, rotated logs, no userland proxy, no
+   new privileges), a 2 GB swap file, `/opt/supportio` owned by `deploy`, and
+   the cron jobs — backup 03:00, watchdog every 5 minutes, log shipping
+   00:15 (UTC) — with their logs in `/var/log/supportio`, rotated weekly.
 
    Docker publishes ports past UFW, which is why PostgreSQL and Redis have no
    `ports:` in the compose file. Never add them.
-5. Docker Engine and the Compose plugin from Docker's apt repository
-   (docs.docker.com/engine/install/ubuntu), then `usermod -aG docker deploy`.
-6. `sudo mkdir -p /opt/supportio && sudo chown deploy: /opt/supportio`, copy
-   `docker-compose.prod.yml`, `Caddyfile.prod` and `scripts/` there.
-7. `cp .env.production.example /opt/supportio/.env.production`, fill it in,
+3. Log in as `deploy` with the key from now on (check it works before closing
+   the root session).
+4. Once DNS is on Cloudflare: `sudo ./scripts/ufw-cloudflare.sh --apply`
+   (§2); with PITR, the WAL-G cron in disaster-recovery.md.
+5. Copy `docker-compose.prod.yml`, `Caddyfile.prod` and `scripts/` to
+   `/opt/supportio`.
+6. `cp .env.production.example /opt/supportio/.env.production`, fill it in,
    `chmod 600 .env.production`. The backend refuses to start and lists what is
    missing while anything required is empty or still the example.
-8. GHCR access for pulling the image: **[you]** create a GitHub token with
+7. GHCR access for pulling the image: **[you]** create a GitHub token with
    `read:packages`, then `docker login ghcr.io -u <github-user>`.
+8. Recommended once things run: SSH only over Tailscale or WireGuard
+   (`ufw delete allow 22/tcp`, then allow 22 on the tailnet interface only),
+   so port 22 is not on the internet at all.
 
 ## 2. Cloudflare and HTTPS
 
 1. **[you]** Add the domain to Cloudflare; point the registrar's nameservers
-   at it.
+   at it. Turn on DNSSEC (and add the DS record at the registrar).
 2. DNS: `A app <VPS IP>`, **DNS only (grey cloud)** for the first start.
 3. First start (section 3). Caddy obtains a Let's Encrypt certificate.
-4. Switch the record to **Proxied (orange cloud)**, then SSL/TLS →
-   **Full (strict)**. Never Flexible.
-5. Network → WebSockets: on. Cache Rules: bypass `/api/*` and `/socket.io/*`;
-   `/widget/v4/*` may be cached long.
-6. `Caddyfile.prod` trusts the visitor IP only from Cloudflare's ranges.
+4. Switch the record to **Proxied (orange cloud)**, then in SSL/TLS:
+   **Full (strict)** (never Flexible), Always Use HTTPS on, Minimum TLS
+   version 1.2, TLS 1.3 on.
+5. Network → WebSockets: on.
+6. Caching → Cache Rules: bypass `/api/*` and `/socket.io/*`; cache
+   `/widget/v4/*` and `/assets/*` at the edge (they are versioned).
+7. Security:
+   - WAF → the free Cloudflare managed ruleset on.
+   - Rate limiting rule: `/api/auth/*`, 20 requests a minute per IP, block
+     for a minute. The application has its own limits; this one stops a
+     flood before it reaches the server.
+   - Bot Fight Mode **off**: it challenges the widget's requests and sockets
+     on customers' sites. Sign-up is protected by Turnstile instead
+     (`TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET`).
+8. CAA records: `0 issue "letsencrypt.org"` and the CAs Cloudflare lists for
+   its edge certificates (SSL/TLS → Edge Certificates shows them).
+9. `Caddyfile.prod` trusts the visitor IP only from Cloudflare's ranges.
    Re-check https://www.cloudflare.com/ips/ before each release and update
    `trusted_proxies` if they changed.
-7. HSTS is one day (`max-age=86400`). Raise it to a year only after a few
-   weeks of Full (strict) without trouble; `preload` only as a deliberate
-   decision.
+10. HSTS is one day (`max-age=86400`). Raise it to a year only after a few
+    weeks of Full (strict) without trouble; `preload` only as a deliberate
+    decision.
 
-Later, optionally: allow 80/443 only from Cloudflare's IPs. HTTP-01
-certificate renewal then fails — switch Caddy to the DNS-01 challenge or a
-Cloudflare Origin CA certificate first.
+### Origin lock: 80/443 from Cloudflare only
+
+Without it, anyone who learns the server's address can skip Cloudflare's WAF
+and rate limits. Let's Encrypt cannot renew once the ports are closed to it,
+so the certificate comes from Cloudflare first:
+
+1. **[you]** SSL/TLS → Origin Server → Create Certificate (RSA, the domain
+   and `*.domain`, 15 years). On the server:
+
+   ```bash
+   mkdir -p /opt/supportio/caddy/origin /opt/supportio/caddy/tls.d
+   # paste the certificate and the key
+   nano /opt/supportio/caddy/origin/origin.pem
+   nano /opt/supportio/caddy/origin/origin.key
+   chmod 600 /opt/supportio/caddy/origin/origin.key
+   echo 'tls /etc/caddy/origin/origin.pem /etc/caddy/origin/origin.key'      > /opt/supportio/caddy/tls.d/origin.caddy
+   docker compose --env-file .env.production -f docker-compose.prod.yml up -d proxy
+   ./scripts/smoke.sh https://<domain>
+   ```
+
+   The Origin CA certificate is trusted by Cloudflare only — fine, because
+   the record is proxied. Removing `origin.caddy` goes back to Let's Encrypt.
+2. Then:
+
+   ```bash
+   sudo ./scripts/ufw-cloudflare.sh --dry-run   # read what it will write
+   sudo ./scripts/ufw-cloudflare.sh --apply
+   ```
+
+   It allows 80/443 from Cloudflare's ranges in UFW and adds the same rule to
+   Docker's `DOCKER-USER` chain (Docker's published ports bypass UFW).
+3. Test from a machine outside Cloudflare:
+   `curl -m 5 -k https://<server IP>/health` must time out;
+   `curl https://<domain>/health` must answer `{"status":"ok"}`;
+   `sudo iptables -L DOCKER-USER -n -v` shows the drop rule counting.
+   Undo with `--revert`. Re-run `--apply` when Cloudflare's ranges change.
+4. Later (P2): Authenticated Origin Pulls (mTLS between Cloudflare and Caddy).
 
 ## 3. First start
 
@@ -89,7 +140,7 @@ sign-up page. To give an organization a plan by hand during the beta (it
 writes a PLAN_CHANGED audit row):
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml   exec backend npm run plan:set:prod -- owner@example.com ENTERPRISE
+docker compose --env-file .env.production -f docker-compose.prod.yml   exec backend node dist/cli/updatePlan.js owner@example.com ENTERPRISE
 ```
 
 ## 4. Deploy and rollback
@@ -123,17 +174,17 @@ Smoke test on its own: `./scripts/smoke.sh https://app.example.com`.
 - **[you]** `age-keygen -o supportio-backup.key` on your own computer; put
   the public key in `BACKUP_AGE_RECIPIENT`, keep the private key off the
   server (password manager).
-- Cron, nightly at 03:00 UTC:
-
-  ```cron
-  0 3 * * * /opt/supportio/scripts/backup-postgres.sh >> /var/log/supportio-backup.log 2>&1
-  ```
+- Nightly at 03:00 UTC from `/etc/cron.d/supportio` (written by
+  bootstrap-server.sh, §1); its log is `/var/log/supportio/backup.log`.
 
   Set `BACKUP_PING_URL` (healthchecks.io or similar) to hear about a night
   that did not run.
 - With `UPLOAD_STORAGE=local`, the `uploads_data` volume needs backing up too.
 
 ## 6. Restore
+
+A moment in time (WAL-G), the burned-server drill and the targets are in
+[disaster-recovery.md](disaster-recovery.md). The nightly dump:
 
 Once a month, prove the backups work:
 
@@ -143,7 +194,14 @@ BACKUP_AGE_IDENTITY=~/supportio-backup.key ./scripts/restore-postgres.sh /tmp/su
 ```
 
 It restores into a scratch database, prints the latest migration and row
-counts, and drops it. To replace the live database (an incident only):
+counts, fails if the migration is not the live one, and drops it.
+
+The same check runs **every Sunday by itself**: `backup-postgres.sh`
+restores the night's plain dump into a scratch database before encrypting it
+(`BACKUP_VERIFY=weekly`; `always` or `off` also work), records the time in
+`/var/lib/supportio/status/backup-verify-last-success` and pings
+`BACKUP_VERIFY_PING_URL`. The watchdog alarms when no restore test has passed
+for 8 days. The private key never has to be on the server for it. To replace the live database (an incident only):
 `... restore-postgres.sh <file> --into-production` — it stops the backend and
 asks for the database name.
 
@@ -159,26 +217,45 @@ asks for the database name.
    `subscription.*` (created, activated, updated, canceled, past_due, paused,
    resumed, trialing). Copy its secret key.
 4. Fill `PADDLE_*` in `.env.production`, set `BILLING_ENABLED=true`, deploy.
-5. Sandbox acceptance: buy Pro with a test card, see the plan change on the
-   billing page; cancel from the customer portal; replay an event from the
-   Paddle dashboard (it must be a no-op).
+5. Sandbox acceptance: every scenario in `docs/billing-acceptance.md`
+   (purchase, plan changes and the downgrade on-hold rules, failed payment,
+   cancellation, replay, bad signature, portal, who sends which mail).
 6. Live: repeat 1–3 in the live account, `PADDLE_ENV=production`.
 
 **Troubleshooting webhooks** (`docker compose … logs backend | grep billing`):
 
 | Symptom | Meaning |
 |---|---|
-| 400 in Paddle's delivery log | Signature rejected: wrong `PADDLE_WEBHOOK_SECRET`, or the server clock is off by more than a few seconds (`timedatectl`). |
+| 400 in Paddle's delivery log | Signature rejected (`paddle webhook rejected` in the log, `supportio_billing_webhook_rejected_total` up): wrong `PADDLE_WEBHOOK_SECRET`, or the server clock is off by more than a few seconds (`timedatectl`). |
 | 503 | `PADDLE_WEBHOOK_SECRET` is empty on the server. |
 | `…: ignored` | The event is not about a subscription, the price id is not one of `PADDLE_PRICE_*`, or the checkout reference did not match (not started from the panel). |
 | `…: stale` | An older event arrived after a newer one; correctly not applied. |
 | `…: duplicate` | Paddle retried an event already applied. |
 | 500 | The database write failed; Paddle retries by itself. |
+| `paddle price differs from domain/plans.ts` | A `PADDLE_PRICE_*` amount was changed in Paddle; the pricing page already shows Paddle's figure. Bring `domain/plans.ts` in line in the next release. |
 
 ## 8. Rotating secrets
 
-- `JWT_SECRET`: change it and deploy. Every session, widget session and
-  unfinished checkout reference becomes invalid; users sign in again.
+- `JWT_SECRET` — without signing anybody out (plan v10 SEC-18):
+  1. In `.env.production` set `JWT_SECRET_PREVIOUS` to the current value
+     and `JWT_SECRET` to a new one (`openssl rand -hex 48`). Deploy.
+     Everything signed or sealed with the old secret is still accepted —
+     panel and widget sessions, e-mail links, attachment links, checkout
+     references, IP blocks, sealed site and authenticator secrets — and
+     everything new uses the new one.
+  2. `docker compose -f docker-compose.prod.yml exec backend npm run
+     secrets:rotate:prod -- --dry-run`, then without `--dry-run`. It
+     re-seals every stored secret under the new key and prints how many
+     accounts still hold recovery codes from the old key; those keep working
+     until step 3, so ask those users to create new codes (Settings →
+     Security).
+  3. After 7 days (the longest session), empty `JWT_SECRET_PREVIOUS` and
+     deploy. Old sessions and links now fail; IP-based visitor blocks made
+     before the rotation stop matching by address (they still match by
+     visitor id).
+  If the old secret leaked, skip the overlap: set the new `JWT_SECRET`
+  with `JWT_SECRET_PREVIOUS` empty. Everybody signs in again, sealed
+  secrets read as "not configured" and owners generate new ones.
 - `DB_PASSWORD`: `ALTER USER support_user PASSWORD '…'` in psql, then the
   same value in `.env.production`, then `docker compose … up -d backend`.
 - Paddle keys and webhook secret: create the new one in Paddle, update
@@ -196,13 +273,15 @@ $C ps                                  # what is running
 $C logs -f --tail 200 backend          # application log
 curl -s https://app.example.com/ready  # {"status":"ready"}
 $C exec postgres psql -U support_user supportchat   # database shell
-$C exec backend npm run db:migrate:prod             # migrations by hand
+$C exec backend node dist/db/migrate.js               # migrations by hand
 df -h /var/lib/docker                  # disk (alert at 80%)
 
 # support operations (each writes an audit row where it changes something)
-$C exec backend npm run org:list:prod -- acme                 # find a workspace
-$C exec backend npm run plan:set:prod -- owner@x.com PRO      # beta / support case
-$C exec backend npm run site:disable:prod -- <site key>       # widget off (--enable undoes)
+$C exec backend node dist/cli/listOrganizations.js acme       # find a workspace
+$C exec backend node dist/cli/orgStats.js 30                   # product numbers, last 30 days
+$C exec backend node dist/cli/updatePlan.js owner@x.com PRO    # beta / support case
+$C exec backend node dist/cli/disableSite.js <site key> --reason "phishing"  # block for abuse (--enable lifts)
+$C exec backend node dist/cli/assistantKill.js on               # AI assistant off everywhere (off / status)
 ```
 
 Logs rotate at 20 MB × 5 files per container. Do not put
@@ -234,22 +313,89 @@ $C logs --since 1m backend | grep -i redis     # "Redis is back"
 
 ## 10. Staging
 
-Same VPS, separate Compose project and data:
+A **separate small server** (plan v10 INF-03): same image, same scripts, its
+own secrets and data, so a mistake there never touches customers.
 
-```bash
-mkdir -p /opt/supportio-staging && cd /opt/supportio-staging
-# its own .env.production with APP_DOMAIN=staging.example.com,
-# its own DB_PASSWORD / JWT_SECRET, PADDLE_ENV=sandbox
-docker compose -p supportio-staging --env-file .env.production -f docker-compose.prod.yml up -d
-```
+1. Set it up exactly like production (§1, §3) with `APP_DOMAIN=staging.<domain>`.
+2. Its `.env.production` differs in:
 
-Caddy on the production project can only bind 80/443 once: either run
-staging on another machine, or add a `staging.example.com` site block to
-`Caddyfile.prod` pointing at the staging backend over a shared network.
+   | Variable | Staging |
+   |---|---|
+   | `DB_PASSWORD`, `JWT_SECRET`, `REDIS_PASSWORD`, all keys | its own, never production's |
+   | `PADDLE_ENV` | `sandbox` (sandbox keys, prices, webhook secret) |
+   | `MAIL_ALLOWLIST_DOMAINS` | your own domains, e.g. `ourcompany.com`: mail to anyone else is withheld and logged, never sent |
+   | `SITE_NOINDEX` | `true`: robots.txt disallows everything, every page says noindex |
+   | `GEMINI_TIER` | `free` is fine |
+
+3. Basic auth for everything but the widget, the health checks and Paddle's
+   webhook: copy `caddy/examples/staging-auth.caddy` to
+   `/opt/supportio/caddy/site.d/`, put a password hash in it
+   (`docker run --rm caddy:2.11.7-alpine caddy hash-password --plaintext '…'`),
+   `$C restart caddy`. Production's `caddy/site.d` stays empty.
+
+### Deploying from GitHub
+
+Every image built from main goes to staging by itself; production goes only
+when you start it and approve it (`.github/workflows/deploy.yml`).
+
+1. On each server, a deploy key that can only run the deploy script — in
+   `/home/deploy/.ssh/authorized_keys`:
+
+   ```
+   command="/opt/supportio/scripts/deploy-forced.sh",restrict ssh-ed25519 AAAA… ci-deploy-staging
+   ```
+
+   It accepts `deploy ghcr.io/<owner>/supportio:sha-<commit>` and nothing
+   else: no shell, no other command, no forwarding.
+2. **[you]** GitHub → Settings → Environments: `staging` and `production`,
+   each with the variable `DEPLOY_HOST` and the secrets `DEPLOY_SSH_KEY`
+   (that environment's private key) and `DEPLOY_KNOWN_HOSTS`
+   (`ssh-keyscan <host>`). On `production`, add yourself under
+   *Required reviewers*.
+3. Repository variable `STAGING_DEPLOY=true` turns on the automatic staging
+   deploy. Production: Actions → Deploy → Run workflow → production
+   (optionally an older `sha-…` tag to roll forward to), then approve.
 
 ## 11. Scaling later (not needed now)
 
-One VPS → a bigger VPS → PostgreSQL on its own host → several backend
-processes (the Redis adapter is already there; set `SLA_SWEEPER=off` on all
-but one, run migrations as a single job, sticky sessions if long-polling is
-on) → managed Redis.
+**When.** Not before the staging measurements (docs/load-test.md) say so,
+and then when either holds for a week of normal traffic:
+
+- CPU of the server above 60 % most of the day, or
+- message acknowledgement p95 above 500 ms
+  (`supportio_operation_seconds{operation="message.insert"}` plus the
+  socket round trip), or event-loop p99 above 100 ms
+  (`supportio_event_loop_delay_seconds`).
+
+**In this order**, each step only when the previous one is used up:
+
+1. **A bigger VPS** (vertical): 4 vCPU / 8 GB. Raise `PG_SHARED_BUFFERS`
+   to 1 GB and `PG_EFFECTIVE_CACHE_SIZE` to 3 GB, `BACKEND_CPUS` to 3.
+   No code change.
+2. **PostgreSQL on its own** — a managed service, chosen with the data
+   residency decision (Türkiye or EU; KARAR-INF-1). `DB_HOST`, `DB_SSL=true`,
+   restore the latest backup there (§6), switch, keep the old one a week.
+3. **Two backend processes** on the same or a second machine: the Redis
+   adapter already carries broadcasts between them. `SLA_SWEEPER=off` on all
+   but one; migrations stay a single job in `deploy.sh`; sticky sessions
+   only if long-polling is used (the widget prefers websockets). Caddy:
+   `reverse_proxy backend1:3000 backend2:3000 { lb_policy least_conn;
+   health_uri /ready }` — this also gives deploys without downtime (one
+   process at a time).
+4. **Managed Redis** once two processes depend on it (with a password and
+   TLS).
+
+Connection budget at every step: `DB_POOL_MAX` × backend processes + the
+backup + a psql session ≤ `max_connections` (50 now: 20 + spare).
+
+**Deploys without the 10–15 s gap (plan v10 INF-06, KARAR-INF-2).** Today a
+deploy restarts the one backend: sockets drop and reconnect on their own
+(jittered 1–30 s, messages queued and resent once — PERF-06), the panel
+shows "reconnecting", nothing is lost. Decision: **after the launch**, as
+step 3 above brings it for free. The shape, when it comes: a second service
+`backend-next` in the compose file; `deploy.sh` starts it on the new image,
+waits for its `/ready`, adds it to Caddy's upstreams (`reverse_proxy
+backend:3000 backend-next:3000 { health_uri /ready }`), stops the old one,
+and swaps the names for the next deploy. Migrations keep their rule — never
+breaking the previous release — which is what makes two versions side by
+side safe.

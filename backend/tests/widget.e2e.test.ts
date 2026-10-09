@@ -25,7 +25,7 @@ import { open, seal } from '../src/config/secretBox';
 import { userHashFor, verifiedIdentity } from '../src/services/identity';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor, widgetSession, widgetToken } from './helpers/widget';
-import { setPlan, verifyEmail } from './helpers/accounts';
+import { setPlan, signUp } from './helpers/accounts';
 
 /** How one request to the running API is made. */
 interface ApiOptions {
@@ -84,21 +84,16 @@ async function api(
 
 async function createTenant(label: string) {
   const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-  const reg = await api('/api/auth/register', {
-    method: 'POST',
-    body: {
-      name: `${label} owner`,
-      email: `${label}${stamp}@widget.test`,
-      password: 'E2ePassw0rd!',
-      companyName: `${label} co`
-    }
+  const reg = await signUp({
+    name: `${label} owner`,
+    email: `${label}${stamp}@widget.test`,
+    password: 'E2ePassw0rd!',
+    companyName: `${label} co`
   });
   assert.ok(
     reg.status === 200 || reg.status === 201,
     `register failed: ${JSON.stringify(reg.body)}`
   );
-  // The widget goes live only for a verified owner.
-  await verifyEmail(`${label}${stamp}@widget.test`);
   // This suite exercises paid features (members, departments, rules), not the
   // plan limits themselves; tests/planLimits.e2e.test.ts covers those.
   await setPlan(reg.body.user.organizationId, 'PRO');
@@ -153,10 +148,12 @@ test('widget.js is served with the right type, CORS and cache headers', async ()
   );
 });
 
-test('the pinned widget path is cacheable as immutable', async () => {
+test('the v4 path is revalidated, not frozen for a year', async () => {
+  // Its content changes with each deploy, so it is not immutable; the
+  // content-hashed name is (tests/widgetDelivery.e2e.test.ts, PERF-02).
   const res = await fetch(`${BASE}/widget/v4/widget.js`);
   assert.equal(res.status, 200);
-  assert.match(res.headers.get('cache-control') || '', /immutable/);
+  assert.doesNotMatch(res.headers.get('cache-control') || '', /immutable/);
 
   // v3 spoke a protocol the server no longer accepts; its pinned path now
   // serves the current runtime with a short cache instead of a 404.

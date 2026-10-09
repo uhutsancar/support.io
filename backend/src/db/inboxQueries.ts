@@ -27,6 +27,13 @@ const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
 
+// Ertelenmis (snooze) bir konusma, zamani gelene kadar gelen kutusunda
+// gorunmez; "Ertelenenler" gorunumu yalnizca onlari gosterir (PRD-07).
+// Zamani gecmis bir erteleme, tarayici sifirlamadan once de uyanik sayilir.
+const AWAKE = '(c.snoozed_until IS NULL OR c.snoozed_until <= now())';
+const SNOOZED = 'c.snoozed_until > now()';
+const MAX_TAG_LENGTH = 32;
+
 // Arama metni SQL'e hicbir zaman metin olarak girmez; yalnizca parametre
 // olarak gecer. Yine de ILIKE kaliplarindaki joker karakterler kacisilir,
 // aksi halde "%" yazan bir kullanici butun tabloyu tarar.
@@ -56,6 +63,13 @@ export interface InboxScope {
   search?: string | null;
   /** Conversation ids whose messages matched the search text. */
   searchMessageMatches?: string[] | null;
+  /** Only conversations carrying this tag. */
+  tag?: string | null;
+  /**
+   * Snoozed conversations: hidden by default, 'only' for the snoozed view,
+   * 'all' for the counters, which count both.
+   */
+  snoozed?: 'hide' | 'only' | 'all' | null;
 }
 
 /** A page request: a scope plus where to continue from. */
@@ -74,10 +88,20 @@ function buildScope({
   unassigned,
   priority,
   search,
-  searchMessageMatches
+  searchMessageMatches,
+  tag,
+  snoozed
 }: InboxScope): { where: string; params: unknown[] } {
   const params: unknown[] = [organizationId, siteId];
   const clauses = ['c.organization_id = $1', 'c.site_id = $2'];
+
+  if (snoozed === 'only') clauses.push(SNOOZED);
+  else if (snoozed !== 'all') clauses.push(AWAKE);
+
+  if (tag && tag.length <= MAX_TAG_LENGTH) {
+    params.push([tag]);
+    clauses.push(`c.tags @> $${params.length}::text[]`);
+  }
 
   if (status && STATUSES.has(status)) {
     params.push(status);
@@ -143,6 +167,12 @@ function buildScope({
 // eksiksizdir.
 const MESSAGE_MATCH_LIMIT = Number(process.env.INBOX_MESSAGE_MATCH_LIMIT) || 1000;
 
+//
+// Iki yoldan eslesir: kelime olarak, Turkce kok bulmayla ("siparisim" yazan,
+// "siparisimi" diyen mesaji bulur; 0017'deki GIN indeksi) ve metin parcasi
+// olarak (siparis numarasi, e-posta parcasi; trigram indeksi). Aranan metin
+// websearch_to_tsquery'ye verilir: kullanicinin yazdigi tirnak, eksi ya da
+// "or" sozdizimi hata uretmez.
 async function messageMatchesForSearch(
   siteId: string,
   search: string | null | undefined
@@ -153,8 +183,10 @@ async function messageMatchesForSearch(
        FROM messages m
        JOIN conversations c ON c.id = m.conversation_id AND c.site_id = $1
       WHERE m.content ILIKE $2
+         OR to_tsvector('turkish'::regconfig, coalesce(m.content, ''))
+            @@ websearch_to_tsquery('turkish'::regconfig, $4)
       LIMIT $3`,
-    [siteId, likePattern(search), MESSAGE_MATCH_LIMIT]
+    [siteId, likePattern(search), MESSAGE_MATCH_LIMIT, search]
   );
   return rows.map((row) => row.id);
 }
@@ -226,7 +258,8 @@ function countsCacheKey(options: InboxScope): string {
     options.assignedAgentId ?? null,
     Boolean(options.unassigned),
     options.search ?? '',
-    options.searchMessageMatches?.length ?? 0
+    options.searchMessageMatches?.length ?? 0,
+    options.tag ?? ''
   ]);
   return `inbox:counts:${createHash('sha1').update(shape).digest('base64url')}`;
 }
@@ -234,17 +267,19 @@ function countsCacheKey(options: InboxScope): string {
 async function computeConversationCounts(options: InboxScope) {
   // Sayimlar durum seritleri icin uretildiginden durumun kendisi disarida
   // birakilir; aksi halde her serit yalnizca kendi sayisini gosterirdi.
-  const { where, params } = buildScope({ ...options, status: null });
+  // Ertelenenler ayri sayilir: durum seritleri onlari gostermez.
+  const { where, params } = buildScope({ ...options, status: null, snoozed: 'all' });
   const { rows } = await query(
     `SELECT
-       count(*)::int AS total,
-       count(*) FILTER (WHERE c.status = 'open')::int AS open,
-       count(*) FILTER (WHERE c.status = 'assigned')::int AS assigned,
-       count(*) FILTER (WHERE c.status = 'pending')::int AS pending,
-       count(*) FILTER (WHERE c.status = 'resolved')::int AS resolved,
-       count(*) FILTER (WHERE c.status = 'closed')::int AS closed,
-       count(*) FILTER (WHERE c.assigned_agent_id IS NULL
-                          AND c.status IN ('open', 'unassigned'))::int AS unassigned
+       count(*) FILTER (WHERE ${AWAKE})::int AS total,
+       count(*) FILTER (WHERE ${AWAKE} AND c.status = 'open')::int AS open,
+       count(*) FILTER (WHERE ${AWAKE} AND c.status = 'assigned')::int AS assigned,
+       count(*) FILTER (WHERE ${AWAKE} AND c.status = 'pending')::int AS pending,
+       count(*) FILTER (WHERE ${AWAKE} AND c.status = 'resolved')::int AS resolved,
+       count(*) FILTER (WHERE ${AWAKE} AND c.status = 'closed')::int AS closed,
+       count(*) FILTER (WHERE ${AWAKE} AND c.assigned_agent_id IS NULL
+                          AND c.status IN ('open', 'unassigned'))::int AS unassigned,
+       count(*) FILTER (WHERE ${SNOOZED})::int AS snoozed
      FROM conversations c
     WHERE ${where}`,
     params

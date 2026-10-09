@@ -7,6 +7,7 @@
 // "may this socket act on this row" is decided, so a handler is left with just
 // its own logic.
 
+import { captureError } from '../services/errorReporting';
 import Conversation from '../models/Conversation';
 import Site from '../models/Site';
 import TeamChat from '../models/TeamChat';
@@ -87,6 +88,7 @@ export class SocketContext {
    */
   fail(socket: Socket, error: unknown): void {
     console.error('[socket]', error);
+    captureError(error, { source: 'socket' });
     socket.emit('error', { message: 'Request failed' });
   }
 
@@ -224,6 +226,9 @@ export class SocketContext {
       if (!isAcceptableAttachmentUrl(String(fileData.url))) return null;
 
       return {
+        // The storage key; a private attachment is shown through a link
+        // signed from it whenever the message is read (models/Message.ts).
+        key: String(fileData.filename).slice(0, 500),
         filename: String(fileData.filename).slice(0, 500),
         originalName: String(fileData.originalName || 'attachment').slice(0, 255),
         mimeType: String(fileData.mimeType || 'application/octet-stream').slice(0, 150),

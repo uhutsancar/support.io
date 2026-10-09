@@ -8,6 +8,7 @@
 import type { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { describeError } from './errors';
 import { logger } from '../config/logger';
+import { captureError } from '../services/errorReporting';
 
 /** Logs the cause once, with the request that produced it (path without its query). */
 function logUnexpected(req: Request, error: unknown): void {
@@ -29,7 +30,10 @@ export const errorHandler: ErrorRequestHandler = (
   if (res.headersSent) return next(error);
 
   const { status, body, unexpected } = describeError(error);
-  if (unexpected) logUnexpected(req, error);
+  if (unexpected) {
+    logUnexpected(req, error);
+    captureError(error, { source: 'api', requestId: req.id, method: req.method, path: req.path });
+  }
 
   // The request id lets a reported failure be found in the log.
   res.status(status).json(unexpected && req.id ? { ...body, requestId: req.id } : body);

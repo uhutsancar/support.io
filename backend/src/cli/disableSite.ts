@@ -1,27 +1,44 @@
-// Switches a site's widget off (or back on) by hand: abuse, a support case
-// (plan (6) §46). A disabled site's widget gets no session; the panel and the
-// conversation history stay.
-//   development:  npm run site:disable -- <site key or id> [--enable]
-//   production:   docker compose ... exec backend npm run site:disable:prod -- <site> [--enable]
+// Blocks a site's widget for abuse — phishing, fraud, spam (plan v10 LEG-05)
+// — or lifts the block. A blocked site's widget gets no session and a page
+// left open can send nothing more; the owner can read the history and delete
+// the site but cannot switch it back on: only this command does
+// (sites.blocked_at, migration 0016). The reason stays in the support trail
+// and is never shown to the owner.
+//   development:  npm run site:disable -- <site key or id> --reason "phishing" [--enable]
+//   production:   docker compose ... exec backend node dist/cli/disableSite.js <site> --reason "…" [--enable]
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../config/env';
 import { pool, query } from '../db/pool';
 import { generateId } from '../db/objectId';
 
+function option(name: string): string | null {
+  const index = process.argv.indexOf(name);
+  const value = index > 0 ? process.argv[index + 1] : undefined;
+  return value && !value.startsWith('--') ? value.trim() : null;
+}
+
 async function disableSite() {
   const ref = (process.argv[2] || '').trim();
   const enable = process.argv.includes('--enable');
-  if (!ref || ref.startsWith('--')) {
-    console.error('Usage: npm run site:disable -- <site key or id> [--enable]');
+  const reason = option('--reason');
+  if (!ref || ref.startsWith('--') || (!enable && !reason)) {
+    console.error(
+      'Usage: npm run site:disable -- <site key or id> --reason "why"   (block)\n' +
+        '       npm run site:disable -- <site key or id> --enable          (lift the block)'
+    );
     process.exitCode = 1;
     return;
   }
 
   const { rows } = await query<{ id: string; name: string; organization_id: string }>(
-    `UPDATE sites SET is_active = $2, updated_at = now()
-      WHERE id = $1 OR site_key = $1
-      RETURNING id, name, organization_id`,
-    [ref, enable]
+    enable
+      ? `UPDATE sites SET blocked_at = NULL, blocked_reason = NULL, updated_at = now()
+          WHERE id = $1 OR site_key = $1
+          RETURNING id, name, organization_id`
+      : `UPDATE sites SET blocked_at = now(), blocked_reason = $2, updated_at = now()
+          WHERE id = $1 OR site_key = $1
+          RETURNING id, name, organization_id`,
+    enable ? [ref] : [ref, reason]
   );
   const site = rows[0];
   if (!site) {
@@ -38,14 +55,20 @@ async function disableSite() {
       site.organization_id,
       site.id,
       JSON.stringify({
-        fields: ['isActive'],
-        isActive: enable,
+        fields: ['blocked'],
+        blocked: !enable,
+        reason: enable ? null : reason,
         source: 'script',
         operator: process.env.USER || process.env.USERNAME || null
       })
     ]
   );
-  console.log(`Site "${site.name}" (${site.id}) ${enable ? 'enabled' : 'disabled'}`);
+  console.log(`Site "${site.name}" (${site.id}) ${enable ? 'unblocked' : 'blocked'}`);
+  if (!enable) {
+    console.log(
+      'Visitors with the chat open are refused from their next message; new page loads get no widget.'
+    );
+  }
 }
 
 disableSite()

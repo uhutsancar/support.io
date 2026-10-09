@@ -21,7 +21,6 @@ import { plainString } from '../middleware/sanitize';
 import { asyncHandler, badRequest, notFound } from '../http';
 import Site from '../models/Site';
 import WidgetConfig from '../models/WidgetConfig';
-import FAQ from '../models/FAQ';
 import Team from '../models/Team';
 import User from '../models/User';
 import { isProduction } from '../config/env';
@@ -31,19 +30,34 @@ import {
   newWidgetSessionId,
   renewableWidgetSession,
   signWidgetSession,
-  siteKeyVersion
+  siteKeyMatches,
+  siteKeyVersion,
+  verifyVisitorLink
 } from '../config/tokens';
+import Conversation from '../models/Conversation';
+import { chatSettings, publicChatSettings } from '../services/chatSettings';
+import { recordRating } from '../services/ratings';
+import { sendActivation } from '../services/activation';
+import { createLimiter } from '../middleware/rateLimit';
+import { HttpError } from '../http';
 import { requestOrigin, siteAcceptsOrigin } from '../config/siteOrigins';
 import { originRefused, requireWidgetSession } from '../middleware/widgetSession';
 import { widgetSessionLimiter } from '../middleware/rateLimit';
 import { organizationVerified } from '../services/verification';
-import { limitsFor } from '../services/entitlements';
 import { forbidden } from '../http';
 import { userHashFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
-import { assistantActive } from '../services/assistant';
+import { assistantActiveFor } from '../services/assistant';
+import { visitorCountry } from '../services/assistant/region';
+import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
+import { siteBundle } from '../services/widgetBundle';
+import Visitor from '../models/Visitor';
+import { ACTIVE_CONVERSATION_STATUSES } from '../domain';
+import { ioFrom, siteRoom } from '../realtime';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
+import { helpCenterUrl } from '../services/helpCenter';
+import { ownWidgetText } from '../domain/widgetTexts';
 import type { SiteDoc } from '../models/Site';
 import type { SiteWidgetSettings } from '../domain';
 
@@ -55,6 +69,9 @@ const widgetNotFound = () => notFound('Widget', 'WIDGET_NOT_FOUND');
 // SDK surumu. Widget calisma zamani kendi surumunu gonderir; uyusmazlik
 // panelde "eski surum" uyarisi gostermeyi mumkun kilar.
 const WIDGET_VERSION = '4.0.0';
+
+/** The languages the widget speaks (src/widget/locales); the panel offers these. */
+export const WIDGET_LANGUAGES = ['auto', 'tr', 'en', 'de', 'fr', 'es', 'nl', 'ru', 'ar'];
 const API_VERSION = '1';
 
 const DEFAULTS = {
@@ -107,7 +124,11 @@ const DEFAULTS = {
     hideOnPages: [],
     showUnreadBadge: true,
     enableSound: true,
-    enableNotifications: true
+    enableNotifications: true,
+    titleAlert: true,
+    hideOnMobile: false,
+    /** 'auto' follows the visitor; a code fixes the widget's language (PRD-16). */
+    language: 'auto'
   },
   typography: { fontFamily: '', fontSize: 'medium', fontWeight: 'normal' },
   advanced: { customCSS: null, zIndex: 2147483000, animationSpeed: 'normal' }
@@ -141,6 +162,9 @@ function publicConfig(site: Doc<SiteDoc> | SiteDoc, saved: Record<string, any> |
   // yerellestirilmis varsayilanini kullanir.
   if (!messages.welcomeMessage) messages.welcomeMessage = ws.welcomeMessage || '';
   if (!messages.placeholderText) messages.placeholderText = ws.placeholderText || '';
+  // Our stock words are said in the visitor's language by the widget itself.
+  messages.welcomeMessage = ownWidgetText(messages.welcomeMessage);
+  messages.placeholderText = ownWidgetText(messages.placeholderText);
 
   const button = merge(DEFAULTS.button, cfg.button);
   if (!(cfg.button && cfg.button.position) && ws.position) button.position = ws.position;
@@ -153,6 +177,7 @@ function publicConfig(site: Doc<SiteDoc> | SiteDoc, saved: Record<string, any> |
   }
 
   const behavior = merge(DEFAULTS.behavior, cfg.behavior);
+  if (!WIDGET_LANGUAGES.includes(behavior.language)) behavior.language = 'auto';
   if (!(cfg.behavior && cfg.behavior.autoOpen !== undefined) && ws.autoOpen !== undefined) {
     behavior.autoOpen = ws.autoOpen;
     behavior.autoOpenDelay = ws.autoOpenDelay || behavior.autoOpenDelay;
@@ -223,9 +248,10 @@ router.post(
     if (!siteKey) throw badRequest('siteKey is required');
 
     const site = await Site.findOne({ siteKey, isActive: true });
-    // An invalid key and a disabled site answer identically, so probing keys
-    // cannot reveal "this site exists but is switched off".
-    if (!site) throw widgetNotFound();
+    // An invalid key, a disabled site and a site over the plan's limit after
+    // a downgrade (BIL-04) answer identically, so probing keys cannot reveal
+    // "this site exists but is switched off".
+    if (!site || site.suspendedAt || site.blockedAt) throw widgetNotFound();
 
     // The widget goes live once the organization's owner has verified their
     // address (plan §7.2); until then the panel works but no page does.
@@ -244,30 +270,64 @@ router.post(
     const keyVersion = siteKeyVersion(site.siteKey);
     const previous = renewableWidgetSession(req.body?.token);
     const continues =
-      previous !== null && previous.siteId === String(site._id) && previous.kv === keyVersion;
+      previous !== null &&
+      previous.siteId === String(site._id) &&
+      siteKeyMatches(site.siteKey, previous.kv);
+    // The link in a reply mail (PRD-01) brings the visitor back to their
+    // conversation, even from another browser: it names the visitor, signed.
+    const resumed = verifyVisitorLink('resume', req.body?.resumeToken);
+    const resumesHere = resumed !== null && resumed.siteId === String(site._id);
 
-    const visitorId = continues ? previous.visitorId : newVisitorId();
+    const visitorId = resumesHere
+      ? resumed.visitorId
+      : continues
+        ? previous.visitorId
+        : newVisitorId();
+
+    // A blocked visitor (SEC-09) gets no session — by their id, or by their
+    // address when the browser forgot the id. The look of the widget comes
+    // along, so it can still draw its bubble and say, politely, that the
+    // chat is not available.
+    if (await isBlocked({ siteId: String(site._id), visitorId, ip: req.ip })) {
+      const saved = await WidgetConfig.findOne({ siteId: site._id, isActive: true });
+      throw new HttpError(403, 'Chat is not available', VISITOR_BLOCKED, {
+        config: publicConfig(site, saved ? saved.toObject() : null)
+      });
+    }
+
     const { token, expiresAt } = signWidgetSession({
       siteId: String(site._id),
       visitorId,
-      sid: continues ? previous.sid : newWidgetSessionId(),
+      sid: continues && !resumesHere ? previous.sid : newWidgetSessionId(),
       kv: keyVersion
     });
 
-    const [saved, faqs, availability, plan] = await Promise.all([
-      WidgetConfig.findOne({ siteId: site._id, isActive: true }),
-      FAQ.find({ siteId: site._id, isActive: true }).sort({ order: 1 }).limit(50).lean(),
+    // The look, the FAQ list and the plan's branding change only when the
+    // owner edits them: kept for a minute in the shared cache (PERF-04).
+    const [bundle, availability, openConversation] = await Promise.all([
+      siteBundle(String(site._id), String(site.organizationId)),
       resolveAvailability(site),
-      limitsFor(String(site.organizationId))
+      // A returning visitor with a conversation still open connects at once,
+      // so a reply reaches them; everyone else only when they open the
+      // widget (PERF-02).
+      continues || resumesHere
+        ? Conversation.findOne({
+            siteId: site._id,
+            visitorId,
+            status: { $in: [...ACTIVE_CONVERSATION_STATUSES] }
+          })
+        : Promise.resolve(null)
     ]);
 
     res.json({
       token,
       // The free plan's widget shows "Powered by Support.io".
-      branding: plan.limits.branding,
+      branding: bundle.branding,
       expiresAt: expiresAt.toISOString(),
       visitorId,
       renewed: continues,
+      resumed: resumesHere,
+      conversationOpen: Boolean(openConversation),
       version: WIDGET_VERSION,
       apiVersion: API_VERSION,
       serverTime: new Date().toISOString(),
@@ -275,14 +335,20 @@ router.post(
       availability,
       // True when the site's FAQ assistant answers first; the widget then says
       // so and offers a way to a person. Nothing else about it is public.
-      assistant: assistantActive(site),
-      config: publicConfig(site, saved ? saved.toObject() : null),
-      faqs: (faqs || []).map((f) => ({
-        id: String(f._id),
-        question: f.question,
-        answer: f.answer,
-        category: f.category || null
-      }))
+      assistant: assistantActiveFor(site, visitorCountry(req.get('cf-ipcountry'))),
+      config: publicConfig(site, bundle.saved),
+      // Forms and ratings (services/chatSettings.ts): what the widget shows,
+      // nothing about who on the team gets mailed.
+      chat: publicChatSettings(chatSettings(site.chatSettings)),
+      faqs: bundle.faqs,
+      // The site's public help center, when the owner turned it on (PRD-10).
+      helpUrl: helpCenterUrl(
+        site,
+        String(process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(
+          /\/+$/,
+          ''
+        )
+      )
     });
   })
 );
@@ -319,8 +385,143 @@ router.post(
       sdkVersion: typeof sdkVersion === 'string' ? sdkVersion.slice(0, 20) : null
     };
     await site.save();
+    // The first sight of the widget on any page: tell the owner it is live.
+    if (!previous.verifiedAt) {
+      void sendActivation(String(site.organizationId), 'widget_live').catch(() => undefined);
+    }
 
     res.json({ ok: true, verifiedAt: site.installation.verifiedAt });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// POST /api/widget/presence   { currentPage, browser?, os?, referrer?, language? }
+//
+// The widget opens its socket only when the visitor opens it or has a
+// conversation going (PERF-02). Until then this keeps the panel's live
+// visitor list right: one small request when a page loads or changes, and
+// one every few minutes while the page is visible. It upserts the same
+// visitor record the socket join writes and tells the panel.
+// ---------------------------------------------------------------------------
+const bounded = (value: unknown, max: number): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null;
+
+router.post(
+  '/presence',
+  requireWidgetSession,
+  asyncHandler(async (req: Request, res: Response) => {
+    const site = req.site;
+    const body = (req.body || {}) as Record<string, unknown>;
+    const visitor = await Visitor.findOneAndUpdate(
+      { visitorId: req.widget.visitorId, siteId: site._id },
+      {
+        organizationId: site.organizationId,
+        ip: req.ip ?? null,
+        browser: bounded(body.browser, 100),
+        os: bounded(body.os, 100),
+        currentPage: bounded(body.currentPage, 2048) ?? '/',
+        referrer: bounded(body.referrer, 2048),
+        isActive: true,
+        lastActiveAt: new Date()
+      },
+      { new: true, upsert: true }
+    );
+    ioFrom(req)?.of('/admin').to(siteRoom(site._id)).emit('visitor-updated', visitor);
+    res.status(204).end();
+  })
+);
+
+// Links mailed to a visitor (plan v10 PRD-01, PRD-04). No session: the
+// signed token in the link is the proof, and it names one conversation.
+// ---------------------------------------------------------------------------
+
+const linkLimiter = createLimiter({
+  name: 'visitor-link',
+  code: 'TOO_MANY_REQUESTS',
+  message: 'Too many requests, please slow down.',
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.VISITOR_LINK_RATE_MAX) || 60
+});
+
+const page = (title: string, body: string) => `<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>${title}</title></head>
+<body style="margin:0;padding:48px 16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f6f7f9;color:#111827">
+<main style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:28px">
+<h1 style="font-size:20px;margin:0 0 12px">${title}</h1><p style="margin:0;line-height:1.5">${body}</p></main></body></html>`;
+
+// One click from the reply mail: no more e-mails about this conversation.
+router.get(
+  '/email-optout',
+  linkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const claims = verifyVisitorLink('email-optout', req.query.t);
+    res.set('Cache-Control', 'no-store');
+    if (!claims) {
+      res
+        .status(400)
+        .type('html')
+        .send(
+          page(
+            'Bağlantı geçersiz / Invalid link',
+            'Bu bağlantı geçersiz ya da süresi dolmuş. / This link is invalid or has expired.'
+          )
+        );
+      return;
+    }
+    await Conversation.updateOne(
+      { _id: claims.conversationId, siteId: claims.siteId, visitorId: claims.visitorId },
+      { $set: { emailRepliesOptOut: true } }
+    );
+    res
+      .type('html')
+      .send(
+        page(
+          'E-postalar durduruldu / E-mails stopped',
+          'Bu sohbetle ilgili size artık e-posta gönderilmeyecek. / You will get no more e-mails about this chat.'
+        )
+      );
+  })
+);
+
+// The rating page the CSAT mail opens (panel /rate) reads and writes here.
+router.get(
+  '/rating',
+  linkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const claims = verifyVisitorLink('csat', req.query.t);
+    if (!claims) throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
+    const [site, conversation] = await Promise.all([
+      Site.findById(claims.siteId).select('name chatSettings'),
+      Conversation.findOne({ _id: claims.conversationId, siteId: claims.siteId })
+    ]);
+    if (!site || !conversation) {
+      throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
+    }
+    res.set('Cache-Control', 'no-store').json({
+      site: site.name,
+      style: chatSettings(site.chatSettings).csat.style,
+      rated: Boolean(conversation.rating?.score)
+    });
+  })
+);
+
+router.post(
+  '/rating',
+  linkLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const claims = verifyVisitorLink('csat', req.body?.t);
+    if (!claims) throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
+    const rating = await recordRating(req.app.get('io'), {
+      conversationId: claims.conversationId,
+      siteId: claims.siteId,
+      visitorId: claims.visitorId,
+      score: req.body?.score,
+      feedback: req.body?.feedback,
+      channel: 'email'
+    });
+    res.json({ rating });
   })
 );
 

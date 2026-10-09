@@ -243,8 +243,14 @@ fs.writeFileSync(
   path.join(OUT, 'site.webmanifest'),
   JSON.stringify(
     {
+      // The panel installs as an app (plan v10 PRD-09): its own id and scope,
+      // opening on the dashboard.
+      id: '/dashboard',
       name: 'Support.io',
       short_name: 'Support.io',
+      description: 'Canlı destek gelen kutusu',
+      lang: 'tr',
+      dir: 'ltr',
       icons: [
         { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
         { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
@@ -252,6 +258,7 @@ fs.writeFileSync(
       theme_color: '#4F46E5',
       background_color: '#ffffff',
       display: 'standalone',
+      scope: '/',
       start_url: '/dashboard'
     },
     null,

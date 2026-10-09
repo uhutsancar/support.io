@@ -1,0 +1,38 @@
+# Findings accepted on purpose. Each one has its reasoning in
+# docs/security/accepted-risks.md and an expiry date: when it passes, Trivy
+# reports the finding again and it has to be looked at anew. Never add an ID
+# here without the matching entry in that document.
+
+# postgres:16.15-alpine — gosu 1.19 is built with Go 1.24.6. gosu runs once,
+# as root, to drop to the postgres user and exec the server; it opens no
+# socket and parses no certificate, archive or HTTP message, which is where
+# these standard-library flaws live. Upstream: github.com/tianon/gosu, "CVEs".
+CVE-2025-68121 exp:2027-01-15
+CVE-2025-61726 exp:2027-01-15
+CVE-2025-61729 exp:2027-01-15
+CVE-2026-25679 exp:2027-01-15
+CVE-2026-27145 exp:2027-01-15
+CVE-2026-32280 exp:2027-01-15
+CVE-2026-32281 exp:2027-01-15
+CVE-2026-32283 exp:2027-01-15
+CVE-2026-33811 exp:2027-01-15
+CVE-2026-33814 exp:2027-01-15
+CVE-2026-33818 exp:2027-01-15
+CVE-2026-39820 exp:2027-01-15
+CVE-2026-39821 exp:2027-01-15
+CVE-2026-39822 exp:2027-01-15
+CVE-2026-39836 exp:2027-01-15
+CVE-2026-42499 exp:2027-01-15
+CVE-2026-42504 exp:2027-01-15
+CVE-2026-56853 exp:2027-01-15
+CVE-2026-56858 exp:2027-01-15
+CVE-2026-56859 exp:2027-01-15
+CVE-2026-56860 exp:2027-01-15
+CVE-2026-56862 exp:2027-01-15
+
+# redis:7.4.11-alpine — Alpine 3.21 OpenSSL 3.3.7-r1 (fixed in -r2, not yet in
+# the official image). Redis here runs without TLS on the Docker network, so
+# no TLS handshake or certificate ever reaches libssl. Short expiry: the
+# official image is rebuilt often and Dependabot moves the digest.
+CVE-2026-75804 exp:2026-11-15
+CVE-2026-84782 exp:2026-11-15
