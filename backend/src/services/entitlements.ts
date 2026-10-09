@@ -35,7 +35,11 @@ async function rows<R extends QueryResultRow>(
 
 /** A limit of the plan was reached; the panel shows the upgrade path. */
 export class PlanLimitError extends HttpError {
-  constructor(resource: 'sites' | 'agents' | 'conversations', limit: number, used: number) {
+  constructor(
+    resource: 'sites' | 'agents' | 'conversations' | 'knowledgeSources',
+    limit: number,
+    used: number
+  ) {
     super(403, `Your plan allows ${limit} ${resource}; upgrade to add more`, 'PLAN_LIMIT_REACHED', {
       resource,
       limit,

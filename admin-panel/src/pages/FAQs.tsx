@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import HelpCenterCard from '../components/faqs/HelpCenterCard';
+import KnowledgeCard from '../components/faqs/KnowledgeCard';
 import { sitesAPI, faqsAPI, clearCache } from '../services/api';
 import { Plus, Edit2, Trash2, HelpCircle } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -169,6 +170,13 @@ const FAQs = () => {
           </div>
         </div>
         {selectedSite && <HelpCenterCard key={selectedSite._id} siteId={selectedSite._id} />}
+        {selectedSite && (
+          <KnowledgeCard
+            key={`k-${selectedSite._id}`}
+            siteId={selectedSite._id}
+            domain={selectedSite.domain}
+          />
+        )}
         {faqs.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
             <HelpCircle className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />

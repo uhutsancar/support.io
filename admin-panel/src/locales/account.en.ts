@@ -248,6 +248,13 @@ export default {
         'Pro trial until {{date}}. We never asked for a card; nothing is charged automatically.'
     },
     errors: {
+      NOT_ON_SITE: 'Only pages of this site can be added.',
+      KNOWLEDGE_EXISTS: 'This page is already added.',
+      NOT_PDF: 'This file is not a PDF.',
+      PDF_UNREADABLE:
+        'The PDF could not be read; upload a PDF that contains text (100 pages at most).',
+      SITEMAP_UNREADABLE: 'The sitemap could not be read. Check that the address is right.',
+      FILE_TOO_LARGE: 'The file is too large.',
       PASSWORD_TOO_SHORT: 'The password must be at least 10 characters.',
       PASSWORD_TOO_LONG: 'The password is too long.',
       PASSWORD_TOO_COMMON: 'This password is too common; choose one that is hard to guess.',
@@ -570,6 +577,44 @@ export default {
       close: 'Close',
       hint: 'Shortcuts do not work while you type in a text box; press Esc to leave it.'
     }
+  },
+  knowledge: {
+    title: 'What the assistant knows',
+    description:
+      'Besides the FAQ, the assistant answers from your site’s pages and from PDF documents you upload. Your product pages, shipping and return terms and manuals become ready answers.',
+    planOnly: 'Page and PDF sources are part of the Pro and Enterprise plans.',
+    upgrade: 'Upgrade your plan',
+    usage: '{{used}} / {{limit}} sources',
+    publicOnly: 'Add public information only; do not upload documents with personal data.',
+    pageLabel: 'A page of your site',
+    addPage: 'Add the page',
+    fromSitemap: 'Add the pages in the sitemap',
+    uploadPdf: 'Upload a PDF',
+    pageAdded: 'Page added; it is read within a few seconds.',
+    sitemapAdded: '{{count}} pages added from the sitemap.',
+    pdfAdded: 'PDF read and added.',
+    ready: 'Ready · {{count}} characters',
+    pending: 'Reading…',
+    errors: {
+      robots: 'Your site’s robots.txt does not allow this page to be read.',
+      robots_unreadable: 'Your site’s robots.txt could not be read; try again later.',
+      not_html: 'This address is not a web page.',
+      empty: 'There is no text to read on the page.',
+      too_large: 'The page is too large (2 MB at most).',
+      unsafe: 'This address cannot be read.',
+      not_on_site: 'Only pages of this site can be added.',
+      unreachable: 'The page could not be reached.',
+      timeout: 'The page did not answer in time.',
+      too_many_redirects: 'The page redirects too many times.',
+      other: 'The page could not be read.'
+    },
+    refreshLabel: 'Read {{title}} again',
+    removeLabel: 'Remove {{title}}',
+    removeTitle: 'Remove this source?',
+    removeMessage: 'Once “{{title}}” is removed, the assistant no longer answers from it.',
+    remove: 'Remove',
+    removed: 'Source removed.',
+    error: 'That did not work, please try again'
   },
   reports: {
     export: {

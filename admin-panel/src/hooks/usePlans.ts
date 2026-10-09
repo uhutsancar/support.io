@@ -55,6 +55,7 @@ export const PLAN_FEATURE_ORDER = [
   'audit',
   'security',
   'integrations',
+  'knowledge',
   'api'
 ] as const;
 

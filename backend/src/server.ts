@@ -17,6 +17,8 @@ import { isConnected } from './config/database';
 import SocketHandler from './socket';
 import authRoutes from './routes/auth';
 import googleAuthRoutes, { standInGoogle } from './routes/googleAuth';
+import knowledgeRoutes from './routes/knowledge';
+import { standInPage } from './services/knowledgeSources';
 import accountRoutes from './routes/account';
 import savedReplyRoutes from './routes/savedReplies';
 import conversationTagRoutes from './routes/conversationTags';
@@ -284,6 +286,8 @@ app.use('/api/saved-replies', savedReplyRoutes);
 app.use('/api/conversation-tags', conversationTagRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/sites', helpSettings);
+// Pages and PDFs the assistant also answers from (PRD-21).
+app.use('/api/sites', knowledgeRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/api-keys', apiKeyRoutes);
 // The public API (PRD-12): its own key, its own limit, no session.
@@ -311,6 +315,20 @@ if (!isProduction && process.env.INTEGRATION_TRANSPORT === 'memory') {
 // sign-in with Google without Google, for the browser tests. Never in production.
 if (!isProduction && process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory') {
   app.use('/api/dev/google', standInGoogle);
+}
+
+// The stand-in for the web the knowledge sources read (KNOWLEDGE_TRANSPORT=
+// memory): a test says what an address answers. Never in production.
+if (!isProduction && process.env.KNOWLEDGE_TRANSPORT === 'memory') {
+  app.post('/api/dev/knowledge-pages', auth, (req: Request, res: Response) => {
+    const { url, body, status, contentType } = req.body || {};
+    standInPage(String(url), {
+      body: String(body ?? ''),
+      status: typeof status === 'number' ? status : undefined,
+      contentType: typeof contentType === 'string' ? contentType : undefined
+    });
+    res.status(204).end();
+  });
 }
 
 // The development push outbox (PUSH_TRANSPORT=memory): what would have been

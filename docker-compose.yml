@@ -151,6 +151,8 @@ services:
       # Sign-in with Google (PRD-14) goes to a stand-in account chooser at
       # /api/dev/google, never to Google, in development.
       - GOOGLE_SIGN_IN_TRANSPORT=${GOOGLE_SIGN_IN_TRANSPORT:-memory}
+      # Knowledge pages (PRD-21) come from a stand-in registry, not the web.
+      - KNOWLEDGE_TRANSPORT=${KNOWLEDGE_TRANSPORT:-memory}
     ports:
       - "${BACKEND_PORT:-5000}:3000"
     depends_on:

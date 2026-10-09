@@ -8,6 +8,7 @@ import { errorText } from '../http/errors';
 import { reconcileSubscriptions } from '../services/billing';
 import { sweepTrials } from '../services/trial';
 import { sweepWeeklyReports } from '../services/weeklyReport';
+import { resumePendingPages } from '../services/knowledgeSources';
 import { reconcileAllPlanLimits } from '../services/planOverage';
 import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
@@ -80,6 +81,12 @@ async function sweepOnce() {
     await reconcileAllPlanLimits();
   } catch (error) {
     console.error('Plan limit reconciliation failed:', errorText(error));
+  }
+  try {
+    // Knowledge pages a restart left half-fetched (PRD-21).
+    await resumePendingPages();
+  } catch (error) {
+    console.error('Knowledge resume failed:', errorText(error));
   }
   try {
     // Monday's summary of the week for owners and managers (PRD-22).

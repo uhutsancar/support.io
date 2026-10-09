@@ -213,7 +213,7 @@ export default {
         {
           cat: 'ai',
           q: 'Yapay zekâ asistanı yanlış bir şey söylerse?',
-          a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
+          a: 'Asistan yalnızca SSS kayıtlarınızdan ve eklediğiniz sayfa ve PDF’lerden yanıt verir, her yanıtta hangi kaynağa dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
         },
         {
           cat: 'ai',
@@ -906,6 +906,7 @@ export default {
       audit: 'Denetim kayıtları',
       security: 'Ekip için zorunlu iki adımlı doğrulama',
       integrations: 'Slack, Telegram ve webhook bildirimleri',
+      knowledge: 'Asistan sayfalarınızdan ve PDF’lerinizden de yanıt verir',
       api: 'Konuşma, ziyaretçi ve SSS için API',
       noBranding: 'Balonda “Support.io” yazısı olmadan'
     }
@@ -1241,7 +1242,7 @@ export default {
     gaps: [
       'Konuşmalar web sitenizdeki sohbet balonundan gelir; e-posta, WhatsApp ve sosyal medya mesajları aynı kutuya düşmez.',
       'Ayrı bir mobil uygulama yok; panel tarayıcıda çalışır.',
-      'Yapay zekâ asistanı yalnızca sitenizin SSS içeriğinden yanıt verir; sipariş sorgulama gibi işlemler yapmaz.'
+      'Yapay zekâ asistanı yalnızca sitenizin SSS içeriğinden ve eklediğiniz sayfa ve PDF’lerden yanıt verir; sipariş sorgulama gibi işlemler yapmaz.'
     ],
     othersTitle: 'Diğer karşılaştırmalar',
     ctaTitle: 'Farkı kendi sitenizde görün',

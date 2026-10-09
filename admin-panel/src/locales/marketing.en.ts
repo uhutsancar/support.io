@@ -203,7 +203,7 @@ export default {
         {
           cat: 'ai',
           q: 'What if the AI assistant says something wrong?',
-          a: 'It answers only from your FAQ entries and notes which entry each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.'
+          a: 'It answers only from your FAQ entries and the pages and PDFs you add, and notes which source each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.'
         },
         {
           cat: 'ai',
@@ -881,6 +881,7 @@ export default {
       audit: 'Audit logs',
       security: 'Two-step verification required for the team',
       integrations: 'Slack, Telegram and webhook notifications',
+      knowledge: 'The assistant also answers from your pages and PDFs',
       api: 'API for conversations, visitors and FAQ',
       noBranding: 'No “Support.io” mark in the bubble'
     }

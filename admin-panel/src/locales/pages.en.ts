@@ -379,7 +379,7 @@ export default {
     faq: [
       {
         q: 'What if the assistant says something wrong?',
-        a: 'It answers only from your FAQ entries and notes which entry each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.'
+        a: 'It answers only from your FAQ entries and the pages and PDFs you add, and notes which source each answer relies on. An answer it cannot back up is never sent; the conversation goes to your team.'
       },
       {
         q: 'What does it take to set up?',
@@ -620,15 +620,15 @@ export default {
         {
           h: 'What it answers from',
           p: [
-            'The assistant answers only from the site’s FAQ. If the FAQ does not cover the question, or an answer does not rest on an FAQ entry, it does not answer and hands the conversation to the team.',
+            'The assistant answers only from the site’s FAQ and the sources the business added (the site’s own pages and documents it uploaded). If they do not cover the question, or an answer does not rest on one of them, it does not answer and hands the conversation to the team.',
             'The moment an agent writes in a conversation, the assistant goes quiet in it.',
-            'The assistant does not place orders, take payments or change accounts; it only gives information and shares only links that appear in the FAQ.'
+            'The assistant does not place orders, take payments or change accounts; it only gives information and shares only links that appear in those sources.'
           ]
         },
         {
           h: 'What data is sent',
           p: [
-            'Only the site’s public FAQ entries and the visitor’s latest message are sent to the AI; not their name, e-mail, earlier messages or the pages they visited.',
+            'Only the site’s public FAQ entries, the passages of the pages and documents the business added that relate to the question, and the visitor’s latest message are sent to the AI; not the visitor’s name, e-mail, earlier messages or the pages they visited.',
             'E-mail addresses, phone numbers and long numbers in the message are hidden before it is sent.',
             'A message containing a card number, an IBAN or a Turkish ID number is not sent at all: the visitor is asked not to share these in chat and the conversation goes to a person.',
             'Which service providers the data is shared with, and why, is set out in the Privacy Policy.'

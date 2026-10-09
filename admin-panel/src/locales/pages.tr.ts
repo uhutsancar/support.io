@@ -390,7 +390,7 @@ export default {
     faq: [
       {
         q: 'Asistan yanlış bir şey söylerse?',
-        a: 'Asistan yalnızca SSS kayıtlarınızdan yanıt verir ve her yanıtta hangi kayda dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
+        a: 'Asistan yalnızca SSS kayıtlarınızdan ve eklediğiniz sayfa ve PDF’lerden yanıt verir, her yanıtta hangi kaynağa dayandığını belirtir. Dayanak gösteremediği yanıt ziyaretçiye gönderilmez; konuşma ekibinize geçer.'
       },
       {
         q: 'Kurmak için ne gerekiyor?',
@@ -631,15 +631,15 @@ export default {
         {
           h: 'Neye dayanarak yanıt verir',
           p: [
-            'Asistan yalnızca sitenin SSS içeriğinden yanıt verir. Soru SSS’de yoksa ya da yanıt bir SSS kaydına dayanmıyorsa yanıt vermez, konuşmayı ekibe devreder.',
+            'Asistan yalnızca sitenin SSS içeriğinden ve işletmenin eklediği kaynaklardan (sitenin kendi sayfaları ve yüklediği belgeler) yanıt verir. Soru bunlarda yoksa ya da yanıt bunlardan birine dayanmıyorsa yanıt vermez, konuşmayı ekibe devreder.',
             'Bir temsilci konuşmaya yazdığı anda asistan o konuşmada susar.',
-            'Asistan sipariş, ödeme ya da hesap işlemi yapmaz; yalnızca bilgi verir ve yalnızca SSS’de geçen bağlantıları paylaşır.'
+            'Asistan sipariş, ödeme ya da hesap işlemi yapmaz; yalnızca bilgi verir ve yalnızca bu kaynaklarda geçen bağlantıları paylaşır.'
           ]
         },
         {
           h: 'Hangi veri gönderilir',
           p: [
-            'Yapay zekâya yalnızca sitenin herkese açık SSS kayıtları ve ziyaretçinin son mesajı gider; adı, e-postası, önceki mesajları ya da gezdiği sayfalar gitmez.',
+            'Yapay zekâya yalnızca sitenin herkese açık SSS kayıtları, işletmenin eklediği sayfa ve belgelerden soruyla ilgili bölümler ve ziyaretçinin son mesajı gider; ziyaretçinin adı, e-postası, önceki mesajları ya da gezdiği sayfalar gitmez.',
             'Mesajdaki e-posta adresleri, telefon numaraları ve uzun numaralar gönderilmeden önce gizlenir.',
             'Kart numarası, IBAN ya da T.C. kimlik numarası içeren bir mesaj hiç gönderilmez: ziyaretçiye bu bilgileri sohbette paylaşmaması söylenir ve konuşma bir insana geçer.',
             'Verinin hangi hizmet sağlayıcılarıyla, ne amaçla paylaşıldığı Gizlilik Politikası’nda yazar.'

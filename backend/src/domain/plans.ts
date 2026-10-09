@@ -23,7 +23,9 @@ export const FEATURES = [
   // Slack, Telegram and outgoing webhooks (PRD-11).
   'integrations',
   // The public REST API with keys (PRD-12): Enterprise.
-  'api'
+  'api',
+  // The assistant also answers from the site's pages and PDFs (PRD-21).
+  'knowledge'
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 
@@ -43,6 +45,8 @@ export interface AssistantLimits {
   answerChars: number;
   /** How long its answers are asked to be, in sentences. */
   sentences: number;
+  /** Pages and PDFs it may also answer from, per organization (PRD-21). */
+  knowledgeSources: number;
 }
 
 export interface PlanLimits {
@@ -80,7 +84,8 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       repliesPerConversation: 3,
       sources: 5,
       answerChars: 400,
-      sentences: 2
+      sentences: 2,
+      knowledgeSources: 0
     },
     features: [],
     price: { monthly: 0, yearly: 0, currency: 'TRY' }
@@ -97,7 +102,8 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       repliesPerConversation: 6,
       sources: 8,
       answerChars: 600,
-      sentences: 3
+      sentences: 3,
+      knowledgeSources: 50
     },
     features: [
       'departments',
@@ -106,7 +112,8 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       'visitors',
       'crm',
       'export',
-      'integrations'
+      'integrations',
+      'knowledge'
     ],
     price: { monthly: 490, yearly: 392, currency: 'TRY' }
   },
@@ -122,7 +129,8 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       repliesPerConversation: 12,
       sources: 15,
       answerChars: 900,
-      sentences: 5
+      sentences: 5,
+      knowledgeSources: 500
     },
     features: [...FEATURES],
     price: { monthly: 1_449, yearly: 1_159, currency: 'TRY' }

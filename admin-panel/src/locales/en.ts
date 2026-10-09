@@ -2111,7 +2111,8 @@ export default {
     limit: {
       sites: 'You are using every site your plan includes.',
       agents: 'You are using every seat your plan includes (open invitations count).',
-      conversations: 'This month’s new conversations are used up.'
+      conversations: 'This month’s new conversations are used up.',
+      knowledgeSources: 'You are using every knowledge source your plan includes.'
     },
     body: 'Move to a higher plan and it opens at once; your data stays exactly as it is.',
     askOwner: 'Only the account owner can change the plan. Ask them to upgrade.',
@@ -2154,6 +2155,11 @@ export default {
         name: 'Integrations',
         benefit:
           'Send new conversations to Slack and Telegram, and connect your own systems with webhooks.'
+      },
+      knowledge: {
+        name: 'An assistant that learns from pages and PDFs',
+        benefit:
+          'Besides the FAQ, the assistant answers from your site’s pages and your PDF documents.'
       },
       api: {
         name: 'API access',

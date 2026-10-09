@@ -249,6 +249,12 @@ export default {
         'Pro deneme: {{date}} tarihine kadar. Kart bilgisi istemedik; otomatik ücret alınmaz.'
     },
     errors: {
+      NOT_ON_SITE: 'Yalnızca bu sitenin sayfaları eklenebilir.',
+      KNOWLEDGE_EXISTS: 'Bu sayfa zaten eklenmiş.',
+      NOT_PDF: 'Bu dosya bir PDF değil.',
+      PDF_UNREADABLE: 'PDF okunamadı; metin içeren bir PDF yükleyin (en fazla 100 sayfa).',
+      SITEMAP_UNREADABLE: 'Site haritası okunamadı. Adresin doğru olduğundan emin olun.',
+      FILE_TOO_LARGE: 'Dosya çok büyük.',
       PASSWORD_TOO_SHORT: 'Şifre en az 10 karakter olmalı.',
       PASSWORD_TOO_LONG: 'Şifre çok uzun.',
       PASSWORD_TOO_COMMON: 'Bu şifre çok yaygın; tahmin edilmesi zor bir şifre seçin.',
@@ -573,6 +579,44 @@ export default {
       close: 'Kapat',
       hint: 'Bir metin kutusuna yazarken kısayollar çalışmaz; Esc ile kutudan çıkabilirsiniz.'
     }
+  },
+  knowledge: {
+    title: 'Asistanın bilgi kaynakları',
+    description:
+      'SSS’nin yanında asistan sitenizin sayfalarından ve yüklediğiniz PDF belgelerinden de yanıt verir. Ürün sayfalarınız, kargo ve iade koşullarınız, kullanım kılavuzlarınız hazır bilgiye dönüşür.',
+    planOnly: 'Sayfa ve PDF kaynakları Pro ve Kurumsal planlarda.',
+    upgrade: 'Planınızı yükseltin',
+    usage: '{{used}} / {{limit}} kaynak',
+    publicOnly: 'Yalnızca herkese açık bilgiler ekleyin; kişisel veri içeren belge yüklemeyin.',
+    pageLabel: 'Sitenizden bir sayfa',
+    addPage: 'Sayfayı ekle',
+    fromSitemap: 'Site haritasındaki sayfaları ekle',
+    uploadPdf: 'PDF yükle',
+    pageAdded: 'Sayfa eklendi; birkaç saniye içinde okunur.',
+    sitemapAdded: 'Site haritasından {{count}} sayfa eklendi.',
+    pdfAdded: 'PDF okundu ve eklendi.',
+    ready: 'Hazır · {{count}} karakter',
+    pending: 'Okunuyor…',
+    errors: {
+      robots: 'Sitenizin robots.txt dosyası bu sayfanın okunmasına izin vermiyor.',
+      robots_unreadable: 'Sitenizin robots.txt dosyası okunamadı; daha sonra yeniden deneyin.',
+      not_html: 'Bu adres bir web sayfası değil.',
+      empty: 'Sayfada okunacak metin bulunamadı.',
+      too_large: 'Sayfa çok büyük (en fazla 2 MB).',
+      unsafe: 'Bu adres okunamaz.',
+      not_on_site: 'Yalnızca bu sitenin sayfaları eklenebilir.',
+      unreachable: 'Sayfaya ulaşılamadı.',
+      timeout: 'Sayfa zamanında yanıt vermedi.',
+      too_many_redirects: 'Sayfa çok fazla yönlendirme yapıyor.',
+      other: 'Sayfa okunamadı.'
+    },
+    refreshLabel: '{{title}} yeniden oku',
+    removeLabel: '{{title}} kaldır',
+    removeTitle: 'Kaynak kaldırılsın mı?',
+    removeMessage: '“{{title}}” kaldırılınca asistan artık ondan yanıt vermez.',
+    remove: 'Kaldır',
+    removed: 'Kaynak kaldırıldı.',
+    error: 'İşlem tamamlanamadı, lütfen tekrar deneyin'
   },
   reports: {
     export: {

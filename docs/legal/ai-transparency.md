@@ -7,7 +7,12 @@
 ## Ürün ne yapıyor
 
 Site sahibi "Yapay zekâ asistanı"nı açtığında, ziyaretçinin sorusuna ilk
-yanıtı sitenin herkese açık SSS içeriğinden bir yapay zekâ modeli üretir.
+yanıtı sitenin herkese açık SSS içeriğinden — Pro ve Kurumsal planda ayrıca
+site sahibinin eklediği kendi site sayfalarından ve yüklediği PDF
+belgelerden (PRD-21) — bir yapay zekâ modeli üretir. Belgenin kendisi
+saklanmaz, metni saklanır; modele yalnızca soruyla ilgili bölümler gider.
+Panel, yalnızca herkese açık bilgi eklenmesini ve kişisel veri içeren belge
+yüklenmemesini ister.
 
 Ziyaretçiye gösterilenler (sohbet balonu, `backend/src/widget/widget.ts`):
 
@@ -21,7 +26,8 @@ Ziyaretçiye gösterilenler (sohbet balonu, `backend/src/widget/widget.ts`):
 
 Asistan şu durumlarda hiç yanıt vermeden konuşmayı bir insana devreder:
 ziyaretçi temsilci isterse; mesajda kart, IBAN veya kimlik numarası varsa;
-SSS soruyu yanıtlamıyorsa ya da yanıt bir SSS kaydına dayanmıyorsa; plan
+SSS ve eklenen kaynaklar soruyu yanıtlamıyorsa ya da yanıt bunlardan birine
+dayanmıyorsa; plan
 kotası dolduysa; servis yanıt vermezse. Bir temsilci yazdığı anda asistan o
 konuşmada susar.
 

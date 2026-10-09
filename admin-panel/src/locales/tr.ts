@@ -2116,7 +2116,8 @@ export default {
       sites: 'Planınızdaki site sayısının tamamını kullanıyorsunuz.',
       agents:
         'Planınızdaki kullanıcı sayısının tamamını kullanıyorsunuz (bekleyen davetler dâhil).',
-      conversations: 'Bu ayın yeni konuşma hakkı doldu.'
+      conversations: 'Bu ayın yeni konuşma hakkı doldu.',
+      knowledgeSources: 'Planınızdaki bilgi kaynağı sayısının tamamını kullanıyorsunuz.'
     },
     body: 'Daha yüksek bir plana geçince hemen açılır; verileriniz olduğu gibi kalır.',
     askOwner: 'Planı yalnızca hesap sahibi değiştirebilir. Hesap sahibinden yükseltmesini isteyin.',
@@ -2159,6 +2160,11 @@ export default {
         name: 'Entegrasyonlar',
         benefit:
           'Yeni konuşmaları Slack’e ve Telegram’a gönderin, kendi sistemlerinize webhook ile bağlayın.'
+      },
+      knowledge: {
+        name: 'Sayfa ve PDF’ten öğrenen asistan',
+        benefit:
+          'Asistan SSS’nin yanında sitenizin sayfalarından ve PDF belgelerinizden de yanıt verir.'
       },
       api: {
         name: 'API erişimi',

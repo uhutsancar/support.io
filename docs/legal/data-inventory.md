@@ -41,6 +41,7 @@
 | `proactive_trigger_logs` | ziyaretçi kimliği | Proaktif mesaj ölçümü | Kural/site ile | Ziyaretçi silmede; site silmede |
 | `visitor_blocks` | ziyaretçi kimliği, IP adresinin tuzlanmış özeti, gerekçe | Kötüye kullanımı engelleme | Engel süresi (müşteri seçer) | Müşteri kaldırır; site/organizasyonla |
 | `deals` | kişi adı, e-posta, telefon, not | Müşterinin CRM kaydı | Müşteri silene kadar | Müşteri siler; organizasyonla |
+| `knowledge_sources`, `knowledge_chunks` | işletmenin eklediği site sayfalarının ve PDF belgelerinin metni (belgenin kendisi saklanmaz); ekleyen kullanıcının kimliği | Asistanın SSS dışında yanıt verdiği kaynaklar (PRD-21) | Sözleşme | Müşteri kaldırana kadar | Müşteri kaldırır; site ve organizasyonla birlikte silinir (cascade). Panel yalnızca herkese açık bilgi eklenmesini ister |
 | Tarayıcı deposu (ziyaretçinin cihazında) | imzalı oturum, verdiyse ad ve e-posta | Konuşmanın sürmesi | Ziyaretçi silene kadar | Ziyaretçinin tarayıcısında ([Çerez Politikası](cerez-politikasi.md)) |
 
 ## Kişisel veri içermeyen ya da yalnız toplu sayılar
