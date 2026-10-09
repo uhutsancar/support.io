@@ -1876,7 +1876,7 @@ export default {
     meta: {
       title: 'Setup guide',
       description:
-        'Add the Support.io chat bubble to your site: steps for HTML, WordPress, Shopify, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
+        'Add the Support.io chat bubble to your site: steps for HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
     },
     eyebrow: 'Setup guide',
     title: 'Add Support.io to your site',

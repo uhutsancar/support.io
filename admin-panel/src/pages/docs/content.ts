@@ -112,6 +112,80 @@ export const PLATFORMS: Platform[] = [
       }
     ]
   },
+  // Türk e-ticaret altyapıları (PRD-13). Menü adları altyapıların kendi yardım
+  // sayfalarından alındı; panelleri değişirse burası da güncellenir.
+  {
+    id: 'ikas',
+    label: 'ikas',
+    steps: [
+      {
+        tr: 'ikas panelinde Satış Kanalı → Eklentiler’i açın; Yüklü Uygulamalar altında Scripts’e girin.',
+        en: 'In the ikas dashboard open Sales Channel → Extensions, then Scripts under Installed Apps.'
+      },
+      {
+        tr: 'Yeni script ekleyin, başlığa “Support.io” yazın ve kodu script içeriği alanına yapıştırın.',
+        en: 'Add a script, name it “Support.io” and paste the code into the script content box.'
+      },
+      {
+        tr: 'Kaydedin ve scriptin listede etkin olduğundan emin olun.',
+        en: 'Save, and make sure the script is enabled in the list.'
+      }
+    ]
+  },
+  {
+    id: 'ticimax',
+    label: 'Ticimax',
+    steps: [
+      {
+        tr: 'Ticimax yönetim panelinde Script Yönetimi sayfasını açın.',
+        en: 'In the Ticimax admin open the Script Management (Script Yönetimi) page.'
+      },
+      {
+        tr: 'Yeni bir kod ekleyin, sayfa olarak “Tüm Sayfalar”ı seçin ve kodu yapıştırın.',
+        en: 'Add a new code, choose “All Pages” (Tüm Sayfalar) and paste the code.'
+      },
+      {
+        tr: 'Kaydedin; balon mağazanızın her sayfasında görünür.',
+        en: 'Save; the bubble appears on every page of your store.'
+      }
+    ]
+  },
+  {
+    id: 'ideasoft',
+    label: 'IdeaSoft',
+    steps: [
+      {
+        tr: 'IdeaSoft yönetim panelinde Ayarlar → Genel Ayarlar → SEO Ayarları’nı açın.',
+        en: 'In the IdeaSoft admin open Settings → General Settings → SEO Settings (Ayarlar → Genel Ayarlar → SEO Ayarları).'
+      },
+      {
+        tr: 'Kodu “Site İzleme & Remarketing Kodu” alanına, varsa mevcut kodların altına yapıştırın.',
+        en: 'Paste the code into the “Site İzleme & Remarketing Kodu” box, below any code already there.'
+      },
+      {
+        tr: 'Kaydedin; bu alandaki kod mağazanın tüm sayfalarında çalışır.',
+        en: 'Save; code in this box runs on every page of the store.'
+      }
+    ]
+  },
+  {
+    id: 'tsoft',
+    label: 'T-Soft',
+    steps: [
+      {
+        tr: 'T-Soft yönetim panelinde Ayarlar → İzleme Kodları sayfasını açın ve artı düğmesiyle yeni kod ekleyin.',
+        en: 'In the T-Soft admin open Settings → Tracking Codes (Ayarlar → İzleme Kodları) and add a new code with the plus button.'
+      },
+      {
+        tr: 'Tip olarak “HTML Öncesi İzleme Kodu”nu seçin ve kodu Kod alanına yapıştırın.',
+        en: 'Choose “HTML Öncesi İzleme Kodu” as the type and paste the code into the Code box.'
+      },
+      {
+        tr: 'Kaydedin. Balon hemen görünmezse panelin sağ üstündeki “Ön Bellek Temizle”ye basın.',
+        en: 'Save. If the bubble does not show right away, press “Ön Bellek Temizle” (clear cache) at the top right of the admin.'
+      }
+    ]
+  },
   {
     id: 'wix',
     label: 'Wix',

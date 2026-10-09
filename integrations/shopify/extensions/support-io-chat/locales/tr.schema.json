@@ -1,0 +1,11 @@
+{
+  "name": "Support.io sohbet",
+  "site_key": {
+    "label": "Site anahtarı",
+    "info": "Support.io panelinizde Siteler’i açın: site anahtarı, sitenizin kurulum kodunda data-site-key’den sonra yazar."
+  },
+  "identify": {
+    "label": "Giriş yapmış müşterileri tanıt",
+    "info": "Giriş yapmış müşterinin adını ve e-postasını sohbete aktarır; ekibiniz kiminle konuştuğunu bilir. Bunu gizlilik politikanızda belirtin."
+  }
+}

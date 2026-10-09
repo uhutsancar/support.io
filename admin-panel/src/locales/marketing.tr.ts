@@ -203,7 +203,7 @@ export default {
         {
           cat: 'setup',
           q: 'Hangi sitelerde çalışır?',
-          a: 'Bir satır HTML ekleyebildiğiniz her sitede: WordPress, Shopify, Wix, Webflow, Ticimax, İdeasoft ya da React, Vue, Angular ve Next.js ile yazılmış uygulamalar. Rehberde her biri için kopyalanabilir kod var.'
+          a: 'Bir satır HTML ekleyebildiğiniz her sitede: WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow ya da React, Vue, Angular ve Next.js ile yazılmış uygulamalar. Rehberde her biri için kopyalanabilir kod var.'
         },
         {
           cat: 'setup',
@@ -351,8 +351,10 @@ export default {
           'WooCommerce',
           'Wix',
           'Webflow',
+          'ikas',
           'Ticimax',
-          'İdeasoft',
+          'IdeaSoft',
+          'T-Soft',
           'Google Tag Manager',
           'React',
           'Next.js',
@@ -484,7 +486,7 @@ export default {
       },
       sdk: {
         title: 'Her altyapıda',
-        body: 'WordPress, Shopify, Wix, Webflow ya da React, Vue, Angular — rehberde hepsi için hazır adımlar var.'
+        body: 'WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow ya da React, Vue, Angular — rehberde hepsi için hazır adımlar var.'
       },
       isolation: {
         title: 'Sitenizi yavaşlatmaz',

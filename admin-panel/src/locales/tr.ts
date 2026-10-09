@@ -1882,7 +1882,7 @@ export default {
     meta: {
       title: 'Kurulum rehberi',
       description:
-        'Support.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
+        'Support.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
     },
     eyebrow: 'Kurulum rehberi',
     title: 'Support.io’yu sitenize ekleyin',

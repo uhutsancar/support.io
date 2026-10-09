@@ -1,0 +1,41 @@
+{%- comment -%}
+  The Support.io chat bubble on every page of the store, as an app embed:
+  the merchant turns it on under Online Store → Themes → Customize → App
+  embeds and enters the site key. A signed-in customer is introduced by name
+  and e-mail when "Introduce signed-in customers" is on.
+{%- endcomment -%}
+{%- assign site_key = block.settings.site_key | strip -%}
+{%- if site_key != blank -%}
+  {%- if block.settings.identify and customer -%}
+    <script>
+      (window.SupportChat = window.SupportChat || { q: [] }).q.push(['identify', {
+        userId: {{ customer.id | append: '' | json }},
+        name: {{ customer.name | json }},
+        email: {{ customer.email | json }}
+      }]);
+    </script>
+  {%- endif -%}
+  <script src="https://__APP_DOMAIN__/widget.js" data-site-key="{{ site_key | escape }}" async></script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:name",
+  "target": "body",
+  "settings": [
+    {
+      "type": "text",
+      "id": "site_key",
+      "label": "t:site_key.label",
+      "info": "t:site_key.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "identify",
+      "label": "t:identify.label",
+      "info": "t:identify.info",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

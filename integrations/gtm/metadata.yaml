@@ -1,0 +1,7 @@
+homepage: "https://__APP_DOMAIN__/"
+documentation: "https://__APP_DOMAIN__/en/documentation"
+versions:
+  # The commit of the gallery repository that holds this template.tpl; the
+  # release script leaves it for the owner to fill in when publishing.
+  - sha: __TEMPLATE_COMMIT__
+    changeNotes: First release.
