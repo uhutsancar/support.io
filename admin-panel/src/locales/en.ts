@@ -1770,6 +1770,20 @@ export default {
         'Shows an answer that arrives while the visitor is on another tab as “(1) Page name”',
       hideOnMobile: 'Hide on phones',
       hideOnMobileHint: 'No chat bubble on screens narrower than 480 px',
+      language: 'Widget language',
+      languageHint:
+        'Automatic: it speaks Turkish, English, German, French, Spanish, Dutch, Russian or Arabic, following the visitor’s page and browser language. Pick a language and every visitor sees that one.',
+      languageAuto: 'Automatic (the visitor’s language)',
+      languageNames: {
+        tr: 'Türkçe',
+        en: 'English',
+        de: 'Deutsch',
+        fr: 'Français',
+        es: 'Español',
+        nl: 'Nederlands',
+        ru: 'Русский',
+        ar: 'العربية'
+      },
       hideOnPages: 'Do not show on these pages',
       hideOnPagesHint: 'One path per line; * matches anything (e.g. /checkout/*)'
     },

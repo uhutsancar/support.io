@@ -545,7 +545,7 @@ export default {
           'Colour, wording and position set from the dashboard',
           'Behaves the same on phones and desktops',
           'Will not break your styling or slow your pages',
-          'The same code works on WordPress and on React'
+          'Speaks the visitor’s language: Turkish, English, German, French, Spanish, Dutch, Russian and Arabic'
         ],
         steps: [
           { title: 'Add your site', body: 'Register your site address in the dashboard.' },

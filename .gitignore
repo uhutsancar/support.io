@@ -17,6 +17,7 @@ coverage/
 # `npm run build:widget`, which `npm run dev` and `npm run build` both do first.
 backend/public/widget.js
 backend/public/widget-version.json
+backend/public/widget-locales/
 
 lhci/
 .lighthouseci/

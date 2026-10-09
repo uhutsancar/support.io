@@ -451,8 +451,8 @@ export const COMMANDS: Array<{ call: string; text: Text }> = [
   {
     call: "['setLocale', 'en']",
     text: {
-      tr: 'Balonun dilini değiştirir: tr veya en.',
-      en: 'Switches the bubble language: tr or en.'
+      tr: 'Balonun dilini değiştirir: tr, en, de, fr, es, nl, ru ya da ar (Arapça sağdan sola).',
+      en: 'Switches the bubble language: tr, en, de, fr, es, nl, ru or ar (Arabic, right to left).'
     }
   },
   {
@@ -476,8 +476,8 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
   {
     attr: 'data-locale="en"',
     text: {
-      tr: 'Dili sabitler. Verilmezse sayfanızın dili kullanılır.',
-      en: 'Fixes the language. Without it, your page’s language is used.'
+      tr: 'Bu sayfada dili sabitler. Verilmezse Widget Studio’da seçtiğiniz dil, o da “Otomatik” ise sayfanızın ve ziyaretçinin tarayıcısının dili kullanılır.',
+      en: 'Fixes the language on this page. Without it, the language chosen in Widget Studio is used, and when that is “Automatic”, your page’s and the visitor’s browser language.'
     }
   },
   {

@@ -567,7 +567,7 @@ export default {
           'Rengi, yazısı ve konumu panelden ayarlanır',
           'Telefonda ve bilgisayarda aynı şekilde çalışır',
           'Sitenizin tasarımını bozmaz, yavaşlatmaz',
-          'Aynı kod WordPress’te de React’te de çalışır'
+          'Ziyaretçinin dilinde konuşur: Türkçe, İngilizce, Almanca, Fransızca, İspanyolca, Felemenkçe, Rusça ve Arapça'
         ],
         steps: [
           { title: 'Sitenizi ekleyin', body: 'Panelden site adresinizi tanımlayın.' },

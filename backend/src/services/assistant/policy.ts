@@ -19,7 +19,12 @@ export function fold(text: string): string {
     .replace(/û/g, 'u');
 }
 
-/** A visitor asking for a person, in Turkish or English (matched folded). */
+/**
+ * A visitor asking for a person (matched folded): Turkish and English, and the
+ * word the widget tells visitors to type in its other languages (PRD-16) with
+ * a few unmistakable phrases — never a bare "person", which a question about
+ * a table for four would contain too.
+ */
 const WANTS_HUMAN = new RegExp(
   [
     'tems[iy]?l?ci',
@@ -39,7 +44,31 @@ const WANTS_HUMAN = new RegExp(
     'representative',
     'live (chat|agent|support)',
     'speak (to|with) (someone|a person|an agent)',
-    'talk (to|with) (someone|a person|an agent)'
+    'talk (to|with) (someone|a person|an agent)',
+    // de
+    'mitarbeiter',
+    'mit einem menschen',
+    'kundendienst',
+    // fr
+    'conseiller',
+    'un humain',
+    'une personne',
+    // es
+    'agente',
+    'una persona',
+    'un humano',
+    // nl
+    'medewerker',
+    'een mens\\b',
+    // ru
+    'оператор',
+    'сотрудник',
+    'живой человек',
+    'с человеком',
+    // ar
+    'موظف',
+    'شخص حقيقي',
+    'التحدث (مع|إلى) شخص'
   ].join('|')
 );
 

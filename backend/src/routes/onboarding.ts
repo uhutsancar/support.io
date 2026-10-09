@@ -10,19 +10,14 @@ import { originsFromDomain } from '../config/siteOrigins';
 import { withTransaction } from '../db/pool';
 import { assertCanCreateSite, lockOrganization } from '../services/entitlements';
 import { asyncHandler, conflict, forbidden, orgId, requireOrganization } from '../http';
+import { STOCK_WIDGET_TEXTS } from '../domain/widgetTexts';
 import type { Request, Response } from 'express';
 
 const router = express.Router();
 
 const DEFAULT_PRIMARY_COLOR = '#4F46E5';
 /** The widget's first words until the owner writes their own, per language. */
-const DEFAULTS = {
-  tr: {
-    welcome: 'Merhaba! Size nasıl yardımcı olabiliriz? 👋',
-    placeholder: 'Mesajınızı buraya yazın...'
-  },
-  en: { welcome: 'Hi! How can we help you? 👋', placeholder: 'Type your message...' }
-} as const;
+const DEFAULTS = STOCK_WIDGET_TEXTS;
 const DEFAULT_BRAND_NAME = 'Destek Ekibi';
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 

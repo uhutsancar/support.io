@@ -1775,6 +1775,20 @@ export default {
       titleAlertHint: 'Ziyaretçi başka sekmedeyken gelen yanıtı “(1) Sayfa adı” olarak gösterir',
       hideOnMobile: 'Telefonda gizle',
       hideOnMobileHint: 'Sohbet balonu 480 px’ten dar ekranlarda görünmez',
+      language: 'Widget dili',
+      languageHint:
+        'Otomatik: ziyaretçinin sayfa ve tarayıcı diline göre Türkçe, İngilizce, Almanca, Fransızca, İspanyolca, Felemenkçe, Rusça ya da Arapça konuşur. Bir dil seçerseniz her ziyaretçi o dili görür.',
+      languageAuto: 'Otomatik (ziyaretçinin dili)',
+      languageNames: {
+        tr: 'Türkçe',
+        en: 'English',
+        de: 'Deutsch',
+        fr: 'Français',
+        es: 'Español',
+        nl: 'Nederlands',
+        ru: 'Русский',
+        ar: 'العربية'
+      },
       hideOnPages: 'Şu sayfalarda gösterme',
       hideOnPagesHint: 'Her satıra bir adres yolu; * her şeyle eşleşir (ör. /checkout/*)'
     },

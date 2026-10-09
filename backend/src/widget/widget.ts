@@ -28,6 +28,18 @@
  * - SPA farkindaligi. history.pushState/replaceState/popstate dinlenir; sayfa
  *   degisimi sunucuya bildirilir ama soket ve konusma korunur.
  */
+import trStrings from './locales/tr.json';
+import enStrings from './locales/en.json';
+
+/**
+ * One language's texts. Turkish and English are in the bundle; the other
+ * languages are fetched from our origin when a visitor needs them
+ * (/widget/v4/locales/<code>.json), so a Turkish or English visitor never
+ * downloads them. Every file has the English keys; a missing one reads in
+ * English.
+ */
+type WidgetStrings = typeof enStrings;
+
 // ---------------------------------------------------------------------------
 // Shapes
 //
@@ -201,15 +213,17 @@ interface WidgetInstance extends EmitterInstance {
   [member: string]: any;
 }
 
-interface Window {
-  SupportChat?: any;
-  SupportIO?: any;
-  SupportChatConfig?: Partial<WidgetConfig>;
-  SupportIOConfig?: Partial<WidgetConfig>;
-  /** The Socket.IO client, once it has been loaded from our own origin. */
-  io?: any;
-  /** Legacy IE/Edge alias, still probed before falling back to Math.random. */
-  msCrypto?: Crypto;
+declare global {
+  interface Window {
+    SupportChat?: any;
+    SupportIO?: any;
+    SupportChatConfig?: Partial<WidgetConfig>;
+    SupportIOConfig?: Partial<WidgetConfig>;
+    /** The Socket.IO client, once it has been loaded from our own origin. */
+    io?: any;
+    /** Legacy IE/Edge alias, still probed before falling back to Math.random. */
+    msCrypto?: Crypto;
+  }
 }
 
 (function () {
@@ -402,176 +416,44 @@ interface Window {
   // 1. Yerellestirme
   //
   // Widget'in ic metinleri paneldeki i18n'den bagimsizdir: musterinin sitesi
-  // baska bir dilde olabilir. Dil sirasi: acik ayar > <html lang> > tarayici.
+  // baska bir dilde olabilir. Dil sirasi: acik ayar (data-locale, init,
+  // setLocale) > sitenin panelde sabitledigi dil > <html lang> > tarayici.
   // -------------------------------------------------------------------------
-  var STRINGS = {
-    tr: {
-      launcherLabel: 'Destek sohbetini aç',
-      close: 'Kapat',
-      back: 'Geri',
-      home: 'Ana sayfa',
-      messages: 'Mesajlar',
-      help: 'Yardım',
-      online: 'Çevrimiçi',
-      away: 'Kısa süre içinde döneceğiz',
-      offline: 'Şu anda çevrimdışıyız',
-      connecting: 'Bağlanıyor...',
-      reconnecting: 'Yeniden bağlanıyor...',
-      disconnected: 'Bağlantı kesildi',
-      connectionLost: 'Bağlantı koptu. Yeniden deneniyor...',
-      connectionRestored: 'Bağlantı geri geldi',
-      placeholder: 'Mesajınızı yazın...',
-      send: 'Gönder',
-      attach: 'Dosya ekle',
-      startConversation: 'Sohbet başlat',
-      replyFast: 'Genelde birkaç dakika içinde yanıtlıyoruz',
-      replyOffline: 'Mesajınızı bırakın, döndüğümüzde yanıtlayalım',
-      greeting: 'Merhaba!',
-      greetingSub: 'Size nasıl yardımcı olabiliriz?',
-      searchHelp: 'Yardım konularında ara...',
-      suggestTitle: 'Bunlar yardımcı olabilir',
-      helpCenter: 'Yardım merkezinin tamamı',
-      noResults: 'Sonuç bulunamadı',
-      noFaqs: 'Henüz yardım içeriği eklenmemiş',
-      emptyThread: 'Sohbeti başlatmak için bir mesaj yazın',
-      typing: 'yazıyor...',
-      sending: 'Gönderiliyor',
-      failed: 'Gönderilemedi',
-      retry: 'Tekrar dene',
-      fileTooLarge: 'Dosya çok büyük. En fazla 10 MB.',
-      fileTypeBlocked: 'Bu dosya türü desteklenmiyor.',
-      uploadFailed: 'Dosya yüklenemedi.',
-      loadFailed: 'Sohbet yüklenemedi. Lütfen sayfayı yenileyin.',
-      offlineNotice: 'Şu anda çevrimdışıyız. Mesajınızı bırakın, en kısa sürede dönelim.',
-      poweredBy: 'Support.io ile çalışır',
-      assistantLabel: 'Otomatik asistan',
-      talkToHuman: 'Temsilciye bağlan',
-      rateLimited: 'Çok hızlı mesaj gönderiyorsunuz. Lütfen biraz bekleyin.',
-      quotaExceeded: 'Şu anda mesaj alamıyoruz, lütfen daha sonra tekrar deneyin.',
-      tooLong: 'Mesaj çok uzun.',
-      preChatTitle: 'Başlamadan önce',
-      preChatSub: 'Size daha hızlı yardımcı olabilmemiz için birkaç bilgi rica ediyoruz.',
-      offlineFormTitle: 'Ekibimiz şu an çevrimdışı',
-      offlineFormSub: 'Mesajınızı ve e-posta adresinizi bırakın, size e-postayla dönelim.',
-      nameLabel: 'Adınız',
-      emailLabel: 'E-posta adresiniz',
-      phoneLabel: 'Telefon numaranız',
-      departmentLabel: 'Konu',
-      consentText: 'Kişisel verilerimin işlenmesine ilişkin aydınlatma metnini okudum.',
-      consentLink: 'Aydınlatma metni',
-      optional: 'isteğe bağlı',
-      submitForm: 'Devam et',
-      skipForm: 'Atla',
-      formSaved: 'Teşekkürler, bilgileriniz kaydedildi.',
-      fieldRequired: 'Bu alan gerekli.',
-      invalidEmail: 'Geçerli bir e-posta adresi yazın.',
-      invalidPhone: 'Geçerli bir telefon numarası yazın.',
-      consentRequired: 'Devam etmek için kutuyu işaretleyin.',
-      chatEnded: 'Sohbet sona erdi',
-      rateTitle: 'Görüşmemizi nasıl buldunuz?',
-      rateUp: 'Memnun kaldım',
-      rateDown: 'Memnun kalmadım',
-      rateStar: '{n} yıldız',
-      feedbackPlaceholder: 'Eklemek istediğiniz bir şey var mı? (isteğe bağlı)',
-      rateSubmit: 'Gönder',
-      rateThanks: 'Değerlendirmeniz için teşekkürler!',
-      transcriptTitle: 'Sohbet dökümü',
-      transcriptSub: 'Bu sohbetin bir kopyasını e-postanıza gönderelim.',
-      transcriptSend: 'Dökümü gönder',
-      transcriptSent: 'Döküm e-postanıza gönderildi.',
-      blocked:
-        'Sohbet şu anda kullanılamıyor. Bir yanlışlık olduğunu düşünüyorsanız lütfen bize başka bir yoldan ulaşın.',
-      slowDown: 'Lütfen bir sonraki mesajınızdan önce biraz bekleyin.',
-      aiBadge: 'Yapay zekâ asistanı',
-      supportTeam: 'Destek ekibi',
-      emoji: 'Emoji ekle',
-      seen: 'Görüldü',
-      aiNote: 'Otomatik yanıt · Bir temsilciye bağlanmak için yazın: temsilci'
-    },
-    en: {
-      launcherLabel: 'Open support chat',
-      close: 'Close',
-      back: 'Back',
-      home: 'Home',
-      messages: 'Messages',
-      help: 'Help',
-      online: 'Online',
-      away: 'Back shortly',
-      offline: 'We are offline right now',
-      connecting: 'Connecting...',
-      reconnecting: 'Reconnecting...',
-      disconnected: 'Disconnected',
-      connectionLost: 'Connection lost. Retrying...',
-      connectionRestored: 'Back online',
-      placeholder: 'Type your message...',
-      send: 'Send',
-      attach: 'Attach a file',
-      startConversation: 'Start a conversation',
-      replyFast: 'We usually reply within a few minutes',
-      replyOffline: 'Leave a message and we will get back to you',
-      greeting: 'Hi there!',
-      greetingSub: 'How can we help you today?',
-      searchHelp: 'Search help articles...',
-      suggestTitle: 'These might help',
-      helpCenter: 'Open the help center',
-      noResults: 'No results found',
-      noFaqs: 'No help articles yet',
-      emptyThread: 'Send a message to start the conversation',
-      typing: 'is typing...',
-      sending: 'Sending',
-      failed: 'Not sent',
-      retry: 'Retry',
-      fileTooLarge: 'File is too large. Maximum 10MB.',
-      fileTypeBlocked: 'This file type is not supported.',
-      uploadFailed: 'Upload failed.',
-      loadFailed: 'Could not load the chat. Please refresh the page.',
-      offlineNotice: 'We are offline right now. Leave a message and we will get back to you.',
-      poweredBy: 'Powered by Support.io',
-      assistantLabel: 'Automatic assistant',
-      talkToHuman: 'Talk to a person',
-      rateLimited: 'You are sending messages too quickly. Please wait a moment.',
-      quotaExceeded: 'We cannot take new messages right now, please try again later.',
-      tooLong: 'The message is too long.',
-      preChatTitle: 'Before we start',
-      preChatSub: 'A few details help us answer you faster.',
-      offlineFormTitle: 'Our team is offline right now',
-      offlineFormSub: 'Leave your message and your e-mail address, and we will reply by e-mail.',
-      nameLabel: 'Your name',
-      emailLabel: 'Your e-mail address',
-      phoneLabel: 'Your phone number',
-      departmentLabel: 'Topic',
-      consentText: 'I have read the privacy notice on how my personal data is processed.',
-      consentLink: 'Privacy notice',
-      optional: 'optional',
-      submitForm: 'Continue',
-      skipForm: 'Skip',
-      formSaved: 'Thank you, your details are saved.',
-      fieldRequired: 'This field is required.',
-      invalidEmail: 'Enter a valid e-mail address.',
-      invalidPhone: 'Enter a valid phone number.',
-      consentRequired: 'Tick the box to continue.',
-      chatEnded: 'The chat has ended',
-      rateTitle: 'How was our conversation?',
-      rateUp: 'Good',
-      rateDown: 'Not good',
-      rateStar: '{n} stars',
-      feedbackPlaceholder: 'Anything you would like to add? (optional)',
-      rateSubmit: 'Send',
-      rateThanks: 'Thank you for your rating!',
-      transcriptTitle: 'Chat transcript',
-      transcriptSub: 'We can send a copy of this chat to your e-mail.',
-      transcriptSend: 'Send the transcript',
-      transcriptSent: 'The transcript is on its way to your inbox.',
-      blocked:
-        'Chat is not available right now. If you think this is a mistake, please reach us another way.',
-      slowDown: 'Please wait a little before sending your next message.',
-      aiBadge: 'AI assistant',
-      supportTeam: 'Support team',
-      emoji: 'Add an emoji',
-      seen: 'Seen',
-      aiNote: 'Automatic answer · To reach a person, type: agent'
+  var STRINGS: Record<string, WidgetStrings> = { tr: trStrings, en: enStrings };
+  /** Every language the widget speaks (PRD-16); the first two are bundled. */
+  var LANGUAGES = ['tr', 'en', 'de', 'fr', 'es', 'nl', 'ru', 'ar'];
+  /** Written right to left. */
+  var RTL: Record<string, boolean> = { ar: true };
+  var loadingStrings: Record<string, Promise<boolean>> = {};
+
+  /** Fetches a language's texts once; resolves whether they are there. */
+  function loadStrings(code: string, apiUrl: string | null): Promise<boolean> {
+    if (STRINGS[code]) return Promise.resolve(true);
+    if (!apiUrl || typeof fetch !== 'function') return Promise.resolve(false);
+    if (!loadingStrings[code]) {
+      loadingStrings[code] = fetch(apiUrl + '/widget/v4/locales/' + code + '.json', {
+        credentials: 'omit'
+      })
+        .then(function (res) {
+          return res.ok ? res.json() : null;
+        })
+        .then(function (data: Record<string, unknown> | null) {
+          if (!data) return false;
+          var filled = {} as Record<string, string>;
+          for (var key in enStrings) {
+            var value = data[key];
+            filled[key] =
+              typeof value === 'string' ? value : (enStrings as Record<string, string>)[key];
+          }
+          STRINGS[code] = filled as WidgetStrings;
+          return true;
+        })
+        .catch(function () {
+          return false;
+        });
     }
-  };
+    return loadingStrings[code];
+  }
 
   function pickLocale(explicit: string | null | undefined): string {
     var candidates = [
@@ -583,7 +465,7 @@ interface Window {
     for (var i = 0; i < candidates.length; i++) {
       if (!candidates[i]) continue;
       var code = String(candidates[i]).toLowerCase().slice(0, 2);
-      if (STRINGS[code as keyof typeof STRINGS]) return code;
+      if (LANGUAGES.indexOf(code) > -1) return code;
     }
     return 'en';
   }
@@ -750,7 +632,8 @@ interface Window {
 
     this.config = config;
     this.locale = pickLocale(config.locale);
-    this.t = STRINGS[this.locale as keyof typeof STRINGS];
+    this.t = STRINGS[this.locale] || STRINGS.en;
+    if (!STRINGS[this.locale]) this.setLocale(this.locale, true);
 
     // The visitor id is the server's: it arrives inside the signed session and
     // is never generated here. Only the token is stored, one per site key.
@@ -982,7 +865,7 @@ interface Window {
               } as any;
               self.faqs = [];
               self.availability = 'offline';
-              if (self.config.locale) self.setLocale(self.config.locale, true);
+              self.setLocale(self.config.locale || self._siteLanguage(body.details.config), true);
               return true;
             }
             if (self.remote) self._enterBlocked();
@@ -1016,8 +899,9 @@ interface Window {
           self.remote = data;
           self.faqs = data.faqs || [];
           self.availability = data.availability || 'offline';
-          // Sunucu bir dil onerisi vermez; ama config'te bir locale varsa o kazanir.
-          if (self.config.locale) self.setLocale(self.config.locale, true);
+          // The page's own choice wins, then the language the site fixed in
+          // the panel; otherwise the visitor's (<html lang>, the browser).
+          self.setLocale(self.config.locale || self._siteLanguage(data.config), true);
         } else {
           self.availability = data.availability || self.availability;
         }
@@ -1389,9 +1273,12 @@ interface Window {
         self._joinedOnce = true;
         self.conversationId = null;
         self._renderThread([]);
+        // The owner's own words if they wrote some; otherwise the widget's,
+        // in the visitor's language.
         var welcome =
           (data && data.welcomeMessage) ||
-          (self.remote.config.messages && self.remote.config.messages.welcomeMessage);
+          (self.remote.config.messages && self.remote.config.messages.welcomeMessage) ||
+          self.t.greeting + ' ' + self.t.greetingSub;
         if (welcome) {
           self._appendMessage({
             _id: 'welcome',
@@ -1665,7 +1552,7 @@ interface Window {
         ';line-height:1.55;}',
 
       '.card{margin-top:22px;width:100%;padding:14px;border:1px solid ' + colors.border + ';',
-      'border-radius:14px;background:' + colors.background + ';cursor:pointer;text-align:left;',
+      'border-radius:14px;background:' + colors.background + ';cursor:pointer;text-align:start;',
       'display:flex;align-items:center;gap:12px;',
       'transition:border-color 160ms ease,box-shadow 160ms ease,transform 160ms ease;}',
       '.card:hover{border-color:' +
@@ -1717,7 +1604,7 @@ interface Window {
       '.faq-list{flex:1;overflow-y:auto;padding:8px;}',
       '.faq{border-radius:10px;overflow:hidden;}',
       '.faq + .faq{margin-top:2px;}',
-      '.faq-q{width:100%;text-align:left;padding:12px 14px;border:0;background:transparent;cursor:pointer;',
+      '.faq-q{width:100%;text-align:start;padding:12px 14px;border:0;background:transparent;cursor:pointer;',
       'font-size:14px;font-weight:550;font-family:inherit;color:' + colors.text + ';display:flex;',
       'align-items:center;justify-content:space-between;gap:10px;border-radius:10px;transition:background 140ms ease;}',
       '.faq-q:hover{background:' + withAlpha(colors.textSecondary, 0.08) + ';}',
@@ -1740,7 +1627,7 @@ interface Window {
       '.suggest-title{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.06em;',
       'text-transform:uppercase;color:' + colors.textSecondary + ';}',
       '.suggest-item{display:block;width:100%;min-height:44px;margin:0 0 6px;padding:10px 12px;',
-      'text-align:left;font:inherit;font-size:13.5px;cursor:pointer;border-radius:10px;background:transparent;color:' +
+      'text-align:start;font:inherit;font-size:13.5px;cursor:pointer;border-radius:10px;background:transparent;color:' +
         colors.text +
         ';border:1px solid ' +
         colors.border +
@@ -1973,7 +1860,18 @@ interface Window {
       // "Seen" under the visitor's last message once the team has read it.
       '.seen{font-size:10.5px;color:' + colors.textSecondary + ';padding:0 4px;}',
       // Read by screen readers, invisible on screen.
-      '.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}'
+      '.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}',
+      // Right to left (Arabic): what points or leans one way turns the other.
+      // Flex rows, column alignment and text follow `dir` by themselves.
+      '[dir=rtl] .msg.visitor .bubble{border-bottom-right-radius:' +
+        c.messages.messageBubbleRadius +
+        'px;border-bottom-left-radius:5px;}',
+      '[dir=rtl] .msg.agent .bubble,[dir=rtl] .msg.bot .bubble{border-bottom-left-radius:' +
+        c.messages.messageBubbleRadius +
+        'px;border-bottom-right-radius:5px;}',
+      '[dir=rtl] .card-go svg{transform:rotate(90deg);}',
+      '[dir=rtl] .send svg{transform:scaleX(-1);}',
+      '[dir=rtl] .file-chip button{margin-left:0;margin-right:auto;}'
     ].join('');
   };
 
@@ -2037,6 +1935,9 @@ interface Window {
 
     var wrap = document.createElement('div');
     wrap.className = 'root';
+    // Screen readers read the texts in their language; Arabic runs right to left.
+    wrap.setAttribute('lang', this.locale);
+    wrap.setAttribute('dir', RTL[this.locale] ? 'rtl' : 'ltr');
     wrap.innerHTML = [
       '<div class="panel" role="dialog" aria-modal="false" ' +
         (showBrand ? 'aria-labelledby="sc-title"' : 'aria-label="' + brand + '"') +
@@ -2780,13 +2681,10 @@ interface Window {
     value: string | number | Date | undefined
   ) {
     try {
-      return new Date(value as string | number | Date).toLocaleTimeString(
-        this.locale === 'tr' ? 'tr-TR' : 'en-US',
-        {
-          hour: '2-digit',
-          minute: '2-digit'
-        }
-      );
+      return new Date(value as string | number | Date).toLocaleTimeString(this.locale, {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } catch (e) {
       return '';
     }
@@ -3891,12 +3789,28 @@ interface Window {
     this.emit('attributes', { attributes: this.attributes });
   };
 
-  Widget.prototype.setLocale = function (this: WidgetInstance, locale: string, silent?: boolean) {
+  Widget.prototype.setLocale = function (
+    this: WidgetInstance,
+    locale: string | null,
+    silent?: boolean
+  ) {
     var next = pickLocale(locale);
-    if (next === this.locale && !silent) return;
+    var self = this;
+    if (!STRINGS[next]) {
+      // Not loaded yet: fetched, then drawn — unless another language was
+      // asked for meanwhile.
+      this._wantedLocale = next;
+      loadStrings(next, this.config.apiUrl).then(function (ok) {
+        if (ok && self._wantedLocale === next) self.setLocale(locale, false);
+      });
+      return;
+    }
+    this._wantedLocale = next;
+    var drawn = this.t === STRINGS[next];
+    if (next === this.locale && drawn && !silent) return;
     this.locale = next;
-    this.t = STRINGS[next as keyof typeof STRINGS];
-    if (this.el && !silent) {
+    this.t = STRINGS[next];
+    if (this.el && (!silent || !drawn)) {
       // Metinleri yeniden ciz. Sohbet gecmisi korunur.
       var openState = this.isOpen;
       var view = this.view;
@@ -3911,6 +3825,15 @@ interface Window {
       if (openState) this.open();
     }
     this.emit('locale', { locale: next });
+  };
+
+  /** The language the site fixed in the panel, or null for "the visitor's". */
+  Widget.prototype._siteLanguage = function (
+    this: WidgetInstance,
+    config: { behavior?: { language?: string } } | null | undefined
+  ) {
+    var language = config && config.behavior && config.behavior.language;
+    return language && LANGUAGES.indexOf(language) > -1 ? language : null;
   };
 
   /** theme: 'light' | 'dark' | 'auto' — panel arkaplan/metin renklerini cevirir. */

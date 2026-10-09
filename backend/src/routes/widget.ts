@@ -57,6 +57,7 @@ import { ioFrom, siteRoom } from '../realtime';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import { helpCenterUrl } from '../services/helpCenter';
+import { ownWidgetText } from '../domain/widgetTexts';
 import type { SiteDoc } from '../models/Site';
 import type { SiteWidgetSettings } from '../domain';
 
@@ -68,6 +69,9 @@ const widgetNotFound = () => notFound('Widget', 'WIDGET_NOT_FOUND');
 // SDK surumu. Widget calisma zamani kendi surumunu gonderir; uyusmazlik
 // panelde "eski surum" uyarisi gostermeyi mumkun kilar.
 const WIDGET_VERSION = '4.0.0';
+
+/** The languages the widget speaks (src/widget/locales); the panel offers these. */
+export const WIDGET_LANGUAGES = ['auto', 'tr', 'en', 'de', 'fr', 'es', 'nl', 'ru', 'ar'];
 const API_VERSION = '1';
 
 const DEFAULTS = {
@@ -122,7 +126,9 @@ const DEFAULTS = {
     enableSound: true,
     enableNotifications: true,
     titleAlert: true,
-    hideOnMobile: false
+    hideOnMobile: false,
+    /** 'auto' follows the visitor; a code fixes the widget's language (PRD-16). */
+    language: 'auto'
   },
   typography: { fontFamily: '', fontSize: 'medium', fontWeight: 'normal' },
   advanced: { customCSS: null, zIndex: 2147483000, animationSpeed: 'normal' }
@@ -156,6 +162,9 @@ function publicConfig(site: Doc<SiteDoc> | SiteDoc, saved: Record<string, any> |
   // yerellestirilmis varsayilanini kullanir.
   if (!messages.welcomeMessage) messages.welcomeMessage = ws.welcomeMessage || '';
   if (!messages.placeholderText) messages.placeholderText = ws.placeholderText || '';
+  // Our stock words are said in the visitor's language by the widget itself.
+  messages.welcomeMessage = ownWidgetText(messages.welcomeMessage);
+  messages.placeholderText = ownWidgetText(messages.placeholderText);
 
   const button = merge(DEFAULTS.button, cfg.button);
   if (!(cfg.button && cfg.button.position) && ws.position) button.position = ws.position;
@@ -168,6 +177,7 @@ function publicConfig(site: Doc<SiteDoc> | SiteDoc, saved: Record<string, any> |
   }
 
   const behavior = merge(DEFAULTS.behavior, cfg.behavior);
+  if (!WIDGET_LANGUAGES.includes(behavior.language)) behavior.language = 'auto';
   if (!(cfg.behavior && cfg.behavior.autoOpen !== undefined) && ws.autoOpen !== undefined) {
     behavior.autoOpen = ws.autoOpen;
     behavior.autoOpenDelay = ws.autoOpenDelay || behavior.autoOpenDelay;

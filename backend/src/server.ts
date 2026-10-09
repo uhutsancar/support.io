@@ -476,6 +476,21 @@ app.get(`/widget/${WIDGET_MAJOR}/widget.:hash([0-9a-f]{12}).js`, (req: Request, 
     current && req.params.hash === current ? 'public, max-age=31536000, immutable' : SHORT_CACHE
   );
 });
+// The widget's languages beyond Turkish and English (PRD-16), fetched by the
+// widget from any customer's page only when a visitor reads one.
+const widgetLocales = path.join(publicPath, 'widget-locales');
+app.get('/widget/v4/locales/:code([a-z]{2}).json', (req: Request, res: Response) => {
+  const file = path.join(widgetLocales, `${req.params.code}.json`);
+  if (!fs.existsSync(file)) {
+    res.status(404).json({ error: 'No such language', code: 'NOT_FOUND' });
+    return;
+  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', SHORT_CACHE);
+  res.sendFile(file);
+});
 app.get('/widget/v3/widget.js', serveWidget());
 // Yaygın yazım varyantları da aynı dosyaya düşer; kurulum talimatını yanlış
 // kopyalayan bir müşteri 404 yerine çalışan bir widget alır.

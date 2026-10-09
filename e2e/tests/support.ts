@@ -65,9 +65,13 @@ export async function mailedLink(
  * A customer's website: one page with the install code pasted into it, on
  * its own origin (the site's allowed origin), as a person would deploy it.
  */
-export async function customerWebsite(port: number, installCode: string) {
+export async function customerWebsite(
+  port: number,
+  installCode: string,
+  { lang = 'tr' }: { lang?: string } = {}
+) {
   const page = `<!doctype html>
-<html lang="tr">
+<html lang="${lang}">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:,"><title>Örnek Mağaza</title></head>
 <body>
   <h1>Örnek Mağaza</h1>

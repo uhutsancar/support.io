@@ -681,6 +681,8 @@ export interface WidgetBehavior {
   titleAlert?: boolean;
   /** No bubble on phone-sized screens. */
   hideOnMobile?: boolean;
+  /** 'auto' follows the visitor; a code fixes the widget's language (PRD-16). */
+  language?: string;
 }
 
 export interface WidgetTypography {

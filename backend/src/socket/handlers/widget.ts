@@ -43,6 +43,7 @@ import { notifyIntegrations } from '../../services/integrations';
 import type { Socket } from 'socket.io';
 import type { CreateInput, Doc } from '../../db/model';
 import type { MessageDoc } from '../../models/Message';
+import { ownWidgetText } from '../../domain/widgetTexts';
 import type { SiteDoc } from '../../models/Site';
 import type { SocketContext } from '../context';
 import type {
@@ -281,7 +282,9 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           socket.emit('conversation-joined', {
             conversation: null,
             messages: [],
-            welcomeMessage: site.widgetSettings.welcomeMessage || 'Hi! How can we help you today?'
+            // Empty unless the owner wrote one: the widget then greets in
+            // the visitor's own language (PRD-16).
+            welcomeMessage: ownWidgetText(site.widgetSettings.welcomeMessage)
           });
         }
 

@@ -66,6 +66,9 @@ import {
 import { derivePalette, normalizeHex } from '../lib/color';
 import type { Site, WidgetConfig } from '../types/api';
 import { errorMessage } from '../hooks/useAsync';
+
+/** The widget's languages (backend src/widget/locales); each is named in itself. */
+const WIDGET_LANGUAGES = ['tr', 'en', 'de', 'fr', 'es', 'nl', 'ru', 'ar'];
 import { publicOrigin } from '../lib/publicOrigin';
 
 const TABS = [
@@ -845,6 +848,34 @@ const WidgetCustomization = () => {
                       checked={draft.behavior.hideOnMobile === true}
                       onChange={(v: any) => patch('behavior', { hideOnMobile: v })}
                     />
+                    <div>
+                      <label
+                        htmlFor="widget-language"
+                        className="block text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        {t('studio.behavior.language')}
+                      </label>
+                      <p
+                        id="widget-language-hint"
+                        className="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                      >
+                        {t('studio.behavior.languageHint')}
+                      </p>
+                      <select
+                        id="widget-language"
+                        aria-describedby="widget-language-hint"
+                        value={draft.behavior.language || 'auto'}
+                        onChange={(e) => patch('behavior', { language: e.target.value })}
+                        className="mt-2 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                      >
+                        <option value="auto">{t('studio.behavior.languageAuto')}</option>
+                        {WIDGET_LANGUAGES.map((code) => (
+                          <option key={code} value={code} lang={code}>
+                            {t(`studio.behavior.languageNames.${code}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <div>
                       <label
                         htmlFor="hide-on-pages"
