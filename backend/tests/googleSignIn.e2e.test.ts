@@ -19,6 +19,7 @@ import { closeRedisClient } from '../src/config/redis';
 import { stepAt, totpCode } from '../src/services/totp';
 import { outbox, signUp } from './helpers/accounts';
 import { BASE } from './helpers/widget';
+import { referralSummary } from '../src/services/referrals';
 
 test.after(async () => {
   await closeRedisClient();
@@ -55,6 +56,8 @@ async function throughGoogle(
     start?: string;
     decision?: 'allow' | 'deny';
     tamper?: (q: URLSearchParams) => void;
+    /** A referral link's code on the sign-in button (PRD-23). */
+    ref?: string;
   } = {}
 ) {
   let attemptCookie: string | null = null;
@@ -62,7 +65,10 @@ async function throughGoogle(
   if (options.start) {
     authorize = options.start;
   } else {
-    const start = await fetch(`${BASE}/api/auth/google/start?lang=tr`, { redirect: 'manual' });
+    const ref = options.ref ? `&ref=${options.ref}` : '';
+    const start = await fetch(`${BASE}/api/auth/google/start?lang=tr${ref}`, {
+      redirect: 'manual'
+    });
     assert.equal(start.status, 303);
     attemptCookie = cookie(start, 'sc_google');
     authorize = String(start.headers.get('location'));
@@ -375,4 +381,27 @@ test('a sign-up nobody confirmed belongs to whoever Google says owns the address
     body: JSON.stringify({ email, password: 'SomeoneElse123!' })
   });
   assert.equal(login.status, 401);
+});
+
+test('a referral link’s code travels through Google to the new workspace', async () => {
+  const { token } = await passwordAccount('referrer');
+  const whoami = await fetch(`${BASE}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const referrer = String(
+    ((await whoami.json()) as { user: { organizationId: string } }).user.organizationId
+  );
+  const { code } = await referralSummary(referrer);
+  const { callback, attemptCookie } = await throughGoogle(
+    { sub: `g-ref-${stamp()}`, email: `davetli${stamp()}@gmail.test` },
+    { ref: code }
+  );
+  const out = await finish(callback, attemptCookie);
+  assert.equal(out.to, '/onboarding');
+  const invited = String((await me(out.session!)).organizationId);
+  const { rows } = await query(
+    'SELECT referrer_organization_id FROM referrals WHERE referred_organization_id = $1',
+    [invited]
+  );
+  assert.equal(rows[0]?.referrer_organization_id, referrer);
 });

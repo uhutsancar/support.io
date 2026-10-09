@@ -9,6 +9,7 @@ import { reconcileSubscriptions } from '../services/billing';
 import { sweepTrials } from '../services/trial';
 import { sweepWeeklyReports } from '../services/weeklyReport';
 import { resumePendingPages } from '../services/knowledgeSources';
+import { sweepReferralRewards } from '../services/referrals';
 import { reconcileAllPlanLimits } from '../services/planOverage';
 import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
@@ -81,6 +82,12 @@ async function sweepOnce() {
     await reconcileAllPlanLimits();
   } catch (error) {
     console.error('Plan limit reconciliation failed:', errorText(error));
+  }
+  try {
+    // Referral months that could not be given yet (PRD-23).
+    await sweepReferralRewards();
+  } catch (error) {
+    console.error('Referral reward sweep failed:', errorText(error));
   }
   try {
     // Knowledge pages a restart left half-fetched (PRD-21).

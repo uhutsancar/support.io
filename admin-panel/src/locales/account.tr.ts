@@ -580,6 +580,19 @@ export default {
       hint: 'Bir metin kutusuna yazarken kısayollar çalışmaz; Esc ile kutudan çıkabilirsiniz.'
     }
   },
+  referral: {
+    title: 'Tavsiye programı',
+    description:
+      'Support.io’yu bir işletmeye tavsiye edin: bağlantınızla kaydolan işletme ilk ödemesini yaptığında bir sonraki ayınız bizden.',
+    linkLabel: 'Tavsiye bağlantınız',
+    copy: 'Bağlantıyı kopyala',
+    copied: 'Bağlantı kopyalandı',
+    joined: 'Kaydolan',
+    qualified: 'Abone olan',
+    rewarded: 'Kazanılan ücretsiz ay',
+    howItWorks:
+      'Her abone olan işletme için bir ay kazanırsınız; ödül bir sonraki faturanıza kendiliğinden uygulanır. Ücretli bir aboneliğiniz yoksa ödül, abone olduğunuzda uygulanır.'
+  },
   knowledge: {
     title: 'Asistanın bilgi kaynakları',
     description:
@@ -707,6 +720,7 @@ export default {
       GOOGLE_LINKED: 'Google Hesabı Bağlandı',
       GOOGLE_UNLINKED: 'Google Bağlantısı Kaldırıldı',
       REPORT_EXPORTED: 'Rapor İndirildi',
+      REFERRAL_REWARDED: 'Tavsiye Ödülü Verildi',
       WEBHOOK_CREATED: 'Webhook Eklendi',
       WEBHOOK_UPDATED: 'Webhook Değişti',
       WEBHOOK_DELETED: 'Webhook Silindi',

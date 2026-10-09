@@ -49,12 +49,21 @@ export function useGoogleSignIn(): boolean {
   return enabled;
 }
 
-const GoogleButton = ({ lang, note }: { lang: 'tr' | 'en'; note?: React.ReactNode }) => {
+const GoogleButton = ({
+  lang,
+  note,
+  refCode
+}: {
+  lang: 'tr' | 'en';
+  note?: React.ReactNode;
+  /** A referral link's code, carried to the workspace Google may create. */
+  refCode?: string | null;
+}) => {
   const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <a
-        href={`${API_BASE_URL}/auth/google/start?lang=${lang}`}
+        href={`${API_BASE_URL}/auth/google/start?lang=${lang}${refCode ? `&ref=${encodeURIComponent(refCode)}` : ''}`}
         className="w-full inline-flex items-center justify-center gap-3 h-12 px-5 rounded-xl border border-gray-300 dark:border-white/15 bg-white dark:bg-white/[0.04] text-[15px] font-semibold text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         <GoogleMark />

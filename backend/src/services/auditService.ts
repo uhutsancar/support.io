@@ -166,6 +166,13 @@ const AUDITED_EVENTS: Record<string, AuditRule> = {
     entityType: 'user',
     entityId: (p) => p.userId
   },
+  // The free month a referral earned, given by the system (PRD-23).
+  'referral.rewarded': {
+    action: 'REFERRAL_REWARDED',
+    entityType: 'organization',
+    entityId: (p) => p.organizationId,
+    systemActor: true
+  },
   'report.exported': {
     action: 'REPORT_EXPORTED',
     entityType: 'organization',

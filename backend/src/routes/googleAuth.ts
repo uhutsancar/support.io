@@ -29,6 +29,7 @@ import { asyncHandler, HttpError } from '../http';
 import { appBaseUrl, mail } from '../services/mail';
 import { mfaEnabled } from '../services/mfa';
 import { sendActivation } from '../services/activation';
+import { normalizeCode, recordReferral } from '../services/referrals';
 import {
   GoogleSignInError,
   authorizeUrl,
@@ -52,6 +53,8 @@ const AUDIENCE = 'support-chat:google-attempt';
 type Lang = 'tr' | 'en';
 interface Attempt extends GoogleAttempt {
   lang: Lang;
+  /** A referral link's code, kept for the workspace this may create (PRD-23). */
+  ref?: string;
   /** Present when a signed-in account is connecting Google. */
   link?: { userId: string; userType: UserType; sv: number };
 }
@@ -121,7 +124,8 @@ router.get('/start', loginLimiter, (req: Request, res: Response) => {
     toLogin(res, lang, 'unavailable');
     return;
   }
-  res.redirect(303, begin(res, { ...newAttempt(), lang }));
+  const ref = normalizeCode(req.query.ref) ?? undefined;
+  res.redirect(303, begin(res, { ...newAttempt(), lang, ...(ref ? { ref } : {}) }));
 });
 
 // Connecting Google to the signed-in account. A POST behind the session and
@@ -235,6 +239,7 @@ async function signIn(req: Request, res: Response, attempt: Attempt, who: Google
         googleEmail: who.email
       });
     }
+    if (attempt.ref) await recordReferral(attempt.ref, String(user.organizationId));
     void sendActivation(String(user.organizationId), 'welcome').catch(() => undefined);
     events.emit('auth.email.verified', {
       organizationId: user.organizationId,

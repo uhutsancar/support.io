@@ -35,6 +35,7 @@ password manager [SAHİP]; nothing here is ever committed with a value.
 | `GEMINI_TIER` | `free`: no assistant answers for visitors from the EEA, UK, CH (AI-02, KARAR-AI-1) |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | no push notifications on phones or closed panels (PRD-09); `npm run push:keys` makes a pair, `VAPID_SUBJECT` is optional |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | no “Continue with Google” on sign-in and sign-up (PRD-14). A Web application OAuth client in Google Cloud [SAHİP], authorised redirect URI `https://<domain>/api/auth/google/callback`, scopes `openid email profile`; the consent screen shows the product name, logo, privacy and terms links |
+| `PADDLE_REFERRAL_DISCOUNT_ID` | referral months are not given by themselves (PRD-23): `npm run referrals:due:prod` lists them for giving by hand. In Paddle [SAHİP]: a discount of 100%, one billing period, `dsc_…` |
 | `S3_ACL` other than empty/`private` | warned: files must stay private (SEC-08) |
 | `MAIL_ALLOWLIST_DOMAINS` set | warned: right for staging only (INF-03) |
 | `SITE_NOINDEX=true` | warned: right for staging only (MKT-02) |

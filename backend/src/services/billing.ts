@@ -27,6 +27,7 @@ import { lockOrganization } from './entitlements';
 import { reconcilePlanLimits } from './planOverage';
 import { appBaseUrl, mail } from './mail';
 import { errorText } from '../http/errors';
+import { qualifyReferral } from './referrals';
 import type { PlanType } from '../domain';
 import type { SubscriptionState, SubscriptionStatus } from '../domain/subscription';
 import type { PoolClient } from 'pg';
@@ -120,7 +121,7 @@ export type WebhookOutcome = 'processed' | 'duplicate' | 'ignored' | 'stale';
 /** Applies one verified event, exactly once. */
 export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<WebhookOutcome> {
   const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
-  const changed: { organizationId: string | null; pastDueStarted?: Date } = {
+  const changed: { organizationId: string | null; pastDueStarted?: Date; active?: boolean } = {
     organizationId: null
   };
   const result = await withTransaction(async (client) => {
@@ -148,7 +149,10 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
         WHERE provider_event_id = $1`,
       [event.event_id, outcome, organizationId]
     );
-    if (outcome === 'processed') changed.organizationId = organizationId;
+    if (outcome === 'processed') {
+      changed.organizationId = organizationId;
+      changed.active = event.data?.status === 'active';
+    }
     return outcome;
   });
   // Sites and seats over a smaller plan go on hold, and come back with a
@@ -160,6 +164,12 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
     // Paddle sends its own dunning mails; ours is the one that says what
     // happens to the workspace and when (BIL-05). Once per failed payment:
     // only the event that moved the subscription into past_due sends it.
+    // A referred workspace that now pays earns its referrer a month (PRD-23).
+    if (changed.active) {
+      await qualifyReferral(changed.organizationId).catch((error: unknown) =>
+        console.error('Referral qualification failed:', errorText(error))
+      );
+    }
     if (changed.pastDueStarted) {
       await tellOwnerPaymentFailed(changed.organizationId, changed.pastDueStarted).catch(
         (error: unknown) => console.error('Payment failure mail failed:', errorText(error))

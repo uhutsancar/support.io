@@ -23,6 +23,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useMarketingRoutes } from '../components/marketing/Shell';
 import AuthLayout, { Field } from '../components/marketing/AuthLayout';
 import GoogleButton from '../components/auth/GoogleButton';
+import { referralCode } from '../lib/referral';
 import Turnstile from '../components/marketing/Turnstile';
 import { Button } from '../components/marketing/kit';
 import { errorMessage } from '../hooks/useAsync';
@@ -31,6 +32,7 @@ import { authAPI } from '../services/api';
 const Register = () => {
   const marketing = useMarketingRoutes();
   const [google, setGoogle] = useState(false);
+  const [refCode] = useState(() => referralCode());
   const { t, i18n } = useTranslation();
   const { language } = useLanguage();
   const [name, setName] = useState('');
@@ -69,7 +71,8 @@ const Register = () => {
         email,
         password,
         locale: i18n.language,
-        ...(captcha ? { turnstileToken: captcha } : {})
+        ...(captcha ? { turnstileToken: captcha } : {}),
+        ...(refCode ? { referralCode: refCode } : {})
       });
       setSentTo(email);
     } catch (error) {
@@ -144,7 +147,7 @@ const Register = () => {
           </div>
         ) : (
           <div className="space-y-5">
-            {google && <GoogleButton lang={language === 'en' ? 'en' : 'tr'} />}
+            {google && <GoogleButton lang={language === 'en' ? 'en' : 'tr'} refCode={refCode} />}
             <form onSubmit={handleSubmit} className="space-y-5">
               <Field
                 label={t('register.name')}

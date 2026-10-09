@@ -9,6 +9,7 @@ import NotificationSettings from '../components/settings/NotificationSettings';
 import SavedRepliesSettings from '../components/settings/SavedRepliesSettings';
 import RetentionSettings from '../components/settings/RetentionSettings';
 import ApiKeysSettings from '../components/settings/ApiKeysSettings';
+import ReferralCard from '../components/settings/ReferralCard';
 
 const Settings = () => {
   const { t } = useTranslation();
@@ -110,6 +111,7 @@ const Settings = () => {
           <SavedRepliesSettings />
           <SecuritySettings />
           {(user?.role === 'owner' || user?.role === 'admin') && <ApiKeysSettings />}
+          <ReferralCard />
           {/* Veri ve gizlilik: KVKK/GDPR veri taşınabilirliği (plan §16). */}
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
             <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-2">

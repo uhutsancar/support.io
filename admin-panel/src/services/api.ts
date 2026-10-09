@@ -68,6 +68,8 @@ export interface RegisterPayload {
   /** The Cloudflare Turnstile answer, when the server asks for one. */
   turnstileToken?: string;
   locale?: string;
+  /** A referral link's code (PRD-23). */
+  referralCode?: string;
 }
 
 /**
@@ -135,6 +137,12 @@ export const authAPI = {
   googleLink: (lang: string) => api.post<{ url: string }>('/auth/google/link', { lang }),
   // The account read (/auth/me) is cached; disconnecting must not show the old one.
   googleUnlink: mutates('/auth/me', () => api.delete('/auth/google')),
+  /** The owner's referral link and its results (PRD-23). */
+  referral: () =>
+    api.get<{ code: string; link: string; joined: number; qualified: number; rewarded: number }>(
+      '/auth/referral',
+      { cache: false }
+    ),
   // E-mail first: the answer is the same for every address and starts no
   // session; the link in the mail does (verifyEmail below).
   register: (data: RegisterPayload) => api.post<{ verificationSent: true }>('/auth/register', data),

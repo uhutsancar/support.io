@@ -575,6 +575,47 @@ export function weeklyReportMail({
   };
 }
 
+/** A referral earned the owner a free month (PRD-23). */
+export function referralRewardMail({
+  name,
+  link,
+  locale
+}: {
+  name: string;
+  link: string;
+  locale?: MailLocale;
+}): Rendered {
+  const subject = pick(
+    locale,
+    'Tavsiyeniz için teşekkürler: bir ay bizden',
+    'Thank you for the referral: a month on us'
+  );
+  return {
+    subject,
+    ...layout({
+      title: subject,
+      lines: pick(
+        locale,
+        [
+          `Merhaba ${name},`,
+          'Tavsiye ettiğiniz işletme Support.io’ya abone oldu. Teşekkür olarak bir sonraki faturanız ücretsiz; bir şey yapmanız gerekmez.'
+        ],
+        [
+          `Hi ${name},`,
+          'A business you referred has subscribed to Support.io. As a thank-you, your next bill is free; there is nothing for you to do.'
+        ]
+      ),
+      action: pick(locale, 'Tavsiye bağlantınız', 'Your referral link'),
+      link,
+      footer: pick(
+        locale,
+        'Her yeni abone tavsiyeniz için bir ay daha kazanırsınız.',
+        'Every new subscriber you refer earns you another month.'
+      )
+    })
+  };
+}
+
 export function quotaWarningMail({
   organization,
   used,

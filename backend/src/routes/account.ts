@@ -43,6 +43,7 @@ import {
 import { planIncludes } from '../domain/plans';
 import { getPlan } from '../services/entitlements';
 import { accountById, mailLocale, sessionClaims } from './auth';
+import { referralSummary } from '../services/referrals';
 import type { Request, Response } from 'express';
 
 const router = express.Router();
@@ -385,6 +386,20 @@ function notificationPreferences(stored: unknown) {
     locale: (prefs.locale === 'en' ? 'en' : 'tr') as 'tr' | 'en'
   };
 }
+
+// ------------------------------------------------------- referral (PRD-23)
+
+/** The owner's referral link and how it has done. */
+router.get(
+  '/referral',
+  auth,
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.organization || req.user.role !== 'owner') {
+      throw forbidden('Only the owner can see the referral link', 'FORBIDDEN');
+    }
+    res.json(await referralSummary(String(req.organization._id)));
+  })
+);
 
 // ------------------------------------------------- organization: require 2FA
 

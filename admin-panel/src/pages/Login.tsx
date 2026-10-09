@@ -21,6 +21,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import AuthLayout, { Field } from '../components/marketing/AuthLayout';
 import GoogleButton, { useGoogleSignIn } from '../components/auth/GoogleButton';
 import { marketingRoutes } from '../lib/marketingPaths';
+import { referralCode } from '../lib/referral';
 import { Button } from '../components/marketing/kit';
 import { errorMessage } from '../hooks/useAsync';
 import { authAPI, isPendingSecondStep } from '../services/api';
@@ -209,6 +210,7 @@ const Login = () => {
             {google && (
               <GoogleButton
                 lang={language === 'en' ? 'en' : 'tr'}
+                refCode={referralCode()}
                 note={
                   <p className="text-[12.5px] leading-relaxed text-gray-500 dark:text-gray-400 text-center">
                     {t('account.google.newAccountNote')}{' '}

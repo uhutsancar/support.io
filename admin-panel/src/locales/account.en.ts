@@ -578,6 +578,19 @@ export default {
       hint: 'Shortcuts do not work while you type in a text box; press Esc to leave it.'
     }
   },
+  referral: {
+    title: 'Referral programme',
+    description:
+      'Recommend Support.io to a business: when a business that signs up through your link makes its first payment, your next month is on us.',
+    linkLabel: 'Your referral link',
+    copy: 'Copy the link',
+    copied: 'Link copied',
+    joined: 'Signed up',
+    qualified: 'Subscribed',
+    rewarded: 'Free months earned',
+    howItWorks:
+      'You earn a month for every business that subscribes; it is applied to your next bill by itself. Without a paid subscription, it is applied once you subscribe.'
+  },
   knowledge: {
     title: 'What the assistant knows',
     description:
@@ -704,6 +717,7 @@ export default {
       GOOGLE_LINKED: 'Google Account Connected',
       GOOGLE_UNLINKED: 'Google Disconnected',
       REPORT_EXPORTED: 'Report Downloaded',
+      REFERRAL_REWARDED: 'Referral Reward Given',
       WEBHOOK_CREATED: 'Webhook Added',
       WEBHOOK_UPDATED: 'Webhook Changed',
       WEBHOOK_DELETED: 'Webhook Deleted',

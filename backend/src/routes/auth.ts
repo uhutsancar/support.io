@@ -49,6 +49,7 @@ import { turnstileSiteKey, verifyTurnstile } from '../services/turnstile';
 import { startTrial, trialRunning } from '../services/trial';
 import { sendActivation } from '../services/activation';
 import { googleConfig } from '../services/googleSignIn';
+import { recordReferral } from '../services/referrals';
 import { getPlan } from '../services/entitlements';
 import { subscriptionSummary } from '../services/billing';
 import type { PlanType } from '../domain';
@@ -334,6 +335,7 @@ router.post(
       pending.password = password;
       pending.name = name;
       await pending.save();
+      await recordReferral(req.body?.referralCode, String(pending.organizationId));
       await sendVerification(req, pending, 'user');
     } else if (existing) {
       // The address has an account. The answer below is the same as for a
@@ -347,6 +349,8 @@ router.post(
       });
     } else {
       const user = await createWorkspace({ email, password, name });
+      // A referral link's code, if the sign-up came through one (PRD-23).
+      await recordReferral(req.body?.referralCode, String(user.organizationId));
       await sendVerification(req, user, 'user');
     }
 

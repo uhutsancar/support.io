@@ -209,6 +209,9 @@ services:
       # Sign-in with Google (PRD-14): the OAuth client [SAHİP]; empty = no button.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # The referral programme's free month (PRD-23): a one-time 100% Paddle
+      # discount [SAHİP]; empty = rewards wait and are listed by referrals:due.
+      PADDLE_REFERRAL_DISCOUNT_ID: ${PADDLE_REFERRAL_DISCOUNT_ID:-}
       # Error tracking (OBS-01); empty DSN sends nothing.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
