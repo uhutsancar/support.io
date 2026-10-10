@@ -80,6 +80,15 @@ export const logger = pino(
         return out;
       }
     },
+    hooks: {
+      logMethod(args, method) {
+        Reflect.apply(
+          method,
+          this,
+          args.map((arg) => sanitizeForLog(arg))
+        );
+      }
+    },
     redact: {
       paths: [...HEADER_PATHS, ...SECRET_KEYS.flatMap((key) => [key, `*.${key}`])],
       censor: (value: unknown, path: string[]) =>
@@ -121,21 +130,63 @@ export function captureLogs(): { lines: string[]; stop(): void } {
 const EMAIL_RX = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
 const JWT_RX = /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g;
 const GOOGLE_KEY_RX = /\bAIza[0-9A-Za-z_-]{35}\b/g;
+const AWS_ACCESS_KEY_RX = /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g;
+const BEARER_RX = /\bBearer\s+[A-Za-z0-9._~+/-]{12,}={0,2}/gi;
+const PRIVATE_KEY_RX =
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]{0,10000}?-----END [A-Z ]*PRIVATE KEY-----/g;
+const TOKEN_URL_RX = /https:\/\/(?:hooks\.slack\.com\/services|api\.telegram\.org\/bot)[^\s"']+/gi;
+const SECRET_KEY_RX =
+  /(?:pass(?:word)?|token|secret|authorization|cookie|api.?key|credential|signature|totp|recovery|private.?key|encrypted|dsn)/i;
+const LOG_MAX_DEPTH = 6;
+const LOG_MAX_KEYS = 100;
 
 /** The text with addresses masked and tokens and keys removed. */
 export function scrubText(text: string): string {
   return text
+    .replace(PRIVATE_KEY_RX, '[private-key]')
     .replace(JWT_RX, '[jwt]')
     .replace(GOOGLE_KEY_RX, '[api-key]')
+    .replace(AWS_ACCESS_KEY_RX, '[aws-key]')
+    .replace(BEARER_RX, 'Bearer [redacted]')
+    .replace(TOKEN_URL_RX, '[token-url]')
     .replace(EMAIL_RX, (address) => maskEmail(address));
 }
 
-function scrubArg(arg: unknown): unknown {
-  if (typeof arg === 'string') return scrubText(arg);
-  if (arg instanceof Error || (arg !== null && typeof arg === 'object')) {
-    return scrubText(util.inspect(arg, { depth: 4, breakLength: Infinity }));
+/** Bounded recursive redaction for every structured log argument. */
+export function sanitizeForLog(
+  value: unknown,
+  depth = 0,
+  seen: WeakSet<object> = new WeakSet()
+): unknown {
+  if (typeof value === 'string') return scrubText(value).replace(/[\r\n\t\0]/g, ' ');
+  if (value === null || typeof value !== 'object') return value;
+  if (depth >= LOG_MAX_DEPTH) return '[truncated]';
+  if (seen.has(value)) return '[circular]';
+  seen.add(value);
+  if (value instanceof Error) {
+    return {
+      name: scrubText(value.name).slice(0, 100),
+      message: scrubText(value.message).slice(0, 1000),
+      stack: scrubText(value.stack || '').slice(0, 8000)
+    };
   }
-  return arg;
+  if (Array.isArray(value)) {
+    return value.slice(0, LOG_MAX_KEYS).map((item) => sanitizeForLog(item, depth + 1, seen));
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value).slice(0, LOG_MAX_KEYS)) {
+    if (SECRET_KEY_RX.test(key)) out[key] = '[redacted]';
+    else if (/email/i.test(key) && typeof item === 'string') out[key] = maskEmail(item);
+    else out[key] = sanitizeForLog(item, depth + 1, seen);
+  }
+  return out;
+}
+
+function scrubArg(arg: unknown): unknown {
+  const clean = sanitizeForLog(arg);
+  return typeof clean === 'object'
+    ? util.inspect(clean, { depth: LOG_MAX_DEPTH, breakLength: Infinity })
+    : clean;
 }
 
 let consoleScrubbed = false;

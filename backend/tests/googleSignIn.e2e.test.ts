@@ -133,10 +133,34 @@ async function passwordAccount(label: string) {
   return { email, token: decodeURIComponent(cookie(reg as unknown as Response, 'sc_session')!) };
 }
 
-async function linkUrl(token: string): Promise<{ url: string; attemptCookie: string | null }> {
-  const res = await fetch(`${BASE}/api/auth/google/link`, {
+async function recentProof(
+  token: string,
+  purpose: 'google-link' | 'google-unlink',
+  secondFactor: { code?: string; recoveryCode?: string } = {}
+): Promise<string> {
+  const res = await fetch(`${BASE}/api/auth/recent-auth`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ purpose, password: PASSWORD, ...secondFactor })
+  });
+  const body = (await res.json()) as { proof?: string; message?: string };
+  assert.equal(res.status, 200, body.message);
+  assert.ok(body.proof);
+  return body.proof;
+}
+
+async function linkUrl(
+  token: string,
+  secondFactor: { code?: string; recoveryCode?: string } = {}
+): Promise<{ url: string; attemptCookie: string | null }> {
+  const proof = await recentProof(token, 'google-link', secondFactor);
+  const res = await fetch(`${BASE}/api/auth/google/link`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'X-Recent-Auth': proof
+    },
     body: JSON.stringify({ lang: 'tr' })
   });
   assert.equal(res.status, 200);
@@ -144,6 +168,14 @@ async function linkUrl(token: string): Promise<{ url: string; attemptCookie: str
     url: ((await res.json()) as { url: string }).url,
     attemptCookie: cookie(res, 'sc_google')
   };
+}
+
+async function unlinkGoogle(token: string): Promise<Response> {
+  const proof = await recentProof(token, 'google-unlink');
+  return fetch(`${BASE}/api/auth/google`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}`, 'X-Recent-Auth': proof }
+  });
 }
 
 async function googleOf(email: string) {
@@ -231,10 +263,7 @@ test('connected by its owner, signed in, Google opens the account', async () => 
   assert.equal((await me(opened.session!)).email, email);
 
   // Disconnected, the Google account no longer opens it.
-  const unlink = await fetch(`${BASE}/api/auth/google`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const unlink = await unlinkGoogle(token);
   assert.equal(unlink.status, 204);
   assert.equal((await googleOf(email)).google_sub, null);
   const after = await signInWithGoogle({ sub, email });
@@ -262,6 +291,47 @@ test('a Google account connects to one account only', async () => {
   assert.equal((await googleOf(b.email)).google_sub, null);
 });
 
+test('link step-up is required and bound to its exact session and purpose', async () => {
+  const { email, token } = await passwordAccount('stepup');
+  const missing = await fetch(`${BASE}/api/auth/google/link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ lang: 'tr' })
+  });
+  assert.equal(missing.status, 403);
+
+  const wrongPurpose = await recentProof(token, 'google-unlink');
+  const wrong = await fetch(`${BASE}/api/auth/google/link`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      'X-Recent-Auth': wrongPurpose
+    },
+    body: JSON.stringify({ lang: 'tr' })
+  });
+  assert.equal(wrong.status, 403);
+
+  const proof = await recentProof(token, 'google-link');
+  const otherSession = await fetch(`${BASE}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: PASSWORD })
+  });
+  assert.equal(otherSession.status, 200);
+  const otherToken = decodeURIComponent(cookie(otherSession, 'sc_session')!);
+  const replayed = await fetch(`${BASE}/api/auth/google/link`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${otherToken}`,
+      'X-Recent-Auth': proof
+    },
+    body: JSON.stringify({ lang: 'tr' })
+  });
+  assert.equal(replayed.status, 403);
+});
+
 test('two-step sign-in still asks for its code', async () => {
   const { email, token } = await passwordAccount('mfa');
   const setup = await fetch(`${BASE}/api/auth/2fa/setup`, {
@@ -276,10 +346,11 @@ test('two-step sign-in still asks for its code', async () => {
     body: JSON.stringify({ code: totpCode(secret, stepAt()) })
   });
   assert.equal(confirm.status, 200);
+  const { recoveryCodes } = (await confirm.json()) as { recoveryCodes: string[] };
   const session = decodeURIComponent(cookie(confirm, 'sc_session')!);
 
   const sub = `g-mfa-${stamp()}`;
-  const { url, attemptCookie } = await linkUrl(session);
+  const { url, attemptCookie } = await linkUrl(session, { recoveryCode: recoveryCodes[0] });
   const { callback } = await throughGoogle({ sub, email }, { start: url });
   assert.equal(
     (await finish(callback, attemptCookie)).to,

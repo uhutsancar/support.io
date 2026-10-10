@@ -12,6 +12,9 @@
 ARG POSTGRES_IMAGE=postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
 FROM ${POSTGRES_IMAGE}
 
+COPY init-roles.sh /docker-entrypoint-initdb.d/010-supportio-roles.sh
+RUN chmod 0755 /docker-entrypoint-initdb.d/010-supportio-roles.sh
+
 ARG TARGETARCH=amd64
 ARG WALG_VERSION=v3.0.9
 ARG WALG_SHA256_AMD64=444ce216230c254edef803e098a59a1746806da3e0d55671d7b0f0082db14ef4

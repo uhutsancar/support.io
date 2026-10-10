@@ -6,9 +6,9 @@
 //   1. the declared type must be one we take, and the first bytes must say
 //      the same thing (a JPEG starts FF D8 FF, a PDF "%PDF-"…): a program
 //      renamed to photo.png is refused with UNSUPPORTED_FILE_TYPE
-//   2. JPEG, PNG and WebP are decoded and written again (sharp): EXIF and GPS
-//      data go, an image that does not decode is refused, and a file that is
-//      an image and something else at once comes out as only the image
+//   2. Images are decoded and written again (sharp): EXIF and GPS data go,
+//      animated GIFs become one bounded frame, an image that does not decode
+//      is refused, and an image/polyglot comes out as only the image
 //   3. the stored name is ours (a UUID and the extension of the detected
 //      type), never the uploader's
 //
@@ -16,15 +16,16 @@
 //
 //   attachments  org/<org>/site/<site>/<uuid>.<ext>, private. The message
 //                keeps the key; whoever reads the message gets a link signed
-//                for twelve hours (signedAttachmentUrl), which answers with a
+//                for fifteen minutes (signedAttachmentUrl), which answers with a
 //                five-minute presigned S3 address or streams the file. A link
 //                without a valid signature is refused (routes/files.ts).
 //   logos        logos/logo-<uuid>.<ext>, public: a site's logo is shown on
 //                its own pages to everyone.
 //
 // Archives (ZIP, RAR) are the easiest way to carry malware past a person and
-// are not taken unless ALLOW_ARCHIVE_UPLOADS=true. SVG is never taken: it is
-// a document that can run script.
+// are not taken unless ALLOW_ARCHIVE_UPLOADS=true. Legacy binary Office files
+// (.doc/.xls) are refused because this service has no AV/CDR engine. SVG is
+// never taken: it is a document that can run script.
 
 import {
   DeleteObjectsCommand,
@@ -39,11 +40,12 @@ import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import crypto, { randomUUID } from 'crypto';
+import zlib from 'zlib';
 import { isProduction } from '../config/env';
 import { derivedKey, derivedKeys } from '../config/tokens';
 import { HttpError } from '../http/errors';
 import type { FileFilterCallback } from 'multer';
-import type { Request } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 // ---------------------------------------------------------------- what we take
 
@@ -59,9 +61,7 @@ const ARCHIVE_TYPES = new Set([
 const DOCUMENT_TYPES = new Set([
   'application/pdf',
   'text/plain',
-  'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 ]);
 
@@ -98,6 +98,129 @@ const ascii = (s: string) => [...s].map((c) => c.charCodeAt(0));
 const ZIP = [0x50, 0x4b, 0x03, 0x04];
 const OLE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
 
+interface ZipEntry {
+  name: string;
+  compressed: number;
+  uncompressed: number;
+  method: number;
+  localOffset: number;
+}
+
+/** Bounded central-directory inspection; nothing is extracted to disk. */
+function inspectZip(buffer: Buffer): { entries: ZipEntry[]; contentTypes: string } | null {
+  const eocdSignature = 0x06054b50;
+  const minimum = 22;
+  const start = Math.max(0, buffer.length - 65_557);
+  let eocd = -1;
+  for (let i = buffer.length - minimum; i >= start; i -= 1) {
+    if (buffer.readUInt32LE(i) === eocdSignature) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0 || eocd + minimum > buffer.length) return null;
+  if (buffer.readUInt16LE(eocd + 4) !== 0 || buffer.readUInt16LE(eocd + 6) !== 0) return null;
+  const count = buffer.readUInt16LE(eocd + 10);
+  const directorySize = buffer.readUInt32LE(eocd + 12);
+  const directoryOffset = buffer.readUInt32LE(eocd + 16);
+  if (count < 1 || count > 256 || directoryOffset + directorySize > eocd) return null;
+
+  const entries: ZipEntry[] = [];
+  const names = new Set<string>();
+  let cursor = directoryOffset;
+  let total = 0;
+  for (let index = 0; index < count; index += 1) {
+    if (cursor + 46 > eocd || buffer.readUInt32LE(cursor) !== 0x02014b50) return null;
+    const flags = buffer.readUInt16LE(cursor + 8);
+    const method = buffer.readUInt16LE(cursor + 10);
+    const compressed = buffer.readUInt32LE(cursor + 20);
+    const uncompressed = buffer.readUInt32LE(cursor + 24);
+    const nameLength = buffer.readUInt16LE(cursor + 28);
+    const extraLength = buffer.readUInt16LE(cursor + 30);
+    const commentLength = buffer.readUInt16LE(cursor + 32);
+    const externalAttributes = buffer.readUInt32LE(cursor + 38);
+    const localOffset = buffer.readUInt32LE(cursor + 42);
+    const end = cursor + 46 + nameLength + extraLength + commentLength;
+    if (end > eocd || nameLength < 1 || nameLength > 1024) return null;
+    const name = buffer.subarray(cursor + 46, cursor + 46 + nameLength).toString('utf8');
+    const canonical = name.replace(/\\/g, '/').toLowerCase();
+    if (
+      name.includes('\0') ||
+      name.includes('\ufffd') ||
+      canonical.startsWith('/') ||
+      /^[a-z]:\//i.test(canonical) ||
+      canonical.split('/').includes('..') ||
+      names.has(canonical) ||
+      flags & 1 ||
+      ![0, 8].includes(method) ||
+      ((externalAttributes >>> 16) & 0o170000) === 0o120000
+    ) {
+      return null;
+    }
+    names.add(canonical);
+    if (uncompressed > 20 * 1024 * 1024 || compressed > 10 * 1024 * 1024) return null;
+    if (uncompressed > 0 && (compressed === 0 || uncompressed / compressed > 100)) return null;
+    total += uncompressed;
+    if (total > 50 * 1024 * 1024) return null;
+    entries.push({ name: canonical, compressed, uncompressed, method, localOffset });
+    cursor = end;
+  }
+  if (cursor !== directoryOffset + directorySize) return null;
+
+  const contentEntry = entries.find((entry) => entry.name === '[content_types].xml');
+  if (!contentEntry || contentEntry.uncompressed > 512 * 1024) return null;
+  const offset = contentEntry.localOffset;
+  if (offset + 30 > buffer.length || buffer.readUInt32LE(offset) !== 0x04034b50) return null;
+  const localNameLength = buffer.readUInt16LE(offset + 26);
+  const localExtraLength = buffer.readUInt16LE(offset + 28);
+  const dataStart = offset + 30 + localNameLength + localExtraLength;
+  const dataEnd = dataStart + contentEntry.compressed;
+  if (dataEnd > directoryOffset) return null;
+  try {
+    const raw = buffer.subarray(dataStart, dataEnd);
+    const xml =
+      contentEntry.method === 0
+        ? raw
+        : zlib.inflateRawSync(raw, { maxOutputLength: contentEntry.uncompressed + 1 });
+    if (xml.length !== contentEntry.uncompressed) return null;
+    return { entries, contentTypes: xml.toString('utf8').toLowerCase() };
+  } catch {
+    return null;
+  }
+}
+
+function officeZipType(buffer: Buffer): 'docx' | 'xlsx' | null {
+  const inspected = inspectZip(buffer);
+  if (!inspected) return null;
+  const names = new Set(inspected.entries.map((entry) => entry.name));
+  const forbidden = inspected.entries.some((entry) =>
+    /(^|\/)(vbaproject\.bin|activex\/|embeddings\/|externalLinks\/)/i.test(entry.name)
+  );
+  if (
+    forbidden ||
+    /macroenabled|vnd\.ms-office\.vbaproject|oleobject|activex/.test(inspected.contentTypes)
+  ) {
+    return null;
+  }
+  if (
+    names.has('word/document.xml') &&
+    inspected.contentTypes.includes(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml'
+    )
+  ) {
+    return 'docx';
+  }
+  if (
+    names.has('xl/workbook.xml') &&
+    inspected.contentTypes.includes(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml'
+    )
+  ) {
+    return 'xlsx';
+  }
+  return null;
+}
+
 /** What the bytes say, as the canonical type and its extension. */
 export function detectType(buffer: Buffer, declared: string): { mime: string; ext: string } | null {
   const type = declared.toLowerCase();
@@ -117,17 +240,18 @@ export function detectType(buffer: Buffer, declared: string): { mime: string; ex
     return type === 'application/pdf' ? { mime: 'application/pdf', ext: '.pdf' } : null;
   }
   if (startsWith(buffer, ZIP)) {
+    const office = officeZipType(buffer);
     if (type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      return { mime: type, ext: '.docx' };
+      return office === 'docx' ? { mime: type, ext: '.docx' } : null;
     }
     if (type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      return { mime: type, ext: '.xlsx' };
+      return office === 'xlsx' ? { mime: type, ext: '.xlsx' } : null;
     }
     if (
       archivesAllowed() &&
       (type === 'application/zip' || type === 'application/x-zip-compressed')
     ) {
-      return { mime: 'application/zip', ext: '.zip' };
+      return inspectZip(buffer) ? { mime: 'application/zip', ext: '.zip' } : null;
     }
     return null;
   }
@@ -157,10 +281,30 @@ export function detectType(buffer: Buffer, declared: string): { mime: string; ex
 
 /** Decodes and re-encodes an image; metadata (EXIF, GPS) does not survive. */
 async function cleanImage(buffer: Buffer, mime: string): Promise<Buffer> {
-  // An animated GIF carries no EXIF and would lose its frames; it is kept.
   if (mime === 'image/gif') {
-    await sharp(buffer, { failOn: 'error', limitInputPixels: 40_000_000 }).metadata();
-    return buffer;
+    const metadata = await sharp(buffer, {
+      failOn: 'error',
+      limitInputPixels: 40_000_000,
+      animated: true
+    }).metadata();
+    const frames = metadata.pages ?? 1;
+    if (
+      frames > 100 ||
+      (metadata.width ?? 0) * (metadata.pageHeight ?? metadata.height ?? 0) * frames > 40_000_000
+    ) {
+      throw unsupported('image');
+    }
+    // A controlled single-frame re-encode removes trailing/polyglot data and
+    // gives GIF the same sanitisation guarantee as the other image formats.
+    return sharp(buffer, { failOn: 'error', limitInputPixels: 40_000_000, pages: 1 })
+      .resize({
+        width: MAX_IMAGE_EDGE,
+        height: MAX_IMAGE_EDGE,
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .gif()
+      .toBuffer();
   }
   const image = sharp(buffer, { failOn: 'error', limitInputPixels: 40_000_000 })
     // Apply the EXIF orientation before the EXIF goes.
@@ -198,6 +342,28 @@ async function oneAtATime<T>(work: () => Promise<T>): Promise<T> {
     running -= 1;
     waiting.shift()?.();
   }
+}
+
+const MAX_INGRESS = Number(process.env.UPLOAD_INGRESS_CONCURRENCY) || 32;
+let ingress = 0;
+
+/** Reserves bounded buffering capacity before multer reads the request body. */
+export function reserveUploadIngress(req: Request, res: Response, next: NextFunction): void {
+  if (ingress >= MAX_INGRESS) {
+    next(new HttpError(503, 'Too many uploads right now, try again', 'UPLOADS_BUSY'));
+    return;
+  }
+  ingress += 1;
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    ingress = Math.max(0, ingress - 1);
+  };
+  res.once('finish', release);
+  res.once('close', release);
+  req.once('aborted', release);
+  next();
 }
 
 // ------------------------------------------------------------------------- S3
@@ -283,7 +449,7 @@ export function attachmentPath(key: string): string {
   return `/api/files/a/${key}`;
 }
 
-const LINK_TTL_SECONDS = 12 * 60 * 60;
+const LINK_TTL_SECONDS = Number(process.env.ATTACHMENT_LINK_TTL_SECONDS) || 15 * 60;
 
 function linkSignature(
   key: string,
@@ -298,20 +464,19 @@ function linkSignature(
 }
 
 /**
- * A link to a private attachment that works for twelve hours. The expiry is
- * rounded up to the hour, so a page that renders the same file twice gets
- * the same link (and the browser's cache).
+ * A short bearer link to a private attachment. A fresh link is rendered when
+ * an authorised conversation is read; it is not rounded into a longer window.
  */
 export function signedAttachmentUrl(key: string, base = apiOrigin()): string {
-  const hour = 3600;
-  const expires = Math.ceil((Date.now() / 1000 + LINK_TTL_SECONDS) / hour) * hour;
+  const expires = Math.floor(Date.now() / 1000) + LINK_TTL_SECONDS;
   return `${base}${attachmentPath(key)}?e=${expires}&s=${linkSignature(key, expires)}`;
 }
 
 /** Whether a signed link's signature and expiry hold. */
 export function attachmentLinkValid(key: string, expires: unknown, signature: unknown): boolean {
   const e = Number(expires);
-  if (!Number.isInteger(e) || e * 1000 < Date.now()) return false;
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isInteger(e) || e < now || e > now + LINK_TTL_SECONDS + 5) return false;
   if (typeof signature !== 'string' || signature.length !== 32) return false;
   // A link signed before a JWT_SECRET rotation still opens (SEC-18).
   return derivedKeys('attachment-link').some((secret) =>
@@ -447,7 +612,14 @@ export function mimeOf(key: string): string {
 function uploader(maxBytes: number, kind: 'chat' | 'logo') {
   return multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: maxBytes, files: 1 },
+    limits: {
+      fileSize: maxBytes,
+      files: 1,
+      fields: 0,
+      parts: 1,
+      fieldNameSize: 100,
+      fieldSize: 1024
+    },
     fileFilter: filterFor(kind)
   });
 }
@@ -467,12 +639,15 @@ export async function deleteStoredFiles(keys: Array<string | null>): Promise<num
   if (s3) {
     for (let i = 0; i < unique.length; i += 1000) {
       // eslint-disable-next-line no-await-in-loop
-      await s3.send(
+      const deleted = await s3.send(
         new DeleteObjectsCommand({
           Bucket: BUCKET as string,
           Delete: { Objects: unique.slice(i, i + 1000).map((Key) => ({ Key })), Quiet: true }
         })
       );
+      if (deleted.Errors?.length) {
+        throw new Error(`Object storage refused ${deleted.Errors.length} attachment deletion(s)`);
+      }
     }
   } else {
     await Promise.all(
@@ -504,12 +679,15 @@ export async function deleteOrganizationFiles(organizationId: string): Promise<n
       const keys = (page.Contents || []).map((o) => o.Key).filter((k): k is string => Boolean(k));
       if (keys.length) {
         // eslint-disable-next-line no-await-in-loop
-        await s3.send(
+        const deleted = await s3.send(
           new DeleteObjectsCommand({
             Bucket: BUCKET as string,
             Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true }
           })
         );
+        if (deleted.Errors?.length) {
+          throw new Error(`Object storage refused ${deleted.Errors.length} attachment deletion(s)`);
+        }
         removed += keys.length;
       }
       token = page.IsTruncated ? page.NextContinuationToken : undefined;

@@ -28,6 +28,9 @@ const ALL_PERMISSIONS = [
   'respond',
   'update_status',
   'team_chat',
+  'crm_read',
+  'crm_write',
+  'crm_delete',
   'read_only'
 ];
 
@@ -52,6 +55,9 @@ const rolePermissions: Record<string, string[]> = {
     'view_analytics',
     'export',
     'team_chat',
+    'crm_read',
+    'crm_write',
+    'crm_delete',
     'respond',
     'update_status',
     'view_assigned'
@@ -63,12 +69,15 @@ const rolePermissions: Record<string, string[]> = {
     'assign_tickets',
     'view_all_tickets',
     'team_chat',
+    'crm_read',
+    'crm_write',
+    'crm_delete',
     'respond',
     'update_status',
     'view_assigned'
   ],
-  agent: ['view_assigned', 'respond', 'update_status', 'team_chat'],
-  viewer: ['read_only', 'view_assigned']
+  agent: ['view_assigned', 'respond', 'update_status', 'team_chat', 'crm_read', 'crm_write'],
+  viewer: ['read_only', 'view_assigned', 'crm_read']
 };
 
 /**

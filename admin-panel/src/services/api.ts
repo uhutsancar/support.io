@@ -134,9 +134,21 @@ export interface LoginPayload {
 export const authAPI = {
   config: () => api.get<AuthConfig>('/auth/config'),
   /** Where to send the browser to connect a Google account (PRD-14). */
-  googleLink: (lang: string) => api.post<{ url: string }>('/auth/google/link', { lang }),
+  recentAuth: (data: {
+    purpose: 'google-link' | 'google-unlink';
+    password: string;
+    code?: string;
+  }) => api.post<{ proof: string; expiresIn: number }>('/auth/recent-auth', data),
+  googleLink: (lang: string, proof: string) =>
+    api.post<{ url: string }>(
+      '/auth/google/link',
+      { lang },
+      { headers: { 'X-Recent-Auth': proof } }
+    ),
   // The account read (/auth/me) is cached; disconnecting must not show the old one.
-  googleUnlink: mutates('/auth/me', () => api.delete('/auth/google')),
+  googleUnlink: mutates('/auth/me', (proof: string) =>
+    api.delete('/auth/google', { headers: { 'X-Recent-Auth': proof } })
+  ),
   /** The owner's referral link and its results (PRD-23). */
   referral: () =>
     api.get<{ code: string; link: string; joined: number; qualified: number; rewarded: number }>(

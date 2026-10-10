@@ -12,6 +12,7 @@
 
 import FAQ from '../../models/FAQ';
 import { knowledgePassages } from '../knowledgeSources';
+import { carriesSensitiveData, redact } from './privacy';
 
 export interface FaqSource {
   /** A short id the model cites, e.g. "s1"; mapped back to the entry here. */
@@ -50,35 +51,40 @@ export async function faqSources(
         // A larger window keeps the same share of best matches.
         .limit(share)
     : [];
-  const fromFaq = matched.map((faq) => ({
-    faqId: String(faq._id),
-    kind: 'faq' as const,
-    question: String(faq.question).slice(0, 300),
-    answer: String(faq.answer).slice(0, MAX_ANSWER_CHARS)
-  }));
+  const fromFaq = matched
+    .filter((faq) => !carriesSensitiveData(`${faq.question} ${faq.answer}`))
+    .map((faq) => ({
+      faqId: String(faq._id),
+      kind: 'faq' as const,
+      question: redact(String(faq.question)).slice(0, 300),
+      answer: redact(String(faq.answer)).slice(0, MAX_ANSWER_CHARS)
+    }));
 
   // Passages take the room the FAQ matches left, at least two places of it.
   const passages = withPassages
     ? await knowledgePassages(siteId, question, Math.max(2, maxSources - fromFaq.length))
     : [];
-  const fromPassages = passages.map((p) => ({
-    faqId: p.id,
-    kind: p.kind,
-    question: String(p.title).slice(0, 200),
-    answer: p.content.slice(0, MAX_ANSWER_CHARS),
-    url: p.url
-  }));
+  const fromPassages = passages
+    .filter((p) => !carriesSensitiveData(`${p.title} ${p.content}`))
+    .map((p) => ({
+      faqId: p.id,
+      kind: p.kind,
+      question: redact(String(p.title)).slice(0, 200),
+      answer: redact(p.content).slice(0, MAX_ANSWER_CHARS),
+      url: p.url
+    }));
 
   const chosen = [...fromFaq, ...fromPassages].slice(0, maxSources);
   if (chosen.length < maxSources) {
     const seen = new Set(fromFaq.map((f) => f.faqId));
     const filler = (await FAQ.find(scope).sort({ createdAt: -1 }).limit(maxSources))
       .filter((f) => !seen.has(String(f._id)))
+      .filter((faq) => !carriesSensitiveData(`${faq.question} ${faq.answer}`))
       .map((faq) => ({
         faqId: String(faq._id),
         kind: 'faq' as const,
-        question: String(faq.question).slice(0, 300),
-        answer: String(faq.answer).slice(0, MAX_ANSWER_CHARS)
+        question: redact(String(faq.question)).slice(0, 300),
+        answer: redact(String(faq.answer)).slice(0, MAX_ANSWER_CHARS)
       }));
     chosen.push(...filler.slice(0, maxSources - chosen.length));
   }

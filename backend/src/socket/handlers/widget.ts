@@ -30,7 +30,7 @@ import { messagesPage } from '../../db/queries';
 import { eventLimiter, VISITOR_BUDGET } from '../limits';
 import { validateEvents, WIDGET_EVENTS } from '../schema';
 import { ConversationQuotaError, countMessage } from '../../services/entitlements';
-import { conversationRoom, siteRoom } from '../../realtime/rooms';
+import { conversationRoom, siteRoom, visitorRoom } from '../../realtime/rooms';
 import { installWidgetExtras, applyContact } from './widgetExtras';
 import { preChatSatisfied } from '../../services/visitorContact';
 import { chatSettings } from '../../services/chatSettings';
@@ -193,6 +193,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
   const limit = eventLimiter('socket-visitor', VISITOR_BUDGET);
   ctx.widget.on('connection', (rawSocket: Socket) => {
     const socket = rawSocket as WidgetSocket;
+    ctx.installLiveAuthorization(socket);
     // Counted per widget session, before any handler runs; see ../limits.ts.
     limit(socket, `v:${socket.widgetSessionId}`);
     // Then every payload is checked against its event's shape; see ../schema.ts.
@@ -200,7 +201,10 @@ export function installWidgetHandlers(ctx: SocketContext): void {
     installWidgetExtras(ctx, socket);
     // Every visitor of one site, so a site suspended over the plan's limit
     // (services/planOverage.ts) can close them all at once.
-    if (socket.siteId) void socket.join(siteRoom(socket.siteId));
+    if (socket.siteId) {
+      void socket.join(siteRoom(socket.siteId));
+      void socket.join(visitorRoom(socket.siteId, socket.visitorId));
+    }
 
     // ---------------------------------------------------------------- joining
 
@@ -221,7 +225,13 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
         // Only an id the shop signed counts; see services/identity.ts. Stored on
         // the socket and the conversation, never taken from the client as-is.
-        const verifiedUserId = verifiedIdentity(site.integrations, data?.userId, data?.userHash);
+        const verifiedUserId = await verifiedIdentity(
+          site.integrations,
+          data?.userId,
+          data?.userHash,
+          site.siteKey,
+          { siteId: String(site._id), sessionId: socket.widgetSessionId! }
+        );
 
         socket.visitorName = boundedString(visitorName, LIMITS.visitorName)?.trim() || 'Visitor';
         socket.visitorEmail = boundedString(visitorEmail, LIMITS.visitorEmail)?.trim() ?? null;
@@ -445,7 +455,11 @@ export function installWidgetHandlers(ctx: SocketContext): void {
 
       const needsAttachment = messageType === 'file' || messageType === 'image';
       const verifiedFile = needsAttachment
-        ? ctx.verifyAttachment(fileData, conversation.siteId)
+        ? await ctx.verifyAttachment(fileData, conversation.siteId, conversation._id, {
+            type: 'widget',
+            id: socket.visitorId!,
+            sessionId: socket.widgetSessionId!
+          })
         : null;
       if (needsAttachment && !verifiedFile) {
         return refuse(socket, ack, 'INVALID_ATTACHMENT', 'Invalid or expired file upload');
@@ -599,12 +613,15 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       })
     );
 
-    socket.on('typing', () => {
-      if (!socket.conversationId) return;
-      ctx.toAdminConversation(socket.conversationId, 'visitor-typing', {
-        conversationId: socket.conversationId
-      });
-    });
+    socket.on(
+      'typing',
+      ctx.guard(socket, () => {
+        if (!socket.conversationId) return;
+        ctx.toAdminConversation(socket.conversationId, 'visitor-typing', {
+          conversationId: socket.conversationId
+        });
+      })
+    );
 
     // ------------------------------------------------------------- going away
 

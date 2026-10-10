@@ -2,6 +2,7 @@ import User from '../models/User';
 import Team from '../models/Team';
 import Organization from '../models/Organization';
 import { readToken, csrfOk } from '../config/session';
+import { isExplicitOriginAllowed } from '../config/origins';
 import { sessionIsCurrent, verifySession } from '../config/tokens';
 import { forbidden, unauthorized } from '../http/errors';
 import { HttpError } from '../http/errors';
@@ -34,6 +35,13 @@ const auth = async (req: Request, _res: Response, next: NextFunction) => {
     if (!token) throw unauthorized();
     if (!csrfOk(req, fromCookie)) {
       throw forbidden('CSRF token missing or invalid', 'CSRF_FAILED');
+    }
+    if (
+      fromCookie &&
+      !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+      !isExplicitOriginAllowed(req.get('origin'))
+    ) {
+      throw forbidden('Request origin missing or invalid', 'CSRF_FAILED');
     }
     // Amaç (aud), algoritma, süre ve userId birlikte doğrulanır. Ayrıntı ve
     // bu kontrolün neden şart olduğu: config/tokens.ts

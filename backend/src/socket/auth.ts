@@ -102,7 +102,9 @@ export function installAdminAuthentication(admin: Namespace): void {
       socket.role = account.role;
       socket.seatSuspended = Boolean(account.seatSuspendedAt);
       socket.userType = decoded.userType === 'team' ? 'team' : 'user';
-      // Empty means "every site"; see SocketContext.siteFor.
+      socket.tokenExpiresAt = Number(decoded.exp) * 1000;
+      socket.sessionVersion = decoded.sv ?? 0;
+      // Empty means no site for restricted roles; owner/admin remain global.
       socket.allowedSiteIds = new Set((account.assignedSites || []).map(String));
 
       next();
@@ -159,6 +161,8 @@ export function installWidgetAuthentication(widget: Namespace): void {
       socket.organizationId = String(site.organizationId);
       socket.visitorId = claims.visitorId;
       socket.widgetSessionId = claims.sid;
+      socket.tokenExpiresAt = claims.exp * 1000;
+      socket.widgetKeyVersion = claims.kv;
       // Defaults until the widget joins and says who the visitor is.
       socket.visitorName = 'Visitor';
       socket.visitorEmail = null;

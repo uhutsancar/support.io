@@ -143,6 +143,7 @@ class RedisStore implements Store {
 }
 
 const recentlySeen = new Map<string, number>();
+const MAX_LOCAL_DEDUPE_KEYS = 10_000;
 
 /**
  * True only for the first call with `key` in a window: SET NX in Redis, or a
@@ -160,6 +161,7 @@ async function firstInWindow(key: string, windowMs: number): Promise<boolean> {
   }
   const now = Date.now();
   for (const [k, until] of recentlySeen) if (until <= now) recentlySeen.delete(k);
+  if (recentlySeen.size >= MAX_LOCAL_DEDUPE_KEYS && !recentlySeen.has(key)) return false;
   if ((recentlySeen.get(key) ?? 0) > now) return false;
   recentlySeen.set(key, now + windowMs);
   return true;
@@ -313,6 +315,36 @@ const minutes = (value: string | undefined, fallback: number): number => Number(
 const isProduction = process.env.NODE_ENV === 'production';
 const limit = (value: string | undefined, production: number, development: number): number =>
   minutes(value, isProduction ? production : development);
+
+/**
+ * Security-sensitive budgets must remain shared across replicas. When a
+ * production Redis configured for that purpose is unavailable, fail with a
+ * controlled 503 instead of silently multiplying the allowance per process.
+ */
+async function requireSharedRateLimits(
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  if (!isProduction || !redisConfigured()) {
+    next();
+    return;
+  }
+  try {
+    const client = await getRedisClient();
+    if (client?.isReady) {
+      next();
+      return;
+    }
+  } catch {
+    /* controlled response below */
+  }
+  res.set('Retry-After', '30').status(503).json({
+    error: 'Security rate limit service is temporarily unavailable',
+    code: 'RATE_LIMIT_UNAVAILABLE',
+    retryAfter: 30
+  });
+}
 
 // Giris denemeleri: parola deneme saldirilarina karsi dar tutulur.
 const loginLimiter = createLimiter({
@@ -535,5 +567,6 @@ export {
   handshakeIp,
   createLimiter,
   createQuota,
-  identifyClient
+  identifyClient,
+  requireSharedRateLimits
 };

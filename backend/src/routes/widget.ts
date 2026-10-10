@@ -45,7 +45,7 @@ import { originRefused, requireWidgetSession } from '../middleware/widgetSession
 import { widgetSessionLimiter } from '../middleware/rateLimit';
 import { organizationVerified } from '../services/verification';
 import { forbidden } from '../http';
-import { userHashFor } from '../services/identity';
+import { identityAssertionFor } from '../services/identity';
 import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActiveFor } from '../services/assistant';
 import { visitorCountry } from '../services/assistant/region';
@@ -542,7 +542,10 @@ if (!isProduction) {
       const site = await Site.findOne({ siteKey, isActive: true });
       const secret = open(site?.integrations?.identitySecret);
       if (!secret) throw widgetNotFound();
-      res.json({ ...DEMO_CUSTOMER, userHash: userHashFor(secret, DEMO_CUSTOMER.userId) });
+      res.json({
+        ...DEMO_CUSTOMER,
+        userHash: identityAssertionFor(secret, siteKey, DEMO_CUSTOMER.userId)
+      });
     })
   );
 }

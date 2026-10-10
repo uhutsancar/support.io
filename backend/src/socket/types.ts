@@ -35,6 +35,9 @@ export interface WidgetSocketState {
   visitorId?: string;
   /** The widget session's `sid`; keys the per-session event limit. */
   widgetSessionId?: string;
+  /** Expiry and key version from the verified handshake token. */
+  tokenExpiresAt?: number;
+  widgetKeyVersion?: string;
   /** The visitor's address as the proxy saw it (not the proxy's own). */
   clientIp?: string | null;
   /** Cloudflare's CF-IPCountry for the handshake, or null (AI-02). */
@@ -69,7 +72,10 @@ export interface AdminSocketState {
   /** Over the plan's seats (BIL-04): reads only; see middleware/rbac.ts. */
   seatSuspended: boolean;
   userType: UserType;
-  /** Empty for an account that is not restricted to specific sites. */
+  /** Security claims copied only so they can be rechecked against the DB. */
+  tokenExpiresAt: number;
+  sessionVersion: number;
+  /** Explicit site grants; owner/admin roles are the only unrestricted case. */
   allowedSiteIds: Set<string>;
   /** The site room this socket has joined, once it picks one. */
   siteId?: string;

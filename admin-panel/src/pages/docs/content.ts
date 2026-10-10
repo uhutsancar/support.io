@@ -418,11 +418,15 @@ ${CLOSE_SCRIPT}`;
 export const userHashSnippet = (
   lang: Lang
 ) => `// Node.js — ${lang === 'tr' ? 'sitenizin sunucusunda; anahtar tarayıcıya asla gönderilmez' : 'on your own server; the key never reaches the browser'}
-import { createHmac } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 
-const userHash = createHmac('sha256', process.env.SUPPORT_IDENTITY_SECRET)
-  .update(String(user.id))
-  .digest('hex');
+const expires = Math.floor(Date.now() / 1000) + 300;
+const nonce = randomBytes(16).toString('hex');
+const payload = ['support.io/widget-identity/v1', process.env.SUPPORT_SITE_KEY,
+  String(user.id), String(expires), nonce].join('\\n');
+const signature = createHmac('sha256', process.env.SUPPORT_IDENTITY_SECRET)
+  .update(payload).digest('hex');
+const userHash = \`v1.\${expires}.\${nonce}.\${signature}\`;
 
 // ${lang === 'tr' ? 'Sayfaya' : 'In the page'}: ['identify', { userId: user.id, name, email, userHash }]`;
 

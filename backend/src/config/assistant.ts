@@ -51,10 +51,12 @@ export function assistantConfig(): AssistantConfig | null {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey || String(process.env.ASSISTANT_ENABLED).toLowerCase() === 'false') return null;
   if (String(process.env.ASSISTANT_KILL_SWITCH).toLowerCase() === 'true') return null;
+  const baseUrl = (process.env.GEMINI_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
+  if (process.env.NODE_ENV === 'production' && baseUrl !== DEFAULT_BASE_URL) return null;
   return {
     apiKey,
     model: (process.env.GEMINI_MODEL || DEFAULT_MODEL).trim(),
-    baseUrl: (process.env.GEMINI_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, ''),
+    baseUrl,
     tier: String(process.env.GEMINI_TIER).toLowerCase() === 'paid' ? 'paid' : 'free',
     timeoutMs: positive(process.env.GEMINI_TIMEOUT_MS, 15_000),
     rpm: positive(process.env.GEMINI_RPM, 10),

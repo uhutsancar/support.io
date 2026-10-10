@@ -10,6 +10,9 @@ export const siteRoom = (siteId: unknown): string => `site:${String(siteId)}`;
 
 export const userRoom = (userId: unknown): string => `user:${String(userId)}`;
 
+export const visitorRoom = (siteId: unknown, visitorId: unknown): string =>
+  `visitor:${String(siteId)}:${String(visitorId)}`;
+
 export const conversationRoom = (conversationId: unknown): string =>
   `conversation:${String(conversationId)}`;
 

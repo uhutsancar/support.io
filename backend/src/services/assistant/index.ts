@@ -343,6 +343,18 @@ async function answer(
     durationMs: 8000
   });
 
+  // Reserve provider spend before the network call. A timeout, refusal or
+  // handoff after calling the model still incurred cost and therefore keeps
+  // the reservation; delivered-answer metrics are tracked separately.
+  if (!(await withinDailyCap(organizationId, limits.assistant.monthlyReplies))) {
+    await handOver(io, conversation, 'daily_cap', undefined, messageId);
+    return;
+  }
+  if (!(await tryConsumeAssistantReply(organizationId))) {
+    await handOver(io, conversation, 'plan_quota', undefined, messageId);
+    return;
+  }
+
   const outcome = await compose({
     siteName: site.name,
     question,
@@ -359,16 +371,6 @@ async function answer(
 
   if (outcome.kind === 'handoff') {
     await handOver(io, conversation, outcome.reason, outcome.text, messageId);
-    return;
-  }
-  if (!(await withinDailyCap(organizationId, limits.assistant.monthlyReplies))) {
-    await handOver(io, conversation, 'daily_cap', undefined, messageId);
-    return;
-  }
-  // Counted when an answer is about to go out, atomically: two answers at the
-  // same moment cannot both take the month's last one.
-  if (!(await tryConsumeAssistantReply(organizationId))) {
-    await handOver(io, conversation, 'plan_quota', undefined, messageId);
     return;
   }
   await deliver(io, conversationId, {

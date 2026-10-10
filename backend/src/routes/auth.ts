@@ -26,6 +26,7 @@ import events from '../events';
 import { auth } from '../middleware/auth';
 import { startSession, endSession, SESSION_TTL_SECONDS } from '../config/session';
 import { deleteOrganization } from '../services/organizationDeletion';
+import { invalidateAdminAccount } from '../realtime/invalidation';
 import { signMfaPending, signSession, verifyMfaPending } from '../config/tokens';
 import {
   assertPasswordAllowed,
@@ -57,7 +58,8 @@ import {
   forgotPasswordAccountLimiter,
   forgotPasswordLimiter,
   mfaLimiter,
-  resendVerificationLimiter
+  resendVerificationLimiter,
+  requireSharedRateLimits
 } from '../middleware/rateLimit';
 import type { MailLocale } from '../services/mail';
 import type { Request, Response } from 'express';
@@ -435,6 +437,7 @@ router.post(
 // The second step: a code from the authenticator app, or a recovery code.
 router.post(
   '/login/2fa',
+  requireSharedRateLimits,
   mfaLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     const pending = verifyMfaPending(req.body?.mfaToken);
@@ -447,7 +450,7 @@ router.post(
     if (!user || (user.sessionVersion ?? 0) !== pending.sv) {
       throw new HttpError(401, 'The sign-in has expired, please start again', 'MFA_EXPIRED');
     }
-    const how = await verifySecondStep(user, {
+    const how = await verifySecondStep(user, pending.userType, {
       code: req.body?.code,
       recoveryCode: req.body?.recoveryCode
     });
@@ -587,6 +590,7 @@ router.post(
 // same answer whatever the address, like the password reset below.
 router.post(
   '/resend-verification-link',
+  requireSharedRateLimits,
   resendVerificationLimiter,
   forgotPasswordAccountLimiter,
   [body('email').isEmail().normalizeEmail()],
@@ -607,6 +611,7 @@ const RESET_REQUESTED = {
 
 router.post(
   '/forgot-password',
+  requireSharedRateLimits,
   forgotPasswordLimiter,
   forgotPasswordAccountLimiter,
   [body('email').isEmail().normalizeEmail()],
@@ -643,6 +648,7 @@ router.post(
 
 router.post(
   '/reset-password',
+  requireSharedRateLimits,
   forgotPasswordLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     // Checked twice: the length and list rules before the token is spent (a
@@ -662,6 +668,7 @@ router.post(
     // A reset link reached this inbox, which proves the address too.
     if (!user.emailVerifiedAt) user.emailVerifiedAt = new Date();
     await user.save();
+    invalidateAdminAccount(user._id);
     await revokeAuthTokens({ id: user._id, type: spent.type }, 'reset');
 
     events.emit('auth.password.reset', {
@@ -708,6 +715,7 @@ router.delete(
     req.user.googleSub = null;
     req.user.googleEmail = null;
     await req.user.save();
+    invalidateAdminAccount(req.user._id);
     endSession(res);
     res.json({ message: 'Account deleted successfully' });
   })

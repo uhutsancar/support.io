@@ -15,6 +15,7 @@ import { sweepActivation } from '../services/activation';
 import { deleteOrganization } from '../services/organizationDeletion';
 import { nightlyPurge } from '../services/dataRetention';
 import { weeklyReport } from '../services/productStats';
+import { deleteStoredFiles } from '../middleware/upload';
 
 const RETENTION_DAYS = 30;
 /** How long a visitor's IP and device details are kept after their last visit. */
@@ -30,11 +31,30 @@ const TARGETS = [
 
 async function sweepOnce() {
   try {
+    const { rows } = await query<{ id: string; object_key: string }>(
+      `SELECT id, object_key FROM upload_records
+        WHERE (status = 'pending' AND expires_at < now())
+           OR status IN ('revoked', 'deleted')
+        ORDER BY created_at LIMIT 1000`
+    );
+    if (rows.length) {
+      await deleteStoredFiles(rows.map((row) => row.object_key));
+      await query('DELETE FROM upload_records WHERE id = ANY($1)', [rows.map((row) => row.id)]);
+    }
+  } catch (error) {
+    console.error('Retention sweep failed for pending uploads:', errorText(error));
+  }
+  try {
     // Spent or expired e-mail links are kept a week for support questions
     // ("I clicked it and nothing happened"), then dropped.
     await query(`DELETE FROM auth_tokens WHERE expires_at < now() - interval '7 days'`);
   } catch (error) {
     console.error('Retention sweep failed for auth_tokens:', errorText(error));
+  }
+  try {
+    await query(`DELETE FROM identity_assertion_uses WHERE expires_at < now()`);
+  } catch (error) {
+    console.error('Retention sweep failed for identity assertions:', errorText(error));
   }
   try {
     // Data minimisation (plan §16): a visitor's IP address and device details

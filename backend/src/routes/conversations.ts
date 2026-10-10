@@ -55,7 +55,8 @@ import {
   orgId,
   requireObjectId,
   requireOrganization,
-  restrictedSiteIds
+  restrictedSiteIds,
+  mayAccessSite
 } from '../http';
 import type { Request, Response } from 'express';
 import type { Doc, UpdateSpec } from '../db/model';
@@ -110,9 +111,7 @@ async function findOrganizationAgent(agentId: unknown, organizationId: string, s
   const agent = teamAgent ?? (await User.findOne({ _id: agentId, organizationId, isActive: true }));
   if (!agent) return null;
 
-  // An empty list means "every site"; a non-empty one restricts them.
-  const assignedSites = (agent.assignedSites || []).map(String);
-  if (assignedSites.length > 0 && !assignedSites.includes(String(siteId))) return null;
+  if (!mayAccessSite(agent.role, agent.assignedSites, siteId)) return null;
 
   return { agent, Model: teamAgent ? Team : User };
 }

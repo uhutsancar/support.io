@@ -22,7 +22,8 @@ import '../src/config/env';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { open, seal } from '../src/config/secretBox';
-import { userHashFor, verifiedIdentity } from '../src/services/identity';
+import { identityAssertionFor, userHashFor, verifiedIdentity } from '../src/services/identity';
+import { widgetConfigUpdates } from '../src/security/widgetConfigSchema';
 import { getPool, query } from '../src/db/pool';
 import { BASE, joinAsVisitor, widgetSession, widgetToken } from './helpers/widget';
 import { setPlan, signUp } from './helpers/accounts';
@@ -370,6 +371,23 @@ test('widget config cannot be written across a tenant boundary', async () => {
   assert.notEqual(session.body.config.colors.primary, '#FF0000');
 });
 
+test('widget config accepts only bounded nested fields and no executable CSS', () => {
+  assert.deepEqual(widgetConfigUpdates({ colors: { primary: '#4f46e5' } }), {
+    colors: { primary: '#4F46E5' }
+  });
+  for (const payload of [
+    { colors: { primary: 'red; background:url(https://evil.test/x)' } },
+    { advanced: { customCSS: '@import url(https://evil.test/x)' } },
+    { behavior: { showOnPages: ['//evil.test'] } },
+    { window: { width: Number.POSITIVE_INFINITY } },
+    { messages: { welcomeMessage: '<script>run()</script>\u0000' } },
+    { colors: { primary: '#4F46E5', constructor: {} } },
+    { unknownSection: {} }
+  ]) {
+    assert.throws(() => widgetConfigUpdates(payload));
+  }
+});
+
 test('the team chat member list stays inside the organization', async () => {
   // Eski sorgu filtresizdi (`Team.find({ isActive: true })` ve `User.find({})`),
   // yani secici SISTEMDEKI TUM organizasyonlarin kullanicilarini listeliyordu.
@@ -404,7 +422,7 @@ test('a direct chat cannot be opened with someone in another organization', asyn
 
 /* ------------------------------------------------- kimlik dogrulamasi */
 
-test('sealed secrets open only intact, and a userHash verifies only for its own id', () => {
+test('sealed secrets open only intact, and a userHash verifies only for its own id', async () => {
   const secret = 'a'.repeat(64);
   const sealed = seal(secret);
   assert.notEqual(sealed, secret);
@@ -416,11 +434,38 @@ test('sealed secrets open only intact, and a userHash verifies only for its own 
 
   const integrations = { identitySecret: sealed };
   const hash = userHashFor(secret, 'u_1');
-  assert.equal(verifiedIdentity(integrations, 'u_1', hash), 'u_1');
-  assert.equal(verifiedIdentity(integrations, 'u_2', hash), null, 'a hash reused for another id');
-  assert.equal(verifiedIdentity(integrations, 'u_1', 'f'.repeat(64)), null);
-  assert.equal(verifiedIdentity(integrations, 'u_1', 'short'), null);
-  assert.equal(verifiedIdentity({ ...integrations, identitySecret: null }, 'u_1', hash), null);
+  assert.equal(await verifiedIdentity(integrations, 'u_1', hash), 'u_1');
+  assert.equal(
+    await verifiedIdentity(integrations, 'u_2', hash),
+    null,
+    'a hash reused for another id'
+  );
+  assert.equal(await verifiedIdentity(integrations, 'u_1', 'f'.repeat(64)), null);
+  assert.equal(await verifiedIdentity(integrations, 'u_1', 'short'), null);
+  assert.equal(
+    await verifiedIdentity({ ...integrations, identitySecret: null }, 'u_1', hash),
+    null
+  );
+
+  const realNow = Date.now;
+  const issuedAt = realNow();
+  try {
+    Date.now = () => issuedAt;
+    const assertion = identityAssertionFor(secret, 'site_key_one', 'u_1');
+    assert.equal(
+      await verifiedIdentity(integrations, 'u_1', assertion, 'site_key_two'),
+      null,
+      'an assertion was reused on another site'
+    );
+    Date.now = () => issuedAt + 11 * 60_000;
+    assert.equal(
+      await verifiedIdentity(integrations, 'u_1', assertion, 'site_key_one'),
+      null,
+      'an expired assertion verified'
+    );
+  } finally {
+    Date.now = realNow;
+  }
 });
 
 async function sendAndWait(
@@ -449,9 +494,10 @@ test('identify() is trusted only with the userHash the shop signed', async (t) =
   assert.ok(!JSON.stringify(created.body.site).includes(secret), 'the site JSON carries the key');
 
   // Signed: the conversation belongs to that customer.
+  const assertion = identityAssertionFor(secret, tenant.site.siteKey, 'customer-7');
   const signed = await joinAsVisitor(tenant.site.siteKey, {
     userId: 'customer-7',
-    userHash: userHashFor(secret, 'customer-7')
+    userHash: assertion
   });
   // The same browser keeps its session; later joins renew it.
   const browser = signed.token;
@@ -462,6 +508,13 @@ test('identify() is trusted only with the userHash the shop signed', async (t) =
     [conversationId]
   );
   assert.equal(rows[0].id, 'customer-7');
+
+  const replayed = await joinAsVisitor(tenant.site.siteKey, {
+    userId: 'customer-7',
+    userHash: assertion
+  });
+  t.after(() => replayed.socket.disconnect());
+  assert.equal(replayed.joined.conversation, null, 'another widget session replayed an assertion');
 
   // Forged, in the same browser: anonymous, and the customer's conversation
   // is not reopened for it.
@@ -477,7 +530,10 @@ test('identify() is trusted only with the userHash the shop signed', async (t) =
   // The real customer gets it back.
   const again = await joinAsVisitor(
     tenant.site.siteKey,
-    { userId: 'customer-7', userHash: userHashFor(secret, 'customer-7') },
+    {
+      userId: 'customer-7',
+      userHash: identityAssertionFor(secret, tenant.site.siteKey, 'customer-7')
+    },
     { token: browser }
   );
   t.after(() => again.socket.disconnect());

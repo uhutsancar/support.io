@@ -10,8 +10,13 @@
 import { captureError } from '../services/errorReporting';
 import Conversation from '../models/Conversation';
 import Site from '../models/Site';
+import Team from '../models/Team';
+import User from '../models/User';
+import Organization from '../models/Organization';
 import TeamChat from '../models/TeamChat';
 import { verifyUploadProof } from '../config/tokens';
+import { siteKeyMatches } from '../config/tokens';
+import { query } from '../db/pool';
 import { isDevelopment } from '../config/env';
 import { mayAccessSite } from '../http/guards';
 import { conversationRoom, siteRoom, teamChatRoom, userRoom } from '../realtime/rooms';
@@ -54,6 +59,100 @@ export class SocketContext {
     this.io = io;
     this.widget = io.of('/widget');
     this.admin = io.of('/admin');
+  }
+
+  /**
+   * Revalidates the security state captured at the handshake. A database or
+   * cache error fails closed. Mutations also publish immediate invalidations,
+   * while this check is the recovery path for a lost Redis notification.
+   */
+  async socketIsCurrent(socket: AdminSocket | WidgetSocket): Promise<boolean> {
+    try {
+      if (!socket.tokenExpiresAt || Date.now() >= socket.tokenExpiresAt) return false;
+      if ('userId' in socket && socket.userId) {
+        const Account = socket.userType === 'team' ? Team : User;
+        const account = await Account.findOne({ _id: socket.userId, isActive: true });
+        if (!account?.organizationId) return false;
+        if (String(account.organizationId) !== String(socket.organizationId)) return false;
+        if ((account.sessionVersion ?? 0) !== socket.sessionVersion) return false;
+        const organization = await Organization.findOne({
+          _id: account.organizationId,
+          isActive: true
+        });
+        if (!organization) return false;
+        if (organization.enforce2fa && !(account.totpEnabledAt && account.totpSecretEnc)) {
+          return false;
+        }
+
+        const nextSites = new Set((account.assignedSites || []).map(String));
+        const sitesChanged =
+          nextSites.size !== socket.allowedSiteIds.size ||
+          [...nextSites].some((siteId) => !socket.allowedSiteIds.has(siteId));
+        const privilegeChanged =
+          account.role !== socket.role ||
+          Boolean(account.seatSuspendedAt) !== Boolean(socket.seatSuspended) ||
+          sitesChanged;
+        if (privilegeChanged) return false;
+        return true;
+      }
+
+      if (!('widgetKeyVersion' in socket)) return false;
+      const site = await Site.findOne({ _id: socket.siteId, isActive: true });
+      return Boolean(
+        site &&
+        !site.suspendedAt &&
+        !site.blockedAt &&
+        siteKeyMatches(site.siteKey, socket.widgetKeyVersion)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /** Applies current-auth checks to every incoming packet and token expiry. */
+  installLiveAuthorization(socket: AdminSocket | WidgetSocket): void {
+    socket.use((_packet, next) => {
+      void this.socketIsCurrent(socket).then((current) => {
+        if (current) next();
+        else {
+          socket.disconnect(true);
+          next(new Error('Authentication required'));
+        }
+      });
+    });
+
+    const tokenExpiresAt = socket.tokenExpiresAt;
+    if (!tokenExpiresAt) {
+      socket.disconnect(true);
+      return;
+    }
+    const expiryDelay = Math.max(0, tokenExpiresAt - Date.now());
+    const expiry = setTimeout(() => socket.disconnect(true), expiryDelay);
+    expiry.unref();
+    const lifetime = setTimeout(
+      () => socket.disconnect(true),
+      Math.min(expiryDelay, Number(process.env.SOCKET_MAX_LIFETIME_MS) || 12 * 60 * 60 * 1000)
+    );
+    lifetime.unref();
+
+    // Every socket is periodically checked even if it only receives data.
+    // Immediate room invalidation is the fast path; this is the recovery path
+    // for a lost Redis notification or an operator changing the database from
+    // another process.
+    const interval = setInterval(
+      () => {
+        void this.socketIsCurrent(socket).then((current) => {
+          if (!current) socket.disconnect(true);
+        });
+      },
+      Math.min(60_000, Math.max(5_000, Number(process.env.SOCKET_AUTH_RECHECK_MS) || 30_000))
+    );
+    interval.unref();
+    socket.once('disconnect', () => {
+      clearTimeout(expiry);
+      clearTimeout(lifetime);
+      clearInterval(interval);
+    });
   }
 
   // ------------------------------------------------------------- broadcasting
@@ -199,10 +298,16 @@ export class SocketContext {
    * derived key and names the exact file, so it cannot be re-pointed or reused
    * for another site. See config/tokens.ts.
    */
-  verifyAttachment(
+  async verifyAttachment(
     fileData: UploadedFilePayload | undefined,
-    siteId: unknown
-  ): VerifiedFile | null {
+    siteId: unknown,
+    conversationId: unknown,
+    principal: {
+      type: 'widget' | 'user' | 'team';
+      id: string;
+      sessionId: string | null;
+    }
+  ): Promise<VerifiedFile | null> {
     if (!fileData || typeof fileData !== 'object' || typeof fileData.uploadToken !== 'string') {
       return null;
     }
@@ -212,6 +317,9 @@ export class SocketContext {
       const matches =
         proof.kind === 'chat-upload' &&
         String(proof.siteId) === String(siteId) &&
+        proof.principalType === principal.type &&
+        proof.principalId === principal.id &&
+        proof.sessionId === principal.sessionId &&
         proof.filename === fileData.filename &&
         proof.url === fileData.url &&
         Number(proof.size) === Number(fileData.size) &&
@@ -224,6 +332,33 @@ export class SocketContext {
       // the local disk over http on localhost, which is the one case where
       // there is nothing to downgrade.
       if (!isAcceptableAttachmentUrl(String(fileData.url))) return null;
+
+      // The first valid send binds a pending upload to this conversation. A
+      // retry in the same conversation is allowed; moving it to another
+      // conversation, visitor, widget session or account is not.
+      const { rows } = await query<{ id: string }>(
+        `UPDATE upload_records
+            SET conversation_id = COALESCE(conversation_id, $2),
+                status = 'bound', updated_at = now()
+          WHERE id = $1 AND site_id = $3 AND principal_type = $4
+            AND principal_id = $5 AND session_id IS NOT DISTINCT FROM $6
+            AND object_key = $7 AND mime_type = $8 AND byte_size = $9
+            AND expires_at > now() AND status IN ('pending', 'bound')
+            AND (conversation_id IS NULL OR conversation_id = $2)
+          RETURNING id`,
+        [
+          proof.uploadId,
+          String(conversationId),
+          String(siteId),
+          principal.type,
+          principal.id,
+          principal.sessionId,
+          proof.filename,
+          proof.mimeType,
+          Number(proof.size)
+        ]
+      );
+      if (!rows[0]) return null;
 
       return {
         // The storage key; a private attachment is shown through a link

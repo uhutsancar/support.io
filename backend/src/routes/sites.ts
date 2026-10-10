@@ -21,15 +21,19 @@ import {
   asyncHandler,
   badRequest,
   HttpError,
+  loadAccessibleSite,
   loadOwnedSite,
   notFound,
   orgId,
   pickStrict,
+  restrictedSiteIds,
   requireOrganization
 } from '../http';
 import type { Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
+import { invalidateSite } from '../realtime/invalidation';
+import { siteWidgetSettings } from '../security/widgetConfigSchema';
 
 const router = express.Router();
 
@@ -94,7 +98,11 @@ function auditIntegration(req: Request, site: Doc<SiteDoc>, change: string): voi
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const sites = await Site.find({ organizationId: orgId(req) }).sort({ createdAt: -1 });
+    const restricted = restrictedSiteIds(req);
+    const sites = await Site.find({
+      organizationId: orgId(req),
+      ...(restricted ? { _id: { $in: [...restricted] } } : {})
+    }).sort({ createdAt: -1 });
     res.json({ sites });
   })
 );
@@ -139,7 +147,7 @@ router.post(
 router.get(
   '/:siteId',
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     res.json({ site });
   })
 );
@@ -159,6 +167,11 @@ router.put(
     if (updates.domain !== undefined) updates.domain = siteText(updates.domain, 'domain', 253);
     if (updates.allowedOrigins !== undefined) {
       updates.allowedOrigins = validateAllowedOrigins(updates.allowedOrigins);
+    }
+    if (updates.widgetSettings !== undefined) {
+      updates.widgetSettings = siteWidgetSettings(
+        updates.widgetSettings
+      ) as unknown as SiteDoc['widgetSettings'];
     }
     if (updates.isActive !== undefined && typeof updates.isActive !== 'boolean') {
       throw badRequest('isActive must be a boolean');
@@ -193,6 +206,9 @@ router.put(
         : value;
     }
     await site.save();
+    if (updates.isActive !== undefined || updates.allowedOrigins !== undefined) {
+      invalidateSite(site._id);
+    }
 
     if (updates.assistantEnabled !== undefined && updates.assistantEnabled !== assistantBefore) {
       // On: ASSISTANT_ENABLED with who confirmed the notice and when. Off:
@@ -219,7 +235,7 @@ router.put(
 router.get(
   '/:siteId/chat-settings',
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     res.json({ settings: chatSettings(site.chatSettings) });
   })
 );
@@ -282,6 +298,7 @@ router.post(
     const site = await loadOwnedSite(req, req.params.siteId);
     site.siteKey = randomUUID();
     await site.save();
+    invalidateSite(site._id);
     res.json({ site });
   })
 );

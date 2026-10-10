@@ -76,7 +76,7 @@ test('the plugin puts the chat on a WordPress site and introduces its users', as
     await expect(tag).toHaveAttribute('async', '');
     const html = await wp.content();
     expect(html).not.toContain(secret);
-    expect(html).toMatch(/"userHash":"[0-9a-f]{64}"/);
+    expect(html).toMatch(/"userHash":"v1\.\d{10}\.[0-9a-f]{32}\.[0-9a-f]{64}"/);
 
     const launcher = wp.locator('.js-launcher');
     await expect(launcher).toBeVisible();

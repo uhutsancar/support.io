@@ -1,7 +1,7 @@
 // Customer identity verification for one site.
 //
 // The shop's server signs a signed-in customer's id with a key only it and
-// we know (userHash = HMAC-SHA256(key, userId)) and passes both to
+// we know (a short-lived, site-bound userHash assertion) and passes both to
 // SupportChat.identify(). The key is created on the server and shown here
 // exactly once, in the response that created it; reopening this section says
 // "set", never the key.

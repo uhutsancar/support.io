@@ -330,7 +330,10 @@ final class Support_IO_Live_Chat {
 				'email'  => $user->user_email,
 			);
 			if ( '' !== $o['identity_secret'] ) {
-				$who['userHash'] = hash_hmac( 'sha256', (string) $user->ID, $o['identity_secret'] );
+				$expires = time() + 300;
+				$nonce   = str_replace( '-', '', wp_generate_uuid4() );
+				$payload = "support.io/widget-identity/v1\n" . $o['site_key'] . "\n" . (string) $user->ID . "\n" . $expires . "\n" . $nonce;
+				$who['userHash'] = 'v1.' . $expires . '.' . $nonce . '.' . hash_hmac( 'sha256', $payload, $o['identity_secret'] );
 			}
 			$js = '(function(){var s=window.SupportChat=window.SupportChat||{q:[]};s.q.push(["identify",'
 				. wp_json_encode( $who, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE )

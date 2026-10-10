@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploys one image to the production stack (plan §14.3).
 #
-#   ./scripts/deploy.sh ghcr.io/<owner>/supportio:sha-1a2b3c4
+#   ./scripts/deploy.sh ghcr.io/<owner>/supportio@sha256:<64 hex>
 #
 # Runs on the VPS from /opt/supportio. Every step must succeed or the deploy
 # stops where it is, with the previous containers still running:
@@ -18,8 +18,8 @@
 set -euo pipefail
 
 NEW_IMAGE="${1:-}"
-if [[ -z "$NEW_IMAGE" || "$NEW_IMAGE" == *":latest" || "$NEW_IMAGE" != *:* ]]; then
-  echo "usage: $0 <image:tag>   (an exact tag such as sha-1a2b3c4, never latest)" >&2
+if [[ ! "$NEW_IMAGE" =~ ^ghcr\.io/[a-z0-9_.-]+/[a-z0-9_.-]+@sha256:[0-9a-f]{64}$ ]]; then
+  echo "usage: $0 <ghcr-image@sha256:digest>" >&2
   exit 2
 fi
 
@@ -31,6 +31,20 @@ flock -n 9 || { echo "another deploy is running" >&2; exit 1; }
 ENV_FILE=.env.production
 [[ -f "$ENV_FILE" ]] || { echo "$ROOT/$ENV_FILE is missing" >&2; exit 1; }
 C="docker compose --env-file $ENV_FILE -f docker-compose.prod.yml"
+
+env_value() { grep -E "^$1=" "$ENV_FILE" | tail -n1 | cut -d= -f2-; }
+COSIGN_CERTIFICATE_IDENTITY="$(env_value COSIGN_CERTIFICATE_IDENTITY)"
+[[ -n "$COSIGN_CERTIFICATE_IDENTITY" ]] || {
+  echo "COSIGN_CERTIFICATE_IDENTITY is required" >&2
+  exit 1
+}
+command -v cosign >/dev/null || { echo "cosign is required on the deploy host" >&2; exit 1; }
+
+echo "==> verify signature and exact GitHub Actions identity"
+cosign verify \
+  --certificate-identity "$COSIGN_CERTIFICATE_IDENTITY" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  "$NEW_IMAGE" >/dev/null
 
 PREV_IMAGE="$(grep -E '^APP_IMAGE=' "$ENV_FILE" | cut -d= -f2- || true)"
 DOMAIN="$(grep -E '^APP_DOMAIN=' "$ENV_FILE" | cut -d= -f2-)"
@@ -51,7 +65,13 @@ echo "==> pull"
 $C pull backend
 
 echo "==> migrations"
-$C run --rm --no-deps backend node dist/db/migrate.js
+export DB_USER="$(env_value DB_MIGRATION_USER)"
+export DB_PASSWORD="$(env_value DB_MIGRATION_PASSWORD)"
+[[ -n "$DB_USER" && -n "$DB_PASSWORD" ]] || {
+  echo "DB_MIGRATION_USER and DB_MIGRATION_PASSWORD are required" >&2
+  exit 1
+}
+$C run --rm --no-deps -e DB_USER -e DB_PASSWORD backend node dist/db/migrate.js
 
 echo "==> restart"
 $C up -d --remove-orphans

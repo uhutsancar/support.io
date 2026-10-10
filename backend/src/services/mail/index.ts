@@ -153,7 +153,12 @@ export const mail = {
     args: {
       name: string;
       event:
-        'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked' | 'google_linked';
+        | 'mfa_enabled'
+        | 'mfa_disabled'
+        | 'recovery_used'
+        | 'sessions_revoked'
+        | 'google_linked'
+        | 'google_unlinked';
       link: string;
       locale?: MailLocale;
     }

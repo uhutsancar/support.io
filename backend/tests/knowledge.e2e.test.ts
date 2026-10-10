@@ -227,7 +227,8 @@ test('pages of the site: added, read, refused by robots, kept to the site', asyn
   );
 
   const added = await call(t, `/api/sites/${t.site._id}/knowledge/pages`, 'POST', {
-    url: `${origin}/kargo`
+    url: `${origin}/kargo`,
+    approvedForExternalModel: true
   });
   assert.equal(added.status, 201, JSON.stringify(added.body));
   assert.equal(added.body.source.status, 'pending');
@@ -244,7 +245,8 @@ test('pages of the site: added, read, refused by robots, kept to the site', asyn
   assert.equal(offSite.body.code, 'NOT_ON_SITE');
 
   const map = await call(t, `/api/sites/${t.site._id}/knowledge/sitemap`, 'POST', {
-    url: `${origin}/sitemap.xml`
+    url: `${origin}/sitemap.xml`,
+    approvedForExternalModel: true
   });
   assert.equal(map.status, 201, JSON.stringify(map.body));
   assert.deepEqual(map.body, { found: 2, added: 1 }, 'the off-site address is not followed');
@@ -263,7 +265,7 @@ test('pages of the site: added, read, refused by robots, kept to the site', asyn
 
   // What the assistant would be given for a question about returns.
   const given = await faqSources(t.site._id, 'İade ücretli mi?', 8, true);
-  const passage = given.find((s) => s.kind === 'page');
+  const passage = given.find((s) => s.kind === 'page' && s.url === `${origin}/iade`);
   assert.ok(passage, JSON.stringify(given));
   assert.equal(passage.url, `${origin}/iade`);
   assert.match(passage.answer, /30 gün içinde ücretsizdir/);
@@ -291,6 +293,14 @@ test('a PDF is read and kept as text; anything else is refused', async () => {
   const notPdf = await upload(Buffer.from('<html>hi</html>'), 'sahte.pdf', 'application/pdf');
   assert.equal(notPdf.status, 400);
   assert.equal(notPdf.body.code, 'NOT_PDF');
+
+  const approved = await call(
+    t,
+    `/api/sites/${t.site._id}/knowledge/${ok.body.source._id}/external-model`,
+    'PUT',
+    { approved: true }
+  );
+  assert.equal(approved.status, 200);
 
   const given = await faqSources(t.site._id, 'Garanti kaç yıl?', 8, true);
   const passage = given.find((s) => s.kind === 'pdf');

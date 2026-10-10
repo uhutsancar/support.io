@@ -86,10 +86,15 @@ test('a blocked site stays off until support lifts the block', async () => {
   const blocked = await siteDisable(site.siteKey, '--reason', 'phishing page');
   assert.match(blocked.stdout, /blocked/);
 
-  // No new session; the open page is refused from its next message.
+  // No new session; the next packet on an already-open page is rejected and
+  // the stale socket is disconnected even when the operator command ran in a
+  // separate process.
   assert.notEqual((await widgetSession(site.siteKey)).status, 200);
-  const after = await send(visitor.socket, { content: 'Hâlâ orada mısınız?' });
+  const after = await send(visitor.socket, { content: 'Hâlâ orada mısınız?' }).catch(() => ({
+    ok: false
+  }));
   assert.equal(after.ok, false);
+  assert.equal(visitor.socket.disconnected, true);
 
   // The owner reads it, sees it is blocked, cannot switch it back on or reply.
   const list = await api('/api/sites', token);

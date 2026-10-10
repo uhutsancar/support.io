@@ -20,6 +20,7 @@ import {
   asyncHandler,
   badRequest,
   conflict,
+  loadAccessibleSite,
   loadOwnedDepartment,
   loadOwnedSite,
   orgId,
@@ -84,7 +85,7 @@ async function validatedMembers(organizationId: string, value: unknown): Promise
 router.get(
   '/site/:siteId',
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     const departments = await Department.find({ siteId: site._id, isActive: true })
       .populate('members.userId', MEMBER_FIELDS)
       .sort({ createdAt: -1 });

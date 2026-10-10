@@ -2371,7 +2371,7 @@ export default {
   },
   identity: {
     title: 'Müşteri kimlik doğrulaması',
-    help: 'Sitenizin sunucusu giriş yapmış müşteri için userHash = HMAC-SHA256(anahtar, userId) hesaplar ve SupportChat.identify() ile gönderir. Böylece panelde “Doğrulanmış müşteri” rozeti görünür ve müşterinin sohbeti başka bir kullanıcıya açılmaz.',
+    help: 'Sitenizin sunucusu giriş yapmış müşteri için en fazla 10 dakika geçerli, site anahtarına ve rastgele nonce değerine bağlı imzalı bir userHash üretir ve SupportChat.identify() ile gönderir. Böylece panelde “Doğrulanmış müşteri” rozeti görünür ve müşterinin sohbeti başka bir kullanıcıya açılmaz.',
     configured: 'Tanımlı',
     notConfigured: 'Tanımlı değil',
     generate: 'Anahtar üret',

@@ -85,6 +85,10 @@ test('a file whose bytes do not match its type is refused', async () => {
     Buffer.from('MZ\x90\x00\x03\x00\x00\x00', 'latin1'),
     Buffer.alloc(64)
   ]);
+  const legacyOffice = Buffer.concat([
+    Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]),
+    Buffer.alloc(64)
+  ]);
   for (const [bytes, type, name] of [
     [exe, 'image/png', 'photo.png'],
     [exe, 'application/pdf', 'invoice.pdf'],
@@ -95,6 +99,18 @@ test('a file whose bytes do not match its type is refused', async () => {
     ],
     [Buffer.from('<html><script>alert(1)</script></html>'), 'image/jpeg', 'x.jpg'],
     [Buffer.from('PK\x03\x04rest-of-a-zip', 'latin1'), 'application/zip', 'files.zip'],
+    [legacyOffice, 'application/msword', 'legacy.doc'],
+    [legacyOffice, 'application/vnd.ms-excel', 'legacy.xls'],
+    [
+      Buffer.from('PK\x03\x04not-a-docx', 'latin1'),
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'fake.docx'
+    ],
+    [
+      Buffer.from('PK\x03\x04not-an-xlsx', 'latin1'),
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'fake.xlsx'
+    ],
     [Buffer.from('text\x00with a NUL', 'latin1'), 'text/plain', 'note.txt']
   ] as const) {
     // eslint-disable-next-line no-await-in-loop
@@ -172,6 +188,24 @@ test('a message carries a signed link to its attachment', async () => {
   visitor.socket.close();
   assert.equal(sent.ok, true, JSON.stringify(sent));
   assert.match(sent.message.fileData.url, /\/api\/files\/a\/org\/.+\?e=\d+&s=[A-Za-z0-9_-]{32}$/);
+
+  // Possession of another visitor's proof does not move the upload into a
+  // new principal/session/conversation on the same site.
+  const other = await joinAsVisitor(site.siteKey, {}, { origin: 'http://localhost:3001' });
+  const replay: any = await new Promise((resolve) =>
+    other.socket.emit(
+      'send-message',
+      {
+        content: 'stolen dot.png',
+        messageType: 'image',
+        fileData: file,
+        clientMessageId: `replay-${stamp()}`
+      },
+      resolve
+    )
+  );
+  other.socket.close();
+  assert.equal(replay.ok, false, 'another visitor reused the upload proof');
 
   // The panel reads the same message with its own signed link.
   const listed = await fetch(

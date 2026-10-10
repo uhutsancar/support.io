@@ -127,7 +127,14 @@ async function workspace() {
       body: { token: invite, name, password: PASSWORD }
     });
     assert.equal(accepted.status, 201, JSON.stringify(accepted.body));
-    agents.push({ id: String(accepted.body.user.id), token: sessionCookie(accepted) });
+    const id = String(accepted.body.user.id);
+    await query(
+      `INSERT INTO team_assigned_sites (team_id, site_id)
+       SELECT $1, id FROM sites WHERE organization_id = $2
+       ON CONFLICT DO NOTHING`,
+      [id, organizationId]
+    );
+    agents.push({ id, token: sessionCookie(accepted) });
   }
   return { email, organizationId, token, sites, agents };
 }

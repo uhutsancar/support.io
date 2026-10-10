@@ -78,7 +78,11 @@ function cookiesOf(headers: Headers): Record<string, { value: string; raw: strin
 test('an upload proof is never accepted as a session', async () => {
   const proof = signUploadProof({
     kind: 'chat-upload',
+    uploadId: '000000000000000000000000',
     siteId: '000000000000000000000000',
+    principalType: 'widget',
+    principalId: 'v_00000000000000000000000000000000',
+    sessionId: '000000000000000000000000',
     filename: 'x.png',
     url: 'https://example.test/x.png',
     size: 1,
@@ -162,9 +166,23 @@ test('a cookie-authenticated write needs the matching CSRF header', async () => 
     });
 
   assert.equal((await write({})).status, 403, 'no header');
-  assert.equal((await write({ 'X-CSRF-Token': 'forged' })).status, 403, 'wrong header');
+  assert.equal(
+    (await write({ Origin: new URL(BASE).origin, 'X-CSRF-Token': 'forged' })).status,
+    403,
+    'wrong header'
+  );
   assert.equal(
     (await write({ 'X-CSRF-Token': cookies.sc_csrf.value })).status,
+    403,
+    'missing origin'
+  );
+  assert.equal(
+    (
+      await write({
+        Origin: new URL(BASE).origin,
+        'X-CSRF-Token': cookies.sc_csrf.value
+      })
+    ).status,
     200,
     'matching header'
   );
@@ -179,7 +197,11 @@ test('logout clears the session cookie', async () => {
   const cookieHeader = `sc_session=${encodeURIComponent(cookies.sc_session.value)}; sc_csrf=${encodeURIComponent(cookies.sc_csrf.value)}`;
   const out = await call('/api/auth/logout', {
     method: 'POST',
-    headers: { Cookie: cookieHeader, 'X-CSRF-Token': cookies.sc_csrf.value }
+    headers: {
+      Origin: new URL(BASE).origin,
+      Cookie: cookieHeader,
+      'X-CSRF-Token': cookies.sc_csrf.value
+    }
   });
   assert.equal(out.status, 200);
   const cleared = cookiesOf(out.headers);

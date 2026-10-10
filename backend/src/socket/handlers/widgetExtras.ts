@@ -53,7 +53,8 @@ export function installWidgetExtras(ctx: SocketContext, socket: WidgetSocket): v
       if (contact.departmentId) {
         const department = await Department.findOne({
           _id: contact.departmentId,
-          organizationId: site.organizationId
+          siteId: site._id,
+          isActive: true
         });
         if (!department) contact.departmentId = null;
       }
@@ -65,6 +66,7 @@ export function installWidgetExtras(ctx: SocketContext, socket: WidgetSocket): v
       if (socket.conversationId) {
         const conversation = await Conversation.findOne({
           _id: socket.conversationId,
+          siteId: socket.siteId,
           visitorId: socket.visitorId
         });
         if (conversation) {

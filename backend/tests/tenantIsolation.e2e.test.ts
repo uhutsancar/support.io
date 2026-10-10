@@ -11,8 +11,8 @@
 //
 // No account of org A may read or change anything of org B by putting B's ids
 // in a URL, a body or a socket payload. Inside org A, an agent restricted to
-// A1 cannot reach A2, while an agent with no site assignment reaches both —
-// the deliberate "empty means all" rule documented in src/http/guards.ts.
+// A1 cannot reach A2, while an explicitly assigned agent reaches both. An
+// empty assignment grants no site access.
 //
 // Needs the running API. Run: npm test
 
@@ -190,7 +190,8 @@ test.before(async () => {
     password: PASSWORD,
     name: 'viewer member',
     role: 'viewer',
-    organizationId: ownerA.organizationId
+    organizationId: ownerA.organizationId,
+    assignedSites: [site1._id]
   });
 
   const tokens: Record<string, string> = {
@@ -198,7 +199,8 @@ test.before(async () => {
     viewer: await login(viewerEmail),
     admin: (await teamMember(ownerA.token, 'admin')).token,
     manager: (await teamMember(ownerA.token, 'manager')).token,
-    agent: (await teamMember(ownerA.token, 'agent')).token,
+    agent: (await teamMember(ownerA.token, 'agent', [site1._id, site2._id])).token,
+    'agent-none': (await teamMember(ownerA.token, 'agent')).token,
     'agent-a1': (await teamMember(ownerA.token, 'agent', [site1._id])).token
   };
 
@@ -219,7 +221,7 @@ test.before(async () => {
   };
 });
 
-const ROLES = ['owner', 'viewer', 'admin', 'manager', 'agent', 'agent-a1'];
+const ROLES = ['owner', 'viewer', 'admin', 'manager', 'agent', 'agent-none', 'agent-a1'];
 
 // ------------------------------------------------------------------- REST
 
@@ -317,7 +319,7 @@ test("org A's listings never contain org B's rows", async () => {
 
 // ----------------------------------------------------- inside one tenant
 
-test('a site-restricted agent reaches only its sites; an unrestricted one reaches all', async () => {
+test('site-restricted agents reach only explicit sites; privileged roles remain unrestricted', async () => {
   const { a } = world;
   const restricted = a.tokens['agent-a1'];
   assert.equal((await api(`/api/conversations/${a.site1._id}`, { token: restricted })).status, 200);
@@ -344,11 +346,18 @@ test('a site-restricted agent reaches only its sites; an unrestricted one reache
   const unread = await api('/api/conversations/unread-count', { token: restricted });
   assert.ok(!(a.site2._id in unread.body.unreadBySite), 'the restricted agent counts site A2');
 
-  // No assignment means every site of the organization (src/http/guards.ts).
-  const open = a.tokens.agent;
-  assert.equal((await api(`/api/conversations/${a.site2._id}`, { token: open })).status, 200);
+  const assigned = a.tokens.agent;
+  assert.equal((await api(`/api/conversations/${a.site2._id}`, { token: assigned })).status, 200);
   assert.equal(
-    (await api(`/api/conversations/${a.site2._id}/${a.conv2}`, { token: open })).status,
+    (await api(`/api/conversations/${a.site2._id}/${a.conv2}`, { token: assigned })).status,
+    200
+  );
+  assert.equal(
+    (await api(`/api/conversations/${a.site1._id}`, { token: a.tokens['agent-none'] })).status,
+    404
+  );
+  assert.equal(
+    (await api(`/api/conversations/${a.site2._id}`, { token: a.tokens.admin })).status,
     200
   );
 });

@@ -147,6 +147,9 @@ export default defineModel<TeamDoc>({
       delete obj.totpLastStep;
       delete obj.recoveryCodes;
       delete obj.googleSub;
+      delete obj.googleEmail;
+      delete obj.sessionVersion;
+      delete obj.totpEnabledAt;
       return obj;
     }
   }

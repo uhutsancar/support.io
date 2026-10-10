@@ -449,8 +449,9 @@ test('an agent cannot delete a conversation; the owner can', async () => {
 
 test('an agent may take an unassigned conversation or release their own, nothing more', async () => {
   const tenant = await createTenant('assignperm');
-  const agent = await createMember(tenant.token, 'agent');
-  const colleague = await createMember(tenant.token, 'agent');
+  const assignment = { assignedSites: [tenant.site._id] };
+  const agent = await createMember(tenant.token, 'agent', assignment);
+  const colleague = await createMember(tenant.token, 'agent', assignment);
   const assign = (id: string, agentId: string | null) =>
     api(`/api/conversations/${id}/assign`, {
       method: 'PUT',

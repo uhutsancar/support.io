@@ -61,8 +61,14 @@ export function eventLimiter(name: string, limits: EventBudget) {
           socket.emit('error', { message: 'Too many requests, slow down', code: 'RATE_LIMITED' });
           ack?.({ ok: false, code: 'RATE_LIMITED' });
         },
-        // The counter is a side system: if it fails, chat keeps working.
-        () => next()
+        // A broken counter must not turn an expensive event budget off.
+        () => {
+          socket.emit('error', {
+            message: 'Rate limit unavailable',
+            code: 'RATE_LIMIT_UNAVAILABLE'
+          });
+          ack?.({ ok: false, code: 'RATE_LIMIT_UNAVAILABLE' });
+        }
       );
     });
   };

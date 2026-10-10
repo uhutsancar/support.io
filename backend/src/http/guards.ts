@@ -149,17 +149,13 @@ const UNRESTRICTED_ROLES = new Set(['owner', 'admin']);
 /**
  * Whether an account may work on a site of its own organization.
  *
- * The inbox rule: owners and admins reach every site; anyone else reaches the
- * sites they are assigned to, and an empty assignment list means all of them.
+ * The inbox rule: owners and admins reach every site; anyone else reaches only
+ * the sites they are explicitly assigned to. An empty list means no sites.
  * The socket layer and the HTTP routes both ask this one function, so the two
  * ways into a conversation cannot disagree about who may open it.
  *
- * "Empty means all" is a deliberate V1 decision for every role, agents
- * included. Tenant isolation is the organization boundary, which is never
- * relaxed; a site assignment only narrows inside it. Reading an empty list as
- * "nothing" would leave every newly invited agent with an empty inbox until
- * someone also ticked each site — and every site added later — for them.
- * tests/tenantIsolation.e2e.test.ts pins both halves.
+ * Migration 0027 materializes the old empty-list grant into explicit rows, so
+ * removing the final assignment now fails closed instead of widening access.
  */
 export function mayAccessSite(
   role: string | undefined,
@@ -168,7 +164,7 @@ export function mayAccessSite(
 ): boolean {
   if (role && UNRESTRICTED_ROLES.has(role)) return true;
   const sites = Array.from(assignedSites ?? [], String);
-  return sites.length === 0 || sites.includes(String(siteId));
+  return sites.includes(String(siteId));
 }
 
 /**
@@ -189,7 +185,7 @@ export async function loadAccessibleSite(req: Request, siteId: unknown): Promise
 export function restrictedSiteIds(req: Request): Set<string> | null {
   if (req.user?.role && UNRESTRICTED_ROLES.has(req.user.role)) return null;
   const sites = Array.from(req.user?.assignedSites ?? [], String);
-  return sites.length ? new Set(sites) : null;
+  return new Set(sites);
 }
 
 /**
@@ -237,7 +233,10 @@ export async function findOwnedDepartment(
   if (!isValidObjectId(departmentId)) return null;
   const department = await Department.findById(departmentId);
   if (!department) return null;
-  return (await findOwnedSite(req, department.siteId)) ? department : null;
+  const site = await findOwnedSite(req, department.siteId);
+  return site && mayAccessSite(req.user?.role, req.user?.assignedSites, site._id)
+    ? department
+    : null;
 }
 
 export async function loadOwnedDepartment(
@@ -266,7 +265,10 @@ export async function requireSiteOwnership<T extends { siteId: unknown }>(
   label: string
 ): Promise<Doc<T>> {
   if (!row) throw notFound(label);
-  if (!(await findOwnedSite(req, row.siteId))) throw notFound(label);
+  const site = await findOwnedSite(req, row.siteId);
+  if (!site || !mayAccessSite(req.user?.role, req.user?.assignedSites, site._id)) {
+    throw notFound(label);
+  }
   return row;
 }
 

@@ -13,6 +13,7 @@ import { requireWidgetSession } from '../middleware/widgetSession';
 import {
   asyncHandler,
   badRequest,
+  loadAccessibleSite,
   loadOwnedSite,
   pick,
   requireOrganization,
@@ -54,7 +55,7 @@ router.get(
   auth,
   requireOrganization,
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     const faqs = await FAQ.find({ siteId: site._id }).sort({ order: 1, createdAt: -1 });
     res.json({ faqs });
   })

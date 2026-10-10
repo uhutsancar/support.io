@@ -5,6 +5,7 @@ import { checkPermission } from '../middleware/rbac';
 import {
   asyncHandler,
   badRequest,
+  loadAccessibleSite,
   loadOwnedSite,
   requireOrganization,
   requireSiteOwnership
@@ -19,7 +20,10 @@ const router = express.Router();
 // nothing at trigger time.
 const ACTION_TYPES = ['send_message', 'open_popup', 'add_tag'];
 const EVENT_TYPES = ['time_on_page', 'exit_intent', 'scroll_depth', 'inactivity', 'custom_event'];
-const URL_MATCH_TYPES = ['any', 'exact', 'contains', 'regex'];
+// Tenant-supplied JavaScript regular expressions can block the shared event
+// loop through catastrophic backtracking. Existing legacy regex rules fail
+// closed in the engine until an owner edits them.
+const URL_MATCH_TYPES = ['any', 'exact', 'contains'];
 const DEVICE_TYPES = ['all', 'desktop', 'mobile', 'tablet'];
 
 // Same ownership rule as the automation routes: a rule is only reachable when
@@ -61,14 +65,11 @@ function validateRuleBody(
       if (trigger.urlMatch !== undefined && !URL_MATCH_TYPES.includes(trigger.urlMatch)) {
         errors.push(`triggerCondition.urlMatch must be one of: ${URL_MATCH_TYPES.join(', ')}`);
       }
-      // A regex arrives as a plain string and is compiled by the engine on every
-      // matching event, so it is checked once here instead of throwing later.
-      if (trigger.urlMatch === 'regex') {
-        try {
-          new RegExp(trigger.urlValue || '');
-        } catch {
-          errors.push('triggerCondition.urlValue is not a valid regular expression');
-        }
+      if (
+        trigger.urlValue !== undefined &&
+        (typeof trigger.urlValue !== 'string' || trigger.urlValue.length > 2048)
+      ) {
+        errors.push('triggerCondition.urlValue must be a string of at most 2048 characters');
       }
     }
   }
@@ -119,7 +120,7 @@ router.get(
   auth,
   requireOrganization,
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
 
     const rules = await ProactiveRule.find({ siteId: site._id }).sort({ createdAt: -1 }).limit(200);
     res.json(rules);

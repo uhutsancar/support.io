@@ -29,6 +29,7 @@ import { installAdminTeamChatHandlers } from './handlers/adminTeamChat';
 import { userRoom } from '../realtime/rooms';
 import { AGENT_BUDGET, eventLimiter } from './limits';
 import { ADMIN_EVENTS, validateEvents } from './schema';
+import { registerSocketServer } from '../realtime/invalidation';
 import type { Server, Socket } from 'socket.io';
 import type { AdminSocket } from './types';
 
@@ -40,6 +41,7 @@ export class SocketHandler {
 
   constructor(io: Server) {
     this.ctx = new SocketContext(io);
+    registerSocketServer(io);
 
     installAdminAuthentication(this.ctx.admin);
     installWidgetAuthentication(this.ctx.widget);
@@ -51,6 +53,7 @@ export class SocketHandler {
     const limit = eventLimiter('socket-agent', AGENT_BUDGET);
     this.ctx.admin.on('connection', (rawSocket: Socket) => {
       const socket = rawSocket as AdminSocket;
+      this.ctx.installLiveAuthorization(socket);
       // Counted per account across all its tabs; see ./limits.ts.
       limit(socket, `a:${socket.userId}`);
       // Then every payload is checked against its event's shape; see ./schema.ts.

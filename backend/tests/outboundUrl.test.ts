@@ -49,6 +49,10 @@ test('private, loopback and metadata addresses are refused', async () => {
     'http://[fd00::1]/',
     'http://[fe80::1]/',
     'http://[::ffff:127.0.0.1]/',
+    'http://[::127.0.0.1]/',
+    'http://[64:ff9b:1::a00:1]/',
+    'http://[2002:7f00:1::]/',
+    'http://[2001::1]/',
     'http://inside.example.com/',
     'http://v6inside.example.com/',
     // One public and one private answer: the private one would be used later.

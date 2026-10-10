@@ -113,7 +113,7 @@ self.addEventListener('push', (event) => {
   } catch (error) {
     data = {};
   }
-  const url = typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/dashboard';
+  const url = safeDashboardPath(data.url);
   event.waitUntil(
     self.registration.showNotification(data.title || 'Support.io', {
       body: data.body || '',
@@ -128,7 +128,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const path = (event.notification.data && event.notification.data.url) || '/dashboard';
+  const path = safeDashboardPath(event.notification.data && event.notification.data.url);
   const target = new URL(path, self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
@@ -143,3 +143,23 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+/** Only a same-origin dashboard route may become a notification navigation. */
+function safeDashboardPath(value) {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+    return '/dashboard';
+  }
+  try {
+    const parsed = new URL(value, self.location.origin);
+    const dashboard =
+      parsed.pathname === '/dashboard' ||
+      parsed.pathname.startsWith('/dashboard/') ||
+      parsed.pathname === '/en/dashboard' ||
+      parsed.pathname.startsWith('/en/dashboard/');
+    return parsed.origin === self.location.origin && dashboard
+      ? parsed.pathname + parsed.search + parsed.hash
+      : '/dashboard';
+  } catch (error) {
+    return '/dashboard';
+  }
+}

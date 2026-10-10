@@ -6,7 +6,7 @@
 // it single-use even when the link is opened twice at the same moment.
 
 import crypto from 'crypto';
-import { query } from '../db/pool';
+import { query, withTransaction } from '../db/pool';
 import { generateId } from '../db/objectId';
 import type { UserType } from '../types/auth';
 
@@ -23,6 +23,8 @@ export const AUTH_TOKEN_TTL_SECONDS: Record<AuthTokenPurpose, number> = {
 export interface AuthTokenPayload {
   /** email_change: the address that replaces the current one. */
   newEmail?: string;
+  /** email_change: where the post-change security notice is sent. */
+  oldEmail?: string;
   /** verify: a fingerprint of the password hash the link was issued for. */
   pw?: string;
 }
@@ -87,6 +89,88 @@ export async function consumeAuthToken(
   return rows[0]
     ? { id: rows[0].account_id, type: rows[0].account_type, payload: rows[0].payload ?? {} }
     : null;
+}
+
+export type EmailChangeResult =
+  | { status: 'invalid' }
+  | { status: 'taken' }
+  | {
+      status: 'changed';
+      id: string;
+      type: UserType;
+      oldEmail: string;
+      newEmail: string;
+      name: string;
+      organizationId: string | null;
+    };
+
+/**
+ * Spends the token, arbitrates the address across both account tables,
+ * changes it and revokes reset links in one transaction. The advisory lock
+ * closes the users-vs-teams race that separate UNIQUE indexes cannot.
+ */
+export async function consumeEmailChange(token: unknown): Promise<EmailChangeResult> {
+  if (typeof token !== 'string' || token.length < 20 || token.length > 200) {
+    return { status: 'invalid' };
+  }
+  return withTransaction(async (client) => {
+    const spent = await client.query<{
+      account_id: string;
+      account_type: UserType;
+      payload: AuthTokenPayload | null;
+    }>(
+      `UPDATE auth_tokens SET used_at = now()
+        WHERE token_hash = $1 AND purpose = 'email_change'
+          AND used_at IS NULL AND expires_at > now()
+        RETURNING account_id, account_type, payload`,
+      [hashOf(token)]
+    );
+    const row = spent.rows[0];
+    const newEmail = row?.payload?.newEmail?.trim().toLowerCase();
+    if (!row || !newEmail) return { status: 'invalid' };
+
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [newEmail]);
+    const occupied = await client.query(
+      `SELECT 1 FROM users WHERE lower(email) = $1 AND is_active AND id <> $2
+       UNION ALL
+       SELECT 1 FROM teams WHERE lower(email) = $1 AND is_active AND id <> $2
+       LIMIT 1`,
+      [newEmail, row.account_id]
+    );
+    if (occupied.rows[0]) return { status: 'taken' };
+
+    const table = row.account_type === 'team' ? 'teams' : 'users';
+    const changed = await client.query<{
+      id: string;
+      email: string;
+      name: string;
+      organization_id: string | null;
+    }>(
+      `UPDATE ${table}
+          SET email = $2, email_verified_at = now(),
+              session_version = session_version + 1, updated_at = now()
+        WHERE id = $1 AND is_active
+        RETURNING id, email, name, organization_id`,
+      [row.account_id, newEmail]
+    );
+    if (!changed.rows[0]) return { status: 'invalid' };
+    await client.query(
+      `UPDATE auth_tokens SET used_at = now()
+        WHERE account_id = $1 AND account_type = $2
+          AND purpose = 'reset' AND used_at IS NULL`,
+      [row.account_id, row.account_type]
+    );
+    const account = changed.rows[0];
+    return {
+      status: 'changed',
+      id: account.id,
+      type: row.account_type,
+      oldEmail: row.payload?.oldEmail || '',
+      newEmail: account.email,
+      name: account.name,
+      organizationId: account.organization_id
+    };
+  });
 }
 
 /** A short fingerprint of a password hash, bound into verification links. */

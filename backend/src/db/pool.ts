@@ -1,6 +1,7 @@
 // Connection details come exclusively from the environment. DATABASE_URL wins
 // when present, otherwise the discrete DB_* variables are used.
 import { Pool } from 'pg';
+import { readFileSync } from 'fs';
 import type { PoolClient, PoolConfig, QueryResult, QueryResultRow } from 'pg';
 
 function buildConfig(): PoolConfig {
@@ -39,17 +40,28 @@ function buildConfig(): PoolConfig {
   // overrides the guess when the default is wrong for a given deployment.
   const sslEnv = (process.env.DB_SSL || '').toLowerCase();
   let ssl: PoolConfig['ssl'] = false;
-  if (sslEnv === 'true' || sslEnv === 'require') ssl = { rejectUnauthorized: false };
-  else if (sslEnv === 'false' || sslEnv === 'disable') ssl = false;
+  const ca = process.env.DB_SSL_CA_FILE
+    ? readFileSync(process.env.DB_SSL_CA_FILE, 'utf8')
+    : process.env.DB_SSL_CA;
+  if (['true', 'require', 'verify-ca', 'verify-full'].includes(sslEnv)) {
+    ssl = { rejectUnauthorized: true, ...(ca ? { ca } : {}) };
+  } else if (sslEnv === 'false' || sslEnv === 'disable') ssl = false;
   else if (
     process.env.DATABASE_URL &&
     /[?&]sslmode=(require|verify)/i.test(process.env.DATABASE_URL)
   ) {
-    ssl = { rejectUnauthorized: false };
+    ssl = { rejectUnauthorized: true, ...(ca ? { ca } : {}) };
   }
 
   if (process.env.DATABASE_URL) {
-    return { ...base, connectionString: process.env.DATABASE_URL, ssl };
+    // pg's connection-string ssl parameters replace an explicit ssl object.
+    // Remove them after deriving the policy above so rejectUnauthorized and
+    // the trusted CA cannot be silently weakened by sslmode=require.
+    const parsed = new URL(process.env.DATABASE_URL);
+    for (const key of ['sslmode', 'sslcert', 'sslkey', 'sslrootcert']) {
+      parsed.searchParams.delete(key);
+    }
+    return { ...base, connectionString: parsed.toString(), ssl };
   }
 
   if (!process.env.DB_HOST || !process.env.DB_NAME) {

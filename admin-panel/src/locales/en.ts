@@ -2365,7 +2365,7 @@ export default {
   },
   identity: {
     title: 'Customer identity verification',
-    help: 'Your site’s server computes userHash = HMAC-SHA256(key, userId) for a signed-in customer and passes it to SupportChat.identify(). The panel then shows a “Verified customer” badge, and that customer’s conversation is never reopened for anyone else.',
+    help: 'Your site’s server creates a signed userHash assertion for the signed-in customer, bound to the site key and a random nonce and valid for no more than 10 minutes, then passes it to SupportChat.identify(). The panel then shows a “Verified customer” badge, and that customer’s conversation is never reopened for anyone else.',
     configured: 'Set',
     notConfigured: 'Not set',
     generate: 'Generate key',

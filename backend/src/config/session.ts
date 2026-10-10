@@ -21,6 +21,7 @@
 // olur (tarayıcı şartı).
 
 import crypto from 'crypto';
+import { derivedKey } from './tokens';
 import type { CookieOptions, Request, Response } from 'express';
 
 export const SESSION_COOKIE = 'sc_session';
@@ -56,7 +57,14 @@ function base(): CookieOptions {
 
 /** Oturumu kurar: token JavaScript'in göremeyeceği çerezde, CSRF eşi okunabilir. */
 export function startSession(res: Response, token: string): string {
-  const csrfToken = crypto.randomBytes(32).toString('base64url');
+  const nonce = crypto.randomBytes(24).toString('base64url');
+  const binding = crypto
+    .createHmac('sha256', derivedKey('csrf'))
+    .update(token)
+    .update('\0')
+    .update(nonce)
+    .digest('base64url');
+  const csrfToken = `${nonce}.${binding}`;
   res.cookie(SESSION_COOKIE, token, { ...base(), httpOnly: true });
   // Bu çerez bilerek okunabilir: panelin başlığa koyabilmesi gerekiyor. Tek
   // başına yetki vermez, yalnızca isteğin gerçekten panelden geldiğini gösterir.
@@ -135,7 +143,25 @@ export function csrfOk(req: Request, fromCookie: boolean): boolean {
   const headerValue = req.header(CSRF_HEADER);
   if (typeof cookieValue !== 'string' || !cookieValue) return false;
   if (typeof headerValue !== 'string' || !headerValue) return false;
-  if (cookieValue.length !== headerValue.length) return false;
-  // Sabit süreli karşılaştırma: uzunluk eşitse baytlar sızdırılmadan bakılır.
-  return crypto.timingSafeEqual(Buffer.from(cookieValue), Buffer.from(headerValue));
+  // Only the canonical ASCII form reaches timingSafeEqual. Character counts
+  // are not byte counts; malformed Unicode used to throw a RangeError here.
+  if (!/^[A-Za-z0-9_-]{32}\.[A-Za-z0-9_-]{43}$/.test(cookieValue)) return false;
+  if (!/^[A-Za-z0-9_-]{32}\.[A-Za-z0-9_-]{43}$/.test(headerValue)) return false;
+  const cookieBytes = Buffer.from(cookieValue, 'ascii');
+  const headerBytes = Buffer.from(headerValue, 'ascii');
+  if (cookieBytes.length !== headerBytes.length) return false;
+  if (!crypto.timingSafeEqual(cookieBytes, headerBytes)) return false;
+
+  const sessionToken = req.cookies?.[SESSION_COOKIE];
+  if (typeof sessionToken !== 'string' || !sessionToken) return false;
+  const [nonce, suppliedBinding] = cookieValue.split('.');
+  const expectedBinding = crypto
+    .createHmac('sha256', derivedKey('csrf'))
+    .update(sessionToken)
+    .update('\0')
+    .update(nonce)
+    .digest('base64url');
+  const expected = Buffer.from(expectedBinding, 'ascii');
+  const supplied = Buffer.from(suppliedBinding, 'ascii');
+  return expected.length === supplied.length && crypto.timingSafeEqual(expected, supplied);
 }

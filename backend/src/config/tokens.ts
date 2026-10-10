@@ -30,6 +30,7 @@ import type { AuthTokenPayload } from '../types/auth';
 
 const SESSION_AUDIENCE = 'support-chat:session';
 const UPLOAD_AUDIENCE = 'support-chat:upload-proof';
+const RECENT_AUTH_AUDIENCE = 'support-chat:recent-auth';
 
 function keyFrom(secret: string, purpose: string): Buffer {
   return crypto.createHmac('sha256', secret).update(`support-chat/${purpose}/v1`).digest();
@@ -81,7 +82,11 @@ export function signSession(payload: AuthTokenPayload, expiresInSeconds: number)
   return jwt.sign({ ...payload }, derivedKey('session'), {
     algorithm: 'HS256',
     audience: SESSION_AUDIENCE,
-    expiresIn: expiresInSeconds
+    expiresIn: expiresInSeconds,
+    // Two logins for the same account can happen in the same second. Without
+    // a unique id jsonwebtoken produces identical bytes for both, which makes
+    // an "exact session" step-up proof replayable in the second browser.
+    jwtid: crypto.randomUUID()
   });
 }
 
@@ -230,7 +235,12 @@ export function verifyMfaPending(token: unknown): MfaPendingClaims | null {
 
 export interface UploadProofClaims {
   kind: 'chat-upload';
+  uploadId: string;
   siteId: string;
+  principalType: 'widget' | 'user' | 'team';
+  principalId: string;
+  /** Widget session id; account uploads are already bound to the account. */
+  sessionId: string | null;
   filename: string;
   url: string;
   size: number;
@@ -251,6 +261,47 @@ export function verifyUploadProof(token: string): UploadProofClaims {
     audience: UPLOAD_AUDIENCE
   }) as UploadProofClaims;
   if (decoded.kind !== 'chat-upload') throw new Error('Not an upload proof');
+  return decoded;
+}
+
+// ------------------------------------------------------- recent-auth proof
+
+export type RecentAuthPurpose = 'google-link' | 'google-unlink';
+export interface RecentAuthClaims {
+  purpose: RecentAuthPurpose;
+  userId: string;
+  userType: 'user' | 'team';
+  sv: number;
+  sessionBinding: string;
+}
+
+export function bindSessionForStepUp(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('base64url');
+}
+
+export function signRecentAuth(claims: RecentAuthClaims): string {
+  return jwt.sign({ ...claims }, derivedKey('recent-auth'), {
+    algorithm: 'HS256',
+    audience: RECENT_AUTH_AUDIENCE,
+    expiresIn: '10m'
+  });
+}
+
+export function verifyRecentAuth(token: string): RecentAuthClaims {
+  const decoded = verifyJwt(token, 'recent-auth', {
+    algorithms: ['HS256'],
+    audience: RECENT_AUTH_AUDIENCE
+  }) as RecentAuthClaims;
+  if (!isValidObjectId(decoded.userId)) throw new Error('Invalid recent-auth account');
+  if (decoded.userType !== 'user' && decoded.userType !== 'team') {
+    throw new Error('Invalid recent-auth account type');
+  }
+  if (decoded.purpose !== 'google-link' && decoded.purpose !== 'google-unlink') {
+    throw new Error('Invalid recent-auth purpose');
+  }
+  if (!Number.isInteger(decoded.sv) || typeof decoded.sessionBinding !== 'string') {
+    throw new Error('Invalid recent-auth session');
+  }
   return decoded;
 }
 

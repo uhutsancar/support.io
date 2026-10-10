@@ -128,6 +128,7 @@ async function callModel(config: AssistantConfig, request: GenerateRequest): Pro
             responseSchema: request.schema
           }
         }),
+        redirect: 'error',
         signal
       }
     );

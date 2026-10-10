@@ -11,38 +11,36 @@ import WidgetConfig from '../models/WidgetConfig';
 import { auth } from '../middleware/auth';
 import { requireWidgetSession } from '../middleware/widgetSession';
 import { checkPermission } from '../middleware/rbac';
-import { storeUpload, uploadLogo } from '../middleware/upload';
+import {
+  deleteStoredFiles,
+  reserveUploadIngress,
+  storedKeyFromUrl,
+  storeUpload,
+  uploadLogo
+} from '../middleware/upload';
 import { publicConfig } from './widget';
 import {
   asyncHandler,
+  asyncMiddleware,
   badRequest,
+  loadAccessibleSite,
   loadOwnedSite,
   notFound,
   orgId,
   requireOrganization
 } from '../http';
-import type { Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import type { Doc } from '../db/model';
 import type { SiteDoc } from '../models/Site';
 import type { WidgetConfigDoc } from '../models/WidgetConfig';
+import { widgetConfigUpdates } from '../security/widgetConfigSchema';
 
 const router = express.Router();
 
-/** The sections a client may edit. Everything else on the row is server-owned. */
-const EDITABLE_SECTIONS = new Set([
-  'colors',
-  'branding',
-  'button',
-  'window',
-  'messages',
-  'behavior',
-  'typography',
-  'advanced',
-  'isActive'
-]);
-
-/** Names that must never be merged into an object; see middleware/sanitize.ts. */
-const POLLUTING_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+const logoSite = asyncMiddleware(async (req: Request, _res: Response, next: NextFunction) => {
+  req.site = await loadOwnedSite(req, req.params.siteId);
+  next();
+});
 
 /**
  * The site's configuration row, created with defaults the first time it is asked for.
@@ -68,7 +66,7 @@ router.get(
   auth,
   requireOrganization,
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     const config = await configForSite(site, orgId(req));
     if (config.$isNew) await config.save();
     res.json({ config });
@@ -81,10 +79,7 @@ router.put(
   requireOrganization,
   checkPermission('manage_sites'),
   asyncHandler(async (req: Request, res: Response) => {
-    const updates = Object.fromEntries(
-      Object.entries(req.body || {}).filter(([key]) => EDITABLE_SECTIONS.has(key))
-    );
-    if (Object.keys(updates).length === 0) throw badRequest('No valid updates supplied');
+    const updates = widgetConfigUpdates(req.body);
 
     // The ownership check comes first. Earlier versions looked the config up by
     // `siteId` alone, so anyone with `manage_sites` in any organization could
@@ -101,9 +96,7 @@ router.put(
       writable[section] = isMergeable
         ? {
             ...(writable[section] as object),
-            ...Object.fromEntries(
-              Object.entries(value as object).filter(([key]) => !POLLUTING_KEYS.has(key))
-            )
+            ...(value as object)
           }
         : value;
     }
@@ -128,9 +121,11 @@ router.post(
   auth,
   requireOrganization,
   checkPermission('manage_sites'),
+  logoSite,
+  reserveUploadIngress,
   uploadLogo.single('logo'),
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = req.site;
     if (!req.file) throw badRequest('No file was uploaded', 'UPLOAD_FAILED');
 
     // Checked and re-encoded like every image (middleware/upload.ts); a
@@ -138,9 +133,11 @@ router.post(
     const stored = await storeUpload(req, req.file, { kind: 'logo' });
 
     const config = await configForSite(site, orgId(req));
+    const previousLogo = storedKeyFromUrl(config.branding.logo);
     config.branding.logo = stored.url;
     await config.save();
     await forgetSiteBundle(site._id);
+    if (previousLogo) await deleteStoredFiles([previousLogo]);
 
     res.json({ success: true, config, logoUrl: stored.url });
   })
@@ -157,10 +154,11 @@ router.delete(
     const config = await WidgetConfig.findOne({ siteId: site._id });
     if (!config) throw notFound('Config');
 
-    // Only the reference is dropped; the object itself stays in the bucket.
+    const previousLogo = storedKeyFromUrl(config.branding.logo);
     config.branding.logo = null;
     await config.save();
     await forgetSiteBundle(site._id);
+    if (previousLogo) await deleteStoredFiles([previousLogo]);
     res.json({ config });
   })
 );

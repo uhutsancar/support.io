@@ -3,6 +3,7 @@
 import express from 'express';
 import Deal from '../models/Deal';
 import { auth } from '../middleware/auth';
+import { checkPermission } from '../middleware/rbac';
 import { requireFeature } from '../services/entitlements';
 import { DEAL_STAGES, isDealStage } from '../domain';
 import { asyncHandler, badRequest, notFound, orgId, pick, requireOrganization } from '../http';
@@ -37,6 +38,7 @@ const ORDER_STEP = 1024;
 
 router.get(
   '/',
+  checkPermission('crm_read'),
   asyncHandler(async (req: Request, res: Response) => {
     const deals = await Deal.find({ organizationId: orgId(req) })
       .sort({ order: 1, createdAt: -1 })
@@ -48,6 +50,7 @@ router.get(
 
 router.post(
   '/',
+  checkPermission('crm_write'),
   asyncHandler(async (req: Request, res: Response) => {
     const organizationId = orgId(req);
     const fields = pick<DealDoc>(req.body, WRITABLE_FIELDS);
@@ -76,6 +79,7 @@ router.post(
 
 router.put(
   '/:id/stage',
+  checkPermission('crm_write'),
   asyncHandler(async (req: Request, res: Response) => {
     const { stage, order } = req.body;
     if (stage !== undefined && !isDealStage(stage)) {
@@ -94,6 +98,7 @@ router.put(
 
 router.delete(
   '/:id',
+  checkPermission('crm_delete'),
   asyncHandler(async (req: Request, res: Response) => {
     const deal = await Deal.findOneAndDelete({ _id: req.params.id, organizationId: orgId(req) });
     if (!deal) throw notFound('Deal');

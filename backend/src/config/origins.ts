@@ -71,4 +71,9 @@ function isOriginAllowed(origin: string | undefined): boolean {
   return false;
 }
 
-export { isOriginAllowed, allowedOrigins };
+/** Strict browser-origin check: unlike CORS helpers, absence is not allowed. */
+function isExplicitOriginAllowed(origin: string | undefined): boolean {
+  return Boolean(origin) && isOriginAllowed(origin);
+}
+
+export { isOriginAllowed, isExplicitOriginAllowed, allowedOrigins };

@@ -7,15 +7,21 @@
 import TeamChat from '../../models/TeamChat';
 import TeamMessage from '../../models/TeamMessage';
 import { teamChatRoom, userRoom } from '../../realtime/rooms';
+import { hasPermission, seatPermits } from '../../middleware/rbac';
 import type { SocketContext } from '../context';
 import type { AdminSocket, TeamChatPayload, TeamChatSendPayload } from '../types';
 
 const MAX_MESSAGE_LENGTH = 10000;
 
 export function installAdminTeamChatHandlers(ctx: SocketContext, socket: AdminSocket): void {
+  const permitted = (): boolean =>
+    hasPermission(socket.role, 'team_chat') &&
+    seatPermits(Boolean(socket.seatSuspended), 'team_chat');
+
   socket.on(
     'team-chat-join',
     ctx.guard(socket, async (data: TeamChatPayload | undefined) => {
+      if (!permitted()) return ctx.reject(socket);
       const chat = await ctx.chatFor(socket, data?.chatId);
       if (!chat) return ctx.reject(socket);
       await socket.join(teamChatRoom(chat.chatId));
@@ -31,7 +37,7 @@ export function installAdminTeamChatHandlers(ctx: SocketContext, socket: AdminSo
     'team-chat-send',
     ctx.guard(socket, async (data: TeamChatSendPayload | undefined) => {
       // A seat over the plan's limit reads but does not write (BIL-04).
-      if (socket.seatSuspended) {
+      if (!permitted()) {
         return socket.emit('error', {
           message: 'Your seat is over the plan limit; you can read but not write',
           code: 'SEAT_SUSPENDED'
@@ -91,6 +97,7 @@ export function installAdminTeamChatHandlers(ctx: SocketContext, socket: AdminSo
   socket.on(
     'team-chat-typing',
     ctx.guard(socket, async (data: TeamChatPayload | undefined) => {
+      if (!permitted()) return ctx.reject(socket);
       const chat = await ctx.chatFor(socket, data?.chatId);
       if (!chat) return;
       // `socket.to` excludes the sender, who does not need to see themselves type.

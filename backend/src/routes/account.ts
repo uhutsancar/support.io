@@ -23,13 +23,14 @@ import Team from '../models/Team';
 import Organization from '../models/Organization';
 import events from '../events';
 import { auth } from '../middleware/auth';
-import { accountChangeLimiter } from '../middleware/rateLimit';
+import { accountChangeLimiter, requireSharedRateLimits } from '../middleware/rateLimit';
 import { startSession, SESSION_TTL_SECONDS } from '../config/session';
-import { signSession } from '../config/tokens';
+import { bindSessionForStepUp, signRecentAuth, signSession } from '../config/tokens';
+import type { RecentAuthPurpose } from '../config/tokens';
 import { assertPasswordAllowed } from '../config/passwords';
 import { isDisposableEmail } from '../config/emailPolicy';
 import { asyncHandler, HttpError, forbidden } from '../http';
-import { consumeAuthToken, issueAuthToken, revokeAuthTokens } from '../services/authTokens';
+import { consumeEmailChange, issueAuthToken, revokeAuthTokens } from '../services/authTokens';
 import { appBaseUrl, mail } from '../services/mail';
 import {
   beginEnrollment,
@@ -42,9 +43,10 @@ import {
 } from '../services/mfa';
 import { planIncludes } from '../domain/plans';
 import { getPlan } from '../services/entitlements';
-import { accountById, mailLocale, sessionClaims } from './auth';
+import { mailLocale, sessionClaims } from './auth';
 import { referralSummary } from '../services/referrals';
 import type { Request, Response } from 'express';
+import { invalidateAdminAccount, invalidateOrganization } from '../realtime/invalidation';
 
 const router = express.Router();
 
@@ -95,6 +97,7 @@ router.post(
     req.user.password = newPassword;
     const csrfToken = rotateSessions(req, res);
     await req.user.save();
+    invalidateAdminAccount(req.user._id);
     // Links mailed before the change would otherwise still set a password.
     await revokeAuthTokens({ id: req.user._id, type: req.userType }, 'reset');
 
@@ -121,6 +124,38 @@ const EMAIL_CHANGE_SENT = {
   message: 'If the address can be used, a confirmation link is on its way to it.'
 };
 
+// A ten-minute, exact-session and exact-purpose proof for account binding
+// changes. MFA accounts must prove both factors; the resulting JWT grants
+// only the named action and is useless as a login session.
+router.post(
+  '/recent-auth',
+  auth,
+  requireSharedRateLimits,
+  accountChangeLimiter,
+  asyncHandler(async (req: Request, res: Response) => {
+    const purpose = req.body?.purpose as RecentAuthPurpose;
+    if (purpose !== 'google-link' && purpose !== 'google-unlink') {
+      throw new HttpError(400, 'Unknown recent-auth purpose', 'RECENT_AUTH_PURPOSE');
+    }
+    await assertPassword(req);
+    if (mfaEnabled(req.user)) {
+      const second = await verifySecondStep(req.user, req.userType, {
+        code: req.body?.code,
+        recoveryCode: req.body?.recoveryCode
+      });
+      if (!second) throw new HttpError(400, 'The verification code is not valid', 'MFA_INVALID');
+    }
+    const proof = signRecentAuth({
+      purpose,
+      userId: String(req.user._id),
+      userType: req.userType,
+      sv: req.user.sessionVersion ?? 0,
+      sessionBinding: bindSessionForStepUp(req.token)
+    });
+    res.set('Cache-Control', 'no-store').json({ proof, expiresIn: 10 * 60 });
+  })
+);
+
 router.post(
   '/change-email',
   auth,
@@ -143,7 +178,8 @@ router.post(
     // this form must not tell a signed-in user who else has an account.
     if (!(await addressTaken(newEmail))) {
       const token = await issueAuthToken({ id: req.user._id, type: req.userType }, 'email_change', {
-        newEmail
+        newEmail,
+        oldEmail: req.user.email
       });
       void mail.sendEmailChange(newEmail, {
         name: req.user.name,
@@ -166,40 +202,33 @@ router.post(
 router.post(
   '/confirm-email-change',
   asyncHandler(async (req: Request, res: Response) => {
-    const spent = await consumeAuthToken(req.body?.token, 'email_change');
-    const newEmail = spent?.payload.newEmail;
-    if (!spent || !newEmail) {
+    const changed = await consumeEmailChange(req.body?.token);
+    if (changed.status === 'invalid') {
       throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
     }
-    const account = await accountById(spent.id, spent.type);
-    if (!account) throw new HttpError(400, 'This link is invalid or has expired', 'INVALID_TOKEN');
-    if (await addressTaken(newEmail)) {
+    if (changed.status === 'taken') {
       // Someone took the address between the request and the click.
       throw new HttpError(409, 'This address is no longer available', 'EMAIL_TAKEN');
     }
-
-    const oldEmail = account.email;
-    account.email = newEmail;
-    // The link reached this inbox: the new address is proven.
-    account.emailVerifiedAt = new Date();
-    await account.save();
-    await revokeAuthTokens({ id: account._id, type: spent.type }, 'reset');
+    invalidateAdminAccount(changed.id);
 
     events.emit('auth.email.changed', {
-      organizationId: account.organizationId,
-      userId: account._id,
-      metadata: { userType: spent.type },
+      organizationId: changed.organizationId,
+      userId: changed.id,
+      metadata: { userType: changed.type },
       ip: req.ip,
       ua: req.get('user-agent')
     });
-    void mail.sendEmailChangeNotice(oldEmail, {
-      name: account.name,
-      newEmail,
-      changed: true,
-      link: resetLink(),
-      locale: mailLocale(req)
-    });
-    res.json({ changed: true, email: newEmail });
+    if (changed.oldEmail) {
+      void mail.sendEmailChangeNotice(changed.oldEmail, {
+        name: changed.name,
+        newEmail: changed.newEmail,
+        changed: true,
+        link: resetLink(),
+        locale: mailLocale(req)
+      });
+    }
+    res.json({ changed: true, email: changed.newEmail });
   })
 );
 
@@ -212,6 +241,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const csrfToken = rotateSessions(req, res);
     await req.user.save();
+    invalidateAdminAccount(req.user._id);
     audit(req, 'auth.sessions.revoked');
     void mail.sendSecurityNotice(req.user.email, {
       name: req.user.name,
@@ -248,7 +278,7 @@ router.post(
     }
     // The secret goes to the browser once, to draw the QR code there; it is
     // never logged and never sent again.
-    const { secret, uri } = await beginEnrollment(req.user);
+    const { secret, uri } = await beginEnrollment(req.user, req.userType);
     res.set('Cache-Control', 'no-store').json({ secret, otpauthUri: uri });
   })
 );
@@ -257,11 +287,12 @@ router.post(
   '/2fa/confirm',
   auth,
   asyncHandler(async (req: Request, res: Response) => {
-    const codes = await confirmEnrollment(req.user, req.body?.code);
+    const codes = await confirmEnrollment(req.user, req.userType, req.body?.code);
     if (!codes) throw new HttpError(400, 'The code is not correct', 'MFA_CODE_INVALID');
     // Existing sessions predate the second step; they end here.
     const csrfToken = rotateSessions(req, res);
     await req.user.save();
+    invalidateAdminAccount(req.user._id);
     audit(req, 'auth.mfa.enabled');
     void mail.sendSecurityNotice(req.user.email, {
       name: req.user.name,
@@ -276,7 +307,7 @@ router.post(
 /** Password and a current code (or a recovery code), for the changes below. */
 async function assertSecondStep(req: Request): Promise<void> {
   await assertPassword(req);
-  const ok = await verifySecondStep(req.user, {
+  const ok = await verifySecondStep(req.user, req.userType, {
     code: req.body?.code,
     recoveryCode: req.body?.recoveryCode
   });
@@ -296,7 +327,10 @@ router.post(
       throw forbidden('Your organization requires two-step verification', 'MFA_ENFORCED');
     }
     await assertSecondStep(req);
-    await disableMfa(req.user);
+    await disableMfa(req.user, req.userType);
+    req.user.sessionVersion = (req.user.sessionVersion ?? 0) + 1;
+    await req.user.save();
+    invalidateAdminAccount(req.user._id);
     audit(req, 'auth.mfa.disabled');
     void mail.sendSecurityNotice(req.user.email, {
       name: req.user.name,
@@ -317,7 +351,7 @@ router.post(
       throw new HttpError(409, 'Two-step verification is off', 'MFA_NOT_ENABLED');
     }
     await assertSecondStep(req);
-    const codes = await regenerateRecoveryCodes(req.user);
+    const codes = await regenerateRecoveryCodes(req.user, req.userType);
     res.set('Cache-Control', 'no-store').json({ recoveryCodes: codes });
   })
 );
@@ -434,6 +468,7 @@ router.put(
     if (!organization) throw forbidden('Organization not found', 'ORGANIZATION_INACTIVE');
     organization.enforce2fa = enforce2fa;
     await organization.save();
+    invalidateOrganization(organization._id);
     audit(req, 'organization.security.updated', { enforce2fa });
     res.json({ enforce2fa });
   })

@@ -251,6 +251,8 @@ const GoogleSignIn = () => {
   const { user, refresh } = useAuth();
   const enabled = useGoogleSignIn();
   const [busy, setBusy] = useState(false);
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -270,10 +272,20 @@ const GoogleSignIn = () => {
 
   if (!enabled && !user?.google) return null;
 
+  const proofFor = async (purpose: 'google-link' | 'google-unlink') => {
+    const { data } = await authAPI.recentAuth({
+      purpose,
+      password,
+      ...(user?.mfaEnabled ? { code } : {})
+    });
+    return data.proof;
+  };
+
   const connect = async () => {
     setBusy(true);
     try {
-      const { data } = await authAPI.googleLink(i18n.language);
+      const proof = await proofFor('google-link');
+      const { data } = await authAPI.googleLink(i18n.language, proof);
       window.location.assign(data.url);
     } catch (error) {
       toast.error(errorMessage(error, t('account.google.settings.failed')));
@@ -283,8 +295,11 @@ const GoogleSignIn = () => {
   const disconnect = async () => {
     setBusy(true);
     try {
-      await authAPI.googleUnlink();
+      const proof = await proofFor('google-unlink');
+      await authAPI.googleUnlink(proof);
       await refresh();
+      setPassword('');
+      setCode('');
       toast.success(t('account.google.settings.disconnected'));
     } catch (error) {
       toast.error(errorMessage(error, t('recovery.error')));
@@ -304,12 +319,46 @@ const GoogleSignIn = () => {
           ? t('account.google.settings.connectedAs', { email: user.google.email ?? '' })
           : t('account.google.settings.body')}
       </p>
+      <div className="grid gap-3 sm:grid-cols-2 mb-4">
+        <Label text={t('account.google.settings.password')}>
+          <input
+            className={input}
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
+        </Label>
+        {user?.mfaEnabled && (
+          <Label text={t('account.google.settings.code')}>
+            <input
+              className={input}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              required
+            />
+          </Label>
+        )}
+      </div>
       {user?.google ? (
-        <button type="button" onClick={disconnect} className={secondary} disabled={busy}>
+        <button
+          type="button"
+          onClick={disconnect}
+          className={secondary}
+          disabled={busy || !password || Boolean(user.mfaEnabled && !code)}
+        >
           {t('account.google.settings.disconnect')}
         </button>
       ) : (
-        <button type="button" onClick={connect} className={secondary} disabled={busy}>
+        <button
+          type="button"
+          onClick={connect}
+          className={secondary}
+          disabled={busy || !password || Boolean(user?.mfaEnabled && !code)}
+        >
           <GoogleMark />
           {t('account.google.settings.connect')}
         </button>

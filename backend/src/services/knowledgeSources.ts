@@ -263,7 +263,10 @@ const memory: Transport = async (target) => {
 
 // The stand-in does not ask DNS; any public-looking answer will do, and the
 // name and literal-address checks still apply.
-const standInLookup = async () => [{ address: '203.0.113.10', family: 4 as const }];
+// Use an actually routable public address here. TEST-NET ranges are correctly
+// rejected by the production SSRF guard, even though this transport never
+// opens a real socket.
+const standInLookup = async () => [{ address: '93.184.216.34', family: 4 as const }];
 
 /** Whether `host` is the site's own domain or under it. */
 export function onSite(host: string, domains: string[]): boolean {
@@ -533,7 +536,8 @@ export async function knowledgePassages(
   const { rows } = await query<KnowledgePassage>(
     `SELECT ch.id, s.kind, s.title, s.url, ch.content
        FROM knowledge_chunks ch
-       JOIN knowledge_sources s ON s.id = ch.source_id AND s.status = 'ready'
+       JOIN knowledge_sources s ON s.id = ch.source_id
+        AND s.status = 'ready' AND s.approved_for_external_model = true
       WHERE ch.site_id = $1 AND ch.search @@ to_tsquery('simple'::regconfig, $2)
       ORDER BY ts_rank(ch.search, to_tsquery('simple'::regconfig, $2)) DESC, ch.position
       LIMIT $3`,

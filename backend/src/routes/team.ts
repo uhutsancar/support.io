@@ -43,13 +43,16 @@ import { conversationCountsByAgent, agentConversationStats, agentPerformance } f
 import type { Request, Response } from 'express';
 import type { Doc, Filter } from '../db/model';
 import type { TeamDoc } from '../models/Team';
+import { teamMemberDTO } from '../security/accountDto';
+import { invalidateAdminAccount } from '../realtime/invalidation';
 
 const router = express.Router();
 
 router.use(auth, requireOrganization);
 
-/** The projections the panel renders a member from; `-password` is not optional. */
-const MEMBER_PROJECTION = '-password';
+/** Query only fields the positive-list team DTO may need. */
+const MEMBER_PROJECTION =
+  'email name role avatar isActive status skills preferences maxCapacity currentLoad permissions stats lastActive phone bio emailVerifiedAt totpEnabledAt seatSuspendedAt assignedSites departments createdAt updatedAt';
 const DEPARTMENT_FIELDS = 'name color';
 const SITE_FIELDS = 'name domain';
 
@@ -122,7 +125,7 @@ router.get(
           resolvedConversations: 0
         };
         return {
-          ...member.toObject(),
+          ...teamMemberDTO(member),
           stats: { ...member.stats, ...counted }
         };
       })
@@ -139,7 +142,7 @@ router.get(
     // The organization filter is inside the query. Loading first and comparing
     // afterwards let a row with an empty organizationId through unchecked.
     if (!member) throw notFound('Team member');
-    res.json(member);
+    res.json(teamMemberDTO(member));
   })
 );
 
@@ -258,10 +261,10 @@ router.post(
       'team-member-added',
       memberData._id,
       memberData.assignedSites,
-      memberData.toObject() as Record<string, unknown>
+      teamMemberDTO(memberData)
     );
 
-    res.status(201).json(memberData);
+    res.status(201).json(teamMemberDTO(memberData));
 
     events.emit('agent.created', {
       organizationId,
@@ -333,6 +336,7 @@ router.put(
     const member = (await withRelations(
       Team.findOneAndUpdate({ _id: existing._id, organizationId }, updateData, { new: true })
     )) as Doc<TeamDoc>;
+    invalidateAdminAccount(member._id);
 
     if (role && previousRole !== role) {
       events.emit('agent.role.updated', {
@@ -345,7 +349,7 @@ router.put(
       });
     }
 
-    res.json(member);
+    res.json(teamMemberDTO(member));
   })
 );
 
@@ -380,7 +384,7 @@ router.patch(
       status
     });
 
-    res.json(member);
+    res.json(teamMemberDTO(member));
   })
 );
 
@@ -411,6 +415,7 @@ router.delete(
       { $pull: { members: { userId: member._id } } }
     );
     await Team.deleteOne({ _id: member._id, organizationId });
+    invalidateAdminAccount(member._id);
 
     notifyAdmin(req)?.teamMemberChanged('team-member-deleted', member._id, member.assignedSites, {
       userId: String(member._id)

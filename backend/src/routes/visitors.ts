@@ -9,7 +9,7 @@ import { requireFeature } from '../services/entitlements';
 import { blockVisitor, listBlocks, unblockVisitor } from '../services/visitorBlocks';
 import { eraseVisitor } from '../services/dataRetention';
 import events from '../events';
-import { conversationRoom, ioFrom, siteRoom } from '../realtime';
+import { conversationRoom, ioFrom, siteRoom, visitorRoom } from '../realtime';
 import {
   asyncHandler,
   badRequest,
@@ -99,7 +99,7 @@ router.post(
     if (widget) {
       const room = widget.in(conversationRoom(conversation._id));
       room.emit('visitor-blocked', {});
-      room.disconnectSockets(true);
+      widget.in(visitorRoom(conversation.siteId, conversation.visitorId)).disconnectSockets(true);
     }
 
     audit(req, 'visitor.blocked', id, {

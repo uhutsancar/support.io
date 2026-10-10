@@ -49,10 +49,36 @@ export function productionConfigProblems(): string[] {
   if (!value('CORS_ORIGINS')) {
     problems.push('CORS_ORIGINS must list the panel’s origin');
   }
+  if (value('COOKIE_SECURE').toLowerCase() === 'false') {
+    problems.push('COOKIE_SECURE=false is not allowed in production');
+  }
+  if (value('COOKIE_DOMAIN')) {
+    problems.push('COOKIE_DOMAIN must be empty in production so session cookies stay host-only');
+  }
+  const sameSite = value('COOKIE_SAMESITE').toLowerCase();
+  if (sameSite && !['lax', 'strict', 'none'].includes(sameSite)) {
+    problems.push('COOKIE_SAMESITE must be lax, strict or none');
+  }
   if (looksPlaceholder(databasePassword())) {
     problems.push(
       'DB_PASSWORD (or the password in DATABASE_URL) is empty or still the example value'
     );
+  }
+  const databaseUrl = value('DATABASE_URL');
+  const dbHost = value('DB_HOST').toLowerCase();
+  const remoteDatabase = databaseUrl
+    ? !['postgres', 'localhost', '127.0.0.1', '::1'].includes(
+        (() => {
+          try {
+            return new URL(databaseUrl).hostname.toLowerCase();
+          } catch {
+            return '';
+          }
+        })()
+      )
+    : Boolean(dbHost) && !['postgres', 'localhost', '127.0.0.1', '::1'].includes(dbHost);
+  if (remoteDatabase && ['false', 'disable', ''].includes(value('DB_SSL').toLowerCase())) {
+    problems.push('A remote database requires DB_SSL=verify-full (certificate verification)');
   }
 
   // Redis is reachable only on the Docker network and still asks for a
@@ -72,6 +98,13 @@ export function productionConfigProblems(): string[] {
     problems.push(
       'APP_BASE_URL must be the https:// address of the panel (links in e-mails use it)'
     );
+  }
+  const geminiBase = value('GEMINI_BASE_URL');
+  if (
+    geminiBase &&
+    geminiBase.replace(/\/+$/, '') !== 'https://generativelanguage.googleapis.com/v1beta'
+  ) {
+    problems.push('GEMINI_BASE_URL must use the official Google HTTPS API origin in production');
   }
 
   const mail = value('MAIL_PROVIDER').toLowerCase() || 'smtp';

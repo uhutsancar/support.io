@@ -22,6 +22,7 @@ import User from '../models/User';
 import Team from '../models/Team';
 import { auth } from '../middleware/auth';
 import { loginLimiter } from '../middleware/rateLimit';
+import { requireRecentAuth } from '../middleware/recentAuth';
 import { clearFlowCookie, setFlowCookie } from '../config/session';
 import { derivedKey, signMfaPending } from '../config/tokens';
 import { isDisposableEmail } from '../config/emailPolicy';
@@ -56,7 +57,7 @@ interface Attempt extends GoogleAttempt {
   /** A referral link's code, kept for the workspace this may create (PRD-23). */
   ref?: string;
   /** Present when a signed-in account is connecting Google. */
-  link?: { userId: string; userType: UserType; sv: number };
+  link?: { userId: string; userType: UserType; sv: number; authTime: number };
 }
 
 const langOf = (value: unknown): Lang => (String(value || '').startsWith('en') ? 'en' : 'tr');
@@ -130,23 +131,31 @@ router.get('/start', loginLimiter, (req: Request, res: Response) => {
 
 // Connecting Google to the signed-in account. A POST behind the session and
 // its CSRF check, so no other site can start it on the user's behalf.
-router.post('/link', ensureEnabled, auth, (req: Request, res: Response) => {
-  const url = begin(res, {
-    ...newAttempt(),
-    lang: langOf(req.body?.lang),
-    link: {
-      userId: String(req.user._id),
-      userType: req.userType,
-      sv: req.user.sessionVersion ?? 0
-    }
-  });
-  res.json({ url });
-});
+router.post(
+  '/link',
+  ensureEnabled,
+  auth,
+  requireRecentAuth('google-link'),
+  (req: Request, res: Response) => {
+    const url = begin(res, {
+      ...newAttempt(),
+      lang: langOf(req.body?.lang),
+      link: {
+        userId: String(req.user._id),
+        userType: req.userType,
+        sv: req.user.sessionVersion ?? 0,
+        authTime: Math.floor(Date.now() / 1000)
+      }
+    });
+    res.json({ url });
+  }
+);
 
 router.delete(
   '/',
   ensureEnabled,
   auth,
+  requireRecentAuth('google-unlink'),
   asyncHandler(async (req: Request, res: Response) => {
     if (req.user.googleSub) {
       req.user.googleSub = null;
@@ -159,6 +168,12 @@ router.delete(
         ip: req.ip,
         ua: req.get('user-agent')
       });
+      void mail.sendSecurityNotice(req.user.email, {
+        name: req.user.name,
+        event: 'google_unlinked',
+        link: `${appBaseUrl()}/forgot-password`,
+        locale: langOf(req.body?.lang)
+      });
     }
     res.status(204).end();
   })
@@ -168,7 +183,13 @@ async function connect(req: Request, res: Response, attempt: Attempt, who: Googl
   const { link, lang } = attempt;
   const user = link ? await accountById(link.userId, link.userType) : null;
   // Signed out, or "sign out everywhere", since the button was pressed.
-  if (!user || (user.sessionVersion ?? 0) !== link!.sv) return toSettings(res, lang, 'expired');
+  if (
+    !user ||
+    (user.sessionVersion ?? 0) !== link!.sv ||
+    Math.floor(Date.now() / 1000) - link!.authTime > 10 * 60
+  ) {
+    return toSettings(res, lang, 'expired');
+  }
   const holder = await accountByGoogle(who.sub);
   if (holder && String(holder.user._id) !== String(user._id)) {
     return toSettings(res, lang, 'taken');

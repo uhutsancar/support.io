@@ -5,6 +5,7 @@ import { checkPermission } from '../middleware/rbac';
 import {
   asyncHandler,
   badRequest,
+  loadAccessibleSite,
   loadOwnedSite,
   orgId,
   requireOrganization,
@@ -146,7 +147,7 @@ router.get(
   auth,
   requireOrganization,
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
 
     const rules = await AutomationRule.find({ siteId: site._id })
       .sort({ priority: -1, createdAt: -1 })

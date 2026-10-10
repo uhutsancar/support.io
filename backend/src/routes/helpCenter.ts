@@ -21,7 +21,14 @@ import {
   siteForHelpSlug,
   suggestSlug
 } from '../services/helpCenter';
-import { asyncHandler, badRequest, conflict, loadOwnedSite, requireOrganization } from '../http';
+import {
+  asyncHandler,
+  badRequest,
+  conflict,
+  loadAccessibleSite,
+  loadOwnedSite,
+  requireOrganization
+} from '../http';
 import type { Request, Response } from 'express';
 
 /** The base the page's own links and canonical address use. */
@@ -64,7 +71,7 @@ helpSettings.use(auth, requireOrganization);
 helpSettings.get(
   '/:siteId/help-center',
   asyncHandler(async (req: Request, res: Response) => {
-    const site = await loadOwnedSite(req, req.params.siteId);
+    const site = await loadAccessibleSite(req, req.params.siteId);
     res.json({
       settings: helpCenterSettings(site.helpCenter),
       slug: site.helpSlug,

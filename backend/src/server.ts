@@ -78,7 +78,8 @@ import {
   loginLimiter,
   loginAccountLimiter,
   registerLimiter,
-  apiLimiter
+  apiLimiter,
+  requireSharedRateLimits
 } from './middleware/rateLimit';
 import { apiNotFound, asyncHandler, errorHandler } from './http';
 import { auth } from './middleware/auth';
@@ -103,6 +104,10 @@ app.set('trust proxy', 1);
 // bir operatöre) dönüşmez. Ayrıntı: middleware/sanitize.ts
 app.set('query parser', 'simple'); // Cloudflare üzerinden gelen gerçek IP'leri tanıması için ŞART
 const server = http.createServer(app);
+server.headersTimeout = Number(process.env.HTTP_HEADERS_TIMEOUT_MS) || 15_000;
+server.requestTimeout = Number(process.env.HTTP_REQUEST_TIMEOUT_MS) || 30_000;
+server.keepAliveTimeout = Number(process.env.HTTP_KEEPALIVE_TIMEOUT_MS) || 5_000;
+server.maxHeadersCount = Number(process.env.HTTP_MAX_HEADERS) || 100;
 
 // A production deployment with a missing or example secret, no mail, a
 // half-configured checkout or no file storage refuses to start, and says
@@ -128,6 +133,7 @@ const io = new Server(server, {
   // The largest thing a client sends is a 5 000-character message (SEC-15);
   // files go over HTTP. A polling request may carry a few packets at once.
   maxHttpBufferSize: Number(process.env.SOCKET_MAX_PAYLOAD_BYTES) || 256 * 1024,
+  connectTimeout: Number(process.env.SOCKET_CONNECT_TIMEOUT_MS) || 20_000,
   pingInterval: 25000,
   pingTimeout: 20000
 });
@@ -249,8 +255,8 @@ app.use(sanitizeInput);
 // requests carry no e-mail, so every second-step attempt from one address
 // would land in a single per-IP bucket of the account lock. The second step
 // has its own limit (mfaLimiter in routes/auth.ts).
-app.post('/api/auth/login', loginLimiter, loginAccountLimiter);
-app.use('/api/auth/register', registerLimiter);
+app.post('/api/auth/login', requireSharedRateLimits, loginLimiter, loginAccountLimiter);
+app.use('/api/auth/register', requireSharedRateLimits, registerLimiter);
 app.use('/api', apiLimiter);
 
 // Sign-in with Google (PRD-14) before the rest of /api/auth.

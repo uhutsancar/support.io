@@ -33,42 +33,80 @@ const BLOCKED_NAMES = [
 ];
 
 function ipv4Private(ip: string): boolean {
-  const [a, b] = ip.split('.').map(Number);
+  const octets = ip.split('.').map(Number);
+  if (octets.length !== 4 || octets.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) {
+    return true;
+  }
+  const [a, b, c] = octets;
   return (
-    a === 0 ||
+    a === 0 || // current network and unspecified
     a === 10 ||
     a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 100 && b >= 64 && b <= 127) || // shared address space
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
     (a === 192 && b === 0) ||
     (a === 192 && b === 168) ||
-    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 192 && b === 88 && c === 99) || // deprecated 6to4 relay anycast
+    (a === 198 && (b === 18 || b === 19)) || // benchmarking
+    (a === 192 && b === 0 && c === 2) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) || // documentation networks
     a >= 224
   );
 }
 
-function ipv6Private(ip: string): boolean {
-  const lower = ip.toLowerCase();
-  // An IPv4 address inside IPv6 (::ffff:a.b.c.d), which URL parsing turns
-  // into hex (::ffff:7f00:1): judged as the IPv4 address it is.
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(lower);
-  if (mapped) return ipv4Private(mapped[1]);
-  const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(lower);
-  if (hex) {
-    const hi = parseInt(hex[1], 16);
-    const lo = parseInt(hex[2], 16);
-    return ipv4Private(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
+/** Canonical 16-byte IPv6 parser, including embedded dotted IPv4. */
+function ipv6Bytes(input: string): Uint8Array | null {
+  let value = input.toLowerCase().split('%', 1)[0];
+  const dotted = /(\d+\.\d+\.\d+\.\d+)$/.exec(value);
+  if (dotted) {
+    if (net.isIP(dotted[1]) !== 4) return null;
+    const bytes = dotted[1].split('.').map(Number);
+    value = `${value.slice(0, dotted.index)}${((bytes[0] << 8) | bytes[1]).toString(16)}:${((bytes[2] << 8) | bytes[3]).toString(16)}`;
   }
-  return (
-    lower === '::' ||
-    lower === '::1' ||
-    /^f[cd][0-9a-f]{2}:/.test(lower) ||
-    /^fe[89ab][0-9a-f]:/.test(lower) ||
-    /^ff[0-9a-f]{2}:/.test(lower) ||
-    /^64:ff9b::/.test(lower) ||
-    /^2001:db8:/.test(lower)
-  );
+  if ((value.match(/::/g) || []).length > 1) return null;
+  const [leftRaw, rightRaw] = value.split('::');
+  const left = leftRaw ? leftRaw.split(':') : [];
+  const right = rightRaw ? rightRaw.split(':') : [];
+  const missing = value.includes('::') ? 8 - left.length - right.length : 0;
+  const groups = [...left, ...Array(Math.max(0, missing)).fill('0'), ...right];
+  if (groups.length !== 8 || groups.some((g) => !/^[0-9a-f]{1,4}$/.test(g))) return null;
+  const out = new Uint8Array(16);
+  groups.forEach((group, index) => {
+    const n = parseInt(group, 16);
+    out[index * 2] = n >> 8;
+    out[index * 2 + 1] = n & 0xff;
+  });
+  return out;
+}
+
+function inPrefix(bytes: Uint8Array, prefix: readonly number[], bits: number): boolean {
+  const whole = Math.floor(bits / 8);
+  for (let i = 0; i < whole; i += 1) if (bytes[i] !== prefix[i]) return false;
+  const remainder = bits % 8;
+  if (!remainder) return true;
+  const mask = (0xff << (8 - remainder)) & 0xff;
+  return (bytes[whole] & mask) === ((prefix[whole] ?? 0) & mask);
+}
+
+function ipv6Private(ip: string): boolean {
+  const bytes = ipv6Bytes(ip);
+  if (!bytes) return true;
+
+  // Only globally-routable unicast (2000::/3) is eligible. Then remove the
+  // special-purpose ranges inside it. Translation/tunnel prefixes are denied
+  // instead of attempting to reason about their embedded destination.
+  if (!inPrefix(bytes, [0x20], 3)) return true;
+  const denied: Array<[readonly number[], number]> = [
+    [[0x20, 0x01, 0x00, 0x00], 32], // Teredo
+    [[0x20, 0x01, 0x00, 0x02], 48], // benchmarking
+    [[0x20, 0x01, 0x00, 0x10], 28], // ORCHID
+    [[0x20, 0x01, 0x00, 0x20], 28], // ORCHIDv2
+    [[0x20, 0x01, 0x0d, 0xb8], 32], // documentation
+    [[0x20, 0x02], 16] // 6to4
+  ];
+  return denied.some(([prefix, bits]) => inPrefix(bytes, prefix, bits));
 }
 
 /** Whether an IP address is loopback, private, link-local or otherwise not on the internet. */

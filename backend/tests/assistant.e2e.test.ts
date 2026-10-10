@@ -107,13 +107,16 @@ test.before(async () => {
   new SocketHandler(ioServer);
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const org = await new Organization({ name: `assistant-${Date.now()}` }).save();
-  orgId = org._id;
 });
 
-test.beforeEach(() => {
+test.beforeEach(async () => {
   calls.length = 0;
   resetBreaker();
+  // Daily provider-spend quotas are intentionally shared and survive for a
+  // day. Give each independent case its own workspace so the suite tests the
+  // case, not spend reserved by an earlier case.
+  const org = await new Organization({ name: `assistant-${Date.now()}-${generateId()}` }).save();
+  orgId = org._id;
 });
 
 test.after(async () => {
@@ -432,8 +435,9 @@ async function siteWithDocument(plan: 'FREE' | 'PRO') {
   }).save();
   const sourceId = generateId();
   await query(
-    `INSERT INTO knowledge_sources (id, organization_id, site_id, kind, title)
-     VALUES ($1, $2, $3, 'pdf', 'Garanti Belgesi.pdf')`,
+    `INSERT INTO knowledge_sources
+       (id, organization_id, site_id, kind, title, approved_for_external_model)
+     VALUES ($1, $2, $3, 'pdf', 'Garanti Belgesi.pdf', true)`,
     [sourceId, org._id, site._id]
   );
   await storeText(

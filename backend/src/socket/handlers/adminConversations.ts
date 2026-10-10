@@ -222,7 +222,11 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
 
     const needsAttachment = messageType === 'file' || messageType === 'image';
     const verifiedFile = needsAttachment
-      ? ctx.verifyAttachment(fileData, conversation.siteId)
+      ? await ctx.verifyAttachment(fileData, conversation.siteId, conversation._id, {
+          type: socket.userType,
+          id: socket.userId,
+          sessionId: null
+        })
       : null;
     if (needsAttachment && !verifiedFile) {
       return refuse('INVALID_ATTACHMENT', 'Invalid or expired file upload');

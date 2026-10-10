@@ -1742,3 +1742,118 @@ ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_action_check CHECK (action IN (
   'REPORT_EXPORTED',
   -- a referral's free month given (0024)
   'REFERRAL_REWARDED'));
+
+-- ===========================================================================
+-- 0025_security_hardening.sql
+-- ===========================================================================
+-- Knowledge-source contents may leave our system only after an explicit owner
+-- decision. Existing sources default to private and must be reviewed.
+ALTER TABLE knowledge_sources
+  ADD COLUMN IF NOT EXISTS approved_for_external_model boolean NOT NULL DEFAULT false;
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_sources_external_ready
+  ON knowledge_sources (site_id, approved_for_external_model, status);
+
+-- ===========================================================================
+-- 0026_upload_records.sql
+-- ===========================================================================
+-- A short-lived upload is owned before it becomes part of a message. The
+-- first socket send binds it to exactly one conversation; possession of the
+-- signed proof alone is therefore not enough to move a file between users.
+CREATE TABLE IF NOT EXISTS upload_records (
+  id               varchar(24) PRIMARY KEY,
+  organization_id  varchar(24) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  site_id           varchar(24) NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  principal_type   text NOT NULL CHECK (principal_type IN ('widget', 'user', 'team')),
+  principal_id     varchar(128) NOT NULL,
+  session_id       varchar(64),
+  object_key       text NOT NULL UNIQUE,
+  mime_type        varchar(150) NOT NULL,
+  byte_size        integer NOT NULL CHECK (byte_size >= 0 AND byte_size <= 10485760),
+  status           text NOT NULL CHECK (status IN ('pending', 'bound', 'revoked', 'deleted')),
+  purpose          text NOT NULL CHECK (purpose = 'chat-attachment'),
+  conversation_id  varchar(24) REFERENCES conversations(id) ON DELETE SET NULL,
+  message_id       varchar(24) REFERENCES messages(id) ON DELETE SET NULL,
+  expires_at       timestamptz NOT NULL,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_upload_records_owner
+  ON upload_records (site_id, principal_type, principal_id, expires_at);
+CREATE INDEX IF NOT EXISTS idx_upload_records_expiry
+  ON upload_records (status, expires_at);
+
+-- ===========================================================================
+-- 0027_explicit_site_access.sql
+-- ===========================================================================
+-- Legacy restricted accounts used an empty join table as an implicit "all
+-- current and future sites" grant. Materialize today's access before changing
+-- the runtime meaning of empty to "none". Owner/admin access remains explicit
+-- in the role policy and needs no join rows.
+INSERT INTO user_assigned_sites (user_id, site_id)
+SELECT u.id, s.id
+  FROM users u
+  JOIN sites s ON s.organization_id = u.organization_id
+ WHERE u.role NOT IN ('owner', 'admin')
+   AND NOT EXISTS (SELECT 1 FROM user_assigned_sites a WHERE a.user_id = u.id)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO team_assigned_sites (team_id, site_id)
+SELECT t.id, s.id
+  FROM teams t
+  JOIN sites s ON s.organization_id = t.organization_id
+ WHERE t.role NOT IN ('owner', 'admin')
+   AND NOT EXISTS (SELECT 1 FROM team_assigned_sites a WHERE a.team_id = t.id)
+ON CONFLICT DO NOTHING;
+
+-- ===========================================================================
+-- 0028_normalize_faq_search.sql
+-- ===========================================================================
+-- The simple text-search dictionary preserves Turkish uppercase lexemes. A
+-- lower-case prefix query such as iade:* therefore missed a title beginning
+-- with uppercase İ unless the answer repeated the word in lower case.
+CREATE OR REPLACE FUNCTION faq_search_vector(question text, answer text, keywords text[])
+RETURNS tsvector AS $$
+  SELECT to_tsvector('simple',
+    lower(coalesce(question, '') || ' ' ||
+          coalesce(answer, '') || ' ' ||
+          coalesce(array_to_string(keywords, ' '), '')));
+$$ LANGUAGE sql IMMUTABLE;
+
+-- Stored generated columns are recomputed when one of their source columns is
+-- written. This preserves ids and indexes while normalizing existing rows.
+UPDATE faqs SET question = question;
+
+-- ===========================================================================
+-- 0029_normalize_turkish_faq_search.sql
+-- ===========================================================================
+-- Some PostgreSQL installations use a non-Turkish collation where lower(İ)
+-- remains uppercase. Normalize the dotted capital explicitly so iade:* and
+-- similar Turkish prefix searches behave identically across deployments.
+CREATE OR REPLACE FUNCTION faq_search_vector(question text, answer text, keywords text[])
+RETURNS tsvector AS $$
+  SELECT to_tsvector('simple',
+    lower(translate(coalesce(question, '') || ' ' ||
+                    coalesce(answer, '') || ' ' ||
+                    coalesce(array_to_string(keywords, ' '), ''), 'İ', 'i')));
+$$ LANGUAGE sql IMMUTABLE;
+
+UPDATE faqs SET question = question;
+
+-- ===========================================================================
+-- 0030_identity_assertion_replay.sql
+-- ===========================================================================
+-- A signed customer-identity assertion may reconnect within the same widget
+-- session, but possession alone cannot move it to another browser/session.
+CREATE TABLE IF NOT EXISTS identity_assertion_uses (
+  site_id      varchar(24) NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  nonce        varchar(32) NOT NULL,
+  session_id   varchar(64) NOT NULL,
+  expires_at   timestamptz NOT NULL,
+  used_at      timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (site_id, nonce)
+);
+
+CREATE INDEX IF NOT EXISTS idx_identity_assertion_uses_expiry
+  ON identity_assertion_uses (expires_at);

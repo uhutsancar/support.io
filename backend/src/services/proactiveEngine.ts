@@ -156,8 +156,8 @@ class ProactiveEngine {
 
       if (triggerCondition.urlMatch === 'exact' && currentUrl !== dbUrl) return false;
       if (triggerCondition.urlMatch === 'contains' && !currentUrl.includes(dbUrl)) return false;
-      if (triggerCondition.urlMatch === 'regex' && !new RegExp(dbUrl, 'i').test(currentUrl))
-        return false;
+      // Never run legacy tenant regexes in Node's main thread.
+      if (triggerCondition.urlMatch === 'regex') return false;
     }
 
     // Check specific event metrics

@@ -11,6 +11,7 @@ import TeamChat from '../models/TeamChat';
 import Team from '../models/Team';
 import User from '../models/User';
 import { auth } from '../middleware/auth';
+import { checkPermission } from '../middleware/rbac';
 import { resolveChatParticipants, unreadTeamChatCount } from '../db/queries';
 import { asyncHandler, badRequest, forbidden, notFound, orgId, requireOrganization } from '../http';
 import type { Request, Response } from 'express';
@@ -21,6 +22,8 @@ const router = express.Router();
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
+const MAX_GROUP_PARTICIPANTS = 100;
+const MAX_GROUP_NAME_LENGTH = 100;
 const PERSON_FIELDS = 'name email avatar status role';
 
 /** Shown in place of a participant whose account has since been deleted. */
@@ -71,7 +74,7 @@ function lastActivity(chat: { lastMessage?: TeamChatPreview | null; updatedAt?: 
   return Number.isNaN(time) ? 0 : time;
 }
 
-router.use(auth);
+router.use(auth, checkPermission('team_chat'));
 
 router.get(
   '/chats',
@@ -129,10 +132,16 @@ router.post(
   requireOrganization,
   asyncHandler(async (req: Request, res: Response) => {
     const { name, participantIds } = req.body;
-    if (!Array.isArray(participantIds) || participantIds.length === 0) {
-      throw badRequest('participantIds must be a non-empty array');
+    if (
+      !Array.isArray(participantIds) ||
+      participantIds.length === 0 ||
+      participantIds.length > MAX_GROUP_PARTICIPANTS
+    ) {
+      throw badRequest('participantIds must contain between 1 and 100 members');
     }
-    if (!name || !String(name).trim()) throw badRequest('name is required');
+    if (!name || !String(name).trim() || String(name).trim().length > MAX_GROUP_NAME_LENGTH) {
+      throw badRequest('name is required and must be at most 100 characters');
+    }
 
     const organizationId = orgId(req);
     const checked = await Promise.all(
@@ -149,7 +158,7 @@ router.post(
       chatType: 'group',
       // Every entry is non-null: the guard above threw otherwise.
       participants: [...new Set([String(req.user._id), ...(checked as string[])])],
-      groupName: name,
+      groupName: String(name).trim(),
       createdBy: req.user._id
     });
 

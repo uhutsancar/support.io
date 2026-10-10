@@ -61,8 +61,12 @@ services:
       -c archive_timeout=300
     environment:
       POSTGRES_DB: ${DB_NAME:-supportchat}
-      POSTGRES_USER: ${DB_USER:-support_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_USER: ${DB_ADMIN_USER:-support_admin}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?DB_ADMIN_PASSWORD is required}
+      DB_MIGRATION_USER: ${DB_MIGRATION_USER:-support_migrator}
+      DB_MIGRATION_PASSWORD: ${DB_MIGRATION_PASSWORD:?DB_MIGRATION_PASSWORD is required}
+      DB_RUNTIME_USER: ${DB_RUNTIME_USER:-support_runtime}
+      DB_RUNTIME_PASSWORD: ${DB_RUNTIME_PASSWORD:?DB_RUNTIME_PASSWORD is required}
       # WAL-G (DR-02): continuous archive to its own bucket, encrypted. Used
       # only with PG_ARCHIVE_MODE=on; docs/disaster-recovery.md.
       WALG_S3_PREFIX: ${WALG_S3_PREFIX:-}
@@ -77,7 +81,7 @@ services:
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-support_user} -d ${DB_NAME:-supportchat}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN_USER:-support_admin} -d ${DB_NAME:-supportchat}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -155,8 +159,8 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-supportchat}
-      DB_USER: ${DB_USER:-support_user}
-      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_USER: ${DB_RUNTIME_USER:-support_runtime}
+      DB_PASSWORD: ${DB_RUNTIME_PASSWORD:?DB_RUNTIME_PASSWORD is required}
       DB_SSL: "false"
       DB_POOL_MAX: ${DB_POOL_MAX:-20}
       DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-15000}

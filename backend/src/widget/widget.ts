@@ -72,7 +72,7 @@ interface WidgetIdentity {
   name?: string | null;
   email?: string | null;
   avatar?: string | null;
-  /** HMAC of the user id, when the tenant has identity verification on. */
+  /** Short-lived, site-bound assertion minted by the tenant backend. */
   userHash?: string | null;
   [field: string]: unknown;
 }
@@ -3728,7 +3728,7 @@ declare global {
    * Oturum acmis kullaniciyi tanitir.
    *
    * GUVENLIK: Buradaki alanlara tek basina GUVENILMEZ. `userId` ancak magazanin
-   * sunucusunun urettigi `userHash` = HMAC_SHA256(kimlik anahtari, userId)
+   * sunucusunun ürettiği kısa ömürlü, siteye bağlı `userHash` doğrulaması
    * sunucuda dogrulanirsa kimlik sayilir (services/identity.ts); panelde
    * "dogrulanmis musteri" rozeti ve konusma gecmisinin geri acilmasi yalnizca
    * bu kimlikle olur. Ad ve e-posta yalnizca gosterim icindir.

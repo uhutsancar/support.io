@@ -847,7 +847,13 @@ export function securityNoticeMail({
   locale
 }: {
   name: string;
-  event: 'mfa_enabled' | 'mfa_disabled' | 'recovery_used' | 'sessions_revoked' | 'google_linked';
+  event:
+    | 'mfa_enabled'
+    | 'mfa_disabled'
+    | 'recovery_used'
+    | 'sessions_revoked'
+    | 'google_linked'
+    | 'google_unlinked';
   link: string;
   locale?: MailLocale;
 }): Rendered {
@@ -859,6 +865,10 @@ export function securityNoticeMail({
     google_linked: [
       'Hesabınıza Google ile giriş eklendi',
       'Google sign-in was added to your account'
+    ],
+    google_unlinked: [
+      'Google ile giriş hesabınızdan kaldırıldı',
+      'Google sign-in was removed from your account'
     ]
   } as const;
   const bodies = {
@@ -881,6 +891,10 @@ export function securityNoticeMail({
     google_linked: [
       'Hesabınıza bir Google hesabı bağlandı; artık onunla da giriş yapılabilir. Bağlantıyı Ayarlar → Güvenlik bölümünden kaldırabilirsiniz.',
       'A Google account was connected to your account and can now be used to sign in. You can remove it under Settings → Security.'
+    ],
+    google_unlinked: [
+      'Bağlı Google hesabı kaldırıldı; artık bu yöntemle giriş yapılamaz.',
+      'The connected Google account was removed and can no longer be used to sign in.'
     ]
   } as const;
   const [titleTr, titleEn] = titles[event];

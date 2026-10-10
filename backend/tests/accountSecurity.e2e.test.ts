@@ -161,6 +161,7 @@ test('changing the password asks for the current one and ends the other sessions
 
 test('changing the address goes through a link to the new address', async () => {
   const me = await owner('mail');
+  const secondOldSession = sessionCookie(await login(me.email));
   const other = await owner('taken');
   const target = unique('new');
 
@@ -195,15 +196,24 @@ test('changing the address goes through a link to the new address', async () => 
   assert.equal((await login(me.email)).status, 200);
 
   const token = await tokenFromMail(target, '/confirm-email');
-  const confirmed = await api('/api/auth/confirm-email-change', {
-    method: 'POST',
-    body: { token }
-  });
+  const confirmations = await Promise.all(
+    Array.from({ length: 2 }, () =>
+      api('/api/auth/confirm-email-change', { method: 'POST', body: { token } })
+    )
+  );
+  assert.equal(
+    confirmations.filter((result) => result.status === 200).length,
+    1,
+    'one email-change token changed the account twice'
+  );
+  const confirmed = confirmations.find((result) => result.status === 200)!;
   assert.equal(confirmed.status, 200, JSON.stringify(confirmed.body));
   assert.equal(confirmed.body.email, target);
   const reused = await api('/api/auth/confirm-email-change', { method: 'POST', body: { token } });
   assert.equal(reused.status, 400);
 
+  assert.equal((await api('/api/auth/me', { token: me.token })).status, 401);
+  assert.equal((await api('/api/auth/me', { token: secondOldSession })).status, 401);
   assert.equal((await login(me.email)).status, 401);
   assert.equal((await login(target)).status, 200);
   assert.equal(await auditCount('EMAIL_CHANGED', me.userId), 1);
@@ -330,6 +340,51 @@ test('two-step sign-in: enrolment, the second step, one use per code', async () 
   assert.ok(sessionCookie(plain), 'the password alone signs in again');
   assert.equal(await auditCount('MFA_ENABLED', me.userId), 1);
   assert.equal(await auditCount('MFA_DISABLED', me.userId), 1);
+});
+
+test('parallel MFA requests consume one TOTP step and one recovery code exactly once', async () => {
+  const totpAccount = await owner('mfa-race-totp');
+  const totp = await enrol(totpAccount.token);
+  const pendingTotp = await login(totpAccount.email);
+  const code = totpCode(totp.secret, stepAt() + 1);
+  const totpResults = await Promise.all(
+    Array.from({ length: 20 }, () =>
+      api('/api/auth/login/2fa', {
+        method: 'POST',
+        body: { mfaToken: pendingTotp.body.mfaToken, code }
+      })
+    )
+  );
+  assert.equal(
+    totpResults.filter((result) => result.status === 200).length,
+    1,
+    'one TOTP step created more than one session'
+  );
+
+  const recoveryAccount = await owner('mfa-race-recovery');
+  const recovery = await enrol(recoveryAccount.token);
+  const pendingRecovery = await login(recoveryAccount.email);
+  const recoveryResults = await Promise.all(
+    Array.from({ length: 20 }, () =>
+      api('/api/auth/login/2fa', {
+        method: 'POST',
+        body: {
+          mfaToken: pendingRecovery.body.mfaToken,
+          recoveryCode: recovery.recoveryCodes[0]
+        }
+      })
+    )
+  );
+  assert.equal(
+    recoveryResults.filter((result) => result.status === 200).length,
+    1,
+    'one recovery code created more than one session'
+  );
+  const { rows } = await query(
+    'SELECT jsonb_array_length(recovery_codes)::int AS n FROM users WHERE id = $1',
+    [recoveryAccount.userId]
+  );
+  assert.equal(rows[0].n, 9);
 });
 
 test('a pending sign-in dies with a password change', async () => {

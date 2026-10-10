@@ -24,8 +24,10 @@
 // derived key.
 
 import express from 'express';
+import crypto from 'crypto';
 import { createLimiter } from '../middleware/rateLimit';
 import { signUploadProof } from '../config/tokens';
+import { query, withTransaction } from '../db/pool';
 import {
   IMAGE_TYPES,
   PRIVATE_KEY,
@@ -34,15 +36,19 @@ import {
   openAttachment,
   signedAttachmentUrl,
   storeUpload,
-  uploadFile
+  deleteStoredFiles,
+  uploadFile,
+  reserveUploadIngress
 } from '../middleware/upload';
 import { requireWidgetSession } from '../middleware/widgetSession';
 import { auth } from '../middleware/auth';
+import { checkPermission } from '../middleware/rbac';
 import {
   asyncHandler,
   asyncMiddleware,
   badRequest,
   forbidden,
+  HttpError,
   loadOwnedSite,
   mayAccessSite,
   notFound,
@@ -51,6 +57,8 @@ import {
 import type { NextFunction, Request, Response } from 'express';
 
 const router = express.Router();
+const SITE_UPLOAD_BYTES_PER_DAY =
+  Number(process.env.SITE_UPLOAD_BYTES_PER_DAY) || 1024 * 1024 * 1024;
 
 // Per widget session or user (rateLimit.ts#identifyClient), shared across
 // processes through Redis.
@@ -80,6 +88,51 @@ const storeAndProve = asyncHandler(async (req: Request, res: Response) => {
     url: stored.url
   };
 
+  const uploadId = crypto.randomBytes(12).toString('hex');
+  const widget = req.widget;
+  const principalType = widget ? 'widget' : req.userType;
+  const principalId = widget ? widget.visitorId : req.userId;
+  const sessionId = widget ? widget.sid : null;
+  try {
+    await withTransaction(async (client) => {
+      const siteId = String(req.site._id);
+      await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [siteId]);
+      const { rows: usage } = await client.query<{ bytes: string }>(
+        `SELECT coalesce(sum(byte_size), 0)::text AS bytes FROM upload_records
+          WHERE site_id = $1 AND created_at >= now() - interval '24 hours'
+            AND status <> 'deleted'`,
+        [siteId]
+      );
+      if (Number(usage[0]?.bytes || 0) + stored.size > SITE_UPLOAD_BYTES_PER_DAY) {
+        throw new HttpError(
+          429,
+          'The daily upload allowance for this site is full',
+          'UPLOAD_QUOTA'
+        );
+      }
+      await client.query(
+        `INSERT INTO upload_records
+          (id, organization_id, site_id, principal_type, principal_id, session_id,
+           object_key, mime_type, byte_size, status, purpose, expires_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','chat-attachment',now() + interval '15 minutes')`,
+        [
+          uploadId,
+          String(req.site.organizationId),
+          siteId,
+          principalType,
+          principalId,
+          sessionId,
+          stored.key,
+          stored.mimeType,
+          stored.size
+        ]
+      );
+    });
+  } catch (error) {
+    await deleteStoredFiles([stored.key]);
+    throw error;
+  }
+
   res.json({
     success: true,
     file: {
@@ -89,7 +142,11 @@ const storeAndProve = asyncHandler(async (req: Request, res: Response) => {
       previewUrl: signedAttachmentUrl(stored.key, apiOrigin(req)),
       uploadToken: signUploadProof({
         kind: 'chat-upload',
+        uploadId,
         siteId: String(req.site._id),
+        principalType,
+        principalId,
+        sessionId,
         filename: file.filename,
         url: file.url,
         size: file.size,
@@ -101,8 +158,9 @@ const storeAndProve = asyncHandler(async (req: Request, res: Response) => {
 
 router.post(
   '/upload',
-  uploadLimiter,
   requireWidgetSession,
+  uploadLimiter,
+  reserveUploadIngress,
   uploadFile.single('file'),
   storeAndProve
 );
@@ -121,10 +179,12 @@ const agentSite = asyncMiddleware(async (req: Request, _res: Response, next: Nex
 
 router.post(
   '/agent-upload',
-  uploadLimiter,
   auth,
   requireOrganization,
+  checkPermission('respond'),
   agentSite,
+  uploadLimiter,
+  reserveUploadIngress,
   uploadFile.single('file'),
   storeAndProve
 );
@@ -136,6 +196,13 @@ router.get(
     if (!PRIVATE_KEY.test(key)) throw notFound('File');
     if (!attachmentLinkValid(key, req.query.e, req.query.s)) {
       throw forbidden('This link has expired; reopen the conversation', 'LINK_EXPIRED');
+    }
+    const { rows: records } = await query<{ status: string }>(
+      'SELECT status FROM upload_records WHERE object_key = $1',
+      [key]
+    );
+    if (records[0] && !['pending', 'bound'].includes(records[0].status)) {
+      throw forbidden('This attachment is no longer available', 'ATTACHMENT_REVOKED');
     }
     const opened = await openAttachment(key);
     if (!opened) throw notFound('File');

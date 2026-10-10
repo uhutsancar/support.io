@@ -17,6 +17,7 @@ import { LIVE_STATUSES, isSubscriptionStatus } from '../domain/subscription';
 import { HttpError } from '../http/errors';
 import { deleteOrganizationFiles, deleteStoredFiles, storedKeyFromUrl } from '../middleware/upload';
 import { logger } from '../config/logger';
+import { invalidateOrganization } from '../realtime/invalidation';
 
 export async function deleteOrganization(organizationId: string): Promise<{ files: number }> {
   const { rows: subscriptions } = await query<{ status: string }>(
@@ -63,6 +64,7 @@ export async function deleteOrganization(organizationId: string): Promise<{ file
     await client.query('DELETE FROM organizations WHERE id = $1', [organizationId]);
     return files.map((f) => storedKeyFromUrl(f.url));
   });
+  invalidateOrganization(organizationId);
 
   // After the commit: a storage error must not bring the data back, so it is
   // logged and the deletion stands.

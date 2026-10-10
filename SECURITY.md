@@ -4,6 +4,9 @@ How Support.io protects accounts, conversations and the sites it runs on,
 and how to report a vulnerability. Every value below is the one in the code;
 the file that holds it is named so it can be checked.
 
+Implementation status, test evidence, migrations and the remaining operational
+release gates are tracked in [`docs/security/remediation-plan.md`](docs/security/remediation-plan.md).
+
 ## Reporting a vulnerability
 
 Write to **security@support.io** (the address in
@@ -27,8 +30,10 @@ bildirimi" (`/kullanim-sartlari#guvenlik`).
   **httpOnly** cookie `sc_session`, `SameSite=Lax`, `Secure` in production,
   valid for `SESSION_TTL_SECONDS` (default 7 days). JavaScript never sees it.
   (`config/session.ts`, `config/tokens.ts`)
-- **CSRF**: double submit — a readable `sc_csrf` cookie must be echoed in the
-  `X-CSRF-Token` header on every cookie-authenticated state-changing request.
+- **CSRF**: a readable `sc_csrf` cookie contains a session-bound signed value
+  and must be echoed in the `X-CSRF-Token` header on every cookie-authenticated
+  state-changing request. Those requests must also carry an explicitly allowed
+  `Origin`; malformed Unicode input is rejected without throwing.
 - Every account has a `session_version`. Changing the password or the e-mail
   address, turning two-step sign-in on or off, or "sign out everywhere" bumps
   it, and every older session stops working at once.
@@ -60,22 +65,22 @@ Counted in Redis (shared by every API process), per user when signed in,
 otherwise per address (IPv6 per /56). Production defaults; each can be set by
 its environment variable (`middleware/rateLimit.ts`):
 
-| What | Default | Variable |
-|---|---|---|
-| Sign-in, per address | 100 / 15 min | `AUTH_RATE_MAX`, `AUTH_RATE_WINDOW_MS` |
-| Sign-in, per account (lock) | 10 / 15 min | `ACCOUNT_LOCK_MAX`, `ACCOUNT_LOCK_WINDOW_MS` |
-| Second sign-in step | 5 / 15 min | `MFA_RATE_MAX` |
-| Sign-up | 20 / hour | `REGISTER_RATE_MAX`, `REGISTER_RATE_WINDOW_MS` |
-| Password reset, per address / per account | 10 / 15 min, 5 / hour | `RESET_RATE_MAX`, `RESET_ACCOUNT_RATE_MAX` |
-| Resending the verification mail | 5 / hour | `VERIFY_RESEND_RATE_MAX` |
-| Password, e-mail and 2FA changes | 5 / hour | `ACCOUNT_RATE_MAX` |
-| Whole API | 1 000 / 15 min | `API_RATE_MAX`, `API_RATE_WINDOW_MS` |
-| Widget sessions | 300 / 15 min | `WIDGET_SESSION_RATE_MAX` |
-| New sites, invitations | 20 / hour each | `SITE_CREATE_RATE_MAX`, `INVITE_RATE_MAX` |
-| Socket connections: agent / widget | 30 / min, 60 / min | `SOCKET_ADMIN_CONNECT_RATE_MAX`, `SOCKET_WIDGET_CONNECT_RATE_MAX` |
-| Socket events: visitor | 30 messages, 300 events / min | `SOCKET_VISITOR_MESSAGES_PER_MIN`, `SOCKET_VISITOR_EVENTS_PER_MIN` |
-| Socket events: agent | 120 messages, 1 200 events / min | `SOCKET_AGENT_MESSAGES_PER_MIN`, `SOCKET_AGENT_EVENTS_PER_MIN` |
-| CSP reports | 30 / min | `CSP_REPORT_RATE_MAX` |
+| What                                      | Default                          | Variable                                                           |
+| ----------------------------------------- | -------------------------------- | ------------------------------------------------------------------ |
+| Sign-in, per address                      | 100 / 15 min                     | `AUTH_RATE_MAX`, `AUTH_RATE_WINDOW_MS`                             |
+| Sign-in, per account (lock)               | 10 / 15 min                      | `ACCOUNT_LOCK_MAX`, `ACCOUNT_LOCK_WINDOW_MS`                       |
+| Second sign-in step                       | 5 / 15 min                       | `MFA_RATE_MAX`                                                     |
+| Sign-up                                   | 20 / hour                        | `REGISTER_RATE_MAX`, `REGISTER_RATE_WINDOW_MS`                     |
+| Password reset, per address / per account | 10 / 15 min, 5 / hour            | `RESET_RATE_MAX`, `RESET_ACCOUNT_RATE_MAX`                         |
+| Resending the verification mail           | 5 / hour                         | `VERIFY_RESEND_RATE_MAX`                                           |
+| Password, e-mail and 2FA changes          | 5 / hour                         | `ACCOUNT_RATE_MAX`                                                 |
+| Whole API                                 | 1 000 / 15 min                   | `API_RATE_MAX`, `API_RATE_WINDOW_MS`                               |
+| Widget sessions                           | 300 / 15 min                     | `WIDGET_SESSION_RATE_MAX`                                          |
+| New sites, invitations                    | 20 / hour each                   | `SITE_CREATE_RATE_MAX`, `INVITE_RATE_MAX`                          |
+| Socket connections: agent / widget        | 30 / min, 60 / min               | `SOCKET_ADMIN_CONNECT_RATE_MAX`, `SOCKET_WIDGET_CONNECT_RATE_MAX`  |
+| Socket events: visitor                    | 30 messages, 300 events / min    | `SOCKET_VISITOR_MESSAGES_PER_MIN`, `SOCKET_VISITOR_EVENTS_PER_MIN` |
+| Socket events: agent                      | 120 messages, 1 200 events / min | `SOCKET_AGENT_MESSAGES_PER_MIN`, `SOCKET_AGENT_EVENTS_PER_MIN`     |
+| CSP reports                               | 30 / min                         | `CSP_REPORT_RATE_MAX`                                              |
 
 A site in spam mode also holds a visitor nobody has answered yet to three
 messages a minute and one link every five minutes.
@@ -86,8 +91,10 @@ messages a minute and one link every five minutes.
   from the token. Another tenant's record answers **404**, never 403, so ids
   cannot be probed. Agents can be limited to some sites; the same rule
   applies on REST and on the sockets (`http/guards.ts`, `socket/context.ts`).
-- Roles (owner, admin, agent, viewer) map to permissions in one table
-  (`middleware/rbac.ts`); plan features are checked on the server.
+- Roles (owner, admin, manager, agent, viewer) map to permissions in one table
+  (`middleware/rbac.ts`); plan features and active-seat state are checked on
+  the server. An empty site assignment for a restricted role means no sites,
+  never every site; owners and admins retain organization-wide access.
 - `tests/tenantIsolation.e2e.test.ts` calls the routes and socket events with
   another tenant's ids and expects nothing back.
 
@@ -101,20 +108,33 @@ messages a minute and one link every five minutes.
   passes one schema (`socket/schema.ts`): only listed fields survive, each
   typed and bounded; unknown events are refused.
 - No third-party script runs in the widget; it lives in a Shadow DOM.
-- A shop can vouch for a signed-in customer with an HMAC of their id
-  (`userHash`); an unsigned id is ignored.
+- A shop can vouch for a signed-in customer with a versioned, site-scoped HMAC
+  assertion carrying audience, issued/expiry times (at most 10 minutes) and a
+  nonce. The nonce is atomically bound to the first widget session that uses it,
+  so another browser cannot replay it. Legacy `userHash` identity is disabled
+  by default in production and an unsigned id is always ignored.
 - An agent can block a visitor for a period, by visitor id and a keyed hash
   of their address; the address itself is not stored with the block.
 
 ## Uploads
 
 - 10 MB for chat files, 5 MB for logos. The type is read from the file's
-  content signature, not its name or the declared type; images are decoded
-  and re-encoded, which drops EXIF and anything appended. Archives are off
-  unless `ALLOW_ARCHIVE_UPLOADS=true`. (`middleware/upload.ts`)
+  content signature, not its name or the declared type. Images are decoded
+  and re-encoded; animated GIFs are bounded and reduced to one safe frame.
+  DOCX/XLSX packages have bounded ZIP structure and required OOXML parts;
+  macros, embedded objects and external relationships are rejected. Archives
+  are off unless `ALLOW_ARCHIVE_UPLOADS=true`. (`middleware/upload.ts`)
 - Chat attachments are private: stored under the organization's prefix, opened
-  through a 12-hour signed link that redirects to a 5-minute presigned
-  storage URL. Only logos are public.
+  through a 15-minute signed link that redirects to a 5-minute presigned
+  storage URL. Every upload has a server record bound to its site, principal
+  and widget session, and the first message atomically binds it to one
+  conversation. Revoked/expired/deleted records cannot be downloaded. Only
+  logos are public.
+- Upload concurrency and per-site daily byte budgets are enforced before
+  storage work; abandoned pending uploads are swept. This codebase does not
+  include an AV/CDR engine: legacy binary Office formats are rejected and
+  archives remain disabled unless an external quarantine scanner is deployed
+  and verified.
 - Deleting a conversation, a visitor's data or a workspace deletes the files.
 
 ## The AI assistant
@@ -122,12 +142,13 @@ messages a minute and one link every five minutes.
 - One provider, Google Gemini, called only from the server; the key
   (`GEMINI_API_KEY`) is sent in a header, never in a URL, and never reaches
   the panel, the widget or the logs.
-- Only the visitor's question and the site's public FAQ entries are sent.
+- Only the visitor's question and owner-approved knowledge/FAQ entries are sent.
   E-mail addresses and phone numbers are masked first; a question containing
   a card number, IBAN or Turkish ID number is not sent at all and goes to a
   person. The visitor's name, address and earlier messages are never sent.
   (`services/assistant/privacy.ts`)
-- The assistant is off for a site until its owner switches it on.
+- The assistant is off for a site until its owner switches it on. Daily,
+  global and monthly usage is atomically reserved before the provider call.
 
 ## Data protection
 
@@ -140,6 +161,8 @@ messages a minute and one link every five minutes.
 - Secrets a tenant stores (identity keys, authenticator secrets) are sealed
   with AES-256-GCM under a key derived from `JWT_SECRET`
   (`config/secretBox.ts`).
+- PostgreSQL runtime and migration credentials are separate in production;
+  remote database connections require verified TLS and an explicit CA.
 - Backups: nightly `pg_dump`, encrypted with **age** (or gpg) before it
   leaves the server (`scripts/backup-postgres.sh`).
 - Retention: conversations are deleted with their attachments once past the
@@ -166,7 +189,8 @@ environment file.
 
 ## Supply chain
 
-Container images are pinned by digest and scanned (Trivy) in CI, signed with
-cosign and shipped with an SBOM; dependencies are updated by Dependabot and
-code is analysed by CodeQL. Accepted findings are listed with a reason in
-`docs/security/accepted-risks.md`.
+The release workflow builds once, pushes and scans that exact digest, signs it
+with cosign and ships an SBOM. Deployment accepts an immutable digest only and
+verifies its expected signer identity and issuer before backup or migration.
+Dependencies are updated by Dependabot and code is analysed by CodeQL.
+Accepted findings are listed with a reason in `docs/security/accepted-risks.md`.

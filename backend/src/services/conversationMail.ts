@@ -41,7 +41,7 @@ interface SiteAccount {
 
 /**
  * Everyone who works on a site and can answer: owners and admins always,
- * others when the site is theirs (an empty assignment means every site).
+ * others only when the site is explicitly assigned to them.
  * Viewers read but do not answer, so they are not mailed.
  */
 export async function siteAccounts(organizationId: string, siteId: string): Promise<SiteAccount[]> {
@@ -69,9 +69,7 @@ export async function siteAccounts(organizationId: string, siteId: string): Prom
   );
   return rows
     .filter((r) => r.role !== 'viewer')
-    .filter(
-      (r) => ['owner', 'admin'].includes(r.role) || !r.sites.length || r.sites.includes(siteId)
-    )
+    .filter((r) => ['owner', 'admin'].includes(r.role) || r.sites.includes(siteId))
     .map((r) => ({
       type: r.type,
       id: r.id,

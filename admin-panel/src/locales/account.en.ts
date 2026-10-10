@@ -35,6 +35,8 @@ export default {
         title: 'Sign in with Google',
         connectedAs: 'Connected Google account: {{email}}',
         body: 'Connect your Google account and sign in with one click, no password to type. Your password keeps working too.',
+        password: 'Current password',
+        code: 'Authenticator code',
         connect: 'Connect Google account',
         disconnect: 'Disconnect',
         disconnected: 'Google was disconnected.',

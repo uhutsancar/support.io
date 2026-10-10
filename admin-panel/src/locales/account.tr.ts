@@ -37,6 +37,8 @@ export default {
         title: 'Google ile giriş',
         connectedAs: 'Bağlı Google hesabı: {{email}}',
         body: 'Google hesabınızı bağlayın; şifre yazmadan tek tıkla giriş yapın. Şifreniz de geçerli kalır.',
+        password: 'Mevcut şifre',
+        code: 'Doğrulama uygulaması kodu',
         connect: 'Google hesabını bağla',
         disconnect: 'Bağlantıyı kaldır',
         disconnected: 'Google bağlantısı kaldırıldı.',
