@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!--
-      İkonlar. Eskiden burada `/src/public/support.io.webp` yazıyordu: bu yol
-      kaynak ağacına işaret eder, `vite build` çıktısında böyle bir dosya
-      olmadığı için üretimde favicon 404 dönüyordu. Artık tüm ikonlar
-      `public/` altındadır ve `npm run icons` ile üretilir.
+      İkonlar doğrudan `public/` altındadır ve `npm run icons` ile üretilir;
+      kaynak ağacındaki dosyalara bağlantı verilmez.
     -->
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
