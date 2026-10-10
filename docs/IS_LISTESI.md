@@ -98,7 +98,7 @@ gösterilmez.
 | Ödeme ekranı sayfası (Pro/Kurumsal'a geçiş) + uygun yerlerden yönlendirme | [x] | 18a6de7 |
 | Fiyatlar sayfasında giriş yapmış kullanıcı doğrudan ödeme sayfasına; yıllık indirim satırı, sipariş özeti | [x] | d25bfbc |
 | Ücretli özellik ücretsiz planda açılınca "planınızı yükseltin" mesajı + yönlendirme | [x] | 18a6de7 |
-| sancaruhut@gmail.com: sahip (owner) + en yüksek plan, her şeyi kullanabilsin | [x] | (veritabanı, denetim kaydıyla; 2026-10-06 tekrar doğrulandı: owner, aktif, doğrulanmış, ENTERPRISE, tüm izinler) |
+| Sahip hesabı: owner + en yüksek plan, her şeyi kullanabilsin | [x] | (veritabanı, denetim kaydıyla; 2026-10-06 tekrar doğrulandı: owner, aktif, doğrulanmış, ENTERPRISE, tüm izinler) |
 | Admin panelde sitenin kendi sohbet balonu görünmesin | [x] | 18a6de7 |
 | Siteler kartı taşıyor (rozetler, kurulum kodu, butonlar) | [x] | 18a6de7 |
 | Ekip sohbeti: "+" ile açılan "Üye seçin" / "Grup oluştur" panelleri siyah görünüyor | [x] | 18a6de7 |
@@ -131,9 +131,9 @@ yapılmadı ve "bitti" sayılmadı. Ayrıntılı adımlar: `docs/production-runb
    gerçek pencere sandbox hesabı ister.
 8. Staging sunucusunda `npm run loadtest` ile ölçüm (kapasite rakamı ancak
    oradan söylenebilir).
-9. Production veritabanı boş başlar: canlıda sancaruhut@gmail.com ile kayıt
+9. Production veritabanı boş başlar: canlıda sahip hesabıyla kayıt
    olduktan sonra bir kez
-   `exec backend npm run plan:set:prod -- sancaruhut@gmail.com ENTERPRISE`
+   `exec backend npm run plan:set:prod -- <sahip-hesabi-e-postasi> ENTERPRISE`
    çalıştırın (runbook §3). Sohbette yazdığınız şifreyi de değiştirin.
 
 Not: `Downloads/plan (6).md` planın eski (v6) sürümüdür; yerini plan (8)
