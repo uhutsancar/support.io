@@ -9,6 +9,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import {
   Check,
@@ -62,7 +63,7 @@ const AiAssistant = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t('aiPage.meta.title') + ' — Support.io'}</title>
+        <title>{pageTitle(t('aiPage.meta.title'))}</title>
         <meta name="description" content={t('aiPage.meta.description')} />
       </Helmet>
 

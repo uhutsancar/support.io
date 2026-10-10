@@ -321,7 +321,7 @@ router.post(
 
     res.json({
       token,
-      // The free plan's widget shows "Powered by Support.io".
+      // The free plan's widget shows "Powered by Supbort.io".
       branding: bundle.branding,
       expiresAt: expiresAt.toISOString(),
       visitorId,

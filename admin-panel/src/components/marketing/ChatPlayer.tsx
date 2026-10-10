@@ -22,6 +22,7 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/rea
 import { BookOpen, Send, Sparkles, UserRound } from 'lucide-react';
 import { asList } from './kit';
 import { LogoMark } from '../Logo';
+import { BRAND_NAME } from '../../lib/brand';
 
 export interface ChatLine {
   from: 'visitor' | 'assistant' | 'agent' | 'note' | 'article';
@@ -171,7 +172,7 @@ export const ChatPlayer = ({
       <div className="px-4 py-3 bg-indigo-600 text-white flex items-center gap-2.5">
         {/* Bizim balonumuz bizim logomuzla açılır; başka bir marka baş harfiyle. */}
         <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-[12px] font-semibold">
-          {t('demoChat.' + script + '.brand') === 'Support.io' ? (
+          {t('demoChat.' + script + '.brand') === BRAND_NAME ? (
             <LogoMark size={22} rounded={false} color="#4F46E5" />
           ) : (
             t('demoChat.' + script + '.brand').charAt(0)

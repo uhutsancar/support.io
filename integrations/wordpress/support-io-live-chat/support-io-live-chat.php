@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name:       Support.io Live Chat
- * Description:       Adds the Support.io live chat bubble to every page of your site. Paste the installation code from your Support.io dashboard; no theme editing needed.
+ * Plugin Name:       Supbort.io Live Chat
+ * Description:       Adds the Supbort.io live chat bubble to every page of your site. Paste the installation code from your Supbort.io dashboard; no theme editing needed.
  * Version:           1.0.0
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Author:            Support.io
+ * Author:            Supbort.io
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       support-io-live-chat
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The plugin: one settings page and one script tag.
  *
- * The settings page takes the installation code the Support.io dashboard
+ * The settings page takes the installation code the Supbort.io dashboard
  * shows (Sites → the site's card → Installation code) and keeps only the two things in it that matter:
  * the address the chat is served from and the site key. The page then loads
  * that address's widget.js with the key, asynchronously, in the footer.
@@ -150,7 +150,7 @@ final class Support_IO_Live_Chat {
 			if ( null === $parsed ) {
 				self::error(
 					'invalid_code',
-					__( 'That is not a Support.io installation code. Copy the whole code from your Support.io dashboard (Sites → your site’s card → Installation code) and paste it here.', 'support-io-live-chat' )
+					__( 'That is not a Supbort.io installation code. Copy the whole code from your Supbort.io dashboard (Sites → your site’s card → Installation code) and paste it here.', 'support-io-live-chat' )
 				);
 			} else {
 				$out['origin']   = $parsed['origin'];
@@ -193,12 +193,12 @@ final class Support_IO_Live_Chat {
 	}
 
 	/**
-	 * Adds Settings → Support.io.
+	 * Adds Settings → Supbort.io.
 	 */
 	public static function add_page() {
 		add_options_page(
-			__( 'Support.io Live Chat', 'support-io-live-chat' ),
-			'Support.io',
+			__( 'Supbort.io Live Chat', 'support-io-live-chat' ),
+			'Supbort.io',
 			'manage_options',
 			self::PAGE,
 			array( __CLASS__, 'render_page' )
@@ -228,7 +228,7 @@ final class Support_IO_Live_Chat {
 		$name = self::OPTION;
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Support.io Live Chat', 'support-io-live-chat' ); ?></h1>
+			<h1><?php esc_html_e( 'Supbort.io Live Chat', 'support-io-live-chat' ); ?></h1>
 			<?php if ( '' !== $o['site_key'] ) : ?>
 				<div class="notice notice-success inline"><p>
 					<?php
@@ -238,7 +238,7 @@ final class Support_IO_Live_Chat {
 						'<code>' . esc_html( $o['origin'] ) . '</code>'
 					);
 					?>
-					<a href="<?php echo esc_url( $o['origin'] . '/dashboard' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open your Support.io dashboard', 'support-io-live-chat' ); ?></a>
+					<a href="<?php echo esc_url( $o['origin'] . '/dashboard' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open your Supbort.io dashboard', 'support-io-live-chat' ); ?></a>
 				</p></div>
 			<?php endif; ?>
 			<form method="post" action="options.php">
@@ -257,7 +257,7 @@ final class Support_IO_Live_Chat {
 										'<code>' . esc_html( substr( $o['site_key'], 0, 8 ) ) . '…</code>'
 									);
 								} else {
-									esc_html_e( 'In your Support.io dashboard, open Sites and copy the installation code from this site’s card. Paste it here as it is.', 'support-io-live-chat' );
+									esc_html_e( 'In your Supbort.io dashboard, open Sites and copy the installation code from this site’s card. Paste it here as it is.', 'support-io-live-chat' );
 								}
 								?>
 							</p>

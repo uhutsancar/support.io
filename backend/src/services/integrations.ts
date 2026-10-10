@@ -154,7 +154,7 @@ const TEXT = {
     created: 'Yeni konuşma',
     closed: 'Konuşma kapandı',
     rating: 'Yeni puan',
-    test: 'Support.io bağlantısı çalışıyor.',
+    test: 'Supbort.io bağlantısı çalışıyor.',
     visitor: 'Ziyaretçi',
     open: 'Panelde aç'
   },
@@ -162,7 +162,7 @@ const TEXT = {
     created: 'New conversation',
     closed: 'Conversation closed',
     rating: 'New rating',
-    test: 'The Support.io connection works.',
+    test: 'The Supbort.io connection works.',
     visitor: 'Visitor',
     open: 'Open in the panel'
   }
@@ -312,7 +312,7 @@ async function sendWith(item: Claimed, transport: Poster): Promise<Response> {
   const at = Math.floor(Date.now() / 1000);
   return post(String(config.url), body, {
     'Content-Type': 'application/json',
-    'User-Agent': 'Support.io-Webhooks/1',
+    'User-Agent': 'Supbort.io-Webhooks/1',
     'X-SupportIO-Event': item.event,
     'X-SupportIO-Delivery': item.id,
     'X-SupportIO-Signature': signature(String(config.secret), body, at)

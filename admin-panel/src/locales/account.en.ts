@@ -346,7 +346,7 @@ export default {
     siteHint: 'Over the plan limit: chat bubble hidden, settings read-only.',
     blocked: 'Blocked',
     blockedHint:
-      'Blocked by Support.io for use against our terms. Write to our support team for details.'
+      'Blocked by Supbort.io for use against our terms. Write to our support team for details.'
   },
   errors: {
     seatSuspended:
@@ -356,7 +356,7 @@ export default {
     overPlanLimit: 'You chose more than your plan allows.',
     emailInUse: 'This e-mail address is already in use.',
     uploadFailed: 'The file could not be uploaded; please try again.',
-    siteBlocked: 'This site was blocked by Support.io; write to our support team to reopen it.'
+    siteBlocked: 'This site was blocked by Supbort.io; write to our support team to reopen it.'
   },
   retention: {
     title: 'Conversation retention',
@@ -583,7 +583,7 @@ export default {
   referral: {
     title: 'Referral programme',
     description:
-      'Recommend Support.io to a business: when a business that signs up through your link makes its first payment, your next month is on us.',
+      'Recommend Supbort.io to a business: when a business that signs up through your link makes its first payment, your next month is on us.',
     linkLabel: 'Your referral link',
     copy: 'Copy the link',
     copied: 'Link copied',

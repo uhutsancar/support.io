@@ -10,6 +10,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -51,7 +52,7 @@ export const ForgotPassword = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('recovery.forgotTitle')} — Support.io`}</title>
+        <title>{pageTitle(t('recovery.forgotTitle'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <AuthLayout
@@ -118,7 +119,7 @@ export const ResetPassword = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('recovery.resetTitle')} — Support.io`}</title>
+        <title>{pageTitle(t('recovery.resetTitle'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <AuthLayout
@@ -209,7 +210,7 @@ export const VerifyEmail = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('recovery.verifyTitle')} — Support.io`}</title>
+        <title>{pageTitle(t('recovery.verifyTitle'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <AuthLayout
@@ -273,7 +274,7 @@ export const ConfirmEmail = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('account.confirmEmail.title')} — Support.io`}</title>
+        <title>{pageTitle(t('account.confirmEmail.title'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <AuthLayout

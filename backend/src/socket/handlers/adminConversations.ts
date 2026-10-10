@@ -208,7 +208,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       return refuse(
         hold,
         hold === 'SITE_BLOCKED'
-          ? 'This site was blocked by Support.io; contact support'
+          ? 'This site was blocked by Supbort.io; contact support'
           : 'This site is over the plan limit and is read-only'
       );
     }

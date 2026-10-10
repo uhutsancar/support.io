@@ -64,7 +64,7 @@ export function mailProvider(): MailProvider {
 
 /** The address mails come from. */
 export function mailFrom(): string {
-  return process.env.MAIL_FROM || 'Support.io <no-reply@localhost>';
+  return process.env.MAIL_FROM || 'Supbort.io <no-reply@localhost>';
 }
 
 /** Where links in mails point: the panel's own origin. */

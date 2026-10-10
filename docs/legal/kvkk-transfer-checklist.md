@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # KVKK yurt dışı aktarım kontrol listesi
 
 > Bu belge hukuki görüş değildir. Hangi hizmet sağlayıcıya hangi verinin
@@ -14,7 +16,7 @@
   bildirilir (Standart Sözleşme Bildirim Modülü).
 - Açık rıza, Eylül 2024'ten bu yana düzenli aktarımlar için dayanak
   değildir; yalnızca arızi aktarımlarda istisnadır.
-- Müşteriyle (site sahibi) ilişkide Support.io **veri işleyen**dir; site
+- Müşteriyle (site sahibi) ilişkide Supbort.io **veri işleyen**dir; site
   ziyaretçilerinin verisinde veri sorumlusu müşteridir. Bu ilişki DPA ile
   yazılı hâle getirilmeli (LEG-01 madde 5).
 

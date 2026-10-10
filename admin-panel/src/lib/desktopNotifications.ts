@@ -75,7 +75,7 @@ export function notifyDesktop({
 
 const BASE_TITLE_KEY = '__supportioBaseTitle';
 
-/** "(3) Support.io" while there are unread messages, and a dot on the favicon. */
+/** "(3) Supbort.io" while there are unread messages, and a dot on the favicon. */
 export function showUnreadInTab(count: number): void {
   if (typeof document === 'undefined') return;
   const w = window as unknown as Record<string, string>;

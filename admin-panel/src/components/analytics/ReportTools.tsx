@@ -59,7 +59,7 @@ export const ExportMenu = ({ range }: { range: string }) => {
       });
       const name =
         /filename="([^"]+)"/.exec(String(res.headers['content-disposition'] || ''))?.[1] ||
-        `support-io-${report}.${format}`;
+        `supbort-io-${report}.${format}`;
       const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url;

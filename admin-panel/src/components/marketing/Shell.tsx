@@ -20,6 +20,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MotionConfig, motion } from 'motion/react';
+import { BRAND_NAME, BRAND_TLD, BRAND_WORD } from '../../lib/brand';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import {
   Menu,
@@ -664,7 +665,8 @@ export const Footer = () => {
             <span className="inline-flex items-center gap-2.5">
               <LogoMark size={30} />
               <span className="text-[18px] font-semibold tracking-[-0.02em] text-white">
-                Support<span className="text-indigo-400">.io</span>
+                {BRAND_WORD}
+                <span className="text-indigo-400">{BRAND_TLD}</span>
               </span>
             </span>
             <p className="mt-5 text-[14px] leading-relaxed text-gray-400 max-w-[34ch]">
@@ -712,7 +714,9 @@ export const Footer = () => {
         </div>
 
         <div className="mt-16 pt-6 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[12.5px] text-gray-400">© {new Date().getFullYear()} Support.io</p>
+          <p className="text-[12.5px] text-gray-400">
+            © {new Date().getFullYear()} {BRAND_NAME}
+          </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-gray-400">
             <Link to={routes.privacy} className="hover:text-gray-300 transition-colors">
               {t('legal.privacy.title')}

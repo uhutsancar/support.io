@@ -24,7 +24,7 @@ const buttonClass =
 
 /** How a shop's server signs a customer; shown next to a freshly generated key. */
 const IDENTITY_EXAMPLE = `// Sunucunuzda (Node.js)
-const userHash = crypto.createHmac('sha256', SUPPORTIO_IDENTITY_KEY)
+const userHash = crypto.createHmac('sha256', SUPBORTIO_IDENTITY_KEY)
   .update(user.id).digest('hex');
 
 // Sayfada

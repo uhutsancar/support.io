@@ -1,3 +1,4 @@
+// LEGAL REVIEW: The controller must be identified by its registered company name, not the brand.
 /**
  * Industry solution pages (English). Same rules as pages.tr.ts.
  */
@@ -6,7 +7,7 @@ export default {
   solutions: {
     eyebrow: 'Solutions',
     painsTitle: 'Sound familiar?',
-    usesTitle: 'How Support.io works here',
+    usesTitle: 'How Supbort.io works here',
     winsTitle: 'What changes',
     othersTitle: 'Other industries',
     featureLink: 'See the feature',
@@ -295,7 +296,7 @@ export default {
     },
     eyebrow: 'AI assistant',
     title: 'An assistant that answers your customers day and night',
-    desc: 'The Support.io AI assistant answers common questions in your chat bubble within seconds. It speaks from your own FAQ, never makes things up, and hands the conversation to your team when needed.',
+    desc: 'The Supbort.io AI assistant answers common questions in your chat bubble within seconds. It speaks from your own FAQ, never makes things up, and hands the conversation to your team when needed.',
     ctaPrimary: 'Start free',
     ctaSecondary: 'See plans',
     heroPoints: ['No setup', 'Included in every plan', 'Switch it off any time'],
@@ -405,16 +406,16 @@ export default {
     updated: 'Last updated: 7 October 2026',
     contact: 'Questions: {{supportEmail}}',
     privacy: {
-      meta: 'What data Support.io processes and why, how long it keeps it, and your rights.',
+      meta: 'What data Supbort.io processes and why, how long it keeps it, and your rights.',
       title: 'Privacy Policy',
       intro:
-        'Support.io lets businesses add live chat and an AI assistant to their websites. This policy covers both the businesses that open a Support.io account and the visitors who use the chat bubble on their sites.',
+        'Supbort.io lets businesses add live chat and an AI assistant to their websites. This policy covers both the businesses that open a Supbort.io account and the visitors who use the chat bubble on their sites.',
       sections: [
         {
           h: 'Roles',
           p: [
-            'Support.io is the controller of your account data.',
-            'For the chat data of a site’s visitors, the business that added the bubble is the controller; Support.io processes that data on its behalf and instructions.'
+            'Supbort.io is the controller of your account data.',
+            'For the chat data of a site’s visitors, the business that added the bubble is the controller; Supbort.io processes that data on its behalf and instructions.'
           ]
         },
         {
@@ -472,14 +473,14 @@ export default {
       ]
     },
     terms: {
-      meta: 'The terms of use of the Support.io service.',
+      meta: 'The terms of use of the Supbort.io service.',
       title: 'Terms of Use',
-      intro: 'By using Support.io you accept these terms. We have tried to keep them short.',
+      intro: 'By using Supbort.io you accept these terms. We have tried to keep them short.',
       sections: [
         {
           h: 'The service',
           p: [
-            'Support.io gives your site a chat bubble, an AI assistant and a dashboard for your team. Features depend on your plan.'
+            'Supbort.io gives your site a chat bubble, an AI assistant and a dashboard for your team. Features depend on your plan.'
           ]
         },
         {
@@ -507,7 +508,7 @@ export default {
         {
           h: 'Visitor data',
           p: [
-            'You are the controller of your visitors’ data. State in your site’s privacy notice that you use Support.io for live chat.'
+            'You are the controller of your visitors’ data. State in your site’s privacy notice that you use Supbort.io for live chat.'
           ]
         },
         {
@@ -552,7 +553,7 @@ export default {
       title: 'Accessibility Statement',
       updated: 'Last updated: 8 October 2026',
       intro:
-        'We want Support.io to be easy to use for everyone, including people with visual, hearing, motor or cognitive differences. Our target is WCAG 2.2 level AA. This statement covers the chat bubble, the dashboard and this website.',
+        'We want Supbort.io to be easy to use for everyone, including people with visual, hearing, motor or cognitive differences. Our target is WCAG 2.2 level AA. This statement covers the chat bubble, the dashboard and this website.',
       sections: [
         {
           h: 'The chat bubble',
@@ -597,11 +598,11 @@ export default {
       ]
     },
     aiUse: {
-      meta: 'What the Support.io AI assistant does, which data it works with, its limits, and how visitors reach a person.',
+      meta: 'What the Supbort.io AI assistant does, which data it works with, its limits, and how visitors reach a person.',
       title: 'Use of AI',
       updated: 'Last updated: 8 October 2026',
       intro:
-        'At Support.io, AI does one job: when the site owner turns it on, it answers visitors’ questions from the site’s frequently asked questions (FAQ). This page explains how the assistant works, what it does not do and what visitors see.',
+        'At Supbort.io, AI does one job: when the site owner turns it on, it answers visitors’ questions from the site’s frequently asked questions (FAQ). This page explains how the assistant works, what it does not do and what visitors see.',
       sections: [
         {
           h: 'Who turns it on',
@@ -648,12 +649,12 @@ export default {
     meta: {
       title: 'API documentation',
       description:
-        'The Support.io API: read conversations, messages, visitors and FAQ from your own systems, and reply to visitors.'
+        'The Supbort.io API: read conversations, messages, visitors and FAQ from your own systems, and reply to visitors.'
     },
     eyebrow: 'Developers',
-    title: 'Support.io API',
+    title: 'Supbort.io API',
     description:
-      'Let your order system, CRM or own dashboard talk to Support.io: read conversations, reply to visitors and keep your FAQ in step with your own source.',
+      'Let your order system, CRM or own dashboard talk to Supbort.io: read conversations, reply to visitors and keep your FAQ in step with your own source.',
     authTitle: 'Authentication',
     auth: 'Every request uses a key you create under Settings → API keys. Send it in the Authorization header as a Bearer token. A key opens only your own workspace’s data; keep it on your server, never in a browser or app bundle.',
     rulesTitle: 'Rules',

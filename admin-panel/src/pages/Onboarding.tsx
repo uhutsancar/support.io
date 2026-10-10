@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -99,7 +100,7 @@ const Onboarding = () => {
         return (
           <div className="animate-fade-in-up">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">
-              {t('onboarding.step1Title', "Support.io'yu nasıl kullanmayı planlıyorsunuz?")}
+              {t('onboarding.step1Title', "Supbort.io'yu nasıl kullanmayı planlıyorsunuz?")}
             </h2>
             <div className="space-y-4">
               {[
@@ -205,7 +206,7 @@ const Onboarding = () => {
               </div>
               <div className="p-4 bg-white dark:bg-gray-800 h-full flex flex-col">
                 <div className="text-center text-xs text-gray-400 mb-4 whitespace-nowrap">
-                  {t('onboarding.previewAgency', 'Canlı Destek Sağlayıcısı Support.io')}
+                  {t('onboarding.previewAgency', 'Canlı Destek Sağlayıcısı Supbort.io')}
                 </div>
                 <div className="flex gap-2 mb-4 mt-auto">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex-shrink-0"></div>
@@ -374,7 +375,7 @@ const Onboarding = () => {
               </div>
               <div className="p-4 bg-white dark:bg-gray-800 h-full flex flex-col">
                 <div className="text-center text-xs text-gray-400 mb-4 whitespace-nowrap">
-                  {t('onboarding.previewAgency', 'Canlı Destek Sağlayıcısı Support.io')}
+                  {t('onboarding.previewAgency', 'Canlı Destek Sağlayıcısı Supbort.io')}
                 </div>
                 <div className="flex gap-2 mb-4 mt-auto">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex-shrink-0 flex items-center justify-center text-xs">
@@ -398,7 +399,7 @@ const Onboarding = () => {
   return (
     <>
       <Helmet>
-        <title>{t('onboarding.title', 'Kurulum - Support.io')}</title>
+        <title>{pageTitle(t('onboarding.title', 'Kurulum'))}</title>
       </Helmet>
       <div className="min-h-screen bg-[#f8f9fa] dark:bg-brand-dark flex flex-col items-center py-10 px-4 transition-colors duration-200">
         <div className="w-full max-w-5xl bg-white dark:bg-brand-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col transition-colors min-h-[70vh]">

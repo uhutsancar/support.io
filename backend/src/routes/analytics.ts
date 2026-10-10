@@ -294,7 +294,7 @@ router.get(
     const table = await buildTable(report, orgId(req), siteId, days, tz, lang);
     const body = format === 'csv' ? toCsv(table) : toXlsx(table);
     const day = localTime(new Date(), tz).slice(0, 10);
-    const file = `support-io-${report}-${range}-${day}.${format}`;
+    const file = `supbort-io-${report}-${range}-${day}.${format}`;
 
     events.emit('report.exported', {
       organizationId: orgId(req),

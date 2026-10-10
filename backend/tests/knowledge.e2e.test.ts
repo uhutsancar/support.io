@@ -95,6 +95,8 @@ test('robots.txt: our group over "*", the longest rule, Allow on a tie', () => {
   assert.equal(robotsAllows(robots, '/private/page'), true, 'our group replaces "*"');
   assert.equal(robotsAllows(robots, '/tmp/x'), false);
   assert.equal(robotsAllows(robots, '/tmp/open/x'), true);
+  const renamed = 'User-agent: SupbortioBot\nDisallow: /new-private';
+  assert.equal(robotsAllows(renamed, '/new-private/page'), false, 'new bot group is honored');
   const star = 'User-agent: *\nDisallow: /private\nDisallow: /*.pdf$\nAllow: /private/ok';
   assert.equal(robotsAllows(star, '/private/x'), false);
   assert.equal(robotsAllows(star, '/private/ok'), true);

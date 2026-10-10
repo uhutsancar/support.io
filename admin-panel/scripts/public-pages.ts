@@ -21,6 +21,7 @@ import marketingTr from '../src/locales/marketing.tr';
 import marketingEn from '../src/locales/marketing.en';
 import pagesTr from '../src/locales/pages.tr';
 import pagesEn from '../src/locales/pages.en';
+import { BRAND_NAME } from '../src/lib/brand';
 
 type Tree = Record<string, unknown>;
 const isPlainObject = (v: unknown): v is Tree =>
@@ -46,7 +47,7 @@ function text(lang: 'tr' | 'en', key: string): string {
   return value;
 }
 
-const SUFFIX = ' — Support.io';
+const SUFFIX = ` — ${BRAND_NAME}`;
 type Meta = { title: string; description: string };
 const meta = (titleKey: string, descKey: string, suffix = true) => ({
   tr: { title: text('tr', titleKey) + (suffix ? SUFFIX : ''), description: text('tr', descKey) },

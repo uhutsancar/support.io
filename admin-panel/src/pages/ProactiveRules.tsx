@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { Site } from '../types/api';
 
@@ -178,7 +179,7 @@ const ProactiveRules = () => {
   return (
     <div className="p-6">
       <Helmet>
-        <title>{`${t('proactive.title')} — Support.io`}</title>
+        <title>{pageTitle(t('proactive.title'))}</title>
       </Helmet>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

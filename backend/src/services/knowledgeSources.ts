@@ -22,7 +22,7 @@ import { pinnedLookup, safeOutboundUrl, UnsafeUrlError } from './outboundUrl';
 import { prefixQuery } from './helpCenter';
 import type { SafeTarget } from './outboundUrl';
 
-export const USER_AGENT = 'SupportioBot/1.0 (+support assistant; reads only pages its site added)';
+export const USER_AGENT = 'SupbortioBot/1.0 (+support assistant; reads only pages its site added)';
 const TIMEOUT_MS = 10_000;
 const MAX_PAGE_BYTES = 2 * 1024 * 1024;
 const MAX_REDIRECTS = 3;
@@ -133,7 +133,7 @@ export function chunkText(text: string, size = CHUNK_CHARS): string[] {
  * there is one, else the one for "*"; the longest matching rule wins, Allow
  * on a tie (RFC 9309).
  */
-export function robotsAllows(robots: string, path: string, agent = 'supportiobot'): boolean {
+export function robotsAllows(robots: string, path: string, agent = 'supbortiobot'): boolean {
   const groups: Array<{ agents: string[]; rules: Array<{ allow: boolean; pattern: string }> }> = [];
   let current: (typeof groups)[number] | null = null;
   let lastWasAgent = false;
@@ -155,7 +155,13 @@ export function robotsAllows(robots: string, path: string, agent = 'supportiobot
       if (value) current.rules.push({ allow: field === 'allow', pattern: value });
     } else lastWasAgent = false;
   }
-  const ours = groups.filter((g) => g.agents.some((a) => a !== '*' && agent.includes(a)));
+  const agentTokens =
+    agent.toLowerCase() === 'supbortiobot'
+      ? ['supbortiobot', 'supportiobot']
+      : [agent.toLowerCase()];
+  const ours = groups.filter((g) =>
+    g.agents.some((a) => a !== '*' && agentTokens.some((token) => token.includes(a)))
+  );
   const chosen = ours.length ? ours : groups.filter((g) => g.agents.includes('*'));
   let best: { allow: boolean; length: number } | null = null;
   for (const rule of chosen.flatMap((g) => g.rules)) {

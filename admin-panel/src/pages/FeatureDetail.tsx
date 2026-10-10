@@ -10,6 +10,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
@@ -60,7 +61,7 @@ const renderVisual = (slug: string, t: (k: string) => string) => {
 const NotFound = ({ t, to }: { t: (k: string) => string; to: string }) => (
   <Shell>
     <Helmet>
-      <title>{t('featuresPage.notFound.title') + ' — Support.io'}</title>
+      <title>{pageTitle(t('featuresPage.notFound.title'))}</title>
       <meta name="robots" content="noindex" />
     </Helmet>
     <div className="pt-44 pb-28 px-5 sm:px-8">
@@ -106,7 +107,7 @@ const FeatureDetail = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t(key('title')) + ' — Support.io'}</title>
+        <title>{pageTitle(t(key('title')))}</title>
         <meta name="description" content={t(key('plain'))} />
       </Helmet>
 

@@ -96,11 +96,11 @@ export function verificationMail({
         locale,
         [
           `Merhaba ${name},`,
-          'Support.io hesabınızı tamamlamak için e-posta adresinizi doğrulayın. Widget’ınız ve ödeme işlemleri doğrulamadan sonra açılır.'
+          'Supbort.io hesabınızı tamamlamak için e-posta adresinizi doğrulayın. Widget’ınız ve ödeme işlemleri doğrulamadan sonra açılır.'
         ],
         [
           `Hi ${name},`,
-          'Verify your e-mail address to finish setting up your Support.io account. Your widget and billing open once it is verified.'
+          'Verify your e-mail address to finish setting up your Supbort.io account. Your widget and billing open once it is verified.'
         ]
       ),
       action: pick(locale, 'E-postamı doğrula', 'Verify my e-mail'),
@@ -163,8 +163,8 @@ export function invitationMail({
 }): Rendered {
   const subject = pick(
     locale,
-    `${organization} sizi Support.io'ya davet etti`,
-    `${organization} invited you to Support.io`
+    `${organization} sizi Supbort.io'ya davet etti`,
+    `${organization} invited you to Supbort.io`
   );
   return {
     subject,
@@ -380,7 +380,7 @@ export function activationMail({
 }): Rendered {
   const copy = {
     welcome: {
-      subject: ['Support.io hesabınız hazır', 'Your Support.io account is ready'],
+      subject: ['Supbort.io hesabınız hazır', 'Your Supbort.io account is ready'],
       lines: [
         [
           `Merhaba ${name},`,
@@ -598,11 +598,11 @@ export function referralRewardMail({
         locale,
         [
           `Merhaba ${name},`,
-          'Tavsiye ettiğiniz işletme Support.io’ya abone oldu. Teşekkür olarak bir sonraki faturanız ücretsiz; bir şey yapmanız gerekmez.'
+          'Tavsiye ettiğiniz işletme Supbort.io’ya abone oldu. Teşekkür olarak bir sonraki faturanız ücretsiz; bir şey yapmanız gerekmez.'
         ],
         [
           `Hi ${name},`,
-          'A business you referred has subscribed to Support.io. As a thank-you, your next bill is free; there is nothing for you to do.'
+          'A business you referred has subscribed to Supbort.io. As a thank-you, your next bill is free; there is nothing for you to do.'
         ]
       ),
       action: pick(locale, 'Tavsiye bağlantınız', 'Your referral link'),
@@ -683,12 +683,12 @@ export function existingAccountMail({
         locale,
         [
           `Merhaba ${name},`,
-          'Biri bu e-posta adresiyle yeni bir Support.io hesabı açmaya çalıştı. Bu adresle zaten bir hesabınız olduğu için yeni hesap açılmadı.',
+          'Biri bu e-posta adresiyle yeni bir Supbort.io hesabı açmaya çalıştı. Bu adresle zaten bir hesabınız olduğu için yeni hesap açılmadı.',
           'Siz denediyseniz giriş yapabilir ya da şifrenizi hatırlamıyorsanız sıfırlayabilirsiniz.'
         ],
         [
           `Hi ${name},`,
-          'Someone tried to create a new Support.io account with this e-mail address. You already have one, so no new account was opened.',
+          'Someone tried to create a new Supbort.io account with this e-mail address. You already have one, so no new account was opened.',
           'If it was you, sign in, or reset your password if you have forgotten it.'
         ]
       ),
@@ -722,11 +722,11 @@ export function passwordChangedMail({
         locale,
         [
           `Merhaba ${name},`,
-          'Support.io hesabınızın şifresi az önce değiştirildi. Diğer tüm cihazlardaki oturumlarınız kapatıldı.'
+          'Supbort.io hesabınızın şifresi az önce değiştirildi. Diğer tüm cihazlardaki oturumlarınız kapatıldı.'
         ],
         [
           `Hi ${name},`,
-          'The password of your Support.io account was just changed. You were signed out on every other device.'
+          'The password of your Supbort.io account was just changed. You were signed out on every other device.'
         ]
       ),
       action: pick(
@@ -767,11 +767,11 @@ export function emailChangeMail({
         locale,
         [
           `Merhaba ${name},`,
-          'Support.io hesabınızın e-posta adresini bu adresle değiştirmek istediniz. Onayladığınızda girişler ve bildirimler bu adrese geçer.'
+          'Supbort.io hesabınızın e-posta adresini bu adresle değiştirmek istediniz. Onayladığınızda girişler ve bildirimler bu adrese geçer.'
         ],
         [
           `Hi ${name},`,
-          'You asked to move your Support.io account to this address. Once you confirm, sign-in and notifications use it.'
+          'You asked to move your Supbort.io account to this address. Once you confirm, sign-in and notifications use it.'
         ]
       ),
       action: pick(locale, 'Adresi onayla', 'Confirm the address'),
@@ -814,14 +814,14 @@ export function emailChangeNoticeMail({
         [
           `Merhaba ${name},`,
           changed
-            ? `Support.io hesabınızın e-posta adresi ${newEmail} olarak değiştirildi.`
-            : `Support.io hesabınızın e-posta adresini ${newEmail} olarak değiştirmek için bir istek yapıldı. Yeni adres onaylanana kadar bu adres geçerlidir.`
+            ? `Supbort.io hesabınızın e-posta adresi ${newEmail} olarak değiştirildi.`
+            : `Supbort.io hesabınızın e-posta adresini ${newEmail} olarak değiştirmek için bir istek yapıldı. Yeni adres onaylanana kadar bu adres geçerlidir.`
         ],
         [
           `Hi ${name},`,
           changed
-            ? `The e-mail address of your Support.io account is now ${newEmail}.`
-            : `Someone asked to move your Support.io account to ${newEmail}. This address stays in use until the new one is confirmed.`
+            ? `The e-mail address of your Supbort.io account is now ${newEmail}.`
+            : `Someone asked to move your Supbort.io account to ${newEmail}. This address stays in use until the new one is confirmed.`
         ]
       ),
       action: pick(

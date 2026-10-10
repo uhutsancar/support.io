@@ -8,6 +8,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -190,7 +191,7 @@ const Upgrade = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('checkout.title')} — Support.io`}</title>
+        <title>{pageTitle(t('checkout.title'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -76,7 +76,7 @@ test('conversations as CSV: Turkish letters, nothing a spreadsheet would run', a
   assert.match(String(res.headers.get('content-type')), /^text\/csv/);
   assert.match(
     String(res.headers.get('content-disposition')),
-    /attachment; filename="support-io-conversations-7days-\d{4}-\d{2}-\d{2}\.csv"/
+    /attachment; filename="supbort-io-conversations-7days-\d{4}-\d{2}-\d{2}\.csv"/
   );
   assert.deepEqual([...res.body.subarray(0, 3)], [0xef, 0xbb, 0xbf], 'byte-order mark');
   const text = res.body.toString('utf8').slice(1);

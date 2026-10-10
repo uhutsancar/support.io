@@ -123,8 +123,8 @@ export const PLATFORMS: Platform[] = [
         en: 'In the ikas dashboard open Sales Channel → Extensions, then Scripts under Installed Apps.'
       },
       {
-        tr: 'Yeni script ekleyin, başlığa “Support.io” yazın ve kodu script içeriği alanına yapıştırın.',
-        en: 'Add a script, name it “Support.io” and paste the code into the script content box.'
+        tr: 'Yeni script ekleyin, başlığa “Supbort.io” yazın ve kodu script içeriği alanına yapıştırın.',
+        en: 'Add a script, name it “Supbort.io” and paste the code into the script content box.'
       },
       {
         tr: 'Kaydedin ve scriptin listede etkin olduğundan emin olun.',
@@ -526,19 +526,19 @@ export const privacyParagraph = (lang: 'tr' | 'en', origin: string) =>
   lang === 'en'
     ? [
         'Live chat',
-        'The chat window on this site is provided by Support.io. When you use it, the messages you write, any files you send and the name, e-mail address or phone number you choose to give are processed to answer your questions, together with the page you are on, your browser and operating system, your IP address and country.',
-        '[Your company name] is the controller of this data; Support.io processes it only on our behalf and instructions. Conversations are kept for [retention period] after the last message.',
+        'The chat window on this site is provided by Supbort.io. When you use it, the messages you write, any files you send and the name, e-mail address or phone number you choose to give are processed to answer your questions, together with the page you are on, your browser and operating system, your IP address and country.',
+        '[Your company name] is the controller of this data; Supbort.io processes it only on our behalf and instructions. Conversations are kept for [retention period] after the last message.',
         '[If you use the AI assistant:] Some questions may be answered by an AI assistant; its answers are marked as such in the chat window and you can ask for a person at any time.',
         "The chat window keeps a few entries in your browser's local storage so the conversation continues when you change page; it sets no advertising or tracking cookies.",
-        `Support.io's privacy policy: ${origin}/en/privacy`
+        `Supbort.io's privacy policy: ${origin}/en/privacy`
       ].join('\n\n')
     : [
         'Canlı destek',
-        'Sitemizdeki sohbet penceresi Support.io tarafından sağlanır. Sohbet penceresini kullandığınızda yazdığınız mesajlar, gönderdiğiniz dosyalar ve kendi isteğinizle verdiğiniz ad, e-posta adresi ya da telefon numarası; bulunduğunuz sayfa, tarayıcınız ve işletim sisteminiz, IP adresiniz ve ülkeniz ile birlikte sorularınızı yanıtlamak amacıyla işlenir.',
-        'Bu verilerin sorumlusu [Şirket adınız]’dır; Support.io bu verileri yalnızca bizim adımıza ve talimatımızla işler. Sohbetler son mesajdan sonra [saklama süresi] boyunca saklanır.',
+        'Sitemizdeki sohbet penceresi Supbort.io tarafından sağlanır. Sohbet penceresini kullandığınızda yazdığınız mesajlar, gönderdiğiniz dosyalar ve kendi isteğinizle verdiğiniz ad, e-posta adresi ya da telefon numarası; bulunduğunuz sayfa, tarayıcınız ve işletim sisteminiz, IP adresiniz ve ülkeniz ile birlikte sorularınızı yanıtlamak amacıyla işlenir.',
+        'Bu verilerin sorumlusu [Şirket adınız]’dır; Supbort.io bu verileri yalnızca bizim adımıza ve talimatımızla işler. Sohbetler son mesajdan sonra [saklama süresi] boyunca saklanır.',
         '[Yapay zekâ asistanını kullanıyorsanız:] Sorularınızın bir kısmı yapay zekâ destekli bir asistan tarafından yanıtlanabilir; bu yanıtlar sohbet penceresinde ayrıca belirtilir ve dilediğiniz an bir temsilciye bağlanabilirsiniz.',
         'Sohbet penceresi, sayfa değiştirdiğinizde konuşmanın sürmesi için tarayıcınızın yerel deposunu kullanır; reklam ya da izleme çerezi kullanmaz.',
-        `Support.io gizlilik politikası: ${origin}/gizlilik`
+        `Supbort.io gizlilik politikası: ${origin}/gizlilik`
       ].join('\n\n');
 
 /** What the chat bubble keeps in the visitor's browser (local storage only). */
@@ -636,9 +636,9 @@ export const WEBHOOK_VERIFY = `import crypto from 'node:crypto';
 import express from 'express';
 
 const app = express();
-const SECRET = process.env.SUPPORTIO_WEBHOOK_SECRET; // whsec_…
+const SECRET = process.env.SUPBORTIO_WEBHOOK_SECRET; // whsec_…
 
-app.post('/supportio', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/supbortio', express.raw({ type: 'application/json' }), (req, res) => {
   const header = req.get('X-SupportIO-Signature') || '';
   const [, t, v1] = /^t=(\\d+),v1=([0-9a-f]{64})$/.exec(header) || [];
   const expected = crypto

@@ -23,6 +23,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -388,7 +389,7 @@ const WidgetCustomization = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('studio.title')} — ${site?.name || ''} — Support.io`}</title>
+        <title>{pageTitle(t('studio.title'), site?.name)}</title>
       </Helmet>
 
       <div className="max-w-[1400px] mx-auto pb-24 xl:pb-0">

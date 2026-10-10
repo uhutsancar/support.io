@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { teamChatAPI } from '../services/api';
@@ -243,7 +244,7 @@ const TeamChatPage = () => {
   return (
     <div className="h-[calc(100vh-3rem)] flex flex-col">
       <Helmet>
-        <title>{`${t('teamChat.title') || ''} — Support.io`}</title>
+        <title>{pageTitle(t('teamChat.title'))}</title>
       </Helmet>
       {}
       <div className="mb-4">

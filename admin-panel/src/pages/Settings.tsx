@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Monitor, ShieldCheck, Download } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,7 +19,7 @@ const Settings = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('settings.title') || ''} — Support.io`}</title>
+        <title>{pageTitle(t('settings.title'))}</title>
         <meta name="description" content={t('settings.profile')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

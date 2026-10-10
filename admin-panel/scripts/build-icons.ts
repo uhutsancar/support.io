@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import { fileURLToPath } from 'url';
+import { BRAND_NAME, BRAND_TLD, BRAND_WORD } from '../src/lib/brand';
 
 /**
  * Marka ikonlarini uretir: favicon.svg + favicon.ico + PNG turevleri.
@@ -210,7 +211,7 @@ const SVG_OG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" w
     <circle cx="25.5" cy="18" r="2.1" fill="#4F46E5"/>
   </g>
   <text x="600" y="470" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        font-size="72" font-weight="650" letter-spacing="-2" fill="#fff">Support<tspan fill="#818CF8">.io</tspan></text>
+        font-size="72" font-weight="650" letter-spacing="-2" fill="#fff">${BRAND_WORD}<tspan fill="#818CF8">${BRAND_TLD}</tspan></text>
   <text x="600" y="528" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
         font-size="26" font-weight="400" fill="#9CA3AF">Canlı destek ve yapay zekâ asistanı</text>
 </svg>
@@ -246,8 +247,8 @@ fs.writeFileSync(
       // The panel installs as an app (plan v10 PRD-09): its own id and scope,
       // opening on the dashboard.
       id: '/dashboard',
-      name: 'Support.io',
-      short_name: 'Support.io',
+      name: BRAND_NAME,
+      short_name: BRAND_NAME,
       description: 'Canlı destek gelen kutusu',
       lang: 'tr',
       dir: 'ltr',

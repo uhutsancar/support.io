@@ -1,3 +1,4 @@
+// HUKUKÇU: Veri sorumlusu olarak marka yerine ticari unvan yazılmalı.
 /**
  * Sektör çözümleri sayfalarının metinleri (Türkçe).
  *
@@ -11,7 +12,7 @@ export default {
   solutions: {
     eyebrow: 'Çözümler',
     painsTitle: 'Tanıdık gelen durumlar',
-    usesTitle: 'Support.io bu işte nasıl çalışır',
+    usesTitle: 'Supbort.io bu işte nasıl çalışır',
     winsTitle: 'Ne değişir',
     othersTitle: 'Diğer sektörler',
     featureLink: 'Özelliği incele',
@@ -303,7 +304,7 @@ export default {
     },
     eyebrow: 'Yapay zekâ asistanı',
     title: 'Müşterinize gece gündüz yanıt veren asistan',
-    desc: 'Support.io’nun yapay zekâ asistanı sitenizdeki sohbet balonunda sık sorulan soruları saniyeler içinde yanıtlar. Sizin SSS içeriğinizden konuşur, bilmediğini uydurmaz ve gerektiğinde konuşmayı ekibinize devreder.',
+    desc: 'Supbort.io’nun yapay zekâ asistanı sitenizdeki sohbet balonunda sık sorulan soruları saniyeler içinde yanıtlar. Sizin SSS içeriğinizden konuşur, bilmediğini uydurmaz ve gerektiğinde konuşmayı ekibinize devreder.',
     ctaPrimary: 'Ücretsiz başlayın',
     ctaSecondary: 'Planları görün',
     heroPoints: ['Kurulum gerektirmez', 'Her planda dâhil', 'İstediğiniz an kapatın'],
@@ -416,16 +417,16 @@ export default {
     updated: 'Son güncelleme: 7 Ekim 2026',
     contact: 'Sorularınız için: {{supportEmail}}',
     privacy: {
-      meta: 'Support.io’nun hangi verileri neden işlediği, ne kadar sakladığı ve haklarınız.',
+      meta: 'Supbort.io’nun hangi verileri neden işlediği, ne kadar sakladığı ve haklarınız.',
       title: 'Gizlilik Politikası',
       intro:
-        'Support.io, işletmelerin sitelerine canlı destek ve yapay zekâ asistanı eklemesini sağlayan bir hizmettir. Bu metin hem Support.io hesabı açan işletmeler hem de bu işletmelerin sitelerinde sohbet balonunu kullanan ziyaretçiler için geçerlidir.',
+        'Supbort.io, işletmelerin sitelerine canlı destek ve yapay zekâ asistanı eklemesini sağlayan bir hizmettir. Bu metin hem Supbort.io hesabı açan işletmeler hem de bu işletmelerin sitelerinde sohbet balonunu kullanan ziyaretçiler için geçerlidir.',
       sections: [
         {
           h: 'Roller',
           p: [
-            'Hesap bilgileriniz için veri sorumlusu Support.io’dur.',
-            'Bir sitenin ziyaretçilerinin sohbet verilerinde veri sorumlusu, sohbet balonunu sitesine ekleyen işletmedir; Support.io bu verileri onun adına ve talimatıyla işler.'
+            'Hesap bilgileriniz için veri sorumlusu Supbort.io’dur.',
+            'Bir sitenin ziyaretçilerinin sohbet verilerinde veri sorumlusu, sohbet balonunu sitesine ekleyen işletmedir; Supbort.io bu verileri onun adına ve talimatıyla işler.'
           ]
         },
         {
@@ -483,14 +484,14 @@ export default {
       ]
     },
     terms: {
-      meta: 'Support.io hizmetinin kullanım şartları.',
+      meta: 'Supbort.io hizmetinin kullanım şartları.',
       title: 'Kullanım Şartları',
-      intro: 'Support.io’yu kullanarak bu şartları kabul etmiş olursunuz. Kısa tutmaya çalıştık.',
+      intro: 'Supbort.io’yu kullanarak bu şartları kabul etmiş olursunuz. Kısa tutmaya çalıştık.',
       sections: [
         {
           h: 'Hizmet',
           p: [
-            'Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.'
+            'Supbort.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için bir yönetim paneli sağlar. Özellikler planınıza göre değişir.'
           ]
         },
         {
@@ -518,7 +519,7 @@ export default {
         {
           h: 'Ziyaretçi verileri',
           p: [
-            'Sitenizin ziyaretçilerinin verilerinde veri sorumlusu sizsiniz. Sitenizin gizlilik metninde canlı destek için Support.io kullandığınızı belirtin.'
+            'Sitenizin ziyaretçilerinin verilerinde veri sorumlusu sizsiniz. Sitenizin gizlilik metninde canlı destek için Supbort.io kullandığınızı belirtin.'
           ]
         },
         {
@@ -563,7 +564,7 @@ export default {
       title: 'Erişilebilirlik Beyanı',
       updated: 'Son güncelleme: 8 Ekim 2026',
       intro:
-        'Support.io’yu görme, işitme, hareket ya da algı farkı olan herkesin rahatça kullanabilmesini istiyoruz. Hedefimiz WCAG 2.2 AA düzeyi. Bu beyan sohbet balonu, yönetim paneli ve bu web sitesi için geçerlidir.',
+        'Supbort.io’yu görme, işitme, hareket ya da algı farkı olan herkesin rahatça kullanabilmesini istiyoruz. Hedefimiz WCAG 2.2 AA düzeyi. Bu beyan sohbet balonu, yönetim paneli ve bu web sitesi için geçerlidir.',
       sections: [
         {
           h: 'Sohbet balonu',
@@ -608,11 +609,11 @@ export default {
       ]
     },
     aiUse: {
-      meta: 'Support.io’nun yapay zekâ asistanının ne yaptığı, hangi veriyle çalıştığı, sınırları ve ziyaretçinin bir insana nasıl ulaştığı.',
+      meta: 'Supbort.io’nun yapay zekâ asistanının ne yaptığı, hangi veriyle çalıştığı, sınırları ve ziyaretçinin bir insana nasıl ulaştığı.',
       title: 'Yapay Zekâ Kullanımı',
       updated: 'Son güncelleme: 8 Ekim 2026',
       intro:
-        'Support.io’da yapay zekâ tek bir iş yapar: site sahibi açtığında, ziyaretçinin sorusunu sitenin sıkça sorulan sorular (SSS) içeriğinden yanıtlar. Bu sayfa asistanın nasıl çalıştığını, neyi yapmadığını ve ziyaretçiye ne gösterdiğini anlatır.',
+        'Supbort.io’da yapay zekâ tek bir iş yapar: site sahibi açtığında, ziyaretçinin sorusunu sitenin sıkça sorulan sorular (SSS) içeriğinden yanıtlar. Bu sayfa asistanın nasıl çalıştığını, neyi yapmadığını ve ziyaretçiye ne gösterdiğini anlatır.',
       sections: [
         {
           h: 'Kim açar',
@@ -659,12 +660,12 @@ export default {
     meta: {
       title: 'API belgeleri',
       description:
-        'Support.io API: konuşmaları, mesajları, ziyaretçileri ve SSS’yi kendi sistemlerinizden okuyun, ziyaretçilere yanıt verin.'
+        'Supbort.io API: konuşmaları, mesajları, ziyaretçileri ve SSS’yi kendi sistemlerinizden okuyun, ziyaretçilere yanıt verin.'
     },
     eyebrow: 'Geliştiriciler',
-    title: 'Support.io API',
+    title: 'Supbort.io API',
     description:
-      'Sipariş sisteminiz, CRM’iniz ya da kendi panonuz Support.io ile konuşsun: konuşmaları okuyun, ziyaretçiye yanıt verin, SSS’nizi kendi kaynağınızdan güncel tutun.',
+      'Sipariş sisteminiz, CRM’iniz ya da kendi panonuz Supbort.io ile konuşsun: konuşmaları okuyun, ziyaretçiye yanıt verin, SSS’nizi kendi kaynağınızdan güncel tutun.',
     authTitle: 'Kimlik doğrulama',
     auth: 'Her istek, Ayarlar → API anahtarları bölümünden oluşturduğunuz anahtarla yapılır. Anahtarı Authorization başlığında Bearer olarak gönderin. Anahtar yalnızca kendi çalışma alanınızın verisini açar; sunucunuzda saklayın, tarayıcıya ya da uygulama koduna koymayın.',
     rulesTitle: 'Kurallar',

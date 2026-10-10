@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -122,7 +123,7 @@ const Assistant = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('assistant.page.title')} — Support.io`}</title>
+        <title>{pageTitle(t('assistant.page.title'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

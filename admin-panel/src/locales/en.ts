@@ -14,7 +14,7 @@ export default {
       customDesc: 'As per your needs',
       btnSales: 'Talk to Sales',
       btnStart: 'Get Started',
-      trustedBy: 'Over 10,000 companies trust Support.io to grow their business',
+      trustedBy: 'Over 10,000 companies trust Supbort.io to grow their business',
       faqTitle: 'Frequently Asked Questions',
       faqDesc: 'Still have questions? Contact our team.',
       faq: {
@@ -28,7 +28,7 @@ export default {
         a4: 'For large teams or special needs, you can review our Enterprise plan. Contact our sales team for details.'
       },
       backHome: 'Back to Home',
-      footerCopyright: '© 2024 Support.io. All rights reserved.',
+      footerCopyright: '© 2024 Supbort.io. All rights reserved.',
       starterFeatures: [
         '5 Operators',
         'Unlimited Live Chat',
@@ -59,23 +59,23 @@ export default {
       heroTitle1: 'Redefining <br/>',
       heroTitle2: 'Customer Communication',
       heroDesc:
-        'At Support.io, we offer a modern and user-friendly platform that helps businesses communicate better with their customers.',
+        'At Supbort.io, we offer a modern and user-friendly platform that helps businesses communicate better with their customers.',
       whoAreWe: 'WHO ARE WE?',
       story1:
-        'Support.io was born from our experience in customer service. We saw many businesses struggling to communicate effectively with their customers. Existing solutions were either too complex or too expensive.',
+        'Supbort.io was born from our experience in customer service. We saw many businesses struggling to communicate effectively with their customers. Existing solutions were either too complex or too expensive.',
       story2:
         'We set out to solve this problem. Our goal was to create an easy-to-use and affordable platform that would enable businesses of all sizes to offer professional customer support.',
       story3:
-        'Today, thousands of businesses communicate better with their customers and increase customer satisfaction using Support.io. And we continue to grow rapidly.',
+        'Today, thousands of businesses communicate better with their customers and increase customer satisfaction using Supbort.io. And we continue to grow rapidly.',
       valuesTitle: 'Our Values',
       valuesDesc: 'Our mission and the core principles that make us who we are.',
       ctaTitle:
         'Ready to Communicate Better <br className="hidden md:block" /> With Your Customers?',
       ctaDesc:
-        'Thousands of businesses increase customer satisfaction with Support.io. We would love to see you among us.',
+        'Thousands of businesses increase customer satisfaction with Supbort.io. We would love to see you among us.',
       ctaBtn: 'Create Free Account',
       backHome: 'Back to Home',
-      footerCopyright: '© 2024 Support.io. All rights reserved.'
+      footerCopyright: '© 2024 Supbort.io. All rights reserved.'
     },
     features: {
       badge: 'NEXT-GEN SUPPORT PLATFORM',
@@ -105,17 +105,17 @@ export default {
       statsUptime: 'Uptime',
       techTitle: 'Our Technology',
       techDesc:
-        'Developed with modern web technologies, Support.io offers high performance and reliability.',
+        'Developed with modern web technologies, Supbort.io offers high performance and reliability.',
       ctaTitle:
         'Ready to Communicate Better <br className="hidden md:block" /> With Your Customers?',
       ctaDesc:
-        'Thousands of businesses are increasing customer satisfaction with Support.io. Join us today.',
+        'Thousands of businesses are increasing customer satisfaction with Supbort.io. Join us today.',
       ctaBtn: 'Create Free Account',
       footerSecurity: 'Security',
       footerTerms: 'Terms of Use',
       footerPrivacy: 'Privacy Policy',
       footerContact: 'Contact',
-      footerCopyright: '© 2024 Support.io Inc. All rights reserved.'
+      footerCopyright: '© 2024 Supbort.io Inc. All rights reserved.'
     },
     home: {
       badge: 'One script, every stack',
@@ -124,7 +124,7 @@ export default {
       heroTitle3: 'To The Next',
       heroTitle4: ' Level',
       heroDesc:
-        'Support.io is a live support platform you add with a single script tag. Real-time chat, team management, automation and analytics in one dashboard.',
+        'Supbort.io is a live support platform you add with a single script tag. Real-time chat, team management, automation and analytics in one dashboard.',
       btnStart: 'Start for free',
       btnDemo: 'Watch Demo',
       trustedBy: 'Trusted by 5,000+ businesses',
@@ -139,7 +139,7 @@ export default {
         'Not a wall of impressive-sounding modules — the tools that carry the daily work.',
       integrateTitle: 'Integrate in<br />Seconds',
       integrateDesc:
-        'Add Support.io to your website with a single line of code. 100% compatible with WordPress, Shopify, or custom software.',
+        'Add Supbort.io to your website with a single line of code. 100% compatible with WordPress, Shopify, or custom software.',
       fastSetup: 'Fast Setup',
       fastSetupDesc: 'The average setup process takes only 2 minutes. Start immediately.',
       zeroLag: 'Zero Performance Loss',
@@ -167,11 +167,11 @@ export default {
       footerAPI: 'API',
       footerLogin: 'Login',
       footerRegister: 'Register',
-      footerCopyright: '© 2024 Support.io. All rights reserved.',
+      footerCopyright: '© 2024 Supbort.io. All rights reserved.',
       footerPrivacy: 'Privacy Policy',
       footerTerms: 'Terms of Use',
       footerCookies: 'Cookie Settings',
-      metaTitle: 'Support.io — Live support in one line of code',
+      metaTitle: 'Supbort.io — Live support in one line of code',
       heroTitle: 'Start talking to your visitors today.',
       btnDocs: 'Documentation',
       heroNote: 'No credit card. Setup takes two minutes.',
@@ -229,7 +229,7 @@ export default {
       allFeatures: 'All features',
       securityTitle: 'You can tell exactly what the code on your site does',
       securityDesc:
-        'The widget contacts no third-party domain and never touches how your page looks. There is one address to allow in your policy: your own Support.io server.',
+        'The widget contacts no third-party domain and never touches how your page looks. There is one address to allow in your policy: your own Supbort.io server.',
       sec: {
         isolation: {
           title: 'Shadow DOM isolation',
@@ -427,7 +427,7 @@ export default {
       title: 'Take Your Customer Service',
       titleHighlight: 'To The Next Level',
       description:
-        'Connect with your visitors instantly with Support.io. Modern, fast, and easy-to-use live support system.',
+        'Connect with your visitors instantly with Supbort.io. Modern, fast, and easy-to-use live support system.',
       cta: 'Get Started Free',
       demo: 'Explore Features'
     },
@@ -461,7 +461,7 @@ export default {
       }
     },
     why: {
-      title: 'Why Support.io?',
+      title: 'Why Supbort.io?',
       description:
         'The most modern live support system you can integrate into your website. The easiest way to communicate with your customers in real-time.',
       benefits: [
@@ -483,7 +483,7 @@ export default {
     },
     cta: {
       title: 'Ready to Communicate Better with Your Customers?',
-      description: 'Thousands of businesses are increasing customer satisfaction with Support.io.',
+      description: 'Thousands of businesses are increasing customer satisfaction with Supbort.io.',
       button: 'Create Free Account'
     },
     footer: {
@@ -491,7 +491,7 @@ export default {
       product: 'Product',
       company: 'Company',
       support: 'Support',
-      copyright: '© 2026 Support.io. All rights reserved.'
+      copyright: '© 2026 Supbort.io. All rights reserved.'
     }
   },
   features: {
@@ -682,9 +682,9 @@ export default {
     },
     success: 'Successfully logged in!',
     error: 'Login failed',
-    metaTitle: 'Login - Support.io Admin Panel',
+    metaTitle: 'Login - Supbort.io Admin Panel',
     metaDescription:
-      'Sign in to your Support.io management panel. Manage customer conversations, view reports, and manage your support team.'
+      'Sign in to your Supbort.io management panel. Manage customer conversations, view reports, and manage your support team.'
   },
   register: {
     title: 'Sign Up',
@@ -710,17 +710,17 @@ export default {
     },
     success: 'Successfully registered!',
     error: 'Registration failed',
-    metaTitle: 'Create Account - Support.io | Get Started Free',
+    metaTitle: 'Create Account - Supbort.io | Get Started Free',
     metaDescription:
-      'Join Support.io and improve your customer support. Start with our free plan, no credit card required.',
+      'Join Supbort.io and improve your customer support. Start with our free plan, no credit card required.',
     metaKeywords:
-      'support.io registration, free account, customer support system registration, live chat start',
-    metaOgTitle: 'Create Account - Support.io | Get Started Free',
+      'supbort.io registration, free account, customer support system registration, live chat start',
+    metaOgTitle: 'Create Account - Supbort.io | Get Started Free',
     metaOgDescription: 'Start with our free plan, no credit card required.'
   },
   dashboard: {
     title: 'Dashboard',
-    subtitle: 'Welcome to your Support.io management panel',
+    subtitle: 'Welcome to your Supbort.io management panel',
     welcome: 'Welcome',
     refresh: 'Refresh',
     refreshing: 'Refreshing...',
@@ -778,7 +778,7 @@ export default {
     sitesDesc: 'Configure websites',
     waiting: 'Waiting',
     none: 'None',
-    welcomeTitle: 'Welcome - Support.io Admin',
+    welcomeTitle: 'Welcome - Supbort.io Admin',
     advancedReportsLocked: 'Advanced Reports Locked',
     advancedReportsDesc:
       'Upgrade your organization to see analytics, average response times, and visitor traffic.',
@@ -1269,15 +1269,15 @@ export default {
   aboutPage: {
     meta: {
       title: 'About',
-      description: 'What Support.io is, the decisions behind it, and what it is built on.'
+      description: 'What Supbort.io is, the decisions behind it, and what it is built on.'
     },
     title: 'Own your support stack',
     description:
-      'Support.io is an attempt to turn live support from a black box into software you can read, host and audit.',
+      'Supbort.io is an attempt to turn live support from a black box into software you can read, host and audit.',
     storyEyebrow: 'Why',
     story: {
       p1: 'Most live support tools sit at one of two extremes: a closed service you can set up in minutes but never look inside, or a flexible stack that takes a week to stand up.',
-      p2: 'Support.io aims for the middle. What your customer adds to their site is a single line of script — but what that script does, where it connects and what it stores is all readable. The widget contacts no third-party domain; even the Socket.IO client comes from your own server.',
+      p2: 'Supbort.io aims for the middle. What your customer adds to their site is a single line of script — but what that script does, where it connects and what it stores is all readable. The widget contacts no third-party domain; even the Socket.IO client comes from your own server.',
       p3: 'The same holds in the dashboard: every number shown is computed from real rows in the database. There are no filler charts, no representative statistics, and no screen that presents a roadmap feature as if it shipped.'
     },
     principlesEyebrow: 'Principles',
@@ -1311,7 +1311,7 @@ export default {
     },
     contactEyebrow: 'Contact',
     contactBody:
-      'If you have a question, a bug report or an enterprise need, write to us. This site runs a Support.io widget too — the button in the bottom right reaches us directly.'
+      'If you have a question, a bug report or an enterprise need, write to us. This site runs a Supbort.io widget too — the button in the bottom right reaches us directly.'
   },
   common: {
     retry: 'Retry',
@@ -1528,13 +1528,13 @@ export default {
     deleteModalTitle: 'Delete Deal'
   },
   onboarding: {
-    title: 'Setup - Support.io',
+    title: 'Setup',
     selectPurposeError: 'Please select a purpose of use.',
     enterUrlError: 'Please enter your website URL.',
     enterNameError: 'Please enter your name.',
     setupSuccess: 'Setup successfully completed!',
     setupError: 'An error occurred.',
-    step1Title: 'How do you plan to use Support.io?',
+    step1Title: 'How do you plan to use Supbort.io?',
     purposes: {
       leads: 'To attract more potential customers',
       sales: 'To get more sales from existing customers',
@@ -1546,7 +1546,7 @@ export default {
     countryLabel: 'Your company country',
     previewName: 'Support Team',
     previewRole: 'Customer Representative',
-    previewAgency: 'Live Support Provider Support.io',
+    previewAgency: 'Live Support Provider Supbort.io',
     previewGreeting: 'Hello, how can I help you? 👋',
     step3Title: 'Smart Triggers',
     step3Desc:
@@ -1572,7 +1572,7 @@ export default {
     complete: 'Complete'
   },
   visitors: {
-    title: 'Visitors - Support.io',
+    title: 'Visitors - Supbort.io',
     headerTitle: 'Visitors',
     headerDesc: 'View the active visitors on your site instantly.',
     fetchError: 'An error occurred while loading sites',
@@ -1890,10 +1890,10 @@ export default {
     meta: {
       title: 'Setup guide',
       description:
-        'Add the Support.io chat bubble to your site: steps for HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
+        'Add the Supbort.io chat bubble to your site: steps for HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
     },
     eyebrow: 'Setup guide',
-    title: 'Add Support.io to your site',
+    title: 'Add Supbort.io to your site',
     description:
       'One snippet, a few minutes. Pick your platform and follow the steps. If you have a developer, copy-ready code for React, Vue, Angular and Next.js is below.',
     onThisPage: 'On this page',
@@ -1979,7 +1979,7 @@ export default {
       items: [
         {
           q: 'What should my privacy notice say?',
-          a: 'State that you use Support.io for live chat. “For your privacy notice” above has a ready-made paragraph in English and Turkish and the list of keys the bubble keeps in the browser. No advertising or tracking cookies.'
+          a: 'State that you use Supbort.io for live chat. “For your privacy notice” above has a ready-made paragraph in English and Turkish and the list of keys the bubble keeps in the browser. No advertising or tracking cookies.'
         },
         {
           q: 'How do I switch on the AI assistant?',

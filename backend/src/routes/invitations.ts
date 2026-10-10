@@ -106,7 +106,7 @@ async function addressTaken(email: string): Promise<boolean> {
 async function sendInvitationMail(req: Request, email: string, token: string): Promise<boolean> {
   const organization = await Organization.findById(orgId(req));
   return mail.sendInvitation(email, {
-    organization: organization?.name || 'Support.io',
+    organization: organization?.name || 'Supbort.io',
     inviter: req.user.name,
     link: `${appBaseUrl()}/invite/accept?token=${encodeURIComponent(token)}`,
     locale: mailLocale(req)

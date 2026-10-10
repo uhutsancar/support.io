@@ -113,7 +113,7 @@ test('the API documentation lists every endpoint, in both languages', async ({ b
   ).length;
 
   await page.goto('/dokumantasyon/api');
-  await expect(page.getByRole('heading', { level: 1, name: 'Support.io API' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Supbort.io API' })).toBeVisible();
   await expect(page.locator('article')).toHaveCount(operations);
   await expect(page.getByRole('heading', { name: 'Konuşmalar' })).toBeVisible();
   await expect(page.getByText('/api/v1/conversations/{id}/messages').first()).toBeVisible();

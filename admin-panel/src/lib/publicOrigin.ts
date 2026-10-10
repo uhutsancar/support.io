@@ -10,7 +10,7 @@
 // This is for display only. Code that actually loads the widget or talks to
 // the API keeps using lib/runtime.ts.
 
-const PLACEHOLDER_ORIGIN = 'https://app.support.io';
+const PLACEHOLDER_ORIGIN = 'https://app.supbort.io';
 
 const LOCAL_HOST =
   /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|[^.]+\.local)$/i;

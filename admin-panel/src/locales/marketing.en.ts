@@ -122,7 +122,7 @@ export default {
       title: 'One line. Live in minutes.',
       desc: 'The moment you paste it, the bubble is on your site. The rest happens in the dashboard: pick the colour, switch on the AI assistant, invite your team. No developer needed.',
       keyPlaceholder: 'YOUR_SITE_KEY',
-      comment: 'Support.io chat bubble',
+      comment: 'Supbort.io chat bubble',
       noDevs: {
         eyebrow: 'No developers',
         title: 'Copy, paste, done.',
@@ -239,14 +239,14 @@ export default {
     }
   },
 
-  // The bubble on this site is Support.io's own, so the scripts are questions
+  // The bubble on this site is Supbort.io's own, so the scripts are questions
   // someone would actually ask us — not a made-up shop's parcel trouble.
   demoChat: {
     status: 'Online · usually replies in a few minutes',
     articleName: 'Help article',
     assistantName: 'AI assistant',
     hero: {
-      brand: 'Support.io',
+      brand: 'Supbort.io',
       lines: [
         { from: 'visitor', text: 'Hi, my site runs on WordPress. Is setup hard?' },
         {
@@ -264,7 +264,7 @@ export default {
       ]
     },
     ai: {
-      brand: 'Support.io',
+      brand: 'Supbort.io',
       lines: [
         { from: 'note', text: 'Sunday · 23:40' },
         { from: 'visitor', text: 'Is there a discount if I pay yearly?' },
@@ -283,7 +283,7 @@ export default {
       ]
     },
     story: {
-      brand: 'Support.io',
+      brand: 'Supbort.io',
       lines: [
         { from: 'visitor', text: 'How do I add an agent to my team?' },
         {
@@ -311,7 +311,7 @@ export default {
 
   landing: {
     home: {
-      metaTitle: 'Support.io — Add live chat to your site',
+      metaTitle: 'Supbort.io — Add live chat to your site',
       metaDesc:
         'Your customers message you from your own site; your team answers from one screen. One line of code. Start on the free plan.',
 
@@ -883,7 +883,7 @@ export default {
       integrations: 'Slack, Telegram and webhook notifications',
       knowledge: 'The assistant also answers from your pages and PDFs',
       api: 'API for conversations, visitors and FAQ',
-      noBranding: 'No “Support.io” mark in the bubble'
+      noBranding: 'No “Supbort.io” mark in the bubble'
     }
   },
 
@@ -892,12 +892,12 @@ export default {
   aboutPage: {
     meta: {
       title: 'About',
-      description: 'Why Support.io exists and how we make decisions.'
+      description: 'Why Supbort.io exists and how we make decisions.'
     },
     eyebrow: 'About',
     title: 'A tool a small team built out of its own frustration',
     description:
-      'Support.io is not the product of a funding round. It is what a team tired of chasing customer messages across three different places built for itself, and then opened up to others.',
+      'Supbort.io is not the product of a funding round. It is what a team tired of chasing customer messages across three different places built for itself, and then opened up to others.',
 
     storyEyebrow: 'The story',
     story: {
@@ -959,7 +959,7 @@ export default {
   login: {
     title: 'Log in',
     subtitle: 'Sign in and get back to your inbox.',
-    metaTitle: 'Log in — Support.io',
+    metaTitle: 'Log in — Supbort.io',
     noAccount: 'No account yet?',
     register: 'Create one free'
   },
@@ -967,7 +967,7 @@ export default {
   register: {
     title: 'Create a free account',
     subtitle: 'An email and a password is all it takes. No card required.',
-    metaTitle: 'Create a free account — Support.io',
+    metaTitle: 'Create a free account — Supbort.io',
     passwordHint: 'At least 10 characters, not a common one',
     noCard: 'By signing up you accept the terms of use.',
     hasAccount: 'Already have an account?',
@@ -977,7 +977,7 @@ export default {
   /* ------------------------------------------------------- product visuals */
 
   viz: {
-    frameGeneric: 'Support.io dashboard',
+    frameGeneric: 'Supbort.io dashboard',
 
     inbox: {
       frame: 'Inbox',
@@ -1177,15 +1177,15 @@ export default {
 
   compare: {
     eyebrow: 'Comparison',
-    title: 'Support.io and {{name}}',
-    metaTitle: 'Support.io vs {{name}}',
+    title: 'Supbort.io and {{name}}',
+    metaTitle: 'Supbort.io vs {{name}}',
     whoEyebrow: 'The short answer',
     whoTitle: 'Which one fits you?',
-    chooseUs: 'Choose Support.io if',
+    chooseUs: 'Choose Supbort.io if',
     chooseThem: '{{name}} may suit you better if',
     tableEyebrow: 'Side by side',
     tableTitle: 'Price and AI',
-    tableDesc: 'The Support.io column comes from the plan table the dashboard enforces.',
+    tableDesc: 'The Supbort.io column comes from the plan table the dashboard enforces.',
     rowLabel: 'Topic',
     rows: {
       model: 'Pricing model',
@@ -1204,9 +1204,9 @@ export default {
     note: 'The {{name}} details were taken from its public pricing page on {{date}}; prices are in US dollars and may have changed since.',
     source: '{{name}} pricing page',
     trademark:
-      'The {{name}} name and brand belong to their owner; Support.io is not affiliated with them.',
+      'The {{name}} name and brand belong to their owner; Supbort.io is not affiliated with them.',
     gapsEyebrow: 'In fairness',
-    gapsTitle: 'What Support.io does not do today',
+    gapsTitle: 'What Supbort.io does not do today',
     gapsDesc: 'Worth knowing before you decide.',
     gaps: [
       'Conversations come from the chat bubble on your website; e-mail, WhatsApp and social media messages do not land in the same inbox.',
@@ -1221,7 +1221,7 @@ export default {
       'tawk-to': {
         name: 'Tawk.to',
         summary:
-          'Both add free live chat to your site. The difference is in AI and in how the price is built: on Tawk.to chat is free while AI and removing the brand line are paid add-ons; on Support.io the assistant is included in every plan and paid plans are a fixed monthly price in Turkish lira.',
+          'Both add free live chat to your site. The difference is in AI and in how the price is built: on Tawk.to chat is free while AI and removing the brand line are paid add-ons; on Supbort.io the assistant is included in every plan and paid plans are a fixed monthly price in Turkish lira.',
         us: [
           'You want the AI assistant included in the plan at no extra cost.',
           'You want to see prices in Turkish lira and pay a fixed monthly amount.',
@@ -1241,7 +1241,7 @@ export default {
       crisp: {
         name: 'Crisp',
         summary:
-          'Crisp and Support.io both charge per plan, not per person. Crisp gathers many channels in one inbox; Support.io focuses on the chat on your website and an assistant that answers from your FAQ, and is sold in Turkish lira.',
+          'Crisp and Supbort.io both charge per plan, not per person. Crisp gathers many channels in one inbox; Supbort.io focuses on the chat on your website and an assistant that answers from your FAQ, and is sold in Turkish lira.',
         us: [
           'You want AI answers as a fixed allowance written in the plan, with no credits to track.',
           'You want to try the AI assistant on the free plan too.',
@@ -1262,7 +1262,7 @@ export default {
       intercom: {
         name: 'Intercom',
         summary:
-          'Intercom is a broad platform for large support teams: it charges per user, and its AI agent is billed separately for every successful outcome. Support.io is for small and mid-sized teams: a fixed price per plan, with AI answers included.',
+          'Intercom is a broad platform for large support teams: it charges per user, and its AI agent is billed separately for every successful outcome. Supbort.io is for small and mid-sized teams: a fixed price per plan, with AI answers included.',
         us: [
           'You do not want the bill to grow with every person you add.',
           'You want to know your AI cost in advance rather than pay per outcome.',
@@ -1282,7 +1282,7 @@ export default {
       tidio: {
         name: 'Tidio',
         summary:
-          'Tidio and Support.io both start with a free plan. On Tidio the price grows with the number of billable conversations and the Lyro AI agent is charged separately; on Support.io AI answers are included in every plan and paid plans are a fixed monthly price in Turkish lira.',
+          'Tidio and Supbort.io both start with a free plan. On Tidio the price grows with the number of billable conversations and the Lyro AI agent is charged separately; on Supbort.io AI answers are included in every plan and paid plans are a fixed monthly price in Turkish lira.',
         us: [
           'You want the AI assistant included in the plan at no extra cost.',
           'You want an AI allowance that renews every month on the free plan.',

@@ -4,6 +4,7 @@
 // Bu deger etiket zincirinde yoktu ve son else'e dusup "Kapali" goruntuluyordu.
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useSearchParams } from 'react-router-dom';
 import VisitorFormDetails from '../components/conversations/VisitorFormDetails';
 import SavedReplyInput from '../components/conversations/SavedReplyInput';
@@ -943,7 +944,7 @@ const Conversations = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('conversations.title') || ''} — Support.io`}</title>
+        <title>{pageTitle(t('conversations.title'))}</title>
         <meta name="description" content={t('conversations.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

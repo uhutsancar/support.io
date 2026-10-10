@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # Hukuk metinleri
 
 > **Durum: TASLAK.** Bu klasördeki metinler hukuki görüş değildir. Kod
@@ -9,12 +11,12 @@
 
 Sitedeki metinler panelin çeviri dosyalarından gelir:
 
-| Sayfa | Adres | Kaynak |
-|---|---|---|
-| Gizlilik Politikası | `/gizlilik`, `/en/privacy` | `admin-panel/src/locales/pages.{tr,en}.ts` → `legal.privacy` |
-| Kullanım Şartları | `/kullanim-sartlari`, `/en/terms` | `legal.terms` (içinde `#guvenlik` güvenlik açığı bildirimi, SEC-10) |
-| Erişilebilirlik Beyanı | `/erisilebilirlik`, `/en/accessibility` | `legal.accessibility` (LEG-07; UX-01/02 testlerine dayanır) |
-| Yapay Zekâ Kullanımı | `/yapay-zeka-kullanimi`, `/en/ai-use` | `legal.aiUse` (LEG-07, AI-03; sağlayıcı adı yok) |
+| Sayfa                  | Adres                                   | Kaynak                                                              |
+| ---------------------- | --------------------------------------- | ------------------------------------------------------------------- |
+| Gizlilik Politikası    | `/gizlilik`, `/en/privacy`              | `admin-panel/src/locales/pages.{tr,en}.ts` → `legal.privacy`        |
+| Kullanım Şartları      | `/kullanim-sartlari`, `/en/terms`       | `legal.terms` (içinde `#guvenlik` güvenlik açığı bildirimi, SEC-10) |
+| Erişilebilirlik Beyanı | `/erisilebilirlik`, `/en/accessibility` | `legal.accessibility` (LEG-07; UX-01/02 testlerine dayanır)         |
+| Yapay Zekâ Kullanımı   | `/yapay-zeka-kullanimi`, `/en/ai-use`   | `legal.aiUse` (LEG-07, AI-03; sağlayıcı adı yok)                    |
 
 İki beyan sözleşme değil, ürünün bugün ne yaptığının tarifidir; her cümlesi
 koddaki ya da testlerdeki bir karşılığa dayanır (asistan:
@@ -24,20 +26,20 @@ okumasında bu iki sayfa da listeye alınmalıdır.
 
 ## Taslaklar (LEG-01, LEG-03)
 
-| Metin | Dosya | Yayın yeri (onaydan sonra) | Not |
-|---|---|---|---|
-| Gizlilik Politikası (güncelleme) | [gizlilik-politikasi.md](gizlilik-politikasi.md) | mevcut sayfa | alt işleyenler adlarıyla, yurt dışı aktarım, başvuru yolu |
-| KVKK Aydınlatma Metni | [kvkk-aydinlatma-metni.md](kvkk-aydinlatma-metni.md) | yeni sayfa `/kvkk-aydinlatma-metni` | m.10 unsurları, m.11 hakları |
-| Çerez Politikası | [cerez-politikasi.md](cerez-politikasi.md) | yeni sayfa `/cerez-politikasi` | yalnız zorunlu çerez ve yerel depo; onay paneli gerekmez |
-| Kullanım Şartları (güncelleme) | [kullanim-sartlari.md](kullanim-sartlari.md) | mevcut sayfa | kabul edilebilir kullanım, askıya alma, plan düşürme, hizmet seviyesi |
-| Veri İşleme Sözleşmesi (DPA) | [veri-isleme-sozlesmesi.md](veri-isleme-sozlesmesi.md) | Kurumsal satışta imzaya; isteğe bağlı sayfa | müşteri = veri sorumlusu, Support.io = veri işleyen |
-| İade ve İptal Politikası | [iade-ve-iptal.md](iade-ve-iptal.md) | yeni sayfa `/iade-ve-iptal` | Paddle alan adı onayı için gerekli (BIL-01) |
-| Alt İşleyenler | [alt-isleyenler.md](alt-isleyenler.md) | yeni sayfa `/alt-isleyenler` | plan Ek B; aktarım ayrıntısı [kvkk-transfer-checklist.md](kvkk-transfer-checklist.md) |
-| Künye / İletişim | [kunye.md](kunye.md) | yeni sayfa `/kunye` | 6563 s. Kanun m.3 hizmet sağlayıcı bilgileri |
-| Veri envanteri | [data-inventory.md](data-inventory.md) | iç belge | tablo tablo kişisel veri, amaç, süre, silme |
-| İlgili kişi başvuru süreci | [basvuru-sureci.md](basvuru-sureci.md) | iç belge | `kvkk@`, 30 gün, panel araçları |
-| Yapay zekâ şeffaflığı | [ai-transparency.md](ai-transparency.md) | iç not; yayındaki karşılığı `/yapay-zeka-kullanimi` | AI-03 |
-| İhlal prosedürü | [breach-procedure.md](breach-procedure.md) | iç belge | OBS |
+| Metin                            | Dosya                                                  | Yayın yeri (onaydan sonra)                          | Not                                                                                   |
+| -------------------------------- | ------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Gizlilik Politikası (güncelleme) | [gizlilik-politikasi.md](gizlilik-politikasi.md)       | mevcut sayfa                                        | alt işleyenler adlarıyla, yurt dışı aktarım, başvuru yolu                             |
+| KVKK Aydınlatma Metni            | [kvkk-aydinlatma-metni.md](kvkk-aydinlatma-metni.md)   | yeni sayfa `/kvkk-aydinlatma-metni`                 | m.10 unsurları, m.11 hakları                                                          |
+| Çerez Politikası                 | [cerez-politikasi.md](cerez-politikasi.md)             | yeni sayfa `/cerez-politikasi`                      | yalnız zorunlu çerez ve yerel depo; onay paneli gerekmez                              |
+| Kullanım Şartları (güncelleme)   | [kullanim-sartlari.md](kullanim-sartlari.md)           | mevcut sayfa                                        | kabul edilebilir kullanım, askıya alma, plan düşürme, hizmet seviyesi                 |
+| Veri İşleme Sözleşmesi (DPA)     | [veri-isleme-sozlesmesi.md](veri-isleme-sozlesmesi.md) | Kurumsal satışta imzaya; isteğe bağlı sayfa         | müşteri = veri sorumlusu, Supbort.io = veri işleyen                                   |
+| İade ve İptal Politikası         | [iade-ve-iptal.md](iade-ve-iptal.md)                   | yeni sayfa `/iade-ve-iptal`                         | Paddle alan adı onayı için gerekli (BIL-01)                                           |
+| Alt İşleyenler                   | [alt-isleyenler.md](alt-isleyenler.md)                 | yeni sayfa `/alt-isleyenler`                        | plan Ek B; aktarım ayrıntısı [kvkk-transfer-checklist.md](kvkk-transfer-checklist.md) |
+| Künye / İletişim                 | [kunye.md](kunye.md)                                   | yeni sayfa `/kunye`                                 | 6563 s. Kanun m.3 hizmet sağlayıcı bilgileri                                          |
+| Veri envanteri                   | [data-inventory.md](data-inventory.md)                 | iç belge                                            | tablo tablo kişisel veri, amaç, süre, silme                                           |
+| İlgili kişi başvuru süreci       | [basvuru-sureci.md](basvuru-sureci.md)                 | iç belge                                            | `kvkk@`, 30 gün, panel araçları                                                       |
+| Yapay zekâ şeffaflığı            | [ai-transparency.md](ai-transparency.md)               | iç not; yayındaki karşılığı `/yapay-zeka-kullanimi` | AI-03                                                                                 |
+| İhlal prosedürü                  | [breach-procedure.md](breach-procedure.md)             | iç belge                                            | OBS                                                                                   |
 
 ## Karşılaştırma sayfaları (MKT-04)
 
@@ -64,8 +66,8 @@ kontrol edilir ve `compare.checked` tarihi güncellenir.
    müşterilere DPA'daki süre kadar önce bildirilir.
 
 | Metin | Onaylayan | Tarih |
-|---|---|---|
-| | | |
+| ----- | --------- | ----- |
+|       |           |       |
 
 ## Sağlayıcı adları
 

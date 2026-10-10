@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -127,7 +128,7 @@ const Departments = () => {
   return (
     <div className="p-6">
       <Helmet>
-        <title>{`${t('departments.title') || ''} — Support.io`}</title>
+        <title>{pageTitle(t('departments.title'))}</title>
       </Helmet>
       <div className="mb-6">
         <div className="flex items-center justify-between">

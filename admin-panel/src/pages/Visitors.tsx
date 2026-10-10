@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { sitesAPI, visitorsAPI } from '../services/api';
 import { useSocket } from '../contexts/SocketContext';
@@ -116,7 +117,7 @@ const Visitors = () => {
   return (
     <>
       <Helmet>
-        <title>{t('sidebar.visitors', 'Ziyaretçiler')} - Support.io</title>
+        <title>{pageTitle(t('sidebar.visitors', 'Ziyaretçiler'))}</title>
       </Helmet>
       <div className="max-w-7xl mx-auto flex flex-col h-full bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-h-[calc(100vh-8rem)]">
         {}

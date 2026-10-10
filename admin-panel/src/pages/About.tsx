@@ -10,6 +10,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { Mail, BookOpen, Heart, Eye, Wallet, Accessibility, MessageCircle } from 'lucide-react';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
@@ -39,7 +40,7 @@ const About = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t('aboutPage.meta.title') + ' — Support.io'}</title>
+        <title>{pageTitle(t('aboutPage.meta.title'))}</title>
         <meta name="description" content={t('aboutPage.meta.description')} />
       </Helmet>
 

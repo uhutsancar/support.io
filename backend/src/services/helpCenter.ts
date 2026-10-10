@@ -8,6 +8,7 @@
 
 import { query } from '../db/pool';
 import { limitsFor } from './entitlements';
+import { BRAND_NAME } from '../domain/brand';
 
 export interface HelpCenterSettings {
   enabled: boolean;
@@ -155,7 +156,7 @@ const WORDS = {
     all: 'Tüm konular',
     contact: 'Sorunuzun cevabı burada yoksa sitemizden bize yazın:',
     general: 'Genel',
-    powered: 'Support.io ile'
+    powered: `${BRAND_NAME} ile`
   },
   en: {
     help: 'Help Center',
@@ -167,7 +168,7 @@ const WORDS = {
     all: 'All articles',
     contact: 'If your question is not answered here, write to us on our site:',
     general: 'General',
-    powered: 'Powered by Support.io'
+    powered: `Powered by ${BRAND_NAME}`
   }
 };
 

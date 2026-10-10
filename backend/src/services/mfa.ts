@@ -15,9 +15,10 @@ import { withTransaction } from '../db/pool';
 import type { AuthenticatedUser } from '../types/auth';
 import type { UserType } from '../types/auth';
 import type { PoolClient } from 'pg';
+import { BRAND_NAME } from '../domain/brand';
 
 export const RECOVERY_CODE_COUNT = 10;
-const ISSUER = 'Support.io';
+const ISSUER = BRAND_NAME;
 
 /** `abcde-fghij`: 50 random bits, no ambiguous characters. */
 function newRecoveryCode(): string {

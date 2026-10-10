@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { Check, Minus, MessageCircle, Store, Rocket, Building2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -186,7 +187,7 @@ const Pricing = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t('pricingPage.meta.title') + ' — Support.io'}</title>
+        <title>{pageTitle(t('pricingPage.meta.title'))}</title>
         <meta name="description" content={t('pricingPage.meta.description')} />
       </Helmet>
 

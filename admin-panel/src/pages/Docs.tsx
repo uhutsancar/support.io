@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import Shell, { PageHero, useMarketingRoutes } from '../components/marketing/Shell';
 import { CodeBlock, H2, Lead, Mono } from '../components/docs/DocsBlocks';
@@ -91,7 +92,7 @@ const Docs = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{`${t('docsPage.meta.title')} — Support.io`}</title>
+        <title>{pageTitle(t('docsPage.meta.title'))}</title>
         <meta name="description" content={t('docsPage.meta.description')} />
       </Helmet>
 

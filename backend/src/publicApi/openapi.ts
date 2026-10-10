@@ -3,6 +3,8 @@
 // documentation page (/dokumantasyon/api). It describes routes/publicApi.ts;
 // tests/publicApi.e2e.test.ts checks that every path here answers.
 
+import { BRAND_NAME } from '../domain/brand';
+
 const id = { type: 'string', pattern: '^[0-9a-f]{24}$', examples: ['6727a19ee4b0f3a9d1c2b2f0'] };
 const time = { type: ['string', 'null'], format: 'date-time' };
 
@@ -48,7 +50,7 @@ export function openApiDocument(base: string) {
   return {
     openapi: '3.1.0',
     info: {
-      title: 'Support.io API',
+      title: `${BRAND_NAME} API`,
       version: '1.0.0',
       description:
         'Read your conversations, messages, visitors and FAQ, reply to visitors and keep your FAQ in step with your own systems. Every call needs a workspace key from Settings → API keys, sent as `Authorization: Bearer sk_live_…`. GET needs the read scope, everything else write. The API is part of the Enterprise plan.'

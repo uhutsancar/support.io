@@ -347,7 +347,7 @@ export default {
     siteHint: 'Plan sınırının üzerinde: sohbet balonu gizli, ayarlar salt okunur.',
     blocked: 'Kapatıldı',
     blockedHint:
-      'Kullanım şartlarına aykırı kullanım nedeniyle Support.io tarafından kapatıldı. Ayrıntı için destek ekibimize yazın.'
+      'Kullanım şartlarına aykırı kullanım nedeniyle Supbort.io tarafından kapatıldı. Ayrıntı için destek ekibimize yazın.'
   },
   errors: {
     seatSuspended:
@@ -357,7 +357,7 @@ export default {
     overPlanLimit: 'Planınızın izin verdiğinden fazlasını seçtiniz.',
     emailInUse: 'Bu e-posta adresi zaten kullanılıyor.',
     uploadFailed: 'Dosya yüklenemedi, tekrar deneyin.',
-    siteBlocked: 'Bu site Support.io tarafından kapatıldı; açılması için destek ekibimize yazın.'
+    siteBlocked: 'Bu site Supbort.io tarafından kapatıldı; açılması için destek ekibimize yazın.'
   },
   retention: {
     title: 'Konuşma saklama süresi',
@@ -585,7 +585,7 @@ export default {
   referral: {
     title: 'Tavsiye programı',
     description:
-      'Support.io’yu bir işletmeye tavsiye edin: bağlantınızla kaydolan işletme ilk ödemesini yaptığında bir sonraki ayınız bizden.',
+      'Supbort.io’yu bir işletmeye tavsiye edin: bağlantınızla kaydolan işletme ilk ödemesini yaptığında bir sonraki ayınız bizden.',
     linkLabel: 'Tavsiye bağlantınız',
     copy: 'Bağlantıyı kopyala',
     copied: 'Bağlantı kopyalandı',

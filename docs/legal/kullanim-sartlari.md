@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # Kullanım Şartları — güncelleme taslağı
 
 > **TASLAK — hukukçu onayı olmadan yayına alınmaz** (plan v10 LEG-01 madde 4,
@@ -17,7 +19,7 @@
 
 **Son güncelleme:** [SAHİP: yayın tarihi]
 
-Bu şartlar, [SAHİP: ticari unvan] ("Support.io", "biz") ile Support.io
+Bu şartlar, [SAHİP: ticari unvan] ("Supbort.io", "biz") ile Supbort.io
 hizmetini kullanan işletme ("siz") arasındadır. Hesap açarak ya da hizmeti
 kullanarak bu şartları kabul etmiş olursunuz. Bir şirket adına kabul
 ediyorsanız buna yetkili olduğunuzu beyan edersiniz.
@@ -32,7 +34,7 @@ ediyorsanız buna yetkili olduğunuzu beyan edersiniz.
 
 ### Hizmet
 
-Support.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için
+Supbort.io, sitenize sohbet balonu, yapay zekâ asistanı ve ekibiniz için
 bir yönetim paneli sağlar. Özellikler ve sınırlar planınıza göre değişir;
 güncel tablo fiyatlandırma sayfasındadır ve sunucuda uygulanır.
 
@@ -103,7 +105,7 @@ gördüğünüzü ekleyin. Bildirimleri en geç 2 iş günü içinde inceleriz.
 
 Sitenizin ziyaretçilerinin verilerinde veri sorumlusu sizsiniz; biz bu
 verileri sizin adınıza işleriz ([Veri İşleme Sözleşmesi](/veri-isleme-sozlesmesi)).
-Sitenizin gizlilik metninde canlı destek için Support.io kullandığınızı
+Sitenizin gizlilik metninde canlı destek için Supbort.io kullandığınızı
 belirtmeniz gerekir; hazır metin belgelerimizde yer alır.
 
 ### Yapay zekâ asistanı
@@ -166,8 +168,8 @@ heyetlerine ve tüketici mahkemelerine başvuru hakları saklıdır.
 
 **Last updated:** [OWNER: publication date]
 
-These terms are between [OWNER: legal name] ("Support.io", "we") and the
-business using the Support.io service ("you"). By opening an account or
+These terms are between [OWNER: legal name] ("Supbort.io", "we") and the
+business using the Supbort.io service ("you"). By opening an account or
 using the service you accept them; if you accept for a company, you confirm
 you may do so.
 
@@ -225,7 +227,7 @@ deleted on the schedule in the Privacy Policy.
 
 You are the controller of your visitors' data; we process it on your behalf
 ([Data Processing Agreement](/en/dpa)). Your site's privacy notice must say
-you use Support.io for live chat; ready-made text is in our docs.
+you use Supbort.io for live chat; ready-made text is in our docs.
 
 ### The AI assistant
 

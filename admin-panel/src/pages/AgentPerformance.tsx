@@ -1,6 +1,7 @@
 // 2026-08-19 -> 19 Ağu
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import {
   Clock,
@@ -137,7 +138,7 @@ const AgentPerformance = () => {
   return (
     <>
       <Helmet>
-        <title>{t('sidebar.myPerformance')} - Support.io</title>
+        <title>{pageTitle(t('sidebar.myPerformance'))}</title>
       </Helmet>
 
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">

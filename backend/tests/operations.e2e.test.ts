@@ -55,7 +55,7 @@ const COMPLETE = {
   APP_BASE_URL: 'https://app.example.com',
   MAIL_PROVIDER: 'smtp',
   SMTP_HOST: 'smtp.example.com',
-  MAIL_FROM: 'Support.io <no-reply@example.com>',
+  MAIL_FROM: 'Supbort.io <no-reply@example.com>',
   BILLING_ENABLED: 'false',
   UPLOAD_STORAGE: undefined,
   S3_BUCKET: 'bucket',

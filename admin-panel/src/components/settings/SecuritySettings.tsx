@@ -380,10 +380,10 @@ const RecoveryCodes = ({ codes, onDone }: { codes: string[]; onDone: () => void 
     }
   };
   const download = () => {
-    const url = URL.createObjectURL(new Blob([`Support.io\n\n${text}\n`], { type: 'text/plain' }));
+    const url = URL.createObjectURL(new Blob([`Supbort.io\n\n${text}\n`], { type: 'text/plain' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'support-io-recovery-codes.txt';
+    a.download = 'supbort-io-recovery-codes.txt';
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -247,7 +247,7 @@ export async function weeklyReport(now = new Date()): Promise<boolean> {
     .replace(/</g, '&lt;')}</pre>`;
   const sent = await sendMail({
     to,
-    subject: `Support.io haftalık rapor — ${now.toISOString().slice(0, 10)}`,
+    subject: `Supbort.io haftalık rapor — ${now.toISOString().slice(0, 10)}`,
     text,
     html
   });

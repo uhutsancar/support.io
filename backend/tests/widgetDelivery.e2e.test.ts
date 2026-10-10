@@ -43,7 +43,7 @@ test('the names that change get a short cache; the hashed name a year', async ()
 
 test('the script is minified and inside its 35 KB gzip budget', async () => {
   const body = Buffer.from(await (await fetch(`${BASE}/widget.js`)).arrayBuffer());
-  assert.ok(body.toString('utf8').startsWith('/*! Support.io widget */'));
+  assert.ok(body.toString('utf8').startsWith('/*! Supbort.io widget */'));
   const gzipped = zlib.gzipSync(body, { level: 9 }).length;
   assert.ok(gzipped <= 35 * 1024, `${gzipped} bytes gzip`);
   assert.ok(body.length < 100 * 1024, `${body.length} bytes raw, minified`);

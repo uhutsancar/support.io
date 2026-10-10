@@ -1,8 +1,8 @@
 {
-  "name": "Support.io chat",
+  "name": "Supbort.io chat",
   "site_key": {
     "label": "Site key",
-    "info": "In your Support.io dashboard, open Sites: the site key is in your site's installation code, after data-site-key."
+    "info": "In your Supbort.io dashboard, open Sites: the site key is in your site's installation code, after data-site-key."
   },
   "identify": {
     "label": "Introduce signed-in customers",

@@ -10,6 +10,7 @@
 
 import type React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpRight, Check, Code2, Palette, ShieldCheck, Pin } from 'lucide-react';
@@ -113,7 +114,7 @@ const Features = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t('featuresPage.meta.title') + ' — Support.io'}</title>
+        <title>{pageTitle(t('featuresPage.meta.title'))}</title>
         <meta name="description" content={t('featuresPage.meta.description')} />
       </Helmet>
 

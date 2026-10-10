@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # İade ve İptal Politikası — taslak
 
 > **TASLAK — hukukçu onayı olmadan yayına alınmaz** (plan v10 LEG-01 madde 6).
@@ -18,7 +20,7 @@
 
 **Son güncelleme:** [SAHİP: yayın tarihi]
 
-Support.io'nun ücretli planlarının ödemesini satıcı olarak **Paddle**
+Supbort.io'nun ücretli planlarının ödemesini satıcı olarak **Paddle**
 (Paddle.com Market Ltd.) alır; fatura ve iadeler Paddle üzerinden yapılır.
 
 ### Ücretsiz deneme
@@ -29,8 +31,8 @@ geçer.
 
 ### İptal
 
-- Aboneliğinizi istediğiniz zaman panelde *Faturalandırma → Aboneliği
-  yönet* bölümünden iptal edebilirsiniz.
+- Aboneliğinizi istediğiniz zaman panelde _Faturalandırma → Aboneliği
+  yönet_ bölümünden iptal edebilirsiniz.
 - İptal, ödenmiş dönemin sonunda geçerli olur; o güne kadar planınızın tüm
   özelliklerini kullanmaya devam edersiniz. Sonra hesap Ücretsiz plana
   geçer; verileriniz silinmez.
@@ -64,7 +66,7 @@ alınır (Kullanım Şartları).
 
 **Last updated:** [OWNER: publication date]
 
-Payments for Support.io's paid plans are taken by **Paddle** (Paddle.com
+Payments for Supbort.io's paid plans are taken by **Paddle** (Paddle.com
 Market Ltd.) as merchant of record; invoices and refunds go through Paddle.
 
 ### Free trial
@@ -74,7 +76,7 @@ charged when the trial ends; the account moves to the Free plan.
 
 ### Cancelling
 
-Cancel at any time under *Billing → Manage subscription*. It takes effect
+Cancel at any time under _Billing → Manage subscription_. It takes effect
 at the end of the paid period; until then every feature of your plan stays
 on. The account then moves to Free; your data is kept.
 

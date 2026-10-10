@@ -56,7 +56,7 @@ export interface PlanLimits {
   agents: number;
   /** New conversations per calendar month (UTC). */
   monthlyConversations: number;
-  /** Whether the widget must show "Powered by Support.io". */
+  /** Whether the widget must show "Powered by Supbort.io". */
   branding: boolean;
   /** Saved replies the organization may keep (PRD-03). */
   savedReplies: number;

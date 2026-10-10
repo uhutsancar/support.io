@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -63,7 +64,7 @@ const AcceptInvitation = () => {
     ? t('acceptInvite.invalid')
     : preview
       ? t('acceptInvite.subtitle', {
-          organization: preview.organization || 'Support.io',
+          organization: preview.organization || 'Supbort.io',
           role: t(`team.filters.${preview.role}`)
         })
       : t('common.loading');
@@ -71,7 +72,7 @@ const AcceptInvitation = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('acceptInvite.title')} — Support.io`}</title>
+        <title>{pageTitle(t('acceptInvite.title'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <AuthLayout

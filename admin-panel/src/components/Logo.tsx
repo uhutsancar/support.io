@@ -1,5 +1,5 @@
 /**
- * Support.io marka kimliği.
+ * Supbort.io marka kimliği.
  *
  * Mark: marka renginde yuvarlatılmış kare, içinde beyaz bir konuşma balonu
  * ve balonun içinde "yazıyor" üç noktası. Önceki işaret üst üste binmiş iki
@@ -10,6 +10,8 @@
  * Neden bileşen, neden .webp değil: SVG bileşeni `currentColor` üzerinden
  * temayla birlikte döner ve her boyutta keskin kalır.
  */
+
+import { BRAND_NAME, BRAND_TLD, BRAND_WORD } from '../lib/brand';
 
 const BRAND = '#4F46E5';
 
@@ -52,13 +54,14 @@ export const LogoMark = ({
  */
 const Logo = ({ size = 30, className = '', showWordmark = true, color = BRAND }) => (
   <span className={`inline-flex items-center gap-2.5 ${className}`}>
-    <LogoMark size={size} color={color} title="Support.io" />
+    <LogoMark size={size} color={color} title={BRAND_NAME} />
     {showWordmark && (
       <span
         className="font-semibold tracking-[-0.02em] text-gray-900 dark:text-white leading-none"
         style={{ fontSize: Math.round(size * 0.62) }}
       >
-        Support<span className="text-indigo-600 dark:text-indigo-400">.io</span>
+        {BRAND_WORD}
+        <span className="text-indigo-600 dark:text-indigo-400">{BRAND_TLD}</span>
       </span>
     )}
   </span>

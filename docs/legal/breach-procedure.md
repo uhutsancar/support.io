@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # Kişisel veri ihlali prosedürü (taslak)
 
 > Bu belge hukuki görüş değildir; hukukçunun onayından önce yürürlüğe girmez
@@ -15,13 +17,13 @@ hesap, sızan gizli anahtar (`JWT_SECRET`, depolama anahtarları, veritabanı
 
 ## Roller
 
-- **Support.io kendi hesaplarının verisi için** (işletme hesapları, ekip
+- **Supbort.io kendi hesaplarının verisi için** (işletme hesapları, ekip
   üyeleri, faturalama) **veri sorumlusudur**: Kurul'a ve ilgili kişilere
-  bildirim yükümlülüğü Support.io'dadır.
+  bildirim yükümlülüğü Supbort.io'dadır.
 - **Müşterilerin sitelerindeki ziyaretçi verisi için** (sohbetler, ekler,
   ziyaretçi kayıtları) **veri işleyendir**: ihlali gecikmeksizin ilgili
   müşteriye (veri sorumlusuna) bildirir; Kurul'a ve ziyaretçilere bildirim
-  müşterinin yükümlülüğüdür, Support.io ona gereken bilgiyi verir. Süre ve
+  müşterinin yükümlülüğüdür, Supbort.io ona gereken bilgiyi verir. Süre ve
   içerik DPA'da yazılı olmalıdır (LEG-01 madde 5).
 
 ## Süre
@@ -43,8 +45,8 @@ Hukukçu güncel Kurul kararlarını ve formu teyit etmelidir.
 | 0–1 saat  | Sızıntıyı durdur: anahtarı döndür (runbook §8), hesabı kilitle, siteyi kapat (`site:disable`), bağlantıyı kaldır. Kanıtları koru: logları ve ilgili satırları kopyala (`scripts/ship-logs.sh`, denetim kaydı), sunucuyu silme. | Nöbetçi         |
 | 1–24 saat | Kapsamı belirle: hangi veri kategorileri, kaç kişi, hangi kurumlar, hangi tarihler. Kaynaklar: denetim kaydı (`audit_logs`), istek logları (istek kimliğiyle), depolama erişim kayıtları, Cloudflare logları.                  | Nöbetçi + sahip |
 | 24 saat   | Etkilenen **müşterilere** (veri işleyen olarak) yazılı bildirim: ne oldu, hangi veriler, kaç ziyaretçi, alınan önlemler, irtibat.                                                                                              | Sahip           |
-| ≤ 72 saat | Support.io'nun veri sorumlusu olduğu veriler etkilendiyse **Kurul'a bildirim** (form); hukukçu inceler.                                                                                                                        | Sahip + hukukçu |
-| Sonra     | İlgili kişilere bildirim (Support.io'nun sorumlu olduğu veriler için); müşterilere ziyaretçilerine bildirim için destek.                                                                                                       | Sahip           |
+| ≤ 72 saat | Supbort.io'nun veri sorumlusu olduğu veriler etkilendiyse **Kurul'a bildirim** (form); hukukçu inceler.                                                                                                                        | Sahip + hukukçu |
+| Sonra     | İlgili kişilere bildirim (Supbort.io'nun sorumlu olduğu veriler için); müşterilere ziyaretçilerine bildirim için destek.                                                                                                       | Sahip           |
 | 2 hafta   | Olay sonrası rapor (`docs/incidents/`) ve önlemler. İhlal kayıt defterine işle.                                                                                                                                                | Sahip           |
 
 ## Bildirimde bulunması gerekenler

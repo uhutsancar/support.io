@@ -1,14 +1,15 @@
 /**
  * Karşılaştırma sayfası (`/karsilastirma/:slug`, `/en/compare/:slug`; plan v10
- * MKT-04): Support.io ve bir rakip, fiyat modeli ve yapay zekâ yan yana.
+ * MKT-04): Supbort.io ve bir rakip, fiyat modeli ve yapay zekâ yan yana.
  *
  * Dürüstlük kuralı: rakip sütunu yalnızca o firmanın herkese açık fiyat
- * sayfasında yazanı söyler, kaynağı ve kontrol tarihiyle; Support.io sütunu
+ * sayfasında yazanı söyler, kaynağı ve kontrol tarihiyle; Supbort.io sütunu
  * sunucunun uyguladığı plan tablosundan (GET /api/plans) gelir. Rakibin daha
- * uygun olduğu durumlar ve Support.io'da olmayanlar da sayfada yazar.
+ * uygun olduğu durumlar ve Supbort.io'da olmayanlar da sayfada yazar.
  */
 
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, ExternalLink, Minus } from 'lucide-react';
@@ -38,7 +39,7 @@ const Compare = () => {
     );
   const lowerFirst = (text: string) => text.charAt(0).toLocaleLowerCase(locale) + text.slice(1);
 
-  // Support.io'nun sütunu: sunucunun plan tablosundan, elle yazılmış sayı yok.
+  // Supbort.io'nun sütunu: sunucunun plan tablosundan, elle yazılmış sayı yok.
   const free = plans?.find((p) => p.type === 'FREE');
   const pro = plans?.find((p) => p.type === 'PRO');
   const ours: Record<(typeof ROWS)[number], string> = {
@@ -83,7 +84,7 @@ const Compare = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t('compare.metaTitle', { name }) + ' — Support.io'}</title>
+        <title>{pageTitle(t('compare.metaTitle', { name }))}</title>
         <meta name="description" content={t(key('summary'))} />
         {!COMPARISONS_PUBLISHED && <meta name="robots" content="noindex, nofollow" />}
       </Helmet>
@@ -165,7 +166,7 @@ const Compare = () => {
                     scope="col"
                     className="w-[39%] px-6 py-4 text-[14px] font-semibold text-indigo-700 dark:text-indigo-300"
                   >
-                    Support.io
+                    Supbort.io
                   </th>
                   <th
                     scope="col"
@@ -205,7 +206,7 @@ const Compare = () => {
                   </dt>
                   <dd className="mt-3 text-[14px] leading-relaxed text-gray-800 dark:text-gray-200">
                     <span className="block text-[11.5px] font-semibold uppercase tracking-[0.08em] text-indigo-700 dark:text-indigo-300">
-                      Support.io
+                      Supbort.io
                     </span>
                     {ourCell(row)}
                   </dd>

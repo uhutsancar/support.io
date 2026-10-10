@@ -28,7 +28,7 @@ async function main() {
     minify: true,
     target: 'es2017',
     legalComments: 'none',
-    banner: { js: '/*! Support.io widget */' },
+    banner: { js: '/*! Supbort.io widget */' },
     logLevel: 'warning'
   });
   const hash = crypto

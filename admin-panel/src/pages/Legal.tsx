@@ -10,6 +10,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import Shell from '../components/marketing/Shell';
 import { Section, asList } from '../components/marketing/kit';
@@ -28,7 +29,7 @@ const Legal = ({ kind }: { kind: Kind }) => {
   return (
     <Shell>
       <Helmet>
-        <title>{t(`legal.${kind}.title`) + ' — Support.io'}</title>
+        <title>{pageTitle(t(`legal.${kind}.title`))}</title>
         <meta name="description" content={t(`legal.${kind}.meta`)} />
       </Helmet>
       <section className="pt-36 pb-10 sm:pt-44 px-5 sm:px-8 bg-gradient-to-b from-[#f1f2ff] to-white dark:from-[#10122a] dark:to-surface-dark">

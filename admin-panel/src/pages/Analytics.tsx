@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
@@ -174,7 +175,7 @@ const Analytics = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('analytics.title') || ''} — Support.io`}</title>
+        <title>{pageTitle(t('analytics.title'))}</title>
         <meta name="description" content={t('analytics.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

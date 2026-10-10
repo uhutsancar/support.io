@@ -14,7 +14,7 @@ export default {
       customDesc: 'İhtiyacınıza göre',
       btnSales: 'Satış Ekibiyle Görüş',
       btnStart: 'Hemen Başla',
-      trustedBy: "10.000'den fazla şirket işini büyütmek için Support.io'ya güveniyor",
+      trustedBy: "10.000'den fazla şirket işini büyütmek için Supbort.io'ya güveniyor",
       faqTitle: 'Sıkça Sorulan Sorular',
       faqDesc: 'Hala sorularınız mı var? Ekibimizle iletişime geçin.',
       faq: {
@@ -28,7 +28,7 @@ export default {
         a4: 'Büyük ekipler veya özel ihtiyaçlar için Enterprise planımızı inceleyebilirsiniz. Detaylar için satış ekibimizle iletişime geçin.'
       },
       backHome: 'Ana Sayfaya Dön',
-      footerCopyright: '© 2024 Support.io. Tüm hakları saklıdır.',
+      footerCopyright: '© 2024 Supbort.io. Tüm hakları saklıdır.',
       starterFeatures: [
         '5 Operatör',
         'Sınırsız Canlı Sohbet',
@@ -59,23 +59,23 @@ export default {
       heroTitle1: 'Müşteri İletişimini <br />',
       heroTitle2: 'Yeniden Tanımlıyoruz',
       heroDesc:
-        'Support.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan modern ve kullanıcı dostu bir platform sunuyoruz.',
+        'Supbort.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan modern ve kullanıcı dostu bir platform sunuyoruz.',
       whoAreWe: 'BİZ KİMİZ?',
       story1:
-        'Support.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler ya çok karmaşık ya da çok pahalıydı.',
+        'Supbort.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler ya çok karmaşık ya da çok pahalıydı.',
       story2:
         'Bu sorunu çözmek için yola çıktık. Amacımız, her büyüklükteki işletmenin profesyonel müşteri desteği sunabilmesini sağlayacak, kullanımı kolay ve uygun fiyatlı bir platform oluşturmaktı.',
       story3:
-        'Bugün binlerce işletme Support.io ile müşterileriyle daha iyi iletişim kuruyor ve müşteri memnuniyetini artırıyor. Ve biz hızla büyümeye devam ediyoruz.',
+        'Bugün binlerce işletme Supbort.io ile müşterileriyle daha iyi iletişim kuruyor ve müşteri memnuniyetini artırıyor. Ve biz hızla büyümeye devam ediyoruz.',
       valuesTitle: 'Değerlerimiz',
       valuesDesc: 'Misyonumuzu ve bizi biz yapan temel prensiplerimiz.',
       ctaTitle:
         'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
       ctaDesc:
-        'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. Sizi de aramıza görmek isteriz.',
+        'Binlerce işletme Supbort.io ile müşteri memnuniyetini artırıyor. Sizi de aramıza görmek isteriz.',
       ctaBtn: 'Ücretsiz Hesap Oluştur',
       backHome: 'Ana Sayfaya Dön',
-      footerCopyright: '© 2024 Support.io. Tüm hakları saklıdır.'
+      footerCopyright: '© 2024 Supbort.io. Tüm hakları saklıdır.'
     },
     features: {
       badge: 'YENİ NESİL DESTEK PLATFORMU',
@@ -106,17 +106,17 @@ export default {
       statsUptime: 'Uptime',
       techTitle: 'Teknolojimiz',
       techDesc:
-        'Modern web teknolojileri ile geliştirilen Support.io, yüksek performans ve güvenilirlik sunar.',
+        'Modern web teknolojileri ile geliştirilen Supbort.io, yüksek performans ve güvenilirlik sunar.',
       ctaTitle:
         'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
       ctaDesc:
-        'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor. Siz de aramıza katılın.',
+        'Binlerce işletme Supbort.io ile müşteri memnuniyetini artırıyor. Siz de aramıza katılın.',
       ctaBtn: 'Ücretsiz Hesap Oluştur',
       footerSecurity: 'Güvenlik',
       footerTerms: 'Kullanım Şartları',
       footerPrivacy: 'Gizlilik Politikası',
       footerContact: 'İletişim',
-      footerCopyright: '© 2024 Support.io A.Ş. Tüm hakları saklıdır.'
+      footerCopyright: '© 2024 Supbort.io A.Ş. Tüm hakları saklıdır.'
     },
     home: {
       badge: 'Tek script, her stack',
@@ -125,7 +125,7 @@ export default {
       heroTitle3: 'Bir Üst Seviyeye',
       heroTitle4: ' Taşıyın',
       heroDesc:
-        'Support.io, sitenize tek bir script etiketiyle eklenen canlı destek platformudur. Gerçek zamanlı sohbet, ekip yönetimi, otomasyon ve analitik tek panelde.',
+        'Supbort.io, sitenize tek bir script etiketiyle eklenen canlı destek platformudur. Gerçek zamanlı sohbet, ekip yönetimi, otomasyon ve analitik tek panelde.',
       btnStart: 'Ücretsiz başlayın',
       btnDemo: 'Demoyu İzle',
       trustedBy: '5,000+ işletme tarafından güveniliyor',
@@ -139,7 +139,7 @@ export default {
       featuresDesc: 'Gösterişli ama boş modüller değil; günlük işi yürüten araçlar.',
       integrateTitle: 'Saniyeler İçinde<br />Entegre Edin',
       integrateDesc:
-        "Tek bir satır kod ile Support.io'yu web sitenize ekleyin. WordPress, Shopify veya özel yazılımlar ile %100 uyumludur.",
+        "Tek bir satır kod ile Supbort.io'yu web sitenize ekleyin. WordPress, Shopify veya özel yazılımlar ile %100 uyumludur.",
       fastSetup: 'Hızlı Kurulum',
       fastSetupDesc: 'Ortalama kurulum şeması sadece 2 dakikadır. Hemen başlayın.',
       zeroLag: 'Sıfır Performans Kaybı',
@@ -166,11 +166,11 @@ export default {
       footerAPI: 'API',
       footerLogin: 'Giriş Yap',
       footerRegister: 'Kayıt Ol',
-      footerCopyright: '© 2024 Support.io. Tüm hakları saklıdır.',
+      footerCopyright: '© 2024 Supbort.io. Tüm hakları saklıdır.',
       footerPrivacy: 'Gizlilik Politikası',
       footerTerms: 'Kullanım Koşulları',
       footerCookies: 'Çerez Ayarları',
-      metaTitle: 'Support.io — Canlı destek, tek satır kodla',
+      metaTitle: 'Supbort.io — Canlı destek, tek satır kodla',
       heroTitle: 'Ziyaretçilerinizle konuşmaya bugün başlayın.',
       btnDocs: 'Dokümantasyon',
       heroNote: 'Kredi kartı gerekmez. Kurulum iki dakika sürer.',
@@ -228,7 +228,7 @@ export default {
       allFeatures: 'Tüm özellikler',
       securityTitle: 'Sitenize koyduğunuz kodun ne yaptığı belli',
       securityDesc:
-        'Widget üçüncü parti hiçbir alan adına bağlanmaz ve sayfanızın görünümüne dokunmaz. Politikanıza eklemeniz gereken tek bir adres vardır: kendi Support.io sunucunuz.',
+        'Widget üçüncü parti hiçbir alan adına bağlanmaz ve sayfanızın görünümüne dokunmaz. Politikanıza eklemeniz gereken tek bir adres vardır: kendi Supbort.io sunucunuz.',
       sec: {
         isolation: {
           title: 'Shadow DOM yalıtımı',
@@ -426,7 +426,7 @@ export default {
       title: 'Müşteri Hizmetlerinizi',
       titleHighlight: 'Bir Üst Seviyeye Taşıyın',
       description:
-        'Support.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.',
+        'Supbort.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.',
       cta: 'Ücretsiz Başlayın',
       demo: 'Özellikleri Keşfedin'
     },
@@ -460,7 +460,7 @@ export default {
       }
     },
     why: {
-      title: 'Neden Support.io?',
+      title: 'Neden Supbort.io?',
       description:
         'Web sitenize entegre edebileceğiniz en modern canlı destek sistemi. Müşterilerinizle gerçek zamanlı iletişim kurmanın en kolay yolu.',
       benefits: [
@@ -482,7 +482,7 @@ export default {
     },
     cta: {
       title: 'Müşterilerinizle Daha İyi İletişim Kurmaya Hazır mısınız?',
-      description: 'Binlerce işletme Support.io ile müşteri memnuniyetini artırıyor.',
+      description: 'Binlerce işletme Supbort.io ile müşteri memnuniyetini artırıyor.',
       button: 'Ücretsiz Hesap Oluştur'
     },
     footer: {
@@ -490,7 +490,7 @@ export default {
       product: 'Ürün',
       company: 'Şirket',
       support: 'Destek',
-      copyright: '© 2026 Support.io. Tüm hakları saklıdır.'
+      copyright: '© 2026 Supbort.io. Tüm hakları saklıdır.'
     }
   },
   features: {
@@ -682,9 +682,9 @@ export default {
     },
     success: 'Başarıyla giriş yaptınız!',
     error: 'Giriş başarısız',
-    metaTitle: 'Giriş Yap - Support.io Admin Paneli',
+    metaTitle: 'Giriş Yap - Supbort.io Admin Paneli',
     metaDescription:
-      'Support.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, raporları görüntüleyin ve destek ekibinizi yönetin.'
+      'Supbort.io yönetim panelinize giriş yapın. Müşteri konuşmalarını yönetin, raporları görüntüleyin ve destek ekibinizi yönetin.'
   },
   register: {
     title: 'Kayıt Ol',
@@ -710,17 +710,17 @@ export default {
     },
     success: 'Başarıyla kayıt oldunuz!',
     error: 'Kayıt başarısız',
-    metaTitle: 'Hesap Oluştur - Support.io | Ücretsiz Başlayın',
+    metaTitle: 'Hesap Oluştur - Supbort.io | Ücretsiz Başlayın',
     metaDescription:
-      "Support.io'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.",
+      "Supbort.io'ya üye olun ve müşteri desteğinizi geliştirin. Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.",
     metaKeywords:
-      'support.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla',
-    metaOgTitle: 'Hesap Oluştur - Support.io | Ücretsiz Başlayın',
+      'supbort.io kayıt, ücretsiz hesap, müşteri destek sistemi kayıt, canlı sohbet başla',
+    metaOgTitle: 'Hesap Oluştur - Supbort.io | Ücretsiz Başlayın',
     metaOgDescription: 'Ücretsiz plan ile hemen başlayın, kredi kartı gerekmez.'
   },
   dashboard: {
     title: 'Gösterge Paneli',
-    subtitle: 'Support.io yönetim panelinize hoş geldiniz',
+    subtitle: 'Supbort.io yönetim panelinize hoş geldiniz',
     welcome: 'Hoş Geldiniz',
     refresh: 'Yenile',
     refreshing: 'Güncelleniyor...',
@@ -779,7 +779,7 @@ export default {
     sitesDesc: 'Web sitelerini yapılandır',
     waiting: 'Bekliyor',
     none: 'Yok',
-    welcomeTitle: 'Hoş geldiniz - Support.io Admin',
+    welcomeTitle: 'Hoş geldiniz - Supbort.io Admin',
     advancedReportsLocked: 'Gelişmiş Raporlar Kilitli',
     advancedReportsDesc:
       'Puanlama, ortalama yanıt süreleri ve ziyaretçi trafiğini görebilmek için organizasyonunuzu yükseltin.',
@@ -1273,15 +1273,15 @@ export default {
   aboutPage: {
     meta: {
       title: 'Hakkımızda',
-      description: 'Support.io nedir, hangi kararlarla kuruldu ve neyin üzerine inşa edildi.'
+      description: 'Supbort.io nedir, hangi kararlarla kuruldu ve neyin üzerine inşa edildi.'
     },
     title: 'Kendi destek altyapınıza sahip olun',
     description:
-      'Support.io, canlı desteği bir kara kutu olmaktan çıkarıp okunabilir, barındırılabilir ve denetlenebilir bir yazılıma dönüştürme denemesidir.',
+      'Supbort.io, canlı desteği bir kara kutu olmaktan çıkarıp okunabilir, barındırılabilir ve denetlenebilir bir yazılıma dönüştürme denemesidir.',
     storyEyebrow: 'Neden',
     story: {
       p1: 'Canlı destek araçlarının çoğu iki uçtan birinde duruyor: ya kurulumu dakikalar süren ama içine bakamadığınız kapalı bir servis, ya da esnek ama ayağa kaldırması bir haftalık iş olan bir yığın.',
-      p2: 'Support.io ikisinin arasını hedefliyor. Müşterinizin sitesine eklediği şey tek satırlık bir script; ama o script’in ne yaptığı, hangi adrese bağlandığı ve hangi veriyi sakladığı okunabilir durumda. Widget üçüncü parti hiçbir alan adına çıkmaz — Socket.IO istemcisi bile kendi sunucunuzdan gelir.',
+      p2: 'Supbort.io ikisinin arasını hedefliyor. Müşterinizin sitesine eklediği şey tek satırlık bir script; ama o script’in ne yaptığı, hangi adrese bağlandığı ve hangi veriyi sakladığı okunabilir durumda. Widget üçüncü parti hiçbir alan adına çıkmaz — Socket.IO istemcisi bile kendi sunucunuzdan gelir.',
       p3: 'Panel tarafında da aynı yaklaşım geçerli: gösterilen her rakam veritabanındaki gerçek satırlardan hesaplanır. Doldurulmuş grafik, temsili istatistik ya da yol haritasındaki bir özelliği bugün varmış gibi gösteren bir ekran yok.'
     },
     principlesEyebrow: 'İlkeler',
@@ -1315,7 +1315,7 @@ export default {
     },
     contactEyebrow: 'İletişim',
     contactBody:
-      'Bir sorunuz, hata bildiriminiz veya kurumsal bir ihtiyacınız varsa yazın. Bu sitede de bir Support.io widget’ı çalışıyor; sağ alttaki butondan doğrudan ulaşabilirsiniz.'
+      'Bir sorunuz, hata bildiriminiz veya kurumsal bir ihtiyacınız varsa yazın. Bu sitede de bir Supbort.io widget’ı çalışıyor; sağ alttaki butondan doğrudan ulaşabilirsiniz.'
   },
   common: {
     retry: 'Tekrar dene',
@@ -1533,13 +1533,13 @@ export default {
     deleteModalTitle: 'Teklifi Sil'
   },
   onboarding: {
-    title: 'Kurulum - Support.io',
+    title: 'Kurulum',
     selectPurposeError: 'Lütfen bir kullanım amacı seçin.',
     enterUrlError: 'Lütfen sitenizin URL adresini girin.',
     enterNameError: 'Lütfen adınızı girin.',
     setupSuccess: 'Kurulum başarıyla tamamlandı!',
     setupError: 'Bir hata oluştu.',
-    step1Title: "Support.io'yu nasıl kullanmayı planlıyorsunuz?",
+    step1Title: "Supbort.io'yu nasıl kullanmayı planlıyorsunuz?",
     purposes: {
       leads: 'Daha fazla potansiyel müşteri çekmek için',
       sales: 'Mevcut müşterilerden daha fazla satış elde etmek için',
@@ -1551,7 +1551,7 @@ export default {
     countryLabel: 'Firmanızın ülkesi',
     previewName: 'Destek Ekibi',
     previewRole: 'Müşteri Temsilcisi',
-    previewAgency: 'Canlı Destek Sağlayıcısı Support.io',
+    previewAgency: 'Canlı Destek Sağlayıcısı Supbort.io',
     previewGreeting: 'Merhaba, size nasıl yardımcı olabilirim? 👋',
     step3Title: 'Akıllı Tetikleyiciler',
     step3Desc:
@@ -1577,7 +1577,7 @@ export default {
     complete: 'Tamamla'
   },
   visitors: {
-    title: 'Ziyaretçiler - Support.io',
+    title: 'Ziyaretçiler - Supbort.io',
     headerTitle: 'Ziyaretçiler',
     headerDesc: 'Sitenizdeki aktif ziyaretçileri anlık görüntüleyin.',
     fetchError: 'Siteler yüklenirken hata oluştu',
@@ -1896,10 +1896,10 @@ export default {
     meta: {
       title: 'Kurulum rehberi',
       description:
-        'Support.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
+        'Supbort.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
     },
     eyebrow: 'Kurulum rehberi',
-    title: 'Support.io’yu sitenize ekleyin',
+    title: 'Supbort.io’yu sitenize ekleyin',
     description:
       'Tek bir kod, birkaç dakika. Platformunuzu seçin ve adımları izleyin. Yazılımcınız varsa React, Vue, Angular ve Next.js için kopyalanabilir kod aşağıda.',
     onThisPage: 'Bu sayfada',
@@ -1985,7 +1985,7 @@ export default {
       items: [
         {
           q: 'Sitemin gizlilik metnine ne yazmalıyım?',
-          a: 'Canlı destek için Support.io kullandığınızı belirtin. Yukarıdaki “Gizlilik metniniz için” bölümünde Türkçe ve İngilizce hazır bir paragraf ve balonun tarayıcıda tuttuğu anahtarların listesi var. Balon reklam ya da izleme çerezi kullanmaz.'
+          a: 'Canlı destek için Supbort.io kullandığınızı belirtin. Yukarıdaki “Gizlilik metniniz için” bölümünde Türkçe ve İngilizce hazır bir paragraf ve balonun tarayıcıda tuttuğu anahtarların listesi var. Balon reklam ya da izleme çerezi kullanmaz.'
         },
         {
           q: 'Yapay zekâ asistanını nasıl açarım?',

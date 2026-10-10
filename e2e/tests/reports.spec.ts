@@ -44,7 +44,7 @@ test('the analytics page: heatmap, late answers, a CSV and an Excel file', async
       page.getByRole('button', { name: 'CSV' }).click()
     ]);
     expect(download.suggestedFilename()).toMatch(
-      /^support-io-conversations-7days-\d{4}-\d{2}-\d{2}\.csv$/
+      /^supbort-io-conversations-7days-\d{4}-\d{2}-\d{2}\.csv$/
     );
     const text = fs.readFileSync((await download.path())!, 'utf8');
     expect(text.charCodeAt(0)).toBe(0xfeff);
@@ -57,7 +57,7 @@ test('the analytics page: heatmap, late answers, a CSV and an Excel file', async
       page.waitForEvent('download'),
       page.getByRole('button', { name: 'Excel' }).click()
     ]);
-    expect(download.suggestedFilename()).toMatch(/^support-io-agents-7days-.*\.xlsx$/);
+    expect(download.suggestedFilename()).toMatch(/^supbort-io-agents-7days-.*\.xlsx$/);
     const bytes = fs.readFileSync((await download.path())!);
     expect(bytes.subarray(0, 2).toString()).toBe('PK');
   });

@@ -13,15 +13,15 @@ ___INFO___
   "id": "cvt_temp_public_id",
   "version": 1,
   "securityGroups": [],
-  "displayName": "Support.io Live Chat",
+  "displayName": "Supbort.io Live Chat",
   "categories": [
     "CHAT"
   ],
   "brand": {
     "id": "brand_dummy",
-    "displayName": "Support.io"
+    "displayName": "Supbort.io"
   },
-  "description": "Adds the Support.io live chat bubble to your site. Enter the site key from your Support.io dashboard and fire the tag on All Pages.",
+  "description": "Adds the Supbort.io live chat bubble to your site. Enter the site key from your Supbort.io dashboard and fire the tag on All Pages.",
   "containerContexts": [
     "WEB"
   ]
@@ -36,7 +36,7 @@ ___TEMPLATE_PARAMETERS___
     "name": "siteKey",
     "displayName": "Site key",
     "simpleValueType": true,
-    "help": "In your Support.io dashboard, open Sites: the site key is in your site's installation code, after data-site-key.",
+    "help": "In your Supbort.io dashboard, open Sites: the site key is in your site's installation code, after data-site-key.",
     "valueValidators": [
       {
         "type": "NON_EMPTY"
@@ -201,5 +201,5 @@ scenarios:
 
 ___NOTES___
 
-Support.io Live Chat. Built from integrations/gtm/template.tpl; the release
+Supbort.io Live Chat. Built from integrations/gtm/template.tpl; the release
 script replaces __APP_DOMAIN__ with the production domain.

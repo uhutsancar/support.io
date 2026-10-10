@@ -1,5 +1,5 @@
 // The WordPress plugin against a real WordPress (plan v10 PRD-13). The
-// administrator pastes the installation code under Settings → Support.io; a
+// administrator pastes the installation code under Settings → Supbort.io; a
 // wrong code is refused; the bubble then appears on the site, and a signed-in
 // WordPress user reaches the team as a verified customer.
 //
@@ -51,12 +51,12 @@ test('the plugin puts the chat on a WordPress site and introduces its users', as
 
   await test.step('a wrong code is refused, the right one is kept', async () => {
     await wp.goto(`${WP_URL}/wp-admin/options-general.php?page=support-io-live-chat`);
-    await expect(wp.getByRole('heading', { level: 1, name: 'Support.io Live Chat' })).toBeVisible();
+    await expect(wp.getByRole('heading', { level: 1, name: 'Supbort.io Live Chat' })).toBeVisible();
     await wp
       .getByLabel('Installation code')
       .fill('<script src="https://evil.example/x.js"></script>');
     await wp.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(wp.getByText('That is not a Support.io installation code.')).toBeVisible();
+    await expect(wp.getByText('That is not a Supbort.io installation code.')).toBeVisible();
 
     await wp.getByLabel('Installation code').fill(installCode);
     await wp.getByRole('checkbox', { name: /Tell your team who they are talking to/ }).check();

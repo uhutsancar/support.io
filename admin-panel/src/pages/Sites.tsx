@@ -1,6 +1,7 @@
 /** Which site the delete dialog is currently asking about. */
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { sitesAPI, clearCache } from '../services/api';
@@ -137,7 +138,7 @@ const Sites = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('sites.title') || ''} — Support.io`}</title>
+        <title>{pageTitle(t('sites.title'))}</title>
         <meta name="description" content={t('sites.subtitle')} />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>

@@ -183,7 +183,7 @@ export const USE_CASES = ['ecommerce', 'saas', 'agency', 'service'];
 /**
  * Karşılaştırma sayfaları (`/karsilastirma/:id`, `/en/compare/:id`; plan v10
  * MKT-04). Rakip bilgileri `compare.items.<id>` altında, kaynağı ve kontrol
- * tarihiyle; Support.io sütunu sunucunun plan tablosundan gelir.
+ * tarihiyle; Supbort.io sütunu sunucunun plan tablosundan gelir.
  *
  * Yayın, rakip markalarının kullanımı için hukukçu kontrolünden sonradır
  * [SAHİP]. O zamana kadar sayfalar adresinden açılır ama menüde ve site

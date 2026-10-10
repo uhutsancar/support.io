@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # Veri İşleme Sözleşmesi (DPA) — taslak
 
 > **TASLAK — hukukçu onayı olmadan kullanılmaz** (plan v10 LEG-01 madde 5).
@@ -14,27 +16,27 @@
 
 **Taraflar**
 
-- **Veri sorumlusu:** Support.io hizmetini kullanan işletme ("Müşteri").
-- **Veri işleyen:** [SAHİP: ticari unvan, adres, MERSİS] ("Support.io").
+- **Veri sorumlusu:** Supbort.io hizmetini kullanan işletme ("Müşteri").
+- **Veri işleyen:** [SAHİP: ticari unvan, adres, MERSİS] ("Supbort.io").
 
 Bu sözleşme, taraflar arasındaki Kullanım Şartları'nın ekidir ve
-Müşteri'nin ziyaretçilerine ait kişisel verilerin Support.io tarafından
+Müşteri'nin ziyaretçilerine ait kişisel verilerin Supbort.io tarafından
 işlenmesine uygulanır.
 
 ### 1. Konu, süre, nitelik ve amaç
 
-Support.io, Müşteri'nin sitesindeki sohbet balonu, yapay zekâ asistanı ve
+Supbort.io, Müşteri'nin sitesindeki sohbet balonu, yapay zekâ asistanı ve
 yönetim paneli aracılığıyla ziyaretçi verilerini yalnızca hizmeti sunmak
 için işler. Sözleşme, Müşteri'nin hesabı açık kaldığı sürece geçerlidir.
 İşlenen veri kategorileri, ilgili kişiler ve saklama süreleri Ek 1'dedir.
 
 ### 2. Talimatlar
 
-Support.io kişisel verileri yalnızca Müşteri'nin belgelenmiş talimatlarıyla
+Supbort.io kişisel verileri yalnızca Müşteri'nin belgelenmiş talimatlarıyla
 işler. Kullanım Şartları, bu sözleşme ve Müşteri'nin panelde yaptığı
 ayarlar (saklama süresi, yapay zekâ asistanını açma/kapama, ziyaretçi
 verisi silme, engelleme) Müşteri'nin talimatlarıdır. Bir talimatın mevzuata
-aykırı olduğunu düşünürse Support.io Müşteri'yi bilgilendirir.
+aykırı olduğunu düşünürse Supbort.io Müşteri'yi bilgilendirir.
 
 ### 3. Gizlilik
 
@@ -43,38 +45,38 @@ yükümlülüğü altındadır ve erişim işin gerektirdiği kadardır.
 
 ### 4. Güvenlik
 
-Support.io, Ek 2'deki teknik ve idari tedbirleri uygular ve güncel tutar.
+Supbort.io, Ek 2'deki teknik ve idari tedbirleri uygular ve güncel tutar.
 
 ### 5. Alt işleyenler
 
 - Müşteri, [Alt İşleyenler](/alt-isleyenler) sayfasındaki sağlayıcıların
   kullanılmasına genel izin verir.
-- Yeni bir alt işleyen eklemeden en az **30 gün** önce Support.io Müşteri'yi
+- Yeni bir alt işleyen eklemeden en az **30 gün** önce Supbort.io Müşteri'yi
   e-postayla bilgilendirir. Müşteri haklı bir gerekçeyle itiraz ederse ve
   taraflar çözüm bulamazsa Müşteri aboneliği cezasız feshedebilir ve
   ödenmiş kullanılmamış dönemin ücretini geri alır.
-- Support.io alt işleyenlere bu sözleşmedekilerle eşdeğer yükümlülükler
+- Supbort.io alt işleyenlere bu sözleşmedekilerle eşdeğer yükümlülükler
   yükler ve onların fiillerinden Müşteri'ye karşı sorumludur.
 
 ### 6. Yurt dışına aktarım
 
 Alt işleyenlerin bir kısmı veriyi Türkiye dışında işler. Bu aktarımlar
 KVKK m.9 uyarınca Kurul'un ilan ettiği standart sözleşmelerle (ve AB
-verisinde AB Standart Sözleşme Maddeleri ile) yapılır; Support.io gerekli
+verisinde AB Standart Sözleşme Maddeleri ile) yapılır; Supbort.io gerekli
 bildirimleri yapar. Yapay zekâ asistanı yalnızca Müşteri açarsa çalışır;
 Müşteri bu aktarımı asistanı açarak talimatlandırmış olur ve kendi
 ziyaretçilerini aydınlatmakla yükümlüdür.
 
 ### 7. İlgili kişi talepleri
 
-Support.io, ziyaretçilerin KVKK m.11 / GDPR haklarına ilişkin taleplerinde
+Supbort.io, ziyaretçilerin KVKK m.11 / GDPR haklarına ilişkin taleplerinde
 Müşteri'ye yardımcı olur: panelde ziyaretçi verisini dışa aktarma ve tek
 adımda silme araçları sunar; doğrudan kendisine gelen talebi gecikmeden
 Müşteri'ye iletir.
 
 ### 8. Veri ihlali
 
-Support.io, Müşteri'nin verisini etkileyen bir ihlali öğrendiğinde
+Supbort.io, Müşteri'nin verisini etkileyen bir ihlali öğrendiğinde
 gecikmeksizin ve en geç **48 saat** içinde Müşteri'ye bildirir; bildirim,
 ihlalin niteliğini, etkilenen veri kategorilerini ve yaklaşık kayıt
 sayısını, olası sonuçları ve alınan tedbirleri içerir. Müşteri'nin Kurul'a
@@ -82,7 +84,7 @@ sayısını, olası sonuçları ve alınan tedbirleri içerir. Müşteri'nin Kur
 
 ### 9. Denetim
 
-Support.io, bu sözleşmeye uyumu gösteren bilgileri Müşteri'nin makul
+Supbort.io, bu sözleşmeye uyumu gösteren bilgileri Müşteri'nin makul
 talebi üzerine sağlar. Kurumsal plan müşterileri, en fazla yılda bir kez ve
 30 gün önceden yazılı bildirimle, gizlilik taahhüdü altında, makul mesai
 saatlerinde ve hizmeti aksatmayacak biçimde denetim yapabilir ya da bağımsız
@@ -90,7 +92,7 @@ bir denetçiye yaptırabilir; masrafı Müşteri'ye aittir.
 
 ### 10. Sözleşmenin sonu
 
-Hesap silindiğinde Support.io, Müşteri'nin verilerini Gizlilik
+Hesap silindiğinde Supbort.io, Müşteri'nin verilerini Gizlilik
 Politikası'ndaki sürelerle siler (canlı veritabanından hemen, şifreli
 yedeklerden en geç [SAHİP: 3 ay] içinde). Müşteri silmeden önce verilerini
 panelden indirebilir. Kanunen saklanması gereken kayıtlar saklanır.
@@ -101,13 +103,13 @@ Kullanım Şartları'ndaki hukuk ve yetki hükmü uygulanır.
 
 ### Ek 1 — İşlemenin ayrıntıları
 
-| | |
-|---|---|
-| İlgili kişiler | Müşteri'nin sitesinin ziyaretçileri; Müşteri'nin CRM'e girdiği kişiler |
-| Veri kategorileri | Sohbet mesajları ve dosyalar; ziyaretçinin verdiği ad, e-posta, telefon; sayfa, tarayıcı, işletim sistemi, IP adresi, ülke; memnuniyet puanı; CRM kişi bilgileri |
-| Özel nitelikli veri | Hizmet buna yönelik değildir; Müşteri gerekli güvenceler olmadan toplamaz |
-| İşleme faaliyetleri | Toplama, saklama, iletme, gösterme, yedekleme, silme; Müşteri açarsa yapay zekâ ile yanıt üretme |
-| Saklama | Müşteri'nin seçtiği sohbet saklama süresi (Ücretsiz 90 gün; ücretli 30 gün–5 yıl); IP ve cihaz bilgisi 90 gün; sayfa hareketi kayıtları 30 gün |
+|                     |                                                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| İlgili kişiler      | Müşteri'nin sitesinin ziyaretçileri; Müşteri'nin CRM'e girdiği kişiler                                                                                           |
+| Veri kategorileri   | Sohbet mesajları ve dosyalar; ziyaretçinin verdiği ad, e-posta, telefon; sayfa, tarayıcı, işletim sistemi, IP adresi, ülke; memnuniyet puanı; CRM kişi bilgileri |
+| Özel nitelikli veri | Hizmet buna yönelik değildir; Müşteri gerekli güvenceler olmadan toplamaz                                                                                        |
+| İşleme faaliyetleri | Toplama, saklama, iletme, gösterme, yedekleme, silme; Müşteri açarsa yapay zekâ ile yanıt üretme                                                                 |
+| Saklama             | Müşteri'nin seçtiği sohbet saklama süresi (Ücretsiz 90 gün; ücretli 30 gün–5 yıl); IP ve cihaz bilgisi 90 gün; sayfa hareketi kayıtları 30 gün                   |
 
 ### Ek 2 — Teknik ve idari tedbirler
 
@@ -137,16 +139,16 @@ Kullanım Şartları'ndaki hukuk ve yetki hükmü uygulanır.
 ## English
 
 **Data Processing Agreement — draft.** Parties: the business using
-Support.io ("Customer", controller) and [OWNER: legal name] ("Support.io",
+Supbort.io ("Customer", controller) and [OWNER: legal name] ("Supbort.io",
 processor). It forms part of the Terms and applies to the personal data of
-the Customer's visitors that Support.io processes.
+the Customer's visitors that Supbort.io processes.
 
 1. **Subject, duration, nature, purpose.** Processing only to provide the
    chat bubble, AI assistant and admin panel, for as long as the account
    exists. Details in Annex 1.
 2. **Instructions.** Only on the Customer's documented instructions: the
    Terms, this agreement and the Customer's settings in the panel
-   (retention, assistant on/off, visitor erasure, blocking). Support.io
+   (retention, assistant on/off, visitor erasure, blocking). Supbort.io
    tells the Customer if it considers an instruction unlawful.
 3. **Confidentiality.** People with access are bound by confidentiality;
    access is need-to-know.
@@ -155,7 +157,7 @@ the Customer's visitors that Support.io processes.
    [Sub-processors](/en/sub-processors). At least **30 days'** e-mail notice
    before adding one; on a reasoned objection that cannot be resolved, the
    Customer may terminate without penalty and is refunded the unused paid
-   period. Equivalent obligations flow down; Support.io remains liable.
+   period. Equivalent obligations flow down; Supbort.io remains liable.
 6. **International transfers.** Under the Board's standard contracts (KVKK
    art. 9) and, for EU data, the EU SCCs. The AI assistant runs only if the
    Customer turns it on; doing so is the Customer's instruction for that

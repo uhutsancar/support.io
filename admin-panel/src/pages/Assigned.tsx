@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { conversationsAPI } from '../services/api';
@@ -52,7 +53,7 @@ const Assigned = () => {
   return (
     <div className="w-full">
       <Helmet>
-        <title>{`${t('assigned.title') || 'Atanan Talepler'} - Support.io`}</title>
+        <title>{pageTitle(t('assigned.title') || 'Atanan Talepler')}</title>
       </Helmet>
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">

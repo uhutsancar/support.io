@@ -14,6 +14,7 @@ import path from 'path';
 import { PLAN_TYPES } from '../domain';
 import { displayPrice } from './paddlePrices';
 import { analyticsTag } from './siteAnalytics';
+import { BRAND_NAME } from '../domain/brand';
 
 interface Meta {
   title: string;
@@ -61,7 +62,7 @@ function structuredData(base: string, page: PublicPage, lang: 'tr' | 'en', meta:
     {
       '@type': 'Organization',
       '@id': `${base}/#organization`,
-      name: 'Support.io',
+      name: BRAND_NAME,
       url: `${base}/`,
       logo: `${base}/icon-512.png`
     }
@@ -69,7 +70,7 @@ function structuredData(base: string, page: PublicPage, lang: 'tr' | 'en', meta:
   if (page.kind === 'home' || page.kind === 'pricing') {
     graph.push({
       '@type': 'SoftwareApplication',
-      name: 'Support.io',
+      name: BRAND_NAME,
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
       description: meta.description,
@@ -107,7 +108,7 @@ export function seoHead(
     `<link rel="alternate" hreflang="en" href="${attr(base + page.en)}" />`,
     `<link rel="alternate" hreflang="x-default" href="${attr(base + page.tr)}" />`,
     '<meta property="og:type" content="website" />',
-    '<meta property="og:site_name" content="Support.io" />',
+    `<meta property="og:site_name" content="${attr(BRAND_NAME)}" />`,
     `<meta property="og:title" content="${attr(meta.title)}" />`,
     `<meta property="og:description" content="${attr(meta.description)}" />`,
     `<meta property="og:url" content="${attr(url)}" />`,

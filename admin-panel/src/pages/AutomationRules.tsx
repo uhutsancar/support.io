@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { RuleForm, Site } from '../types/api';
 
@@ -168,7 +169,7 @@ const AutomationRules = () => {
   return (
     <div className="p-6 border border-gray-100 dark:border-gray-800 rounded-lg shadow-sm bg-white dark:bg-gray-900">
       <Helmet>
-        <title>{`${t('automation.title')} — Support.io`}</title>
+        <title>{pageTitle(t('automation.title'))}</title>
       </Helmet>
       <div className="flex justify-between items-center mb-6">
         <div>

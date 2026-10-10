@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # KVKK Aydınlatma Metni — taslak
 
 > **TASLAK — hukukçu onayı olmadan yayına alınmaz** (plan v10 LEG-01 madde 2).
@@ -5,7 +7,7 @@
 > Uyulacak Usul ve Esaslar Hakkında Tebliğ'in istediği unsurlar: veri
 > sorumlusunun kimliği, amaçlar, aktarım ve amacı, toplama yöntemi ve hukuki
 > sebebi, m.11 hakları. Yayın yeri: `/kvkk-aydinlatma-metni` (TR),
-> `/en/kvkk-notice` (EN). Bu metin Support.io'nun **kendi** veri
+> `/en/kvkk-notice` (EN). Bu metin Supbort.io'nun **kendi** veri
 > sorumluluğundaki veriler (hesap sahipleri ve ekip üyeleri) içindir;
 > ziyaretçiler için veri sorumlusu, sohbet balonunu kullanan işletmedir.
 
@@ -15,7 +17,7 @@
 
 ### Veri sorumlusu
 
-[SAHİP: ticari unvan] ("Support.io")
+[SAHİP: ticari unvan] ("Supbort.io")
 Adres: [SAHİP]
 MERSİS / Vergi No: [SAHİP]
 E-posta: [SAHİP: kvkk@alan-adı]
@@ -33,14 +35,14 @@ E-posta: [SAHİP: kvkk@alan-adı]
 
 ### Amaçlar ve hukuki sebepler
 
-| Amaç | Veri kategorisi | Hukuki sebep (m.5/2) |
-|---|---|---|
-| Hesabın açılması, hizmetin sunulması, ekip davetleri | Kimlik, iletişim, müşteri işlem | (c) sözleşmenin kurulması ve ifası |
-| Hesap güvenliği, yetkisiz erişimin önlenmesi, işlem kaydı | Hesap ve işlem güvenliği | (ç) hukuki yükümlülük; (f) meşru menfaat |
-| Hesap e-postaları (doğrulama, şifre sıfırlama, kullanım ve ödeme uyarıları) | Kimlik, iletişim | (c) sözleşmenin ifası |
-| Faturalandırma, vergi ve muhasebe | Müşteri işlem | (ç) hukuki yükümlülük |
-| Talep ve şikâyetlerin yanıtlanması | Kimlik, iletişim, ilgili yazışma | (c) sözleşmenin ifası; (f) meşru menfaat |
-| Hukuki uyuşmazlıklarda hakların korunması | İlgili kayıtlar | (e) bir hakkın tesisi, kullanılması veya korunması |
+| Amaç                                                                        | Veri kategorisi                  | Hukuki sebep (m.5/2)                               |
+| --------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------- |
+| Hesabın açılması, hizmetin sunulması, ekip davetleri                        | Kimlik, iletişim, müşteri işlem  | (c) sözleşmenin kurulması ve ifası                 |
+| Hesap güvenliği, yetkisiz erişimin önlenmesi, işlem kaydı                   | Hesap ve işlem güvenliği         | (ç) hukuki yükümlülük; (f) meşru menfaat           |
+| Hesap e-postaları (doğrulama, şifre sıfırlama, kullanım ve ödeme uyarıları) | Kimlik, iletişim                 | (c) sözleşmenin ifası                              |
+| Faturalandırma, vergi ve muhasebe                                           | Müşteri işlem                    | (ç) hukuki yükümlülük                              |
+| Talep ve şikâyetlerin yanıtlanması                                          | Kimlik, iletişim, ilgili yazışma | (c) sözleşmenin ifası; (f) meşru menfaat           |
+| Hukuki uyuşmazlıklarda hakların korunması                                   | İlgili kayıtlar                  | (e) bir hakkın tesisi, kullanılması veya korunması |
 
 ### Toplama yöntemi
 
@@ -78,7 +80,7 @@ Başvurunuzu Türkçe olarak, kimliğinizi ve talebinizi açıkça belirterek
 Başvuru Usul ve Esasları Hakkında Tebliğ). Başvurunuz en geç **30 gün**
 içinde ücretsiz sonuçlandırılır; işlemin ayrıca bir maliyet gerektirmesi
 hâlinde Kurul'un belirlediği tarife uygulanabilir. Hesap sahipleri
-verilerinin tamamını panelde *Ayarlar → Veri ve gizlilik* bölümünden
+verilerinin tamamını panelde _Ayarlar → Veri ve gizlilik_ bölümünden
 indirebilir ve hesabı silebilir.
 
 ---
@@ -87,7 +89,7 @@ indirebilir ve hesabı silebilir.
 
 ### Controller
 
-[OWNER: legal name] ("Support.io"), [OWNER: address], [OWNER: tax/MERSIS
+[OWNER: legal name] ("Supbort.io"), [OWNER: address], [OWNER: tax/MERSIS
 number], [OWNER: privacy@domain].
 
 ### Data we process
@@ -136,4 +138,4 @@ for unlawful processing.
 In writing to [OWNER: privacy@domain] from your registered address, or by
 post to [OWNER: address], stating who you are and what you ask. We answer
 within **30 days**, free of charge. Account owners can download all their
-data and delete the account under *Settings → Data and privacy*.
+data and delete the account under _Settings → Data and privacy_.

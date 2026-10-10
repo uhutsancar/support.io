@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import Shell, { PageHero } from '../components/marketing/Shell';
 import { Section } from '../components/marketing/kit';
@@ -72,7 +73,7 @@ const ApiDocs = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t('apiDocs.meta.title') + ' — Support.io'}</title>
+        <title>{pageTitle(t('apiDocs.meta.title'))}</title>
         <meta name="description" content={t('apiDocs.meta.description')} />
       </Helmet>
       <PageHero

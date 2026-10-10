@@ -132,7 +132,7 @@ export default {
       title: 'Tek satır. Birkaç dakikada yayında.',
       desc: 'Satırı yapıştırdığınız an balon sitenizde. Gerisi panelden: rengini seçin, yapay zekâ asistanını açın, ekibinizi davet edin. Yazılımcıya gerek yok.',
       keyPlaceholder: 'SITE_ANAHTARINIZ',
-      comment: 'Support.io sohbet balonu',
+      comment: 'Supbort.io sohbet balonu',
       noDevs: {
         eyebrow: 'Yazılımcı gerekmez',
         title: 'Kopyala, yapıştır, bitti.',
@@ -251,14 +251,14 @@ export default {
 
   /* --------------------------------------------- oynayan sohbet senaryoları */
 
-  // Bu sitedeki balon Support.io'nun kendi balonu; senaryolar da bu yüzden
+  // Bu sitedeki balon Supbort.io'nun kendi balonu; senaryolar da bu yüzden
   // bize yazan birinin sorularıdır, uydurma bir mağazanın kargo derdi değil.
   demoChat: {
     status: 'Çevrimiçi · genelde birkaç dakikada yanıtlar',
     articleName: 'Yardım makalesi',
     assistantName: 'Yapay zekâ asistanı',
     hero: {
-      brand: 'Support.io',
+      brand: 'Supbort.io',
       lines: [
         { from: 'visitor', text: 'Merhaba, sitem WordPress. Kurulum zor mu?' },
         {
@@ -276,7 +276,7 @@ export default {
       ]
     },
     ai: {
-      brand: 'Support.io',
+      brand: 'Supbort.io',
       lines: [
         { from: 'note', text: 'Pazar · 23:40' },
         { from: 'visitor', text: 'Yıllık ödersem indirim var mı?' },
@@ -295,7 +295,7 @@ export default {
       ]
     },
     story: {
-      brand: 'Support.io',
+      brand: 'Supbort.io',
       lines: [
         { from: 'visitor', text: 'Ekibime nasıl temsilci eklerim?' },
         {
@@ -326,7 +326,7 @@ export default {
 
   landing: {
     home: {
-      metaTitle: 'Support.io — Sitenize canlı destek ekleyin',
+      metaTitle: 'Supbort.io — Sitenize canlı destek ekleyin',
       metaDesc:
         'Müşterileriniz sitenizden yazar, ekibiniz tek ekrandan yanıtlar. Kurulum bir satır kod. Ücretsiz planla başlayın.',
 
@@ -908,7 +908,7 @@ export default {
       integrations: 'Slack, Telegram ve webhook bildirimleri',
       knowledge: 'Asistan sayfalarınızdan ve PDF’lerinizden de yanıt verir',
       api: 'Konuşma, ziyaretçi ve SSS için API',
-      noBranding: 'Balonda “Support.io” yazısı olmadan'
+      noBranding: 'Balonda “Supbort.io” yazısı olmadan'
     }
   },
 
@@ -917,12 +917,12 @@ export default {
   aboutPage: {
     meta: {
       title: 'Hakkımızda',
-      description: 'Support.io neden var ve neye göre karar veriyoruz.'
+      description: 'Supbort.io neden var ve neye göre karar veriyoruz.'
     },
     eyebrow: 'Hakkımızda',
     title: 'Küçük bir ekibin kendi derdinden doğan araç',
     description:
-      'Support.io bir yatırım turunun ürünü değil. Müşteri mesajlarını üç ayrı yerden takip etmekten yorulan bir ekibin kendisi için yazdığı, sonra başkalarına da açtığı bir araç.',
+      'Supbort.io bir yatırım turunun ürünü değil. Müşteri mesajlarını üç ayrı yerden takip etmekten yorulan bir ekibin kendisi için yazdığı, sonra başkalarına da açtığı bir araç.',
 
     storyEyebrow: 'Hikâye',
     story: {
@@ -984,7 +984,7 @@ export default {
   login: {
     title: 'Giriş yapın',
     subtitle: 'Hesabınıza girin ve gelen kutunuza dönün.',
-    metaTitle: 'Giriş yap — Support.io',
+    metaTitle: 'Giriş yap — Supbort.io',
     noAccount: 'Hesabınız yok mu?',
     register: 'Ücretsiz açın'
   },
@@ -992,7 +992,7 @@ export default {
   register: {
     title: 'Ücretsiz hesap açın',
     subtitle: 'E-posta ve şifre yeterli. Kredi kartı istemiyoruz.',
-    metaTitle: 'Ücretsiz hesap açın — Support.io',
+    metaTitle: 'Ücretsiz hesap açın — Supbort.io',
     passwordHint: 'En az 10 karakter, tahmin edilmesi kolay olmasın',
     noCard: 'Kayıt olarak kullanım koşullarını kabul etmiş olursunuz.',
     hasAccount: 'Zaten hesabınız var mı?',
@@ -1002,7 +1002,7 @@ export default {
   /* ------------------------------------------------------ ürün görselleri */
 
   viz: {
-    frameGeneric: 'Support.io paneli',
+    frameGeneric: 'Supbort.io paneli',
 
     inbox: {
       frame: 'Gelen kutusu',
@@ -1208,15 +1208,15 @@ export default {
 
   compare: {
     eyebrow: 'Karşılaştırma',
-    title: 'Support.io ve {{name}}',
-    metaTitle: 'Support.io ve {{name}} karşılaştırması',
+    title: 'Supbort.io ve {{name}}',
+    metaTitle: 'Supbort.io ve {{name}} karşılaştırması',
     whoEyebrow: 'Kısa cevap',
     whoTitle: 'Hangisi size uygun?',
-    chooseUs: 'Support.io’yu seçin, eğer',
+    chooseUs: 'Supbort.io’yu seçin, eğer',
     chooseThem: '{{name}} daha uygun olabilir, eğer',
     tableEyebrow: 'Yan yana',
     tableTitle: 'Fiyat ve yapay zekâ',
-    tableDesc: 'Support.io sütunu, panelde uygulanan plan tablosundan gelir.',
+    tableDesc: 'Supbort.io sütunu, panelde uygulanan plan tablosundan gelir.',
     rowLabel: 'Konu',
     rows: {
       model: 'Fiyat modeli',
@@ -1235,9 +1235,9 @@ export default {
     note: '{{name}} bilgileri {{date}} tarihinde firmanın herkese açık fiyat sayfasından alınmıştır; fiyatlar ABD doları cinsindendir ve o tarihten sonra değişmiş olabilir.',
     source: '{{name}} fiyat sayfası',
     trademark:
-      '{{name}} adı ve markası sahibine aittir; Support.io bu firmayla bağlantılı değildir.',
+      '{{name}} adı ve markası sahibine aittir; Supbort.io bu firmayla bağlantılı değildir.',
     gapsEyebrow: 'Açık konuşalım',
-    gapsTitle: 'Support.io’da bugün olmayanlar',
+    gapsTitle: 'Supbort.io’da bugün olmayanlar',
     gapsDesc: 'Karar verirken bilmeniz gerekenler.',
     gaps: [
       'Konuşmalar web sitenizdeki sohbet balonundan gelir; e-posta, WhatsApp ve sosyal medya mesajları aynı kutuya düşmez.',
@@ -1252,7 +1252,7 @@ export default {
       'tawk-to': {
         name: 'Tawk.to',
         summary:
-          'İkisi de sitenize ücretsiz canlı sohbet ekler. Fark yapay zekâda ve fiyatın kuruluşunda: Tawk.to’da sohbet ücretsiz, yapay zekâ ve marka yazısını kaldırmak ayrı ücretli eklenti; Support.io’da asistan her planda dâhil, ücretli planlar Türk lirasıyla sabit aylık.',
+          'İkisi de sitenize ücretsiz canlı sohbet ekler. Fark yapay zekâda ve fiyatın kuruluşunda: Tawk.to’da sohbet ücretsiz, yapay zekâ ve marka yazısını kaldırmak ayrı ücretli eklenti; Supbort.io’da asistan her planda dâhil, ücretli planlar Türk lirasıyla sabit aylık.',
         us: [
           'Yapay zekâ asistanının ek ücret istemeden planın içinde gelmesini istiyorsanız.',
           'Fiyatı Türk lirasıyla görmek ve sabit bir aylık tutar ödemek istiyorsanız.',
@@ -1272,7 +1272,7 @@ export default {
       crisp: {
         name: 'Crisp',
         summary:
-          'Crisp ve Support.io’nun ikisi de kişi başı değil, plan başına ücret alır. Crisp birçok kanalı tek kutuda toplar; Support.io web sitenizdeki sohbete ve SSS’nizden yanıt veren asistana odaklanır ve Türk lirasıyla satılır.',
+          'Crisp ve Supbort.io’nun ikisi de kişi başı değil, plan başına ücret alır. Crisp birçok kanalı tek kutuda toplar; Supbort.io web sitenizdeki sohbete ve SSS’nizden yanıt veren asistana odaklanır ve Türk lirasıyla satılır.',
         us: [
           'Yapay zekâ yanıtlarının kredi hesabı olmadan, planda yazan sabit bir hakla gelmesini istiyorsanız.',
           'Yapay zekâ asistanını ücretsiz planda da denemek istiyorsanız.',
@@ -1293,7 +1293,7 @@ export default {
       intercom: {
         name: 'Intercom',
         summary:
-          'Intercom büyük destek ekipleri için kapsamlı bir platform: kullanıcı başına ücret alır, yapay zekâ ajanı ise her başarılı sonuç için ayrıca ücretlendirilir. Support.io küçük ve orta ölçekli ekipler için: plan başına sabit fiyat, yapay zekâ yanıtları planın içinde.',
+          'Intercom büyük destek ekipleri için kapsamlı bir platform: kullanıcı başına ücret alır, yapay zekâ ajanı ise her başarılı sonuç için ayrıca ücretlendirilir. Supbort.io küçük ve orta ölçekli ekipler için: plan başına sabit fiyat, yapay zekâ yanıtları planın içinde.',
         us: [
           'Ekibiniz büyüdükçe faturanın kişi sayısıyla artmasını istemiyorsanız.',
           'Yapay zekâ maliyetini önceden bilmek, sonuç başına ödememek istiyorsanız.',
@@ -1313,7 +1313,7 @@ export default {
       tidio: {
         name: 'Tidio',
         summary:
-          'Tidio ve Support.io’nun ikisi de ücretsiz planla başlar. Tidio’da ücret faturalanan konuşma sayısına göre artar, yapay zekâ ajanı Lyro ayrıca ücretlendirilir; Support.io’da yapay zekâ yanıtları her planda dâhil, ücretli planlar Türk lirasıyla sabit aylık.',
+          'Tidio ve Supbort.io’nun ikisi de ücretsiz planla başlar. Tidio’da ücret faturalanan konuşma sayısına göre artar, yapay zekâ ajanı Lyro ayrıca ücretlendirilir; Supbort.io’da yapay zekâ yanıtları her planda dâhil, ücretli planlar Türk lirasıyla sabit aylık.',
         us: [
           'Yapay zekâ asistanının ek ücret istemeden planın içinde gelmesini istiyorsanız.',
           'Ücretsiz planda her ay yenilenen bir yapay zekâ hakkı istiyorsanız.',

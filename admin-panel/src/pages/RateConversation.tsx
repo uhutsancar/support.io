@@ -1,7 +1,7 @@
 /**
  * /rate?t=…  — the page the rating mail opens (plan v10 PRD-04).
  *
- * The reader is a customer's visitor, not a Support.io user: the page is
+ * The reader is a customer's visitor, not a Supbort.io user: the page is
  * plain, names the customer's site, and asks one question. The token in the
  * link is the only proof; nothing else is needed or stored.
  */

@@ -37,19 +37,19 @@ function offlinePage(english) {
   const text = english
     ? [
         'No connection',
-        'Support.io opens again by itself as soon as the connection is back.',
+        'Supbort.io opens again by itself as soon as the connection is back.',
         'Try again'
       ]
     : [
         'Bağlantı yok',
-        'İnternet bağlantısı gelir gelmez Support.io kendiliğinden açılır.',
+        'İnternet bağlantısı gelir gelmez Supbort.io kendiliğinden açılır.',
         'Tekrar dene'
       ];
   const html =
     '<!doctype html><html lang="' +
     (english ? 'en' : 'tr') +
     '"><head><meta charset="utf-8">' +
-    '<meta name="viewport" content="width=device-width, initial-scale=1"><title>Support.io</title>' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1"><title>Supbort.io</title>' +
     '<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;' +
     'font-family:system-ui,sans-serif;background:#f9fafb;color:#111827;text-align:center;padding:24px}' +
     'h1{font-size:22px;margin:0 0 8px}p{color:#4b5563;margin:0 0 20px}' +
@@ -115,7 +115,7 @@ self.addEventListener('push', (event) => {
   }
   const url = safeDashboardPath(data.url);
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Support.io', {
+    self.registration.showNotification(data.title || 'Supbort.io', {
       body: data.body || '',
       tag: data.tag || undefined,
       renotify: Boolean(data.tag),

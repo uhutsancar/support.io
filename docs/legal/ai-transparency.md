@@ -1,3 +1,5 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # Yapay zekâ şeffaflığı — hukukçu için not
 
 > Bu belge hukuki görüş değildir. Ürünün bugün ne yaptığını ve konuyla ilgili
@@ -49,7 +51,7 @@ yanıtları ziyaretçiye 'Yapay zekâ asistanı' olarak işaretlenir."
   ertelememiştir; yalnızca 50(2)'deki işaretleme yükümlülüğü için, o tarihten
   önce piyasada olan sistemlere 2 Aralık 2026'ya kadar süre tanınmıştır.
   Hukukçunun teyit etmesi gerekenler:
-  - Support.io bu düzende "sağlayıcı" mı, yoksa asistanı sitesinde kullanan
+  - Supbort.io bu düzende "sağlayıcı" mı, yoksa asistanı sitesinde kullanan
     müşteri "uygulayıcı" (deployer) mı; her birinin yükümlülüğü ne?
   - Yukarıdaki ekran metinleri 50(1) için yeterli mi?
   - Türkiye'deki müşterilerin AB'deki ziyaretçileri için durum.

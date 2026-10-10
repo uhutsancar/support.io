@@ -2,7 +2,7 @@
 #
 #   docker compose -f integrations/wordpress/docker-compose.test.yml -p sio-wp up -d
 #   docker compose -f integrations/wordpress/docker-compose.test.yml -p sio-wp run --rm cli wp core install \
-#     --url=http://localhost:8089 --title="Support.io WP" --admin_user=admin \
+#     --url=http://localhost:8089 --title="Supbort.io WP" --admin_user=admin \
 #     --admin_password=WpTestPassw0rd! --admin_email=admin@wp.test --skip-email
 #   docker compose -f integrations/wordpress/docker-compose.test.yml -p sio-wp run --rm cli wp plugin activate support-io-live-chat
 #   WP_URL=http://localhost:8089 npx playwright test tests/wordpress-plugin.spec.ts   (in e2e/)

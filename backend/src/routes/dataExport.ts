@@ -165,7 +165,7 @@ router.get(
 
       const day = new Date().toISOString().slice(0, 10);
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.setHeader('Content-Disposition', `attachment; filename="supportio-export-${day}.json"`);
+      res.setHeader('Content-Disposition', `attachment; filename="supbortio-export-${day}.json"`);
       res.setHeader('Cache-Control', 'no-store');
       await write(
         `{"exportedAt":${JSON.stringify(new Date().toISOString())},"organization":${JSON.stringify(org[0] ?? null)}`

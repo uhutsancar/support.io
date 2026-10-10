@@ -7,6 +7,7 @@
  */
 import { useEffect, useId, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Hash, History, KeyRound, Plug, Plus, Send, Trash2, Webhook } from 'lucide-react';
@@ -190,7 +191,7 @@ const Integrations = () => {
   return (
     <>
       <Helmet>
-        <title>{`${t('integrations.title')} — Support.io`}</title>
+        <title>{pageTitle(t('integrations.title'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -8,6 +8,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ArrowRight, Check } from 'lucide-react';
@@ -80,7 +81,7 @@ const Solution = () => {
   return (
     <Shell>
       <Helmet>
-        <title>{t(key('name')) + ' — Support.io'}</title>
+        <title>{pageTitle(t(key('name')))}</title>
         <meta name="description" content={t(key('desc'))} />
       </Helmet>
 

@@ -1,6 +1,8 @@
+<!-- HUKUKÇU: veri sorumlusu olarak ticari unvan yazılmalı -->
+
 # İlgili kişi başvuru süreci (KVKK m.11, m.13)
 
-> Plan v10 LEG-03. İç süreç belgesi. Yasal süre: başvuru Support.io'ya
+> Plan v10 LEG-03. İç süreç belgesi. Yasal süre: başvuru Supbort.io'ya
 > ulaştıktan sonra en geç **30 gün** içinde, kural olarak ücretsiz
 > sonuçlandırılır (KVKK m.13; Veri Sorumlusuna Başvuru Usul ve Esasları
 > Hakkında Tebliğ). Bu belge hukuki görüş değildir; hukukçu teyit etmeli.
@@ -13,7 +15,7 @@
 - **Posta / elden:** [SAHİP: adres], ıslak imzalı dilekçe.
 - **KEP:** [SAHİP: varsa KEP adresi].
 - Panel: hesap sahipleri dışa aktarma ve hesap silmeyi kendileri yapar
-  (*Ayarlar → Veri ve gizlilik*); bu bir başvuru sayılmaz ama yanıtta
+  (_Ayarlar → Veri ve gizlilik_); bu bir başvuru sayılmaz ama yanıtta
   önerilir.
 
 ## Akış
@@ -25,20 +27,20 @@
    için: sohbette verdiği e-posta adresinden yazması ya da sohbetin tarih,
    site ve içeriğinden bir ayrıntı vermesi.
 3. **Rol tespiti:**
-   - Hesap sahibi / ekip üyesi → Support.io veri sorumlusu, 4. adıma geç.
+   - Hesap sahibi / ekip üyesi → Supbort.io veri sorumlusu, 4. adıma geç.
    - Bir sitenin ziyaretçisi → veri sorumlusu o işletmedir. Başvuru 3 iş
      günü içinde işletmenin hesap sahibine iletilir, başvuru sahibine
      bilgi verilir; işletme isterse panel araçlarıyla yardım edilir (DPA
      madde 7).
-4. **Yerine getirme** (Support.io sorumlu olduğunda):
+4. **Yerine getirme** (Supbort.io sorumlu olduğunda):
 
-   | Talep | Nasıl |
-   |---|---|
-   | Bilgi / erişim | Organizasyon dışa aktarması (`GET /api/account/export`, panelde *Ayarlar → Veri ve gizlilik*) ya da kişiye özgü sorgu; şifre özeti ve anahtarlar verilmez |
-   | Düzeltme | Kişi panelde kendisi düzeltir; yapamıyorsa destek düzeltir, denetim kaydı düşer |
-   | Silme | Hesap silme (sahip için panel; ekip üyesi için sahibin üyeyi çıkarması); ziyaretçi için panelde "Bu ziyaretçinin verilerini sil" (SEC-17) |
-   | Aktarılan üçüncü kişiler | [Alt İşleyenler](alt-isleyenler.md) listesi |
-   | İtiraz / zarar | Hukukçuya iletilir |
+   | Talep                    | Nasıl                                                                                                                                                     |
+   | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Bilgi / erişim           | Organizasyon dışa aktarması (`GET /api/account/export`, panelde _Ayarlar → Veri ve gizlilik_) ya da kişiye özgü sorgu; şifre özeti ve anahtarlar verilmez |
+   | Düzeltme                 | Kişi panelde kendisi düzeltir; yapamıyorsa destek düzeltir, denetim kaydı düşer                                                                           |
+   | Silme                    | Hesap silme (sahip için panel; ekip üyesi için sahibin üyeyi çıkarması); ziyaretçi için panelde "Bu ziyaretçinin verilerini sil" (SEC-17)                 |
+   | Aktarılan üçüncü kişiler | [Alt İşleyenler](alt-isleyenler.md) listesi                                                                                                               |
+   | İtiraz / zarar           | Hukukçuya iletilir                                                                                                                                        |
 
 5. **Yanıt:** yazılı, Türkçe, başvurunun geldiği kanaldan; kabul ya da
    gerekçeli ret. Silme yapıldıysa yedeklerden en geç [SAHİP: 3 ay] içinde

@@ -114,7 +114,7 @@ export async function loadOwnedSite(req: Request, siteId: unknown): Promise<Doc<
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     // Blocked by the platform for abuse (LEG-05): only support lifts it.
     if (site.blockedAt) {
-      throw forbidden('This site was blocked by Support.io; contact support', 'SITE_BLOCKED');
+      throw forbidden('This site was blocked by Supbort.io; contact support', 'SITE_BLOCKED');
     }
     if (site.suspendedAt) {
       throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');
@@ -210,7 +210,7 @@ export async function loadAccessibleConversation(
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     const site = await Site.findById(conversation.siteId).select('blockedAt suspendedAt');
     if (site?.blockedAt) {
-      throw forbidden('This site was blocked by Support.io; contact support', 'SITE_BLOCKED');
+      throw forbidden('This site was blocked by Supbort.io; contact support', 'SITE_BLOCKED');
     }
     if (site?.suspendedAt) {
       throw forbidden('This site is over the plan limit and is read-only', 'SITE_SUSPENDED');

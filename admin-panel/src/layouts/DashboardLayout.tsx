@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { notifyDesktop, showUnreadInTab } from '../lib/desktopNotifications';
+import { BRAND_NAME } from '../lib/brand';
 import { resyncPush } from '../lib/pushNotifications';
 import { VerifyEmailBanner } from '../pages/AccountRecovery';
 import {
@@ -193,7 +194,7 @@ const DashboardLayout = () => {
       const message = payload?.message;
       if (desktopPrefs.current.allMessages && message?.senderType === 'visitor') {
         notifyDesktop({
-          title: payload?.conversation?.visitorName || message.senderName || 'Support.io',
+          title: payload?.conversation?.visitorName || message.senderName || BRAND_NAME,
           body: String(message.content || ''),
           tag: `message:${message._id}`,
           onClick: openConversation(message.conversationId)
@@ -469,7 +470,7 @@ const DashboardLayout = () => {
   const sidebar = (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
       <div className="flex items-center justify-between h-14 px-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-        <Link to={routes.dashboard} className="flex items-center" aria-label="Support.io">
+        <Link to={routes.dashboard} className="flex items-center" aria-label={BRAND_NAME}>
           <Logo size={26} />
         </Link>
         <button
@@ -641,7 +642,7 @@ const DashboardLayout = () => {
           <Link
             to={routes.dashboard}
             className="lg:hidden flex items-center"
-            aria-label="Support.io"
+            aria-label={BRAND_NAME}
           >
             <LogoMark size={26} />
           </Link>

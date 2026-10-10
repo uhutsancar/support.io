@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
 import { dealsAPI } from '../services/api';
 import { Plus, GripVertical, UserCircle, Briefcase, Mail, X, Trash2, Tag } from 'lucide-react';
@@ -181,7 +182,7 @@ const CRM = () => {
   return (
     <>
       <Helmet>
-        <title>{t('crm.title', 'CRM - Fırsatlar')} - Support.io</title>
+        <title>{pageTitle(t('crm.title', 'CRM - Fırsatlar'))}</title>
       </Helmet>
       <div className="flex flex-col h-[calc(100vh-6rem)] relative overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-xl">
         {}

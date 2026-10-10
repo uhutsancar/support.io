@@ -130,7 +130,7 @@ export interface Site {
   integrations?: SiteIntegrationsView;
   /** Over the plan's site limit after a downgrade: widget hidden, read-only. */
   suspendedAt?: string | null;
-  /** Blocked by Support.io for abuse: widget off; only support lifts it. */
+  /** Blocked by Supbort.io for abuse: widget off; only support lifts it. */
   blockedAt?: string | null;
   installation?: {
     verifiedAt?: string | null;

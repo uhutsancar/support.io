@@ -49,7 +49,7 @@ test('the owner downloads the organization’s data, without secrets', async () 
   assert.equal(res.status, 200);
   assert.match(
     res.headers.get('content-disposition') || '',
-    /attachment; filename="supportio-export-/
+    /attachment; filename="supbortio-export-/
   );
   const text = await res.text();
   const data = JSON.parse(text);

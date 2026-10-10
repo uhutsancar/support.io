@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { pageTitle } from '../lib/brand';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -414,7 +415,7 @@ const Dashboard = () => {
   return (
     <>
       <Helmet>
-        <title>{t('dashboard.title') + ' — Support.io'}</title>
+        <title>{pageTitle(t('dashboard.title'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 

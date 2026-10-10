@@ -1,5 +1,5 @@
 /*!
- * Support.io Widget Runtime
+ * Supbort.io Widget Runtime
  * Universal, framework-agnostic embeddable chat widget.
  *
  * Kurulum (TEK satir, her stack icin ayni):
@@ -875,7 +875,7 @@ declare global {
             self._fail(
               'ORIGIN_NOT_ALLOWED',
               window.location.origin +
-                ' is not an allowed origin for this site. Add it under Sites in the Support.io panel.'
+                ' is not an allowed origin for this site. Add it under Sites in the Supbort.io panel.'
             );
           } else {
             self._fail(
