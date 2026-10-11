@@ -21,6 +21,7 @@ import { closeRedisClient } from '../src/config/redis';
 import {
   dispatchIntegrationEvent,
   runIntegrationDeliveries,
+  runSelectedIntegrationDeliveries,
   sealConfig,
   useIntegrationPoster
 } from '../src/services/integrations';
@@ -313,4 +314,103 @@ test('integrations are part of the paid plans; another workspace’s cannot be t
   const free = await call(a.token, '/api/integrations');
   assert.equal(free.status, 403);
   assert.equal(json(free).code, 'PLAN_UPGRADE_REQUIRED');
+});
+
+test('the delivery worker is fair, bounded to five calls and ordered per integration', async () => {
+  const a = await tenant('intfaira');
+  const b = await tenant('intfairb');
+  const deliveryIds: string[] = [];
+  const config = sealConfig({ url: 'https://1.1.1.1/hook', secret: 'whsec_test' });
+
+  await Promise.all(
+    Array.from({ length: 50 }, async (_, index) => {
+      const organizationId = index % 2 ? b.organizationId : a.organizationId;
+      const integrationId = generateId();
+      const deliveryId = generateId();
+      deliveryIds.push(deliveryId);
+      await query(
+        `INSERT INTO integrations (id, organization_id, kind, name, events, config, hint)
+         VALUES ($1, $2, 'webhook', $3, $4, $5, '1.1.1.1')`,
+        [integrationId, organizationId, `Bounded ${index}`, ALL, config]
+      );
+      await query(
+        `INSERT INTO integration_deliveries
+           (id, integration_id, organization_id, event, payload, next_attempt_at)
+         VALUES ($1, $2, $3, 'integration.test', $4, now() - interval '30 hours')`,
+        [
+          deliveryId,
+          integrationId,
+          organizationId,
+          JSON.stringify({ id: deliveryId, event: 'integration.test', data: { index } })
+        ]
+      );
+    })
+  );
+
+  let active = 0;
+  let maximumActive = 0;
+  useIntegrationPoster(async () => {
+    active += 1;
+    maximumActive = Math.max(maximumActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    active -= 1;
+    return { status: 200 };
+  });
+
+  // The fair SQL window gives the first six slots evenly to the two tenants.
+  assert.equal(await runIntegrationDeliveries(6), 6);
+  const { rows: first } = await query<{ organization_id: string; delivered: number }>(
+    `SELECT organization_id, count(*)::int AS delivered
+       FROM integration_deliveries
+      WHERE id = ANY($1) AND status = 'delivered'
+      GROUP BY organization_id`,
+    [deliveryIds]
+  );
+  assert.deepEqual(Object.fromEntries(first.map((row) => [row.organization_id, row.delivered])), {
+    [a.organizationId]: 3,
+    [b.organizationId]: 3
+  });
+  assert.equal(await runIntegrationDeliveries(44), 44);
+  assert.ok(maximumActive <= 5, `observed ${maximumActive} simultaneous deliveries`);
+
+  // Three rows for one integration may be selected together, but its flight
+  // chain must still call the receiver in database order.
+  const orderedIntegration = generateId();
+  await query(
+    `INSERT INTO integrations (id, organization_id, kind, name, events, config, hint)
+     VALUES ($1, $2, 'webhook', 'Ordered', $3, $4, '1.1.1.1')`,
+    [orderedIntegration, a.organizationId, ALL, config]
+  );
+  const orderedIds = [generateId(), generateId(), generateId()];
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      query(
+        `INSERT INTO integration_deliveries
+           (id, integration_id, organization_id, event, payload, created_at, next_attempt_at)
+         VALUES ($1, $2, $3, 'integration.test', $4,
+                 now() + ($5 * interval '1 millisecond'), now() - interval '40 hours')`,
+        [
+          id,
+          orderedIntegration,
+          a.organizationId,
+          JSON.stringify({ id, event: 'integration.test', data: { sequence: index } }),
+          index
+        ]
+      )
+    )
+  );
+  const seen: number[] = [];
+  useIntegrationPoster(async (_target, body) => {
+    seen.push(JSON.parse(body).data.sequence);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    return { status: 200 };
+  });
+  assert.equal(
+    await runSelectedIntegrationDeliveries(
+      orderedIds.map((id) => ({ id, integration_id: orderedIntegration }))
+    ),
+    3
+  );
+  assert.deepEqual(seen, [0, 1, 2]);
+  useIntegrationPoster(null);
 });

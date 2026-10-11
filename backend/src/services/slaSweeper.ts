@@ -34,6 +34,7 @@ import { AdminNotifier } from '../realtime';
 import { runConversationMail } from './conversationMail';
 import { query } from '../db/pool';
 import { runIntegrationDeliveries } from './integrations';
+import { reconcileAgentLoads } from './conversationAssignment';
 import type { Server } from 'socket.io';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -49,6 +50,10 @@ const NEXT_BUSINESS_MORNING_HOUR = 9;
 
 let timer: NodeJS.Timeout | null = null;
 let running = false;
+let integrationTimer: NodeJS.Timeout | null = null;
+let integrationRunning = false;
+let lastLoadReconciliationAt = 0;
+const LOAD_RECONCILIATION_INTERVAL_MS = 5 * 60 * 1000;
 
 /** The four SLA figures a change is judged against. */
 interface SlaSnapshot {
@@ -236,10 +241,12 @@ function startSlaSweeper(
       console.error('[sla] waking snoozed conversations failed', error);
     }
     try {
-      // Webhook, Slack and Telegram retries (PRD-11) ride on this pass too.
-      await runIntegrationDeliveries();
+      if (Date.now() - lastLoadReconciliationAt >= LOAD_RECONCILIATION_INTERVAL_MS) {
+        await reconcileAgentLoads();
+        lastLoadReconciliationAt = Date.now();
+      }
     } catch (error) {
-      console.error('[sla] integration deliveries failed', error);
+      console.error('[assignment] load reconciliation failed', error);
     }
     try {
       // Unanswered-chat, reply and rating mails ride on the same pass, so
@@ -255,12 +262,36 @@ function startSlaSweeper(
   void tick();
   timer = setInterval(tick, intervalMs);
   timer.unref?.();
+  startIntegrationDeliveryLoop();
   return timer;
+}
+
+function startIntegrationDeliveryLoop(
+  intervalMs = Number(process.env.INTEGRATION_DELIVERY_INTERVAL_MS) || 15_000
+): NodeJS.Timeout {
+  if (integrationTimer) return integrationTimer;
+  const tick = async () => {
+    if (integrationRunning) return;
+    integrationRunning = true;
+    try {
+      await runIntegrationDeliveries();
+    } catch (error) {
+      console.error('[integrations] delivery pass failed', error);
+    } finally {
+      integrationRunning = false;
+    }
+  };
+  void tick();
+  integrationTimer = setInterval(tick, intervalMs);
+  integrationTimer.unref?.();
+  return integrationTimer;
 }
 
 function stopSlaSweeper(): void {
   if (timer) clearInterval(timer);
   timer = null;
+  if (integrationTimer) clearInterval(integrationTimer);
+  integrationTimer = null;
 }
 
-export { startSlaSweeper, stopSlaSweeper, sweepOnce, wakeSnoozed };
+export { startIntegrationDeliveryLoop, startSlaSweeper, stopSlaSweeper, sweepOnce, wakeSnoozed };

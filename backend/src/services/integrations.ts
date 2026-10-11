@@ -2,9 +2,9 @@
 //
 // An event of a conversation — created, a message, closed, rated — becomes
 // one delivery per integration that asked for it. A delivery is tried at
-// once; when that fails, the SLA pass (services/slaSweeper.ts, the only
-// timer) tries again after 1, 5, 15 and 30 minutes, then every few hours,
-// for at most 24 hours. Each try first claims the row, so the immediate
+// once; when that fails, its own delivery loop (services/slaSweeper.ts)
+// tries again after 1, 5, 15 and 30 minutes, then every few hours, for at
+// most 24 hours. Each try first claims the row, so the immediate
 // attempt and the timer never send the same delivery twice.
 //
 // Every call goes through services/outboundUrl.ts: https only, public
@@ -68,6 +68,7 @@ const MAX_HOURS = 24;
 const BACKOFF_MINUTES = [1, 5, 15, 30, 60, 120, 240, 480, 720];
 const LEASE_SECONDS = 120;
 const MAX_ERROR = 200;
+const DELIVERY_CONCURRENCY = 5;
 
 export const SLACK_URL = /^https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9_/-]{20,200}$/;
 export const TELEGRAM_TOKEN = /^\d{5,15}:[A-Za-z0-9_-]{30,60}$/;
@@ -101,23 +102,33 @@ async function checkedTarget(url: string): Promise<SafeTarget> {
 /** POSTs to the cleared address itself (pinned lookup: no second DNS answer). */
 const postSafely: Poster = (target, body, headers) =>
   new Promise<Response>((resolve, reject) => {
+    const controller = new AbortController();
+    const totalTimeout = setTimeout(
+      () => controller.abort(new Error('delivery timed out')),
+      10_000
+    );
+    const finish = <T>(callback: (value: T) => void, value: T) => {
+      clearTimeout(totalTimeout);
+      callback(value);
+    };
     const request = https.request(
       target.url,
       {
         method: 'POST',
         lookup: pinnedLookup(target) as never,
         headers: { ...headers, 'Content-Length': String(Buffer.byteLength(body)) },
-        timeout: 10_000
+        timeout: 10_000,
+        signal: controller.signal
       },
       (response) => {
         // The answer is not needed, only its status; a few bytes are read
         // so the socket can close.
         response.resume();
-        response.on('end', () => resolve({ status: response.statusCode ?? 0 }));
+        response.on('end', () => finish(resolve, { status: response.statusCode ?? 0 }));
       }
     );
     request.on('timeout', () => request.destroy(new Error('timed out')));
-    request.on('error', reject);
+    request.on('error', (error) => finish(reject, error));
     request.end(body);
   });
 
@@ -376,6 +387,40 @@ export async function attemptDelivery(
   return giveUp ? 'failed' : 'retry';
 }
 
+let activeDeliveries = 0;
+const deliveryWaiters: Array<() => void> = [];
+const integrationFlights = new Map<string, Promise<unknown>>();
+
+async function withDeliverySlot<T>(task: () => Promise<T>): Promise<T> {
+  if (activeDeliveries >= DELIVERY_CONCURRENCY) {
+    await new Promise<void>((resolve) => deliveryWaiters.push(resolve));
+  }
+  activeDeliveries += 1;
+  try {
+    return await task();
+  } finally {
+    activeDeliveries -= 1;
+    deliveryWaiters.shift()?.();
+  }
+}
+
+/** At most five calls globally, and never two simultaneous calls to one integration. */
+function orderedDelivery(
+  integrationId: string,
+  deliveryId: string
+): Promise<'delivered' | 'retry' | 'failed' | null> {
+  const previous = integrationFlights.get(integrationId) ?? Promise.resolve();
+  const current = previous
+    .catch(() => undefined)
+    .then(() => withDeliverySlot(() => attemptDelivery(deliveryId)));
+  integrationFlights.set(integrationId, current);
+  const cleanup = () => {
+    if (integrationFlights.get(integrationId) === current) integrationFlights.delete(integrationId);
+  };
+  void current.then(cleanup, cleanup);
+  return current;
+}
+
 /**
  * Turns an event into deliveries for the integrations that asked for it, and
  * tries each at once. Never throws: the conversation goes on regardless.
@@ -394,7 +439,7 @@ export async function dispatchIntegrationEvent(
     if (!rows.length) return 0;
     // A workspace that left the paid plan keeps its settings, not the service.
     if (!(await hasFeature(data.organizationId, 'integrations'))) return 0;
-    const ids: string[] = [];
+    const deliveries: Array<{ id: string; integrationId: string }> = [];
     for (const row of rows) {
       const id = generateId();
       // eslint-disable-next-line no-await-in-loop -- a few integrations per workspace
@@ -409,10 +454,14 @@ export async function dispatchIntegrationEvent(
           JSON.stringify({ id, event, createdAt: new Date().toISOString(), data: publicData(data) })
         ]
       );
-      ids.push(id);
+      deliveries.push({ id, integrationId: row.id });
     }
-    await Promise.all(ids.map((id) => attemptDelivery(id).catch(() => null)));
-    return ids.length;
+    await Promise.all(
+      deliveries.map(({ id, integrationId }) =>
+        orderedDelivery(integrationId, id).catch(() => null)
+      )
+    );
+    return deliveries.length;
   } catch (error) {
     console.error('[integrations] could not dispatch', { event }, error);
     return 0;
@@ -456,7 +505,7 @@ export async function sendTest(integrationId: string, organizationId: string) {
       })
     ]
   );
-  const outcome = await attemptDelivery(id);
+  const outcome = await orderedDelivery(integrationId, id);
   const { rows } = await query<{ last_status_code: number | null; last_error: string | null }>(
     'SELECT last_status_code, last_error FROM integration_deliveries WHERE id = $1',
     [id]
@@ -470,18 +519,30 @@ export async function sendTest(integrationId: string, organizationId: string) {
 
 /** The timer's share (services/slaSweeper.ts): deliveries whose next try is due. */
 export async function runIntegrationDeliveries(limit = 50): Promise<number> {
-  const { rows } = await query<{ id: string }>(
-    `SELECT id FROM integration_deliveries
+  const { rows } = await query<{ id: string; integration_id: string }>(
+    `SELECT id, integration_id FROM integration_deliveries
       WHERE status = 'pending' AND next_attempt_at <= now()
-      ORDER BY next_attempt_at LIMIT $1`,
+      ORDER BY row_number() OVER (
+        PARTITION BY organization_id ORDER BY next_attempt_at, created_at, id
+      ), next_attempt_at, created_at, id
+      LIMIT $1`,
     [limit]
   );
-  let done = 0;
-  for (const row of rows) {
-    // eslint-disable-next-line no-await-in-loop -- one at a time, each claims its row
-    if (await attemptDelivery(row.id)) done += 1;
-  }
-  return done;
+  return runSelectedIntegrationDeliveries(rows);
+}
+
+/**
+ * Runs an already selected batch through the same global/per-integration
+ * scheduler as the timer. Exported so ordering and the concurrency ceiling can
+ * be verified without competing with unrelated due rows from another suite.
+ */
+export async function runSelectedIntegrationDeliveries(
+  rows: Array<{ id: string; integration_id: string }>
+): Promise<number> {
+  const outcomes = await Promise.all(
+    rows.map((row) => orderedDelivery(row.integration_id, row.id))
+  );
+  return outcomes.filter(Boolean).length;
 }
 
 /** The nightly purge's share: the delivery log is kept for 30 days. */

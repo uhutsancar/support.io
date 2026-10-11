@@ -4,11 +4,11 @@
 //
 // Tek yerde toplanan dört karar:
 //
-//   maliyet    bcrypt 10 (OWASP: "10 veya üstü"). bcryptjs saf JavaScript;
-//              maliyet 12'de bir karşılaştırma ölçümde ~900 ms CPU tuttu,
-//              yani eşzamanlı birkaç giriş denemesi bütün API'yi
-//              yavaşlatabilirdi. Maliyet yükseltilirse needsRehash eski
-//              hash'leri başarılı girişte kendiliğinden yeniler.
+//   maliyet    Yeni parolalar node:crypto scrypt (N=2^17, r=8, p=1) ile
+//              libuv işçi havuzunda türetilir. 11 Ekim 2026 ölçümünde beş
+//              paralel bcryptjs/10 ana döngüyü 495,5 ms geciktirirken scrypt
+//              15,3 ms geciktirdi. Eski bcrypt hash'leri doğrulanır ve başarılı
+//              girişte needsRehash ile kendiliğinden scrypt'e taşınır.
 //   politika   en az 10 karakter ve en yaygın 10.000 paroladan biri değil
 //              (NIST SP 800-63B: uzunluk ve bilinen-parola listesi, zorunlu
 //              karakter sınıfı yok). Liste depoda (config/data); dış servise
@@ -17,8 +17,8 @@
 //              bayttan sonrasını sessizce yok sayar: 100 karakterlik bir
 //              parolanın son 28 karakteri hiçbir şey korumaz. Bu yüzden üst
 //              sınır karakter değil bayt olarak 72.
-//   zamanlama  kullanıcı bulunamadığında da gerçek hash'lerle AYNI maliyette
-//              bir bcrypt karşılaştırması yapılır. Aksi halde "kayıtlı değil"
+//   zamanlama  kullanıcı bulunamadığında da güncel scrypt parametreleriyle
+//              gerçek bir türetme yapılır. Aksi halde "kayıtlı değil"
 //              yanıtı milisaniyeler içinde, "yanlış parola" yanıtı yüzlerce
 //              ms sonra döner ve aynı hata mesajına rağmen hangi e-postaların
 //              kayıtlı olduğu yanıt süresinden okunur. Kukla hash farklı
@@ -26,10 +26,18 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { HttpError } from '../http/errors';
 
+// Only used to verify legacy hashes during the gradual migration.
 export const BCRYPT_COST = 10;
+export const SCRYPT_LOG_N = 17;
+export const SCRYPT_R = 8;
+export const SCRYPT_P = 1;
+const SCRYPT_KEY_BYTES = 64;
+const SCRYPT_MAX_MEMORY = 256 * 1024 * 1024;
+const SCRYPT_PREFIX = '$scrypt$';
 export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_BYTES = 72;
 
@@ -101,12 +109,61 @@ export function assertPasswordAllowed(password: unknown, context: { email?: stri
   if (code) throw new HttpError(400, MESSAGES[code], code);
 }
 
-export function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, BCRYPT_COST);
+interface ScryptHash {
+  logN: number;
+  r: number;
+  p: number;
+  salt: Buffer;
+  key: Buffer;
 }
 
-export function verifyPassword(candidate: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(String(candidate), hash);
+function parseScryptHash(hash: string): ScryptHash | null {
+  const match = /^\$scrypt\$ln=(\d+),r=(\d+),p=(\d+)\$([A-Za-z0-9_-]+)\$([A-Za-z0-9_-]+)$/.exec(
+    hash
+  );
+  if (!match) return null;
+  const logN = Number(match[1]);
+  const r = Number(match[2]);
+  const p = Number(match[3]);
+  const salt = Buffer.from(match[4], 'base64url');
+  const key = Buffer.from(match[5], 'base64url');
+  // Never let a corrupt database value request unbounded CPU or memory.
+  if (logN < 14 || logN > 18 || r < 1 || r > 16 || p < 1 || p > 4) return null;
+  if (salt.length < 16 || salt.length > 64 || key.length !== SCRYPT_KEY_BYTES) return null;
+  return { logN, r, p, salt, key };
+}
+
+function deriveScrypt(password: string, hash: Pick<ScryptHash, 'logN' | 'r' | 'p' | 'salt'>) {
+  return new Promise<Buffer>((resolve, reject) => {
+    crypto.scrypt(
+      password,
+      hash.salt,
+      SCRYPT_KEY_BYTES,
+      { N: 2 ** hash.logN, r: hash.r, p: hash.p, maxmem: SCRYPT_MAX_MEMORY },
+      (error, key) => (error ? reject(error) : resolve(key))
+    );
+  });
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  const params = {
+    logN: SCRYPT_LOG_N,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+    salt: crypto.randomBytes(16)
+  };
+  const key = await deriveScrypt(password, params);
+  return `${SCRYPT_PREFIX}ln=${params.logN},r=${params.r},p=${params.p}$${params.salt.toString('base64url')}$${key.toString('base64url')}`;
+}
+
+export async function verifyPassword(candidate: string, hash: string): Promise<boolean> {
+  const parsed = parseScryptHash(hash);
+  if (parsed) {
+    const actual = await deriveScrypt(String(candidate), parsed);
+    return crypto.timingSafeEqual(actual, parsed.key);
+  }
+  if (/^\$2[aby]\$/.test(hash)) return bcrypt.compare(String(candidate), hash);
+  return false;
 }
 
 /**
@@ -118,20 +175,20 @@ export function verifyPassword(candidate: string, hash: string): Promise<boolean
  * verir.
  */
 export function needsRehash(hash: string): boolean {
-  try {
-    return bcrypt.getRounds(hash) !== BCRYPT_COST;
-  } catch {
-    return false;
+  const parsed = parseScryptHash(hash);
+  if (parsed) {
+    return parsed.logN !== SCRYPT_LOG_N || parsed.r !== SCRYPT_R || parsed.p !== SCRYPT_P;
   }
+  return /^\$2[aby]\$/.test(hash);
 }
 
-// Gerçek bir hash ile aynı maliyette, hiçbir parolaya karşılık gelmeyen sabit.
-// İlk kullanımda bir kez üretilir.
+// Güncel bir hash ile aynı maliyette, hiçbir parolaya karşılık gelmeyen sabit.
+// İlk kullanımda bir kez üretilir; her kontrolde türetme yeniden yapılır.
 let dummyHash: Promise<string> | null = null;
 
 /** Kullanıcı yokken de gerçek bir doğrulama kadar zaman harcar. */
 export async function burnVerification(candidate: unknown): Promise<false> {
-  if (!dummyHash) dummyHash = bcrypt.hash('support-chat-timing-equaliser', BCRYPT_COST);
-  await bcrypt.compare(String(candidate ?? ''), await dummyHash);
+  if (!dummyHash) dummyHash = hashPassword('support-chat-timing-equaliser');
+  await verifyPassword(String(candidate ?? ''), await dummyHash);
   return false;
 }

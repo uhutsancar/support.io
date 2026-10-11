@@ -122,7 +122,7 @@ export async function recordNewConversation(
 export async function recordAgentResolution(agentId: unknown): Promise<void> {
   if (!agentId) return;
   await Team.findByIdAndUpdate(agentId, {
-    $inc: { 'stats.activeConversations': -1, 'stats.resolvedConversations': 1 }
+    $inc: { 'stats.resolvedConversations': 1 }
   });
 }
 

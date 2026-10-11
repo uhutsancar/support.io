@@ -6,11 +6,11 @@
 
 import events from '../events';
 import { AdminNotifier } from '../realtime';
-import { updateAgentLoad } from './autoAssignment';
 import { refreshSla } from './conversationSla';
 import { recordAgentResolution, recordResolution } from './departmentStats';
 import { announceConversationEnded } from './conversationEnd';
-import { isActiveConversationStatus } from '../domain';
+import Conversation from '../models/Conversation';
+import { transitionConversationStatusAtomically } from './conversationAssignment';
 import type { Server } from 'socket.io';
 import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
@@ -35,42 +35,40 @@ export async function setConversationStatus(
 ): Promise<Doc<ConversationDoc>> {
   await conversation.populate('department');
 
-  const previousStatus = conversation.status;
-  const wasActive = isActiveConversationStatus(previousStatus);
-  const willBeActive = isActiveConversationStatus(status);
-
-  // An agent's load follows the conversation in and out of the active set.
-  if (conversation.assignedAgent && wasActive !== willBeActive) {
-    await updateAgentLoad(conversation.assignedAgent, willBeActive ? 1 : -1);
+  const transition = await transitionConversationStatusAtomically(
+    conversation._id,
+    actor.organizationId,
+    status
+  );
+  if (transition.reason) {
+    throw new Error(`Conversation status transition failed: ${transition.reason}`);
   }
+  const previousStatus = transition.previousStatus;
+  const wasActive = ['open', 'assigned', 'pending', 'unassigned'].includes(previousStatus);
+  const updated = await Conversation.findById(conversation._id).populate('department');
+  if (!updated) throw new Error('Conversation disappeared during status transition');
 
-  conversation.status = status;
-
-  if (status === 'closed') {
-    conversation.closedAt = new Date();
-  } else if (status === 'resolved') {
-    conversation.resolvedAt = new Date();
-    refreshSla(conversation);
-    if (wasActive) {
+  if (status === 'resolved') {
+    refreshSla(updated);
+    await updated.save();
+    if (transition.changed && wasActive) {
       // The same rollup the socket handler performs; see
       // services/departmentStats.ts for why it is not written out twice.
-      await recordResolution(conversation);
-      await recordAgentResolution(conversation.assignedAgent);
+      await recordResolution(updated);
+      await recordAgentResolution(updated.assignedAgent);
     }
   }
-
-  await conversation.save();
-  await conversation.populate('assignedAgent', AGENT_FIELDS);
+  await updated.populate('assignedAgent', AGENT_FIELDS);
 
   const notifier = io ? new AdminNotifier(io) : null;
-  notifier?.conversationUpdated(conversation, conversation);
-  if (status === 'resolved') notifier?.conversationResolved(conversation, conversation);
+  notifier?.conversationUpdated(updated, updated);
+  if (status === 'resolved') notifier?.conversationResolved(updated, updated);
   if (wasActive && (status === 'resolved' || status === 'closed')) {
-    await announceConversationEnded(io, conversation);
+    await announceConversationEnded(io, updated);
   }
 
-  emitStatusEvent(actor, conversation, previousStatus, status);
-  return conversation;
+  emitStatusEvent(actor, updated, previousStatus, status);
+  return updated;
 }
 
 /**

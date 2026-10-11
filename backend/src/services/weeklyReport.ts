@@ -13,6 +13,11 @@ import { appBaseUrl, mail } from './mail';
 const ZONE = 'Europe/Istanbul';
 const SEND_FROM_HOUR = 8;
 
+export function reportBatchSize(): number {
+  const configured = Number.parseInt(process.env.WEEKLY_REPORT_BATCH_SIZE ?? '', 10);
+  return Number.isFinite(configured) ? Math.min(2_000, Math.max(1, configured)) : 200;
+}
+
 interface Recipient {
   email: string;
   name: string;
@@ -43,8 +48,8 @@ export async function sweepWeeklyReports({
         AND (o.weekly_report_sent_at IS NULL OR o.weekly_report_sent_at < $1)
         AND ($2::text[] IS NULL OR o.id = ANY($2::text[]))
       ORDER BY o.id
-      LIMIT 200`,
-    [weekStart, only ?? null]
+      LIMIT $3`,
+    [weekStart, only ?? null, reportBatchSize()]
   );
 
   let sent = 0;

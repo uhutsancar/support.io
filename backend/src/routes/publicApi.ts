@@ -254,7 +254,7 @@ router.patch(
   '/conversations/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const key = caller(res);
-    const conversation = await ownConversation(key.organizationId, req.params.id);
+    let conversation = await ownConversation(key.organizationId, req.params.id);
     const hold = await siteHold(conversation.siteId);
     if (hold) throw forbidden('The site is read-only', hold);
     const body = (req.body ?? {}) as Record<string, unknown>;
@@ -273,7 +273,7 @@ router.patch(
       if (!['open', 'pending', 'resolved', 'closed'].includes(String(body.status))) {
         throw badRequest('status is one of: open, pending, resolved, closed');
       }
-      await setConversationStatus(
+      conversation = await setConversationStatus(
         ioFrom(req),
         conversation,
         body.status as ConversationDoc['status'],

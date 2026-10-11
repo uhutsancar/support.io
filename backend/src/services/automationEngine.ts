@@ -11,6 +11,7 @@ import type { Doc } from '../db/model';
 import type { AutomationRuleDoc } from '../models/AutomationRule';
 import type { AutomationAction, AutomationCondition, AutomationEvent } from '../domain';
 import { errorText } from '../http/errors';
+import { assignConversationAtomically } from './conversationAssignment';
 
 class AutomationEngine {
   io: Server;
@@ -225,12 +226,18 @@ class AutomationEngine {
       }
 
       case 'assign_agent': {
-        conversation.assignedAgent = actionPayload.agentId;
-        conversation.status = 'assigned';
-        await conversation.save();
-        // The actor is the rule, not a person, which is what `assignedBy`
-        // records here.
-        admin?.conversationAssigned(conversation, actionPayload.agentId, 'system');
+        const assignment = await assignConversationAtomically({
+          conversationId: conversation._id,
+          organizationId: String(conversation.organizationId),
+          agentId: actionPayload.agentId,
+          assignedBy: null,
+          expectedAgentId: conversation.assignedAgent || null
+        });
+        if (assignment.assigned) {
+          // The actor is the rule, not a person; a null assigned_by_id records
+          // that without inventing a cross-table id such as "system".
+          admin?.conversationAssigned(conversation, actionPayload.agentId, 'system');
+        }
         break;
       }
 

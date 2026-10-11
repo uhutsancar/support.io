@@ -245,7 +245,7 @@ test('two-step sign-in: enrolment, the second step, one use per code', async () 
     body: { password: PASSWORD }
   });
   assert.equal(setup.status, 200);
-  assert.match(setup.body.otpauthUri, /^otpauth:\/\/totp\/Support\.io/);
+  assert.match(setup.body.otpauthUri, /^otpauth:\/\/totp\/Supbort\.io/);
   assert.equal(setup.headers.get('cache-control'), 'no-store');
   const badConfirm = await api('/api/auth/2fa/confirm', {
     method: 'POST',

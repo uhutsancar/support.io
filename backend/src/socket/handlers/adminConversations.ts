@@ -5,7 +5,6 @@
 // the organization *and* the agent's site allow-list. A handler never queries a
 // conversation by id on its own.
 
-import { announceConversationEnded } from '../../services/conversationEnd';
 import Department from '../../models/Department';
 import { SEAT_SUSPENDED, hasPermission, seatPermits } from '../../middleware/rbac';
 import { countMessage } from '../../services/entitlements';
@@ -14,12 +13,8 @@ import Team from '../../models/Team';
 import User from '../../models/User';
 import { refreshSla } from '../../services/conversationSla';
 import { takeOver } from '../../services/assistant';
-import {
-  recordAgentAssignment,
-  recordAgentResolution,
-  recordDepartmentChange,
-  recordResolution
-} from '../../services/departmentStats';
+import { recordDepartmentChange } from '../../services/departmentStats';
+import { assignConversationAtomically } from '../../services/conversationAssignment';
 import {
   CLIENT_MESSAGE_TYPES,
   MAX_MESSAGE_LENGTH,
@@ -37,6 +32,7 @@ import type { Doc } from '../../db/model';
 import type { CreateInput } from '../../db/model';
 import type { ConversationDoc } from '../../models/Conversation';
 import { siteHold } from '../../services/planOverage';
+import { setConversationStatus } from '../../services/conversationStatus';
 import type { MessageDoc } from '../../models/Message';
 import type { SocketContext } from '../context';
 import type {
@@ -52,9 +48,6 @@ import type {
 
 /** PostgreSQL's code for a unique-index violation. */
 const UNIQUE_VIOLATION = '23505';
-
-/** Default cap for an account whose row does not set one. */
-const DEFAULT_CAPACITY = 10;
 
 /**
  * Whether this socket's role carries `permission` — the same role table the
@@ -269,9 +262,15 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
     // Answering an unclaimed conversation takes it: an agent who has started
     // typing is the one handling it.
     if (!conversation.assignedAgent) {
-      conversation.assignedAgent = socket.userId;
-      conversation.assignedAt = new Date();
-      conversation.status = 'assigned';
+      // Losing this race does not lose the message. Ownership changes only if
+      // the row is still active and unassigned at commit time.
+      await assignConversationAtomically({
+        conversationId: conversation._id,
+        organizationId: socket.organizationId,
+        agentId: socket.userId,
+        assignedBy: socket.userId,
+        expectedAgentId: null
+      });
     }
 
     const isFirstResponse = !conversation.firstResponseAt;
@@ -334,13 +333,21 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         return ctx.reject(socket);
       }
 
-      conversation.assignedAgent = agentId;
-      conversation.assignedBy = socket.userId;
-      conversation.assignedAt = new Date();
-      conversation.status = 'assigned';
-      await conversation.save();
-
-      await recordAgentAssignment(target.Model, agentId, socket.organizationId);
+      const assignmentResult = await assignConversationAtomically({
+        conversationId: conversation._id,
+        organizationId: socket.organizationId,
+        agentId,
+        assignedBy: socket.userId,
+        expectedAgentId: conversation.assignedAgent || null
+      });
+      if (!assignmentResult.assigned) {
+        return socket.emit('error', {
+          message:
+            assignmentResult.reason === 'capacity'
+              ? 'Maximum active conversations reached'
+              : 'Conversation assignment changed; refresh and try again'
+        });
+      }
 
       // The previous version wrapped this in two nested try/catch blocks that
       // looked the agent up again, branched three ways on which table they were
@@ -375,29 +382,21 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       const target = await findAgent(socket.userId, socket.organizationId);
       if (!target) return ctx.reject(socket);
 
-      // The two account tables name the same limit differently, so each side is
-      // read where it exists.
-      const { agent, Model } = target;
-      const capacity =
-        ('maxCapacity' in agent ? agent.maxCapacity : undefined) ??
-        ('preferences' in agent ? agent.preferences?.maxActiveConversations : undefined) ??
-        DEFAULT_CAPACITY;
-      const load =
-        ('currentLoad' in agent ? agent.currentLoad : undefined) ??
-        agent.stats?.activeConversations ??
-        0;
-
-      if (load >= capacity) {
-        return socket.emit('error', { message: 'Maximum active conversations reached' });
+      const assignment = await assignConversationAtomically({
+        conversationId: conversation._id,
+        organizationId: socket.organizationId,
+        agentId: socket.userId,
+        assignedBy: socket.userId,
+        expectedAgentId: null
+      });
+      if (!assignment.assigned) {
+        return socket.emit('error', {
+          message:
+            assignment.reason === 'capacity'
+              ? 'Maximum active conversations reached'
+              : 'Conversation was claimed by another agent'
+        });
       }
-
-      conversation.assignedAgent = socket.userId;
-      conversation.assignedBy = socket.userId;
-      conversation.assignedAt = new Date();
-      conversation.status = 'assigned';
-      await conversation.save();
-
-      await recordAgentAssignment(Model, socket.userId, socket.organizationId);
 
       const claim = { conversationId: conversation._id, agentId: socket.userId };
       ctx.toAdminSite(conversation.siteId, 'conversation-claimed', claim);
@@ -499,21 +498,16 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         });
       }
 
-      conversation.status = 'resolved';
-      conversation.resolvedAt = new Date();
-      refreshSla(conversation);
-      await conversation.save();
-
-      // The identical rollup the HTTP route performs; see
-      // services/departmentStats.ts for why it is no longer written out twice.
-      await recordResolution(conversation);
-      await recordAgentResolution(conversation.assignedAgent);
+      const resolved = await setConversationStatus(ctx.io, conversation, 'resolved', {
+        organizationId: socket.organizationId,
+        userId: socket.userId,
+        via: 'socket'
+      });
 
       ctx.toAdminSite(conversation.siteId, 'conversation-resolved', {
         conversationId: conversation._id,
-        conversation
+        conversation: resolved
       });
-      await announceConversationEnded(ctx.io, conversation);
     })
   );
 }

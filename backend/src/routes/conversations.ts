@@ -31,9 +31,10 @@ import {
 } from '../db/queries';
 import { listConversations, conversationCounts, messageMatchesForSearch } from '../db/inboxQueries';
 import { updateAgentLoad } from '../services/autoAssignment';
+import { assignConversationAtomically } from '../services/conversationAssignment';
 import { deleteConversations } from '../services/dataRetention';
 import { refreshSla, refreshSlaAll } from '../services/conversationSla';
-import { recordAgentAssignment, recordDepartmentChange } from '../services/departmentStats';
+import { recordDepartmentChange } from '../services/departmentStats';
 import {
   CONVERSATION_STATUSES,
   PRIORITIES,
@@ -59,7 +60,7 @@ import {
   mayAccessSite
 } from '../http';
 import type { Request, Response } from 'express';
-import type { Doc, UpdateSpec } from '../db/model';
+import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
 import type { InboxScope } from '../db/inboxQueries';
 
@@ -334,24 +335,26 @@ async function assignConversation(
   if (agentId && !target) throw notFound('Agent');
 
   const previousAgentId = conversation.assignedAgent;
-  const update: UpdateSpec = {
-    assignedAgent: agentId || null,
+  const assignment = await assignConversationAtomically({
+    conversationId: conversation._id,
+    organizationId,
+    agentId: agentId || null,
     assignedBy: req.userId,
-    status: agentId ? 'assigned' : 'unassigned',
-    assignedAt: agentId ? new Date() : null
-  };
-
-  const updated = await withRelations(
-    Conversation.findByIdAndUpdate(conversation._id, update, { new: true })
-  );
+    expectedAgentId: previousAgentId || null
+  });
+  if (!assignment.assigned) {
+    const message =
+      assignment.reason === 'capacity'
+        ? 'Agent has reached maximum capacity'
+        : assignment.reason === 'inactive'
+          ? 'Closed conversations cannot be assigned'
+          : 'Conversation assignment changed; refresh and try again';
+    throw conflict(message, 'ASSIGNMENT_CONFLICT');
+  }
+  const updated = await withRelations(Conversation.findById(conversation._id));
 
   const changed = String(previousAgentId || '') !== String(agentId || '');
   if (changed) {
-    if (previousAgentId) await updateAgentLoad(previousAgentId, -1);
-    if (agentId) {
-      await updateAgentLoad(agentId, 1);
-      await recordAgentAssignment(target!.Model, agentId, organizationId);
-    }
     events.emit('conversation.assigned', {
       organizationId,
       userId: req.user?._id ?? null,
@@ -396,35 +399,26 @@ router.put(
     const target = await findOrganizationAgent(agentId, organizationId, conversation.siteId);
     if (!target) throw notFound('Agent');
 
-    const { agent, Model } = target;
+    const { agent } = target;
     if (agent.status !== 'online') {
       throw conflict('Agent must be online to claim conversations');
     }
 
-    // Only a Team row carries the load counters; a User account falls back to the
-    // same defaults the check has always used.
-    const currentLoad = ('currentLoad' in agent ? agent.currentLoad : undefined) || 0;
-    const maxCapacity = ('maxCapacity' in agent ? agent.maxCapacity : undefined) || 10;
-    if (currentLoad >= maxCapacity) throw conflict('Agent has reached maximum capacity');
-
-    // The ownership test and the write happen in one UPDATE, so two agents
-    // clicking at the same moment cannot both win.
-    const claimed = await withRelations(
-      Conversation.findOneAndUpdate(
-        {
-          _id: conversation._id,
-          organizationId,
-          assignedAgent: null,
-          status: { $in: ['open', 'unassigned', 'pending'] }
-        },
-        { assignedAgent: agentId, assignedBy: agentId, assignedAt: new Date(), status: 'assigned' },
-        { new: true }
-      )
-    );
-    if (!claimed) throw conflict('Conversation was claimed by another agent');
-
-    await updateAgentLoad(agentId, 1);
-    await recordAgentAssignment(Model, agentId, organizationId);
+    const assignment = await assignConversationAtomically({
+      conversationId: conversation._id,
+      organizationId,
+      agentId,
+      assignedBy: agentId,
+      expectedAgentId: null
+    });
+    if (!assignment.assigned) {
+      if (assignment.reason === 'capacity') {
+        throw conflict('Agent has reached maximum capacity');
+      }
+      throw conflict('Conversation was claimed by another agent');
+    }
+    const claimed = await withRelations(Conversation.findById(conversation._id));
+    if (!claimed) throw notFound('Conversation');
 
     const notifier = notifyAdmin(req);
     notifier?.conversationClaimed(claimed, agentId);

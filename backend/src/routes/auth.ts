@@ -376,7 +376,7 @@ router.post(
     }
 
     if (!user) {
-      // An unregistered address still costs one bcrypt comparison, so the
+      // An unregistered address still costs one current password derivation, so the
       // response time does not reveal which addresses exist.
       await burnVerification(password);
       events.emit('auth.login.failure', {
@@ -402,7 +402,7 @@ router.post(
     }
 
     // The password is in hand and the hash is out of date, so it is upgraded to
-    // today's cost without the user doing anything.
+    // today's algorithm and cost without the user doing anything.
     if (needsRehash(user.password)) {
       user.password = password;
       await user.save();

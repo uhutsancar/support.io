@@ -4,6 +4,7 @@ import Conversation from '../models/Conversation';
 import Department from '../models/Department';
 import { isAwayPresence } from '../domain';
 import { pushConversationEvent } from './push';
+import { assignConversationAtomically } from './conversationAssignment';
 import type { Doc, Filter } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
 
@@ -55,7 +56,7 @@ function loadAgents(filter: Filter) {
  * Failures were swallowed and reported as "no agent available", so a broken
  * query looked exactly like an empty team.
  */
-async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId: string) {
+async function findBestAgents(conversation: Doc<ConversationDoc>, organizationId: string) {
   const { requiredSkills = [], department } = conversation;
   // A seat over the plan's limit reads but does not reply (BIL-04): it is
   // never handed a conversation.
@@ -76,7 +77,7 @@ async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId:
   }
 
   const everyone = candidates.length > 0 ? candidates : await loadAgents(onlineInOrg);
-  if (everyone.length === 0) return null;
+  if (everyone.length === 0) return [];
 
   const wanted = requiredSkills.map((skill: string) => skill.toLowerCase());
   const skilled = wanted.length
@@ -89,10 +90,14 @@ async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId:
   const available = pool.filter(
     (agent) => (agent.currentLoad || 0) < (agent.maxCapacity || DEFAULT_CAPACITY)
   );
-  if (available.length === 0) return null;
-
   // Least busy first, so work spreads instead of piling onto whoever sorts first.
-  return available.sort((a, b) => (a.currentLoad || 0) - (b.currentLoad || 0))[0];
+  // The atomic capacity reservation below tries the rest if this snapshot was
+  // made stale by another assignment.
+  return available.sort((a, b) => (a.currentLoad || 0) - (b.currentLoad || 0));
+}
+
+async function findBestAgent(conversation: Doc<ConversationDoc>, organizationId: string) {
+  return (await findBestAgents(conversation, organizationId))[0] ?? null;
 }
 async function autoAssignConversation(
   conversationId: unknown,
@@ -111,33 +116,40 @@ async function autoAssignConversation(
         return { success: false, reason: 'Recently assigned, skipping auto-reassign' };
       }
     }
-    const bestAgent = await findBestAgent(conversation, organizationId);
-    if (!bestAgent) {
-      await Conversation.findByIdAndUpdate(conversationId, {
-        status: 'unassigned'
-      });
+    const candidates = await findBestAgents(conversation, organizationId);
+    if (!candidates.length) {
+      // Do not "normalize" the status with an unconditional write here. A
+      // close can race this stale candidate lookup; writing `unassigned`
+      // would then reopen the closed conversation. New conversations already
+      // enter this path as open/unassigned and can safely stay that way.
       return { success: false, reason: 'No eligible agent available' };
     }
-    conversation.assignedAgent = bestAgent._id;
-    conversation.assignedBy = bestAgent._id;
-    conversation.assignedAt = new Date();
-    conversation.status = 'assigned';
-    await conversation.save();
-    await Team.findByIdAndUpdate(bestAgent._id, {
-      $inc: {
-        currentLoad: 1,
-        'stats.activeConversations': 1,
-        'stats.totalConversations': 1
+    for (const candidate of candidates) {
+      // eslint-disable-next-line no-await-in-loop -- candidates are capacity reservations
+      const assignment = await assignConversationAtomically({
+        conversationId,
+        organizationId,
+        agentId: candidate._id,
+        assignedBy: candidate._id,
+        expectedAgentId: null
+      });
+      if (assignment.reason === 'capacity') continue;
+      if (!assignment.assigned) {
+        return { success: false, reason: `Conversation assignment ${assignment.reason}` };
       }
-    });
-    // Nothing on the socket tells the agent (the inbox shows it); a closed
-    // panel hears it by push (PRD-09).
-    void pushConversationEvent('assigned', conversation, { assignee: bestAgent._id });
-    return {
-      success: true,
-      agentId: bestAgent._id,
-      agentName: bestAgent.name
-    };
+      const assigned = await Conversation.findById(conversationId);
+      if (assigned) {
+        // Nothing on the socket tells the agent (the inbox shows it); a closed
+        // panel hears it by push (PRD-09).
+        void pushConversationEvent('assigned', assigned, { assignee: candidate._id });
+      }
+      return {
+        success: true,
+        agentId: candidate._id,
+        agentName: candidate.name
+      };
+    }
+    return { success: false, reason: 'All eligible agents reached capacity' };
   } catch (error) {
     // Auto-assignment is best effort: the conversation still exists and an
     // agent can pick it up by hand. The cause is logged rather than only
@@ -168,21 +180,51 @@ async function checkAndReassign(
     if (!shouldReassign) {
       return { reassigned: false, reason: 'No need to reassign' };
     }
-    const oldAgentId = conversation.assignedAgent._id;
-    await Team.findByIdAndUpdate(oldAgentId, {
-      $inc: {
-        currentLoad: -1,
-        'stats.activeConversations': -1
+    const oldAgentId = String(conversation.assignedAgent._id);
+    const candidates = (await findBestAgents(conversation, organizationId)).filter(
+      (candidate) => String(candidate._id) !== oldAgentId
+    );
+    let assignResult: AssignmentResult = {
+      success: false,
+      reason: 'No eligible replacement available'
+    };
+    for (const candidate of candidates) {
+      // eslint-disable-next-line no-await-in-loop -- each candidate reserves capacity atomically
+      const moved = await assignConversationAtomically({
+        conversationId,
+        organizationId,
+        agentId: candidate._id,
+        assignedBy: candidate._id,
+        expectedAgentId: oldAgentId
+      });
+      if (moved.reason === 'capacity') continue;
+      if (moved.assigned) {
+        assignResult = {
+          success: true,
+          agentId: String(candidate._id),
+          agentName: candidate.name
+        };
+      } else {
+        assignResult = { success: false, reason: `Conversation assignment ${moved.reason}` };
       }
-    });
-    conversation.assignedAgent = null;
-    conversation.assignedAt = null;
-    conversation.assignedBy = null;
-    conversation.status = 'unassigned';
-    conversation.autoReassignAttempts = (conversation.autoReassignAttempts || 0) + 1;
-    conversation.lastReassignAt = new Date();
-    await conversation.save();
-    const assignResult = await autoAssignConversation(conversationId, organizationId);
+      break;
+    }
+    if (!assignResult.success && assignResult.reason === 'No eligible replacement available') {
+      const released = await assignConversationAtomically({
+        conversationId,
+        organizationId,
+        agentId: null,
+        assignedBy: null,
+        expectedAgentId: oldAgentId
+      });
+      if (!released.assigned) {
+        return { reassigned: false, reason: `Conversation assignment ${released.reason}` };
+      }
+    }
+    await Conversation.findOneAndUpdate(
+      { _id: conversationId, organizationId },
+      { $inc: { autoReassignAttempts: 1 }, lastReassignAt: new Date() }
+    );
     return {
       reassigned: assignResult.success,
       reason: assignResult.reason || 'Reassigned successfully',
@@ -215,4 +257,4 @@ async function updateAgentLoad(agentId: unknown, delta: number): Promise<void> {
     console.error('[assignment] could not adjust load for agent', agentId, error);
   }
 }
-export { findBestAgent, autoAssignConversation, checkAndReassign, updateAgentLoad };
+export { findBestAgent, findBestAgents, autoAssignConversation, checkAndReassign, updateAgentLoad };

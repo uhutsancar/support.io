@@ -29,6 +29,22 @@ import type { AdminSocket, UploadedFilePayload, VerifiedFile, WidgetSocket } fro
 
 /** The largest attachment a message may reference. */
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const WRITE_EVENTS = new Set([
+  'join-conversation',
+  'send-message',
+  'assign-conversation',
+  'claim-conversation',
+  'set-department',
+  'set-priority',
+  'resolve-conversation',
+  'update-status',
+  'team-chat-send',
+  'visitor-contact',
+  'rate-conversation',
+  'request-transcript',
+  'visitor-page-view',
+  'request-human'
+]);
 
 /** Hosts whose plain-http attachment URLs are acceptable in development. */
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
@@ -71,14 +87,16 @@ export class SocketContext {
       if (!socket.tokenExpiresAt || Date.now() >= socket.tokenExpiresAt) return false;
       if ('userId' in socket && socket.userId) {
         const Account = socket.userType === 'team' ? Team : User;
-        const account = await Account.findOne({ _id: socket.userId, isActive: true });
+        const account = await Account.findOne({ _id: socket.userId, isActive: true }).select(
+          'organizationId sessionVersion assignedSites role seatSuspendedAt totpEnabledAt totpSecretEnc'
+        );
         if (!account?.organizationId) return false;
         if (String(account.organizationId) !== String(socket.organizationId)) return false;
         if ((account.sessionVersion ?? 0) !== socket.sessionVersion) return false;
         const organization = await Organization.findOne({
           _id: account.organizationId,
           isActive: true
-        });
+        }).select('enforce2fa');
         if (!organization) return false;
         if (organization.enforce2fa && !(account.totpEnabledAt && account.totpSecretEnc)) {
           return false;
@@ -97,7 +115,9 @@ export class SocketContext {
       }
 
       if (!('widgetKeyVersion' in socket)) return false;
-      const site = await Site.findOne({ _id: socket.siteId, isActive: true });
+      const site = await Site.findOne({ _id: socket.siteId, isActive: true }).select(
+        'siteKey suspendedAt blockedAt'
+      );
       return Boolean(
         site &&
         !site.suspendedAt &&
@@ -111,8 +131,37 @@ export class SocketContext {
 
   /** Applies current-auth checks to every incoming packet and token expiry. */
   installLiveAuthorization(socket: AdminSocket | WidgetSocket): void {
-    socket.use((_packet, next) => {
-      void this.socketIsCurrent(socket).then((current) => {
+    const duration = (name: string, fallback: number) => {
+      const value = Number(process.env[name]);
+      return Number.isFinite(value) && value >= 0 ? value : fallback;
+    };
+    const freshMs = duration('SOCKET_AUTH_FRESH_MS', 5_000);
+    const writeFreshMs = Math.max(
+      0,
+      Math.min(2_000, duration('SOCKET_AUTH_WRITE_FRESH_MS', 1_000))
+    );
+    let lastCheckedAt = 0;
+    let checkInFlight: Promise<boolean> | null = null;
+    const currentWithin = (maximumAge: number): Promise<boolean> => {
+      if (!socket.tokenExpiresAt || Date.now() >= socket.tokenExpiresAt)
+        return Promise.resolve(false);
+      if (lastCheckedAt && Date.now() - lastCheckedAt < maximumAge) return Promise.resolve(true);
+      if (checkInFlight) return checkInFlight;
+      checkInFlight = this.socketIsCurrent(socket)
+        .then((current) => {
+          if (current) lastCheckedAt = Date.now();
+          return current;
+        })
+        .finally(() => {
+          checkInFlight = null;
+        });
+      return checkInFlight;
+    };
+
+    socket.use((packet, next) => {
+      const event = typeof packet[0] === 'string' ? packet[0] : '';
+      const maximumAge = WRITE_EVENTS.has(event) ? writeFreshMs : freshMs;
+      void currentWithin(maximumAge).then((current) => {
         if (current) next();
         else {
           socket.disconnect(true);
@@ -141,7 +190,7 @@ export class SocketContext {
     // another process.
     const interval = setInterval(
       () => {
-        void this.socketIsCurrent(socket).then((current) => {
+        void currentWithin(0).then((current) => {
           if (!current) socket.disconnect(true);
         });
       },
