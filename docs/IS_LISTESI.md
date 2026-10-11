@@ -355,8 +355,8 @@ tamamlandı ve doğrulandı · `[!]` kod dışı sahip kararı/işlemi.
 
 Son doğrulama: kök `npm run check` ve iki `format:check` geçti; backend
 321/322 geçti, 1 bilinçli atlandı; widget 25,6 KB ve panel ilk yükleme 145,9
-KB gzip ile bütçe içinde. Playwright tam koşudaki tek seçici belirsizliği
-düzeltildikten sonra hedefli MFA koşusu geçti; gerçek model ve WordPress
-senaryoları ilgili dış hesaplar olmadığı için bilinçli atlanıyor. Lighthouse
+KB gzip ile bütçe içinde. Playwright tam matrisinde 39/41 senaryo geçti,
+2 senaryo (gerçek model ve WordPress) ilgili dış hesaplar olmadığı için bilinçli
+atlandı ve 0 senaryo başarısız oldu. Lighthouse
 statik üretim önizlemesi ana sayfa 62, fiyatlandırma 81 ve Yapay Zekâ 78;
 90 hedefi karşılanmadığı için bu performans maddesi go/no-go'da açık risk.

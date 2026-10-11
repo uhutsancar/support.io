@@ -49,7 +49,7 @@ tamamlandığında aşağıdaki ❌ maddeler yeniden işaretlenir.
 | Çevrimdışı akış + kaçırılan sohbet e-postası (PRD-01) | ✅ | 862eae6 |
 | Bildirimler, hazır yanıtlar, CSAT, ön form + KVKK onayı, aktivasyon | ✅ | 862eae6, ea8fcb2 |
 | Widget erişilebilirliği axe 0 ciddi; mobil widget | ✅ emülasyon · ❌ gerçek cihaz | acf873c, 3335903; iOS/Android cihaz denemesi sahipte |
-| Playwright ≥ 14 senaryo yeşil | ✅ | 41 senaryo: 38 geçti, 2 bilinçli atlandı; tek belirsiz seçici düzeltildikten sonra hedefli yeniden koşu geçti (toplam etkin sonuç 39 geçti, 2 atlandı, 0 açık hata) |
+| Playwright ≥ 14 senaryo yeşil | ✅ | Tam matris: 39/41 geçti, 2 bilinçli atlandı (gerçek model, `WP_URL` olmadan WordPress), 0 başarısız |
 
 ## Yapay zekâ
 
@@ -75,10 +75,8 @@ tamamlandığında aşağıdaki ❌ maddeler yeniden işaretlenir.
 Faz: Plan v10 — tamamı (Faz 0–14)
 Tamamlanan görevler: docs/IS_LISTESI.md bölüm E ve F — her görev, durumu ve commit'i
 Testler: backend 321/322 geçti, 1 bilinçli atlandı (gerçek modelle asistan
-         denemesi), 0 başarısız; Playwright tam koşuda 38/41 geçti, 2 bilinçli
-         atlandı (gerçek modelle asistan, WordPress — WP_URL olmadan); kalan
-         tek testte Google kartının eklenmesiyle aynı etikete sahip iki alanı
-         ayıran seçici düzeltildi ve hedefli koşu geçti; açık hata yok;
+         denemesi), 0 başarısız; Playwright tam matriste 39/41 geçti, 2 bilinçli
+         atlandı (gerçek modelle asistan, WordPress — WP_URL olmadan), 0 başarısız;
          npm audit (prod) backend 0 / panel 0 açık; imaj taraması (Trivy, supportio:local,
          Alpine 3.24.2) düzeltilebilir kritik/yüksek 0; yerel üretim yığınında
          göçler 0000–0024 temiz veritabanına uygulandı, duman testi 23/23 geçti
