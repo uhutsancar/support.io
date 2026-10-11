@@ -316,7 +316,7 @@ tamamlandı ve doğrulandı · `[!]` kod dışı sahip kararı/işlemi.
 
 | Görev | Durum | Commit / kanıt |
 |---|---|---|
-| A — Görünen marka Support.io → Supbort.io | [x] | `d839b61` |
+| A — Görünen marka Support.io → Supbort.io | [x] | `d839b61`, `0bea5cf` |
 | B-01 — Panel ErrorBoundary | [x] | `eefd610` |
 | B-02 — Deploy parçası kurtarma, bağlantı geri dönüşü | [x] | `eefd610`, `48d19e3` |
 | B-03 — Atama lost-update yarışı | [x] | `dbf70ab`; 20 eşzamanlı atama testi |
