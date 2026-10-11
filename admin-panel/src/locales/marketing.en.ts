@@ -13,7 +13,37 @@
 
 export default {
   common: {
-    skipToContent: 'Skip to content'
+    skipToContent: 'Skip to content',
+    copy: 'Copy',
+    copied: 'Copied',
+    yes: 'Yes',
+    no: 'No',
+    unexpectedErrorTitle: 'Something went wrong',
+    unexpectedErrorBody: 'This section could not load. Reload the page to continue working.',
+    newVersionTitle: 'A new version is ready',
+    newVersionBody: 'The application was updated. Reload the page to open the latest version.',
+    reloadPage: 'Reload page'
+  },
+
+  header: {
+    pricing: 'Pricing',
+    about: 'About',
+    docs: 'Documentation',
+    panel: 'Dashboard',
+    logout: 'Logout',
+    login: 'Login',
+    register: 'Get Started Free',
+    goToHome: 'Go to homepage',
+    mainNavigation: 'Main navigation',
+    switchLanguage: 'Switch language',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu'
+  },
+
+  notFound: {
+    title: 'Page not found',
+    body: 'The page may have moved, been removed, or the address may be mistyped.',
+    home: 'Back to homepage'
   },
 
   nav: {
@@ -39,7 +69,7 @@ export default {
     hero: {
       title: 'Every message answered,',
       accent: 'no customer left waiting.',
-      desc: 'Add live chat to your site with one line. The AI assistant answers common questions in seconds; your team handles the rest from one inbox.',
+      desc: 'Live chat for small and medium-sized businesses: add it to your site with one line. AI answers common questions; your team handles the rest from one inbox.',
       tour: 'Tour the product',
       photoAlt: 'Support agent with a headset answering a customer at a computer',
       notifTitle: 'New conversation · /pricing',
@@ -311,9 +341,9 @@ export default {
 
   landing: {
     home: {
-      metaTitle: 'Supbort.io — Add live chat to your site',
+      metaTitle: 'Supbort.io — Live Chat & AI Assistant for Small Business',
       metaDesc:
-        'Your customers message you from your own site; your team answers from one screen. One line of code. Start on the free plan.',
+        'Add live chat to your site with one line of code. AI answers common questions and your team handles the rest from one inbox. Start on the free plan.',
 
       btnStart: 'Start free',
       btnDocs: 'Setup guide',
@@ -407,9 +437,9 @@ export default {
 
   featuresPage: {
     meta: {
-      title: 'Features',
+      title: 'Live Chat Software Features',
       description:
-        'Live chat, chat bubble, department routing, automatic rules, proactive messages, help content, reports and team management.'
+        'Explore live chat, one shared inbox, department routing, automation, proactive messages, reports and team management.'
     },
     eyebrow: 'Product',
     title: 'Everything your support team uses all day',
@@ -739,9 +769,9 @@ export default {
 
   pricingPage: {
     meta: {
-      title: 'Pricing',
+      title: 'Live Chat Pricing — Free Plan',
       description:
-        'Start on the free plan. Paid plans are one flat monthly price, not per seat, with nothing hidden.'
+        'Start with a free plan that has no time limit and needs no credit card. Compare Pro and Enterprise live chat plans with clear monthly pricing.'
     },
     eyebrow: 'Pricing',
     title: 'Start free, move up when your team grows',

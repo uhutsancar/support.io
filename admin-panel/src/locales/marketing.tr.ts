@@ -21,7 +21,37 @@
 
 export default {
   common: {
-    skipToContent: 'İçeriğe geç'
+    skipToContent: 'İçeriğe geç',
+    copy: 'Kopyala',
+    copied: 'Kopyalandı',
+    yes: 'Evet',
+    no: 'Hayır',
+    unexpectedErrorTitle: 'Bir şey ters gitti',
+    unexpectedErrorBody: 'Bu bölüm yüklenemedi. Çalışmanıza devam etmek için sayfayı yenileyin.',
+    newVersionTitle: 'Yeni sürüm hazır',
+    newVersionBody: 'Uygulama güncellendi. En yeni sürümü açmak için sayfayı yenileyin.',
+    reloadPage: 'Sayfayı yenile'
+  },
+
+  header: {
+    pricing: 'Fiyatlandırma',
+    about: 'Hakkımızda',
+    docs: 'Dokümantasyon',
+    panel: 'Panel',
+    logout: 'Çıkış Yap',
+    login: 'Giriş Yap',
+    register: 'Ücretsiz Başla',
+    goToHome: 'Ana sayfaya git',
+    mainNavigation: 'Ana navigasyon',
+    switchLanguage: 'Dili değiştir',
+    openMenu: 'Menüyü aç',
+    closeMenu: 'Menüyü kapat'
+  },
+
+  notFound: {
+    title: 'Sayfa bulunamadı',
+    body: 'Aradığınız sayfa taşınmış, silinmiş veya adresi yanlış yazılmış olabilir.',
+    home: 'Ana sayfaya dön'
   },
 
   nav: {
@@ -49,7 +79,7 @@ export default {
     hero: {
       title: 'Her mesaja cevap,',
       accent: 'hiçbir müşteri beklemesin.',
-      desc: 'Sitenize tek satırla canlı destek ekleyin. Yapay zekâ asistanı sık soruları saniyeler içinde yanıtlar; gerisini ekibiniz tek gelen kutusundan karşılar.',
+      desc: 'Küçük ve orta ölçekli işletmeler için canlı destek: sitenize tek satırla ekleyin. Yapay zekâ sık soruları yanıtlar; gerisini ekibiniz tek gelen kutusundan karşılar.',
       tour: 'Ürünü gezin',
       photoAlt: 'Kulaklıkla bilgisayar başında müşteriye yanıt veren destek temsilcisi',
       notifTitle: 'Yeni konuşma · /fiyatlandirma',
@@ -326,9 +356,9 @@ export default {
 
   landing: {
     home: {
-      metaTitle: 'Supbort.io — Sitenize canlı destek ekleyin',
+      metaTitle: 'Supbort.io — KOBİ’ler için Canlı Destek ve Yapay Zekâ',
       metaDesc:
-        'Müşterileriniz sitenizden yazar, ekibiniz tek ekrandan yanıtlar. Kurulum bir satır kod. Ücretsiz planla başlayın.',
+        'Sitenize tek satır kodla canlı destek ekleyin. Yapay zekâ sık soruları yanıtlar, ekibiniz tek gelen kutusundan karşılar. Ücretsiz planla başlayın.',
 
       btnStart: 'Ücretsiz başlayın',
       btnDocs: 'Kurulum rehberi',
@@ -425,9 +455,9 @@ export default {
 
   featuresPage: {
     meta: {
-      title: 'Özellikler',
+      title: 'Canlı Destek Yazılımı Özellikleri',
       description:
-        'Canlı sohbet, sohbet balonu, departman yönlendirme, otomatik kurallar, proaktif mesaj, yardım içeriği, raporlar ve ekip yönetimi.'
+        'Canlı sohbet, tek gelen kutusu, departman yönlendirme, otomasyon, proaktif mesajlar, raporlar ve ekip yönetimi özelliklerini inceleyin.'
     },
     eyebrow: 'Ürün',
     title: 'Destek ekibinizin gün boyu kullandığı her şey',
@@ -764,9 +794,9 @@ export default {
 
   pricingPage: {
     meta: {
-      title: 'Fiyatlandırma',
+      title: 'Canlı Destek Fiyatları — Ücretsiz Plan ve TL Fiyatlar',
       description:
-        'Ücretsiz planla başlayın. Ücretli planlarda kişi başı değil, sabit aylık ücret; gizli kalem yok.'
+        'Süresiz ücretsiz planla başlayın; kredi kartı gerekmez. Pro ve Kurumsal canlı destek planlarını TL fiyatları ve özellikleriyle karşılaştırın.'
     },
     eyebrow: 'Fiyatlandırma',
     title: 'Ücretsiz başlayın, ekibiniz büyüyünce geçin',

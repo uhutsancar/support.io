@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { SocketProvider } from './contexts/SocketContext';
 import PlanGate from './components/billing/PlanGate';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Home = lazy(() => import('./pages/Home'));
 const Features = lazy(() => import('./pages/Features'));
@@ -58,6 +59,7 @@ const FeatureDetail = lazy(() => import('./pages/FeatureDetail'));
 const Solution = lazy(() => import('./pages/Solution'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const Compare = lazy(() => import('./pages/Compare'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 const LoadingSpinner = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -122,362 +124,359 @@ const PublicRoute = ({ children }: { children?: any; [prop: string]: any }) => {
   }
   return !isAuthenticated ? children : <Navigate to={`${langPrefix}/dashboard`} />;
 };
-const DefaultRedirect = () => {
-  const location = useLocation();
-  const langPrefix = location.pathname.startsWith('/en') ? '/en' : '';
-  return <Navigate to={langPrefix || '/'} />;
-};
 function App() {
   return (
-    <HelmetProvider>
-      <ThemeProvider>
-        <BrowserRouter>
-          <LanguageProvider>
-            <AuthProvider>
-              <SocketProvider>
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: 'var(--toast-bg, #363636)',
-                      color: 'var(--toast-color, #fff)'
-                    },
-                    success: {
-                      duration: 3000,
-                      iconTheme: {
-                        primary: '#10b981',
-                        secondary: '#fff'
-                      }
-                    },
-                    error: {
+    <ErrorBoundary>
+      <HelmetProvider>
+        <ThemeProvider>
+          <BrowserRouter>
+            <LanguageProvider>
+              <AuthProvider>
+                <SocketProvider>
+                  <Toaster
+                    position="top-right"
+                    toastOptions={{
                       duration: 4000,
-                      iconTheme: {
-                        primary: '#ef4444',
-                        secondary: '#fff'
-                      }
-                    }
-                  }}
-                />
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/ozellikler" element={<Features />} />
-                    <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
-                    <Route path="/cozumler/:slug" element={<Solution />} />
-                    <Route path="/karsilastirma/:slug" element={<Compare />} />
-                    <Route path="/fiyatlandirma" element={<Pricing />} />
-                    <Route path="/yapay-zeka" element={<AiAssistant />} />
-                    <Route path="/gizlilik" element={<Legal kind="privacy" />} />
-                    <Route path="/kullanim-sartlari" element={<Legal kind="terms" />} />
-                    <Route path="/erisilebilirlik" element={<Legal kind="accessibility" />} />
-                    <Route path="/yapay-zeka-kullanimi" element={<Legal kind="aiUse" />} />
-                    <Route path="/dokumantasyon" element={<Docs />} />
-                    <Route path="/dokumantasyon/api" element={<ApiDocs />} />
-                    <Route path="/hakkimizda" element={<About />} />
-                    <Route
-                      path="/login"
-                      element={
-                        <PublicRoute>
-                          <Login />
-                        </PublicRoute>
-                      }
-                    />
-                    <Route
-                      path="/register"
-                      element={
-                        <PublicRoute>
-                          <Register />
-                        </PublicRoute>
-                      }
-                    />
-                    <Route
-                      path="/forgot-password"
-                      element={
-                        <PublicRoute>
-                          <ForgotPassword />
-                        </PublicRoute>
-                      }
-                    />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/verify-email" element={<VerifyEmail />} />
-                    <Route path="/confirm-email" element={<ConfirmEmail />} />
-                    <Route path="/rate" element={<RateConversation />} />
-                    <Route path="/invite/accept" element={<AcceptInvitation />} />
-                    <Route path="/en" element={<Home />} />
-                    <Route path="/en/features" element={<Features />} />
-                    <Route path="/en/features/:slug" element={<FeatureDetail />} />
-                    <Route path="/en/solutions/:slug" element={<Solution />} />
-                    <Route path="/en/compare/:slug" element={<Compare />} />
-                    <Route path="/en/pricing" element={<Pricing />} />
-                    <Route path="/en/ai-assistant" element={<AiAssistant />} />
-                    <Route path="/en/privacy" element={<Legal kind="privacy" />} />
-                    <Route path="/en/terms" element={<Legal kind="terms" />} />
-                    <Route path="/en/accessibility" element={<Legal kind="accessibility" />} />
-                    <Route path="/en/ai-use" element={<Legal kind="aiUse" />} />
-                    <Route path="/en/documentation" element={<Docs />} />
-                    <Route path="/en/documentation/api" element={<ApiDocs />} />
-                    <Route path="/en/about" element={<About />} />
-                    <Route
-                      path="/en/login"
-                      element={
-                        <PublicRoute>
-                          <Login />
-                        </PublicRoute>
-                      }
-                    />
-                    <Route
-                      path="/en/register"
-                      element={
-                        <PublicRoute>
-                          <Register />
-                        </PublicRoute>
-                      }
-                    />
-                    <Route
-                      path="/en/forgot-password"
-                      element={
-                        <PublicRoute>
-                          <ForgotPassword />
-                        </PublicRoute>
-                      }
-                    />
-                    <Route path="/en/reset-password" element={<ResetPassword />} />
-                    <Route path="/en/verify-email" element={<VerifyEmail />} />
-                    <Route path="/en/confirm-email" element={<ConfirmEmail />} />
-                    <Route path="/en/rate" element={<RateConversation />} />
-                    <Route path="/en/invite/accept" element={<AcceptInvitation />} />
-                    <Route
-                      path="/onboarding"
-                      element={
-                        <ProtectedRoute>
-                          <Onboarding />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/en/onboarding"
-                      element={
-                        <ProtectedRoute>
-                          <Onboarding />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<Dashboard />} />
-                      <Route path="sites" element={<Sites />} />
-                      <Route path="assistant" element={<Assistant />} />
-                      <Route path="billing" element={<Billing />} />
-                      <Route path="upgrade" element={<Upgrade />} />
-                      <Route path="conversations" element={<Conversations />} />
-                      <Route path="assigned" element={<Assigned />} />
-                      <Route
-                        path="analytics"
-                        element={
-                          <AdminRoute>
-                            <Analytics />
-                          </AdminRoute>
+                      style: {
+                        background: 'var(--toast-bg, #363636)',
+                        color: 'var(--toast-color, #fff)'
+                      },
+                      success: {
+                        duration: 3000,
+                        iconTheme: {
+                          primary: '#10b981',
+                          secondary: '#fff'
                         }
-                      />
-                      <Route path="faqs" element={<FAQs />} />
-                      <Route path="team" element={<Team />} />
-                      <Route path="team-chat" element={<TeamChat />} />
+                      },
+                      error: {
+                        duration: 4000,
+                        iconTheme: {
+                          primary: '#ef4444',
+                          secondary: '#fff'
+                        }
+                      }
+                    }}
+                  />
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/ozellikler" element={<Features />} />
+                      <Route path="/ozellikler/:slug" element={<FeatureDetail />} />
+                      <Route path="/cozumler/:slug" element={<Solution />} />
+                      <Route path="/karsilastirma/:slug" element={<Compare />} />
+                      <Route path="/fiyatlandirma" element={<Pricing />} />
+                      <Route path="/yapay-zeka" element={<AiAssistant />} />
+                      <Route path="/gizlilik" element={<Legal kind="privacy" />} />
+                      <Route path="/kullanim-sartlari" element={<Legal kind="terms" />} />
+                      <Route path="/erisilebilirlik" element={<Legal kind="accessibility" />} />
+                      <Route path="/yapay-zeka-kullanimi" element={<Legal kind="aiUse" />} />
+                      <Route path="/dokumantasyon" element={<Docs />} />
+                      <Route path="/dokumantasyon/api" element={<ApiDocs />} />
+                      <Route path="/hakkimizda" element={<About />} />
                       <Route
-                        path="departments"
+                        path="/login"
                         element={
-                          <PlanGate feature="departments">
-                            <Departments />
-                          </PlanGate>
+                          <PublicRoute>
+                            <Login />
+                          </PublicRoute>
                         }
                       />
                       <Route
-                        path="integrations"
+                        path="/register"
                         element={
-                          <AdminRoute>
-                            <PlanGate feature="integrations">
-                              <Integrations />
-                            </PlanGate>
-                          </AdminRoute>
+                          <PublicRoute>
+                            <Register />
+                          </PublicRoute>
                         }
                       />
                       <Route
-                        path="audit-logs"
+                        path="/forgot-password"
                         element={
-                          <AdminRoute>
-                            <PlanGate feature="audit">
-                              <AuditLogs />
-                            </PlanGate>
-                          </AdminRoute>
+                          <PublicRoute>
+                            <ForgotPassword />
+                          </PublicRoute>
+                        }
+                      />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/verify-email" element={<VerifyEmail />} />
+                      <Route path="/confirm-email" element={<ConfirmEmail />} />
+                      <Route path="/rate" element={<RateConversation />} />
+                      <Route path="/invite/accept" element={<AcceptInvitation />} />
+                      <Route path="/en" element={<Home />} />
+                      <Route path="/en/features" element={<Features />} />
+                      <Route path="/en/features/:slug" element={<FeatureDetail />} />
+                      <Route path="/en/solutions/:slug" element={<Solution />} />
+                      <Route path="/en/compare/:slug" element={<Compare />} />
+                      <Route path="/en/pricing" element={<Pricing />} />
+                      <Route path="/en/ai-assistant" element={<AiAssistant />} />
+                      <Route path="/en/privacy" element={<Legal kind="privacy" />} />
+                      <Route path="/en/terms" element={<Legal kind="terms" />} />
+                      <Route path="/en/accessibility" element={<Legal kind="accessibility" />} />
+                      <Route path="/en/ai-use" element={<Legal kind="aiUse" />} />
+                      <Route path="/en/documentation" element={<Docs />} />
+                      <Route path="/en/documentation/api" element={<ApiDocs />} />
+                      <Route path="/en/about" element={<About />} />
+                      <Route
+                        path="/en/login"
+                        element={
+                          <PublicRoute>
+                            <Login />
+                          </PublicRoute>
                         }
                       />
                       <Route
-                        path="widget-customization/:siteId"
-                        element={<WidgetCustomization />}
-                      />
-                      <Route path="settings" element={<Settings />} />
-                      <Route
-                        path="visitors"
+                        path="/en/register"
                         element={
-                          <AdminRoute>
-                            <PlanGate feature="visitors">
-                              <Visitors />
-                            </PlanGate>
-                          </AdminRoute>
+                          <PublicRoute>
+                            <Register />
+                          </PublicRoute>
                         }
                       />
                       <Route
-                        path="crm"
+                        path="/en/forgot-password"
                         element={
-                          <AdminRoute>
-                            <PlanGate feature="crm">
-                              <CRM />
-                            </PlanGate>
-                          </AdminRoute>
+                          <PublicRoute>
+                            <ForgotPassword />
+                          </PublicRoute>
                         }
                       />
+                      <Route path="/en/reset-password" element={<ResetPassword />} />
+                      <Route path="/en/verify-email" element={<VerifyEmail />} />
+                      <Route path="/en/confirm-email" element={<ConfirmEmail />} />
+                      <Route path="/en/rate" element={<RateConversation />} />
+                      <Route path="/en/invite/accept" element={<AcceptInvitation />} />
                       <Route
-                        path="my-performance"
+                        path="/onboarding"
                         element={
                           <ProtectedRoute>
-                            <AgentPerformance />
+                            <Onboarding />
                           </ProtectedRoute>
                         }
                       />
                       <Route
-                        path="automation-rules"
-                        element={
-                          <AdminRoute>
-                            <PlanGate feature="automation">
-                              <AutomationRules />
-                            </PlanGate>
-                          </AdminRoute>
-                        }
-                      />
-                      <Route
-                        path="proactive-rules"
-                        element={
-                          <AdminRoute>
-                            <PlanGate feature="proactive">
-                              <ProactiveRules />
-                            </PlanGate>
-                          </AdminRoute>
-                        }
-                      />
-                    </Route>
-                    <Route
-                      path="/en/dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <DashboardLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route index element={<Dashboard />} />
-                      <Route path="sites" element={<Sites />} />
-                      <Route path="assistant" element={<Assistant />} />
-                      <Route path="billing" element={<Billing />} />
-                      <Route path="upgrade" element={<Upgrade />} />
-                      <Route path="conversations" element={<Conversations />} />
-                      <Route path="assigned" element={<Assigned />} />
-                      <Route
-                        path="analytics"
-                        element={
-                          <AdminRoute>
-                            <Analytics />
-                          </AdminRoute>
-                        }
-                      />
-                      <Route path="faqs" element={<FAQs />} />
-                      <Route path="team" element={<Team />} />
-                      <Route path="team-chat" element={<TeamChat />} />
-                      <Route
-                        path="departments"
-                        element={
-                          <PlanGate feature="departments">
-                            <Departments />
-                          </PlanGate>
-                        }
-                      />
-                      <Route
-                        path="audit-logs"
-                        element={
-                          <AdminRoute>
-                            <PlanGate feature="audit">
-                              <AuditLogs />
-                            </PlanGate>
-                          </AdminRoute>
-                        }
-                      />
-                      <Route
-                        path="widget-customization/:siteId"
-                        element={<WidgetCustomization />}
-                      />
-                      <Route path="settings" element={<Settings />} />
-                      <Route
-                        path="visitors"
-                        element={
-                          <AdminRoute>
-                            <PlanGate feature="visitors">
-                              <Visitors />
-                            </PlanGate>
-                          </AdminRoute>
-                        }
-                      />
-                      <Route
-                        path="crm"
-                        element={
-                          <AdminRoute>
-                            <PlanGate feature="crm">
-                              <CRM />
-                            </PlanGate>
-                          </AdminRoute>
-                        }
-                      />
-                      <Route
-                        path="my-performance"
+                        path="/en/onboarding"
                         element={
                           <ProtectedRoute>
-                            <AgentPerformance />
+                            <Onboarding />
                           </ProtectedRoute>
                         }
                       />
                       <Route
-                        path="automation-rules"
+                        path="/dashboard"
                         element={
-                          <AdminRoute>
-                            <PlanGate feature="automation">
-                              <AutomationRules />
-                            </PlanGate>
-                          </AdminRoute>
+                          <ProtectedRoute>
+                            <DashboardLayout />
+                          </ProtectedRoute>
                         }
-                      />
+                      >
+                        <Route index element={<Dashboard />} />
+                        <Route path="sites" element={<Sites />} />
+                        <Route path="assistant" element={<Assistant />} />
+                        <Route path="billing" element={<Billing />} />
+                        <Route path="upgrade" element={<Upgrade />} />
+                        <Route path="conversations" element={<Conversations />} />
+                        <Route path="assigned" element={<Assigned />} />
+                        <Route
+                          path="analytics"
+                          element={
+                            <AdminRoute>
+                              <Analytics />
+                            </AdminRoute>
+                          }
+                        />
+                        <Route path="faqs" element={<FAQs />} />
+                        <Route path="team" element={<Team />} />
+                        <Route path="team-chat" element={<TeamChat />} />
+                        <Route
+                          path="departments"
+                          element={
+                            <PlanGate feature="departments">
+                              <Departments />
+                            </PlanGate>
+                          }
+                        />
+                        <Route
+                          path="integrations"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="integrations">
+                                <Integrations />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="audit-logs"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="audit">
+                                <AuditLogs />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="widget-customization/:siteId"
+                          element={<WidgetCustomization />}
+                        />
+                        <Route path="settings" element={<Settings />} />
+                        <Route
+                          path="visitors"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="visitors">
+                                <Visitors />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="crm"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="crm">
+                                <CRM />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="my-performance"
+                          element={
+                            <ProtectedRoute>
+                              <AgentPerformance />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="automation-rules"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="automation">
+                                <AutomationRules />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="proactive-rules"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="proactive">
+                                <ProactiveRules />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                      </Route>
                       <Route
-                        path="proactive-rules"
+                        path="/en/dashboard"
                         element={
-                          <AdminRoute>
-                            <PlanGate feature="proactive">
-                              <ProactiveRules />
-                            </PlanGate>
-                          </AdminRoute>
+                          <ProtectedRoute>
+                            <DashboardLayout />
+                          </ProtectedRoute>
                         }
-                      />
-                    </Route>
-                    <Route path="*" element={<DefaultRedirect />} />
-                  </Routes>
-                </Suspense>
-              </SocketProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </HelmetProvider>
+                      >
+                        <Route index element={<Dashboard />} />
+                        <Route path="sites" element={<Sites />} />
+                        <Route path="assistant" element={<Assistant />} />
+                        <Route path="billing" element={<Billing />} />
+                        <Route path="upgrade" element={<Upgrade />} />
+                        <Route path="conversations" element={<Conversations />} />
+                        <Route path="assigned" element={<Assigned />} />
+                        <Route
+                          path="analytics"
+                          element={
+                            <AdminRoute>
+                              <Analytics />
+                            </AdminRoute>
+                          }
+                        />
+                        <Route path="faqs" element={<FAQs />} />
+                        <Route path="team" element={<Team />} />
+                        <Route path="team-chat" element={<TeamChat />} />
+                        <Route
+                          path="departments"
+                          element={
+                            <PlanGate feature="departments">
+                              <Departments />
+                            </PlanGate>
+                          }
+                        />
+                        <Route
+                          path="audit-logs"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="audit">
+                                <AuditLogs />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="widget-customization/:siteId"
+                          element={<WidgetCustomization />}
+                        />
+                        <Route path="settings" element={<Settings />} />
+                        <Route
+                          path="visitors"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="visitors">
+                                <Visitors />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="crm"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="crm">
+                                <CRM />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="my-performance"
+                          element={
+                            <ProtectedRoute>
+                              <AgentPerformance />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="automation-rules"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="automation">
+                                <AutomationRules />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                        <Route
+                          path="proactive-rules"
+                          element={
+                            <AdminRoute>
+                              <PlanGate feature="proactive">
+                                <ProactiveRules />
+                              </PlanGate>
+                            </AdminRoute>
+                          }
+                        />
+                      </Route>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </SocketProvider>
+              </AuthProvider>
+            </LanguageProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 }
 export default App;
