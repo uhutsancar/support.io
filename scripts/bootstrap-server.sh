@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sets up and hardens a fresh Ubuntu 24.04 server for Support.io (plan v10
+# Sets up and hardens a fresh Ubuntu 24.04 server for Supbort.io (plan v10
 # SEC-14, INF-02, runbook §1). Run as root; running it again changes nothing
 # that is already in place.
 #
@@ -30,7 +30,7 @@ set -euo pipefail
 
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
 APP_DIR="${APP_DIR:-/opt/supportio}"
-MARK='# managed by supportio bootstrap-server.sh'
+MARK='# managed by Supbort.io bootstrap-server.sh'
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "run as root (sudo)" >&2
@@ -43,7 +43,7 @@ if id "$DEPLOY_USER" >/dev/null 2>&1; then
   echo "already there"
 else
   # No password: it signs in with the key root was given by the provider.
-  adduser --disabled-password --gecos 'Support.io deploy' "$DEPLOY_USER" >/dev/null
+  adduser --disabled-password --gecos 'Supbort.io deploy' "$DEPLOY_USER" >/dev/null
   if [[ -s /root/.ssh/authorized_keys ]]; then
     install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.ssh"
     install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" /root/.ssh/authorized_keys \
@@ -73,7 +73,7 @@ EOF
 cat >/etc/systemd/system/supportio-reboot.service <<EOF
 $MARK
 [Unit]
-Description=Reboot if an update asked for it (Support.io maintenance window)
+Description=Reboot if an update asked for it (Supbort.io maintenance window)
 
 [Service]
 Type=oneshot
@@ -82,7 +82,7 @@ EOF
 cat >/etc/systemd/system/supportio-reboot.timer <<EOF
 $MARK
 [Unit]
-Description=Support.io maintenance window: Sunday 04:00 UTC
+Description=Supbort.io maintenance window: Sunday 04:00 UTC
 
 [Timer]
 OnCalendar=Sun *-*-* 04:00:00 UTC

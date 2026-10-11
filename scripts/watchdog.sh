@@ -50,7 +50,7 @@ mkdir -p "$STATE_DIR"
 json_escape() { sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr '\n' ' '; }
 
 send() {
-  local text="[supportio ${HOST}] $1"
+  local text="[Supbort.io ${HOST}] $1"
   echo "$(date -u +%FT%TZ) $text"
   [[ -n "$WEBHOOK" ]] || return 0
   local body
