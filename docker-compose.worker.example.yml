@@ -1,0 +1,30 @@
+# Optional growth-stage override. Use together with docker-compose.prod.yml:
+#
+#   docker compose --env-file .env.production \
+#     -f docker-compose.prod.yml -f docker-compose.worker.example.yml \
+#     --profile worker up -d
+#
+# The public API stops the SLA/scheduled-delivery loop and one non-public
+# process owns it. The worker still boots the same application image so it can
+# initialize Socket.IO-dependent automation; it is not routed by Caddy.
+
+services:
+  backend:
+    environment:
+      SLA_SWEEPER: "off"
+
+  worker:
+    extends:
+      file: docker-compose.prod.yml
+      service: backend
+    profiles: [worker]
+    environment:
+      SLA_SWEEPER: "on"
+      PORT: 3001
+    expose: []
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""
+        ]

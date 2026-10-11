@@ -24,6 +24,18 @@ test('a message written offline is sent once the network is back, once', async (
   const { sites } = await (await owner.request.get('/api/sites')).json();
   const site = sites[0] as { _id: string; siteKey: string };
 
+  await test.step('the panel makes a dropped connection visible until it recovers', async () => {
+    await owner.goto('/dashboard');
+    await expect(owner.locator('[role="status"]')).toHaveCount(0, { timeout: 20_000 });
+    await owner.context().setOffline(true);
+    await expect(owner.locator('[role="status"]')).toContainText(
+      /Bağlantı kesildi|Yeniden bağlanıyor/,
+      { timeout: 20_000 }
+    );
+    await owner.context().setOffline(false);
+    await expect(owner.locator('[role="status"]')).toHaveCount(0, { timeout: 30_000 });
+  });
+
   const shop = await customerWebsite(
     port,
     `<script src="${baseURL}/widget.js" data-site-key="${site.siteKey}" async></script>`

@@ -109,7 +109,9 @@ export interface Gauge {
 const COUNTER_HELP: Record<string, string> = {
   supportio_assistant_calls_total: 'Calls to the AI model, by outcome',
   supportio_mail_total: 'Mails handed to the transport, by outcome',
-  supportio_billing_webhook_rejected_total: 'Paddle webhooks refused for a bad signature or body'
+  supportio_billing_webhook_rejected_total: 'Paddle webhooks refused for a bad signature or body',
+  supportio_widget_session_rate_limited_total:
+    'Initial widget sessions refused by the site and address rate limit'
 };
 
 /**

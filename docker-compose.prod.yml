@@ -184,6 +184,10 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_MAX_CONNECTIONS: ${SMTP_MAX_CONNECTIONS:-3}
+      SMTP_MAX_MESSAGES: ${SMTP_MAX_MESSAGES:-100}
+      SMTP_RATE_DELTA_MS: ${SMTP_RATE_DELTA_MS:-1000}
+      SMTP_RATE_LIMIT: ${SMTP_RATE_LIMIT:-10}
       # Staging only: mail goes to these domains alone (INF-03).
       MAIL_ALLOWLIST_DOMAINS: ${MAIL_ALLOWLIST_DOMAINS:-}
       # File uploads: S3-compatible storage (AWS S3, Cloudflare R2, Hetzner).
@@ -224,6 +228,9 @@ services:
       # scripts/backup-postgres.sh writes.
       METRICS_TOKEN: ${METRICS_TOKEN:-}
       OPS_REPORT_EMAIL: ${OPS_REPORT_EMAIL:-}
+      WEEKLY_REPORT_BATCH_SIZE: ${WEEKLY_REPORT_BATCH_SIZE:-200}
+      SOCKET_AUTH_FRESH_MS: ${SOCKET_AUTH_FRESH_MS:-5000}
+      SOCKET_AUTH_WRITE_FRESH_MS: ${SOCKET_AUTH_WRITE_FRESH_MS:-1000}
       # Caddy compresses (encode zstd gzip); doing it here too only costs CPU.
       HTTP_COMPRESSION: "off"
       BACKUP_STATUS_FILE: /run/supportio-status/backup-last-success

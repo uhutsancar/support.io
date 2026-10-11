@@ -85,9 +85,10 @@ owner can make; nothing in the repository does them.
 9. `Caddyfile.prod` trusts the visitor IP only from Cloudflare's ranges.
    Re-check https://www.cloudflare.com/ips/ before each release and update
    `trusted_proxies` if they changed.
-10. HSTS is one day (`max-age=86400`). Raise it to a year only after a few
-    weeks of Full (strict) without trouble; `preload` only as a deliberate
-    decision.
+10. HSTS is one day (`max-age=86400`). Record the date Full (strict) is enabled;
+    after 21 consecutive trouble-free days, schedule a change to
+    `max-age=31536000`. Add `preload` only as a separate, deliberate decision
+    after every subdomain is confirmed HTTPS-only.
 
 ### Origin lock: 80/443 from Cloudflare only
 
@@ -149,9 +150,26 @@ docker compose --env-file .env.production -f docker-compose.prod.yml   exec back
 ./scripts/deploy.sh ghcr.io/<owner>/supportio:sha-1a2b3c4
 ```
 
-Backup → switch `APP_IMAGE` (the previous one is kept in `.last-release`) →
-pull → migrations once → restart → wait for `/ready` → smoke test. Any
-failing step stops the deploy.
+Backup → pull the new image without changing `.env.production` → run its
+migrations once → switch `APP_IMAGE` (the previous one is kept in
+`.last-release`) → restart → wait for `/ready` → smoke test. Any failing step
+stops the deploy; a failed migration therefore cannot leave the env pointing
+at an unmigrated image.
+
+Production deploy window is **02:00–06:00 Europe/Istanbul**. During business
+hours deploy only an urgent fix. This single-process installation briefly
+drops panel and widget sockets; clients reconnect automatically.
+
+In any multi-process installation, set `SLA_SWEEPER=off` on every API process
+except exactly one designated worker. Two sweepers can claim the same timed
+work; no sweeper means SLA, missed-chat mail and scheduled jobs stop.
+
+The growth-stage example is `docker-compose.worker.example.yml`. Start it only
+after the thresholds in the scaling section are met, using the command at the
+top of that file. Keep `worker` out of Caddy's upstreams and verify after each
+deploy that exactly one container logs the SLA and integration timer startup.
+The example intentionally uses the same application image; it does not change
+the current single-VPS availability decision.
 
 ```bash
 ./scripts/rollback.sh            # the image from before the last deploy
@@ -207,7 +225,7 @@ asks for the database name.
 
 ## 7. Paddle
 
-1. **[you]** Paddle sandbox account → Catalog: a product "Support.io" with
+1. **[you]** Paddle sandbox account → Catalog: a product "Supbort.io" with
    prices for Pro (monthly 490 TRY, yearly) and Enterprise (monthly 1449 TRY,
    yearly). Note the `pri_…` ids.
 2. **[you]** Developer tools → Authentication: an API key (server) and a

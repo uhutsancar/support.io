@@ -120,6 +120,9 @@ services:
       - REGISTER_RATE_MAX=${REGISTER_RATE_MAX:-100000}
       - AUTH_RATE_MAX=${AUTH_RATE_MAX:-100000}
       - API_RATE_MAX=${API_RATE_MAX:-1000000}
+      # Keep the real widget-session budget in tests; signed renewals must be
+      # exempt while the 301st tokensız opening is refused.
+      - WIDGET_SESSION_RATE_MAX=${WIDGET_SESSION_RATE_MAX:-300}
       # SSS asistani (Google Gemini, src/services/assistant). Ciplak aktarim:
       # host'ta tanimli degilse anahtar backend/.env'den (git'e girmez) okunur.
       # Anahtar yoksa asistan kapali kalir, canli destek aynen calisir.

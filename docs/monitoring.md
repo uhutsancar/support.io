@@ -91,6 +91,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml \
 | `supportio_assistant_calls_total{outcome!="ok"}`                          | rising: quota or outage; visitors are handed to people        |
 | `supportio_assistant_available`                                           | 0 while it should answer: model check or kill switch          |
 | `supportio_mail_total{outcome="failed"}`                                  | above 0: SMTP problem                                         |
+| `supportio_widget_session_rate_limited_total`                              | any increase: inspect CGNAT/customer traffic; alert at 10/hour |
 | `supportio_backup_last_success_timestamp_seconds`                         | older than 26 h                                               |
 
 With `METRICS_TOKEN` set, send `Authorization: Bearer <token>`. A dashboard

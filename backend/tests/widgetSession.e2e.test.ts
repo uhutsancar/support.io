@@ -352,6 +352,38 @@ test('an expired session is refused for use but may be renewed for a while', asy
   assert.notEqual(restarted.visitorId, valid.visitorId, 'a long-dead session was renewed');
 });
 
+test('signed renewals do not exhaust the shared site and address session limit', async () => {
+  const tenant = await createTenant('renew-limit', [SHOP]);
+  const first = await widgetToken(tenant.site.siteKey, { origin: SHOP });
+
+  for (let offset = 0; offset < 500; offset += 25) {
+    const batch = await Promise.all(
+      Array.from({ length: 25 }, () =>
+        widgetSession(tenant.site.siteKey, { origin: SHOP, token: first.token })
+      )
+    );
+    assert.ok(
+      batch.every((res) => res.status === 200),
+      `renewal batch ${offset} was limited`
+    );
+  }
+
+  // The first request above used one of the 300 initial-session slots.
+  for (let offset = 0; offset < 299; offset += 25) {
+    const size = Math.min(25, 299 - offset);
+    const batch = await Promise.all(
+      Array.from({ length: size }, () => widgetSession(tenant.site.siteKey, { origin: SHOP }))
+    );
+    assert.ok(
+      batch.every((res) => res.status === 200),
+      `initial-session batch ${offset} failed`
+    );
+  }
+  const limited = await widgetSession(tenant.site.siteKey, { origin: SHOP });
+  assert.equal(limited.status, 429);
+  assert.equal(limited.body?.code, 'TOO_MANY_WIDGET_SESSIONS');
+});
+
 test('regenerating the site key ends every session issued under the old one', async () => {
   const tenant = await createTenant('rekey');
   const before = await widgetToken(tenant.site.siteKey);

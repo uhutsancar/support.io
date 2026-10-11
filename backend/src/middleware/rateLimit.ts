@@ -31,8 +31,15 @@ import type {
 import type { NextFunction, Request, Response } from 'express';
 import { getRedisClient, isEnabled as redisConfigured } from '../config/redis';
 import { readToken } from '../config/session';
-import { verifyMfaPending, verifySession, verifyWidgetSession } from '../config/tokens';
+import {
+  renewableWidgetSession,
+  siteKeyMatches,
+  verifyMfaPending,
+  verifySession,
+  verifyWidgetSession
+} from '../config/tokens';
 import { errorText } from '../http/errors';
+import { increment } from '../config/metrics';
 
 class RedisStore implements Store {
   prefix: string;
@@ -250,6 +257,8 @@ interface LimiterSpec {
   keyGenerator?: (req: Request) => string;
   /** Yalnizca basarisiz (>= 400) yanitlari say. */
   skipSuccessfulRequests?: boolean;
+  /** Bu isteği sayaca hiç dahil etme. */
+  skip?: (req: Request) => boolean;
   /** Sinira takilan istekten sonra, yanit gittikten sonra calisir. */
   onLimit?: (req: Request) => void;
 }
@@ -262,6 +271,7 @@ function createLimiter({
   max,
   keyGenerator,
   skipSuccessfulRequests,
+  skip,
   onLimit
 }: LimiterSpec): RateLimitRequestHandler {
   const respond = limitReachedResponse(code, message);
@@ -269,6 +279,7 @@ function createLimiter({
     windowMs,
     max,
     skipSuccessfulRequests: Boolean(skipSuccessfulRequests),
+    skip,
     // Standart RateLimit-* basliklari; eski X-RateLimit-* basliklari da panel
     // tarafinda okunabilsin diye acik birakilir.
     standardHeaders: true,
@@ -397,18 +408,29 @@ const registerLimiter = createLimiter({
   max: limit(process.env.REGISTER_RATE_MAX, 20, 100000)
 });
 
-// Widget oturumu: her sayfa acilisinda bir kez alinir. Site anahtari + IP'ye
-// gore sayilir; anahtarlari tarayip oturum basmayi da yavaslatir.
+// Widget oturumu: yalnızca ilk, tokensız açılış site anahtarı + IP'ye göre
+// sayılır. İmzalı mevcut oturumun yenilenmesi CGNAT arkasındaki başka
+// ziyaretçilerin kotasını tüketmez; rota tokenın bu siteye ait olduğunu yine
+// doğrular.
 const widgetSessionLimiter = createLimiter({
   name: 'widget-session',
   code: 'TOO_MANY_WIDGET_SESSIONS',
   message: 'Too many widget sessions, please try again later.',
   windowMs: minutes(process.env.WIDGET_SESSION_RATE_WINDOW_MS, 15 * 60 * 1000),
   max: limit(process.env.WIDGET_SESSION_RATE_MAX, 300, 100000),
+  skip: (req: Request) => {
+    const session = renewableWidgetSession(req.body?.token);
+    return (
+      session !== null &&
+      typeof req.body?.siteKey === 'string' &&
+      siteKeyMatches(req.body.siteKey, session.kv)
+    );
+  },
   keyGenerator: (req: Request) => {
     const siteKey = typeof req.body?.siteKey === 'string' ? req.body.siteKey.slice(0, 128) : 'none';
     return `ws:${siteKey}:${ipKeyGenerator(req.ip || '')}`;
-  }
+  },
+  onLimit: () => increment('supportio_widget_session_rate_limited_total')
 });
 
 // Sifre sifirlama talebi: IP basina ve e-posta basina iki sayac. E-posta
