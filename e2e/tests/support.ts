@@ -203,5 +203,10 @@ export async function ownerThroughApi(
   });
   if (verified.status() !== 200) throw new Error(`verify: ${verified.status()}`);
   const { cookies } = await request.storageState();
-  return { csrf: { 'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? '' } };
+  return {
+    csrf: {
+      Origin: new URL(process.env.E2E_APP_URL || 'http://localhost').origin,
+      'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? ''
+    }
+  };
 }

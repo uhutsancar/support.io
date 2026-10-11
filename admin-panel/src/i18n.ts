@@ -50,7 +50,7 @@ const appLoads: Partial<Record<'tr' | 'en', Promise<void>>> = {};
 
 export function isApplicationPath(pathname: string): boolean {
   const path = pathname.replace(/^\/en(?=\/|$)/, '') || '/';
-  return /^\/(?:dashboard(?:\/|$)|onboarding(?:\/|$)|login\/?$|register\/?$|forgot-password\/?$|reset-password\/?$|verify-email\/?$|confirm-email\/?$|rate\/?$|invite\/accept\/?$)/.test(
+  return /^\/(?:dashboard(?:\/|$)|onboarding(?:\/|$)|dokumantasyon(?:\/|$)|documentation(?:\/|$)|login\/?$|register\/?$|forgot-password\/?$|reset-password\/?$|verify-email\/?$|confirm-email\/?$|rate\/?$|invite\/accept\/?$)/.test(
     path
   );
 }

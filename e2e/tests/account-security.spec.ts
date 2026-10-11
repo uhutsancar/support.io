@@ -29,10 +29,13 @@ test('password change and two-step sign-in, from the settings page', async ({ br
 
   await test.step('change the password from the settings page', async () => {
     await page.goto('/dashboard/settings');
-    await page.getByLabel('Mevcut şifre').fill(PASSWORD);
-    await page.getByLabel('Yeni şifre', { exact: true }).fill(NEW_PASSWORD);
-    await page.getByLabel('Yeni şifre (tekrar)').fill(NEW_PASSWORD);
-    await page.getByRole('button', { name: 'Şifreyi değiştir' }).click();
+    const passwordCard = page.locator('section', {
+      has: page.getByRole('heading', { name: 'Şifre', exact: true })
+    });
+    await passwordCard.getByLabel('Mevcut şifre').fill(PASSWORD);
+    await passwordCard.getByLabel('Yeni şifre', { exact: true }).fill(NEW_PASSWORD);
+    await passwordCard.getByLabel('Yeni şifre (tekrar)').fill(NEW_PASSWORD);
+    await passwordCard.getByRole('button', { name: 'Şifreyi değiştir' }).click();
     await expect(page.getByText('Şifreniz değişti').first()).toBeVisible();
     // This browser stays in; the other device is out.
     expect((await page.request.get('/api/auth/me')).status()).toBe(200);

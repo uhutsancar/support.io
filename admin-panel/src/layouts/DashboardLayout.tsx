@@ -628,6 +628,7 @@ const DashboardLayout = () => {
       <div className="flex-1 lg:ml-64 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* ------------------------------------------------------- üst çubuk */}
         <header
+          data-socket-connection={connection}
           className="shrink-0 h-14 flex items-center gap-2 px-3 sm:px-5
           bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
         >

@@ -32,7 +32,10 @@ test('a message written while the widget is still connecting arrives', async ({
   });
   expect(verified.status()).toBe(200);
   const { cookies } = await request.storageState();
-  const csrf = { 'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? '' };
+  const csrf = {
+    Origin: new URL(baseURL || 'http://localhost').origin,
+    'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? ''
+  };
   const onboarded = await request.post('/api/onboarding', {
     headers: csrf,
     data: { websiteUrl: `http://127.0.0.1:${SHOP_PORT}`, title: 'Early Owner' }

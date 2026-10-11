@@ -28,6 +28,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const userId = user?._id;
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connection, setConnection] = useState<ConnectionState>('idle');
+  const [browserOnline, setBrowserOnline] = useState(() => navigator.onLine);
 
   useEffect(() => {
     if (!isAuthenticated || !userId) {
@@ -45,6 +46,22 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       if (reason !== 'io client disconnect') setConnection('disconnected');
     };
     const onReconnectAttempt = () => setConnection('reconnecting');
+    // Socket.IO learns about a lost network only after its heartbeat times
+    // out. The browser already knows immediately, so reflect that state in
+    // the shell and ask the shared socket to reconnect as soon as the network
+    // returns.
+    const onOffline = () => {
+      setBrowserOnline(false);
+      setConnection('disconnected');
+    };
+    const onOnline = () => {
+      setBrowserOnline(true);
+      if (client?.connected) setConnection('connected');
+      else {
+        setConnection('reconnecting');
+        client?.connect();
+      }
+    };
     // A refusal from the server's middleware is not retried by the client on
     // its own. Too many handshakes from this address is temporary, so try
     // again after a while (backend/src/socket/auth.ts).
@@ -54,6 +71,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(retry);
       retry = setTimeout(() => client?.connect(), 5000 + Math.random() * 10000);
     };
+
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
 
     void import('socket.io-client')
       .then(({ io }) => {
@@ -85,12 +105,20 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       client?.off('disconnect', onDisconnect);
       client?.off('connect_error', onConnectError);
       client?.io.off('reconnect_attempt', onReconnectAttempt);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
       clearTimeout(retry);
       client?.close();
       setSocket((current) => (current === client ? null : current));
     };
   }, [isAuthenticated, userId]);
 
-  const value = useMemo<SocketContextValue>(() => ({ socket, connection }), [socket, connection]);
+  // A late socket event must not hide the browser's authoritative offline
+  // signal while a transport is still winding down.
+  const visibleConnection = browserOnline ? connection : 'disconnected';
+  const value = useMemo<SocketContextValue>(
+    () => ({ socket, connection: visibleConnection }),
+    [socket, visibleConnection]
+  );
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };

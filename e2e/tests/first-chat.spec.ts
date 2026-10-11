@@ -145,7 +145,10 @@ test('a new customer answers their first visitor and upgrades', async ({ browser
       // The trial runs out; the plan in force is Free again.
       const cookies = await agentContext.cookies();
       const ended = await panel.request.post('/api/dev/end-trial', {
-        headers: { 'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? '' }
+        headers: {
+          Origin: new URL(panel.url()).origin,
+          'X-CSRF-Token': cookies.find((c) => c.name === 'sc_csrf')?.value ?? ''
+        }
       });
       expect(ended.status()).toBe(204);
       await panel.reload();

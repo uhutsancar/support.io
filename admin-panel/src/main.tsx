@@ -13,6 +13,10 @@ const PRELOAD_RELOAD_KEY = 'supbort:preload-reload-attempted';
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
+  // A dynamic import also fails while the browser is offline. Reloading then
+  // destroys the usable shell and cannot fetch the replacement bundle; the
+  // connection indicator should handle that case instead.
+  if (!navigator.onLine) return;
   const preloadEvent = event as Event & { payload?: unknown };
   reportError(preloadEvent.payload ?? new Error('Vite preload failed'));
   try {

@@ -26,14 +26,23 @@ test('a message written offline is sent once the network is back, once', async (
 
   await test.step('the panel makes a dropped connection visible until it recovers', async () => {
     await owner.goto('/dashboard');
-    await expect(owner.locator('[role="status"]')).toHaveCount(0, { timeout: 20_000 });
-    await owner.context().setOffline(true);
-    await expect(owner.locator('[role="status"]')).toContainText(
-      /Bağlantı kesildi|Yeniden bağlanıyor/,
-      { timeout: 20_000 }
-    );
-    await owner.context().setOffline(false);
-    await expect(owner.locator('[role="status"]')).toHaveCount(0, { timeout: 30_000 });
+    const header = owner.locator('header[data-socket-connection]');
+    await expect(header).toHaveAttribute('data-socket-connection', 'connected', {
+      timeout: 20_000
+    });
+    // Chromium's CDP network emulation does not dispatch the browser's
+    // offline/online events, so trigger the same events a real network change
+    // emits. The widget portion below still uses actual offline emulation.
+    await owner.evaluate(() => window.dispatchEvent(new Event('offline')));
+    await expect(header).toHaveAttribute('data-socket-connection', 'disconnected');
+    await expect(header.getByRole('status')).toContainText(/Bağlantı kesildi|Yeniden bağlanıyor/, {
+      timeout: 20_000
+    });
+    await owner.evaluate(() => window.dispatchEvent(new Event('online')));
+    await expect(header).toHaveAttribute('data-socket-connection', 'connected', {
+      timeout: 30_000
+    });
+    await expect(header.getByRole('status')).toHaveCount(0);
   });
 
   const shop = await customerWebsite(

@@ -171,7 +171,7 @@ app.use(
       // atip yaniti okuyabilmesi demektir. Panel uclari izin listesiyle kalir.
       credentials: !isPublicEmbedRequest,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token']
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'x-recent-auth']
     });
   })
 );

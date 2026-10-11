@@ -40,7 +40,7 @@ async function onboardedOwner(request: APIRequestContext) {
     headers: csrf,
     data: { websiteUrl: `http://127.0.0.1:${SHOP_PORT}`, title: 'Erişilebilir Mağaza' }
   });
-  expect(onboarded.ok()).toBeTruthy();
+  expect(onboarded.ok(), `${onboarded.status()}: ${await onboarded.text()}`).toBeTruthy();
   const { sites } = await (await request.get('/api/sites')).json();
   return { csrf, site: sites[0] as { _id: string; siteKey: string } };
 }

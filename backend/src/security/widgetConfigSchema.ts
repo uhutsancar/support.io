@@ -147,7 +147,7 @@ const SECTION_SCHEMAS: Record<string, Record<string, Check>> = {
     enableNotifications: boolean,
     titleAlert: boolean,
     hideOnMobile: boolean,
-    language: enumeration(['auto', 'tr', 'en'])
+    language: enumeration(['auto', 'tr', 'en', 'de', 'fr', 'es', 'nl', 'ru', 'ar'])
   },
   typography: {
     fontFamily: enumeration([

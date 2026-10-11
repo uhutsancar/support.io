@@ -82,6 +82,7 @@ test('an existing address is not opened by Google until its owner connects it', 
   await test.step('the owner connects Google from settings', async () => {
     await page.goto('/dashboard/settings');
     const card = page.locator('section', { hasText: 'Google ile giriş' });
+    await card.getByLabel('Mevcut şifre').fill('E2ePassw0rd!');
     await card.getByRole('button', { name: 'Google hesabını bağla' }).click();
     await chooseGoogleAccount(page, { sub, email: `kisisel${stamp()}@gmail.test`, name: 'Sahip' });
     await expect(page).toHaveURL(/\/dashboard\/settings#security$/);
@@ -101,6 +102,7 @@ test('an existing address is not opened by Google until its owner connects it', 
 
   await test.step('and disconnecting it is one click', async () => {
     const card = page.locator('section', { hasText: 'Google ile giriş' });
+    await card.getByLabel('Mevcut şifre').fill('E2ePassw0rd!');
     await card.getByRole('button', { name: 'Bağlantıyı kaldır' }).click();
     await expect(page.getByText('Google bağlantısı kaldırıldı.')).toBeVisible();
     await expect(card.getByRole('button', { name: 'Google hesabını bağla' })).toBeVisible();
