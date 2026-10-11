@@ -1,7 +1,6 @@
 /** The active locale, and the navigations that switch it. */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { translatePath } from '../lib/marketingPaths';
 import { switchLanguage } from '../i18n';
@@ -24,28 +23,16 @@ export const useLanguage = (): LanguageContextValue => {
   return context;
 };
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const { i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const getLanguageFromPath = (): 'tr' | 'en' => {
-    return location.pathname.startsWith('/en') ? 'en' : 'tr';
-  };
-  const [language, setLanguage] = useState(getLanguageFromPath);
+  const language: 'tr' | 'en' = location.pathname.startsWith('/en') ? 'en' : 'tr';
   useEffect(() => {
-    const newLang = getLanguageFromPath();
-    if (newLang !== language) {
-      setLanguage(newLang);
-      void switchLanguage(newLang);
-      localStorage.setItem('language', newLang);
-    }
-  }, [location.pathname]);
-  useEffect(() => {
-    void switchLanguage(language);
+    void switchLanguage(language, location.pathname);
     localStorage.setItem('language', language);
     // `text-transform: uppercase` follows the document language, so leaving
     // this at "tr" turned English table headers into TRİGGER and ACTİON.
     document.documentElement.lang = language;
-  }, [language, i18n]);
+  }, [language, location.pathname]);
   // Pazarlama sayfalarının adı dile göre değiştiği için yol, önek eklenerek
   // değil eşleme tablosundan çevrilir (bkz. lib/marketingPaths).
   const switchTo = (next: 'tr' | 'en') => {

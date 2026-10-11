@@ -1,7 +1,7 @@
 /**
  * Çeviri ağacı iki parçadan birleşir:
  *
- *   locales/tr.js            panelin çevirisi (1800+ satır, seyrek değişir)
+ *   locales/tr.js            panelin çevirisi (yalnız uygulama yollarında yüklenir)
  *   locales/marketing.tr.js  pazarlama sayfalarının metni (sık değişir)
  *   locales/pages.tr.js      sektör çözümleri ve yapay zekâ sayfası
  *
@@ -16,10 +16,8 @@
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import tr from './locales/tr';
 import marketingTr from './locales/marketing.tr';
 import pagesTr from './locales/pages.tr';
-import accountTr from './locales/account.tr';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -33,12 +31,11 @@ function deepMerge(base: any, override: any) {
   return out;
 }
 
-// Turkish, the default, ships with the first load. English is its own chunk,
-// fetched only by a visitor who reads English (plan v10 PERF-08): half the
-// texts were downloaded by every visitor and read by none.
+// The Turkish public-site texts are the only locale in the first load.
+// English and the much larger panel/account trees are route-level chunks.
 i18n.use(initReactI18next).init({
   resources: {
-    tr: { translation: deepMerge(deepMerge(deepMerge(tr, marketingTr), pagesTr), accountTr) }
+    tr: { translation: deepMerge(marketingTr, pagesTr) }
   },
   partialBundledLanguages: true,
   lng: 'tr',
@@ -48,37 +45,65 @@ i18n.use(initReactI18next).init({
   }
 });
 
-let englishLoad: Promise<void> | null = null;
+const publicLoads: Partial<Record<'tr' | 'en', Promise<void>>> = {};
+const appLoads: Partial<Record<'tr' | 'en', Promise<void>>> = {};
 
-/** Makes a language's texts available; Turkish always is. */
-export function ensureLanguage(lang: 'tr' | 'en'): Promise<void> {
-  if (lang === 'tr' || i18n.hasResourceBundle('en', 'translation')) return Promise.resolve();
-  englishLoad ??= Promise.all([
-    import('./locales/en'),
+export function isApplicationPath(pathname: string): boolean {
+  const path = pathname.replace(/^\/en(?=\/|$)/, '') || '/';
+  return /^\/(?:dashboard(?:\/|$)|onboarding(?:\/|$)|login\/?$|register\/?$|forgot-password\/?$|reset-password\/?$|verify-email\/?$|confirm-email\/?$|rate\/?$|invite\/accept\/?$)/.test(
+    path
+  );
+}
+
+async function ensurePublicLanguage(lang: 'tr' | 'en'): Promise<void> {
+  if (lang === 'tr' || i18n.hasResourceBundle('en', 'translation')) return;
+  publicLoads.en ??= Promise.all([
     import('./locales/marketing.en'),
-    import('./locales/pages.en'),
-    import('./locales/account.en')
-  ])
-    .then(([en, marketing, pages, account]) => {
+    import('./locales/pages.en')
+  ]).then(([marketing, pages]) => {
+    i18n.addResourceBundle('en', 'translation', deepMerge(marketing.default, pages.default));
+  });
+  try {
+    await publicLoads.en;
+  } catch (error) {
+    delete publicLoads.en;
+    throw error;
+  }
+}
+
+/** Makes the public texts, and only when needed the panel texts, available. */
+export async function ensureLanguage(lang: 'tr' | 'en', pathname = '/'): Promise<void> {
+  await ensurePublicLanguage(lang);
+  if (!isApplicationPath(pathname) || appLoads[lang]) return appLoads[lang];
+
+  appLoads[lang] = (
+    lang === 'tr'
+      ? Promise.all([import('./locales/tr'), import('./locales/account.tr')])
+      : Promise.all([import('./locales/en'), import('./locales/account.en')])
+  )
+    .then(([panel, account]) => {
+      const publicTree = i18n.getResourceBundle(lang, 'translation') ?? {};
       i18n.addResourceBundle(
-        'en',
+        lang,
         'translation',
-        deepMerge(
-          deepMerge(deepMerge(en.default, marketing.default), pages.default),
-          account.default
-        )
+        deepMerge(deepMerge(panel.default, publicTree), account.default),
+        true,
+        true
       );
     })
     .catch((error) => {
-      englishLoad = null;
+      delete appLoads[lang];
       throw error;
     });
-  return englishLoad;
+  return appLoads[lang];
 }
 
 /** Loads a language if needed, then switches to it. */
-export async function switchLanguage(lang: 'tr' | 'en'): Promise<void> {
-  await ensureLanguage(lang).catch(() => undefined);
+export async function switchLanguage(
+  lang: 'tr' | 'en',
+  pathname = window.location.pathname
+): Promise<void> {
+  await ensureLanguage(lang, pathname).catch(() => undefined);
   if (i18n.language !== lang) await i18n.changeLanguage(lang);
 }
 

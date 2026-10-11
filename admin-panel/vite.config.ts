@@ -31,8 +31,13 @@ export default defineConfig({
             },
             {
               name: 'network-vendor',
-              test: /node_modules[\\/](socket\.io-client|axios)[\\/]/,
+              test: /node_modules[\\/]axios[\\/]/,
               priority: 15
+            },
+            {
+              name: 'socket-vendor',
+              test: /node_modules[\\/]socket\.io-client[\\/]/,
+              priority: 16
             },
             { name: 'seo-vendor', test: /node_modules[\\/]react-helmet-async[\\/]/, priority: 15 }
           ]

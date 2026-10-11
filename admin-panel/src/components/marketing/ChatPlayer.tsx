@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
+import { AnimatePresence, m, useInView, useReducedMotion } from 'motion/react';
 import { BookOpen, Send, Sparkles, UserRound } from 'lucide-react';
 import { asList } from './kit';
 import { LogoMark } from '../Logo';
@@ -197,7 +197,7 @@ export const ChatPlayer = ({
       >
         <AnimatePresence initial={false}>
           {lines.slice(0, visible).map((line, i) => (
-            <motion.div
+            <m.div
               key={i}
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -209,17 +209,17 @@ export const ChatPlayer = ({
                 articleName={t('demoChat.articleName')}
                 assistantName={t('demoChat.assistantName')}
               />
-            </motion.div>
+            </m.div>
           ))}
           {typing && (
-            <motion.div
+            <m.div
               key="typing"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
               <Typing />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

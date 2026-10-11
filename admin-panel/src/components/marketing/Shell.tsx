@@ -19,8 +19,9 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MotionConfig, motion } from 'motion/react';
+import { LazyMotion, MotionConfig, domAnimation, m } from 'motion/react';
 import { BRAND_NAME, BRAND_TLD, BRAND_WORD } from '../../lib/brand';
+import ErrorBoundary from '../ErrorBoundary';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import {
   Menu,
@@ -164,7 +165,7 @@ const ProductMenu = ({ routes }: { routes: Routes }) => {
           ikisi de motion'a verilir — CSS keyframe'i ölçeği eziyordu.
         */}
         <div className="relative h-[292px] overflow-hidden rounded-xl">
-          <motion.div
+          <m.div
             key={hovered}
             initial={{ opacity: 0, y: 8, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 0.82 }}
@@ -180,7 +181,7 @@ const ProductMenu = ({ routes }: { routes: Routes }) => {
                 <Visual />
               </div>
             ) : null}
-          </motion.div>
+          </m.div>
         </div>
         <p className="mt-4 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-400">
           <span className={['font-semibold', accent(tone).text].join(' ')}>
@@ -777,19 +778,25 @@ const Shell = ({
   return (
     // "Hareketi azalt" seçili sistemlerde kayma animasyonları kapanır, yalnızca
     // opaklık geçişi kalır.
-    <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100">
-        <a
-          href="#main"
-          className="skip-link px-3 py-2 rounded-lg bg-indigo-600 text-white text-[13px] font-medium"
-        >
-          {t('common.skipToContent')}
-        </a>
-        <Header overDark={darkHero} />
-        <main id="main">{children}</main>
-        <Footer />
-      </div>
-    </MotionConfig>
+    <LazyMotion features={domAnimation}>
+      <MotionConfig reducedMotion="user">
+        <div className="min-h-screen bg-white dark:bg-surface-dark text-gray-900 dark:text-gray-100">
+          <a
+            href="#main"
+            className="skip-link px-3 py-2 rounded-lg bg-indigo-600 text-white text-[13px] font-medium"
+          >
+            {t('common.skipToContent')}
+          </a>
+          <Header overDark={darkHero} />
+          <main id="main">
+            <ErrorBoundary key={location.pathname} compact>
+              {children}
+            </ErrorBoundary>
+          </main>
+          <Footer />
+        </div>
+      </MotionConfig>
+    </LazyMotion>
   );
 };
 

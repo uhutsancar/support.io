@@ -1,123 +1,5 @@
 export default {
   landing: {
-    pricing: {
-      title1: 'Esnek Fiyatlandırma, <br />',
-      title2: 'Şeffaf Planlar',
-      desc: 'İşletmenizin büyüklüğü ne olursa olsun, ihtiyacınıza uygun bir planımız var. Sürpriz ücretler yok.',
-      monthly: 'Aylık Ödeme',
-      yearly: 'Yıllık Ödeme',
-      discount: '%20 İndirim',
-      popular: 'EN ÇOK TERCİH EDİLEN',
-      billedYearly: 'yıllık faturalandırılır',
-      billedMonthly: 'aylık faturalandırılır',
-      customTitle: 'Özel',
-      customDesc: 'İhtiyacınıza göre',
-      btnSales: 'Satış Ekibiyle Görüş',
-      btnStart: 'Hemen Başla',
-      trustedBy: "10.000'den fazla şirket işini büyütmek için Supbort.io'ya güveniyor",
-      faqTitle: 'Sıkça Sorulan Sorular',
-      faqDesc: 'Hala sorularınız mı var? Ekibimizle iletişime geçin.',
-      faq: {
-        q1: 'Kredi kartı gerekli mi?',
-        a1: 'Hayır, 14 günlük ücretsiz deneme sürümümüz için kredi kartı gerekmez. Sadece e-posta adresinizle kayıt olabilirsiniz.',
-        q2: 'Planımı daha sonra değiştirebilir miyim?',
-        a2: 'Evet, istediğiniz zaman planlar arasında geçiş yapabilirsiniz. Değişiklik yaptığınızda kullanım sürenize göre oranlanmış bir fiyatlandırma uygulanır.',
-        q3: 'Sözleşme taahhüdü var mı?',
-        a3: 'Yıllık planlar dışında herhangi bir taahhüt yoktur. Aylık planlarda istediğiniz zaman iptal edebilirsiniz.',
-        q4: 'Özelleştirilmiş bir plana ihtiyacım var, ne yapmalıyım?',
-        a4: 'Büyük ekipler veya özel ihtiyaçlar için Enterprise planımızı inceleyebilirsiniz. Detaylar için satış ekibimizle iletişime geçin.'
-      },
-      backHome: 'Ana Sayfaya Dön',
-      footerCopyright: '© 2024 Supbort.io. Tüm hakları saklıdır.',
-      starterFeatures: [
-        '5 Operatör',
-        'Sınırsız Canlı Sohbet',
-        'Temel Analitik',
-        '100 Temel Entegrasyon',
-        'E-posta Desteği',
-        '14 Gün Kayıt Geçmişi'
-      ],
-      proFeatures: [
-        'Sınırsız Operatör',
-        'Gelişmiş Yapay Zeka Botları',
-        'Derinlemesine Analitik & Raporlama',
-        'Sınırsız Entegrasyon + API Erişimi',
-        'Öncelikli 7/24 Destek',
-        'Sınırsız Kayıt Geçmişi',
-        'Çoklu Dil Desteği'
-      ],
-      enterpriseFeatures: [
-        'Özel Yapay Zeka Modelleri',
-        'On-Premise Kurulum Seçeneği',
-        'SLA Garantisi',
-        'Özel Müşteri Başarı Yöneticisi',
-        'Gelişmiş Güvenlik ve Uyumluluk',
-        'White-label Özelleştirme'
-      ]
-    },
-    about: {
-      heroTitle1: 'Müşteri İletişimini <br />',
-      heroTitle2: 'Yeniden Tanımlıyoruz',
-      heroDesc:
-        'Supbort.io olarak, işletmelerin müşterileriyle daha iyi iletişim kurmasını sağlayan modern ve kullanıcı dostu bir platform sunuyoruz.',
-      whoAreWe: 'BİZ KİMİZ?',
-      story1:
-        'Supbort.io, müşteri hizmetlerindeki deneyimimizden doğdu. Birçok işletmenin müşterileriyle etkili iletişim kurmakta zorlandığını gördük. Mevcut çözümler ya çok karmaşık ya da çok pahalıydı.',
-      story2:
-        'Bu sorunu çözmek için yola çıktık. Amacımız, her büyüklükteki işletmenin profesyonel müşteri desteği sunabilmesini sağlayacak, kullanımı kolay ve uygun fiyatlı bir platform oluşturmaktı.',
-      story3:
-        'Bugün binlerce işletme Supbort.io ile müşterileriyle daha iyi iletişim kuruyor ve müşteri memnuniyetini artırıyor. Ve biz hızla büyümeye devam ediyoruz.',
-      valuesTitle: 'Değerlerimiz',
-      valuesDesc: 'Misyonumuzu ve bizi biz yapan temel prensiplerimiz.',
-      ctaTitle:
-        'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
-      ctaDesc:
-        'Binlerce işletme Supbort.io ile müşteri memnuniyetini artırıyor. Sizi de aramıza görmek isteriz.',
-      ctaBtn: 'Ücretsiz Hesap Oluştur',
-      backHome: 'Ana Sayfaya Dön',
-      footerCopyright: '© 2024 Supbort.io. Tüm hakları saklıdır.'
-    },
-    features: {
-      badge: 'YENİ NESİL DESTEK PLATFORMU',
-      title1: 'Müşteri İletişimini ',
-      title2: 'Yeniden Tanımlıyoruz',
-      desc: 'İşletmeniz ile müşterilerinizle daha hızlı, daha akıllı ve daha samimi bir bağ kurmasını sağlayan dünyanın en gelişmiş destek platformu.',
-      btnStart: 'Hemen Deneyin',
-      btnDemo: 'Demoyu İzle',
-      aiTitle: 'Yapay Zeka Destekli Otomasyon',
-      aiDesc:
-        'Müşterilerinizin sorularını %80 oranında saniyeler içinde yanıtlayan gelişmiş yapay zeka entegrasyonu.',
-      aiAsk: 'Fiyatlandırma hakkında bilgi alabilir miyim?',
-      aiAns: "Harika bir soru! Paketlerimiz aylık $29'dan başlamaktadır...",
-      analyticsTitle: 'Derin Analitik',
-      analyticsDesc: 'Müşteri performansını ve ekipleri metriklerini gerçek zamanlı takip edin.',
-      langTitle: 'Çoklu Dil',
-      langDesc: '50+ dilde otomatik çeviri.',
-      integTitle: 'Sınırsız Entegrasyon',
-      integDesc: '100+ CRM ve araç desteği.',
-      secTitle: 'Maksimum Güvenlik',
-      secDesc: 'SSL ve GDPR uyumluluğu.',
-      platformTitle1: 'Tek Bir Platform, ',
-      platformTitle2: 'Sonsuz Çözüm',
-      platformDesc: 'İhtiyacınız olan her şey tek bir panelde birleşti.',
-      statsUsers: 'Aktif Kullanıcı',
-      statsChats: 'Aylık Konuşma',
-      statsCountries: 'Ülke',
-      statsUptime: 'Uptime',
-      techTitle: 'Teknolojimiz',
-      techDesc:
-        'Modern web teknolojileri ile geliştirilen Supbort.io, yüksek performans ve güvenilirlik sunar.',
-      ctaTitle:
-        'Müşterilerinizle Daha İyi İletişim <br className="hidden md:block" /> Kurmaya Hazır mısınız?',
-      ctaDesc:
-        'Binlerce işletme Supbort.io ile müşteri memnuniyetini artırıyor. Siz de aramıza katılın.',
-      ctaBtn: 'Ücretsiz Hesap Oluştur',
-      footerSecurity: 'Güvenlik',
-      footerTerms: 'Kullanım Şartları',
-      footerPrivacy: 'Gizlilik Politikası',
-      footerContact: 'İletişim',
-      footerCopyright: '© 2024 Supbort.io A.Ş. Tüm hakları saklıdır.'
-    },
     home: {
       badge: 'Tek script, her stack',
       heroTitle1: 'Müşteri ',
@@ -420,209 +302,6 @@ export default {
     last7days: 'Son 7 Gün',
     last30days: 'Son 30 Gün',
     last90days: 'Son 90 Gün'
-  },
-  home: {
-    hero: {
-      title: 'Müşteri Hizmetlerinizi',
-      titleHighlight: 'Bir Üst Seviyeye Taşıyın',
-      description:
-        'Supbort.io ile ziyaretçilerinizle anlık iletişim kurun. Modern, hızlı ve kullanımı kolay canlı destek sistemi.',
-      cta: 'Ücretsiz Başlayın',
-      demo: 'Özellikleri Keşfedin'
-    },
-    features: {
-      title: 'Güçlü Özellikler',
-      subtitle: 'Müşteri desteğinizi kolaylaştırmak için ihtiyacınız olan her şey',
-      realtime: {
-        title: 'Canlı Sohbet',
-        description:
-          'Müşterilerinizle anlık olarak iletişime geçin. Hızlı ve etkili destek sağlayın.'
-      },
-      ai: {
-        title: 'Hızlı Yanıt',
-        description: 'Otomatik yanıtlar ve hazır şablonlarla müşteri sorularını anında cevaplayın.'
-      },
-      multisite: {
-        title: 'Çoklu Operatör',
-        description: 'Ekip arkadaşlarınızla birlikte çalışın. Konuşmaları paylaşın ve verimli olun.'
-      },
-      analytics: {
-        title: 'Detaylı Raporlar',
-        description: 'Müşteri etkileşimlerinizi analiz edin. Performansınızı sürekli iyileştirin.'
-      },
-      secure: {
-        title: '7/24 Erişilebilir',
-        description: 'Müşterileriniz her zaman size ulaşabilir. Kaçırılan fırsat yok.'
-      },
-      customizable: {
-        title: 'Güvenli',
-        description: 'Verileriniz şifrelenir ve güvenle saklanır. GDPR uyumlu altyapı.'
-      }
-    },
-    why: {
-      title: 'Neden Supbort.io?',
-      description:
-        'Web sitenize entegre edebileceğiniz en modern canlı destek sistemi. Müşterilerinizle gerçek zamanlı iletişim kurmanın en kolay yolu.',
-      benefits: [
-        'Kolay kurulum - 5 dakikada başlayın',
-        'Mobil uyumlu arayüz',
-        'Sınırsız konuşma',
-        'Özelleştirilebilir widget',
-        'E-posta bildirimleri',
-        'Sohbet geçmişi'
-      ]
-    },
-    getStarted: {
-      title: 'Hemen Başlayın',
-      description: 'Birkaç dakika içinde kurulumu tamamlayın ve müşterilerinizle iletişime geçin.',
-      step1: 'Ücretsiz hesap oluşturun',
-      step2: 'Widget kodunu sitenize ekleyin',
-      step3: 'Müşterilerinizle konuşmaya başlayın',
-      cta: 'Şimdi Deneyin'
-    },
-    cta: {
-      title: 'Müşterilerinizle Daha İyi İletişim Kurmaya Hazır mısınız?',
-      description: 'Binlerce işletme Supbort.io ile müşteri memnuniyetini artırıyor.',
-      button: 'Ücretsiz Hesap Oluştur'
-    },
-    footer: {
-      description: 'Modern müşteri destek sistemi',
-      product: 'Ürün',
-      company: 'Şirket',
-      support: 'Destek',
-      copyright: '© 2026 Supbort.io. Tüm hakları saklıdır.'
-    }
-  },
-  features: {
-    title: 'Özellikler',
-    subtitle: 'İşinizi büyütmek için ihtiyacınız olan her şey',
-    chat: {
-      title: 'Canlı Sohbet',
-      description:
-        'Müşterilerinizle gerçek zamanlı iletişim kurun. WebSocket teknolojisi ile anlık mesajlaşma deneyimi sunun.'
-    },
-    ai: {
-      title: 'Yapay Zeka Asistan',
-      description:
-        'Akıllı yapay zeka asistanı, sık sorulan sorulara otomatik yanıt verir ve müşteri memnuniyetini artırır.'
-    },
-    faq: {
-      title: 'Akıllı FAQ Sistemi',
-      description:
-        'Sık sorulan soruları düzenleyin ve müşterilerinizin hızlıca cevap bulmasını sağlayın.'
-    },
-    multisite: {
-      title: 'Çoklu Site Desteği',
-      description:
-        'Birden fazla web sitenizi tek bir panelden yönetin. Her site için ayrı widget kodu ve ayarlar.'
-    },
-    analytics: {
-      title: 'Analitik ve Raporlama',
-      description:
-        'Detaylı analitiklerle müşteri davranışlarını izleyin ve performansınızı iyileştirin.'
-    },
-    security: {
-      title: 'Güvenlik',
-      description:
-        'End-to-end şifreleme ile müşteri verileriniz güvende. GDPR ve veri koruma standartlarına uygun.'
-    },
-    customization: {
-      title: 'Özelleştirme',
-      description:
-        'Widget tasarımını markanıza uygun şekilde özelleştirin. Renkler, yazı tipleri ve konumlandırma seçenekleri.'
-    },
-    mobile: {
-      title: 'Mobil Uyumlu',
-      description: 'Responsive tasarım ile tüm cihazlarda mükemmel çalışan destek sistemi.'
-    }
-  },
-  pricing: {
-    title: 'Fiyatlandırma',
-    subtitle: 'İşletmenize uygun planı seçin',
-    monthly: 'Aylık',
-    yearly: 'Yıllık',
-    save: '2 ay ücretsiz',
-    starter: {
-      name: 'Başlangıç',
-      price: '₺299',
-      period: '/ay',
-      description: 'Küçük işletmeler için',
-      features: [
-        '1 web sitesi',
-        '100 konuşma/ay',
-        'Temel analitik',
-        'Email destek',
-        '7/24 sohbet widget'
-      ],
-      cta: 'Başla'
-    },
-    professional: {
-      name: 'Profesyonel',
-      price: '₺799',
-      period: '/ay',
-      description: 'Büyüyen işletmeler için',
-      popular: 'Popüler',
-      features: [
-        '5 web sitesi',
-        '500 konuşma/ay',
-        'Gelişmiş analitik',
-        'Öncelikli destek',
-        'Yapay zeka asistan',
-        'Özelleştirilebilir widget',
-        'API erişimi'
-      ],
-      cta: 'Başla'
-    },
-    enterprise: {
-      name: 'Kurumsal',
-      price: 'Özel',
-      period: '',
-      description: 'Büyük organizasyonlar için',
-      features: [
-        'Sınırsız web sitesi',
-        'Sınırsız konuşma',
-        'Özel analitik',
-        '7/24 telefon desteği',
-        'Özel AI eğitimi',
-        'Özel entegrasyonlar',
-        'SLA garantisi',
-        'Özel sunucu seçeneği'
-      ],
-      cta: 'İletişime Geç'
-    }
-  },
-  about: {
-    title: 'Hakkımızda',
-    subtitle: 'Müşteri deneyimini yeniden tasarlıyoruz',
-    mission: {
-      title: 'Misyonumuz',
-      description:
-        'Her büyüklükteki işletmenin dünya standartlarında müşteri desteği sunabilmesini sağlamak. Yapay zeka ve modern teknolojileri kullanarak müşteri hizmetlerini daha erişilebilir ve etkili hale getiriyoruz.'
-    },
-    vision: {
-      title: 'Vizyonumuz',
-      description:
-        'Müşteri desteğinin geleceğini şekillendirmek. Her müşteri etkileşiminin değerli, hızlı ve kişiselleştirilmiş olduğu bir dünya hayal ediyoruz.'
-    },
-    values: {
-      title: 'Değerlerimiz',
-      innovation: {
-        title: 'İnovasyon',
-        description: 'Sürekli gelişen teknoloji ile en iyi çözümleri sunuyoruz'
-      },
-      customer: {
-        title: 'Müşteri Odaklılık',
-        description: 'Müşterilerimizin başarısı bizim başarımızdır'
-      },
-      security: {
-        title: 'Güvenlik',
-        description: 'Veri güvenliği ve gizlilik en önceliğimiz'
-      }
-    },
-    team: {
-      title: 'Ekibimiz',
-      description: 'Deneyimli ve tutkulu profesyonellerden oluşan ekibimiz, sizin için çalışıyor.'
-    }
   },
   acceptInvite: {
     title: 'Ekibe katılın',
@@ -1350,7 +1029,17 @@ export default {
     clear: 'Temizle',
     saving: 'Kaydediliyor…',
     active: 'Etkin',
-    inactive: 'Kapalı'
+    inactive: 'Kapalı',
+    unexpectedErrorTitle: 'Bir şey ters gitti',
+    unexpectedErrorBody: 'Bu bölüm yüklenemedi. Çalışmanıza devam etmek için sayfayı yenileyin.',
+    newVersionTitle: 'Yeni sürüm hazır',
+    newVersionBody: 'Uygulama güncellendi. En yeni sürümü açmak için sayfayı yenileyin.',
+    reloadPage: 'Sayfayı yenile'
+  },
+  notFound: {
+    title: 'Sayfa bulunamadı',
+    body: 'Aradığınız sayfa taşınmış, silinmiş veya adresi yanlış yazılmış olabilir.',
+    home: 'Ana sayfaya dön'
   },
   team: {
     title: 'Ekip Yönetimi',
@@ -1894,7 +1583,7 @@ export default {
   },
   docsPage: {
     meta: {
-      title: 'Kurulum rehberi',
+      title: 'Canlı Destek Kurulumu: WordPress, Shopify, ikas, Ticimax',
       description:
         'Supbort.io sohbet balonunu sitenize ekleyin: HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue ve Angular için adımlar.'
     },

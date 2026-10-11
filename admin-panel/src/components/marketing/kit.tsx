@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { ArrowRight, Plus } from 'lucide-react';
@@ -117,7 +117,7 @@ export const Reveal = ({
   className?: string;
   as?: 'div' | 'li' | 'section';
 }) => {
-  const Tag = motion[as];
+  const Tag = m[as];
   return (
     <Tag
       className={className}

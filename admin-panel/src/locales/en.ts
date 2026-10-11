@@ -1,122 +1,5 @@
 export default {
   landing: {
-    pricing: {
-      title1: 'Flexible Pricing, <br />',
-      title2: 'Transparent Plans',
-      desc: 'No matter the size of your business, we have a plan for you. No hidden fees.',
-      monthly: 'Monthly',
-      yearly: 'Yearly',
-      discount: '20% Off',
-      popular: 'MOST POPULAR',
-      billedYearly: 'billed yearly',
-      billedMonthly: 'billed monthly',
-      customTitle: 'Custom',
-      customDesc: 'As per your needs',
-      btnSales: 'Talk to Sales',
-      btnStart: 'Get Started',
-      trustedBy: 'Over 10,000 companies trust Supbort.io to grow their business',
-      faqTitle: 'Frequently Asked Questions',
-      faqDesc: 'Still have questions? Contact our team.',
-      faq: {
-        q1: 'Is a credit card required?',
-        a1: 'No, our 14-day free trial does not require a credit card. You can sign up with just your email address.',
-        q2: 'Can I change my plan later?',
-        a2: 'Yes, you can switch between plans at any time. When you make a change, pro-rated pricing will be applied based on your usage time.',
-        q3: 'Is there a contract commitment?',
-        a3: 'There is no commitment other than annual plans. You can cancel monthly plans at any time.',
-        q4: 'I need a customized plan, what should I do?',
-        a4: 'For large teams or special needs, you can review our Enterprise plan. Contact our sales team for details.'
-      },
-      backHome: 'Back to Home',
-      footerCopyright: '© 2024 Supbort.io. All rights reserved.',
-      starterFeatures: [
-        '5 Operators',
-        'Unlimited Live Chat',
-        'Basic Analytics',
-        '100 Basic Integrations',
-        'Email Support',
-        '14 Days Chat History'
-      ],
-      proFeatures: [
-        'Unlimited Operators',
-        'Advanced AI Bots',
-        'In-depth Analytics & Reporting',
-        'Unlimited Integrations + API Access',
-        'Priority 24/7 Support',
-        'Unlimited Chat History',
-        'Multi-Language Support'
-      ],
-      enterpriseFeatures: [
-        'Custom AI Models',
-        'On-Premise Installation Option',
-        'SLA Guarantee',
-        'Custom Customer Success Manager',
-        'Advanced Security and Compliance',
-        'White-label Customization'
-      ]
-    },
-    about: {
-      heroTitle1: 'Redefining <br/>',
-      heroTitle2: 'Customer Communication',
-      heroDesc:
-        'At Supbort.io, we offer a modern and user-friendly platform that helps businesses communicate better with their customers.',
-      whoAreWe: 'WHO ARE WE?',
-      story1:
-        'Supbort.io was born from our experience in customer service. We saw many businesses struggling to communicate effectively with their customers. Existing solutions were either too complex or too expensive.',
-      story2:
-        'We set out to solve this problem. Our goal was to create an easy-to-use and affordable platform that would enable businesses of all sizes to offer professional customer support.',
-      story3:
-        'Today, thousands of businesses communicate better with their customers and increase customer satisfaction using Supbort.io. And we continue to grow rapidly.',
-      valuesTitle: 'Our Values',
-      valuesDesc: 'Our mission and the core principles that make us who we are.',
-      ctaTitle:
-        'Ready to Communicate Better <br className="hidden md:block" /> With Your Customers?',
-      ctaDesc:
-        'Thousands of businesses increase customer satisfaction with Supbort.io. We would love to see you among us.',
-      ctaBtn: 'Create Free Account',
-      backHome: 'Back to Home',
-      footerCopyright: '© 2024 Supbort.io. All rights reserved.'
-    },
-    features: {
-      badge: 'NEXT-GEN SUPPORT PLATFORM',
-      title1: 'Redefining ',
-      title2: 'Customer Communication',
-      desc: "The world's most advanced support platform that allows your business to establish a faster, smarter, and closer bond with your customers.",
-      btnStart: 'Try It Now',
-      btnDemo: 'Watch Demo',
-      aiTitle: 'AI-Powered Automation',
-      aiDesc: "Advanced AI integration that answers 80% of your customers' questions in seconds.",
-      aiAsk: 'Can I get information about pricing?',
-      aiAns: 'Great question! Our packages start at $29 per month...',
-      analyticsTitle: 'Deep Analytics',
-      analyticsDesc: 'Track customer performance and team metrics in real-time.',
-      langTitle: 'Multi-Language',
-      langDesc: 'Auto-translation in 50+ languages.',
-      integTitle: 'Unlimited Integrations',
-      integDesc: '100+ CRM and tool support.',
-      secTitle: 'Maximum Security',
-      secDesc: 'SSL and GDPR compliance.',
-      platformTitle1: 'One Platform, ',
-      platformTitle2: 'Infinite Solutions',
-      platformDesc: 'Everything you need combined in a single dashboard.',
-      statsUsers: 'Active Users',
-      statsChats: 'Monthly Chats',
-      statsCountries: 'Countries',
-      statsUptime: 'Uptime',
-      techTitle: 'Our Technology',
-      techDesc:
-        'Developed with modern web technologies, Supbort.io offers high performance and reliability.',
-      ctaTitle:
-        'Ready to Communicate Better <br className="hidden md:block" /> With Your Customers?',
-      ctaDesc:
-        'Thousands of businesses are increasing customer satisfaction with Supbort.io. Join us today.',
-      ctaBtn: 'Create Free Account',
-      footerSecurity: 'Security',
-      footerTerms: 'Terms of Use',
-      footerPrivacy: 'Privacy Policy',
-      footerContact: 'Contact',
-      footerCopyright: '© 2024 Supbort.io Inc. All rights reserved.'
-    },
     home: {
       badge: 'One script, every stack',
       heroTitle1: 'Take Your ',
@@ -421,208 +304,6 @@ export default {
     last7days: 'Last 7 Days',
     last30days: 'Last 30 Days',
     last90days: 'Last 90 Days'
-  },
-  home: {
-    hero: {
-      title: 'Take Your Customer Service',
-      titleHighlight: 'To The Next Level',
-      description:
-        'Connect with your visitors instantly with Supbort.io. Modern, fast, and easy-to-use live support system.',
-      cta: 'Get Started Free',
-      demo: 'Explore Features'
-    },
-    features: {
-      title: 'Powerful Features',
-      subtitle: 'Everything you need to simplify your customer support',
-      realtime: {
-        title: 'Live Chat',
-        description: 'Connect with your customers instantly. Provide fast and effective support.'
-      },
-      ai: {
-        title: 'Quick Response',
-        description:
-          'Answer customer questions instantly with automatic responses and ready templates.'
-      },
-      multisite: {
-        title: 'Multi-operator',
-        description: 'Work together with your team. Share conversations and be efficient.'
-      },
-      analytics: {
-        title: 'Detailed Reports',
-        description: 'Analyze your customer interactions. Continuously improve your performance.'
-      },
-      secure: {
-        title: '24/7 Accessible',
-        description: 'Your customers can always reach you. No missed opportunities.'
-      },
-      customizable: {
-        title: 'Secure',
-        description: 'Your data is encrypted and stored securely. GDPR compliant infrastructure.'
-      }
-    },
-    why: {
-      title: 'Why Supbort.io?',
-      description:
-        'The most modern live support system you can integrate into your website. The easiest way to communicate with your customers in real-time.',
-      benefits: [
-        'Easy setup - Get started in 5 minutes',
-        'Mobile-friendly interface',
-        'Unlimited conversations',
-        'Customizable widget',
-        'Email notifications',
-        'Chat history'
-      ]
-    },
-    getStarted: {
-      title: 'Get Started Now',
-      description: 'Complete the setup in a few minutes and connect with your customers.',
-      step1: 'Create a free account',
-      step2: 'Add widget code to your site',
-      step3: 'Start chatting with your customers',
-      cta: 'Try Now'
-    },
-    cta: {
-      title: 'Ready to Communicate Better with Your Customers?',
-      description: 'Thousands of businesses are increasing customer satisfaction with Supbort.io.',
-      button: 'Create Free Account'
-    },
-    footer: {
-      description: 'Modern customer support system',
-      product: 'Product',
-      company: 'Company',
-      support: 'Support',
-      copyright: '© 2026 Supbort.io. All rights reserved.'
-    }
-  },
-  features: {
-    title: 'Features',
-    subtitle: 'Everything you need to grow your business',
-    chat: {
-      title: 'Live Chat',
-      description:
-        'Communicate with your customers in real-time. Provide instant messaging experience with WebSocket technology.'
-    },
-    ai: {
-      title: 'AI Assistant',
-      description:
-        'Smart AI assistant automatically responds to frequently asked questions and increases customer satisfaction.'
-    },
-    faq: {
-      title: 'Smart FAQ System',
-      description:
-        'Organize frequently asked questions and help your customers find answers quickly.'
-    },
-    multisite: {
-      title: 'Multi-site Support',
-      description:
-        'Manage multiple websites from a single panel. Separate widget code and settings for each site.'
-    },
-    analytics: {
-      title: 'Analytics and Reporting',
-      description: 'Track customer behavior with detailed analytics and improve your performance.'
-    },
-    security: {
-      title: 'Security',
-      description:
-        'Your customer data is safe with end-to-end encryption. Compliant with GDPR and data protection standards.'
-    },
-    customization: {
-      title: 'Customization',
-      description:
-        'Customize widget design to match your brand. Colors, fonts, and positioning options.'
-    },
-    mobile: {
-      title: 'Mobile Friendly',
-      description: 'Support system that works perfectly on all devices with responsive design.'
-    }
-  },
-  pricing: {
-    title: 'Pricing',
-    subtitle: 'Choose the plan that fits your business',
-    monthly: 'Monthly',
-    yearly: 'Yearly',
-    save: '2 months free',
-    starter: {
-      name: 'Starter',
-      price: '$29',
-      period: '/month',
-      description: 'For small businesses',
-      features: [
-        '1 website',
-        '100 conversations/month',
-        'Basic analytics',
-        'Email support',
-        '24/7 chat widget'
-      ],
-      cta: 'Get Started'
-    },
-    professional: {
-      name: 'Professional',
-      price: '$79',
-      period: '/month',
-      description: 'For growing businesses',
-      popular: 'Popular',
-      features: [
-        '5 websites',
-        '500 conversations/month',
-        'Advanced analytics',
-        'Priority support',
-        'AI assistant',
-        'Customizable widget',
-        'API access'
-      ],
-      cta: 'Get Started'
-    },
-    enterprise: {
-      name: 'Enterprise',
-      price: 'Custom',
-      period: '',
-      description: 'For large organizations',
-      features: [
-        'Unlimited websites',
-        'Unlimited conversations',
-        'Custom analytics',
-        '24/7 phone support',
-        'Custom AI training',
-        'Custom integrations',
-        'SLA guarantee',
-        'Dedicated server option'
-      ],
-      cta: 'Contact Us'
-    }
-  },
-  about: {
-    title: 'About Us',
-    subtitle: 'Redesigning the customer experience',
-    mission: {
-      title: 'Our Mission',
-      description:
-        'To enable businesses of all sizes to provide world-class customer support. We make customer service more accessible and effective using artificial intelligence and modern technologies.'
-    },
-    vision: {
-      title: 'Our Vision',
-      description:
-        'To shape the future of customer support. We envision a world where every customer interaction is valuable, fast, and personalized.'
-    },
-    values: {
-      title: 'Our Values',
-      innovation: {
-        title: 'Innovation',
-        description: 'We provide the best solutions with constantly evolving technology'
-      },
-      customer: {
-        title: 'Customer Focus',
-        description: "Our customers' success is our success"
-      },
-      security: {
-        title: 'Security',
-        description: 'Data security and privacy are our top priority'
-      }
-    },
-    team: {
-      title: 'Our Team',
-      description: 'Our team of experienced and passionate professionals is working for you.'
-    }
   },
   acceptInvite: {
     title: 'Join the team',
@@ -1346,7 +1027,17 @@ export default {
     clear: 'Clear',
     saving: 'Saving…',
     active: 'Active',
-    inactive: 'Inactive'
+    inactive: 'Inactive',
+    unexpectedErrorTitle: 'Something went wrong',
+    unexpectedErrorBody: 'This section could not load. Reload the page to continue working.',
+    newVersionTitle: 'A new version is ready',
+    newVersionBody: 'The app was updated. Reload the page to open the latest version.',
+    reloadPage: 'Reload page'
+  },
+  notFound: {
+    title: 'Page not found',
+    body: 'The page may have moved, been removed, or the address may be incorrect.',
+    home: 'Back to home'
   },
   team: {
     title: 'Team Management',
@@ -1888,7 +1579,7 @@ export default {
   },
   docsPage: {
     meta: {
-      title: 'Setup guide',
+      title: 'Live Chat Setup: WordPress, Shopify, ikas and Ticimax',
       description:
         'Add the Supbort.io chat bubble to your site: steps for HTML, WordPress, Shopify, ikas, Ticimax, IdeaSoft, T-Soft, Wix, Webflow, Google Tag Manager, React, Next.js, Vue and Angular.'
     },
