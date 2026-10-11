@@ -1,6 +1,6 @@
 # GO / NO-GO — plan v10 §19
 
-Durum: 9 Ekim 2026, dal `feat/prod-readiness-v10`. Her madde kanıtıyla.
+Durum: 12 Ekim 2026, dal `chore/supbort-rebrand-and-prod-polish`. Her madde kanıtıyla.
 ✅ kanıtlandı · ❌ henüz değil (kimin adımı olduğu yanında) · ◐ kısmen.
 
 **Karar: NO-GO.** Kod tarafı kapalı betaya hazır; canlıya çıkışı engelleyenler
@@ -40,7 +40,7 @@ tamamlandığında aşağıdaki ❌ maddeler yeniden işaretlenir.
 | Staging'de ayrı makineden yük testi, kapasite cümlesi | ❌ staging | `npm run loadtest`, docs/load-test.md |
 | Yeniden bağlanma fırtınası: mesaj kaybı 0 | ✅ yerel | af2135a |
 | Widget gzip ≤ 35 KB | ✅ | 25,6 KB (8674181 sonrası, `scripts/check-bundle-size.mjs`) |
-| Mobil Lighthouse ana sayfa ≥ 90 (P2: en az ölçüldü) | ◐ ölçüldü | ana sayfa 49 → 56, fiyatlandırma 74 (40b03e9); hedef karşılanmadı |
+| Mobil Lighthouse ana sayfa ≥ 90 (P2: en az ölçüldü) | ◐ ölçüldü | statik üretim önizlemesi: ana sayfa 62, fiyatlandırma 81, Yapay Zekâ 78; önceki ana sayfa 56 / fiyatlandırma 74; hedef hâlâ karşılanmadı |
 
 ## Ürün
 
@@ -49,7 +49,7 @@ tamamlandığında aşağıdaki ❌ maddeler yeniden işaretlenir.
 | Çevrimdışı akış + kaçırılan sohbet e-postası (PRD-01) | ✅ | 862eae6 |
 | Bildirimler, hazır yanıtlar, CSAT, ön form + KVKK onayı, aktivasyon | ✅ | 862eae6, ea8fcb2 |
 | Widget erişilebilirliği axe 0 ciddi; mobil widget | ✅ emülasyon · ❌ gerçek cihaz | acf873c, 3335903; iOS/Android cihaz denemesi sahipte |
-| Playwright ≥ 14 senaryo yeşil | ✅ | 39 senaryo: 37 geçti, 2 bilinçli atlandı, 0 başarısız |
+| Playwright ≥ 14 senaryo yeşil | ✅ | 41 senaryo: 38 geçti, 2 bilinçli atlandı; tek belirsiz seçici düzeltildikten sonra hedefli yeniden koşu geçti (toplam etkin sonuç 39 geçti, 2 atlandı, 0 açık hata) |
 
 ## Yapay zekâ
 
@@ -73,16 +73,18 @@ tamamlandığında aşağıdaki ❌ maddeler yeniden işaretlenir.
 
 ```text
 Faz: Plan v10 — tamamı (Faz 0–14)
-Tamamlanan görevler: docs/IS_LISTESI.md bölüm E — her görev, durumu ve commit'i
-Testler: backend 305/307 geçti, 1 bilinçli atlandı (gerçek modelle asistan
-         denemesi), 1 sıra varsayımı düzeltildi ve tekrar geçti (a8e53e8);
-         playwright 37/39 geçti, 2 bilinçli atlandı (gerçek modelle asistan,
-         WordPress — WP_URL olmadan), 0 başarısız — 6 tarayıcı/cihaz profili;
+Tamamlanan görevler: docs/IS_LISTESI.md bölüm E ve F — her görev, durumu ve commit'i
+Testler: backend 321/322 geçti, 1 bilinçli atlandı (gerçek modelle asistan
+         denemesi), 0 başarısız; Playwright tam koşuda 38/41 geçti, 2 bilinçli
+         atlandı (gerçek modelle asistan, WordPress — WP_URL olmadan); kalan
+         tek testte Google kartının eklenmesiyle aynı etikete sahip iki alanı
+         ayıran seçici düzeltildi ve hedefli koşu geçti; açık hata yok;
          npm audit (prod) backend 0 / panel 0 açık; imaj taraması (Trivy, supportio:local,
          Alpine 3.24.2) düzeltilebilir kritik/yüksek 0; yerel üretim yığınında
          göçler 0000–0024 temiz veritabanına uygulandı, duman testi 23/23 geçti
-Ölçümler: widget 25,6 KB gzip (bütçe 35); panel ilk yükleme 191,5 KB gzip
-          (bütçe 250); mobil Lighthouse ana sayfa 49 → 56, fiyatlandırma 74
+Ölçümler: widget 25,6 KB gzip (bütçe 35); panel ilk yükleme 145,9 KB gzip,
+          önceki 191,5 KB (bütçe 250); mobil Lighthouse statik üretim
+          önizlemesinde ana sayfa 62, fiyatlandırma 81, Yapay Zekâ 78
           (hedef 90 karşılanmadı)
 Sahibe kalan: SAHİP-01…16 (plan §20) + Google OAuth istemcisi, Paddle tavsiye
               indirimi, WordPress.org / GTM galerisi / Shopify Partner hesapları

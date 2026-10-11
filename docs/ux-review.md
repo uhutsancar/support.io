@@ -26,6 +26,16 @@ sign-ups, how many reached each step and the median hours from sign-up
 The browser tests walk the same path end to end (`e2e/tests/first-chat.spec.ts`,
 `early-message.spec.ts`).
 
+## Small-team defaults (D-09)
+
+The defaults were reviewed for a new workspace with one to three people.
+Automatic assignment should stay effectively off until the owner creates the
+team/department rules and capacity; manual claim and reply is the least
+surprising first-use path. FAQ automatic answers should likewise stay off until
+the owner adds reviewed content and explicitly accepts the assistant notice.
+No default was changed. Revisit both choices only after the five-customer beta
+session below shows the same hesitation at least twice.
+
 ## Checked
 
 | Area | Result |
