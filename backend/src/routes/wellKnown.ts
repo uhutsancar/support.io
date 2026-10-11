@@ -79,6 +79,7 @@ router.get('/security.txt', (_req: Request, res: Response) => {
 export const PRIVATE_PREFIXES = [
   '/dashboard',
   '/onboarding',
+  '/login',
   '/api/',
   '/invite/',
   '/reset-password',

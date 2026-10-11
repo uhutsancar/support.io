@@ -22,7 +22,7 @@ const SHELL = `<!doctype html>
     <title>Default</title>
     <!--/seo-->
   </head>
-  <body></body>
+  <body><div id="root"></div></body>
 </html>`;
 const BASE = 'https://app.example.com';
 
@@ -30,7 +30,7 @@ test('a public page gets its own head on the given domain', { skip: !fs.existsSy
   const html = withSeoHead(SHELL, '/en/pricing', BASE);
   assert.match(html, /<html lang="en"/);
   assert.doesNotMatch(html, /Default/);
-  assert.match(html, /<title>[^<]+— Support\.io<\/title>/);
+  assert.match(html, /<title>[^<]+— Supbort\.io<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/app\.example\.com\/en\/pricing" \/>/);
   assert.match(html, /hreflang="tr" href="https:\/\/app\.example\.com\/fiyatlandirma"/);
   assert.match(html, /hreflang="x-default" href="https:\/\/app\.example\.com\/fiyatlandirma"/);
@@ -40,10 +40,33 @@ test('a public page gets its own head on the given domain', { skip: !fs.existsSy
   const ld = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/s.exec(html)![1]);
   const app = ld['@graph'].find((n: { '@type': string }) => n['@type'] === 'SoftwareApplication');
   assert.ok(app, 'pricing carries the application with its offers');
-  const pro = app.offers.find((o: { name: string }) => o.name === 'PRO');
+  const pro = app.offers.find((o: { name: string }) => o.name === 'Pro');
   assert.equal(pro.price, String(PLAN_LIMITS.PRO.price.monthly));
   assert.equal(pro.priceCurrency, 'TRY');
 });
+
+test(
+  'visible FAQ, breadcrumbs and noscript summaries are emitted',
+  { skip: !fs.existsSync(PAGES) },
+  () => {
+    const home = withSeoHead(SHELL, '/', BASE);
+    const homeLd = JSON.parse(
+      /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(home)![1]
+    );
+    assert.ok(homeLd['@graph'].some((node: { '@type': string }) => node['@type'] === 'FAQPage'));
+    assert.match(home, /<noscript><main><h1>/);
+    assert.match(home, /Küçük ve orta ölçekli işletmeler için canlı destek/);
+
+    const feature = withSeoHead(SHELL, '/ozellikler/live-chat', BASE);
+    const featureLd = JSON.parse(
+      /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(feature)![1]
+    );
+    const breadcrumb = featureLd['@graph'].find(
+      (node: { '@type': string }) => node['@type'] === 'BreadcrumbList'
+    );
+    assert.equal(breadcrumb.itemListElement.length, 3);
+  }
+);
 
 test(
   'Turkish pages stay Turkish; trailing slashes are the same page',

@@ -8,7 +8,7 @@
  * kapalı "teknik not" bloğunda.
  */
 
-import type React from 'react';
+import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { Link } from 'react-router-dom';
@@ -66,7 +66,6 @@ const DEV_ICONS: Record<string, React.ElementType> = {
 };
 
 const FeatureCard = ({ id, to, t }: { id: string; to: string; t: (k: string) => string }) => {
-  const Icon = featureIcon(id);
   const badge = PLAN_BADGE[FEATURE_PLAN[id as keyof typeof FEATURE_PLAN]];
   const tone = FEATURE_TONE[id as keyof typeof FEATURE_TONE];
   const a = accent(tone);
@@ -84,7 +83,10 @@ const FeatureCard = ({ id, to, t }: { id: string; to: string; t: (k: string) => 
               a.border
             ].join(' ')}
           >
-            <Icon className={['w-5 h-5', a.text].join(' ')} strokeWidth={1.8} />
+            {React.createElement(featureIcon(id), {
+              className: ['w-5 h-5', a.text].join(' '),
+              strokeWidth: 1.8
+            })}
           </span>
           {badge && <Chip>{badge}</Chip>}
         </div>

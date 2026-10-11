@@ -18,11 +18,11 @@ export default {
     featureLink: 'Özelliği incele',
     items: {
       ecommerce: {
-        name: 'E-ticaret',
+        name: 'E-ticaret için Canlı Destek',
         tag: 'Kargo, iade, beden ve ödeme soruları',
         photoAlt: 'Paketlerin arasında telefonundan siparişlere bakan mağaza sahibi',
         headline: 'Sepetteki müşteri sorusunu sorabilsin, sipariş kaçmasın',
-        desc: '“Bu bedeni var mı?”, “Kargo ne kadar sürer?”, “İade nasıl?” Ürün sayfasında soru soran müşteri cevabı beklemeden gider. Sık soruları yapay zekâ asistanı gece gündüz yanıtlar; satışa dönecek konuşmalar ekibinize kalır.',
+        desc: 'E-ticaret için canlı destek, ürün ve ödeme sayfasındaki soruyu satış kaçmadan karşılar. “Bu bedeni var mı?”, “Kargo ne kadar sürer?”, “İade nasıl?” gibi sık soruları yapay zekâ yanıtlar; gerisi ekibinize kalır.',
         pains: [
           {
             title: 'Aynı soru günde otuz kez',
@@ -68,11 +68,11 @@ export default {
         ]
       },
       saas: {
-        name: 'Yazılım / SaaS',
+        name: 'SaaS için Canlı Destek',
         tag: 'Deneme süresi, kurulum ve hata bildirimleri',
         photoAlt: 'Ofiste ekran başında birlikte çalışan yazılım ekibi',
         headline: 'Deneme süresindeki kullanıcıyı takılıp bırakmadan yakalayın',
-        desc: 'Ürününüzü yeni deneyen biri takıldığında genellikle sormaz, sessizce çıkar. Kimin nerede takıldığını görün, sorusu doğru ekibe gitsin.',
+        desc: 'SaaS için canlı destek, deneme süresindeki kullanıcıyı takıldığı ekranda yakalar. Kimin nerede takıldığını görün, sorusu doğru ekibe gitsin.',
         pains: [
           {
             title: 'Sessiz terk',
@@ -115,11 +115,11 @@ export default {
         ]
       },
       agency: {
-        name: 'Ajans / Birden çok site',
+        name: 'Ajanslar için Canlı Destek',
         tag: 'Müşteri siteleri, ayrı ekipler, ayrı raporlar',
         photoAlt: 'Dizüstü bilgisayar başında gülümseyerek toplanan ajans ekibi',
         headline: 'Tek panelden onlarca siteyi yönetin, veriler karışmasın',
-        desc: 'Yönettiğiniz her site kendi kurulum satırını, kendi görünümünü ve kendi raporunu alır. Hangi ekip üyesinin hangi siteyi göreceğini siz seçersiniz.',
+        desc: 'Ajanslar için canlı destek, yönettiğiniz siteleri tek panelde ayrı tutar. Her site kendi görünümünü ve raporunu alır; hangi ekip üyesinin hangi siteyi göreceğini siz seçersiniz.',
         pains: [
           {
             title: 'Her site ayrı panel',
@@ -159,11 +159,11 @@ export default {
         ]
       },
       health: {
-        name: 'Klinik / Sağlık',
+        name: 'Klinikler için Canlı Destek',
         tag: 'Randevu, fiyat ve yol tarifi soruları',
         photoAlt: 'Klinikte hastasıyla konuşan gülümseyen doktor',
         headline: 'Telefonla sorulan her şeyi yazıyla, mesai dışında da alın',
-        desc: 'Randevu, fiyat ve adres soruları telefonu meşgul eder. Aynı sorular sohbetten geldiğinde ekibiniz aynı anda birkaç kişiyle ilgilenebilir.',
+        desc: 'Klinikler için canlı destek, randevu, fiyat ve adres sorularını telefondan sohbete taşır. Ekibiniz aynı anda birkaç kişiyle ilgilenebilir.',
         pains: [
           {
             title: 'Hat hep meşgul',
@@ -203,11 +203,11 @@ export default {
         ]
       },
       hospitality: {
-        name: 'Otel / Restoran',
+        name: 'Oteller için Canlı Destek',
         tag: 'Rezervasyon, oda ve menü soruları',
         photoAlt: 'Ahşap detaylı modern otel resepsiyonu',
         headline: 'Rezervasyon sayfasındaki misafir sorusunu anında yanıtlayın',
-        desc: 'Oda tipi, erken giriş, otopark, alerjen… Rezervasyon yapmak üzere olan misafir cevabı bulamazsa başka sekmeye geçer.',
+        desc: 'Oteller için canlı destek, rezervasyon öncesi oda, erken giriş ve otopark sorularını anında karşılar. Cevabını bulan misafir başka sekmeye geçmez.',
         pains: [
           {
             title: 'Rezervasyon yarıda kalıyor',
@@ -250,11 +250,11 @@ export default {
         ]
       },
       education: {
-        name: 'Eğitim',
+        name: 'Eğitim Kurumları için Canlı Destek',
         tag: 'Kayıt, ders ve ödeme soruları',
         photoAlt: 'Kulaklıkla dizüstü bilgisayarda çevrimiçi derse katılan öğrenci',
         headline: 'Kayıt döneminde gelen soruların altında kalmayın',
-        desc: 'Kayıt tarihleri, ders programı, ödeme seçenekleri… Dönem başında gelen yüzlerce soru ekibi boğar. Cevabı belli olanı yapay zekâ asistanı karşılasın, gerisi doğru birime gitsin.',
+        desc: 'Eğitim kurumları için canlı destek, kayıt, ders ve ödeme sorularını tek yerde toplar. Cevabı belli olanı yapay zekâ karşılar, gerisi doğru birime gider.',
         pains: [
           {
             title: 'Dönem başı yığılması',
@@ -298,9 +298,9 @@ export default {
 
   aiPage: {
     meta: {
-      title: 'Yapay zekâ asistanı',
+      title: 'Yapay Zekâ Destek Asistanı',
       description:
-        'Sitenizdeki sohbet balonunda sık soruları 7/24, saniyeler içinde yanıtlayan yapay zekâ asistanı. Sizin SSS içeriğinizden konuşur, bilmediğini ekibinize devreder.'
+        'Yapay zekâ destek asistanı SSS içeriğinizden sık soruları yanıtlar; cevabını bilmediği konuşmaları ekibinize devreder.'
     },
     eyebrow: 'Yapay zekâ asistanı',
     title: 'Müşterinize gece gündüz yanıt veren asistan',

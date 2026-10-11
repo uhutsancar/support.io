@@ -18,7 +18,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { AnimatePresence, motion, useInView, useScroll } from 'motion/react';
+import { AnimatePresence, m, useInView, useScroll } from 'motion/react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import {
@@ -90,7 +90,7 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
   <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-24 px-5 sm:px-8 overflow-hidden bg-gradient-to-b from-[#eef0ff] via-[#f6f5ff] to-white dark:from-[#10122a] dark:via-surface-dark dark:to-surface-dark">
     <div className="max-w-7xl mx-auto grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-14 lg:gap-10 items-center">
       <div>
-        <motion.h1
+        <m.h1
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -98,18 +98,18 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
         >
           {t('homePage.hero.title')}{' '}
           <span className="text-indigo-600 dark:text-indigo-400">{t('homePage.hero.accent')}</span>
-        </motion.h1>
+        </m.h1>
 
-        <motion.p
+        <m.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
           className="mt-7 text-[18px] sm:text-[19px] leading-[1.6] text-gray-600 dark:text-gray-400 max-w-[50ch] text-pretty"
         >
           {t('homePage.hero.desc')}
-        </motion.p>
+        </m.p>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
@@ -121,7 +121,7 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
           <Button href="#tur" variant="secondary" size="lg">
             {t('homePage.hero.tour')}
           </Button>
-        </motion.div>
+        </m.div>
 
         <ul className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2">
           {['free', 'card', 'setup'].map((k) => (
@@ -140,7 +140,7 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
       <div className="relative mx-auto w-full max-w-[600px] lg:max-w-none">
         {/* Grows in, never fades in: a transparent picture is not painted,
             and it is the largest thing on the page (LCP). */}
-        <motion.div
+        <m.div
           initial={{ scale: 0.97 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
@@ -152,9 +152,9 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
             className="aspect-[4/3.4] sm:aspect-[4/3.2] lg:ml-auto lg:w-[86%] rounded-[32px] shadow-panel-lg"
             imgClassName="object-[62%_center]"
           />
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
@@ -163,9 +163,9 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
           className="relative -mt-24 mx-auto w-[280px] sm:absolute sm:mt-0 sm:mx-0 sm:-bottom-10 sm:left-2 sm:w-[300px]"
         >
           <ChatPlayer script="hero" height={250} />
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, delay: 0.5 }}
@@ -183,9 +183,9 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
               {t('homePage.hero.notifBody')}
             </span>
           </span>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, delay: 0.7 }}
@@ -195,7 +195,7 @@ const Hero = ({ t, routes }: { t: T; routes: Routes }) => (
           <span className="text-[12px] font-medium text-gray-800 dark:text-gray-100">
             {t('homePage.hero.handoff')}
           </span>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   </section>
@@ -317,7 +317,7 @@ const ProductTour = ({ t, routes }: { t: T; routes: Routes }) => {
           {tabs.map((tab) => (
             <TabPanel key={tab.id} value={tab.id} className="focus:outline-none">
               <div className="mt-8 grid lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.4fr)] gap-8 lg:gap-12 items-center rounded-[28px] bg-gradient-to-br from-[#f3f4ff] to-[#faf8f4] dark:from-white/[0.03] dark:to-transparent border border-gray-200/70 dark:border-white/[0.06] p-6 sm:p-10">
-                <motion.div
+                <m.div
                   key={tab.id}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -349,9 +349,9 @@ const ProductTour = ({ t, routes }: { t: T; routes: Routes }) => {
                   <TextLink to={routes.feature(tab.id)} tone={tone} className="mt-6">
                     {t('landing.home.tour.detail')}
                   </TextLink>
-                </motion.div>
+                </m.div>
 
-                <motion.div
+                <m.div
                   key={tab.id + '-v'}
                   initial={{ opacity: 0, y: 16, scale: 0.985 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -360,7 +360,7 @@ const ProductTour = ({ t, routes }: { t: T; routes: Routes }) => {
                   <AppFrame label={t(TOUR_VISUAL[tab.id].frame)} tone={tone}>
                     {TOUR_VISUAL[tab.id].node()}
                   </AppFrame>
-                </motion.div>
+                </m.div>
               </div>
             </TabPanel>
           ))}
@@ -630,7 +630,7 @@ const Story = ({ t }: { t: T }) => {
             className="absolute left-4 top-0 bottom-0 w-px bg-gray-200 dark:bg-white/10"
             aria-hidden="true"
           />
-          <motion.div
+          <m.div
             className="absolute left-4 top-0 bottom-0 w-px bg-indigo-600 origin-top"
             style={{ scaleY: scrollYProgress }}
             aria-hidden="true"
@@ -650,7 +650,7 @@ const Story = ({ t }: { t: T }) => {
         <div className="hidden lg:block">
           <div className="sticky top-[calc(50vh-210px)]">
             <AnimatePresence mode="wait">
-              <motion.div
+              <m.div
                 key={active}
                 initial={{ opacity: 0, y: 24, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -661,7 +661,7 @@ const Story = ({ t }: { t: T }) => {
                 <p className="mt-4 text-center text-[10.5px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                   {steps[active]?.chips?.join(' · ')}
                 </p>
-              </motion.div>
+              </m.div>
             </AnimatePresence>
           </div>
         </div>
@@ -823,7 +823,7 @@ const SetupBento = ({ t, routes }: { t: T; routes: Routes }) => {
                   key={i}
                   className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end"
                 >
-                  <motion.div
+                  <m.div
                     className="w-full rounded-md bg-gradient-to-t from-indigo-600 to-indigo-400"
                     initial={{ height: 0 }}
                     animate={{ height: barsInView ? `${(v / 72) * 100}%` : 0 }}

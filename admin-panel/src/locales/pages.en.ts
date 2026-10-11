@@ -13,11 +13,11 @@ export default {
     featureLink: 'See the feature',
     items: {
       ecommerce: {
-        name: 'E-commerce',
+        name: 'Live Chat for E-commerce',
         tag: 'Shipping, returns, sizes and payment questions',
         photoAlt: 'Shop owner checking orders on a phone among parcels',
         headline: 'Let the shopper with a full cart ask — and keep the order',
-        desc: '“Do you have this in M?”, “How long is delivery?”, “How do returns work?” A shopper who asks on a product page will not wait. The AI assistant answers common questions day and night; conversations that turn into sales stay with your team.',
+        desc: 'Live chat for e-commerce answers questions on product and checkout pages before a sale is lost. AI handles common shipping, size and returns questions; your team handles the rest.',
         pains: [
           {
             title: 'The same question thirty times a day',
@@ -60,11 +60,11 @@ export default {
         ]
       },
       saas: {
-        name: 'Software / SaaS',
+        name: 'Live Chat for SaaS',
         tag: 'Trials, onboarding and bug reports',
         photoAlt: 'Software team working together at their screens',
         headline: 'Catch trial users before they get stuck and leave',
-        desc: 'Someone new to your product rarely asks when they get stuck; they just leave. See who is stuck where, and send every question to the right team.',
+        desc: 'Live chat for SaaS catches trial users on the screen where they get stuck. See who needs help and send every question to the right team.',
         pains: [
           {
             title: 'Silent churn',
@@ -107,11 +107,11 @@ export default {
         ]
       },
       agency: {
-        name: 'Agency / Many sites',
+        name: 'Live Chat for Agencies',
         tag: 'Client sites, separate teams, separate reports',
         photoAlt: 'Agency team gathered around a laptop, smiling',
         headline: 'Run dozens of sites from one dashboard without mixing data',
-        desc: 'Every site you manage gets its own install line, its own look and its own reports. You choose which team member sees which site.',
+        desc: 'Live chat for agencies keeps every client site separate in one dashboard. Each site has its own look and reports, and you choose who can see it.',
         pains: [
           {
             title: 'One dashboard per site',
@@ -151,11 +151,11 @@ export default {
         ]
       },
       health: {
-        name: 'Clinics / Health',
+        name: 'Live Chat for Clinics',
         tag: 'Appointments, prices and directions',
         photoAlt: 'Smiling doctor talking to a patient in a clinic',
         headline: 'Take phone questions in writing, even after hours',
-        desc: 'Appointment, price and address questions keep the phone busy. When they come through chat, your team can help several people at once.',
+        desc: 'Live chat for clinics moves appointment, price and directions questions from the phone to chat, so your team can help several people at once.',
         pains: [
           {
             title: 'The line is always busy',
@@ -195,11 +195,11 @@ export default {
         ]
       },
       hospitality: {
-        name: 'Hotels / Restaurants',
+        name: 'Live Chat for Hotels',
         tag: 'Bookings, rooms and menu questions',
         photoAlt: 'Modern hotel reception with wooden details',
         headline: 'Answer the guest on your booking page, right away',
-        desc: 'Room types, early check-in, parking, allergens… A guest about to book who cannot find the answer moves on to another tab.',
+        desc: 'Live chat for hotels answers room, early check-in and parking questions while guests are booking, before they move to another tab.',
         pains: [
           {
             title: 'Bookings left half-done',
@@ -245,11 +245,11 @@ export default {
         ]
       },
       education: {
-        name: 'Education',
+        name: 'Live Chat for Education',
         tag: 'Enrolment, courses and payments',
         photoAlt: 'Student with headphones attending an online class on a laptop',
         headline: 'Do not drown in questions during enrolment',
-        desc: 'Enrolment dates, schedules, payment options… Hundreds of questions at the start of term swamp the team. Let the AI assistant handle the ones with a known answer and send the rest to the right office.',
+        desc: 'Live chat for education gathers enrolment, course and payment questions in one place. AI handles known answers and sends the rest to the right office.',
         pains: [
           {
             title: 'Start-of-term pile-up',
@@ -290,9 +290,9 @@ export default {
 
   aiPage: {
     meta: {
-      title: 'AI assistant',
+      title: 'AI Customer Support Assistant',
       description:
-        'An AI assistant that answers common questions in your chat bubble 24/7, in seconds. It speaks from your own FAQ and hands what it does not know to your team.'
+        'An AI customer support assistant that answers from your FAQ and hands conversations it cannot answer to your team.'
     },
     eyebrow: 'AI assistant',
     title: 'An assistant that answers your customers day and night',

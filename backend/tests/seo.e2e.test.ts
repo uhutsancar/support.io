@@ -61,6 +61,8 @@ test('private pages say noindex; public ones do not', async () => {
     '/dashboard',
     '/en/dashboard/settings',
     '/onboarding',
+    '/login',
+    '/en/login',
     '/verify-email',
     '/invite/accept'
   ]) {
@@ -71,6 +73,14 @@ test('private pages say noindex; public ones do not', async () => {
     const res = await fetch(`${BASE}${path}`);
     assert.equal(res.headers.get('x-robots-tag'), null, path);
   }
+});
+
+test('unknown browser routes are a soft-404-safe HTML response', async () => {
+  const res = await fetch(`${BASE}/this-page-does-not-exist`);
+  assert.equal(res.status, 404);
+  assert.equal(res.headers.get('x-robots-tag'), 'noindex, nofollow');
+  assert.match(res.headers.get('content-type') || '', /text\/html/);
+  assert.match(await res.text(), /<div id="root">/);
 });
 
 test('the home page gets its own head, the hero preload included', async (t) => {

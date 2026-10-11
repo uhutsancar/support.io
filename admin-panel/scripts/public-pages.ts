@@ -40,11 +40,14 @@ const texts = {
   en: deepMerge(deepMerge(en as Tree, marketingEn as Tree), pagesEn as Tree)
 };
 function text(lang: 'tr' | 'en', key: string): string {
-  const value = key
-    .split('.')
-    .reduce<unknown>((node, part) => (isPlainObject(node) ? node[part] : undefined), texts[lang]);
+  const value = valueAt(lang, key);
   if (typeof value !== 'string' || !value) throw new Error(`missing ${lang} text: ${key}`);
   return value;
+}
+function valueAt(lang: 'tr' | 'en', key: string): unknown {
+  return key
+    .split('.')
+    .reduce<unknown>((node, part) => (isPlainObject(node) ? node[part] : undefined), texts[lang]);
 }
 
 const SUFFIX = ` — ${BRAND_NAME}`;
@@ -60,7 +63,30 @@ const pair = (pick: (routes: ReturnType<typeof marketingRoutes>) => string) => (
   en: pick(r.en)
 });
 
-const pages: Array<{ tr: string; en: string; kind: string; meta: { tr: Meta; en: Meta } }> = [
+interface FaqEntry {
+  question: string;
+  answer: string;
+}
+interface BreadcrumbEntry {
+  name: string;
+  path: string;
+}
+interface PublicContent {
+  heading: string;
+  description: string;
+  sections: string[];
+  faq?: FaqEntry[];
+  breadcrumbs?: BreadcrumbEntry[];
+}
+interface PublicPage {
+  tr: string;
+  en: string;
+  kind: string;
+  meta: { tr: Meta; en: Meta };
+  content?: { tr: PublicContent; en: PublicContent };
+}
+
+const pages: PublicPage[] = [
   {
     ...pair((x) => x.home),
     kind: 'home',
@@ -138,6 +164,95 @@ const pages: Array<{ tr: string; en: string; kind: string; meta: { tr: Meta; en:
     }
   }))
 ];
+
+const stringList = (lang: 'tr' | 'en', keys: string[]) =>
+  keys
+    .map((key) => valueAt(lang, key))
+    .filter((value): value is string => typeof value === 'string');
+
+function faqEntries(lang: 'tr' | 'en', key: string): FaqEntry[] | undefined {
+  const items = valueAt(lang, key);
+  if (!Array.isArray(items)) return undefined;
+  const faq = items.flatMap((item) => {
+    if (!isPlainObject(item) || typeof item.q !== 'string' || typeof item.a !== 'string') return [];
+    return [{ question: item.q, answer: item.a }];
+  });
+  return faq.length ? faq : undefined;
+}
+
+function contentFor(page: PublicPage, lang: 'tr' | 'en'): PublicContent {
+  const routes = r[lang];
+  let heading = page.meta[lang].title.replace(SUFFIX, '');
+  let description = page.meta[lang].description;
+  let sections: string[] = [];
+  let faq: FaqEntry[] | undefined;
+  let breadcrumbs: BreadcrumbEntry[] | undefined;
+
+  if (page.kind === 'home') {
+    heading = `${text(lang, 'homePage.hero.title')} ${text(lang, 'homePage.hero.accent')}`;
+    description = text(lang, 'homePage.hero.desc');
+    sections = stringList(lang, [
+      'homePage.tour.title',
+      'homePage.industries.title',
+      'homePage.story.title',
+      'homePage.ai.title',
+      'homePage.setup.title',
+      'homePage.features.title',
+      'homePage.security.title',
+      'homePage.plans.title',
+      'homePage.faq.title'
+    ]);
+    faq = faqEntries(lang, 'homePage.faq.items');
+  } else if (page.kind === 'pricing') {
+    heading = text(lang, 'pricingPage.title');
+    description = text(lang, 'pricingPage.description');
+    sections = stringList(lang, [
+      'pricingPage.chooseTitle',
+      'pricingPage.compareTitle',
+      'pricingPage.faqTitle'
+    ]);
+    faq = faqEntries(lang, 'pricingPage.faqItems');
+  } else if (page.kind === 'feature') {
+    const id = page.en.split('/').pop()!;
+    heading = text(lang, `featuresPage.items.${id}.title`);
+    description = text(lang, `featuresPage.items.${id}.plain`);
+    sections = stringList(lang, [
+      `featuresPage.items.${id}.benefitsTitle`,
+      `featuresPage.items.${id}.stepsTitle`
+    ]);
+    breadcrumbs = [
+      { name: lang === 'tr' ? 'Ana sayfa' : 'Home', path: routes.home },
+      { name: lang === 'tr' ? 'Özellikler' : 'Features', path: routes.features },
+      { name: heading, path: lang === 'tr' ? page.tr : page.en }
+    ];
+  } else if (page.kind === 'solution') {
+    const id = page.en.split('/').pop()!;
+    heading = text(lang, `solutions.items.${id}.headline`);
+    description = text(lang, `solutions.items.${id}.desc`);
+    sections = stringList(lang, [
+      'solutions.painsTitle',
+      'solutions.usesTitle',
+      'solutions.winsTitle'
+    ]);
+    breadcrumbs = [
+      { name: lang === 'tr' ? 'Ana sayfa' : 'Home', path: routes.home },
+      { name: lang === 'tr' ? 'Çözümler' : 'Solutions', path: routes.solutions },
+      { name: text(lang, `solutions.items.${id}.name`), path: lang === 'tr' ? page.tr : page.en }
+    ];
+  }
+
+  return {
+    heading,
+    description,
+    sections,
+    ...(faq ? { faq } : {}),
+    ...(breadcrumbs ? { breadcrumbs } : {})
+  };
+}
+
+for (const page of pages) {
+  page.content = { tr: contentFor(page, 'tr'), en: contentFor(page, 'en') };
+}
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const out = path.join(here, '..', 'dist', 'public-pages.json');

@@ -55,7 +55,7 @@ import wellKnownRoutes, { robotsHeader } from './routes/wellKnown';
 import cspReportRoutes from './routes/cspReport';
 import { panelTelemetry, widgetTelemetry } from './routes/telemetry';
 import { internalMetricsRoutes } from './routes/internalMetrics';
-import { withSeoHead } from './services/seoHead';
+import { isPublicPage, withSeoHead } from './services/seoHead';
 import { appBaseUrl } from './services/mail';
 import { captureError } from './services/errorReporting';
 import { usePlanOverageRealtime } from './services/planOverage';
@@ -99,10 +99,11 @@ installConsoleRedaction();
 // started after it is created rather than at import time.
 
 const app = express();
+// Cloudflare/Caddy zincirinden gelen gerçek istemci IP'sini Express'e bildirir.
 app.set('trust proxy', 1);
 // Sorgu dizesi düz ayrıştırılır: `?siteKey[$ne]=x` bir nesneye (ve ORM için
 // bir operatöre) dönüşmez. Ayrıntı: middleware/sanitize.ts
-app.set('query parser', 'simple'); // Cloudflare üzerinden gelen gerçek IP'leri tanıması için ŞART
+app.set('query parser', 'simple');
 const server = http.createServer(app);
 server.headersTimeout = Number(process.env.HTTP_HEADERS_TIMEOUT_MS) || 15_000;
 server.requestTimeout = Number(process.env.HTTP_REQUEST_TIMEOUT_MS) || 30_000;
@@ -437,7 +438,20 @@ app.use(
     // "/" must reach the page handler below, which writes the home page's
     // own head (title, canonical, Open Graph, the hero preload); served from
     // here it went out with the shell's defaults.
-    index: false
+    index: false,
+    setHeaders: (res, filePath) => {
+      const relative = path.relative(adminPanelPath, filePath).replace(/\\/g, '/');
+      if (relative.startsWith('assets/')) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      } else if (relative === 'index.html') {
+        res.setHeader('Cache-Control', 'no-cache');
+      } else if (
+        relative.startsWith('photos/') ||
+        /\.(?:ico|png|svg|webmanifest)$/.test(relative)
+      ) {
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+      }
+    }
   })
 );
 
@@ -576,6 +590,27 @@ app.use(
 // JSON-LD blogunun calismasi icin bu yanitin nonce'u isaretlenmeli.
 const shellPath = path.join(adminPanelPath, 'index.html');
 let shellCache: string | null = null;
+const PANEL_ROUTES = [
+  '/dashboard',
+  '/onboarding',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/confirm-email',
+  '/rate',
+  '/invite/accept'
+];
+
+function isKnownSpaPath(pathname: string): boolean {
+  if (isPublicPage(pathname)) return true;
+  const bare = pathname.startsWith('/en/') ? pathname.slice(3) : pathname;
+  return PANEL_ROUTES.some(
+    (route) => bare === route || (route === '/dashboard' && bare.startsWith('/dashboard/'))
+  );
+}
+
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
   if (
     req.path.startsWith('/api/') ||
@@ -584,6 +619,9 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   ) {
     return next();
   }
+  const known = isKnownSpaPath(req.path);
+  res.setHeader('Cache-Control', 'no-cache');
+  if (!known) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   try {
     // Uretimde kabuk degismez; gelistirmede her istekte yeniden okunur ki
     // yeniden derlenen panel aninda gorunsun.
@@ -592,6 +630,12 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
     // Gelistirmede panel Vite tarafindan sunulur ve dist hic uretilmez. Hatayi
     // yukari birakmak Expressin varsayilan isleyicisine dusup yigin izini
     // istemciye basiyordu; burasi durumu oldugu gibi soyluyor.
+    if (!known) {
+      return res
+        .status(404)
+        .type('html')
+        .send('<!doctype html><html lang="tr"><body><div id="root"></div></body></html>');
+    }
     return res
       .status(404)
       .type('text')
@@ -604,7 +648,10 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   // A public page gets its own title, description, Open Graph, canonical and
   // JSON-LD on this domain (services/seoHead.ts, MKT-03).
   const base = appBaseUrl() || `${req.protocol}://${req.get('host')}`;
-  res.type('html').send(withNonce(withSeoHead(shellCache, req.path, base), res.locals.cspNonce));
+  res
+    .status(known ? 200 : 404)
+    .type('html')
+    .send(withNonce(withSeoHead(shellCache, req.path, base), res.locals.cspNonce));
 });
 
 // The error handler must come after EVERY route and static handler. Declared

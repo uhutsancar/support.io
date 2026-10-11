@@ -25,12 +25,72 @@ interface PublicPage {
   en: string;
   kind: string;
   meta?: { tr: Meta; en: Meta };
+  content?: {
+    tr: PublicContent;
+    en: PublicContent;
+  };
+}
+interface PublicContent {
+  heading: string;
+  description: string;
+  sections: string[];
+  faq?: Array<{ question: string; answer: string }>;
+  breadcrumbs?: Array<{ name: string; path: string }>;
 }
 
 const PAGES_FILE = path.join(__dirname, '../../../admin-panel/dist/public-pages.json');
 
 let loaded: { at: number; byPath: Map<string, { page: PublicPage; lang: 'tr' | 'en' }> } | null =
   null;
+
+// Development/API-only images do not contain admin-panel/dist. Route
+// classification must still be correct there; page metadata continues to come
+// from the generated manifest whenever the production panel build is present.
+const PUBLIC_PATHS_WITHOUT_MANIFEST = new Set([
+  '/',
+  '/en',
+  '/ozellikler',
+  '/en/features',
+  '/yapay-zeka',
+  '/en/ai-assistant',
+  '/fiyatlandirma',
+  '/en/pricing',
+  '/dokumantasyon',
+  '/en/documentation',
+  '/dokumantasyon/api',
+  '/en/documentation/api',
+  '/hakkimizda',
+  '/en/about',
+  '/gizlilik',
+  '/en/privacy',
+  '/kullanim-sartlari',
+  '/en/terms',
+  '/erisilebilirlik',
+  '/en/accessibility',
+  '/yapay-zeka-kullanimi',
+  '/en/ai-use'
+]);
+const PUBLIC_FEATURE_IDS = [
+  'live-chat',
+  'universal-widget',
+  'routing',
+  'automation',
+  'proactive',
+  'knowledge-base',
+  'analytics',
+  'team',
+  'visitors',
+  'crm'
+];
+const PUBLIC_SOLUTION_IDS = ['ecommerce', 'saas', 'agency', 'health', 'hospitality', 'education'];
+for (const id of PUBLIC_FEATURE_IDS) {
+  PUBLIC_PATHS_WITHOUT_MANIFEST.add(`/ozellikler/${id}`);
+  PUBLIC_PATHS_WITHOUT_MANIFEST.add(`/en/features/${id}`);
+}
+for (const id of PUBLIC_SOLUTION_IDS) {
+  PUBLIC_PATHS_WITHOUT_MANIFEST.add(`/cozumler/${id}`);
+  PUBLIC_PATHS_WITHOUT_MANIFEST.add(`/en/solutions/${id}`);
+}
 
 function pages() {
   // Read once a minute at most: the file changes only with a deploy.
@@ -51,6 +111,11 @@ function pages() {
   return byPath;
 }
 
+export function isPublicPage(pathname: string): boolean {
+  const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  return pages().has(clean) || PUBLIC_PATHS_WITHOUT_MANIFEST.has(clean);
+}
+
 const attr = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -58,6 +123,11 @@ const attr = (value: string) =>
 const json = (value: unknown) => JSON.stringify(value).replace(/</g, '\u003c');
 
 function structuredData(base: string, page: PublicPage, lang: 'tr' | 'en', meta: Meta) {
+  const content = page.content?.[lang];
+  const offerNames =
+    lang === 'tr'
+      ? { FREE: 'Ücretsiz', PRO: 'Pro', ENTERPRISE: 'Kurumsal' }
+      : { FREE: 'Free', PRO: 'Pro', ENTERPRISE: 'Enterprise' };
   const graph: unknown[] = [
     {
       '@type': 'Organization',
@@ -79,14 +149,43 @@ function structuredData(base: string, page: PublicPage, lang: 'tr' | 'en', meta:
       // The prices GET /api/plans shows: Paddle's once billing is on.
       offers: PLAN_TYPES.map((plan) => ({
         '@type': 'Offer',
-        name: plan,
+        name: offerNames[plan],
         price: String(displayPrice(plan).monthly ?? 0),
         priceCurrency: displayPrice(plan).currency,
         url: `${base}${lang === 'en' ? page.en : page.tr}`
       }))
     });
   }
+  if (content?.faq?.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: content.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer }
+      }))
+    });
+  }
+  if (content?.breadcrumbs?.length) {
+    graph.push({
+      '@type': 'BreadcrumbList',
+      itemListElement: content.breadcrumbs.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: `${base}${item.path}`
+      }))
+    });
+  }
   return { '@context': 'https://schema.org', '@graph': graph };
+}
+
+function noScriptBody(content: PublicContent | undefined): string {
+  if (!content) return '';
+  const sections = content.sections.map((heading) => `<h2>${attr(heading)}</h2>`).join('');
+  return `<noscript><main><h1>${attr(content.heading)}</h1><p>${attr(
+    content.description
+  )}</p>${sections}</main></noscript>`;
 }
 
 /** The <head> part for a public page, or null when the path is not one. */
@@ -144,5 +243,11 @@ export function withSeoHead(shell: string, pathname: string, base: string): stri
   const end = shell.indexOf('<!--/seo-->');
   if (start < 0 || end < start) return shell;
   const replaced = shell.slice(0, start) + head.html + shell.slice(end + '<!--/seo-->'.length);
-  return head.lang === 'en' ? replaced.replace('<html lang="tr"', '<html lang="en"') : replaced;
+  const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  const content = pages().get(clean)?.page.content?.[head.lang];
+  const withBody = replaced.replace(
+    '<div id="root"></div>',
+    `<div id="root">${noScriptBody(content)}</div>`
+  );
+  return head.lang === 'en' ? withBody.replace('<html lang="tr"', '<html lang="en"') : withBody;
 }

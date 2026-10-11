@@ -10,6 +10,7 @@
  */
 
 import { Helmet } from 'react-helmet-async';
+import { createElement } from 'react';
 import { pageTitle } from '../lib/brand';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -90,7 +91,6 @@ const FeatureDetail = () => {
   // The AI assistant has a page of its own.
   if (slug === 'ai-assistant') return <Navigate to={routes.ai} replace />;
 
-  const Icon = featureIcon(slug);
   const tone = FEATURE_TONE[slug as keyof typeof FEATURE_TONE];
   const a = accent(tone);
   const plan = FEATURE_PLAN[slug as keyof typeof FEATURE_PLAN];
@@ -130,7 +130,10 @@ const FeatureDetail = () => {
                     a.border
                   ].join(' ')}
                 >
-                  <Icon className={['w-[22px] h-[22px]', a.text].join(' ')} strokeWidth={1.8} />
+                  {createElement(featureIcon(slug), {
+                    className: ['w-[22px] h-[22px]', a.text].join(' '),
+                    strokeWidth: 1.8
+                  })}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   <Chip>{PLAN_LABEL[plan as keyof typeof PLAN_LABEL][lang]}</Chip>
