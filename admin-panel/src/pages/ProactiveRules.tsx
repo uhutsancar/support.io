@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
@@ -52,11 +52,7 @@ const ProactiveRules = () => {
     }
   });
 
-  useEffect(() => {
-    fetchSitesAndRules();
-  }, []);
-
-  const fetchSitesAndRules = async () => {
+  const fetchSitesAndRules = useCallback(async () => {
     try {
       setLoading(true);
       const sitesRes = await api.get('/sites');
@@ -74,7 +70,11 @@ const ProactiveRules = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    void fetchSitesAndRules();
+  }, [fetchSitesAndRules]);
 
   const handleSiteChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const siteId = e.target.value;

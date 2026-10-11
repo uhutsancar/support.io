@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,30 @@ import {
   SlaBreachList,
   WeekHeatmap
 } from '../components/analytics/ReportTools';
+
+const AnalyticsTooltip = ({
+  active,
+  payload,
+  label
+}: {
+  active?: boolean;
+  payload?: any;
+  label?: any;
+  [prop: string]: any;
+}) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+      <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">{label}</p>
+      {payload.map((entry: any, index: number) => (
+        <p key={index} className="text-xs" style={{ color: entry.color }}>
+          {entry.name}: {entry.value}
+        </p>
+      ))}
+    </div>
+  );
+};
+
 const Analytics = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -54,28 +78,11 @@ const Analytics = () => {
   const [channelDistribution, setChannelDistribution] = useState<any[]>([]);
   const [slaCompliance, setSlaCompliance] = useState<any[]>([]);
   const [selectedAgent, setSelectedAgent] = useState('all');
-  useEffect(() => {
-    if (!socket) return undefined;
-    const refresh = () => fetchAnalytics();
-    socket.on('new-conversation', refresh);
-    socket.on('sla-breach', refresh);
-    socket.on('conversation-resolved', refresh);
-    socket.on('conversation-update', refresh);
-    return () => {
-      socket.off('new-conversation', refresh);
-      socket.off('sla-breach', refresh);
-      socket.off('conversation-resolved', refresh);
-      socket.off('conversation-update', refresh);
-    };
-  }, [socket, timeRange]);
-  useEffect(() => {
-    fetchAnalytics();
-  }, [timeRange]);
   // One request returns the whole dashboard, aggregated by PostgreSQL over the
   // full window. This page used to fetch conversations per site and reduce them
   // in the browser, which silently described only the newest 50 conversations
   // per site because that endpoint is capped.
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -124,7 +131,25 @@ const Analytics = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [language, t, timeRange]);
+
+  useEffect(() => {
+    if (!socket) return undefined;
+    const refresh = () => void fetchAnalytics();
+    socket.on('new-conversation', refresh);
+    socket.on('sla-breach', refresh);
+    socket.on('conversation-resolved', refresh);
+    socket.on('conversation-update', refresh);
+    return () => {
+      socket.off('new-conversation', refresh);
+      socket.off('sla-breach', refresh);
+      socket.off('conversation-resolved', refresh);
+      socket.off('conversation-update', refresh);
+    };
+  }, [fetchAnalytics, socket]);
+  useEffect(() => {
+    void fetchAnalytics();
+  }, [fetchAnalytics]);
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -148,30 +173,6 @@ const Analytics = () => {
       </div>
     );
   }
-  const CustomTooltip = ({
-    active,
-    payload,
-    label
-  }: {
-    active?: boolean;
-    payload?: any;
-    label?: any;
-    [prop: string]: any;
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-xs" style={{ color: entry.color }}>
-              {entry.name}: {entry.value}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
   return (
     <>
       <Helmet>
@@ -274,7 +275,7 @@ const Analytics = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
                 <XAxis dataKey="date" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AnalyticsTooltip />} />
                 <Legend />
                 <Area
                   type="monotone"
@@ -304,7 +305,7 @@ const Analytics = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
                 <XAxis dataKey="hour" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AnalyticsTooltip />} />
                 <Legend />
                 <Line
                   type="monotone"
@@ -373,7 +374,7 @@ const Analytics = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
                   <XAxis dataKey="category" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                   <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<AnalyticsTooltip />} />
                   <Legend />
                   <Bar dataKey="met" name={t('stats.slaMet')} fill="#10B981" stackId="a" />
                   <Bar dataKey="pending" name={t('stats.pending')} fill="#F59E0B" stackId="a" />
@@ -532,7 +533,7 @@ const Analytics = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
                 <XAxis dataKey="name" stroke="#9CA3AF" style={{ fontSize: '12px' }} />
                 <YAxis stroke="#9CA3AF" style={{ fontSize: '12px' }} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<AnalyticsTooltip />} />
                 <Legend />
                 <Bar dataKey="resolved" name={t('stats.resolvedTickets')} fill="#8B5CF6" />
                 <Line

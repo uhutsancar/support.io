@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { notifyDesktop, showUnreadInTab } from '../lib/desktopNotifications';
 import { BRAND_NAME } from '../lib/brand';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { resyncPush } from '../lib/pushNotifications';
 import { VerifyEmailBanner } from '../pages/AccountRecovery';
 import {
@@ -771,7 +772,9 @@ const DashboardLayout = () => {
           <PaymentIssueBanner base={`${langPrefix}/dashboard`} />
           <PlanOverageBanner base={`${langPrefix}/dashboard`} />
           <MfaRequiredGate>
-            <Outlet />
+            <ErrorBoundary key={location.pathname} compact>
+              <Outlet />
+            </ErrorBoundary>
           </MfaRequiredGate>
         </main>
       </div>

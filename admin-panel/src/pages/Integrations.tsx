@@ -5,7 +5,7 @@
  * kadarı görünür. Webhook'un imza anahtarı bir kez, eklendiği anda
  * gösterilir. Her entegrasyonun deneme düğmesi ve gönderim geçmişi vardır.
  */
-import { useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
@@ -71,7 +71,7 @@ const Integrations = () => {
     language: useId()
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const { data } = await integrationsAPI.list();
       setItems(data.integrations);
@@ -79,7 +79,7 @@ const Integrations = () => {
       toast.error(errorMessage(error, t('integrations.error')));
       setItems([]);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -87,7 +87,7 @@ const Integrations = () => {
       .getAll()
       .then(({ data }) => setSites(data.sites || []))
       .catch(() => setSites([]));
-  }, []);
+  }, [load]);
 
   const siteName = (id: string | null) =>
     id ? (sites.find((s) => s._id === id)?.name ?? id) : t('integrations.allSites');

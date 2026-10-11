@@ -1,5 +1,5 @@
 /** What every consumer of useAuth() gets. */
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import { hasSession, purgeLegacyStorage } from '../lib/session';
 import { forgetPushOnSignOut } from '../lib/pushNotifications';
 import type { ReactNode } from 'react';
@@ -31,6 +31,7 @@ export interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const toCurrentUser = (u: CurrentUser): CurrentUser => (u.id && !u._id ? { ...u, _id: u.id } : u);
 export const useAuth = (): AuthContextValue => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -41,15 +42,10 @@ export const useAuth = (): AuthContextValue => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    checkAuth();
-  }, []);
   // Oturumun hiçbir parçası tarayıcıda kalıcı olarak tutulmuyor: token
   // httpOnly çerezde (JavaScript göremez), profil yalnızca bu bileşenin
   // belleğinde ve her açılışta sunucudan geliyor. Ayrıntı: lib/session.ts
-  const toCurrentUser = (u: CurrentUser): CurrentUser => (u.id && !u._id ? { ...u, _id: u.id } : u);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     purgeLegacyStorage();
     // CSRF eşi yoksa oturum çerezi de yoktur; sunucuya boşuna gidilmez.
     if (!hasSession()) {
@@ -64,7 +60,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
   const login = async (email: string, password: string) => {
     const response = await authAPI.login({ email, password });
     if (!isPendingSecondStep(response.data)) setUser(toCurrentUser(response.data.user));

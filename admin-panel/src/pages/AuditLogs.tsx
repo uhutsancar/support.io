@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { auditAPI } from '../services/api';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -185,34 +185,40 @@ export default function AuditLogs() {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const initiallyLoaded = useRef(false);
 
-  const fetchLogs = async (opts: { page?: number; limit?: number } = {}) => {
-    setLoading(true);
-    try {
-      const params = {
-        action: filters.action || undefined,
-        start: filters.start || undefined,
-        end: filters.end || undefined,
-        page: opts.page || page,
-        limit: opts.limit || limit
-      };
-      const res = await auditAPI.getAll(params);
-      setTotal(res.data.total || 0);
-      setDocs(res.data.docs || []);
-      setPage(res.data.page || 1);
-      setLimit(res.data.limit || 25);
-    } catch {
-      setDocs([]);
-      setTotal(0);
-      toast.error(t('audit.fetchError', 'Gelişmiş analitik verileri alınırken bir hata oluştu'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchLogs = useCallback(
+    async (opts: { page?: number; limit?: number } = {}) => {
+      setLoading(true);
+      try {
+        const params = {
+          action: filters.action || undefined,
+          start: filters.start || undefined,
+          end: filters.end || undefined,
+          page: opts.page || page,
+          limit: opts.limit || limit
+        };
+        const res = await auditAPI.getAll(params);
+        setTotal(res.data.total || 0);
+        setDocs(res.data.docs || []);
+        setPage(res.data.page || 1);
+        setLimit(res.data.limit || 25);
+      } catch {
+        setDocs([]);
+        setTotal(0);
+        toast.error(t('audit.fetchError', 'Gelişmiş analitik verileri alınırken bir hata oluştu'));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters.action, filters.end, filters.start, limit, page, t]
+  );
 
   useEffect(() => {
-    fetchLogs({ page: 1 });
-  }, []);
+    if (initiallyLoaded.current) return;
+    initiallyLoaded.current = true;
+    void fetchLogs({ page: 1 });
+  }, [fetchLogs]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

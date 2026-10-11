@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
@@ -17,14 +17,6 @@ const Visitors = () => {
   const [loading, setLoading] = useState(true);
   const startTimes = React.useRef(new Map());
   const [, setTick] = useState(0);
-  useEffect(() => {
-    fetchSites();
-  }, []);
-  useEffect(() => {
-    if (activeSite) {
-      loadVisitors();
-    }
-  }, [activeSite]);
   useEffect(() => {
     if (!activeSite || !socket) return undefined;
     socket.emit('join-site', { siteId: activeSite });
@@ -57,7 +49,7 @@ const Visitors = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       const response = await sitesAPI.getAll();
       const siteData = response.data.sites || [];
@@ -71,8 +63,8 @@ const Visitors = () => {
       toast.error(t('visitors.fetchError', 'Siteler yüklenirken hata oluştu'));
       setLoading(false);
     }
-  };
-  const loadVisitors = async () => {
+  }, [t]);
+  const loadVisitors = useCallback(async () => {
     try {
       setLoading(true);
       const response = await visitorsAPI.getAll(activeSite as string, true);
@@ -90,7 +82,13 @@ const Visitors = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSite]);
+  useEffect(() => {
+    void fetchSites();
+  }, [fetchSites]);
+  useEffect(() => {
+    if (activeSite) void loadVisitors();
+  }, [activeSite, loadVisitors]);
   const formatDuration = (visitorId: string) => {
     const start = startTimes.current.get(visitorId);
     if (!start) return '00:00';

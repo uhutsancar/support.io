@@ -162,15 +162,16 @@ export function useAsync<T>(
     }
   }, []);
 
-  // `deps` is the caller's own dependency list, so it cannot be an array
-  // literal here and the rule cannot verify it. `run` is stable (useCallback
-  // with no dependencies), so it is deliberately not part of it.
-  /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  // Callers use serialisable route/filter values here. A stable signature
+  // lets React verify this hook's own literal dependency list while retaining
+  // the public `deps` API.
+  const dependencyKey = JSON.stringify(deps);
+
   useEffect(() => {
     const controller = new AbortController();
     void run(controller.signal);
     return () => controller.abort();
-  }, deps);
+  }, [run, dependencyKey]);
 
   const reload = useCallback(async () => {
     const controller = new AbortController();

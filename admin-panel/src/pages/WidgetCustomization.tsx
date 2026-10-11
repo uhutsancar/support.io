@@ -182,7 +182,7 @@ const WidgetCustomization = () => {
     } finally {
       setLoading(false);
     }
-  }, [siteId]);
+  }, [siteId, t]);
 
   useEffect(() => {
     load();

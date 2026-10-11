@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
@@ -185,13 +185,16 @@ const TeamChatPage = () => {
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
     typingTimeout.current = setTimeout(() => {}, 2000);
   };
-  const getChatName = (chat: any) => {
-    if (!chat) return '';
-    if (chat.chatType === 'group') return chat.groupName || 'Group';
-    const currentUserId = user?._id || user?.id;
-    const other = chat.participants?.find((p: any) => p && p._id !== currentUserId);
-    return other?.name || chat.name || 'Unknown';
-  };
+  const getChatName = useCallback(
+    (chat: any) => {
+      if (!chat) return '';
+      if (chat.chatType === 'group') return chat.groupName || 'Group';
+      const currentUserId = user?._id || user?.id;
+      const other = chat.participants?.find((p: any) => p && p._id !== currentUserId);
+      return other?.name || chat.name || 'Unknown';
+    },
+    [user?._id, user?.id]
+  );
   const getChatStatus = (chat: any) => {
     if (chat.chatType === 'group') return null;
     const currentUserId = user?._id || user?.id;
@@ -208,7 +211,7 @@ const TeamChatPage = () => {
     if (!search) return chats || [];
     const q = search.toLowerCase();
     return (chats || []).filter((c) => getChatName(c).toLowerCase().includes(q));
-  }, [chats, search]);
+  }, [chats, getChatName, search]);
   const otherMembers = useMemo(() => {
     const currentUserId = user?._id || user?.id;
     return (members || []).filter((m) => m && m._id !== currentUserId);

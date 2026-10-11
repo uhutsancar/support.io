@@ -31,6 +31,40 @@ const formatDay = (iso: any, locale: string) => {
   return d.toLocaleDateString(locale, { day: '2-digit', month: 'short' });
 };
 
+const showMetric = (value: number | null | undefined, suffix = '') =>
+  value === null || value === undefined ? '—' : `${value}${suffix}`;
+
+const StatCard = ({
+  title,
+  value,
+  subValue,
+  icon: Icon,
+  color
+}: {
+  title: string;
+  value: React.ReactNode;
+  subValue?: React.ReactNode;
+  icon: React.ElementType;
+  color: string;
+}) => (
+  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</p>
+        <div className="flex items-baseline space-x-2">
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{value}</h3>
+          {subValue && <span className="text-sm text-gray-500 dark:text-gray-400">{subValue}</span>}
+        </div>
+      </div>
+      <div
+        className={`p-3 rounded-lg bg-${color}-50 dark:bg-${color}-900/40 border border-${color}-100 dark:border-${color}-900/60`}
+      >
+        <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
+      </div>
+    </div>
+  </div>
+);
+
 const AgentPerformance = () => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'en' ? 'en-GB' : 'tr-TR';
@@ -92,48 +126,7 @@ const AgentPerformance = () => {
     };
   }, [timeRange, reloadToken, locale, t]);
 
-  // A metric is null when nothing in the window could produce it (no rated
-  // conversation, no reply yet). Showing a dash is honest; showing 0 is not.
-  /** Renders a figure, or an em dash when the server had nothing to report. */
-  const show = (value: number | null | undefined, suffix = '') =>
-    value === null || value === undefined ? '—' : `${value}${suffix}`;
   const hasActivity = dailyActivity.some((d) => d.assigned > 0 || d.resolved > 0);
-
-  const StatCard = ({
-    title,
-    value,
-    subValue,
-    icon: Icon,
-    color
-  }: {
-    title: string;
-    /** Already formatted for display, so a dash is as valid as a number. */
-    value: React.ReactNode;
-    subValue?: React.ReactNode;
-    icon: React.ElementType;
-    color: string;
-  }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-          <div className="flex items-baseline space-x-2">
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-              {value}
-            </h3>
-            {subValue && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">{subValue}</span>
-            )}
-          </div>
-        </div>
-        <div
-          className={`p-3 rounded-lg bg-${color}-50 dark:bg-${color}-900/40 border border-${color}-100 dark:border-${color}-900/60`}
-        >
-          <Icon className={`w-6 h-6 text-${color}-600 dark:text-${color}-400`} />
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -194,20 +187,20 @@ const AgentPerformance = () => {
               />
               <StatCard
                 title={t('stats.slaCompliance')}
-                value={show(stats.slaCompliance, '%')}
+                value={showMetric(stats.slaCompliance, '%')}
                 icon={Award}
                 color="indigo"
               />
               <StatCard
                 title={t('stats.avgResponse')}
-                value={show(stats.avgResponseTime)}
+                value={showMetric(stats.avgResponseTime)}
                 subValue="dk"
                 icon={Zap}
                 color="purple"
               />
               <StatCard
                 title={t('stats.csat')}
-                value={show(stats.csatScore)}
+                value={showMetric(stats.csatScore)}
                 subValue="/ 5.0"
                 icon={MessageSquare}
                 color="yellow"

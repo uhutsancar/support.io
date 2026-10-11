@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useTranslation } from 'react-i18next';
@@ -65,10 +65,7 @@ const CRM = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDeals();
-  }, []);
-  const fetchDeals = async () => {
+  const fetchDeals = useCallback(async () => {
     try {
       setLoading(true);
       const response = await dealsAPI.getAll();
@@ -78,7 +75,10 @@ const CRM = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+  useEffect(() => {
+    void fetchDeals();
+  }, [fetchDeals]);
   const calculateFormatValue = (val: any) => {
     return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(val);
   };

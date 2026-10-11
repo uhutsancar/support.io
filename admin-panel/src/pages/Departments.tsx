@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useNavigate } from 'react-router-dom';
@@ -50,16 +50,7 @@ const Departments = () => {
     departmentId: null,
     departmentName: ''
   });
-  useEffect(() => {
-    fetchSites();
-  }, []);
-  useEffect(() => {
-    if (selectedSite) {
-      fetchDepartments();
-      fetchTeamMembers();
-    }
-  }, [selectedSite]);
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       setLoading(true);
       const response = await sitesAPI.getAll();
@@ -72,8 +63,8 @@ const Departments = () => {
     } catch {
       setLoading(false);
     }
-  };
-  const fetchDepartments = async () => {
+  }, []);
+  const fetchDepartments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await departmentsAPI.getAll(selectedSite as string);
@@ -95,8 +86,8 @@ const Departments = () => {
     } finally {
       setLoading(false);
     }
-  };
-  const fetchTeamMembers = async () => {
+  }, [selectedSite]);
+  const fetchTeamMembers = useCallback(async () => {
     try {
       const response = await teamAPI.getAll(selectedSite);
       setTeamMembers(response.data || []);
@@ -105,7 +96,16 @@ const Departments = () => {
       // page showing stale data with nothing to say why.
       console.error('[departments] request failed', error);
     }
-  };
+  }, [selectedSite]);
+  useEffect(() => {
+    void fetchSites();
+  }, [fetchSites]);
+  useEffect(() => {
+    if (selectedSite) {
+      void fetchDepartments();
+      void fetchTeamMembers();
+    }
+  }, [fetchDepartments, fetchTeamMembers, selectedSite]);
   const handleDeleteDepartment = async () => {
     const { departmentId } = confirmDialog;
     if (!departmentId) return;

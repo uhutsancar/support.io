@@ -1,7 +1,6 @@
 /** Where the shared connection currently stands. */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { socketUrl } from '../lib/runtime';
@@ -26,29 +25,21 @@ export const useSocket = (): SocketContextValue => {
 // in the layout and another in every page doubled traffic and event fan-out.
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated } = useAuth();
+  const userId = user?._id;
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connection, setConnection] = useState<ConnectionState>('idle');
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !userId) {
       setSocket(null);
       setConnection('idle');
       return undefined;
     }
 
     setConnection('connecting');
-    const client = io(socketUrl('/admin'), {
-      // El sıkışması oturum çerezini taşır; token'ı okuyup göndermeye gerek yok.
-      withCredentials: true,
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      // 1 s to 30 s with jitter, like the widget (PERF-06).
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 30000,
-      randomizationFactor: 0.5,
-      timeout: 15000
-    });
-
+    let client: Socket | null = null;
+    let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
     const onConnect = () => setConnection('connected');
     const onDisconnect = (reason: string) => {
       if (reason !== 'io client disconnect') setConnection('disconnected');
@@ -57,30 +48,48 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     // A refusal from the server's middleware is not retried by the client on
     // its own. Too many handshakes from this address is temporary, so try
     // again after a while (backend/src/socket/auth.ts).
-    let retry: ReturnType<typeof setTimeout> | undefined;
     const onConnectError = (error: Error) => {
       setConnection('disconnected');
       if (error?.message !== 'RATE_LIMITED') return;
       clearTimeout(retry);
-      retry = setTimeout(() => client.connect(), 5000 + Math.random() * 10000);
+      retry = setTimeout(() => client?.connect(), 5000 + Math.random() * 10000);
     };
 
-    client.on('connect', onConnect);
-    client.on('disconnect', onDisconnect);
-    client.on('connect_error', onConnectError);
-    client.io.on('reconnect_attempt', onReconnectAttempt);
-    setSocket(client);
+    void import('socket.io-client')
+      .then(({ io }) => {
+        if (cancelled) return;
+        client = io(socketUrl('/admin'), {
+          // El sıkışması oturum çerezini taşır; token'ı okuyup göndermeye gerek yok.
+          withCredentials: true,
+          transports: ['websocket', 'polling'],
+          reconnection: true,
+          // 1 s to 30 s with jitter, like the widget (PERF-06).
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 30000,
+          randomizationFactor: 0.5,
+          timeout: 15000
+        });
+        client.on('connect', onConnect);
+        client.on('disconnect', onDisconnect);
+        client.on('connect_error', onConnectError);
+        client.io.on('reconnect_attempt', onReconnectAttempt);
+        setSocket(client);
+      })
+      .catch(() => {
+        if (!cancelled) setConnection('disconnected');
+      });
 
     return () => {
-      client.off('connect', onConnect);
-      client.off('disconnect', onDisconnect);
-      client.off('connect_error', onConnectError);
-      client.io.off('reconnect_attempt', onReconnectAttempt);
+      cancelled = true;
+      client?.off('connect', onConnect);
+      client?.off('disconnect', onDisconnect);
+      client?.off('connect_error', onConnectError);
+      client?.io.off('reconnect_attempt', onReconnectAttempt);
       clearTimeout(retry);
-      client.close();
+      client?.close();
       setSocket((current) => (current === client ? null : current));
     };
-  }, [isAuthenticated, user?._id]);
+  }, [isAuthenticated, userId]);
 
   const value = useMemo<SocketContextValue>(() => ({ socket, connection }), [socket, connection]);
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

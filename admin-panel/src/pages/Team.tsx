@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useNavigate } from 'react-router-dom';
@@ -82,16 +82,7 @@ const Team = () => {
       socket.off('team-member-deleted', onMemberDeleted);
     };
   }, [socket, t]);
-  useEffect(() => {
-    fetchSites();
-  }, []);
-  useEffect(() => {
-    if (selectedSite) {
-      fetchTeam();
-      socket?.emit('join-site', { siteId: selectedSite });
-    }
-  }, [selectedSite, socket]);
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       setLoading(true);
       const response = await sitesAPI.getAll();
@@ -104,8 +95,8 @@ const Team = () => {
     } catch {
       setLoading(false);
     }
-  };
-  const fetchTeam = async () => {
+  }, []);
+  const fetchTeam = useCallback(async () => {
     try {
       setLoading(true);
       const response = await teamAPI.getAll(selectedSite);
@@ -115,7 +106,16 @@ const Team = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSite]);
+  useEffect(() => {
+    void fetchSites();
+  }, [fetchSites]);
+  useEffect(() => {
+    if (selectedSite) {
+      void fetchTeam();
+      socket?.emit('join-site', { siteId: selectedSite });
+    }
+  }, [fetchTeam, selectedSite, socket]);
   const handleStatusChange = async (userId: string, status: string) => {
     try {
       await teamAPI.updateStatus(userId, status);

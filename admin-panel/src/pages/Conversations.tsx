@@ -2,7 +2,7 @@
 // dagitilan panel kullanicinin kendi makinesine istek atmaya calisir.
 // Temsilci cevrimici degilken autoAssignment konusmayi 'unassigned' yapar.
 // Bu deger etiket zincirinde yoktu ve son else'e dusup "Kapali" goruntuluyordu.
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { pageTitle } from '../lib/brand';
 import { useSearchParams } from 'react-router-dom';
@@ -84,6 +84,10 @@ const STATUS_LABELS = {
 const isUnclaimed = (c: Conversation | null | undefined): boolean =>
   !c?.assignedAgent && (c?.status === 'open' || c?.status === 'unassigned');
 
+/** The selected site's id, whichever shape the selection was stored in. */
+const siteIdOf = (site: Site | string | null | undefined): string =>
+  !site ? '' : typeof site === 'string' ? site : site._id;
+
 /** Newest activity first, the order the inbox is always sorted in. */
 const byMostRecent = (a: Conversation, b: Conversation): number =>
   new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime();
@@ -92,10 +96,6 @@ const Conversations = () => {
   const statusLabel = (status: string) => {
     return t(STATUS_LABELS[status as keyof typeof STATUS_LABELS] || STATUS_LABELS.closed);
   };
-  /** The selected site's id, whichever shape the selection was stored in. */
-  const siteIdOf = (site: Site | string | null | undefined): string =>
-    !site ? '' : typeof site === 'string' ? site : site._id;
-
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -142,6 +142,7 @@ const Conversations = () => {
   // seçeneği göstermez; asıl kontrol her durumda sunucuda.
   const canAssignAnyone = ['owner', 'admin', 'manager'].includes(user?.role || '');
   const canDeleteConversations = ['owner', 'admin'].includes(user?.role || '');
+  const userId = user?._id;
   const selfId = String(user?._id || user?.id || '');
 
   // The thread as last rendered, for the reconnect catch-up below.
@@ -181,10 +182,6 @@ const Conversations = () => {
   const [threadLoading, setThreadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    fetchSites();
-    loadTags();
-  }, []);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 300);
     return () => clearTimeout(timer);
@@ -342,98 +339,30 @@ const Conversations = () => {
       void fetchAssignedConversations();
     }
   });
-  useEffect(() => {
-    if (selectedSite && socket && user) {
-      const siteId = siteIdOf(selectedSite);
-      // Emitting on a socket that has just dropped throws; the socket layer
-      // reconnects and the page re-joins on the next render, so the failure is
-      // logged rather than shown to the agent.
-      try {
-        socket.emit('join-site', { siteId, userId: user._id });
-      } catch (error) {
-        console.error('[inbox] join-site failed', error);
-      }
-      void fetchConversations(siteId);
-    }
-    if (user && user.role === 'agent') {
-      fetchAssignedConversations();
-    }
-  }, [selectedSite, socket, user]);
   // Filtreler sunucuda uygulandigi icin her degisiklik listeyi bastan ceker.
   // Ilk yukleme yukaridaki effect'te yapilir, bu yuzden burada site secimi
   // degistiginde tekrar cekilmez.
   const filtersKey = `${statusFilter}|${departmentFilter}|${debouncedSearch}|${tagFilter}|${view}`;
   const lastFiltersKey = useRef(filtersKey);
-  useEffect(() => {
-    if (lastFiltersKey.current === filtersKey) return;
-    lastFiltersKey.current = filtersKey;
-    setChecked(new Set());
-    if (!selectedSite) return;
-    setNextCursor(null);
-    fetchConversations(siteIdOf(selectedSite));
-  }, [filtersKey, selectedSite]);
-  useEffect(() => {
-    // ?conversation= is what mails and desktop notifications link to.
-    const conversationId = searchParams.get('id') || searchParams.get('conversation');
-    const tab = searchParams.get('tab');
-    if (tab === 'assigned') {
-      fetchAssignedConversations();
-      setSearchParams({});
-      return;
-    }
-    if (conversationId && conversations.length > 0) {
-      const conversation = conversations.find((conv) => conv._id === conversationId);
-      if (conversation && conversation._id !== selectedConversation?._id) {
-        setSelectedConversation(conversation);
-        setSearchParams({});
-      }
-    }
-  }, [searchParams, conversations]);
   // Keyed on the id, not the object: loading the transcript replaces the
   // conversation object with the server's copy, and depending on the object
   // re-ran this effect after every load — the thread was fetched over and over
   // and the screen kept redrawing while a conversation was open.
   const selectedConversationId = selectedConversation?._id;
   useEffect(() => {
-    const conversation = selectedConversationRef.current;
-    if (!selectedConversationId || !conversation || !socket) return;
-    socket.emit('join-conversation', { conversationId: selectedConversationId });
-    const derivedSiteId =
-      conversation.siteId ||
-      (conversation.site as Site | undefined)?._id ||
-      siteIdOf(selectedSiteRef.current);
-    setMessages([]);
-    setThreadLoading(true);
-    fetchConversationMessages(derivedSiteId, selectedConversationId).finally(() =>
-      setThreadLoading(false)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedConversationId, socket]);
-  useEffect(() => {
     setNote('');
   }, [selectedConversation?._id]);
-  useEffect(() => {
-    const id = setTimeout(() => {
-      // A conversation just opened jumps to its end; new messages in the one
-      // already open glide there.
-      const fresh = shownThreadRef.current !== selectedConversationId;
-      scrollToBottom(fresh ? 'auto' : 'smooth');
-      if (messages.length) shownThreadRef.current = selectedConversationId ?? null;
-    }, 30);
-    return () => clearTimeout(id);
-  }, [messages, selectedConversationId]);
-  const fetchSites = async () => {
+  const fetchSites = useCallback(async () => {
     try {
       const response = await sitesAPI.getAll();
       const siteList = response.data.sites || [];
       setSites(siteList);
       if (siteList.length > 0) {
-        if (
-          !selectedSite ||
-          !siteList.some((s) => String(s._id) === String(selectedSite._id || selectedSite))
-        ) {
-          setSelectedSite(siteList[0]);
-        }
+        setSelectedSite((current) =>
+          current && siteList.some((site) => String(site._id) === String(current._id))
+            ? current
+            : siteList[0]
+        );
       } else {
         setSelectedSite(null);
         setConversations([]);
@@ -444,7 +373,7 @@ const Conversations = () => {
       // one is surfaced rather than logged.
       toast.error(errorMessage(error, t('conversations.sitesError', 'Siteler yüklenemedi')));
     }
-  };
+  }, [t]);
 
   /**
    * The pickers in the conversation sidebar.
@@ -453,66 +382,77 @@ const Conversations = () => {
    * cannot reassign or re-route from the dropdowns. Reported to the console so
    * a persistent failure is findable, not to the agent, who cannot act on it.
    */
-  const fetchDepartments = async (siteId: string) => {
+  const fetchDepartments = useCallback(async (siteId: string) => {
     try {
       const response = await departmentsAPI.getAll(siteId);
       setDepartments(response.data || []);
     } catch (error) {
       console.error('[inbox] could not load departments', error);
     }
-  };
+  }, []);
 
-  const fetchTeamMembers = async (siteId: string) => {
+  const fetchTeamMembers = useCallback(async (siteId: string) => {
     try {
       const response = await teamAPI.getAll(siteId);
       setTeamMembers(response.data || []);
     } catch (error) {
       console.error('[inbox] could not load team members', error);
     }
-  };
-  const fetchConversations = async (
-    siteId: string,
-    { cursor = null }: { cursor?: string | null } = {}
-  ) => {
-    try {
-      const response = await conversationsAPI.getAll(siteId, {
-        status: statusFilter,
-        departmentId: departmentFilter,
-        search: debouncedSearch,
-        tag: tagFilter !== 'all' ? tagFilter : undefined,
-        view,
-        limit: 30,
-        cursor
-      });
-      const { conversations: page, nextCursor: cursorAfter, counts: pageCounts } = response.data;
-      // Sayfa eklenirken kimlige gore tekillestirilir: bu sirada gelen bir
-      // realtime guncelleme ayni kaydi listeye ikinci kez sokabilir.
-      setConversations((prev) => {
-        if (!cursor) return page;
-        const merged = new Map(prev.map((c) => [String(c._id), c]));
-        page.forEach((c) => merged.set(String(c._id), c));
-        return Array.from(merged.values());
-      });
-      setNextCursor(cursorAfter || null);
-      if (pageCounts) setCounts(pageCounts);
-      if (!cursor) {
-        // Ticks survive a refresh for the rows still listed; a tick made
-        // while this page was on its way is not lost.
-        setChecked((current) =>
-          current.size
-            ? new Set([...current].filter((id) => page.some((c) => String(c._id) === id)))
-            : current
-        );
-        fetchDepartments(siteId);
-        fetchTeamMembers(siteId);
-        if (socket) {
-          socket.emit('join-site', { siteId, userId: user?._id });
+  }, []);
+  const fetchConversations = useCallback(
+    async (siteId: string, { cursor = null }: { cursor?: string | null } = {}) => {
+      try {
+        const response = await conversationsAPI.getAll(siteId, {
+          status: statusFilter,
+          departmentId: departmentFilter,
+          search: debouncedSearch,
+          tag: tagFilter !== 'all' ? tagFilter : undefined,
+          view,
+          limit: 30,
+          cursor
+        });
+        const { conversations: page, nextCursor: cursorAfter, counts: pageCounts } = response.data;
+        // Sayfa eklenirken kimlige gore tekillestirilir: bu sirada gelen bir
+        // realtime guncelleme ayni kaydi listeye ikinci kez sokabilir.
+        setConversations((prev) => {
+          if (!cursor) return page;
+          const merged = new Map(prev.map((c) => [String(c._id), c]));
+          page.forEach((c) => merged.set(String(c._id), c));
+          return Array.from(merged.values());
+        });
+        setNextCursor(cursorAfter || null);
+        if (pageCounts) setCounts(pageCounts);
+        if (!cursor) {
+          // Ticks survive a refresh for the rows still listed; a tick made
+          // while this page was on its way is not lost.
+          setChecked((current) =>
+            current.size
+              ? new Set([...current].filter((id) => page.some((c) => String(c._id) === id)))
+              : current
+          );
+          fetchDepartments(siteId);
+          fetchTeamMembers(siteId);
+          if (socket) {
+            socket.emit('join-site', { siteId, userId });
+          }
         }
+      } catch (error) {
+        toast.error(errorMessage(error, t('dashboard.fetchError')));
       }
-    } catch (error) {
-      toast.error(errorMessage(error, t('dashboard.fetchError')));
-    }
-  };
+    },
+    [
+      debouncedSearch,
+      departmentFilter,
+      fetchDepartments,
+      fetchTeamMembers,
+      socket,
+      statusFilter,
+      t,
+      tagFilter,
+      userId,
+      view
+    ]
+  );
   const loadMoreConversations = async () => {
     if (!nextCursor || loadingMore || !selectedSite) return;
     setLoadingMore(true);
@@ -522,7 +462,7 @@ const Conversations = () => {
       setLoadingMore(false);
     }
   };
-  const fetchAssignedConversations = async () => {
+  const fetchAssignedConversations = useCallback(async () => {
     try {
       const resp = await conversationsAPI.getAssigned();
       if (resp && resp.data && Array.isArray(resp.data.conversations)) {
@@ -540,7 +480,7 @@ const Conversations = () => {
     } catch (error) {
       toast.error(errorMessage(error, t('conversations.fetchError', 'Konuşmalar yüklenemedi')));
     }
-  };
+  }, [t]);
   /**
    * Loads a conversation and its thread into the pane.
    *
@@ -549,36 +489,35 @@ const Conversations = () => {
    * was opened meanwhile: moving quickly with j/k used to put the slower,
    * older answer back on screen.
    */
-  const fetchConversationMessages = async (
-    siteId: string,
-    conversationId: string,
-    { open = false }: { open?: boolean } = {}
-  ) => {
-    const resolvedSiteId =
-      siteId ||
-      siteIdOf(selectedSiteRef.current) ||
-      String(selectedConversationRef.current?.siteId ?? '');
-    if (!resolvedSiteId) return;
+  const fetchConversationMessages = useCallback(
+    async (siteId: string, conversationId: string, { open = false }: { open?: boolean } = {}) => {
+      const resolvedSiteId =
+        siteId ||
+        siteIdOf(selectedSiteRef.current) ||
+        String(selectedConversationRef.current?.siteId ?? '');
+      if (!resolvedSiteId) return;
 
-    try {
-      const { data } = await conversationsAPI.getOne(resolvedSiteId, conversationId);
-      if (!open && selectedConversationRef.current?._id !== conversationId) return;
-      setSelectedConversation(data.conversation);
-      // An empty page with a `lastMessage` on the conversation means the
-      // transcript has not loaded yet; showing that one line beats an empty
-      // thread that looks like a bug.
-      const fetched = Array.isArray(data.messages) ? data.messages : [];
-      setMessages(
-        fetched.length > 0
-          ? fetched
-          : data.conversation?.lastMessage
-            ? [data.conversation.lastMessage]
-            : []
-      );
-    } catch (error) {
-      toast.error(errorMessage(error, t('dashboard.fetchMessagesError')));
-    }
-  };
+      try {
+        const { data } = await conversationsAPI.getOne(resolvedSiteId, conversationId);
+        if (!open && selectedConversationRef.current?._id !== conversationId) return;
+        setSelectedConversation(data.conversation);
+        // An empty page with a `lastMessage` on the conversation means the
+        // transcript has not loaded yet; showing that one line beats an empty
+        // thread that looks like a bug.
+        const fetched = Array.isArray(data.messages) ? data.messages : [];
+        setMessages(
+          fetched.length > 0
+            ? fetched
+            : data.conversation?.lastMessage
+              ? [data.conversation.lastMessage]
+              : []
+        );
+      } catch (error) {
+        toast.error(errorMessage(error, t('dashboard.fetchMessagesError')));
+      }
+    },
+    [t]
+  );
 
   /**
    * Opens a conversation that was just handed to this agent.
@@ -592,7 +531,7 @@ const Conversations = () => {
    * left the agent with a toast saying the conversation was assigned to them
    * and no way to see it.
    */
-  const openAssignedConversation = async (conversationId: string, siteId: string | null) => {
+  async function openAssignedConversation(conversationId: string, siteId: string | null) {
     try {
       const targetSiteId = siteId || siteIdOf(selectedSiteRef.current);
       if (!targetSiteId) {
@@ -625,7 +564,7 @@ const Conversations = () => {
     } catch (error) {
       toast.error(errorMessage(error, t('conversations.openError', 'Konuşma açılamadı')));
     }
-  };
+  }
   const deleteConversation = async () => {
     const { conversationId } = confirmDialog;
     try {
@@ -689,10 +628,10 @@ const Conversations = () => {
   };
   // scrollIntoView would also scroll every scrollable ancestor — the panel's
   // main area included — which made the whole page jump on every message.
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     const thread = threadRef.current;
     if (thread) thread.scrollTo({ top: thread.scrollHeight, behavior });
-  };
+  }, []);
   const handleStatusChange = async (newStatus: any) => {
     if (!selectedConversation) return;
     try {
@@ -806,14 +745,90 @@ const Conversations = () => {
   // ------------------------------------------------ inbox tools (PRD-07)
 
   /** The workspace's tags; secondary, so a failure is logged, not shown. */
-  const loadTags = async () => {
+  const loadTags = useCallback(async () => {
     try {
       const { data } = await tagsAPI.list();
       setTagCatalog(data.tags);
     } catch (error) {
       console.error('[inbox] could not load tags', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchSites();
+    void loadTags();
+  }, [fetchSites, loadTags]);
+
+  useEffect(() => {
+    if (!selectedSite || !socket || !userId) return;
+    const siteId = siteIdOf(selectedSite);
+    try {
+      socket.emit('join-site', { siteId, userId });
+    } catch (error) {
+      console.error('[inbox] join-site failed', error);
+    }
+    void fetchConversations(siteId);
+  }, [fetchConversations, selectedSite, socket, userId]);
+
+  useEffect(() => {
+    if (user?.role === 'agent') void fetchAssignedConversations();
+  }, [fetchAssignedConversations, user?.role]);
+
+  useEffect(() => {
+    if (lastFiltersKey.current === filtersKey) return;
+    lastFiltersKey.current = filtersKey;
+    setChecked(new Set());
+    setNextCursor(null);
+  }, [filtersKey]);
+
+  useEffect(() => {
+    // ?conversation= is what mails and desktop notifications link to.
+    const conversationId = searchParams.get('id') || searchParams.get('conversation');
+    const tab = searchParams.get('tab');
+    if (tab === 'assigned') {
+      void fetchAssignedConversations();
+      setSearchParams({});
+      return;
+    }
+    if (conversationId && conversations.length > 0) {
+      const conversation = conversations.find((candidate) => candidate._id === conversationId);
+      if (conversation && conversation._id !== selectedConversationId) {
+        setSelectedConversation(conversation);
+        setSearchParams({});
+      }
+    }
+  }, [
+    conversations,
+    fetchAssignedConversations,
+    searchParams,
+    selectedConversationId,
+    setSearchParams
+  ]);
+
+  useEffect(() => {
+    const conversation = selectedConversationRef.current;
+    if (!selectedConversationId || !conversation || !socket) return;
+    socket.emit('join-conversation', { conversationId: selectedConversationId });
+    const derivedSiteId =
+      conversation.siteId ||
+      (conversation.site as Site | undefined)?._id ||
+      siteIdOf(selectedSiteRef.current);
+    setMessages([]);
+    setThreadLoading(true);
+    void fetchConversationMessages(derivedSiteId, selectedConversationId).finally(() =>
+      setThreadLoading(false)
+    );
+  }, [fetchConversationMessages, selectedConversationId, socket]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const fresh = shownThreadRef.current !== selectedConversationId;
+      scrollToBottom(fresh ? 'auto' : 'smooth');
+      if (messages.length) shownThreadRef.current = selectedConversationId ?? null;
+    }, 30);
+    return () => clearTimeout(id);
+  }, [messages, scrollToBottom, selectedConversationId]);
+
   const tagColor = (name: string) => tagCatalog.find((tag) => tag.name === name)?.color;
 
   /** Puts a conversation the server sent back into the list and the open pane. */
