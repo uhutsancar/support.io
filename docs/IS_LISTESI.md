@@ -307,3 +307,56 @@ OAuth istemcisi (`GOOGLE_CLIENT_ID/SECRET`), Paddle'da tavsiye indirimi
 (`PADDLE_REFERRAL_DISCOUNT_ID`), WordPress.org / GTM galerisi / Shopify
 Partner hesapları (`integrations/README.md`), alan adı belli olunca
 `node integrations/release.mjs <alan-adı>`.
+
+## F. Supbort.io marka değişikliği ve prod öncesi denetim
+
+Dal: `chore/supbort-rebrand-and-prod-polish` (12 Ekim 2026). Korunan protokol,
+cookie, webhook, Docker ve dosya sistemi kimlikleri değiştirilmedi. `[x]` kodda
+tamamlandı ve doğrulandı · `[!]` kod dışı sahip kararı/işlemi.
+
+| Görev | Durum | Commit / kanıt |
+|---|---|---|
+| A — Görünen marka Support.io → Supbort.io | [x] | `d839b61` |
+| B-01 — Panel ErrorBoundary | [x] | `eefd610` |
+| B-02 — Deploy parçası kurtarma, bağlantı geri dönüşü | [x] | `eefd610`, `48d19e3` |
+| B-03 — Atama lost-update yarışı | [x] | `dbf70ab`; 20 eşzamanlı atama testi |
+| B-04 — Entegrasyon teslimatını süpürücüden ayırma | [x] | `dbf70ab` |
+| B-05 — Soket yetki önbelleği | [x] | `dbf70ab`; sorgu sayısı testi |
+| B-06 — Mobil ilk yükleme | [x] | `06734a6`; 191,5 → 145,9 KB gzip |
+| B-07 — Statik varlık önbelleği | [x] | `43d8b62`; hash'li dosya 1 yıl immutable |
+| B-08 — Ölü çeviri anahtarları | [x] | `06734a6`; locale ve hard-coded text denetimleri |
+| B-09 — Kullanılmayan eski marka varlıkları | [x] | `42f0fcd` |
+| B-10 — Güvenli deploy sırası | [x] | `dae74e1`; `scripts/deploy-order.test.mjs` |
+| B-11 — SMTP havuzu | [x] | `dae74e1`; bounded/rate-limited pool testi |
+| B-12 — Bilinmeyen rota 404/noindex | [x] | `43d8b62`; SEO e2e testi |
+| B-13 — Atomik kapasite kontrolü | [x] | `dbf70ab`; eşzamanlı kapasite testi |
+| B-14 — CGNAT widget yenileme sınırı | [x] | `dae74e1`; imzalı yenileme testi ve metrik |
+| B-15 — Depo hijyeni | [x] | `3b10c03`; geçmiş yeniden yazılmadı (K-7a) |
+| B-16 — React hook hata adayları | [x] | `c793b21`; lint 0 hata |
+| B-17 — Tek sunucu operasyon kuralı | [x] | `dae74e1`, `c985302`; runbook ve go/no-go |
+| B-18 — Yerel scrypt ve kademeli taşıma | [x] | `dbf70ab`; yeni/legacy hash testleri ve gecikme ölçümü |
+| B-19 — Ayrı worker örneği | [x] | `dae74e1`; `docker-compose.worker.example.yml` |
+| B-20 — HSTS yükseltme takvimi | [x] | `dae74e1`; Full (strict) sonrası 21 gün |
+| B-21 — Haftalık rapor batch sınırı | [x] | `dbf70ab`; env ve sınır testi |
+| B-22 — `trust proxy` yorumu | [x] | `43d8b62` |
+| B-23 — Entegrasyon sırası ve eşzamanlılığı | [x] | `dbf70ab`; kurum adaleti, global 5, entegrasyon içi sıra testi |
+| C-01…C-04 — KOBİ metni, JSON-LD ve noscript | [x] | `43d8b62` |
+| C-05 — URL'ler | [x] | Mevcut slug'lar korundu; yönlendirme gerekmedi |
+| C-06 — Canonical/indexleme ayrıntıları | [x] | `43d8b62` |
+| C-07 — Meta keywords temizliği | [x] | `43d8b62` |
+| C-08 — Supbort marka araması | [x] | `d839b61`, `43d8b62`; görünen yüzey taraması |
+| C-09 — İçerik önerileri | [!] | Kod görevi değil; sahibin içerik takvimine bırakıldı |
+| D-01…D-04 — Başlık, hata ekranı, KOBİ metni ve çözüm bağlantıları | [x] | `eefd610`, `43d8b62` |
+| D-05/D-06 — Altyapı adları ve güven satırları | [!] | Sahip/hukukçu onayı olmadan genişletilmedi |
+| D-07 — Reduced motion | [x] | `06734a6`; Playwright `reducedMotion` kontrolleri |
+| D-08 — Bağlantı göstergesi ve taslak koruma | [x] | `dae74e1`, `48d19e3`; reconnect e2e |
+| D-09 — 1–3 kişilik ekip varsayılanları | [x] | `c985302`; `docs/ux-review.md`, kod varsayımları değiştirilmedi |
+| D-10 — Beş beta müşterisi oturumu | [!] | Oturum planı `docs/ux-review.md`; uygulama sahibi yapacak |
+
+Son doğrulama: kök `npm run check` ve iki `format:check` geçti; backend
+321/322 geçti, 1 bilinçli atlandı; widget 25,6 KB ve panel ilk yükleme 145,9
+KB gzip ile bütçe içinde. Playwright tam koşudaki tek seçici belirsizliği
+düzeltildikten sonra hedefli MFA koşusu geçti; gerçek model ve WordPress
+senaryoları ilgili dış hesaplar olmadığı için bilinçli atlanıyor. Lighthouse
+statik üretim önizlemesi ana sayfa 62, fiyatlandırma 81 ve Yapay Zekâ 78;
+90 hedefi karşılanmadığı için bu performans maddesi go/no-go'da açık risk.
