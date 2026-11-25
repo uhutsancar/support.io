@@ -9,7 +9,7 @@
     "@radix-ui/react-navigation-menu": "1.2.14",
     "@radix-ui/react-tabs": "^1.1.21",
     "axios": "^1.6.0",
-    "date-fns": "^2.30.0",
+    "date-fns": "^4.4.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "i18next": "^25.8.4",
