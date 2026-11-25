@@ -1,4 +1,4 @@
-// Desktop notifications and the tab's unread count (plan v10 PRD-02).
+// Desktop notifications and the tab's unread count.
 //
 // A notification is shown only while the panel is in the background and only
 // for the events the agent chose (Settings → Notifications). Several open

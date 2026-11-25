@@ -1,6 +1,6 @@
 'use strict';
 
-// Tenant isolation of the routes added by plan v10 (TST-03), with the
+// Tenant isolation of the newer routes, with the
 // template in tests/helpers/idor.ts: workspace A's owner puts workspace B's
 // ids into every new route that takes one, and is refused without learning
 // anything; B's rows stay as they were.
@@ -19,7 +19,7 @@ test.after(async () => {
   await getPool().end();
 });
 
-test("the plan v10 routes refuse another workspace's ids", async () => {
+test("the newer routes refuse another workspace's ids", async () => {
   const { a, b } = await twoTenants();
   const conv = await conversationOf(b);
   const { rows: messages } = await query<{ id: string }>(
@@ -43,7 +43,7 @@ test("the plan v10 routes refuse another workspace's ids", async () => {
     [block, b.organizationId, b.site._id, `v_${generateId()}`]
   );
 
-  // Inbox tools (PRD-07): B's tag, and one of A's conversations to merge with.
+  // Inbox tools: B's tag, and one of A's conversations to merge with.
   const bTag = await call(b.token, '/api/conversation-tags', 'POST', { name: 'Gizli etiket' });
   assert.equal(bTag.status, 201, bTag.text);
   const tagId = JSON.parse(bTag.text).tag._id;
@@ -54,15 +54,15 @@ test("the plan v10 routes refuse another workspace's ids", async () => {
     // Conversations and their messages
     ['GET', `/api/conversations/${b.site._id}/${conv}/messages`],
     ['GET', `/api/conversations/${a.site._id}/${conv}/messages`],
-    // Chat settings (PRD-01, PRD-04, PRD-05)
+    // Chat settings
     ['GET', `/api/sites/${b.site._id}/chat-settings`],
     ['PUT', `/api/sites/${b.site._id}/chat-settings`, { offlineForm: false }],
-    // Saved replies (PRD-03)
+    // Saved replies
     ['PUT', `/api/saved-replies/${savedReply}`, { title: 'pwned' }],
     ['DELETE', `/api/saved-replies/${savedReply}`],
     ['POST', `/api/saved-replies/${savedReply}/use`],
     ['POST', '/api/saved-replies', { siteId: b.site._id, shortcut: 'x', title: 'x', body: 'x' }],
-    // Visitor blocks and erasure (SEC-09, SEC-17)
+    // Visitor blocks and erasure
     ['POST', '/api/visitors/block', { conversationId: conv, days: 1 }],
     ['GET', `/api/visitors/blocks/${b.site._id}`],
     ['DELETE', `/api/visitors/blocks/${block}`],
@@ -70,7 +70,7 @@ test("the plan v10 routes refuse another workspace's ids", async () => {
     // Assistant feedback (AI)
     ['POST', '/api/assistant/feedback', { messageId: messages[0].id, verdict: 'wrong' }],
     ['DELETE', `/api/assistant/feedback/${messages[0].id}`],
-    // Inbox tools (PRD-07)
+    // Inbox tools
     ['PUT', `/api/conversations/${conv}/tags`, { tags: ['x'] }],
     ['PUT', `/api/conversations/${conv}/snooze`, { until: tomorrow }],
     ['POST', `/api/conversations/${conv}/merge`, { intoId: own }],

@@ -1,5 +1,5 @@
 /**
- * Ayarlar → API anahtarları (plan v10 PRD-12).
+ * Ayarlar → API anahtarları.
  *
  * Anahtar yalnızca oluşturulduğu anda bir kez gösterilir; sunucu yalnızca
  * özetini saklar. Kapsamlar: okuma (GET) ve yazma. Kurumsal planda.

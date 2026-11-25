@@ -1,11 +1,8 @@
-// Redis down: nothing that only uses it as a helper may wait for it (plan §18).
+// Redis down: nothing that only uses it as a helper may wait for it.
 //
 // In-process test, no API needed. Port 1 refuses connections, so the client
 // keeps reconnecting in the background the whole time, which is the state a
 // running server is in while Redis is stopped.
-//
-// The full outage drill (stop the container, run the message suites, start it
-// again, watch the adapter resubscribe) is in docs/production-runbook.md.
 
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';

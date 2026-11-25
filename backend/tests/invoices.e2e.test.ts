@@ -1,6 +1,6 @@
 'use strict';
 
-// The billing page's invoices (plan v10 BIL-06), in process with a stand-in
+// The billing page's invoices, in process with a stand-in
 // for Paddle: the owner sees their customer's billed payments, opens a PDF
 // of their own, and gets a 404 for anybody else's — the transaction id alone
 // is never enough. Without a subscription the list is simply empty.

@@ -3,7 +3,7 @@
 #   APP_IMAGE=supportio:local docker compose --env-file .env.production \
 #     -f docker-compose.prod.yml -f docker-compose.prod.build.yml up -d --build
 #
-# Never on the production server (plan §23: no `build:` on the VPS).
+# Never on the production server: no `build:` on the VPS.
 services:
   backend:
     image: ${APP_IMAGE:-supportio:local}

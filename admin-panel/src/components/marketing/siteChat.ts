@@ -14,6 +14,7 @@
  * kopya çalıştırırdı.
  */
 import { useEffect } from 'react';
+import { API_ORIGIN } from '../../lib/runtime';
 
 interface SupportChatApi {
   __runtime?: unknown;
@@ -44,7 +45,7 @@ const api = (): SupportChatApi | undefined =>
 
 function load(language: string) {
   if (document.getElementById(SCRIPT_ID)) return;
-  const origin = (import.meta.env.VITE_API_URL as string | undefined) || window.location.origin;
+  const origin = API_ORIGIN || window.location.origin;
   const script = document.createElement('script');
   script.id = SCRIPT_ID;
   script.src = origin.replace(/\/+$/, '') + '/widget.js';

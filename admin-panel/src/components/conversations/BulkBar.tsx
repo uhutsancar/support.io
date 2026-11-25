@@ -1,5 +1,5 @@
-// What can be done to the conversations ticked in the inbox list (plan v10
-// PRD-07): resolve, close, take them, tag or snooze them in one go. The
+// What can be done to the conversations ticked in the inbox list:
+// resolve, close, take them, tag or snooze them in one go. The
 // server applies each conversation's own rules and says which ones failed.
 
 import { useId, useState } from 'react';

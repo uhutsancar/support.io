@@ -32,7 +32,7 @@ export interface ChatSettings {
   csat: { enabled: boolean; style: 'thumbs' | 'stars'; askByEmail: boolean };
   /** The visitor may have the transcript mailed when the chat ends. */
   transcript: boolean;
-  /** Stricter limits for new visitors and links held back (SEC-09). */
+  /** Stricter limits for new visitors and links held back. */
   spamMode: boolean;
 }
 

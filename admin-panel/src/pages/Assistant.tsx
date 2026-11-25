@@ -57,7 +57,7 @@ const Assistant = () => {
   const locale = language === 'en' ? 'en-US' : 'tr-TR';
   const base = `${language === 'en' ? '/en' : ''}/dashboard`;
   const [busy, setBusy] = useState<string | null>(null);
-  // The site waiting for the owner's confirmation before switching on (AI-04).
+  // The site waiting for the owner's confirmation before switching on.
   const [asking, setAsking] = useState<AssistantSiteOverview | null>(null);
 
   const overview = useAsync<AssistantOverview | null>(

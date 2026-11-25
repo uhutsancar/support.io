@@ -1,4 +1,4 @@
-// The workspace's API keys, managed from the panel (plan v10 PRD-12).
+// The workspace's API keys, managed from the panel.
 //
 //   GET    /api/api-keys          the keys: name, first characters, scopes, last use
 //   POST   /api/api-keys          { name, scopes }  → the whole key, this once

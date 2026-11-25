@@ -2,24 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
-  }
-
-  .glass-dark {
-    @apply bg-black/20 backdrop-blur-md border border-white/10;
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500;
-  }
-
-  .text-gradient-light {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300;
-  }
-}
-
 body {
   margin: 0;
   font-family:

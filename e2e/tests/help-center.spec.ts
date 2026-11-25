@@ -1,4 +1,4 @@
-// The help center (plan v10 PRD-10): the owner publishes it from the FAQ
+// The help center: the owner publishes it from the FAQ
 // page, the public page lists and searches the articles (and passes axe),
 // and in the chat bubble the matching articles come up while the visitor
 // types — before anything reaches a person or the assistant.

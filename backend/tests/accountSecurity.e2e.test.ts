@@ -1,6 +1,6 @@
 'use strict';
 
-// The signed-in account's own security (plan v10 SEC-03, SEC-04, SEC-05):
+// The signed-in account's own security:
 //
 //  - changing the password asks for the current one, ends every other
 //    session and tells the owner by mail
@@ -79,13 +79,11 @@ const login = (email: string, password = PASSWORD) =>
 async function auditCount(action: string, userId: string): Promise<number> {
   for (let i = 0; i < 20; i++) {
     // Audit rows are written by an event listener after the response.
-    // eslint-disable-next-line no-await-in-loop
     const { rows } = await query(
       'SELECT count(*)::int AS n FROM audit_logs WHERE action = $1 AND user_id = $2',
       [action, userId]
     );
     if (rows[0].n > 0) return rows[0].n;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((r) => setTimeout(r, 100));
   }
   return 0;

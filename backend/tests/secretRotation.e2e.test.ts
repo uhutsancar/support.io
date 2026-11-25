@@ -1,6 +1,6 @@
 'use strict';
 
-// Rotating JWT_SECRET without signing everybody out (plan v10 SEC-18):
+// Rotating JWT_SECRET without signing everybody out:
 //
 //  - with JWT_SECRET = new and JWT_SECRET_PREVIOUS = old, everything made
 //    with the old secret still holds: panel and widget sessions, the widget's

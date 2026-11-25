@@ -1,4 +1,4 @@
-// The coverage of the modules that guard money and access (plan v10 TST-02).
+// The coverage of the modules that guard money and access.
 //
 // Reads c8's json-summary (coverage/coverage-summary.json) and prints the
 // line coverage of the security and billing modules, with the whole

@@ -1,4 +1,4 @@
-// The list behind "?" in the inbox (plan v10 PRD-07).
+// The list behind "?" in the inbox.
 
 import { useTranslation } from 'react-i18next';
 import { Keyboard } from 'lucide-react';

@@ -145,13 +145,13 @@ const DashboardLayout = () => {
     }
   }, []);
 
-  // The tab's title and favicon carry the unread count (PRD-02).
+  // The tab's title and favicon carry the unread count.
   useEffect(() => {
     showUnreadInTab(unreadCount);
   }, [unreadCount]);
 
   // The service worker, and this browser's push subscription saved again for
-  // whoever is signed in (PRD-09). Only the panel registers it.
+  // whoever is signed in. Only the panel registers it.
   useEffect(() => {
     void resyncPush();
   }, []);

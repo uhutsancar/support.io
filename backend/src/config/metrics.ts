@@ -1,4 +1,4 @@
-// Process measurements for load tests (plan §18): event-loop delay, CPU and
+// Process measurements for load tests: event-loop delay, CPU and
 // memory of this process, and how long chosen operations take.
 //
 // Read through GET /api/dev/metrics, which exists only outside production
@@ -80,7 +80,7 @@ export function resetMetrics(): void {
 
 // ---------------------------------------------------------------- counters
 //
-// Totals since the process started, for GET /internal/metrics (OBS-03):
+// Totals since the process started, for GET /internal/metrics:
 // model calls by outcome, mails sent and failed. Never reset; Prometheus
 // computes rates from them.
 

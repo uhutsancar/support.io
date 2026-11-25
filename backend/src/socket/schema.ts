@@ -1,4 +1,4 @@
-// What each socket event may carry (plan v10 SEC-15).
+// What each socket event may carry.
 //
 // Every event a client sends passes one validator before its handler runs,
 // as REST requests pass express-validator: the payload must be an object (or

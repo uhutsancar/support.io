@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Keeps a day of container logs off the server (plan v10 OBS-05,
-# KARAR-OBS-3 option b). Docker keeps only 20 MB × 5 per container and loses
+# Keeps a day of container logs off the server.
+# Docker keeps only 20 MB × 5 per container and loses
 # them with the container; this copies the last 24 hours, gzipped, to the
 # same kind of bucket as the backups. Keep 30 days with the bucket's
 # lifecycle rule.

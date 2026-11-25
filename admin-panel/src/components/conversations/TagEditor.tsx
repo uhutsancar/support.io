@@ -1,4 +1,4 @@
-// A conversation's tags (plan v10 PRD-07): chips with the colour the
+// A conversation's tags: chips with the colour the
 // workspace gave each tag, a remove button on each, and a box that suggests
 // the workspace's tags and coins a new one when the name is new.
 

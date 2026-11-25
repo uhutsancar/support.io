@@ -1,4 +1,4 @@
-// A site's knowledge sources (plan v10 PRD-21): pages of its own site and PDF
+// A site's knowledge sources: pages of its own site and PDF
 // documents the assistant may answer from, beside the FAQ. Owners and admins
 // (manage_sites), on a plan with the feature, up to the plan's number.
 //

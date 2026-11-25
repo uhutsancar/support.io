@@ -1,5 +1,5 @@
-// The addresses the site shows (plan v10 MKT-01): from the build, so the
-// domain decision (MKT-05) is one setting, not a search through the code.
+// The addresses the site shows: from the build, so the
+// domain decision is one setting, not a search through the code.
 export const SUPPORT_EMAIL: string =
   (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) || 'destek@supbort.io';
 export const SECURITY_EMAIL: string =

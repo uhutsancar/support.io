@@ -1,6 +1,6 @@
 'use strict';
 
-// Deleting the workspace (plan (6) §22). The owner's "delete account" takes
+// Deleting the workspace. The owner's "delete account" takes
 // the organization and everything in it: sites stop answering, the visitors'
 // details and the conversations are gone, the accounts are anonymous and
 // signed out. It wants the password again, and a live subscription has to be

@@ -1,4 +1,4 @@
-// File uploads: chat attachments and site logos (plan v10 SEC-07, SEC-08).
+// File uploads: chat attachments and site logos.
 //
 // What arrives is held in memory (10 MB at most, a few at a time), checked,
 // and only then written to storage:
@@ -371,7 +371,7 @@ export function reserveUploadIngress(req: Request, res: Response, next: NextFunc
 const BUCKET = process.env.S3_BUCKET || process.env.AWS_BUCKET_NAME;
 /**
  * Any S3-compatible store: Amazon S3 by default, or Cloudflare R2 / Hetzner
- * Object Storage / MinIO through S3_ENDPOINT (plan §12, decision A). Those use
+ * Object Storage / MinIO through S3_ENDPOINT. Those use
  * path-style addresses and a region of "auto" unless told otherwise.
  */
 const ENDPOINT = process.env.S3_ENDPOINT || undefined;
@@ -478,7 +478,7 @@ export function attachmentLinkValid(key: string, expires: unknown, signature: un
   const now = Math.floor(Date.now() / 1000);
   if (!Number.isInteger(e) || e < now || e > now + LINK_TTL_SECONDS + 5) return false;
   if (typeof signature !== 'string' || signature.length !== 32) return false;
-  // A link signed before a JWT_SECRET rotation still opens (SEC-18).
+  // A link signed before a JWT_SECRET rotation still opens.
   return derivedKeys('attachment-link').some((secret) =>
     crypto.timingSafeEqual(Buffer.from(linkSignature(key, e, secret)), Buffer.from(signature))
   );

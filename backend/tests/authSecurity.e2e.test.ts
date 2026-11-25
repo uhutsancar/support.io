@@ -48,7 +48,7 @@ const sessionKey = () =>
 
 async function register() {
   const email = `auth${Date.now()}${Math.floor(Math.random() * 100000)}@auth-security.test`;
-  // The session starts from the verification link (plan v10 SEC-06); its
+  // The session starts from the verification link; its
   // answer carries the cookies the tests below inspect.
   const res = await signUp({
     name: 'auth owner',

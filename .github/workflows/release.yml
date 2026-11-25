@@ -1,4 +1,4 @@
-# The production image (plan §14.2, v10 SUP-03): built from main and from v*
+# The production image: built from main and from v*
 # tags, scanned, pushed to GHCR as ghcr.io/<owner>/supportio:sha-<7 chars>
 # (and :vX.Y.Z for a tag) with an SBOM and provenance, then signed with
 # Sigstore keyless signing. There is no `latest`: a deployment always names
@@ -81,7 +81,7 @@ jobs:
             echo "Digest: \`${{ steps.push.outputs.digest }}\` (signed; deploy.sh verifies it when COSIGN_VERIFY=true)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # PostgreSQL with WAL-G (docker/postgres, plan v10 DR-02): the official
+  # PostgreSQL with WAL-G (docker/postgres): the official
   # image plus a checksum-verified WAL-G binary. Same scan, push and
   # signature as the application image; tagged by the versions it contains.
   postgres-image:

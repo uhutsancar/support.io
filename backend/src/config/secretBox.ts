@@ -7,7 +7,7 @@
 // from JWT_SECRET for this one purpose (config/tokens.ts), so the dump alone
 // is not enough.
 //
-// Rotation (plan v10 SEC-18): a sealed value names the key it was sealed
+// Rotation: a sealed value names the key it was sealed
 // with (`v2.<key id>.…`). While JWT_SECRET_PREVIOUS is set, values sealed
 // under the old secret still open; `npm run secrets:rotate` re-seals them all
 // under the new one, after which the old secret can go. A value no key opens

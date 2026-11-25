@@ -1,4 +1,4 @@
-# Weekly re-scan of what production runs (plan v10 SUP-03 step 5).
+# Weekly re-scan of what production runs.
 #
 # A new advisory can land on an image that was clean the day it shipped.
 # This scans the image built from main's HEAD and the pinned third-party
@@ -67,7 +67,7 @@ jobs:
             echo '```'
             echo
             echo "Rebuild or move the pinned digest (Dependabot may already have a PR),"
-            echo "or record a reasoned exception in docs/security/accepted-risks.md and .trivyignore."
+            echo "or record a reasoned exception in .trivyignore."
           } > body.md
           gh issue create --title "Image scan: ${{ matrix.target }} has new findings" --body-file body.md --label security || \
           gh issue create --title "Image scan: ${{ matrix.target }} has new findings" --body-file body.md

@@ -1,6 +1,6 @@
 'use strict';
 
-// The free Pro trial (plan v10 PRD-15): every new workspace gets Pro for 14
+// The free Pro trial: every new workspace gets Pro for 14
 // days with no card; three days before the end the owner is reminded, at the
 // end they are told; the plan in force falls back to Free by the clock, paid
 // features lock, and nothing is deleted. Each mail goes out once.

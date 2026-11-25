@@ -363,7 +363,7 @@ async function analyticsOverview(
   };
 }
 
-/** One row per team member over a window: the agent comparison (PRD-22). */
+/** One row per team member over a window: the agent comparison. */
 const agentRows = agentBreakdown;
 
 export { analyticsOverview, agentRows, RANGES };

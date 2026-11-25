@@ -1,4 +1,4 @@
-// The evaluation set (plan v10 AI-05): what visitors of a Turkish shop write,
+// The evaluation set: what visitors of a Turkish shop write,
 // and what the assistant must do with each.
 //
 //   answer     the FAQ answers it: an answer citing `faq` (1-based), which in

@@ -1,6 +1,6 @@
 // The site's public pages, Turkish and English pairs with each page's title
-// and description, written next to the build as dist/public-pages.json
-// (plan v10 MKT-01, MKT-03). The backend turns it into /sitemap.xml and into
+// and description, written next to the build as dist/public-pages.json.
+// The backend turns it into /sitemap.xml and into
 // each page's <head> (title, description, Open Graph, canonical, hreflang,
 // JSON-LD) with the domain it runs on, so one image serves staging and
 // production, and a crawler or a link preview that runs no JavaScript still

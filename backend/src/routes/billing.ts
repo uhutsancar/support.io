@@ -1,4 +1,4 @@
-// Paddle billing (plan §9).
+// Paddle billing.
 //
 //   POST /api/billing/paddle/webhook   Paddle → us. Raw body, Paddle-Signature.
 //   GET  /api/billing                  the billing page: plan, limits, usage,
@@ -131,7 +131,7 @@ router.get(
         }
       },
       emailVerified: Boolean(req.user.emailVerifiedAt),
-      // The free Pro trial (PRD-15), while it runs and no plan was bought.
+      // The free Pro trial, while it runs and no plan was bought.
       trial:
         !subscription &&
         usage.plan === 'PRO' &&
@@ -144,7 +144,7 @@ router.get(
   })
 );
 
-// -------------------------------------------- over the plan's limits (BIL-04)
+// -------------------------------------------- over the plan's limits
 
 // The sites and members, and which of them are on hold after a downgrade.
 router.get(
@@ -228,7 +228,7 @@ router.post(
   })
 );
 
-// ------------------------------------------------------- invoices (BIL-06)
+// ------------------------------------------------------- invoices
 
 // Paddle issues the invoices (with the company and tax number entered at
 // checkout); the page lists them and opens Paddle's PDF.

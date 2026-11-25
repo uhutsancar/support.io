@@ -1,7 +1,6 @@
 'use strict';
 
-// A customer-given address may not reach our own network (plan v10 TST-03,
-// SSRF): the cloud metadata address, loopback, private ranges, IPv6 and
+// A customer-given address may not reach our own network (SSRF): the cloud metadata address, loopback, private ranges, IPv6 and
 // IPv4-mapped forms, odd ports and schemes, credentials in the URL, names
 // that are ours, and a public-looking name that resolves inside (DNS
 // rebinding). A public address passes and the connection is pinned to it.

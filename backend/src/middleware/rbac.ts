@@ -109,7 +109,7 @@ function hasPermission(role: string, permission: string): boolean {
 }
 
 /**
- * What a seat over the plan's limit keeps after a downgrade (BIL-04): it can
+ * What a seat over the plan's limit keeps after a downgrade: it can
  * sign in and read, but not reply or change anything, until the owner picks
  * it or upgrades (services/planOverage.ts).
  */

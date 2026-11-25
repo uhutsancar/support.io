@@ -1,4 +1,4 @@
-// The signed-in account's own security settings (plan v10 SEC-03, SEC-04).
+// The signed-in account's own security settings.
 //
 //   POST /api/auth/change-password       current + new password
 //   POST /api/auth/change-email          password + new address → link to it
@@ -359,7 +359,7 @@ router.post(
 // ----------------------------------------------------- notification settings
 
 /**
- * How this account hears about chats (PRD-01, PRD-02): unanswered-chat mails
+ * How this account hears about chats: unanswered-chat mails
  * at once / hourly / never, which events raise a desktop notification, the
  * sound, and the language mails go out in. Only these keys are written.
  */
@@ -421,7 +421,7 @@ function notificationPreferences(stored: unknown) {
   };
 }
 
-// ------------------------------------------------------- referral (PRD-23)
+// ------------------------------------------------------- referral
 
 /** The owner's referral link and how it has done. */
 router.get(

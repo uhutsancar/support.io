@@ -1,4 +1,4 @@
-// The set-up mails a new owner gets (plan v10 PRD-08).
+// The set-up mails a new owner gets.
 //
 //   welcome            once the address is verified: where the install code is
 //   widget_live        the first time the widget is seen on a page
@@ -7,7 +7,7 @@
 //   invite_team        a week on, if the owner is still alone
 //
 // They are about setting up the account and nothing else — transactional, not
-// marketing (plan LEG-06) — and the owner can switch them off
+// marketing — and the owner can switch them off
 // (preferences.activationEmails = false). Each is claimed in
 // organizations.activation before it is sent, so it goes out once.
 

@@ -81,7 +81,7 @@ const auth = async (req: Request, _res: Response, next: NextFunction) => {
       }
     }
     // An organization that requires two-step verification lets a member
-    // without it reach only what setting it up needs (SEC-04).
+    // without it reach only what setting it up needs.
     if (
       organization?.enforce2fa &&
       !(user.totpEnabledAt && user.totpSecretEnc) &&

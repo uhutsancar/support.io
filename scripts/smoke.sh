@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The minimum a live deployment must answer (plan §14.3, v10 SEC-11):
+# The minimum a live deployment must answer:
 #
 #   /health            200
 #   /ready             200
@@ -47,7 +47,7 @@ for name in server x-powered-by; do
   has "$name" && check "header $name absent" no || check "header $name absent" yes
 done
 
-# --- plan v10 TST-05 -------------------------------------------------------
+# --- widget delivery -------------------------------------------------------
 
 widget_headers="$(curl -s -D - -o /dev/null --max-time 15 "$BASE/widget/v4/widget.js" | tr -d '\r' | tr '[:upper:]' '[:lower:]')"
 grep -q '^http/[0-9.]* 200' <<<"$widget_headers" && check "/widget/v4/widget.js 200" yes || check "/widget/v4/widget.js 200" no

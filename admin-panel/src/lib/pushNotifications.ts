@@ -1,4 +1,4 @@
-// Push notifications on this device (plan v10 PRD-09): the service worker
+// Push notifications on this device: the service worker
 // (public/sw.js) and the browser's push subscription, saved on the server for
 // the signed-in account.
 //

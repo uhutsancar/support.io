@@ -1,4 +1,4 @@
-// Error tracking (plan v10 OBS-01): unexpected failures of the API, the
+// Error tracking: unexpected failures of the API, the
 // sockets, the panel and the widget go to a Sentry-compatible service
 // (Sentry's EU region, or a self-hosted GlitchTip) when SENTRY_DSN is set.
 // Without it nothing is sent anywhere; the log keeps everything as before.
@@ -57,10 +57,6 @@ function dsn(): Dsn | null {
   if (raw && !parsed) logger.warn('SENTRY_DSN is not a valid DSN; error tracking is off');
   cachedDsn = { raw, dsn: parsed };
   return parsed;
-}
-
-export function errorTrackingEnabled(): boolean {
-  return dsn() !== null;
 }
 
 export type ErrorSource = 'api' | 'socket' | 'process' | 'job' | 'panel' | 'widget';

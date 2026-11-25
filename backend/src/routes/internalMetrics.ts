@@ -1,4 +1,4 @@
-// GET /internal/metrics (plan v10 OBS-03): the process, the database pool,
+// GET /internal/metrics: the process, the database pool,
 // the sockets, the assistant, mail and the last backup, in the Prometheus
 // text format — for a scraper on the Docker network (Grafana Alloy, or a
 // curl from scripts/watchdog.sh).

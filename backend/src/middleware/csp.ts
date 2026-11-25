@@ -13,13 +13,8 @@
 //   connect-src 'self' …         — and even if something did run, it cannot
 //                                  send the token anywhere but back to us
 //
-// Two policies are served, because the two surfaces have different needs:
-//
-//   panel + API  strict; the SPA shell gets a per-response nonce so its one
-//                inline block (JSON-LD) keeps working without 'unsafe-inline'
-//   /demo        relaxed; the developer playground is written with inline
-//                handlers and holds no credentials, so loosening script-src
-//                there costs nothing an attacker could use
+// The SPA shell gets a per-response nonce so its one inline block (JSON-LD)
+// keeps working without 'unsafe-inline'.
 //
 // S3/CDN hosts are read from the environment: uploads are served from the
 // bucket, and a policy that forgets them would hide every customer's logo.
@@ -29,7 +24,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { siteAnalytics } from '../services/siteAnalytics';
 
 /**
- * Where browsers report what the policy blocked (routes/cspReport.ts, SEC-11):
+ * Where browsers report what the policy blocked (routes/cspReport.ts):
  * report-uri for the browsers that only know it, report-to with the
  * Reporting-Endpoints header for the rest.
  */
@@ -79,7 +74,7 @@ function paddleHosts(): { script: string; frame: string; connect: string } | nul
 }
 
 /**
- * Cloudflare Turnstile on the sign-up form (SEC-06), only when a site key is
+ * Cloudflare Turnstile on the sign-up form, only when a site key is
  * configured: its script and its challenge frame come from one host.
  */
 function turnstileHost(): string | null {
@@ -91,7 +86,7 @@ function turnstileHost(): string | null {
 const STRICT_BASE = (nonce: string): string[] => {
   const paddle = paddleHosts();
   const turnstile = turnstileHost();
-  // Self-hosted visitor counts (KARAR-MKT-3): the script and its reports
+  // Self-hosted visitor counts: the script and its reports
   // share one origin.
   const analytics = siteAnalytics()?.origin;
   const scripts = [paddle?.script, turnstile, analytics].filter(Boolean).join(' ');
@@ -117,21 +112,6 @@ const STRICT_BASE = (nonce: string): string[] => {
   ];
 };
 
-// The playground is served from our origin but carries no session. Its inline
-// handlers would each need a nonce, which buys nothing here.
-const RELAXED = (): string[] => [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self' data:",
-  "img-src 'self' data: blob:",
-  `connect-src 'self' ${connectHosts().join(' ')}`.trim(),
-  "object-src 'none'",
-  "base-uri 'self'",
-  "frame-ancestors 'none'",
-  ...REPORTING
-];
-
 /**
  * Attaches the nonce and the policy.
  *
@@ -149,8 +129,7 @@ export function contentSecurityPolicy(options: { isProduction: boolean }) {
       return next();
     }
 
-    const directives = req.path.startsWith('/demo') ? RELAXED() : STRICT_BASE(nonce);
-    const policy = directives
+    const policy = STRICT_BASE(nonce)
       .filter((d) => options.isProduction || d !== 'upgrade-insecure-requests')
       .join('; ');
 

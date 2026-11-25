@@ -28,7 +28,7 @@ const FALLBACK_PRODUCTION_ORIGINS: string[] = [];
 // istek atabilmesi demektir.
 const DEVELOPMENT_ORIGINS = [
   'http://localhost:3000',
-  'http://localhost:3001', // demo sayfası (npx serve)
+  'http://localhost:3001', // yerel test sayfası, testler bu origin'i kullanır
   'http://localhost:3002', // admin panel (vite dev)
   'http://localhost:3004',
   'http://localhost:5173' // docker compose'daki admin servisi

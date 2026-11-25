@@ -73,7 +73,7 @@ router.get(
   })
 );
 
-// When conversations start: weekday × hour in the viewer's time zone (PRD-22).
+// When conversations start: weekday × hour in the viewer's time zone.
 router.get(
   '/heatmap',
   auth,
@@ -87,7 +87,7 @@ router.get(
   })
 );
 
-// The conversations whose first answer came too late (PRD-22).
+// The conversations whose first answer came too late.
 router.get(
   '/sla-breaches',
   auth,
@@ -271,7 +271,7 @@ async function buildTable(
   return { name: SHEET[report][lang], headers: HEADERS[report][lang], rows };
 }
 
-// A report as a file: CSV or Excel, on a plan with exports (PRD-22). It
+// A report as a file: CSV or Excel, on a plan with exports. It
 // carries visitors' names and addresses, so every download is audited.
 router.get(
   '/export',

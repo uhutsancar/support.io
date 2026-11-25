@@ -1,9 +1,9 @@
 /**
- * Raporlar (plan v10 PRD-22): dosya olarak indirme, saat×gün yoğunluk
+ * Raporlar: dosya olarak indirme, saat×gün yoğunluk
  * haritası, SLA ihlalleri listesi ve temsilci karşılaştırma tablosu.
  *
- * Saat ve gün, görüntüleyenin tarayıcısındaki saat dilimine göre sayılır
- * (KARAR-UX-1). İndirme, planda dışa aktarma yoksa sunucuya hiç sorulmaz;
+ * Saat ve gün, görüntüleyenin tarayıcısındaki saat dilimine göre sayılır.
+ * İndirme, planda dışa aktarma yoksa sunucuya hiç sorulmaz;
  * yükseltme penceresi açılır.
  */
 import { useEffect, useMemo, useState } from 'react';

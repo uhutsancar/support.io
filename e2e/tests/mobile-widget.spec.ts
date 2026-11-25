@@ -1,4 +1,4 @@
-// The widget on phones and tablets (plan v10 UX-03). Runs in the iphone-14,
+// The widget on phones and tablets. Runs in the iphone-14,
 // pixel-7 and ipad projects (playwright.config.ts).
 //
 // On a phone (under 480 px) the open window fills the screen and follows the

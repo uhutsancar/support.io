@@ -1,6 +1,6 @@
 'use strict';
 
-// The widget's languages (plan v10 PRD-16): every file says everything the
+// The widget's languages: every file says everything the
 // English one says, keeps its placeholders, and the word each one tells
 // visitors to type for a person is one the assistant hands over on — while
 // an ordinary question in that language is not taken for one.

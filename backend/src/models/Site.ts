@@ -22,13 +22,13 @@ export interface SiteDoc {
   isActive: boolean;
   /** Missed chats, forms, ratings (services/chatSettings.ts); stored sparse. */
   chatSettings: Record<string, unknown>;
-  /** Over the plan's site limit after a downgrade (BIL-04): widget silent. */
+  /** Over the plan's site limit after a downgrade: widget silent. */
   suspendedAt: Date | null;
-  /** Switched off by the platform for abuse (LEG-05); only `site:disable` changes it. */
+  /** Switched off by the platform for abuse; only `site:disable` changes it. */
   blockedAt: Date | null;
   /** Why, for the support trail; never sent to the panel. */
   blockedReason: string | null;
-  /** The public help center's address, /help/<helpSlug> (PRD-10). */
+  /** The public help center's address, /help/<helpSlug>. */
   helpSlug: string | null;
   /** { enabled, noindex, title }; see services/helpCenter.ts. */
   helpCenter: Record<string, unknown>;

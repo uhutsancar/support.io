@@ -1,4 +1,4 @@
-// The public API's description, OpenAPI 3.1 (plan v10 PRD-12). Served at
+// The public API's description, OpenAPI 3.1. Served at
 // GET /api/v1/openapi.json with the server's own address, and read by the
 // documentation page (/dokumantasyon/api). It describes routes/publicApi.ts;
 // tests/publicApi.e2e.test.ts checks that every path here answers.

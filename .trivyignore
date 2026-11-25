@@ -1,7 +1,6 @@
-# Findings accepted on purpose. Each one has its reasoning in
-# docs/security/accepted-risks.md and an expiry date: when it passes, Trivy
-# reports the finding again and it has to be looked at anew. Never add an ID
-# here without the matching entry in that document.
+# Findings accepted on purpose, each with its reasoning and an expiry date:
+# when it passes, Trivy reports the finding again and it has to be looked at
+# anew.
 
 # postgres:16.15-alpine — gosu 1.19 is built with Go 1.24.6. gosu runs once,
 # as root, to drop to the postgres user and exec the server; it opens no

@@ -1,12 +1,11 @@
-// Visitor counts for the public site (plan v10 MKT-04, KARAR-MKT-3).
+// Visitor counts for the public site.
 //
 // Off unless both variables are set. The recommended tool is a self-hosted
 // Umami: it sets no cookie, keeps no visitor profile and runs on a server
 // the owner controls, so no consent banner is needed for it. The script is
 // put only on the public pages' <head> (seoHead.ts) and counts only them;
 // the panel never reports the dashboard's addresses (admin-panel
-// lib/siteAnalytics.ts). Before switching it on, the Privacy Policy names it
-// (docs/legal/gizlilik-politikasi.md).
+// lib/siteAnalytics.ts). Before switching it on, the Privacy Policy names it.
 //
 //   ANALYTICS_SCRIPT_URL   https://stats.example.com/script.js
 //   ANALYTICS_WEBSITE_ID   the site's id in Umami (a UUID)

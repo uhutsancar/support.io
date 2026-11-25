@@ -18,7 +18,7 @@ export interface ConversationListItemProps {
   onSelect: (conversation: Conversation) => void;
   /** The translated status name; the page owns that table. */
   statusLabel: (status: string) => string;
-  /** Ticked for a bulk move (PRD-07); no box is drawn without onToggleChecked. */
+  /** Ticked for a bulk move; no box is drawn without onToggleChecked. */
   checked?: boolean;
   onToggleChecked?: () => void;
   /** A tag's colour from the workspace's list. */

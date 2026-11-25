@@ -2,7 +2,7 @@
 // it: the assigned agent's load, the resolution figures, the visitor's
 // end-of-chat card (and Slack, Telegram, webhooks), the panel's live update
 // and the audit entry. The panel's routes (single and bulk) and the public
-// API (PRD-12) all come here, so none of them does it differently.
+// API all come here, so none of them does it differently.
 
 import events from '../events';
 import { AdminNotifier } from '../realtime';

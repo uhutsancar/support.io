@@ -1,4 +1,4 @@
-// The site's public help center (plan v10 PRD-10): on or off, its address,
+// The site's public help center: on or off, its address,
 // whether search engines may list it, and the language of the page. The
 // articles are this page's FAQ entries that are active and site-wide.
 

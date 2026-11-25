@@ -1,4 +1,4 @@
-// Two-step sign-in for panel accounts (plan v10 SEC-04).
+// Two-step sign-in for panel accounts.
 //
 // Enrolment is two calls so a secret is never switched on unseen: `begin`
 // stores a fresh sealed secret and returns the otpauth address for the QR
@@ -34,7 +34,7 @@ const normalise = (code: string) => code.toLowerCase().replace(/[^a-z0-9]/g, '')
  * What is stored for a recovery code: the id of the key it was hashed with
  * and a keyed hash, so a database dump alone does not reveal the codes and
  * a JWT_SECRET rotation knows which accounts still hold codes from the old
- * key (SEC-18, npm run secrets:rotate).
+ * key (npm run secrets:rotate).
  */
 function recoveryHash(code: string, key = derivedKey('recovery-codes')): string {
   return `${keyId(key)}:${crypto.createHmac('sha256', key).update(normalise(code)).digest('hex')}`;

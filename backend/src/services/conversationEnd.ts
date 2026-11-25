@@ -1,5 +1,5 @@
-// Telling the visitor's widget that the conversation is over (plan v10
-// PRD-04, PRD-06): it then asks for a rating, and offers the transcript, as
+// Telling the visitor's widget that the conversation is over:
+// it then asks for a rating, and offers the transcript, as
 // the site's settings say. Both ways a conversation ends — the REST status
 // route and the socket's resolve — call this.
 

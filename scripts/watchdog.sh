@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Threshold alarms without an external service (plan v10 OBS-04). Run from
+# Threshold alarms without an external service. Run from
 # cron every five minutes; each problem is sent to ALERT_WEBHOOK_URL at most
 # once an hour, and once more when it clears.
 #
@@ -128,7 +128,7 @@ else
   problem backup "no successful backup recorded ($STATUS_DIR/backup-last-success)"
 fi
 
-# backup verification (DR-03): a restore test at least every 8 days
+# backup verification: a restore test at least every 8 days
 if [[ -f "$STATUS_DIR/backup-verify-last-success" ]]; then
   vage=$(( $(date +%s) - $(cat "$STATUS_DIR/backup-verify-last-success") ))
   if (( vage > 8 * 86400 )); then

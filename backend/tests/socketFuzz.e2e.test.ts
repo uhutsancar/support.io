@@ -1,7 +1,7 @@
 'use strict';
 
-// Socket payloads that are wrong in every way a client can make them wrong
-// (plan v10 SEC-15): 1 000 events, half on a visitor's /widget socket and
+// Socket payloads that are wrong in every way a client can make them wrong:
+// 1 000 events, half on a visitor's /widget socket and
 // half on an agent's /admin socket — unknown events, payloads that are not
 // objects, fields of the wrong type, strings over their limit, two payloads
 // in one event, deep junk in unknown fields, prototype keys.

@@ -1,7 +1,6 @@
 'use strict';
 
-// Tenant isolation, across every role, over REST and the admin socket
-// (plan §5.3).
+// Tenant isolation, across every role, over REST and the admin socket.
 //
 //   Org A: site A1, site A2, conversations in both, and one account of every
 //          role — owner, viewer (users table); admin, manager, agent, and an
@@ -273,7 +272,6 @@ test("no role of org A can read or write org B's data over REST", async () => {
 
   for (const role of ROLES) {
     for (const [method, path, body] of attempts) {
-      // eslint-disable-next-line no-await-in-loop
       const res = await api(path, { method, token: a.tokens[role], body });
       assert.ok(
         res.status >= 400 && res.status < 500,
@@ -304,7 +302,6 @@ test("org A's listings never contain org B's rows", async () => {
   const { a, b } = world;
   for (const role of ROLES) {
     const token = a.tokens[role];
-    /* eslint-disable no-await-in-loop */
     const sites = await api('/api/sites', { token });
     assert.ok(!JSON.stringify(sites.body).includes(b.site._id), `${role} lists B's site`);
     const deals = await api('/api/deals', { token });
@@ -313,7 +310,6 @@ test("org A's listings never contain org B's rows", async () => {
     assert.ok(!JSON.stringify(team.body).includes(b.member), `${role} lists B's member`);
     const unread = await api('/api/conversations/unread-count', { token });
     assert.ok(!JSON.stringify(unread.body).includes(b.site._id), `${role} counts B's site`);
-    /* eslint-enable no-await-in-loop */
   }
 });
 
@@ -375,7 +371,6 @@ test('a viewer reads but cannot change a conversation', async () => {
     [`/api/conversations/${a.conv1}/claim`, undefined],
     [`/api/conversations/${a.conv1}/assign`, { agentId: null }]
   ] as Array<[string, unknown]>) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await api(path, { method: 'PUT', token: viewer, body });
     assert.equal(res.status, 403, `viewer: PUT ${path} answered ${res.status}`);
   }
@@ -424,7 +419,6 @@ test("no role of org A can reach org B's conversation over the admin socket", as
   ]);
 
   for (const role of ROLES) {
-    // eslint-disable-next-line no-await-in-loop
     const socket = await adminSocket(a.tokens[role]);
     try {
       const leaks: unknown[] = [];
@@ -439,7 +433,6 @@ test("no role of org A can reach org B's conversation over the admin socket", as
         ['assign-conversation', { conversationId: b.conv, agentId: b.member }],
         ['set-department', { conversationId: b.conv, departmentId: b.department }]
       ] as Array<[string, unknown]>) {
-        // eslint-disable-next-line no-await-in-loop
         const message = await refused(socket, event, payload);
         assert.ok(message, `${role}: ${event} on B was not refused`);
       }

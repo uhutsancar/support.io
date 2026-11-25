@@ -1,4 +1,4 @@
-// Reports in the panel (plan v10 PRD-22): the analytics page shows when
+// Reports in the panel: the analytics page shows when
 // conversations start and which were answered late, compares agents, and
 // downloads a report as CSV or Excel on a plan with exports — on Free the
 // buttons offer the upgrade instead. axe finds nothing serious.

@@ -1,6 +1,6 @@
 // The inbox: listing conversations, reading one, and the moves an agent makes
 // on it (assign, claim, route to a department, reprioritise, resolve, delete),
-// one at a time or several at once, plus tags, snoozing and merging (PRD-07).
+// one at a time or several at once, plus tags, snoozing and merging.
 //
 // Two rules hold throughout:
 //
@@ -263,7 +263,7 @@ router.get(
       { conversationId: conversation._id, senderType: 'visitor', isRead: false },
       { isRead: true, readAt }
     );
-    // The visitor sees "seen" under their messages (UX-04).
+    // The visitor sees "seen" under their messages.
     if (read.modifiedCount) {
       const io = ioFrom(req);
       if (io) new WidgetNotifier(io).messagesSeen(conversation._id, readAt);

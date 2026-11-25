@@ -1,5 +1,5 @@
 /**
- * Ayarlar → Hesap güvenliği (plan v10 SEC-03, SEC-04).
+ * Ayarlar → Hesap güvenliği.
  *
  * Şifre değiştirme, e-posta değiştirme, diğer cihazlardan çıkış, iki adımlı
  * doğrulama (kurulum, kurtarma kodları, kapatma) ve — sahip/yönetici için —
@@ -240,7 +240,7 @@ const Sessions = () => {
 };
 
 /**
- * Sign-in with Google (PRD-14): connecting is the account owner's consent,
+ * Sign-in with Google: connecting is the account owner's consent,
  * given signed in. The API sends the browser to Google and back here with
  * ?google=linked|taken|failed|expired|cancelled.
  */

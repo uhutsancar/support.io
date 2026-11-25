@@ -116,7 +116,7 @@ const Conversations = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [note, setNote] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
-  // Inbox tools (PRD-07): the workspace's tags, the tag filter, the snoozed
+  // Inbox tools: the workspace's tags, the tag filter, the snoozed
   // view, the rows ticked for a bulk move, and the menus and dialogs.
   const [tagCatalog, setTagCatalog] = useState<ConversationTag[]>([]);
   const [tagFilter, setTagFilter] = useState('all');
@@ -234,7 +234,7 @@ const Conversations = () => {
       );
       setConversations((current) => {
         const known = current.some((c) => String(c._id) === String(conversationId));
-        // Woken from a snooze (PRD-07): back into the inbox view of its site.
+        // Woken from a snooze: back into the inbox view of its site.
         if (!known) {
           const woken =
             viewRef.current === 'inbox' &&
@@ -742,7 +742,7 @@ const Conversations = () => {
       setNoteSaving(false);
     }
   };
-  // ------------------------------------------------ inbox tools (PRD-07)
+  // ------------------------------------------------ inbox tools
 
   /** The workspace's tags; secondary, so a failure is logged, not shown. */
   const loadTags = useCallback(async () => {

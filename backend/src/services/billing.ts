@@ -1,4 +1,4 @@
-// Paddle billing (plan §9): what a webhook does to an organization's plan.
+// Paddle billing: what a webhook does to an organization's plan.
 //
 // The flow for one delivery:
 //
@@ -45,7 +45,7 @@ export function checkoutReference(
 function referenceMatches(organizationId: unknown, reference: unknown): boolean {
   if (typeof organizationId !== 'string' || typeof reference !== 'string') return false;
   const given = Buffer.from(reference);
-  // A checkout started before a JWT_SECRET rotation still completes (SEC-18).
+  // A checkout started before a JWT_SECRET rotation still completes.
   return derivedKeys('billing-checkout').some((secret) => {
     const expected = Buffer.from(checkoutReference(organizationId, secret));
     return expected.length === given.length && crypto.timingSafeEqual(expected, given);
@@ -156,15 +156,15 @@ export async function handleEvent(event: PaddleEvent, rawBody: string): Promise<
     return outcome;
   });
   // Sites and seats over a smaller plan go on hold, and come back with a
-  // bigger one (BIL-04) — after the commit, in their own transaction.
+  // bigger one — after the commit, in their own transaction.
   if (changed.organizationId) {
     await reconcilePlanLimits(changed.organizationId).catch((error: unknown) => {
       console.error('Plan limit reconciliation failed:', errorText(error));
     });
     // Paddle sends its own dunning mails; ours is the one that says what
-    // happens to the workspace and when (BIL-05). Once per failed payment:
+    // happens to the workspace and when. Once per failed payment:
     // only the event that moved the subscription into past_due sends it.
-    // A referred workspace that now pays earns its referrer a month (PRD-23).
+    // A referred workspace that now pays earns its referrer a month.
     if (changed.active) {
       await qualifyReferral(changed.organizationId).catch((error: unknown) =>
         console.error('Referral qualification failed:', errorText(error))
@@ -217,7 +217,7 @@ async function applySubscriptionEvent(
 ): Promise<{
   outcome: Exclude<WebhookOutcome, 'duplicate'>;
   organizationId: string | null;
-  /** This event is the first of a failed payment: the owner is told (BIL-05). */
+  /** This event is the first of a failed payment: the owner is told. */
   pastDueStarted?: Date;
 }> {
   const data = event.data || {};
@@ -388,7 +388,7 @@ export async function syncOrganizationPlan(
     [organizationId]
   );
   const row = result.rows[0];
-  // A hand-set plan (SEC-05) is never moved by a subscription event.
+  // A hand-set plan is never moved by a subscription event.
   if (!row || row.billing_exempt) return null;
   const from: PlanType = isPlanType(row.current) ? row.current : 'FREE';
   const to = subscriptionPlan(row) ?? from;

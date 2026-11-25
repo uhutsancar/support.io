@@ -1,5 +1,5 @@
 // Live visitors on a site, for the dashboard's presence list; and the
-// visitors the team has blocked (plan v10 SEC-09).
+// visitors the team has blocked.
 
 import express from 'express';
 import Visitor from '../models/Visitor';

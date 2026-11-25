@@ -1,4 +1,4 @@
-// How long conversations are kept, and erasing one visitor (plan v10 SEC-17).
+// How long conversations are kept, and erasing one visitor.
 //
 // KVKK asks that personal data be kept only as long as it is needed. Each
 // plan has a window (domain/plans.ts): Free keeps 90 days, Pro up to a year,
@@ -208,7 +208,7 @@ export async function nightlyPurge(now = new Date()): Promise<void> {
       const removed = await purgeExpiredConversations({ now });
       if (removed.conversations)
         logger.info({ retention: removed }, 'expired conversations deleted');
-      // The integrations' delivery log is kept for 30 days (PRD-11).
+      // The integrations' delivery log is kept for 30 days.
       const deliveries = await purgeDeliveryLog();
       if (deliveries) logger.info({ deliveries }, 'old integration deliveries deleted');
     } finally {

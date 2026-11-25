@@ -6,7 +6,7 @@
  * Düzen artık AuthLayout'tan geliyor; sağ panel kayıt olurken neye kayıt
  * olunduğunu gösteriyor.
  *
- * Kayıt e-posta önceliklidir (plan v10 SEC-06): form yalnızca doğrulama
+ * Kayıt e-posta önceliklidir: form yalnızca doğrulama
  * bağlantısını gönderir ve "gelen kutunuzu kontrol edin" ekranına geçer;
  * oturum bağlantı açılınca başlar. Sunucu adres kayıtlı olsa da olmasa da
  * aynı cevabı verir, bu ekran da öyle. Sunucu bir Turnstile anahtarı

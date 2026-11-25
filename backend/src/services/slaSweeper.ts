@@ -199,8 +199,8 @@ async function sweepOnce(
 }
 
 /**
- * Brings snoozed conversations back into the inbox when their time comes
- * (PRD-07). One UPDATE picks them; each one is announced to its site so an
+ * Brings snoozed conversations back into the inbox when their time comes.
+ * One UPDATE picks them; each one is announced to its site so an
  * open inbox shows it again without a refresh.
  */
 async function wakeSnoozed(io: Server | null): Promise<number> {
@@ -250,7 +250,7 @@ function startSlaSweeper(
     }
     try {
       // Unanswered-chat, reply and rating mails ride on the same pass, so
-      // SLA_SWEEPER=off keeps them to one process as well (PRD-01).
+      // SLA_SWEEPER=off keeps them to one process as well.
       await runConversationMail();
     } catch (error) {
       console.error('[sla] conversation mail pass failed', error);

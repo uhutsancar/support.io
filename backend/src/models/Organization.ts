@@ -13,9 +13,9 @@ export interface OrganizationDoc {
   enforce2fa: boolean;
   /** The free Pro trial runs until then (migration 0010); null without one. */
   trialEndsAt: Date | null;
-  /** Conversations older than this are deleted (SEC-17); null: the plan's default. */
+  /** Conversations older than this are deleted; null: the plan's default. */
   retentionDays: number | null;
-  /** Which set-up mails went out (PRD-08). */
+  /** Which set-up mails went out. */
   activation: Record<string, string>;
 }
 

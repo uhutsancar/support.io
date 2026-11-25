@@ -1,4 +1,4 @@
-// The Google Tag Manager template (plan v10 PRD-13). GTM's own sandbox runs
+// The Google Tag Manager template. GTM's own sandbox runs
 // only inside Tag Manager, so this test does two honest things instead: it
 // checks that the template file is well formed and that its permissions
 // allow exactly what its code does, and it runs the template's code in a real

@@ -1,5 +1,5 @@
-// The template for the tenant-isolation test every new route needs (plan v10
-// TST-03): two workspaces, and a list of calls that put workspace B's ids in
+// The template for the tenant-isolation test every new route needs:
+// two workspaces, and a list of calls that put workspace B's ids in
 // front of workspace A's session. Each must be refused (4xx) without saying
 // anything about B's data, and B's rows must be as they were.
 //
@@ -101,7 +101,6 @@ export async function assertRefused(
   secret = 'secret of this tenant'
 ): Promise<void> {
   for (const [method, path, body] of attempts) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await call(as.token, path, method, body);
     assert.ok(res.status >= 400 && res.status < 500, `${method} ${path} answered ${res.status}`);
     assert.ok(!res.text.includes(secret), `${method} ${path} leaked the other tenant's data`);

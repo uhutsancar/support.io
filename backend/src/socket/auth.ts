@@ -148,7 +148,7 @@ export function installWidgetAuthentication(widget: Namespace): void {
         return next(new Error(WIDGET_SESSION_INVALID));
       }
 
-      // A visitor the team blocked (SEC-09) keeps a session that is still
+      // A visitor the team blocked keeps a session that is still
       // valid for a while; it no longer opens a socket.
       const address = clientAddress(socket.handshake.headers, socket.handshake.address);
       if (await isBlocked({ siteId: String(site._id), visitorId: claims.visitorId, ip: address })) {

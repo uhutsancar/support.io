@@ -1,6 +1,6 @@
 'use strict';
 
-// The inbox tools of plan v10 PRD-07: tags, snoozing, merging two
+// The inbox tools: tags, snoozing, merging two
 // conversations of one visitor, bulk moves and word search with Turkish
 // stemming. Each is held to the rules of the single routes it builds on —
 // tenant filter, role, the read-only site — and to what the visitor's
@@ -61,13 +61,11 @@ async function conversationFor(t: Tenant, visitorId: string, content: string): P
 async function auditRows(organizationId: string, action: string): Promise<any[]> {
   // Audit rows are written by an event listener, just after the response.
   for (let i = 0; i < 20; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
     const { rows } = await query(
       'SELECT entity_id, metadata FROM audit_logs WHERE organization_id = $1 AND action = $2',
       [organizationId, action]
     );
     if (rows.length) return rows;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return [];
@@ -299,7 +297,6 @@ test('bulk: the same move on many, each by its own rules', async () => {
       conversationIds: Array.from({ length: 101 }, () => generateId())
     }
   ]) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await call(a.token, '/api/conversations/bulk', 'POST', bad);
     assert.equal(res.status, 400, JSON.stringify(bad));
   }
@@ -312,7 +309,6 @@ test('search finds words in other forms (Turkish stemming)', async () => {
 
   // Neither text is a substring of the message; both are its words.
   for (const term of ['siparişler', 'kargolarım']) {
-    // eslint-disable-next-line no-await-in-loop
     const list = await inbox(t, `?search=${encodeURIComponent(term)}`);
     assert.deepEqual(ids(list), [found], term);
   }
@@ -332,7 +328,6 @@ test('a site over the plan limit is read-only in the inbox REST routes too', asy
       ['PUT', `/api/conversations/${id}/tags`, { tags: ['x'] }],
       ['POST', `/api/conversations/${id}/notes`, { note: 'not now' }]
     ] as const) {
-      // eslint-disable-next-line no-await-in-loop
       const res = await call(t.token, path, method, body);
       assert.equal(res.status, 403, `${method} ${path}`);
       assert.equal(JSON.parse(res.text).code, 'SITE_SUSPENDED');

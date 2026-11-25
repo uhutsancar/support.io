@@ -1,5 +1,5 @@
 /**
- * "Google ile devam et" (plan v10 PRD-14).
+ * "Google ile devam et".
  *
  * Düz bir bağlantı: API tarayıcıyı Google'a gönderir, Google geri yollar, API
  * oturumu açıp panele yönlendirir. Sayfada hiçbir Google betiği çalışmaz.

@@ -366,7 +366,7 @@ const Pricing = () => {
           </div>
         )}
         {/*
-          KARAR-MKT-2: Paddle vergiyi ödeme penceresinde, alıcının ülkesine
+          Paddle vergiyi ödeme penceresinde, alıcının ülkesine
           ve fatura bilgisine göre hesaplayıp gösterir; buradaki satır onunla
           çelişmeyen tek ifadedir.
         */}

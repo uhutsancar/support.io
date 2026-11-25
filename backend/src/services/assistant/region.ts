@@ -1,4 +1,4 @@
-// Who the assistant may answer on the free tier (plan v10 AI-02).
+// Who the assistant may answer on the free tier.
 //
 // Google's terms allow only the paid Gemini API for apps that serve people in
 // the European Economic Area, Switzerland or the United Kingdom. While

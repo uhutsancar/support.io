@@ -1,24 +1,29 @@
+# Dependencies and build output
 node_modules/
 dist/
 build/
-.env
-.env.local
-.DS_Store
-*.log
 coverage/
+backend/public/
+
+# Environment files, examples included
+.env
+.env.*
+
+# Uploaded files
+backend/uploads/
+
+# Test reports
+e2e/test-results/
+e2e/playwright-report/
+lhci/
+.lighthouseci/
+
+# Editors, OS and tooling
 .vscode/
 .idea/
 .claude/settings.local.json
+.cache/
+.DS_Store
+*.log
 *.swp
 *.swo
-.cache/
-# Uploads are governed by backend/uploads/.gitignore, next to what it describes.
-
-# Build output, not a source file: compiled from backend/src/widget/widget.ts by
-# `npm run build:widget`, which `npm run dev` and `npm run build` both do first.
-backend/public/widget.js
-backend/public/widget-version.json
-backend/public/widget-locales/
-
-lhci/
-.lighthouseci/

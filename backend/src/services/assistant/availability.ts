@@ -1,5 +1,5 @@
-// Whether the assistant may answer at all right now, platform-wide
-// (plan v10 AI-01, AI-07). Three things can stop it besides the settings in
+// Whether the assistant may answer at all right now, platform-wide.
+// Three things can stop it besides the settings in
 // config/assistant.ts:
 //
 //   the model     checked once at boot and then every few hours: a model

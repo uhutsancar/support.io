@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Nightly PostgreSQL backup, encrypted and copied off the server (plan §15).
+# Nightly PostgreSQL backup, encrypted and copied off the server.
 #
 #   pg_dump -Fc  ->  sha256  ->  age (or gpg) encryption  ->  rclone to
 #   off-site storage  ->  the local copy deleted
@@ -15,7 +15,7 @@
 #   BACKUP_PING_URL       optional; called on success (healthchecks.io style)
 #   BACKUP_VERIFY         weekly (default: Sundays), always, or off — restore
 #                         the night's plain dump into a scratch database
-#                         before it is encrypted (DR-03, restore-postgres.sh)
+#                         before it is encrypted (restore-postgres.sh)
 #   BACKUP_VERIFY_PING_URL optional; called when a verification passes
 #   BACKUP_STATUS_DIR     where the time of the last success is written, read
 #                         by the API's /internal/metrics and scripts/watchdog.sh;

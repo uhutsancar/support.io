@@ -1,4 +1,4 @@
-# Every push and pull request (plan §14.1, v10 SEC-02 / SUP-03 / PERF-01).
+# Every push and pull request.
 #
 #   checks    typecheck, lint and formatting for both packages, the
 #             production dependency audit, and two guards: no trace of the
@@ -62,12 +62,11 @@ jobs:
       - name: Translations have the same keys in Turkish and English
         run: npx tsx scripts/check-locales.ts
         working-directory: admin-panel
-      - name: No text written into components (UX-06)
+      - name: No text written into components
         run: npx tsx scripts/check-hardcoded-text.ts
         working-directory: admin-panel
       - name: Production dependencies have no high or critical advisory
-        # Development-only tooling is reported in docs/security/accepted-risks.md;
-        # what ships in the image must be clean.
+        # What ships in the image must be clean; development tooling is not gated.
         run: |
           (cd backend && npm audit --omit=dev --audit-level=high)
           (cd admin-panel && npm audit --omit=dev --audit-level=high)
@@ -89,7 +88,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       postgres:
-        # The base of docker/postgres and of the development stack (DR-02).
+        # The base of docker/postgres and of the development stack.
         image: postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
         env:
           POSTGRES_DB: supportchat
@@ -139,14 +138,14 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
         working-directory: backend
-      - name: A throw-away Web Push key pair for this run (PRD-09)
+      - name: A throw-away Web Push key pair for this run
         # Generated here so no private key sits in the repository.
         working-directory: backend
         run: node -e "const k=require('web-push').generateVAPIDKeys();console.log('VAPID_PUBLIC_KEY='+k.publicKey);console.log('VAPID_PRIVATE_KEY='+k.privateKey)" >> "$GITHUB_ENV"
       - name: Start the API, recording coverage
         # The suite calls a running API: the code it exercises runs there.
         # scripts/coverage-api.ts exits cleanly on a stop file, so V8 writes
-        # what ran (TST-02).
+        # what ran.
         working-directory: backend
         run: |
           npm run build:widget
@@ -190,7 +189,7 @@ jobs:
     needs: [checks]
     services:
       postgres:
-        # The base of docker/postgres and of the development stack (DR-02).
+        # The base of docker/postgres and of the development stack.
         image: postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
         env:
           POSTGRES_DB: supportchat
@@ -222,7 +221,7 @@ jobs:
       PADDLE_PRICE_PRO: pri_ci_pro
       PADDLE_PRICE_ENTERPRISE: pri_ci_enterprise
       # The AI model is the stand-in in e2e/fake-gemini.mjs: no real key, no
-      # request leaves the runner (TST-01 #2).
+      # request leaves the runner.
       GEMINI_API_KEY: test-key-not-a-real-one
       GEMINI_BASE_URL: http://127.0.0.1:5199/v1beta
       E2E_FAKE_GEMINI: '1'
@@ -241,7 +240,7 @@ jobs:
       - run: npm ci
         working-directory: backend
       # Chromium for desktop Chrome and the Pixel 7, WebKit for the iPhone,
-      # iPad and desktop Safari, Firefox for desktop Firefox (UX-03).
+      # iPad and desktop Safari, Firefox for desktop Firefox.
       - run: npm ci && npx playwright install --with-deps chromium webkit firefox
         working-directory: e2e
       - name: Start the stand-in AI model
@@ -261,7 +260,7 @@ jobs:
         run: npm test
         working-directory: e2e
       - name: Lighthouse on the marketing pages
-        # Plan v10 PERF-08: accessibility, SEO and layout shift must hold;
+        # Accessibility, SEO and layout shift must hold;
         # performance (target 90 on mobile) and LCP are reported, not gated.
         run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

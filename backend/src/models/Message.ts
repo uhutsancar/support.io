@@ -52,7 +52,7 @@ export default defineModel<MessageDoc>({
     assistant: { column: 'assistant', type: 'json', default: null }
   },
   options: {
-    // A private attachment (plan v10 SEC-08) leaves the server as a link
+    // A private attachment leaves the server as a link
     // signed at that moment, valid for twelve hours; the stored address
     // opens nothing by itself.
     present(row) {

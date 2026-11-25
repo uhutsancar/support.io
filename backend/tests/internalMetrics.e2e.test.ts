@@ -1,6 +1,6 @@
 'use strict';
 
-// GET /internal/metrics (plan v10 OBS-03): Prometheus text for the Docker
+// GET /internal/metrics: Prometheus text for the Docker
 // network only. Called on the backend's own port (as a scraper on the
 // network would) it answers; through a proxy, or with X-Forwarded-For, it is
 // a 404 like any unknown path.

@@ -73,7 +73,7 @@ export async function openCheckout(
     customer: { email: session.customerEmail },
     customData: session.customData,
     // showAddTaxId: a business buyer adds its company name and tax number,
-    // which Paddle prints on the invoice (BIL-06).
+    // which Paddle prints on the invoice.
     settings: { displayMode: 'overlay', theme: 'light', locale, showAddTaxId: true }
   });
 }

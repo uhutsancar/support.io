@@ -1,12 +1,12 @@
 'use strict';
 
-// Personal data (plan §16):
+// Personal data:
 //
 //  - the owner can download everything the organization stored, without
 //    password hashes or sealed keys
 //  - a visitor's IP and device details are dropped 90 days after the visit
 //  - an invitation (an e-mail address) is dropped 90 days after it was
-//    accepted, revoked or expired (LEG-03)
+//    accepted, revoked or expired
 //
 // Needs the running API. Run: npm run test:compose
 

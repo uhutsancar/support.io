@@ -1,6 +1,6 @@
 'use strict';
 
-// What the server writes while people use it (plan v10 SEC-16): a sign-in
+// What the server writes while people use it: a sign-in
 // with a wrong and then the right password, a visitor who leaves their
 // address and writes a message, and the assistant asked about it — once
 // failing, once answering. Every structured log line and everything older

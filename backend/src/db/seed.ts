@@ -40,8 +40,7 @@ import Deal from '../models/Deal';
 import AutomationRule from '../models/AutomationRule';
 import ProactiveRule from '../models/ProactiveRule';
 import AuditLog from '../models/AuditLog';
-import { seal } from '../config/secretBox';
-import { DEMO_CUSTOMER, DEMO_IDENTITY_SECRET, DEMO_SITE_KEY } from './demo';
+import { DEMO_SITE_KEY } from './demo';
 
 const DEMO_ORG_NAME = 'Acme Yazılım (Demo)';
 const DEMO_DOMAIN = 'demo.support.io';
@@ -171,10 +170,7 @@ async function seed() {
     siteKey: DEMO_SITE_KEY,
     userId: owner._id,
     organizationId: org._id,
-    // Identity verification, so the demo page's "sign in as a demo customer"
-    // works. Sealed with this server's JWT_SECRET: seed inside the backend
-    // container. The FAQ assistant stays off until switched on in the panel.
-    integrations: { identitySecret: seal(DEMO_IDENTITY_SECRET) },
+    // The FAQ assistant stays off until switched on in the panel.
     widgetSettings: {
       position: 'bottom-right',
       primaryColor: '#4F46E5',
@@ -1070,7 +1066,6 @@ Demo verisi hazır.
 
   Organizasyon : ${DEMO_ORG_NAME} (ENTERPRISE)
   Site anahtarı: ${result.site.siteKey}
-  Demo müşteri : ${DEMO_CUSTOMER.userId} (demo sayfasındaki "Demo müşteri olarak giriş yap")
 
   Giriş:
     Sahip   ${result.owner.email} / ${DEMO_PASSWORD}

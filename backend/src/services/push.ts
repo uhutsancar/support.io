@@ -1,4 +1,4 @@
-// Web Push to the panel (plan v10 PRD-09): who receives a conversation
+// Web Push to the panel: who receives a conversation
 // event on their phone or desktop while the panel is closed, and sending it.
 //
 // The recipients follow the same choices as the desktop notifications in

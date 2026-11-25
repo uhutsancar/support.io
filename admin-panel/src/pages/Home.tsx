@@ -565,7 +565,7 @@ const StoryStepBlock = ({
         {active && <span className="absolute inset-[3px] rounded-full bg-indigo-600" />}
       </span>
       {/* The step being read stands out by colour, not by fading the others:
-          faded text fell below a readable contrast (UX-02). */}
+          faded text fell below a readable contrast. */}
       <div>
         <div
           className={['transition-[filter] duration-500', active ? '' : 'lg:grayscale'].join(' ')}

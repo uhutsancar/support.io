@@ -1,5 +1,5 @@
 /*
- * The panel's service worker (plan v10 PRD-09).
+ * The panel's service worker.
  *
  * Two jobs only:
  *   - push: shows the notification the server sent (a new conversation, an

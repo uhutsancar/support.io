@@ -28,7 +28,7 @@ const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
 
 // Ertelenmis (snooze) bir konusma, zamani gelene kadar gelen kutusunda
-// gorunmez; "Ertelenenler" gorunumu yalnizca onlari gosterir (PRD-07).
+// gorunmez; "Ertelenenler" gorunumu yalnizca onlari gosterir.
 // Zamani gecmis bir erteleme, tarayici sifirlamadan once de uyanik sayilir.
 const AWAKE = '(c.snoozed_until IS NULL OR c.snoozed_until <= now())';
 const SNOOZED = 'c.snoozed_until > now()';

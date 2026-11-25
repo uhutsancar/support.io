@@ -1,4 +1,4 @@
-// The WordPress plugin against a real WordPress (plan v10 PRD-13). The
+// The WordPress plugin against a real WordPress. The
 // administrator pastes the installation code under Settings → Supbort.io; a
 // wrong code is refused; the bubble then appears on the site, and a signed-in
 // WordPress user reaches the team as a verified customer.

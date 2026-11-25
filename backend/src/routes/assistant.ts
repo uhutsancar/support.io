@@ -40,7 +40,7 @@ const OVERVIEW_DAYS = 30;
 
 // Why it is not available, in words for the panel and nothing more: whether
 // the service is set up here, or paused for every workspace for now. No
-// provider, model or key state (AI-01).
+// provider, model or key state.
 router.get('/status', auth, requireOrganization, (_req: Request, res: Response) => {
   const config = assistantConfig();
   const block = config ? platformBlock() : null;
@@ -116,7 +116,7 @@ router.get(
       available: config !== null,
       days: OVERVIEW_DAYS,
       plan,
-      // Answers an agent marked as wrong in the window (AI-06).
+      // Answers an agent marked as wrong in the window.
       flagged: flagged.rows[0]?.n ?? 0,
       // This month's answers against the plan's allowance.
       usage: {
@@ -145,7 +145,7 @@ router.get(
   })
 );
 
-// ------------------------------------------------- "wrong answer" (AI-06)
+// ------------------------------------------------- "wrong answer"
 //
 //   POST   /api/assistant/feedback            { messageId, note? }
 //   DELETE /api/assistant/feedback/:messageId

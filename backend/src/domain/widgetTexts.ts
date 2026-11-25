@@ -2,7 +2,7 @@
 // until they write their own: onboarding's (routes/onboarding.ts), the model
 // defaults (models/Site.ts, models/WidgetConfig.ts) and the demo seed. A text
 // still equal to one of them is not the owner's, so the widget says it in the
-// visitor's own language instead (PRD-16) — a German visitor is not greeted
+// visitor's own language instead — a German visitor is not greeted
 // with a Turkish line nobody chose.
 
 export const STOCK_WIDGET_TEXTS = {

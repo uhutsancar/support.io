@@ -1,4 +1,4 @@
-// Merging two conversations of one visitor (plan v10 PRD-07): the server
+// Merging two conversations of one visitor: the server
 // lists the visitor's other conversations on the site; the one picked
 // receives this one's messages and notes, and this one closes.
 

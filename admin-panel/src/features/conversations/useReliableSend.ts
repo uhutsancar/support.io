@@ -123,7 +123,7 @@ export function useReliableSend({
         messageType: fields.messageType ?? 'text',
         // Until the server answers, the attachment shows through the signed
         // preview link the upload returned: its stable address opens nothing
-        // by itself (private attachments, plan v10 SEC-08).
+        // by itself (private attachments).
         fileData: fields.fileData
           ? ({
               ...fields.fileData,

@@ -1,4 +1,4 @@
-// The panel as an app (plan v10 PRD-09): the manifest, the service worker
+// The panel as an app: the manifest, the service worker
 // the panel registers, a push turned into a notification that opens the
 // conversation, the device switch in the settings, and — on the built panel —
 // the dashboard opening without a network.

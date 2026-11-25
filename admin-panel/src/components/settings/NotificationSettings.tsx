@@ -1,5 +1,5 @@
 /**
- * Ayarlar → Bildirimler (plan v10 PRD-01, PRD-02).
+ * Ayarlar → Bildirimler.
  *
  * Yanıtlanmamış sohbet e-postaları (hemen / saatlik / kapalı), masaüstü
  * bildirimleri (izin bir tıklamayla istenir, sayfa açılır açılmaz değil),
@@ -34,7 +34,7 @@ const NotificationSettings = () => {
   const { t } = useTranslation();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [permission, setPermission] = useState(notificationPermission());
-  // Push on this device (PRD-09): null until known; 'unavailable' hides the block.
+  // Push on this device: null until known; 'unavailable' hides the block.
   const [push, setPush] = useState<'on' | 'off' | 'unavailable' | null>(null);
   const [pushNote, setPushNote] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);

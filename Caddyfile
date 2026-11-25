@@ -35,13 +35,6 @@ handle /uploads/* {
     reverse_proxy backend:3000
 }
 
-# Widget entegrasyon test sayfasi backend'in statik dosyalari arasindadir.
-# Bu blok olmadan /demo asagidaki SPA handler'ina duser ve Vite admin
-# panelinin index.html'ini dondururdu.
-handle /demo* {
-    reverse_proxy backend:3000
-}
-
 # The public help centers (/help/<site>) are pages the backend writes.
 handle /help/* {
     reverse_proxy backend:3000

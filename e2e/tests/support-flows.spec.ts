@@ -1,4 +1,4 @@
-// The flows around a chat (plan v10 TST-01 #3–#7): nobody online — the
+// The flows around a chat: nobody online — the
 // offline form takes an address and the team is mailed about the unanswered
 // chat; a required pre-chat form with a consent box comes before the first
 // message; a saved reply goes in with "/"; a picture uploads and a fake one

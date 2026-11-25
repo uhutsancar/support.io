@@ -1,4 +1,4 @@
-// Blocking a visitor (plan v10 SEC-09).
+// Blocking a visitor.
 //
 // An agent blocks the visitor of a conversation for 30 days (or another
 // period): by the server-minted visitor id, and by a keyed hash of the IP
@@ -23,8 +23,8 @@ export function ipHash(ip: string | null | undefined): string | null {
 
 /**
  * The address's hash under the current secret, and during a JWT_SECRET
- * rotation under the previous one too, so blocks made before it still hold
- * (SEC-18). The first is the one new blocks store.
+ * rotation under the previous one too, so blocks made before it still hold.
+ * The first is the one new blocks store.
  */
 function ipHashes(ip: string | null | undefined): string[] {
   const value = String(ip || '')
@@ -122,7 +122,7 @@ const URL_RX = /\b(?:https?:\/\/|www\.)\S+/gi;
 
 /**
  * Whether a visitor message looks like spam: more than three links, or the
- * same text a third time in a row (SEC-09).
+ * same text a third time in a row.
  */
 export function looksLikeSpam(content: string, previous: string[]): boolean {
   if ((content.match(URL_RX) || []).length > 3) return true;

@@ -1,4 +1,4 @@
-// The network goes away mid-conversation (plan v10 TST-01 #13): what the
+// The network goes away mid-conversation: what the
 // visitor writes waits as "sending", goes out once the network is back, and
 // the conversation holds it exactly once — on the visitor's screen, after a
 // reload, and in the panel's API.

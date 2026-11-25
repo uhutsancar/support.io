@@ -87,7 +87,7 @@ export function setMailTransport(next: MailTransport | null): void {
 }
 
 /**
- * The recipient domains a staging server may write to (plan v10 INF-03):
+ * The recipient domains a staging server may write to:
  * MAIL_ALLOWLIST_DOMAINS="example.com,ourcompany.com". Empty: every domain
  * (production). Staging uses real SMTP but must never mail a real customer.
  */

@@ -1,5 +1,4 @@
-// What happens to sites and seats beyond the plan after a downgrade
-// (plan v10 BIL-04, KARAR-BIL-1 default).
+// What happens to sites and seats beyond the plan after a downgrade.
 //
 // Nothing is deleted. Sites over the limit are suspended: the widget stays
 // silent on the customer's page (routes/widget.ts, middleware/widgetSession.ts)
@@ -39,7 +38,7 @@ export interface OverageChange {
 interface Row {
   id: string;
   suspended: boolean;
-  /** Blocked by the platform (LEG-05): never takes a slot from a working site. */
+  /** Blocked by the platform: never takes a slot from a working site. */
   blocked?: boolean;
   kind?: 'user' | 'team';
 }
@@ -241,7 +240,7 @@ export async function reconcileAllPlanLimits(): Promise<number> {
 
 /**
  * Why nobody may reply on a site, if they may not: over its plan's limit
- * (BIL-04) or blocked by the platform (LEG-05). Null when replies are fine.
+ * or blocked by the platform. Null when replies are fine.
  */
 export async function siteHold(siteId: unknown): Promise<'SITE_SUSPENDED' | 'SITE_BLOCKED' | null> {
   if (!siteId) return null;

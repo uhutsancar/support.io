@@ -1,6 +1,6 @@
 'use strict';
 
-// Uploads (plan v10 SEC-07, SEC-08):
+// Uploads:
 //
 //  - the first bytes must match the declared type: a program called
 //    photo.png is refused; SVG and, by default, archives are not taken
@@ -113,7 +113,6 @@ test('a file whose bytes do not match its type is refused', async () => {
     ],
     [Buffer.from('text\x00with a NUL', 'latin1'), 'text/plain', 'note.txt']
   ] as const) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await visitorUpload(site.siteKey, bytes, type, name);
     assert.equal(res.status, 400, `${name} (${type}) was accepted`);
     assert.equal(res.body.code, 'UNSUPPORTED_FILE_TYPE');

@@ -1,4 +1,4 @@
-// The workspace's integrations (plan v10 PRD-11): Slack, Telegram, webhooks.
+// The workspace's integrations: Slack, Telegram, webhooks.
 //
 //   GET    /api/integrations                 the list, addresses masked
 //   POST   /api/integrations                 { kind, name, events, siteId?, url? | botToken+chatId, language? }

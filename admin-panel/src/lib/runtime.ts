@@ -1,7 +1,10 @@
-const configuredOrigin = String(import.meta.env.VITE_API_URL || '').trim();
+// In production the panel and API share an origin, so an unset or empty
+// VITE_API_URL produces relative URLs. `npm run dev` talks to the backend on
+// its default port unless VITE_API_URL says otherwise.
+const configuredOrigin = String(
+  import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:5000' : '')
+).trim();
 
-// In production the panel and API normally share an origin. An empty Vite
-// variable must therefore produce relative URLs, never "undefined/api".
 export const API_ORIGIN = configuredOrigin.replace(/\/+$/, '');
 export const API_BASE_URL = `${API_ORIGIN}/api`;
 

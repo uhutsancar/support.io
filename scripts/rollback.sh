@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Returns to the image that ran before the last deploy (plan §14.4).
+# Returns to the image that ran before the last deploy.
 #
 #   ./scripts/rollback.sh            the image recorded in .last-release
 #   ./scripts/rollback.sh <image>    a specific earlier image

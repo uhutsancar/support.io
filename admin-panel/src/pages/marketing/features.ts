@@ -173,22 +173,17 @@ export const SOLUTIONS = [
   }
 ] as const;
 
-export type SolutionId = (typeof SOLUTIONS)[number]['id'];
-
 export const SOLUTION_IDS: readonly string[] = SOLUTIONS.map((s) => s.id);
 
-/** Sektöre göre anlatım. Her biri aynı ürünü farklı bir dille anlatır. */
-export const USE_CASES = ['ecommerce', 'saas', 'agency', 'service'];
-
 /**
- * Karşılaştırma sayfaları (`/karsilastirma/:id`, `/en/compare/:id`; plan v10
- * MKT-04). Rakip bilgileri `compare.items.<id>` altında, kaynağı ve kontrol
+ * Karşılaştırma sayfaları (`/karsilastirma/:id`, `/en/compare/:id`).
+ * Rakip bilgileri `compare.items.<id>` altında, kaynağı ve kontrol
  * tarihiyle; Supbort.io sütunu sunucunun plan tablosundan gelir.
  *
- * Yayın, rakip markalarının kullanımı için hukukçu kontrolünden sonradır
- * [SAHİP]. O zamana kadar sayfalar adresinden açılır ama menüde ve site
+ * Yayın, rakip markalarının kullanımı için hukukçu kontrolünden sonradır.
+ * O zamana kadar sayfalar adresinden açılır ama menüde ve site
  * haritasında yoktur, arama motorlarına kapalıdır (noindex). Onaydan sonra
- * bu bayrak `true` yapılır; docs/legal/README.md onay tablosuna yazılır.
+ * bu bayrak `true` yapılır.
  */
 export const COMPARISONS_PUBLISHED = false;
 

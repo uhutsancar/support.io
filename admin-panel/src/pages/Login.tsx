@@ -6,7 +6,7 @@
  * ardında kaçak bir `)` karakteri vardı ve sayfada görünür şekilde
  * basılıyordu. İkisi de gitti; düzen artık AuthLayout'tan geliyor.
  *
- * İki ek durum (plan v10 SEC-04/06): adresi henüz doğrulanmamış hesap
+ * İki ek durum: adresi henüz doğrulanmamış hesap
  * sahibine yeni bağlantı gönderme düğmesi gösterilir; iki adımlı doğrulaması
  * açık hesap şifreden sonra uygulamadaki kodu (ya da bir kurtarma kodunu)
  * girer.
@@ -27,7 +27,7 @@ import { errorMessage } from '../hooks/useAsync';
 import { authAPI, isPendingSecondStep } from '../services/api';
 import type { AuthResponse } from '../services/api';
 
-/** What the API says when it sends the browser back from Google (PRD-14). */
+/** What the API says when it sends the browser back from Google. */
 const GOOGLE_OUTCOMES = ['exists', 'failed', 'expired', 'cancelled', 'unavailable', 'disposable'];
 
 const errorCode = (error: unknown): string =>

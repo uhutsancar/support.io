@@ -1,4 +1,4 @@
-# Static analysis of the backend, the widget and the panel (plan v10 SEC-02).
+# Static analysis of the backend, the widget and the panel.
 name: CodeQL
 
 on:

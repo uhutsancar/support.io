@@ -1,4 +1,4 @@
-# Deployments (plan v10 INF-03).
+# Deployments.
 #
 # Staging: every image built from main ("Release image" succeeded) goes to
 # staging on its own, once the repository variable STAGING_DEPLOY is "true".

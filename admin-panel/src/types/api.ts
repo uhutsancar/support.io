@@ -22,27 +22,12 @@
 // still records which document a column points at.
 export type Ref<TDoc> = TDoc | any;
 
-/** The id behind a reference, whether or not the endpoint populated it. */
-export function refId<TDoc extends { _id?: string }>(
-  ref: Ref<TDoc> | null | undefined
-): string | null {
-  if (!ref) return null;
-  return typeof ref === 'string' ? ref : (ref._id ?? null);
-}
-
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
 export type ConversationStatus =
   'open' | 'assigned' | 'pending' | 'resolved' | 'closed' | 'unassigned';
 export type PresenceStatus = 'online' | 'offline' | 'away' | 'busy';
 export type PlanType = 'FREE' | 'PRO' | 'ENTERPRISE';
 export type SlaState = 'pending' | 'met' | 'breached';
-
-export interface Organization {
-  _id: string;
-  name: string;
-  planType: PlanType;
-  isActive: boolean;
-}
 
 /** The signed-in account, as /auth/me returns it. */
 export interface CurrentUser {
@@ -69,13 +54,13 @@ export interface CurrentUser {
   } | null;
   /** Two-step sign-in is on for this account. */
   mfaEnabled?: boolean;
-  /** The Google account it can sign in with (PRD-14). */
+  /** The Google account it can sign in with. */
   google?: { email: string | null } | null;
   /** The organization requires it and this account has none yet. */
   mfaSetupRequired?: boolean;
-  /** Over the plan's seats after a downgrade: reads, cannot reply (BIL-04). */
+  /** Over the plan's seats after a downgrade: reads, cannot reply. */
   seatSuspended?: boolean;
-  /** The owner's subscription payment failed; the plan holds until then (BIL-05). */
+  /** The owner's subscription payment failed; the plan holds until then. */
   paymentIssue?: { graceEndsAt: string | null } | null;
   permissions?: Record<string, boolean>;
   [extra: string]: unknown;
@@ -165,7 +150,7 @@ export interface PlanInfo {
   branding: boolean;
   features: string[];
   assistant: { monthlyReplies: number; repliesPerConversation: number };
-  /** How long conversations are kept after their last message (SEC-17). */
+  /** How long conversations are kept after their last message. */
   retention?: { defaultDays: number; minDays: number; maxDays: number };
   price: { monthly: number | null; yearly: number | null; currency: string };
 }
@@ -181,7 +166,7 @@ export interface Invoice {
   status: string;
 }
 
-/** GET /api/billing/overage: what is over the plan, and on hold (BIL-04). */
+/** GET /api/billing/overage: what is over the plan, and on hold. */
 export interface PlanOverage {
   plan: PlanType;
   limits: { sites: number; agents: number };
@@ -200,7 +185,7 @@ export interface PlanOverage {
 
 export interface BillingOverview {
   plan: PlanType;
-  /** The free Pro trial while it runs and no plan was bought (PRD-15). */
+  /** The free Pro trial while it runs and no plan was bought. */
   trial?: { plan: PlanType; endsAt: string } | null;
   /** A hand-set plan no subscription event moves (beta, platform owner). */
   billingExempt?: boolean;
@@ -384,18 +369,18 @@ export interface Conversation {
   updatedAt?: string;
   /** Added by the list endpoint so the row can show a preview. */
   lastMessage?: Message | null;
-  /** From the pre-chat form (PRD-05). */
+  /** From the pre-chat form. */
   visitorPhone?: string | null;
   prechat?: Record<string, string>;
   visitorConsentAt?: string | null;
-  /** Out of the inbox until then (PRD-07). */
+  /** Out of the inbox until then. */
   snoozedUntil?: string | null;
   /** Set on a conversation that was merged into another. */
   mergedIntoId?: string | null;
   [extra: string]: unknown;
 }
 
-/** A Slack, Telegram or webhook integration (PRD-11); the address is masked. */
+/** A Slack, Telegram or webhook integration; the address is masked. */
 export interface Integration {
   _id: string;
   siteId: string | null;
@@ -450,7 +435,7 @@ export interface MessageAssistantNote {
   sources: string[];
   /** Why it handed the conversation to a person; null on an answer. */
   handoff: string | null;
-  /** An agent marked the answer as wrong (AI-06). */
+  /** An agent marked the answer as wrong. */
   flagged?: boolean;
 }
 
@@ -530,33 +515,6 @@ export interface Deal {
   createdBy: Ref<TeamMember>;
   order: number;
   notes: string;
-  createdAt?: string;
-}
-
-export interface AutomationRule {
-  _id: string;
-  siteId: string;
-  name: string;
-  isActive: boolean;
-  priority: number;
-  triggerType: string;
-  conditions: Array<{ field: string; operator: string; value: unknown }>;
-  conditionOperator: string;
-  actions: Array<{ type: string; payload?: Record<string, unknown> }>;
-  metrics?: { executionsCount: number; successCount: number; failureCount: number };
-  createdAt?: string;
-}
-
-export interface ProactiveRule {
-  _id: string;
-  siteId: string;
-  name: string;
-  isActive: boolean;
-  triggerCondition: Record<string, unknown>;
-  audienceContext: Record<string, unknown>;
-  action: Record<string, unknown>;
-  frequencyControl: { triggerOncePerVisitor: boolean; cooldownMinutes: number };
-  metrics?: { triggersCount: number; conversionsCount: number };
   createdAt?: string;
 }
 
@@ -681,7 +639,7 @@ export interface WidgetBehavior {
   titleAlert?: boolean;
   /** No bubble on phone-sized screens. */
   hideOnMobile?: boolean;
-  /** 'auto' follows the visitor; a code fixes the widget's language (PRD-16). */
+  /** 'auto' follows the visitor; a code fixes the widget's language. */
   language?: string;
 }
 

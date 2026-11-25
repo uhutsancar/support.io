@@ -1,6 +1,6 @@
 'use strict';
 
-// A downgrade below what the workspace uses (plan v10 BIL-04, KARAR-BIL-1):
+// A downgrade below what the workspace uses:
 //
 //  - nothing is deleted; sites over the limit are on hold — the widget gives
 //    no session, a visitor already connected is closed, the panel may read
@@ -99,7 +99,6 @@ async function workspace() {
 
   const sites = [];
   for (const name of ['first', 'second', 'third']) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await api('/api/sites', {
       method: 'POST',
       token,
@@ -112,16 +111,13 @@ async function workspace() {
   const agents = [];
   for (const name of ['Ayşe', 'Mehmet']) {
     const agentEmail = `agent${stamp()}@overage.test`;
-    // eslint-disable-next-line no-await-in-loop
     const sent = await api('/api/invitations', {
       method: 'POST',
       token,
       body: { email: agentEmail, role: 'agent' }
     });
     assert.equal(sent.status, 201, JSON.stringify(sent.body));
-    // eslint-disable-next-line no-await-in-loop
     const invite = await tokenFromMail(agentEmail, '/invite/accept');
-    // eslint-disable-next-line no-await-in-loop
     const accepted = await api('/api/invitations/accept', {
       method: 'POST',
       body: { token: invite, name, password: PASSWORD }

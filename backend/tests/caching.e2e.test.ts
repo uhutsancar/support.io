@@ -1,6 +1,6 @@
 'use strict';
 
-// Caching and query counts (plan v10 PERF-04):
+// Caching and query counts:
 //
 //  - the widget session keeps the site's look and FAQ list in the shared
 //    cache, yet an owner's change shows on the next page view at once

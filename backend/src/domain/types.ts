@@ -55,7 +55,7 @@ export interface ConversationRating {
   score: number | null;
   feedback: string | null;
   ratedAt: Date | null;
-  /** Where the visitor rated it (PRD-04). */
+  /** Where the visitor rated it. */
   channel?: 'widget' | 'email';
 }
 
@@ -108,15 +108,15 @@ export interface UserPreferences {
   autoAcceptAssignments: boolean;
   maxActiveConversations: number;
   notificationSound: boolean;
-  /** Unanswered-chat mails: at once (grouped per 10 min), hourly, or never (PRD-01). */
+  /** Unanswered-chat mails: at once (grouped per 10 min), hourly, or never. */
   missedChatEmail?: 'instant' | 'hourly' | 'off';
-  /** Desktop notifications (PRD-02). */
+  /** Desktop notifications. */
   desktop?: { newConversation: boolean; assigned: boolean; allMessages: boolean };
   /** The language the account's mails go out in. */
   locale?: 'tr' | 'en';
-  /** The set-up mails of the first month (PRD-08). */
+  /** The set-up mails of the first month. */
   activationEmails?: boolean;
-  /** Monday's summary of the week, for owners and managers (PRD-22). */
+  /** Monday's summary of the week, for owners and managers. */
   weeklyReport?: boolean;
 }
 
@@ -149,7 +149,7 @@ export interface MessageAssistantNote {
   sources: string[];
   /** Why it handed the conversation to a person; null on an answer. */
   handoff: string | null;
-  /** An agent marked the answer as wrong (AI-06). */
+  /** An agent marked the answer as wrong. */
   flagged?: boolean;
 }
 

@@ -1,4 +1,4 @@
-// "Snooze until…" (plan v10 PRD-07): four usual times and a date picker.
+// "Snooze until…": four usual times and a date picker.
 // The menu is controlled by the page so the "s" shortcut can open it.
 
 import { useEffect, useRef, useState } from 'react';

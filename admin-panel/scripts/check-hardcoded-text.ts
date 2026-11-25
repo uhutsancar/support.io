@@ -1,4 +1,4 @@
-// Text a person reads must come from the locale files (plan v10 UX-06): a
+// Text a person reads must come from the locale files: a
 // sentence written straight into a component shows Turkish to an English
 // reader, or the other way round.
 //
@@ -96,7 +96,7 @@ const baseline: Record<string, number> = fs.existsSync(BASELINE)
 const worse = Object.entries(counts).filter(([file, n]) => n > (baseline[file] ?? 0));
 const total = Object.values(counts).reduce((a, b) => a + b, 0);
 if (worse.length) {
-  console.error('Text written into components instead of the locale files (UX-06):');
+  console.error('Text written into components instead of the locale files:');
   for (const [file, n] of worse) {
     console.error(`  ${file}: ${n} (allowed ${baseline[file] ?? 0})`);
     for (const line of listing.filter((l) => l.startsWith(`${file}:`)))

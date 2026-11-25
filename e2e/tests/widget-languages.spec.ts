@@ -1,4 +1,4 @@
-// The widget's languages in the browser (plan v10 PRD-16). Turkish and
+// The widget's languages in the browser. Turkish and
 // English are in the script; German, French, Spanish, Dutch, Russian and
 // Arabic are fetched from our origin only when a visitor reads them. A site
 // can fix the language in Widget Studio; otherwise the widget follows the

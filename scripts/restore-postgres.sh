@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restores a backup into a scratch database and checks it (plan §15).
+# Restores a backup into a scratch database and checks it.
 #
 #   ./scripts/restore-postgres.sh <file.dump[.age|.gpg]> [--into-production]
 #
@@ -14,7 +14,7 @@
 #   BACKUP_AGE_IDENTITY  the age private key file, for .age files
 #
 # The check also runs every week from backup-postgres.sh on the night's
-# plain dump, before it is encrypted (plan v10 DR-03): it fails when the
+# plain dump, before it is encrypted: it fails when the
 # restored database's latest migration differs from the live one's.
 #
 # SUPPORTIO_COMPOSE_FILE / SUPPORTIO_ENV_FILE point it at another stack

@@ -23,8 +23,6 @@ import Site from '../models/Site';
 import WidgetConfig from '../models/WidgetConfig';
 import Team from '../models/Team';
 import User from '../models/User';
-import { isProduction } from '../config/env';
-import { open } from '../config/secretBox';
 import {
   newVisitorId,
   newWidgetSessionId,
@@ -45,8 +43,6 @@ import { originRefused, requireWidgetSession } from '../middleware/widgetSession
 import { widgetSessionLimiter } from '../middleware/rateLimit';
 import { organizationVerified } from '../services/verification';
 import { forbidden } from '../http';
-import { identityAssertionFor } from '../services/identity';
-import { DEMO_CUSTOMER, DEMO_SITE_KEY } from '../db/demo';
 import { assistantActiveFor } from '../services/assistant';
 import { visitorCountry } from '../services/assistant/region';
 import { isBlocked, VISITOR_BLOCKED } from '../services/visitorBlocks';
@@ -127,7 +123,7 @@ const DEFAULTS = {
     enableNotifications: true,
     titleAlert: true,
     hideOnMobile: false,
-    /** 'auto' follows the visitor; a code fixes the widget's language (PRD-16). */
+    /** 'auto' follows the visitor; a code fixes the widget's language. */
     language: 'auto'
   },
   typography: { fontFamily: '', fontSize: 'medium', fontWeight: 'normal' },
@@ -249,12 +245,12 @@ router.post(
 
     const site = await Site.findOne({ siteKey, isActive: true });
     // An invalid key, a disabled site and a site over the plan's limit after
-    // a downgrade (BIL-04) answer identically, so probing keys cannot reveal
+    // a downgrade answer identically, so probing keys cannot reveal
     // "this site exists but is switched off".
     if (!site || site.suspendedAt || site.blockedAt) throw widgetNotFound();
 
     // The widget goes live once the organization's owner has verified their
-    // address (plan §7.2); until then the panel works but no page does.
+    // address; until then the panel works but no page does.
     if (!(await organizationVerified(site.organizationId))) {
       throw forbidden(
         'The account behind this site has not verified its e-mail',
@@ -273,7 +269,7 @@ router.post(
       previous !== null &&
       previous.siteId === String(site._id) &&
       siteKeyMatches(site.siteKey, previous.kv);
-    // The link in a reply mail (PRD-01) brings the visitor back to their
+    // The link in a reply mail brings the visitor back to their
     // conversation, even from another browser: it names the visitor, signed.
     const resumed = verifyVisitorLink('resume', req.body?.resumeToken);
     const resumesHere = resumed !== null && resumed.siteId === String(site._id);
@@ -284,7 +280,7 @@ router.post(
         ? previous.visitorId
         : newVisitorId();
 
-    // A blocked visitor (SEC-09) gets no session — by their id, or by their
+    // A blocked visitor gets no session — by their id, or by their
     // address when the browser forgot the id. The look of the widget comes
     // along, so it can still draw its bubble and say, politely, that the
     // chat is not available.
@@ -303,13 +299,13 @@ router.post(
     });
 
     // The look, the FAQ list and the plan's branding change only when the
-    // owner edits them: kept for a minute in the shared cache (PERF-04).
+    // owner edits them: kept for a minute in the shared cache.
     const [bundle, availability, openConversation] = await Promise.all([
       siteBundle(String(site._id), String(site.organizationId)),
       resolveAvailability(site),
       // A returning visitor with a conversation still open connects at once,
       // so a reply reaches them; everyone else only when they open the
-      // widget (PERF-02).
+      // widget.
       continues || resumesHere
         ? Conversation.findOne({
             siteId: site._id,
@@ -341,7 +337,7 @@ router.post(
       // nothing about who on the team gets mailed.
       chat: publicChatSettings(chatSettings(site.chatSettings)),
       faqs: bundle.faqs,
-      // The site's public help center, when the owner turned it on (PRD-10).
+      // The site's public help center, when the owner turned it on.
       helpUrl: helpCenterUrl(
         site,
         String(process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(
@@ -399,7 +395,7 @@ router.post(
 // POST /api/widget/presence   { currentPage, browser?, os?, referrer?, language? }
 //
 // The widget opens its socket only when the visitor opens it or has a
-// conversation going (PERF-02). Until then this keeps the panel's live
+// conversation going. Until then this keeps the panel's live
 // visitor list right: one small request when a page loads or changes, and
 // one every few minutes while the page is visible. It upserts the same
 // visitor record the socket join writes and tells the panel.
@@ -432,7 +428,7 @@ router.post(
   })
 );
 
-// Links mailed to a visitor (plan v10 PRD-01, PRD-04). No session: the
+// Links mailed to a visitor. No session: the
 // signed token in the link is the proof, and it names one conversation.
 // ---------------------------------------------------------------------------
 
@@ -524,31 +520,6 @@ router.post(
     res.json({ rating });
   })
 );
-
-// ---------------------------------------------------------------------------
-// GET /api/widget/demo-identity?siteKey=...  (yalnizca gelistirmede)
-//
-// Demo sayfasinin "Demo musteri olarak giris yap" dugmesi. Gercek bir magazada
-// userHash'i magazanin kendi sunucusu uretir; demo magazanin sunucusu olmadigi
-// icin bu uc onun yerine gecer. Uretimde hic baglanmaz ve yalnizca tohum
-// kiracisinin sitesi icin cevap verir.
-// ---------------------------------------------------------------------------
-if (!isProduction) {
-  router.get(
-    '/demo-identity',
-    asyncHandler(async (req: Request, res: Response) => {
-      const siteKey = plainString(req.query.siteKey, 128);
-      if (siteKey !== DEMO_SITE_KEY) throw widgetNotFound();
-      const site = await Site.findOne({ siteKey, isActive: true });
-      const secret = open(site?.integrations?.identitySecret);
-      if (!secret) throw widgetNotFound();
-      res.json({
-        ...DEMO_CUSTOMER,
-        userHash: identityAssertionFor(secret, siteKey, DEMO_CUSTOMER.userId)
-      });
-    })
-  );
-}
 
 export { WIDGET_VERSION, publicConfig };
 export default router;

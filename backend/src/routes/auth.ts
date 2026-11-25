@@ -5,7 +5,7 @@
 // The `csrfToken` that *is* returned grants nothing — it only proves a request
 // came from the panel. See config/session.ts for both halves of that design.
 //
-// Sign-up is e-mail first (plan v10 SEC-06): POST /register answers the same
+// Sign-up is e-mail first: POST /register answers the same
 // whether or not the address already has an account, and the session starts
 // when the link in the verification mail is opened. An owner account cannot
 // sign in with its password before its address is verified, so an address
@@ -121,9 +121,9 @@ export function accountResponse(
     organizationId: user.organizationId ?? null,
     userType,
     mfaEnabled: mfaEnabled(user),
-    // The Google account it signs in with (PRD-14); only its address is shown.
+    // The Google account it signs in with; only its address is shown.
     google: user.googleSub ? { email: user.googleEmail } : null,
-    // Over the plan's seats after a downgrade (BIL-04): the panel shows a
+    // Over the plan's seats after a downgrade: the panel shows a
     // read-only notice and hides the reply box.
     seatSuspended: Boolean(user.seatSuspendedAt),
     // The organization asks every member for a second step and this account
@@ -234,7 +234,7 @@ async function organizationForHost(host: string | undefined): Promise<unknown> {
 
 /**
  * A new owner with a workspace of their own, on the free trial of the paid
- * plan (PRD-15). The address is unproven unless `fields` says otherwise.
+ * plan. The address is unproven unless `fields` says otherwise.
  */
 export async function createWorkspace(fields: {
   email: string;
@@ -351,7 +351,7 @@ router.post(
       });
     } else {
       const user = await createWorkspace({ email, password, name });
-      // A referral link's code, if the sign-up came through one (PRD-23).
+      // A referral link's code, if the sign-up came through one.
       await recordReferral(req.body?.referralCode, String(user.organizationId));
       await sendVerification(req, user, 'user');
     }
@@ -488,7 +488,7 @@ router.get(
   auth,
   asyncHandler(async (req: Request, res: Response) => {
     const plan = req.organization ? await getPlan(String(req.organization._id)) : undefined;
-    // A failed payment, for the person who can fix it (BIL-05).
+    // A failed payment, for the person who can fix it.
     const subscription =
       req.organization && req.user.role === 'owner'
         ? await subscriptionSummary(String(req.organization._id))
@@ -548,7 +548,7 @@ router.post(
     if (!user.emailVerifiedAt) {
       user.emailVerifiedAt = new Date();
       await user.save();
-      // A new owner's first set-up mail: where the install code is (PRD-08).
+      // A new owner's first set-up mail: where the install code is.
       if (spent.type === 'user' && user.role === 'owner' && user.organizationId) {
         void sendActivation(String(user.organizationId), 'welcome').catch(() => undefined);
       }

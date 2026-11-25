@@ -1,6 +1,6 @@
 'use strict';
 
-// The public API (plan v10 PRD-12): keys are made in the panel and shown
+// The public API: keys are made in the panel and shown
 // once; a key opens only its own workspace, only within its scopes, only on
 // a plan with the API; revoked, it is closed. Every path the OpenAPI
 // document lists answers, and what comes back is what the document
@@ -159,7 +159,6 @@ test('reading and writing through the API, as the document describes', async () 
     ['POST', '/faqs', { siteId: t.site._id, question: '' }],
     ['GET', '/conversations?status=lost']
   ] as const) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await v1(secret, bad[1], bad[0], bad[2]);
     assert.equal(res.status, 400, `${bad[0]} ${bad[1]}`);
   }
@@ -188,7 +187,6 @@ test("a key never opens another workspace's data", async () => {
     ['PATCH', `/faqs/${rows[0].id}`, { answer: 'pwned' }],
     ['DELETE', `/faqs/${rows[0].id}`]
   ] as const) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await v1(secret, path, method, body);
     assert.equal(res.status, 404, `${method} ${path}`);
     assert.ok(!res.text.includes('secret of this tenant'));
@@ -216,7 +214,6 @@ test('the OpenAPI document is valid 3.1 and every path it lists answers', async 
     const concrete =
       path.replace('{id}', conversation) +
       (/visitors|faqs/.test(path) ? `?siteId=${t.site._id}` : '');
-    // eslint-disable-next-line no-await-in-loop
     const res = await v1(secret, concrete);
     assert.equal(res.status, 200, `GET ${concrete}: ${res.text.slice(0, 120)}`);
   }

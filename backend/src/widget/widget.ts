@@ -195,7 +195,7 @@ interface WidgetInstance extends EmitterInstance {
   _bannerTimer: ReturnType<typeof setTimeout> | null;
   /** The original history methods, kept so destroy() can put them back. */
   _historyPatch: Record<string, (...args: any[]) => any> | null;
-  /** While the window fills a phone's screen: what to put back (UX-03). */
+  /** While the window fills a phone's screen: what to put back. */
   _phone: {
     htmlOverflow: string;
     bodyOverflow: string;
@@ -204,7 +204,7 @@ interface WidgetInstance extends EmitterInstance {
   } | null;
   /** The next popstate is the one our own history.back() caused. */
   _ignorePop: boolean;
-  /** Answers counted into the tab title, "(2) …" (UX-04). */
+  /** Answers counted into the tab title, "(2) …". */
   _titleCount: number;
   _lastTypingAt: number;
   _lightColors: boolean;
@@ -287,7 +287,7 @@ declare global {
   }
 
   // Common words that say nothing about what the visitor wants; left out
-  // when matching help articles to what they type (PRD-10).
+  // when matching help articles to what they type.
   var SUGGEST_STOP = [
     've',
     'ile',
@@ -398,7 +398,7 @@ declare global {
     );
   }
 
-  /** A short, stable tag for a site in the "Powered by" link (MKT-01): not its key. */
+  /** A short, stable tag for a site in the "Powered by" link: not its key. */
   function shortHash(value: string): string {
     var h = 5381;
     for (var i = 0; i < value.length; i++) h = ((h << 5) + h + value.charCodeAt(i)) | 0;
@@ -420,7 +420,7 @@ declare global {
   // setLocale) > sitenin panelde sabitledigi dil > <html lang> > tarayici.
   // -------------------------------------------------------------------------
   var STRINGS: Record<string, WidgetStrings> = { tr: trStrings, en: enStrings };
-  /** Every language the widget speaks (PRD-16); the first two are bundled. */
+  /** Every language the widget speaks; the first two are bundled. */
   var LANGUAGES = ['tr', 'en', 'de', 'fr', 'es', 'nl', 'ru', 'ar'];
   /** Written right to left. */
   var RTL: Record<string, boolean> = { ar: true };
@@ -596,7 +596,7 @@ declare global {
             ? bool(attr('data-auto-open'), false)
             : modern.autoOpen,
       hidden: o.hidden !== undefined ? o.hidden : bool(attr('data-hidden'), false),
-      // On a phone the back button closes the open window (UX-03);
+      // On a phone the back button closes the open window;
       // data-back-button="false" leaves the page's history alone.
       backButton: o.backButton !== undefined ? o.backButton : bool(attr('data-back-button'), true),
       user: o.user || modern.user || null,
@@ -778,7 +778,7 @@ declare global {
       });
       return;
     }
-    // The socket opens only when it is needed (PERF-02): a returning visitor
+    // The socket opens only when it is needed: a returning visitor
     // whose conversation is still open (a reply must reach them), the link
     // in a reply mail, or later the visitor opening the widget. Until then
     // a small request keeps the panel's live visitor list right.
@@ -814,7 +814,7 @@ declare global {
     this.fatal = { code: code, message: message };
     if (window.console && console.error) console.error('[SupportChat] ' + code + ': ' + message);
     this.emit('error', { code: code, message: message });
-    // Reported to our own API, sampled there (OBS-01). No page address: this
+    // Reported to our own API, sampled there. No page address: this
     // runs on a customer's site. A network failure has no one to report to.
     if (code !== 'NETWORK_ERROR' && this.config.apiUrl && navigator.sendBeacon) {
       try {
@@ -931,7 +931,7 @@ declare global {
       );
       return rx.test(path);
     };
-    // No bubble on phone-sized screens, when the site says so (UX-04).
+    // No bubble on phone-sized screens, when the site says so.
     if (
       behavior.hideOnMobile &&
       typeof window.matchMedia === 'function' &&
@@ -1056,7 +1056,7 @@ declare global {
     this.emit('connection', { state: state, detail: detail || null });
   };
 
-  /** Opens the socket unless it is open, opening, or not allowed (PERF-02). */
+  /** Opens the socket unless it is open, opening, or not allowed. */
   Widget.prototype._ensureSocket = function (this: WidgetInstance) {
     if (this.socket || this._connecting || this._blocked || this.destroyed) return;
     this._connecting = true;
@@ -1167,7 +1167,7 @@ declare global {
       forceNew: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
-      // Exponential back-off from 1 s to 30 s with ±50 % jitter (PERF-06):
+      // Exponential back-off from 1 s to 30 s with ±50 % jitter:
       // after a deploy thousands of widgets must not knock at the same second.
       reconnectionDelay: 1000,
       reconnectionDelayMax: 30000,
@@ -1204,7 +1204,7 @@ declare global {
     // The browser knows first when the network goes: the connection is dropped
     // at once instead of after the ping timeout, so what the visitor writes
     // waits in the queue; and it comes back as soon as the network does,
-    // instead of after the backoff (TST-01 #13).
+    // instead of after the backoff.
     this._listen(window, 'offline', function () {
       var engine = self.socket && (self.socket.io as any).engine;
       if (self.socket && self.socket.connected && engine) engine.close();
@@ -1336,7 +1336,7 @@ declare global {
 
     // The assistant asks for longer than a person's keystroke pause: its
     // answer can take a few seconds to write.
-    // The team has read the visitor's messages (UX-04).
+    // The team has read the visitor's messages.
     this.socket.on('messages-seen', function () {
       self._markSeen();
     });
@@ -1352,7 +1352,7 @@ declare global {
       self.emit('conversation:ended', { conversationId: data && data.conversationId });
     });
 
-    // The team blocked this visitor while the chat was open (SEC-09).
+    // The team blocked this visitor while the chat was open.
     this.socket.on('visitor-blocked', function () {
       self._enterBlocked();
     });
@@ -1621,7 +1621,7 @@ declare global {
         colors.border +
         ';}',
       '.help-all:hover{background:' + withAlpha(colors.textSecondary, 0.08) + ';}',
-      /* help suggestions while typing (PRD-10) */
+      /* help suggestions while typing */
       '.suggest{padding:10px 12px 2px;border-top:1px solid ' + colors.border + ';}',
       '.suggest[hidden]{display:none;}',
       '.suggest-title{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.06em;',
@@ -1643,7 +1643,7 @@ declare global {
       '.msg-sender{font-size:11px;font-weight:600;color:' +
         colors.textSecondary +
         ';padding:0 4px;}',
-      // The assistant's answers say what they are (AI-03).
+      // The assistant's answers say what they are.
       '.msg-badge{font-size:10.5px;font-weight:600;letter-spacing:.01em;padding:1px 7px;border-radius:999px;color:' +
         colors.textSecondary +
         ';border:1px solid currentColor;}',
@@ -1843,7 +1843,7 @@ declare global {
       '.header{padding-top:calc(16px + env(safe-area-inset-top,0px));}',
       '}',
       '@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}.messages{scroll-behavior:auto;}}',
-      // The emoji panel above the message box (UX-04).
+      // The emoji panel above the message box.
       '.emoji-pop{position:absolute;left:8px;right:8px;bottom:calc(100% + 6px);display:grid;grid-template-columns:repeat(8,1fr);gap:2px;',
       'padding:8px;border:1px solid ' +
         colors.border +
@@ -1999,7 +1999,7 @@ declare global {
         '</button>',
       '</div>',
       // Help articles that match what the visitor is typing, before they
-      // send it (PRD-10): an answer found here needs no one, and no AI.
+      // send it: an answer found here needs no one, and no AI.
       '<div class="suggest js-suggest" role="region" aria-live="polite" aria-label="' +
         escapeHtml(t.suggestTitle) +
         '" hidden></div>',
@@ -2457,7 +2457,7 @@ declare global {
 
   /**
    * Up to three help articles that share words with what the visitor is
-   * typing, shown above the box while no conversation has started (PRD-10).
+   * typing, shown above the box while no conversation has started.
    * Words are compared by their first letters (four or five, as long as the
    * shorter word allows), so "kargom" finds "kargo" and "iadeler" "iade".
    */
@@ -2660,7 +2660,7 @@ declare global {
     return node;
   };
 
-  /** Reads a message from the other side out to a screen reader (UX-01). */
+  /** Reads a message from the other side out to a screen reader. */
   Widget.prototype._announce = function (this: WidgetInstance, message: WidgetMessage) {
     var region = this.el && this.el.announce;
     if (!region) return;
@@ -2698,7 +2698,7 @@ declare global {
 
     var parts = [];
     // An answer the assistant wrote is marked as such, whatever the site's
-    // avatar setting; the first one also says how to reach a person (AI-03).
+    // avatar setting; the first one also says how to reach a person.
     var aiAnswer =
       message.senderId === 'assistant' && !(message.assistant && message.assistant.handoff);
     if (aiAnswer) {
@@ -2814,7 +2814,7 @@ declare global {
     this.socket.emit('typing');
   };
 
-  // ------------------------------------------------------- emoji (UX-04)
+  // ------------------------------------------------------- emoji
   // A fixed handful drawn on first use: no library, no request.
   var EMOJIS = [
     '😀',
@@ -2899,7 +2899,7 @@ declare global {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
-  // ------------------------------------------------- "seen" (UX-04)
+  // ------------------------------------------------- "seen"
   /** "Seen" under the visitor's last message: the team has read up to there. */
   Widget.prototype._markSeen = function (this: WidgetInstance) {
     if (!this.el) return;
@@ -2914,7 +2914,7 @@ declare global {
     last.appendChild(seen);
   };
 
-  // ------------------------------------------- the page's tab (UX-04)
+  // ------------------------------------------- the page's tab
   var TITLE_PREFIX = /^\(\d+\+?\) /;
 
   /** "(2) Shop" in the tab while answers wait unread, when the site allows it. */
@@ -2959,7 +2959,7 @@ declare global {
   };
 
   /**
-   * The team blocked this visitor on the site (SEC-09): the socket closes for
+   * The team blocked this visitor on the site: the socket closes for
    * good, the composer locks and a polite line stays in its place.
    */
   Widget.prototype._enterBlocked = function (this: WidgetInstance) {
@@ -3175,7 +3175,7 @@ declare global {
   // -------------------------------------------------------------------------
 
   // -------------------------------------------------------------------------
-  // Pre-chat / offline form, rating and transcript (plan v10 PRD-01/04/05/06)
+  // Pre-chat / offline form, rating and transcript
   // -------------------------------------------------------------------------
 
   var EMAIL_RX = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
@@ -3618,7 +3618,7 @@ declare global {
     this.emit('close', {});
   };
 
-  // -------------------------------------------------------- phone screen (UX-03)
+  // -------------------------------------------------------- phone screen
   //
   // Under 480 px the window fills the screen (CSS). While it does: the page
   // behind does not scroll, the window follows the visual viewport so the

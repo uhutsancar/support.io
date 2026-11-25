@@ -1,6 +1,6 @@
 'use strict';
 
-// A site blocked for abuse (plan v10 LEG-05): `site:disable --reason …` stops
+// A site blocked for abuse: `site:disable --reason …` stops
 // the widget — no new session, and a page already open is refused from its
 // next message — and the owner cannot switch it back on from the panel, nor
 // reply on it, nor read the support note. `--enable` lifts it.

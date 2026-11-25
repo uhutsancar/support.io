@@ -21,7 +21,7 @@ export function fold(text: string): string {
 
 /**
  * A visitor asking for a person (matched folded): Turkish and English, and the
- * word the widget tells visitors to type in its other languages (PRD-16) with
+ * word the widget tells visitors to type in its other languages with
  * a few unmistakable phrases — never a bare "person", which a question about
  * a table for four would contain too.
  */
@@ -122,11 +122,11 @@ export const TEXT = {
 export type HandoffReason =
   | 'requested'
   | 'sensitive'
-  /** Insults or harassment: a person decides (AI-05). */
+  /** Insults or harassment: a person decides. */
   | 'abuse'
   | 'limit'
   | 'plan_quota'
-  /** A tenth of the month's answers went in one day (AI-07). */
+  /** A tenth of the month's answers went in one day. */
   | 'daily_cap'
   | 'no_faq'
   | 'no_answer'
@@ -138,7 +138,7 @@ export type HandoffReason =
   | 'api_blocked'
   | 'api_bad_response';
 
-// ------------------------------------------------------------ output (AI-06)
+// ------------------------------------------------------------ output
 
 const URL_IN_TEXT = /\b(?:https?:\/\/|www\.)[^\s<>()"']+/gi;
 

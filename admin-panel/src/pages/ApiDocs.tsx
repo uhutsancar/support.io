@@ -1,6 +1,5 @@
 /**
- * API başvuru sayfası (`/dokumantasyon/api`, `/en/documentation/api`;
- * plan v10 PRD-12).
+ * API başvuru sayfası (`/dokumantasyon/api`, `/en/documentation/api`).
  *
  * Uç noktalar sunucunun kendi OpenAPI belgesinden (GET /api/v1/openapi.json)
  * okunur; sayfa koddan ayrı düşemez. Özetler ve parametre açıklamaları

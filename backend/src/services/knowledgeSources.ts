@@ -1,5 +1,5 @@
-// What the assistant may answer from besides the FAQ (plan v10 PRD-21,
-// AI-08): pages of the site itself and PDF documents the business uploads.
+// What the assistant may answer from besides the FAQ:
+// pages of the site itself and PDF documents the business uploads.
 //
 // Pages are fetched only from the site's own domain — the product is not a
 // crawler for anyone else's — and only where robots.txt allows our agent.

@@ -421,7 +421,7 @@ test('the plan decides how many answers a month; when they are used up a person 
   }
 });
 
-// ------------------------------------------------------------ knowledge sources (PRD-21)
+// ------------------------------------------------------------ knowledge sources
 
 /** A site whose only knowledge is a PDF passage about warranties, on `plan`. */
 async function siteWithDocument(plan: 'FREE' | 'PRO') {

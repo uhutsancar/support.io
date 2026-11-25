@@ -1,5 +1,5 @@
 /**
- * Cloudflare Turnstile, the bot check on the sign-up form (plan v10 SEC-06).
+ * Cloudflare Turnstile, the bot check on the sign-up form.
  *
  * Rendered only when the server hands out a site key (GET /api/auth/config);
  * without one — local development — nothing is loaded and the form works as

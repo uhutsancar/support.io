@@ -1,4 +1,4 @@
-// The team (plan v10 TST-01 #1 and #14): the owner invites an agent from the
+// The team: the owner invites an agent from the
 // Team page, the agent joins through the mailed link with a password of
 // their own, works in the inbox but cannot open the owner's billing page,
 // and the two talk in a team group chat.

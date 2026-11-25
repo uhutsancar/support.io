@@ -1,7 +1,6 @@
 'use strict';
 
-// Staging mails only the domains it is allowed to (plan v10 INF-03,
-// MAIL_ALLOWLIST_DOMAINS): a real customer's address is withheld, an allowed
+// Staging mails only the domains it is allowed to (MAIL_ALLOWLIST_DOMAINS): a real customer's address is withheld, an allowed
 // one goes out; with the setting empty (production) everything goes.
 //
 // Run: npx tsx --test tests/mailAllowlist.test.ts

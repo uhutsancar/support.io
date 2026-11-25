@@ -1,4 +1,4 @@
-# Production stack (plan §13.4): Cloudflare -> Caddy :443 -> backend:3000,
+# Production stack: Cloudflare -> Caddy :443 -> backend:3000,
 # PostgreSQL and Redis reachable only on the Docker network.
 #
 # The backend runs a prebuilt image named by APP_IMAGE
@@ -9,10 +9,10 @@
 #
 # Never add `ports:` to postgres or redis: published ports bypass UFW.
 #
-# Every third-party image is pinned by digest (plan v10 SUP-02); Dependabot
+# Every third-party image is pinned by digest; Dependabot
 # proposes new digests weekly and the release workflow scans them (Trivy).
 # Each service drops the Linux capabilities it does not need and cannot gain
-# new privileges (SEC-14). The memory and CPU ceilings are starting values for
+# new privileges. The memory and CPU ceilings are starting values for
 # a 2 vCPU / 4 GB server; adjust them from the staging measurements.
 
 x-logging: &logging
@@ -27,7 +27,7 @@ x-hardening: &hardening
 
 services:
   postgres:
-    # PostgreSQL 16 with WAL-G (docker/postgres, DR-02), built and signed by the
+    # PostgreSQL 16 with WAL-G (docker/postgres), built and signed by the
     # release workflow; its summary prints the reference to put here.
     image: ${POSTGRES_IMAGE:?POSTGRES_IMAGE is required, e.g. ghcr.io/<owner>/supportio-postgres:16.15-walg-3.0.9@sha256:...}
     restart: unless-stopped
@@ -37,7 +37,7 @@ services:
     cap_drop: [ALL]
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     shm_size: 256mb
-    # Sized for a 4 GB server where the database gets about 1 GB (PERF-03).
+    # Sized for a 4 GB server where the database gets about 1 GB.
     # log_parameter_max_length=0 keeps bind values (message text, e-mail
     # addresses) out of the slow-query log. pg_stat_statements is loaded so
     # the slowest queries can be read on staging:
@@ -67,8 +67,8 @@ services:
       DB_MIGRATION_PASSWORD: ${DB_MIGRATION_PASSWORD:?DB_MIGRATION_PASSWORD is required}
       DB_RUNTIME_USER: ${DB_RUNTIME_USER:-support_runtime}
       DB_RUNTIME_PASSWORD: ${DB_RUNTIME_PASSWORD:?DB_RUNTIME_PASSWORD is required}
-      # WAL-G (DR-02): continuous archive to its own bucket, encrypted. Used
-      # only with PG_ARCHIVE_MODE=on; docs/disaster-recovery.md.
+      # WAL-G: continuous archive to its own bucket, encrypted. Used
+      # only with PG_ARCHIVE_MODE=on.
       WALG_S3_PREFIX: ${WALG_S3_PREFIX:-}
       AWS_ACCESS_KEY_ID: ${WALG_AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${WALG_AWS_SECRET_ACCESS_KEY:-}
@@ -100,10 +100,10 @@ services:
     # Redis carries only the Socket.IO adapter, rate limits, presence and short
     # budgets; every message lives in PostgreSQL. Nothing here needs to
     # survive a restart, so persistence is off and there is no volume. If
-    # durable data is ever put in Redis, revisit this (and the runbook).
+    # durable data is ever put in Redis, revisit this.
     #
-    # Only the Docker network reaches it, and it still asks for a password
-    # (SEC-12): a compromised neighbour container cannot read rate-limit or
+    # Only the Docker network reaches it, and it still asks for a password:
+    # a compromised neighbour container cannot read rate-limit or
     # presence keys, and FLUSHALL / CONFIG are switched off outright.
     # REDIS_PASSWORD goes into a URL, so keep it to [A-Za-z0-9]
     # (openssl rand -hex 24).
@@ -145,15 +145,15 @@ services:
       MIGRATE_ON_BOOT: "false"
       APP_BASE_URL: https://${APP_DOMAIN:?APP_DOMAIN is required}
       CORS_ORIGINS: https://${APP_DOMAIN}
-      # /.well-known/security.txt (SEC-10).
+      # /.well-known/security.txt.
       SECURITY_CONTACT_EMAIL: ${SECURITY_CONTACT_EMAIL:-}
       SECURITY_TXT_EXPIRES: ${SECURITY_TXT_EXPIRES:-}
-      # Staging: robots.txt and every page say noindex (MKT-02).
+      # Staging: robots.txt and every page say noindex.
       SITE_NOINDEX: ${SITE_NOINDEX:-false}
-      # Bot check on sign-up (SEC-06).
+      # Bot check on sign-up.
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
-      # Self-hosted, cookieless visitor counts on the public pages (KARAR-MKT-3).
+      # Self-hosted, cookieless visitor counts on the public pages.
       ANALYTICS_SCRIPT_URL: ${ANALYTICS_SCRIPT_URL:-}
       ANALYTICS_WEBSITE_ID: ${ANALYTICS_WEBSITE_ID:-}
       DB_HOST: postgres
@@ -167,7 +167,7 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-      # Only while rotating JWT_SECRET (runbook §8): the old value, still trusted
+      # Only while rotating JWT_SECRET: the old value, still trusted
       # for checking what it signed and sealed.
       JWT_SECRET_PREVIOUS: ${JWT_SECRET_PREVIOUS:-}
       # Session cookie: panel and API share the origin, so Lax + Secure.
@@ -188,7 +188,7 @@ services:
       SMTP_MAX_MESSAGES: ${SMTP_MAX_MESSAGES:-100}
       SMTP_RATE_DELTA_MS: ${SMTP_RATE_DELTA_MS:-1000}
       SMTP_RATE_LIMIT: ${SMTP_RATE_LIMIT:-10}
-      # Staging only: mail goes to these domains alone (INF-03).
+      # Staging only: mail goes to these domains alone.
       MAIL_ALLOWLIST_DOMAINS: ${MAIL_ALLOWLIST_DOMAINS:-}
       # File uploads: S3-compatible storage (AWS S3, Cloudflare R2, Hetzner).
       UPLOAD_STORAGE: ${UPLOAD_STORAGE:-s3}
@@ -210,21 +210,21 @@ services:
       GEMINI_TIER: ${GEMINI_TIER:-free}
       GEMINI_COST_PER_ANSWER: ${GEMINI_COST_PER_ANSWER:-}
       ASSISTANT_KILL_SWITCH: ${ASSISTANT_KILL_SWITCH:-false}
-      # Push notifications to the panel (PRD-09); empty keys turn push off.
+      # Push notifications to the panel; empty keys turn push off.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-}
-      # Sign-in with Google (PRD-14): the OAuth client [SAHİP]; empty = no button.
+      # Sign-in with Google: the OAuth client; empty = no button.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      # The referral programme's free month (PRD-23): a one-time 100% Paddle
-      # discount [SAHİP]; empty = rewards wait and are listed by referrals:due.
+      # The referral programme's free month: a one-time 100% Paddle
+      # discount; empty = rewards wait and are listed by referrals:due.
       PADDLE_REFERRAL_DISCOUNT_ID: ${PADDLE_REFERRAL_DISCOUNT_ID:-}
-      # Error tracking (OBS-01); empty DSN sends nothing.
+      # Error tracking; empty DSN sends nothing.
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       WIDGET_TELEMETRY_SAMPLE: ${WIDGET_TELEMETRY_SAMPLE:-0.1}
-      # /internal/metrics (OBS-03): optional bearer token; the backup time
+      # /internal/metrics: optional bearer token; the backup time
       # scripts/backup-postgres.sh writes.
       METRICS_TOKEN: ${METRICS_TOKEN:-}
       OPS_REPORT_EMAIL: ${OPS_REPORT_EMAIL:-}
@@ -246,7 +246,7 @@ services:
       PADDLE_PRICE_ENTERPRISE_YEARLY: ${PADDLE_PRICE_ENTERPRISE_YEARLY:-}
       BILLING_PAST_DUE_GRACE_DAYS: ${BILLING_PAST_DUE_GRACE_DAYS:-7}
     volumes:
-      # Used only with UPLOAD_STORAGE=local (plan §12, decision B); then it
+      # Used only with UPLOAD_STORAGE=local; then it
       # must be in the backups too.
       - uploads_data:/app/backend/uploads
       # The time of the last successful backup (scripts/backup-postgres.sh).
@@ -286,7 +286,7 @@ services:
       - "443:443/udp"
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
-      # Optional Cloudflare Origin CA certificate (runbook §2, SEC-13).
+      # Optional Cloudflare Origin CA certificate.
       - ./caddy/tls.d:/etc/caddy/tls.d:ro
       - ./caddy/site.d:/etc/caddy/site.d:ro
       - ./caddy/origin:/etc/caddy/origin:ro

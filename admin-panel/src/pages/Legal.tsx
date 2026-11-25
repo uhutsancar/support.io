@@ -1,6 +1,6 @@
 /**
  * Gizlilik Politikası, Kullanım Şartları ve iki beyan: erişilebilirlik ve
- * yapay zekâ kullanımı (plan v10 LEG-07).
+ * yapay zekâ kullanımı.
  *
  * İçerik çeviri dosyasındadır (`legal.<tür>`) ve ürünün
  * gerçekten yaptığını anlatır: saklama süreleri retention sweep'iyle,

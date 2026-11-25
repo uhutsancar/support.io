@@ -1,8 +1,8 @@
-// Paddle configuration (plan §9.4), read from the environment on each call so
+// Paddle configuration, read from the environment on each call so
 // tests and a restarted process see the same thing.
 //
 //   BILLING_ENABLED          "true" shows checkout in the panel. Off during the
-//                            closed beta; plans are then set by scripts/updatePlan.ts.
+//                            closed beta; plans are then set with npm run plan:set.
 //   PADDLE_ENV               sandbox | production
 //   PADDLE_API_KEY           server only — customer portal sessions
 //   PADDLE_WEBHOOK_SECRET    server only — verifies Paddle-Signature

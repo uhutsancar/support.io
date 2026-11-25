@@ -1,6 +1,6 @@
 'use strict';
 
-// Visitor counts on the public pages (plan v10 MKT-04, KARAR-MKT-3): off by
+// Visitor counts on the public pages: off by
 // default; when both variables are valid the public pages carry the script
 // with tracking left to the panel, and the policy allows that one origin.
 

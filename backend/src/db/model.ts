@@ -1982,8 +1982,4 @@ export function defineModel<TFields = Record<string, unknown>, TStatics = Record
   return Exported as unknown as Model<TFields, TStatics>;
 }
 
-export function getModel(name: string): ModelRuntime | undefined {
-  return registry.get(name);
-}
-
 export { registry, getPool, ModelRuntime };

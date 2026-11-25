@@ -1,6 +1,6 @@
 'use strict';
 
-// The owner's numbers (plan v10 OBS-07): org:stats aggregates, and the
+// The owner's numbers: org:stats aggregates, and the
 // weekly report goes to OPS_REPORT_EMAIL on Monday morning (UTC), once a
 // week however many processes run the sweep, and never on another day.
 //
@@ -55,7 +55,7 @@ test('the numbers come back whole, and as text', async () => {
   assert.match(text, /Son 30 gün/);
   assert.match(text, /Tahmini MRR/);
   assert.doesNotMatch(text, /@/, 'no addresses in the report');
-  // The first-use path, step by step (UX-05).
+  // The first-use path, step by step.
   assert.deepEqual(
     stats.funnel.map((f) => f.step),
     [...FUNNEL_STEPS]

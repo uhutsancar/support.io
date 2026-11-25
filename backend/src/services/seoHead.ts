@@ -1,5 +1,5 @@
-// Each public page's <head>, written by the server (plan v10 MKT-03,
-// KARAR-MKT-1 option a without a headless browser in the build): the
+// Each public page's <head>, written by the server
+// (no headless browser in the build): the
 // title and description from the panel's build (dist/public-pages.json),
 // with Open Graph and Twitter tags, the canonical address and its other
 // language (hreflang) and JSON-LD — all on the domain this process runs
@@ -223,13 +223,13 @@ export function seoHead(
     `<title>${attr(meta.title)}</title>`
   ];
   // The home page's largest element is its hero photo: asked for with the
-  // HTML, not after the JavaScript has drawn it (plan v10 PERF-08).
+  // HTML, not after the JavaScript has drawn it.
   if (page.kind === 'home') {
     lines.push(
       '<link rel="preload" as="image" href="/photos/agent-woman-700.webp" imagesrcset="/photos/agent-woman-700.webp 700w, /photos/agent-woman.webp 1400w" imagesizes="(min-width: 1024px) 50vw, 100vw" fetchpriority="high" />'
     );
   }
-  // Visitor counts, when the owner has switched them on (KARAR-MKT-3).
+  // Visitor counts, when the owner has switched them on.
   const analytics = analyticsTag(attr);
   if (analytics) lines.push(analytics);
   return { html: lines.join('\n    '), lang };

@@ -1,4 +1,4 @@
-// Report figures beyond the dashboard (plan v10 PRD-22): the conversations
+// Report figures beyond the dashboard: the conversations
 // of a window as rows, the SLA breaches, the week-by-hour heatmap and the
 // weekly summary. Like db/analyticsQueries.ts, every query is scoped to one
 // organization (and optionally one of its sites) and computed by PostgreSQL.

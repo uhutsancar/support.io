@@ -1,5 +1,5 @@
 /**
- * Entegrasyonlar (plan v10 PRD-11): Slack, Telegram ve webhook.
+ * Entegrasyonlar: Slack, Telegram ve webhook.
  *
  * Adresler ve anahtarlar sunucuda mühürlü durur; burada yalnızca tanınacak
  * kadarı görünür. Webhook'un imza anahtarı bir kez, eklendiği anda

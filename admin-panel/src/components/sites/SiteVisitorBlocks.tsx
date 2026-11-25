@@ -1,5 +1,5 @@
 /**
- * Bir sitede yürürlükteki ziyaretçi engelleri (plan v10 SEC-09): ne zaman,
+ * Bir sitede yürürlükteki ziyaretçi engelleri: ne zaman,
  * hangi gerekçeyle, ne zamana kadar. Engel buradan kaldırılır.
  */
 import { useEffect, useState } from 'react';

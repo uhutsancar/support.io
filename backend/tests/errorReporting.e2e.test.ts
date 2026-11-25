@@ -1,6 +1,6 @@
 'use strict';
 
-// Error tracking (plan v10 OBS-01), against a local stand-in for a
+// Error tracking, against a local stand-in for a
 // Sentry-compatible service:
 //
 //  - nothing is sent without SENTRY_DSN

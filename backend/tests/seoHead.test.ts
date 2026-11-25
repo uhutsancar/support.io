@@ -1,6 +1,6 @@
 'use strict';
 
-// Each public page's <head> from the server (plan v10 MKT-03): title,
+// Each public page's <head> from the server: title,
 // description, canonical and hreflang on the given domain, Open Graph with
 // the PNG preview, JSON-LD with the plan prices, the page's language; other
 // pages keep the shell's default. Uses the panel build's page list

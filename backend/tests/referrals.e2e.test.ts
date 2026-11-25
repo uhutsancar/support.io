@@ -1,6 +1,6 @@
 'use strict';
 
-// The referral programme (plan v10 PRD-23): an owner's link carries a code;
+// The referral programme: an owner's link carries a code;
 // a workspace that signs up with it — by form or with Google — is recorded
 // once; it qualifies when Paddle says its first paid subscription is active
 // (the real webhook, signed); the referrer's free month is then given as a
@@ -161,13 +161,11 @@ test('a referred workspace that pays earns its referrer one free month, once', a
   );
   let audited = 0;
   for (let i = 0; i < 30 && !audited; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
     const audit = await query(
       `SELECT count(*)::int AS n FROM audit_logs WHERE organization_id = $1 AND action = 'REFERRAL_REWARDED'`,
       [a.organizationId]
     );
     audited = audit.rows[0].n;
-    // eslint-disable-next-line no-await-in-loop
     if (!audited) await new Promise((resolve) => setTimeout(resolve, 100));
   }
   assert.equal(audited, 1);

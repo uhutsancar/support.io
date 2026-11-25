@@ -1,5 +1,5 @@
 # The production image: the API, the widget runtime and the built panel and
-# marketing site, served from one origin (plan §13.3).
+# marketing site, served from one origin.
 #
 # Every stage starts from the same Node image, named once below and pinned by
 # digest so a rebuild cannot silently change the runtime. Dependabot
@@ -18,11 +18,11 @@ ARG VITE_API_URL=""
 ARG VITE_SUPPORT_SITE_KEY=""
 # Shown in install snippets; empty means "the page's own origin".
 ARG VITE_PUBLIC_APP_ORIGIN=""
-# The commit this image is built from: error reports name it (OBS-01).
+# The commit this image is built from: error reports name it.
 ARG APP_RELEASE=""
-# The public status page, linked in the site's footer once it exists (OBS-06).
+# The public status page, linked in the site's footer once it exists.
 ARG VITE_STATUS_PAGE_URL=""
-# The addresses the site shows (MKT-01); empty keeps the defaults in lib/contact.ts.
+# The addresses the site shows; empty keeps the defaults in lib/contact.ts.
 ARG VITE_SUPPORT_EMAIL=""
 ARG VITE_SECURITY_EMAIL=""
 ENV VITE_API_URL=${VITE_API_URL} \

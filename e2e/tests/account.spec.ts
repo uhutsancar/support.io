@@ -1,4 +1,4 @@
-// The account's two big moves (plan v10 TST-01 #8 and #10): a paid plan that
+// The account's two big moves: a paid plan that
 // ends puts the sites over the Free limit on hold — the panel says so and the
 // owner picks which site stays — and deleting the workspace takes the
 // password, then the account cannot sign in again.

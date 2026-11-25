@@ -1,4 +1,4 @@
-// What a visitor can do in the widget beyond typing (plan v10 UX-04): pick
+// What a visitor can do in the widget beyond typing: pick
 // an emoji, attach a file by dropping it or by pasting an image, see "seen"
 // once the team has read the messages, find "(1)" in the page's tab when an
 // answer arrives with the window closed, and drive it from the page through

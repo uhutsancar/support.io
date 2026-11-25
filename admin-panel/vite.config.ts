@@ -26,7 +26,7 @@ export default defineConfig({
             },
             {
               name: 'ui-vendor',
-              test: /node_modules[\\/](@headlessui|lucide-react)[\\/]/,
+              test: /node_modules[\\/]lucide-react[\\/]/,
               priority: 15
             },
             {

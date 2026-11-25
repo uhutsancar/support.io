@@ -392,7 +392,7 @@ export const Section = ({
         pad,
         'px-5 sm:px-8',
         bordered ? 'border-t border-gray-200/70 dark:border-white/[0.06]' : '',
-        // Laid out only when near the screen (plan v10 PERF-08): the long
+        // Laid out only when near the screen: the long
         // marketing pages spent two seconds of a phone's CPU on style and
         // layout of sections nobody had scrolled to yet.
         '[content-visibility:auto] [contain-intrinsic-size:auto_900px]',
@@ -452,31 +452,6 @@ export const AccentIcon = ({
   return <Icon className={[ico, a.text, 'shrink-0', className].join(' ')} strokeWidth={1.75} />;
 };
 
-/** İçi dolu marka renkli karo — panelin gösterge kartlarındaki ile aynı. */
-export const SolidIcon = ({
-  icon: Icon,
-  tone = 'indigo',
-  className = ''
-}: {
-  icon: React.ElementType;
-  tone?: string;
-  className?: string;
-}) => {
-  const a = accent(tone);
-  return (
-    <span
-      className={[
-        'inline-flex items-center justify-center shrink-0 w-11 h-11 rounded-xl',
-        a.bg,
-        'shadow-[0_6px_16px_-6px_rgba(15,18,40,.45)]',
-        className
-      ].join(' ')}
-    >
-      <Icon className="w-5 h-5 text-white" strokeWidth={2.1} />
-    </span>
-  );
-};
-
 /* ------------------------------------------------------------- çip & rozet */
 
 /**
@@ -506,34 +481,11 @@ export const Chip = ({
   </span>
 );
 
-/** Küçük rozet (plan adı, kurulum süresi). */
-export const Pill = ({
-  children,
-  className = ''
-}: {
-  children?: React.ReactNode;
-  className?: string;
-}) => (
-  <span
-    className={[
-      'inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11.5px] font-medium',
-      'border border-gray-200 dark:border-white/15 text-gray-600 dark:text-gray-400',
-      className
-    ].join(' ')}
-  >
-    {children}
-  </span>
-);
-
 /* -------------------------------------------------------------------- görsel */
 
 /**
- * Fotoğraf. Genişlik/yükseklik verilir ki yüklenirken sayfa zıplamasın;
- * ekranın altındakiler tembel yüklenir.
- */
-/**
  * The photos ship at 1400 px and 700 px (public/photos/*-700.webp): a phone
- * downloads the small one (plan v10 PERF-08).
+ * downloads the small one.
  */
 export const photoSrcSet = (src: string): string | undefined =>
   /^\/photos\/[^/]+\.webp$/.test(src)
@@ -769,68 +721,3 @@ export const AppFrame = ({
     </div>
   );
 };
-
-/** Ziyaretçi tarafını göstermek için tarayıcı penceresi. */
-export const BrowserFrame = ({
-  url,
-  children,
-  className = ''
-}: {
-  url?: string;
-  children?: React.ReactNode;
-  className?: string;
-}) => (
-  <div
-    className={[
-      'rounded-2xl border border-gray-200 dark:border-white/[0.09] bg-white dark:bg-[#12141f]',
-      'overflow-hidden shadow-panel-lg',
-      className
-    ].join(' ')}
-  >
-    <div
-      className="flex items-center gap-2 px-3.5 h-9 border-b border-gray-200 dark:border-white/[0.07]
-      bg-gray-50/80 dark:bg-white/[0.03]"
-    >
-      <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
-      <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
-      <span className="w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-white/15" />
-      <span
-        className="ml-2 flex-1 h-6 rounded-md bg-white dark:bg-white/[0.05]
-        border border-gray-200 dark:border-white/[0.07] flex items-center px-2.5
-        text-[10.5px] text-gray-500 dark:text-gray-400 truncate"
-      >
-        {url}
-      </span>
-    </div>
-    {children}
-  </div>
-);
-
-/* ------------------------------------------------------------------- şerit */
-
-/**
- * Sonsuz kayan şerit. İçerik iki kez basılır ve %50 kaydırılır; döngü başa
- * döndüğünde görünür bir sıçrama olmaz.
- */
-export const Marquee = ({
-  children,
-  className = ''
-}: {
-  children?: React.ReactNode;
-  className?: string;
-}) => (
-  <div
-    className={['relative overflow-hidden', className].join(' ')}
-    style={{
-      maskImage: 'linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)',
-      WebkitMaskImage: 'linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)'
-    }}
-  >
-    <div className="flex w-max animate-marquee motion-reduce:animate-none hover:[animation-play-state:paused]">
-      <div className="flex items-center gap-12 pr-12">{children}</div>
-      <div className="flex items-center gap-12 pr-12" aria-hidden="true">
-        {children}
-      </div>
-    </div>
-  </div>
-);

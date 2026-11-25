@@ -1,6 +1,6 @@
 // Answering a visitor from the site's FAQ before an agent gets there.
 //
-// Off unless the site switches it on (sites.faq_auto_reply, plan §3.4), and
+// Off unless the site switches it on (sites.faq_auto_reply), and
 // never together with the FAQ assistant. A deliberately conservative feature:
 // one full-text search, and the answer is only sent when the match is
 // confident. A wrong automatic answer is worse than none — the visitor reads

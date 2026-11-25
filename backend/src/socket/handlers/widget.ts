@@ -168,7 +168,7 @@ async function openFirstConversation(
   socket.conversationId = opened._id;
   if (!created) return;
 
-  // What the visitor filled in before writing (PRD-05) goes on the new
+  // What the visitor filled in before writing goes on the new
   // conversation; a department they picked routes it.
   if (socket.contact) {
     applyContact(opened, socket.contact);
@@ -184,7 +184,7 @@ async function openFirstConversation(
   ctx.toAdminSite(socket.siteId, 'new-conversation', {
     conversation: await opened.populate('department', 'name color icon')
   });
-  // Phones and closed panels hear about it too (PRD-09); not awaited.
+  // Phones and closed panels hear about it too; not awaited.
   void pushConversationEvent('newConversation', opened);
   runAutomation('conversation_created', opened, { content });
 }
@@ -293,7 +293,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
             conversation: null,
             messages: [],
             // Empty unless the owner wrote one: the widget then greets in
-            // the visitor's own language (PRD-16).
+            // the visitor's own language.
             welcomeMessage: ownWidgetText(site.widgetSettings.welcomeMessage)
           });
         }
@@ -378,7 +378,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       // authorize: the site of the signed session, still active
       const site = await Site.findOne({ _id: socket.siteId, isActive: true });
       // Suspended over the plan's limit or blocked since the handshake: a
-      // page left open stops here too (BIL-04, LEG-05).
+      // page left open stops here too.
       if (!site?.organizationId || site.suspendedAt || site.blockedAt) {
         return refuse(socket, ack, 'SITE_NOT_FOUND', 'Site not found');
       }
@@ -391,7 +391,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       const opening = !socket.conversationId;
       if (!socket.conversationId) {
         // A site with a required pre-chat form or consent box hears nothing
-        // before it is filled in (PRD-05).
+        // before it is filled in.
         if (!preChatSatisfied(site.chatSettings, socket.contact, Boolean(socket.verifiedUserId))) {
           return refuse(socket, ack, 'PRECHAT_REQUIRED', 'Please fill in the form first');
         }
@@ -406,8 +406,8 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       }
 
       let conversation = await ctx.widgetConversationFor(socket, socket.conversationId);
-      // The team merged this conversation into another of the same visitor
-      // (PRD-07): the widget carries on there.
+      // The team merged this conversation into another of the same visitor:
+      // the widget carries on there.
       if (conversation?.mergedIntoId) {
         const into = await ctx.widgetConversationFor(socket, conversation.mergedIntoId);
         if (into) {
@@ -433,7 +433,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
         if (existing) return delivered(socket, ack, existing.toObject(), true);
       }
 
-      // Spam mode (SEC-09): until somebody on the team has answered, the
+      // Spam mode: until somebody on the team has answered, the
       // visitor writes at a slower pace, and a link waits its turn.
       if (chatSettings(site.chatSettings).spamMode && !conversation.firstResponseAt) {
         const key = `${socket.siteId}:${socket.visitorId}`;
@@ -500,7 +500,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       // read the old count and write it back plus one.
       const counted = await Conversation.findByIdAndUpdate(
         conversation._id,
-        // A visitor writing again wakes a snoozed conversation (PRD-07).
+        // A visitor writing again wakes a snoozed conversation.
         { $inc: { unreadCount: 1 }, lastMessageAt: new Date(), snoozedUntil: null },
         { new: true }
       );
@@ -510,7 +510,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       }
 
       // More than three links, or the same text three times running: the
-      // conversation is tagged so the inbox can filter it out (SEC-09).
+      // conversation is tagged so the inbox can filter it out.
       const tags = conversation.tags || [];
       if (
         !tags.includes('spam') &&
@@ -558,7 +558,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
       // ACK
       ack?.({ ok: true, message: emitted });
 
-      // Slack, Telegram, webhooks (PRD-11): the first message comes with the
+      // Slack, Telegram, webhooks: the first message comes with the
       // conversation, later ones on their own.
       notifyIntegrations(opening ? 'conversation.created' : 'message.created', conversation, {
         message
@@ -572,7 +572,7 @@ export function installWidgetHandlers(ctx: SocketContext): void {
           scheduleAssistantReply(ctx.io, conversation._id, message._id);
         }
       } else if (site.faqAutoReply) {
-        // The keyword FAQ reply, only on a site that chose it (plan §3.4).
+        // The keyword FAQ reply, only on a site that chose it.
         await tryFaqAutoResponse(ctx, conversation, content);
       }
     };

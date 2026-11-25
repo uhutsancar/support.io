@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Sets up and hardens a fresh Ubuntu 24.04 server for Supbort.io (plan v10
-# SEC-14, INF-02, runbook §1). Run as root; running it again changes nothing
+# Sets up and hardens a fresh Ubuntu 24.04 server for Supbort.io.
+# Run as root; running it again changes nothing
 # that is already in place.
 #
 #   sudo ./scripts/bootstrap-server.sh
@@ -25,7 +25,7 @@
 #     logs in /var/log/supportio rotated weekly
 #
 # It does not restrict 80/443 to Cloudflare (scripts/ufw-cloudflare.sh, after
-# DNS is on Cloudflare) and does not schedule WAL-G (disaster-recovery.md).
+# DNS is on Cloudflare) and does not schedule WAL-G.
 set -euo pipefail
 
 DEPLOY_USER="${DEPLOY_USER:-deploy}"
@@ -214,11 +214,11 @@ cat >/etc/cron.d/supportio <<EOF
 $MARK
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-# Nightly database backup; the weekly restore check runs inside it (DR-01).
+# Nightly database backup; the weekly restore check runs inside it.
 0 3 * * * $DEPLOY_USER $APP_DIR/scripts/backup-postgres.sh >> /var/log/supportio/backup.log 2>&1
-# Health and disk every five minutes, alerts to ALERT_WEBHOOK_URL (OBS-04).
+# Health and disk every five minutes, alerts to ALERT_WEBHOOK_URL.
 */5 * * * * $DEPLOY_USER $APP_DIR/scripts/watchdog.sh >> /var/log/supportio/watchdog.log 2>&1
-# Yesterday's container logs to the log bucket, if LOG_REMOTE is set (OBS-05).
+# Yesterday's container logs to the log bucket, if LOG_REMOTE is set.
 15 0 * * * $DEPLOY_USER $APP_DIR/scripts/ship-logs.sh >> /var/log/supportio/logs.log 2>&1
 EOF
 chmod 644 /etc/cron.d/supportio
@@ -240,5 +240,5 @@ EOF
 echo "weekly, 8 kept"
 
 step "done"
-echo "Next: runbook §1 step 6 onwards (.env.production, then docker compose up)."
-echo "Recommended later: SSH only over Tailscale or WireGuard (runbook §1)."
+echo "Next: fill in .env.production, then docker compose up."
+echo "Recommended later: SSH only over Tailscale or WireGuard."

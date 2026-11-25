@@ -1,6 +1,6 @@
 'use strict';
 
-// The free tier's regional rule (plan v10 AI-02): while GEMINI_TIER=free, a
+// The free tier's regional rule: while GEMINI_TIER=free, a
 // visitor whose CF-IPCountry is in the EEA, Switzerland or the UK is never
 // sent to the model — their conversation starts with a person — and in
 // production a missing country counts the same. On the paid tier, or for a

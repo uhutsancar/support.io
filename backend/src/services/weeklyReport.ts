@@ -1,4 +1,4 @@
-// The weekly report mail (plan v10 PRD-22): every Monday from 08:00
+// The weekly report mail: every Monday from 08:00
 // (Europe/Istanbul), the owner and the admins and managers of each workspace
 // get the last seven days in a few lines — conversations, resolved, first
 // response time, SLA, satisfaction, what the assistant answered, the busiest

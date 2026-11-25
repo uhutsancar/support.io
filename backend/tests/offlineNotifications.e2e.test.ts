@@ -1,7 +1,6 @@
 'use strict';
 
-// What happens when nobody answers, and after the chat (plan v10 PRD-01,
-// PRD-04, PRD-05, PRD-06):
+// What happens when nobody answers, and after the chat:
 //
 //  - an unanswered chat mails the team once its delay has passed; chats in
 //    the next ten minutes are gathered into one mail; "off" means no mail

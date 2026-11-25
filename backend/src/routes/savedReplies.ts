@@ -1,4 +1,4 @@
-// Saved replies (plan v10 PRD-03): text an agent drops into the reply box by
+// Saved replies: text an agent drops into the reply box by
 // typing "/" and a shortcut. Agents read and use them; owners and admins
 // (manage_sites) write them. A reply belongs to the organization, and either
 // to one site or — site_id NULL — to all of them. Variables such as

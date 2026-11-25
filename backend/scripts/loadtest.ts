@@ -1,6 +1,6 @@
 'use strict';
 
-// Yük testi (plan §18).
+// Yük testi.
 //
 // Her aşamada N ziyaretçi gerçek widget yolundan bağlanır (POST
 // /api/widget/session → /widget soketi → join) ve bağlı kalır. Hepsi

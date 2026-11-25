@@ -1,4 +1,4 @@
-// The AI assistant in the browser (plan v10 TST-01 #2), against the stand-in
+// The AI assistant in the browser, against the stand-in
 // model (e2e/fake-gemini.mjs): a question the FAQ answers gets an answer
 // marked as AI; asking for a person hands over; the agent takes over in the
 // panel and the visitor gets the person's reply.

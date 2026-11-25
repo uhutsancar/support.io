@@ -1,4 +1,4 @@
-// Sign-in with Google in the browser (plan v10 PRD-14), against the API's
+// Sign-in with Google in the browser, against the API's
 // stand-in for Google's account chooser (GOOGLE_SIGN_IN_TRANSPORT=memory):
 // the same redirects, state cookie, PKCE and ID-token checks as with Google,
 // without Google's servers. Real Google needs the owner's OAuth client.

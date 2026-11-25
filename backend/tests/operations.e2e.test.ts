@@ -1,6 +1,6 @@
 'use strict';
 
-// Operating the service (plan §11, §13.5):
+// Operating the service:
 //
 //  - /health says only that the process is up; /ready that it can serve
 //  - neither leaks anything about the server
@@ -125,7 +125,7 @@ test('R2 or Hetzner storage through S3_ENDPOINT counts as configured', () => {
   );
 });
 
-test('appendix C: what production can run without is warned about, never fatal', () => {
+test('what production can run without is warned about, never fatal', () => {
   const quiet = {
     ...COMPLETE,
     TURNSTILE_SITE_KEY: 'site',

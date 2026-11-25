@@ -90,7 +90,7 @@ import { attachRedisAdapter } from './socket/adapter';
 import type { Request, Response, NextFunction } from 'express';
 
 // Whatever older code still writes with console.* is scrubbed of e-mail
-// addresses, tokens and keys (config/logger.ts, plan v10 SEC-16).
+// addresses, tokens and keys (config/logger.ts).
 installConsoleRedaction();
 
 // --- Route Tanımları ---
@@ -131,7 +131,7 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
-  // The largest thing a client sends is a 5 000-character message (SEC-15);
+  // The largest thing a client sends is a 5 000-character message;
   // files go over HTTP. A polling request may carry a few packets at once.
   maxHttpBufferSize: Number(process.env.SOCKET_MAX_PAYLOAD_BYTES) || 256 * 1024,
   connectTimeout: Number(process.env.SOCKET_CONNECT_TIMEOUT_MS) || 20_000,
@@ -178,9 +178,8 @@ app.use(
 
 // Helmet Ayarları (S3 resimlerinin engellenmesini çözen kısım)
 //
-// CSP helmet'in kendi varsayılanı yerine middleware/csp.ts'ten geliyor: panel
-// ile /demo'nun ihtiyaçları farklı ve SPA kabuğunun satır içi bloğu için yanıt
-// başına nonce üretilmesi gerekiyor. Kapalı bırakıldığında panelde XSS'e karşı
+// CSP helmet'in kendi varsayılanı yerine middleware/csp.ts'ten geliyor: SPA
+// kabuğunun satır içi bloğu için yanıt başına nonce üretilmesi gerekiyor. Kapalı bırakıldığında panelde XSS'e karşı
 // ikinci bir savunma hattı kalmıyordu.
 app.use(
   helmet({
@@ -198,7 +197,7 @@ app.use(contentSecurityPolicy({ isProduction }));
 // --- ⚙️ 2. ARA KATMANLAR (MIDDLEWARES) ---
 // Behind Caddy (production) compression is Caddy's job: it compresses in Go,
 // off this process's event loop, and skips a response that is already
-// encoded — so compressing here too only spent Node's CPU (PERF-04).
+// encoded — so compressing here too only spent Node's CPU.
 // HTTP_COMPRESSION=off there; on its own (development, tests) Express does it.
 if (process.env.HTTP_COMPRESSION !== 'off') {
   app.use(
@@ -260,7 +259,7 @@ app.post('/api/auth/login', requireSharedRateLimits, loginLimiter, loginAccountL
 app.use('/api/auth/register', requireSharedRateLimits, registerLimiter);
 app.use('/api', apiLimiter);
 
-// Sign-in with Google (PRD-14) before the rest of /api/auth.
+// Sign-in with Google before the rest of /api/auth.
 app.use('/api/auth/google', googleAuthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', accountRoutes);
@@ -293,11 +292,11 @@ app.use('/api/saved-replies', savedReplyRoutes);
 app.use('/api/conversation-tags', conversationTagRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/sites', helpSettings);
-// Pages and PDFs the assistant also answers from (PRD-21).
+// Pages and PDFs the assistant also answers from.
 app.use('/api/sites', knowledgeRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/api-keys', apiKeyRoutes);
-// The public API (PRD-12): its own key, its own limit, no session.
+// The public API: its own key, its own limit, no session.
 app.use('/api/v1', publicApiRoutes);
 app.use('/api/data-retention', dataRetentionRoutes);
 
@@ -380,10 +379,10 @@ if (!isProduction) {
 // after the static handlers at the bottom of this file.
 app.use('/api', apiNotFound);
 
-// Public help centers (PRD-10): server-written pages, before the SPA fallback.
+// Public help centers: server-written pages, before the SPA fallback.
 app.use(helpPages);
 
-// Liveness and readiness (plan §11.1).
+// Liveness and readiness.
 //
 //   /health  the process is up. It asks nothing of the database, so a slow
 //            database does not get a healthy process restarted.
@@ -414,7 +413,7 @@ app.get('/ready', async (_req: Request, res: Response) => {
 
 // /.well-known/security.txt, /robots.txt and /sitemap.xml, before the panel's
 // static files and the SPA fallback would answer them; X-Robots-Tag on the
-// private pages (MKT-02).
+// private pages.
 app.use(robotsHeader);
 app.use(wellKnownRoutes);
 // Prometheus metrics for the Docker network only (routes/internalMetrics.ts).
@@ -422,13 +421,10 @@ app.use(internalMetricsRoutes(io));
 
 // --- 📦 4. STATİK DOSYALAR ---
 //
-// Yollar __dirname'e göre çözülür. Eskiden `express.static('public')` yazıyordu:
-// bu ifade sürecin ÇALIŞMA DİZİNİNE görelidir, yani sunucu repo kökünden
-// (`node backend/src/server.js`) veya bir servis yöneticisinden başlatıldığında
-// widget.js 404 dönerdi. Aynı sorun /demo için de vardı.
+// Yollar sürecin çalışma dizinine değil __dirname'e göre çözülür; sunucu
+// hangi dizinden başlatılırsa başlatılsın aynı dosyaları sunar.
 const adminPanelPath = path.join(__dirname, '../../admin-panel/dist');
 const publicPath = path.join(__dirname, '../public');
-const demoPath = path.join(__dirname, '../../demo');
 
 app.use(
   express.static(adminPanelPath, {
@@ -460,7 +456,7 @@ app.use(
 //   /widget.js                    → her zaman en güncel sürüm
 //   /widget/v4/widget.js          → v4'ün en güncel sürümü
 //   /widget/v4/widget.<hash>.js   → tam olarak o içerik, bir yıl değişmez
-//                                   önbellek (plan v10 PERF-02)
+//                                   önbellek
 //
 // İlk ikisi 5 dakika önbellekte kalır, sonra ETag ile yeniden doğrulanır;
 // `stale-while-revalidate` sayesinde müşteri sayfası bu sırada beklemez.
@@ -514,7 +510,7 @@ app.get(`/widget/${WIDGET_MAJOR}/widget.:hash([0-9a-f]{12}).js`, (req: Request, 
     current && req.params.hash === current ? 'public, max-age=31536000, immutable' : SHORT_CACHE
   );
 });
-// The widget's languages beyond Turkish and English (PRD-16), fetched by the
+// The widget's languages beyond Turkish and English, fetched by the
 // widget from any customer's page only when a visitor reads one.
 const widgetLocales = path.join(publicPath, 'widget-locales');
 app.get('/widget/v4/locales/:code([a-z]{2}).json', (req: Request, res: Response) => {
@@ -545,12 +541,6 @@ app.use(
     }
   })
 );
-
-// The widget test page is a development tool. In production it would be a
-// second, unauthenticated page on the panel's own origin, serving a demo key.
-if (!isProduction) {
-  app.use('/demo', express.static(demoPath));
-}
 
 // Locally stored uploads. With S3 configured this directory stays empty and the
 // route is simply never hit; see middleware/upload.ts.
@@ -584,7 +574,6 @@ app.use(
 );
 
 // React SPA fallback
-// React SPA fallback
 //
 // Kabuk sendFile ile degil okunarak gonderiliyor: katı CSP altinda satir ici
 // JSON-LD blogunun calismasi icin bu yanitin nonce'u isaretlenmeli.
@@ -612,11 +601,7 @@ function isKnownSpaPath(pathname: string): boolean {
 }
 
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  if (
-    req.path.startsWith('/api/') ||
-    req.path.startsWith('/widget') ||
-    req.path.startsWith('/demo')
-  ) {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/widget')) {
     return next();
   }
   const known = isKnownSpaPath(req.path);
@@ -646,7 +631,7 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
       );
   }
   // A public page gets its own title, description, Open Graph, canonical and
-  // JSON-LD on this domain (services/seoHead.ts, MKT-03).
+  // JSON-LD on this domain (services/seoHead.ts).
   const base = appBaseUrl() || `${req.protocol}://${req.get('host')}`;
   res
     .status(known ? 200 : 404)
@@ -696,7 +681,7 @@ connectDB()
 
     // The model check and the kill switch (services/assistant/availability.ts).
     startAssistantWatch();
-    // Paddle's prices for the pricing page, with billing on (BIL-03).
+    // Paddle's prices for the pricing page, with billing on.
     startPaddlePriceSync();
 
     server.listen(PORT, () => {

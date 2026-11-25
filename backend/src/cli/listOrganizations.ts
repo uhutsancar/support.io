@@ -1,10 +1,10 @@
-// Lists organizations for support and the closed beta (plan (6) §46).
+// Lists organizations for support and the closed beta.
 //   development:  npm run org:list -- [text in the name or the owner's e-mail]
 //   production:   docker compose ... exec backend npm run org:list:prod -- [text]
 // Read only. Prints no visitor data, only what an operator needs to find a
 // workspace: plan, subscription, owner, sites and this month's usage —
 // conversations and AI answers, with an estimated cost when
-// GEMINI_COST_PER_ANSWER is set (plan v10 AI-07).
+// GEMINI_COST_PER_ANSWER is set.
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../config/env';
 import { pool, query } from '../db/pool';

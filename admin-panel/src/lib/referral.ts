@@ -1,4 +1,4 @@
-// A referral link's code (plan v10 PRD-23): read from ?ref= on arrival and
+// A referral link's code: read from ?ref= on arrival and
 // kept for the browser session, so it survives a detour through the pricing
 // page before signing up. Sent with the sign-up; the server ignores a code
 // it does not know.

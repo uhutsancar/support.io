@@ -1,6 +1,6 @@
 'use strict';
 
-// Running the assistant safely (plan v10 AI-01, AI-07):
+// Running the assistant safely:
 //
 //  - the model is checked against the API at boot: a model the API does not
 //    know, or a refused key, switches the assistant off; a preview model is
@@ -281,7 +281,7 @@ test('a day may use a tenth of the month; the next question goes to a person', a
   assert.equal(rows[0].n, 5, 'only the answers given were counted');
 });
 
-// ------------------------------------------------------- consent (AI-04)
+// ------------------------------------------------------- consent
 
 async function ownerWithSite() {
   const email = `owner${Date.now()}${Math.floor(Math.random() * 1e5)}@consent.test`;

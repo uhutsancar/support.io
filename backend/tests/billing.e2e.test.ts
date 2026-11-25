@@ -1,6 +1,6 @@
 'use strict';
 
-// Paddle billing (plan §9, §21.2):
+// Paddle billing:
 //
 //  - the webhook is verified over the raw body; a bad or missing signature
 //    is refused, a good one is applied
@@ -428,7 +428,7 @@ test('the billing page is the owner’s, and checkout stays shut while billing i
   const org = await owner();
   const page = await api('/api/billing', { token: org.token });
   assert.equal(page.status, 200);
-  // A new workspace is on the free Pro trial (PRD-15), with no subscription.
+  // A new workspace is on the free Pro trial, with no subscription.
   assert.equal(page.body.plan, 'PRO');
   assert.equal(page.body.trial.plan, 'PRO');
   assert.ok(new Date(page.body.trial.endsAt).getTime() > Date.now() + 13 * DAY);

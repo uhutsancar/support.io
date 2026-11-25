@@ -1,4 +1,4 @@
-// Inviting agents (plan §7.3).
+// Inviting agents.
 //
 //   GET    /api/invitations              open and recent invitations
 //   POST   /api/invitations              invite { email, role, assignedSites }

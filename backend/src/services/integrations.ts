@@ -1,4 +1,4 @@
-// Slack, Telegram and outgoing webhooks (plan v10 PRD-11).
+// Slack, Telegram and outgoing webhooks.
 //
 // An event of a conversation — created, a message, closed, rated — becomes
 // one delivery per integration that asked for it. A delivery is tried at

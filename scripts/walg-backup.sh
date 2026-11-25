@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Weekly WAL-G base backup and retention (plan v10 DR-02). With continuous
+# Weekly WAL-G base backup and retention. With continuous
 # WAL archiving on (PG_ARCHIVE_MODE=on), any moment since the oldest kept
-# base backup can be restored (docs/disaster-recovery.md). The nightly
+# base backup can be restored. The nightly
 # pg_dump (backup-postgres.sh) stays: a second, independent backup.
 #
 # Cron (UTC):  30 2 * * 0  /opt/supportio/scripts/walg-backup.sh >> /var/log/supportio-walg.log 2>&1

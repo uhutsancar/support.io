@@ -159,7 +159,7 @@ router.put(
     // `pickStrict` rejects an unknown key rather than dropping it, which is what
     // this endpoint did before — a caller sending a field this route does not own
     // gets told so instead of watching it vanish.
-    // The consent box that comes with switching the assistant on (AI-04) is
+    // The consent box that comes with switching the assistant on is
     // not a site field; it is read here and recorded in the audit trail.
     const { assistantConsent, ...fields } = (req.body || {}) as Record<string, unknown>;
     const updates = pickStrict<SiteDoc>(fields, WRITABLE_FIELDS);
@@ -185,7 +185,7 @@ router.put(
     const assistantBefore = site.assistantEnabled;
     // Switching it on means the site's FAQ and its visitors' questions (with
     // personal data masked) go to the AI service provider: the owner says so
-    // first, every time it is switched on (AI-04).
+    // first, every time it is switched on.
     if (updates.assistantEnabled === true && !assistantBefore && assistantConsent !== true) {
       throw new HttpError(
         400,

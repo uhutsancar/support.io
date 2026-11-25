@@ -1,10 +1,10 @@
 // Prepares the install channels for publishing once the production domain is
-// known (SAHİP-05): copies the WordPress plugin, the GTM template and the
+// known: copies the WordPress plugin, the GTM template and the
 // Shopify extension to integrations/dist/ with __APP_DOMAIN__ replaced.
 //
 //   node integrations/release.mjs support.example.com
 //
-// Nothing here is published; see integrations/README.md for the owner's steps.
+// Nothing here is published; the archives are uploaded by hand.
 
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,15 +1,15 @@
 /**
  * Two strips the dashboard layout shows above every page.
  *
- *   TrialBanner      the free Pro trial is running (PRD-15): days left and
+ *   TrialBanner      the free Pro trial is running: days left and
  *                    the way to a plan, for the people who can buy one
- *   PaymentIssueBanner the subscription payment failed (BIL-05): until when
+ *   PaymentIssueBanner the subscription payment failed: until when
  *                    the plan holds, and the way to the payment method
- *   PlanOverageBanner  the plan went below what the workspace uses (BIL-04):
+ *   PlanOverageBanner  the plan went below what the workspace uses:
  *                    a member on hold reads that they cannot reply; the
  *                    owner is sent to the billing page to choose
  *   MfaRequiredGate  the organization requires two-step sign-in and this
- *                    account has none (SEC-04): the set-up takes the page's
+ *                    account has none: the set-up takes the page's
  *                    place until it is done; the server refuses everything
  *                    else meanwhile anyway (MFA_SETUP_REQUIRED)
  */

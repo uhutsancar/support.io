@@ -1,6 +1,6 @@
 'use strict';
 
-// One source for prices (plan v10 BIL-03), in process with a stand-in for
+// One source for prices, in process with a stand-in for
 // Paddle: with billing on, GET /api/plans shows the amounts Paddle charges,
 // a difference from domain/plans.ts is reported, a yearly price is compared
 // per month, and while billing is off or Paddle cannot be read the table in

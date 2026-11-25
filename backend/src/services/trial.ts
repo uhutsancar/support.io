@@ -1,4 +1,4 @@
-// The free trial of the Pro plan (plan v10 PRD-15).
+// The free trial of the Pro plan.
 //
 // Every new workspace gets Pro for TRIAL_DAYS (default 14, 0 switches the
 // trial off) with no card and no Paddle involvement — the trial is ours, so

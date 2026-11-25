@@ -1,6 +1,6 @@
 'use strict';
 
-// Slack, Telegram and outgoing webhooks (plan v10 PRD-11): only safe https
+// Slack, Telegram and outgoing webhooks: only safe https
 // addresses are accepted, keys never come back from the API, the four
 // conversation events reach every kind in the right form, webhooks are
 // signed, failed tries are retried for a day and then given up, and the
@@ -51,10 +51,8 @@ async function outbox(token: string): Promise<any[]> {
 async function calls(token: string, count: number): Promise<any[]> {
   let list: any[] = [];
   for (let i = 0; i < 40; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
     list = await outbox(token);
     if (list.length >= count) return list;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return list;
@@ -75,7 +73,6 @@ test('only safe https addresses and well-formed keys are accepted', async () => 
     { kind: 'webhook', name: 'x', events: ['everything'], url: 'https://1.1.1.1/hook' },
     { kind: 'ftp', name: 'x', events: ALL, url: 'https://1.1.1.1/hook' }
   ]) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await call(t.token, '/api/integrations', 'POST', body);
     assert.equal(res.status, 400, JSON.stringify(body));
   }
@@ -302,7 +299,6 @@ test('integrations are part of the paid plans; another workspace’s cannot be t
     ['POST', `/api/integrations/${theirs}/test`],
     ['GET', `/api/integrations/${theirs}/deliveries`]
   ] as const) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await call(a.token, path, method, body);
     assert.equal(res.status, 404, `${method} ${path}`);
   }

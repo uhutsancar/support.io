@@ -1,5 +1,5 @@
 // What the assistant knows: the site's public FAQ entries and — on a plan
-// with knowledge sources (PRD-21) — passages of the site's own pages and of
+// with knowledge sources — passages of the site's own pages and of
 // the PDFs the business uploaded.
 //
 // The FAQ entries are the same ones the widget shows to every visitor in its

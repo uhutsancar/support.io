@@ -1,5 +1,5 @@
 /**
- * Konuşma saklama süresi (plan v10 SEC-17). Son mesajından bu kadar gün
+ * Konuşma saklama süresi. Son mesajından bu kadar gün
  * geçen konuşma, mesajları ve ekleriyle birlikte her gece silinir. Pencere
  * plana göre: Ücretsiz 90 gün (seçim yok), Pro 30 gün–1 yıl, Kurumsal
  * 30 gün–5 yıl. Yalnızca sahip ve yöneticiler değiştirir.

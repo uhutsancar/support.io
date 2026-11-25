@@ -1,4 +1,4 @@
-// Which plan a subscription gives, at a given moment (plan §9.2).
+// Which plan a subscription gives, at a given moment.
 //
 // Kept free of the database and of Paddle so the rule can be read — and
 // tested — on its own:

@@ -11,7 +11,7 @@
 // status the server adds later renders in grey instead of unstyled.
 //
 // Text on the light badges is the 700/800 shade: the 600 ones fell below the
-// 4.5:1 contrast WCAG asks of small text (axe, plan v10 UX-02).
+// 4.5:1 contrast WCAG asks of small text (axe).
 
 import type { ConversationStatus, PresenceStatus, Priority } from '../types/api';
 

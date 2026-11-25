@@ -1,6 +1,6 @@
 'use strict';
 
-// Reconnect storm (plan v10 PERF-06): visitors and agents are connected, the
+// Reconnect storm: visitors and agents are connected, the
 // backend restarts (as during a deploy), and everyone comes back.
 //
 // Measured:
@@ -16,7 +16,7 @@
 //
 // The clients use the widget's own back-off: 1 s to 30 s, ±50 % jitter.
 // Run it against a stack with nothing else on it. The result describes the
-// machine it ran on, not production capacity (docs/load-test.md).
+// machine it ran on, not production capacity.
 //
 //   npm run reconnect-storm -- --visitors 300 --agents 20
 //   (restart command: --restart "docker compose restart backend")

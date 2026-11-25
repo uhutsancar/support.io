@@ -1,4 +1,4 @@
-// The widget opens its socket only when it is needed (plan v10 PERF-02):
+// The widget opens its socket only when it is needed:
 // a page with the install code draws the bubble, says "present" with one
 // small request (the panel's live visitor list) and opens no connection;
 // opening the bubble connects, and a message goes through.

@@ -44,7 +44,7 @@ export function derivedKey(purpose: string): Buffer {
 /**
  * The keys a signature or a sealed value may have been made with: the
  * current one first, then — while JWT_SECRET_PREVIOUS is set during a
- * rotation (SEC-18) — the one it replaced. Anything new uses derivedKey().
+ * rotation — the one it replaced. Anything new uses derivedKey().
  */
 export function derivedKeys(purpose: string): Buffer[] {
   const previous = previousJwtSecret();
@@ -139,7 +139,7 @@ export function sessionIsCurrent(
 // ------------------------------------------------------------ e-mailed links
 
 /**
- * Links mailed to a visitor (plan v10 PRD-01, PRD-04): back to the chat,
+ * Links mailed to a visitor: back to the chat,
  * no more e-mails about it, rate it. Each purpose has its own key and
  * audience, so one can never be traded for another — or for a session.
  */

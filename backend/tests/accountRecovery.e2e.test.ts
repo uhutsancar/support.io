@@ -1,10 +1,10 @@
 'use strict';
 
-// E-mail verification and password reset, end to end (plan §7.2).
+// E-mail verification and password reset, end to end.
 //
 //  - sign-up mails a verification link and nothing else: the session starts
 //    from the link, the answer is the same for a taken address, and a newer
-//    sign-up of an unconfirmed address replaces it (plan v10 SEC-06)
+//    sign-up of an unconfirmed address replaces it
 //  - a link works once, only for its purpose, and only the newest one works
 //  - forgot-password answers the same for every address
 //  - a reset ends every session of the account and the old password

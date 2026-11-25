@@ -1,4 +1,4 @@
-// The account's own security in the panel (plan v10 SEC-03, SEC-04, TST-01):
+// The account's own security in the panel:
 // changing the password ends the other device's session, and two-step
 // sign-in is set up from the QR screen and then asked for at sign-in.
 

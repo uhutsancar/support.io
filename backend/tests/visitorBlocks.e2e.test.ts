@@ -1,6 +1,6 @@
 'use strict';
 
-// Blocking a visitor and spam protection (plan v10 SEC-09):
+// Blocking a visitor and spam protection:
 //
 //  - an agent blocks the visitor of a conversation: their open widget hears
 //    it and is disconnected; their session, socket and widget endpoints are

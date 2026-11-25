@@ -1,6 +1,6 @@
-// Re-sealing stored secrets after JWT_SECRET changes (plan v10 SEC-18).
+// Re-sealing stored secrets after JWT_SECRET changes.
 //
-// The rotation, as docs/production-runbook.md §8 lays it out:
+// The rotation:
 //   1. JWT_SECRET_PREVIOUS = the old value, JWT_SECRET = a new one; deploy.
 //      Sessions, links and sealed values made with the old one keep working.
 //   2. npm run secrets:rotate:prod — every sealed value (site identity
@@ -48,7 +48,7 @@ async function sealedValues(organizationId: string | null): Promise<Sealed[]> {
     );
     accounts.push(...rows.map((r) => ({ table, ...r })));
   }
-  // Slack addresses, Telegram tokens and webhook secrets (PRD-11).
+  // Slack addresses, Telegram tokens and webhook secrets.
   const { rows: integrations } = await query<{ id: string; value: string }>(
     `SELECT id, config AS value FROM integrations WHERE ${scoped('organization_id')}`,
     [organizationId]

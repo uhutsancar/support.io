@@ -1,5 +1,5 @@
 /**
- * After a downgrade below what the workspace uses (BIL-04): which sites and
+ * After a downgrade below what the workspace uses: which sites and
  * members are on hold, and the owner's choice of which stay active. Nothing
  * is deleted; an upgrade brings everything back.
  */

@@ -1,4 +1,4 @@
-// Builds the widget (plan v10 PERF-01/PERF-02, PRD-16): one minified script
+// Builds the widget: one minified script
 // for customers' pages, bundled from src/widget/widget.ts — Turkish and
 // English inside — whose gzip size has a budget (scripts/check-bundle-size.mjs).
 // `tsc -p tsconfig.widget.json` type-checks it first and writes nothing.

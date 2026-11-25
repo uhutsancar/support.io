@@ -40,7 +40,7 @@ export interface WidgetSocketState {
   widgetKeyVersion?: string;
   /** The visitor's address as the proxy saw it (not the proxy's own). */
   clientIp?: string | null;
-  /** Cloudflare's CF-IPCountry for the handshake, or null (AI-02). */
+  /** Cloudflare's CF-IPCountry for the handshake, or null. */
   country?: string | null;
   visitorName?: string;
   visitorEmail?: string | null;
@@ -57,7 +57,7 @@ export interface WidgetSocketState {
   verifiedUserId?: string | null;
   /** The message being handled; the next one waits for it (handlers/widget.ts). */
   sending?: Promise<unknown>;
-  /** What the visitor left in the pre-chat / offline form (PRD-05). */
+  /** What the visitor left in the pre-chat / offline form. */
   contact?: import('../services/visitorContact').VisitorContact;
 }
 
@@ -69,7 +69,7 @@ export interface AdminSocketState {
   userName: string;
   organizationId: string;
   role: string;
-  /** Over the plan's seats (BIL-04): reads only; see middleware/rbac.ts. */
+  /** Over the plan's seats: reads only; see middleware/rbac.ts. */
   seatSuspended: boolean;
   userType: UserType;
   /** Security claims copied only so they can be rechecked against the DB. */

@@ -1,6 +1,7 @@
 node_modules
 dist
 .env
-npm-debug.log
+.env.*
 uploads
+public
 *.log

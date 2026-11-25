@@ -1,4 +1,4 @@
-// What the assistant may answer from besides the FAQ (plan v10 PRD-21):
+// What the assistant may answer from besides the FAQ:
 // pages of this site and PDF documents. Owners and admins add them; a page
 // is read in the background (the list refreshes until it is ready), a PDF at
 // once. Only the text is kept, and only public material belongs here.

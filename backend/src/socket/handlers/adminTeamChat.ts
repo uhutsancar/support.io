@@ -36,7 +36,7 @@ export function installAdminTeamChatHandlers(ctx: SocketContext, socket: AdminSo
   socket.on(
     'team-chat-send',
     ctx.guard(socket, async (data: TeamChatSendPayload | undefined) => {
-      // A seat over the plan's limit reads but does not write (BIL-04).
+      // A seat over the plan's limit reads but does not write.
       if (!permitted()) {
         return socket.emit('error', {
           message: 'Your seat is over the plan limit; you can read but not write',

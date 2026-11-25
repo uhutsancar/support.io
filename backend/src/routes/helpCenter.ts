@@ -1,4 +1,4 @@
-// The help center (plan v10 PRD-10).
+// The help center.
 //
 //   GET /help/:slug              the public page (no session; ?q= searches)
 //   GET /api/sites/:id/help-center    the owner's settings, with a suggested address

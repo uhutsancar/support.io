@@ -1,4 +1,4 @@
-// Deleting a whole workspace (plan (6) §22): what the owner's "delete
+// Deleting a whole workspace: what the owner's "delete
 // account" means. Only the owner's own row used to be switched off, so the
 // sites kept answering, and every visitor's name, e-mail, address and
 // messages stayed in the database with nobody left to ask for them.

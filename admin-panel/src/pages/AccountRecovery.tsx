@@ -240,7 +240,7 @@ export const VerifyEmail = () => {
 };
 
 /**
- * /confirm-email?token=…  — the link sent to a new address (plan v10 SEC-03).
+ * /confirm-email?token=…  — the link sent to a new address.
  * Works without a session: the link itself is the proof.
  */
 export const ConfirmEmail = () => {

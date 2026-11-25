@@ -3,7 +3,7 @@
 // Public and read-only: the same table the server enforces
 // (domain/plans.ts), so the numbers on the pricing page are the numbers the
 // product applies. Prices are Paddle's once billing is on, so the pricing
-// page shows what checkout charges (services/paddlePrices.ts, BIL-03).
+// page shows what checkout charges (services/paddlePrices.ts).
 // Nothing about any organization is in it.
 
 import express from 'express';

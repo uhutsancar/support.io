@@ -1,10 +1,3 @@
-# Editor defaults, so a file's indentation does not depend on who opened it.
-#
-# Five files in admin-panel/src/pages were indented with four spaces and the
-# rest with two, because nothing in the repository said which to use. This is
-# the smallest of the three layers that now do: the editor reads this, Prettier
-# enforces it on save and in CI, and ESLint checks what Prettier cannot.
-
 root = true
 
 [*]
@@ -17,11 +10,4 @@ trim_trailing_whitespace = true
 max_line_length = 100
 
 [*.md]
-# Markdown uses trailing spaces for hard line breaks.
 trim_trailing_whitespace = false
-
-[*.{yml,yaml}]
-indent_size = 2
-
-[Makefile]
-indent_style = tab

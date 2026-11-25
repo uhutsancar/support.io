@@ -1,4 +1,4 @@
-// Which addresses may open an account (plan v10 SEC-06).
+// Which addresses may open an account.
 //
 // Throwaway inboxes are how sign-up abuse scales: an address that exists for
 // ten minutes verifies an account and is gone before anyone could reach it.

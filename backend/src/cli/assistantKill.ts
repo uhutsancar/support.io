@@ -1,4 +1,4 @@
-// The assistant's emergency switch for every site at once (plan v10 AI-07).
+// The assistant's emergency switch for every site at once.
 // Every API process hears it within 15 seconds; no restart. Audited.
 //   development:  npm run assistant:kill -- on | off | status
 //   production:   docker compose ... exec backend npm run assistant:kill:prod -- on | off | status

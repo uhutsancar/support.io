@@ -1,4 +1,4 @@
-// POST /api/csp-report (plan v10 SEC-11): where browsers send what the
+// POST /api/csp-report: where browsers send what the
 // Content Security Policy blocked (middleware/csp.ts names it in report-uri
 // and report-to).
 //

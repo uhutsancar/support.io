@@ -193,7 +193,7 @@ export function invitationMail({
 }
 
 /**
- * Chats nobody has answered yet (PRD-01): one, or several gathered over the
+ * Chats nobody has answered yet: one, or several gathered over the
  * last minutes. `visitors` are the names, newest first.
  */
 export function missedChatMail({
@@ -255,7 +255,7 @@ export function missedChatMail({
   };
 }
 
-/** An agent answered while the visitor was away (PRD-01). */
+/** An agent answered while the visitor was away. */
 export function visitorReplyMail({
   site,
   replies,
@@ -299,7 +299,7 @@ export function visitorReplyMail({
   };
 }
 
-/** How was it? Sent when the visitor left before rating (PRD-04). */
+/** How was it? Sent when the visitor left before rating. */
 export function csatRequestMail({
   site,
   link,
@@ -330,7 +330,7 @@ export function csatRequestMail({
   };
 }
 
-/** The whole conversation, mailed to the visitor who asked for it (PRD-06). */
+/** The whole conversation, mailed to the visitor who asked for it. */
 export function transcriptMail({
   site,
   messages,
@@ -364,7 +364,7 @@ export function transcriptMail({
   };
 }
 
-/** The set-up mails after sign-up and the first sight of the widget (PRD-08). */
+/** The set-up mails after sign-up and the first sight of the widget. */
 export function activationMail({
   step,
   name,
@@ -477,7 +477,7 @@ export function activationMail({
   };
 }
 
-/** The figures of one week, for the weekly report mail (PRD-22). */
+/** The figures of one week, for the weekly report mail. */
 export interface WeeklyFigures {
   conversations: number;
   resolved: number;
@@ -575,7 +575,7 @@ export function weeklyReportMail({
   };
 }
 
-/** A referral earned the owner a free month (PRD-23). */
+/** A referral earned the owner a free month. */
 export function referralRewardMail({
   name,
   link,
@@ -662,7 +662,7 @@ export function quotaWarningMail({
 
 /**
  * Someone tried to sign up with an address that already has an account. The
- * sign-up form answers exactly as for a new address (plan v10 SEC-06), so
+ * sign-up form answers exactly as for a new address, so
  * the owner of the address is the only one told.
  */
 export function existingAccountMail({
@@ -998,7 +998,7 @@ export function trialEndedMail({
   };
 }
 
-/** Sites or seats went past a smaller plan and were suspended (BIL-04). */
+/** Sites or seats went past a smaller plan and were suspended. */
 export function planOverageMail({
   name,
   organization,
@@ -1057,7 +1057,7 @@ export function planOverageMail({
   };
 }
 
-/** A payment failed: what happens to the workspace, and by when (BIL-05). */
+/** A payment failed: what happens to the workspace, and by when. */
 export function paymentFailedMail({
   name,
   organization,

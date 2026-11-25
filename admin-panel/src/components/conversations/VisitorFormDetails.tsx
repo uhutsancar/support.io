@@ -1,7 +1,7 @@
 /**
  * What the visitor left in the pre-chat form, when they consented to the
- * privacy notice, and how they rated the conversation (plan v10 PRD-04,
- * PRD-05). Shown in the conversation's side panel; renders nothing when
+ * privacy notice, and how they rated the conversation.
+ * Shown in the conversation's side panel; renders nothing when
  * there is nothing to show.
  */
 import { useTranslation } from 'react-i18next';

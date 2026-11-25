@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploys one image to the production stack (plan §14.3).
+# Deploys one image to the production stack.
 #
 #   ./scripts/deploy.sh ghcr.io/<owner>/supportio@sha256:<64 hex>
 #

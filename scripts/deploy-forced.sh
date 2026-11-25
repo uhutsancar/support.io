@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The only thing the CI deploy key may run (plan v10 INF-03).
+# The only thing the CI deploy key may run.
 #
 # In ~deploy/.ssh/authorized_keys on the server, the key GitHub Actions uses
 # is pinned to this script:

@@ -1,14 +1,13 @@
 // /.well-known/security.txt, /robots.txt and /sitemap.xml, all built from the
 // domain this process runs on.
 //
-// security.txt (RFC 9116; plan v10 SEC-10): where somebody who
+// security.txt (RFC 9116): where somebody who
 // found a vulnerability writes to, in which languages, and the policy they
 // can expect — the "Güvenlik açığı bildirimi" section of the terms.
 //
 // Built from APP_BASE_URL, so staging and production each name their own
-// address. SECURITY_CONTACT_EMAIL must be a mailbox somebody reads
-// (docs/production-runbook.md); without it the address is security@ on the
-// panel's domain.
+// address. SECURITY_CONTACT_EMAIL must be a mailbox somebody reads; without
+// it the address is security@ on the panel's domain.
 //
 // Expires: RFC 9116 wants a date under a year ahead, which a hand-edited file
 // forgets to move. SECURITY_TXT_EXPIRES pins one (an ISO date); otherwise it
@@ -68,7 +67,7 @@ router.get('/security.txt', (_req: Request, res: Response) => {
   res.redirect(301, '/.well-known/security.txt');
 });
 
-// ------------------------------------------------- robots and sitemap (MKT-01/02)
+// ------------------------------------------------------------ robots and sitemap
 //
 // Both from the domain this process runs on, so the same image answers for
 // staging and production. The page list comes from the panel's build

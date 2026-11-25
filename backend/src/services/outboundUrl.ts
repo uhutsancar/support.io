@@ -1,5 +1,5 @@
-// An address a customer gives us to call (a webhook, PRD-11) must not point
-// into our own network (plan v10 TST-03, SSRF).
+// An address a customer gives us to call (a webhook) must not point
+// into our own network (SSRF).
 //
 // Checked before every call, not when the address is saved: a name can
 // resolve somewhere else tomorrow. The name is resolved once, every address

@@ -1,5 +1,5 @@
 /**
- * The panel's uncaught errors go to our own API (plan v10 OBS-01), which
+ * The panel's uncaught errors go to our own API, which
  * scrubs them and forwards them to error tracking when it is configured.
  * No third-party script in the panel. At most MAX_REPORTS per page load;
  * the path is sent without its query string (links carry tokens).

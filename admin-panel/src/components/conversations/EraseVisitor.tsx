@@ -1,5 +1,5 @@
 /**
- * "Bu ziyaretçinin verilerini sil" (plan v10 SEC-17). Bir ziyaretçi KVKK
+ * "Bu ziyaretçinin verilerini sil". Bir ziyaretçi KVKK
  * m.11 kapsamında verilerinin silinmesini istediğinde: o sitedeki tüm
  * konuşmaları, mesajları, ekleri, ziyaretçi kaydı ve sayfa olayları silinir.
  * Geri alınamaz; yalnızca sahip ve yöneticiler görür.

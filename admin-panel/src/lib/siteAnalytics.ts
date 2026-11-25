@@ -1,4 +1,4 @@
-// Counts a view of a public page (plan v10 MKT-04, KARAR-MKT-3).
+// Counts a view of a public page.
 //
 // The server puts the analytics script on the public pages only, and only
 // when the owner has switched it on (backend services/siteAnalytics.ts). It

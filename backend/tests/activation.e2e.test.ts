@@ -1,6 +1,6 @@
 'use strict';
 
-// Set-up mails and saved replies (plan v10 PRD-08, PRD-03).
+// Set-up mails and saved replies.
 //
 //  - verifying the address sends the welcome mail; the widget's first page
 //    view sends "your bubble is live"; a day without it, a reminder — each once
@@ -63,10 +63,8 @@ async function api(
 
 async function waitForMail(address: string, pattern: RegExp) {
   for (let i = 0; i < 30; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const found = (await outbox(address)).find((m) => pattern.test(m.subject));
     if (found) return found;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((r) => setTimeout(r, 100));
   }
   return null;
@@ -194,7 +192,6 @@ test('saved replies: agents read, admins write, one shortcut each, a plan cap', 
   // The free plan keeps ten.
   await setPlan(me.organizationId, 'FREE');
   for (let i = 0; i < 9; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const ok = await api('/api/saved-replies', {
       method: 'POST',
       token: me.token,

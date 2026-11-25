@@ -1,4 +1,4 @@
-// The Integrations page (plan v10 PRD-11): an owner adds Slack, sends a
+// The Integrations page: an owner adds Slack, sends a
 // test, reads the delivery history, adds a webhook and sees its signing
 // secret once, then deletes it. The development API records the calls
 // instead of making them (INTEGRATION_TRANSPORT=memory), so nothing reaches

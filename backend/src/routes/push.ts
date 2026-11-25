@@ -1,4 +1,4 @@
-// The panel's push subscriptions (plan v10 PRD-09).
+// The panel's push subscriptions.
 //
 //   GET    /api/push/config          { enabled, publicKey } — the VAPID key
 //   POST   /api/push/subscriptions   { endpoint, keys: { p256dh, auth } }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Size budgets (plan v10 PERF-01), checked in CI after both builds.
+// Size budgets, checked in CI after both builds.
 //
 //   widget.js                     gzip ≤ 35 KB   — it loads on every page of
 //                                                  every customer's site
@@ -84,6 +84,6 @@ if (process.env.GITHUB_STEP_SUMMARY) {
   fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Size budgets\n\n${table}\n`);
 }
 if (failed) {
-  console.error('\nA size budget is exceeded (plan v10 PERF-01).');
+  console.error('\nA size budget is exceeded.');
   process.exit(1);
 }

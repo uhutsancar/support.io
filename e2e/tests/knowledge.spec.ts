@@ -1,4 +1,4 @@
-// Knowledge sources in the panel (plan v10 PRD-21): on the FAQ page an owner
+// Knowledge sources in the panel: on the FAQ page an owner
 // adds a page of their site — read in the background by the API's stand-in
 // for the web (KNOWLEDGE_TRANSPORT=memory) — uploads a PDF, and removes a
 // source. axe finds nothing serious on the page.

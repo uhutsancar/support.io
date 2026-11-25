@@ -1,4 +1,4 @@
-// The referral programme in the browser (plan v10 PRD-23): the owner finds
+// The referral programme in the browser: the owner finds
 // their link under Settings; someone opens it, looks at the pricing page,
 // then signs up — and the owner's "signed up" count goes to one.
 

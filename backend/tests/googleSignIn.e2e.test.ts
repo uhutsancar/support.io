@@ -1,6 +1,6 @@
 'use strict';
 
-// Sign-in with Google (plan v10 PRD-14), through the API's stand-in for
+// Sign-in with Google, through the API's stand-in for
 // Google (GOOGLE_SIGN_IN_TRANSPORT=memory): the same redirects, state cookie,
 // PKCE and ID-token checks as with Google, minus Google's servers. A new
 // Google account makes a verified workspace; an address that already has an
@@ -56,7 +56,7 @@ async function throughGoogle(
     start?: string;
     decision?: 'allow' | 'deny';
     tamper?: (q: URLSearchParams) => void;
-    /** A referral link's code on the sign-in button (PRD-23). */
+    /** A referral link's code on the sign-in button. */
     ref?: string;
   } = {}
 ) {
@@ -188,14 +188,12 @@ async function googleOf(email: string) {
 /** Audit rows are written from an event, a moment after the response. */
 async function audited(email: string, action: string): Promise<number> {
   for (let attempt = 0; attempt < 30; attempt++) {
-    // eslint-disable-next-line no-await-in-loop
     const { rows } = await query(
       `SELECT count(*)::int AS n FROM audit_logs a JOIN users u ON u.id = a.user_id
         WHERE u.email = $1 AND a.action = $2`,
       [email, action]
     );
     if (rows[0].n > 0) return rows[0].n;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return 0;
@@ -278,14 +276,11 @@ test('a Google account connects to one account only', async () => {
     [a, '/dashboard/settings?google=linked#security'],
     [b, '/dashboard/settings?google=taken#security']
   ] as const) {
-    // eslint-disable-next-line no-await-in-loop
     const { url, attemptCookie } = await linkUrl(who.token);
-    // eslint-disable-next-line no-await-in-loop
     const { callback } = await throughGoogle(
       { sub, email: `x${stamp()}@gmail.test` },
       { start: url }
     );
-    // eslint-disable-next-line no-await-in-loop
     assert.equal((await finish(callback, attemptCookie)).to, expected);
   }
   assert.equal((await googleOf(b.email)).google_sub, null);

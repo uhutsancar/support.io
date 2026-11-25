@@ -1,5 +1,5 @@
 /**
- * Ayarlar → Tavsiye programı (plan v10 PRD-23), yalnızca hesap sahibine.
+ * Ayarlar → Tavsiye programı, yalnızca hesap sahibine.
  *
  * Sahibin bağlantısı, bağlantıyla kaydolanlar, abone olanlar ve kazanılan
  * ücretsiz aylar. Ödül, tavsiye edilen işletmenin ilk ödemesinden sonra

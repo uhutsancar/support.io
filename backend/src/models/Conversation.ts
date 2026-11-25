@@ -78,22 +78,22 @@ export interface ConversationDoc {
   /** Who answers the visitor right now: the FAQ assistant or a person. */
   responseOwner: ResponseOwner;
   internalNotes: ConversationInternalNote[];
-  /** From the pre-chat form (PRD-05). */
+  /** From the pre-chat form. */
   visitorPhone: string | null;
   prechat: Record<string, string>;
   /** When the visitor ticked the site's privacy notice box. */
   visitorConsentAt: Date | null;
-  /** When the unanswered-chat mail went out (PRD-01). */
+  /** When the unanswered-chat mail went out. */
   missedNotifiedAt: Date | null;
   /** The visitor asked for no e-mailed replies. */
   emailRepliesOptOut: boolean;
-  /** When a satisfaction request was mailed (PRD-04). */
+  /** When a satisfaction request was mailed. */
   csatRequestedAt: Date | null;
-  /** Out of the open inbox until then (PRD-07). */
+  /** Out of the open inbox until then. */
   snoozedUntil: Date | null;
   /** Set on a conversation merged into another. */
   mergedIntoId: string | null;
-  /** The last time agent replies were mailed to the away visitor (PRD-01). */
+  /** The last time agent replies were mailed to the away visitor. */
   visitorReplyMailedAt: Date | null;
 
   /** Virtuals: minutes elapsed, or null while the milestone has not happened. */

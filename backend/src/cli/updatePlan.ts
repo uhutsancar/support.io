@@ -2,8 +2,8 @@
 //   development:  npm run plan:set -- <email> [FREE|PRO|ENTERPRISE] [--exempt|--not-exempt]
 //   production:   docker compose ... exec backend node dist/cli/updatePlan.js <email> ENTERPRISE --exempt
 //
-// --exempt keeps the plan where it is set: no Paddle event moves it (SEC-05;
-// the platform owner's own workspace, beta customers). --not-exempt hands the
+// --exempt keeps the plan where it is set: no Paddle event moves it
+// (the platform owner's own workspace, beta customers). --not-exempt hands the
 // organization back to billing.
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../config/env';
@@ -94,7 +94,7 @@ async function updatePlan() {
       })
     ]
   );
-  // Sites and seats over a smaller plan go on hold, or come back (BIL-04).
+  // Sites and seats over a smaller plan go on hold, or come back.
   const overage = await reconcilePlanLimits(String(org._id));
   console.log(
     `Organization "${org.name}" set to ${plan} for ${email} (was ${from})` +

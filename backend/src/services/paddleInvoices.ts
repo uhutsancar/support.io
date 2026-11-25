@@ -1,4 +1,4 @@
-// The owner's invoices, from Paddle (plan v10 BIL-06).
+// The owner's invoices, from Paddle.
 //
 // Paddle is the merchant of record: it issues the invoice, with the company
 // name and tax number the buyer entered at checkout, and mails it. The

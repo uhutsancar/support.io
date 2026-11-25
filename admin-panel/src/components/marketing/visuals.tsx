@@ -365,54 +365,6 @@ export const WidgetVisual = ({ className = '', launcher = true }) => {
   );
 };
 
-/* ---------------------------------------------------------- 3. Gösterge kartları */
-
-/** Panelin gösterge panelindeki dolu renkli istatistik kartları. */
-export const MetricsVisual = () => {
-  const { t } = useTranslation();
-  const cards = t('viz.metrics.cards', { returnObjects: true });
-  const list = Array.isArray(cards) ? cards : [];
-  const tones = ['violet', 'emerald', 'sky', 'amber'];
-
-  return (
-    <div data-mockup="" aria-hidden="true" className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {list.map((card, i) => {
-        const a = accent(tones[i % 4]);
-        return (
-          <div
-            key={i}
-            className="rounded-xl border border-gray-200 dark:border-white/[0.08]
-            bg-white dark:bg-white/[0.03] p-3"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <span
-                className={[
-                  'inline-flex items-center justify-center w-8 h-8 rounded-lg',
-                  a.bg
-                ].join(' ')}
-              >
-                <span className="w-3.5 h-3.5 rounded-[3px] bg-white/90" />
-              </span>
-              <span
-                className={[
-                  'text-[10.5px] font-semibold tabular-nums',
-                  card.up ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-                ].join(' ')}
-              >
-                {card.delta}
-              </span>
-            </div>
-            <p className="mt-2.5 text-[21px] font-semibold tracking-tight text-gray-900 dark:text-white tabular-nums">
-              {card.value}
-            </p>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{card.label}</p>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 /* ------------------------------------------------------------- 4. Analitik */
 
 /**

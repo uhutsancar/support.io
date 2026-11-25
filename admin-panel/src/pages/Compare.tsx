@@ -1,6 +1,6 @@
 /**
- * Karşılaştırma sayfası (`/karsilastirma/:slug`, `/en/compare/:slug`; plan v10
- * MKT-04): Supbort.io ve bir rakip, fiyat modeli ve yapay zekâ yan yana.
+ * Karşılaştırma sayfası (`/karsilastirma/:slug`, `/en/compare/:slug`):
+ * Supbort.io ve bir rakip, fiyat modeli ve yapay zekâ yan yana.
  *
  * Dürüstlük kuralı: rakip sütunu yalnızca o firmanın herkese açık fiyat
  * sayfasında yazanı söyler, kaynağı ve kontrol tarihiyle; Supbort.io sütunu

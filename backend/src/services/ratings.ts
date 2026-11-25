@@ -1,4 +1,4 @@
-// Satisfaction ratings (plan v10 PRD-04).
+// Satisfaction ratings.
 //
 // A visitor rates a conversation that has ended — from the widget, or from
 // the link in the rating mail. The score is 1–5; the thumbs style sends 5 or

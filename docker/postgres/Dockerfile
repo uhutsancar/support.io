@@ -1,11 +1,11 @@
 # PostgreSQL 16 with WAL-G, for continuous archiving and point-in-time
-# recovery (plan v10 DR-02, KARAR-DR-2: WAL-G).
+# recovery.
 #
 # The same Debian (trixie) base the development stack runs, so the two sort
 # text the same way (glibc collations); the official WAL-G binary is built
 # against glibc and would not run on Alpine. WAL-G's archive is off until
 # PG_ARCHIVE_MODE=on and its storage settings are given
-# (docker-compose.prod.yml, docs/disaster-recovery.md).
+# (docker-compose.prod.yml).
 #
 # Built and pushed by the release workflow as
 # ghcr.io/<owner>/supportio-postgres:16.15-walg-3.0.9; the server only pulls.

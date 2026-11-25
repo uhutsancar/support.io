@@ -151,7 +151,7 @@ test('widget.js is served with the right type, CORS and cache headers', async ()
 
 test('the v4 path is revalidated, not frozen for a year', async () => {
   // Its content changes with each deploy, so it is not immutable; the
-  // content-hashed name is (tests/widgetDelivery.e2e.test.ts, PERF-02).
+  // content-hashed name is (tests/widgetDelivery.e2e.test.ts).
   const res = await fetch(`${BASE}/widget/v4/widget.js`);
   assert.equal(res.status, 200);
   assert.doesNotMatch(res.headers.get('cache-control') || '', /immutable/);

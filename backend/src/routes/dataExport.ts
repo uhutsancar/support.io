@@ -1,5 +1,5 @@
 // GET /api/account/export — everything an organization has stored, as one
-// JSON file (plan §16, KVKK/GDPR data portability). The owner only.
+// JSON file (KVKK/GDPR data portability). The owner only.
 //
 // Written as a stream, table by table, a few hundred rows at a time, so an
 // organization with years of conversations does not have to fit in memory.

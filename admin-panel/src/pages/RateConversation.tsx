@@ -1,5 +1,5 @@
 /**
- * /rate?t=…  — the page the rating mail opens (plan v10 PRD-04).
+ * /rate?t=…  — the page the rating mail opens.
  *
  * The reader is a customer's visitor, not a Supbort.io user: the page is
  * plain, names the customer's site, and asks one question. The token in the

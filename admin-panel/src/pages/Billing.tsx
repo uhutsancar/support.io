@@ -1,4 +1,4 @@
-// Plan and billing — the owner's page (plan §9.3).
+// Plan and billing — the owner's page.
 //
 // What it shows comes from the server (GET /api/billing): the plan in force,
 // this month's usage against the plan's limits, and the subscription Paddle

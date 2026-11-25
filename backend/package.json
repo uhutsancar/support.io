@@ -4,7 +4,6 @@
   "description": "SaaS Customer Support Backend API",
   "main": "dist/server.js",
   "scripts": {
-    "server": "npm run build:widget && nodemon",
     "dev": "npm run build:widget && nodemon",
     "start": "node dist/server.js",
     "build": "npm run build:widget && tsc -p tsconfig.build.json && tsx scripts/copy-assets.ts",

@@ -68,7 +68,7 @@ export interface RegisterPayload {
   /** The Cloudflare Turnstile answer, when the server asks for one. */
   turnstileToken?: string;
   locale?: string;
-  /** A referral link's code (PRD-23). */
+  /** A referral link's code. */
   referralCode?: string;
 }
 
@@ -86,7 +86,7 @@ export const isPendingSecondStep = (
 export interface AuthConfig {
   turnstileSiteKey: string | null;
   passwordMinLength: number;
-  /** "Continue with Google" is offered (PRD-14). */
+  /** "Continue with Google" is offered. */
   googleSignIn?: boolean;
 }
 
@@ -113,9 +113,9 @@ export interface NotificationPreferences {
   missedChatEmail: 'instant' | 'hourly' | 'off';
   desktop: { newConversation: boolean; assigned: boolean; allMessages: boolean };
   notificationSound: boolean;
-  /** The set-up mails of the first month (PRD-08). */
+  /** The set-up mails of the first month. */
   activationEmails: boolean;
-  /** Monday's summary of the week (owners, admins, managers; PRD-22). */
+  /** Monday's summary of the week (owners; admins; managers). */
   weeklyReport: boolean;
   locale: 'tr' | 'en';
 }
@@ -133,7 +133,7 @@ export interface LoginPayload {
 
 export const authAPI = {
   config: () => api.get<AuthConfig>('/auth/config'),
-  /** Where to send the browser to connect a Google account (PRD-14). */
+  /** Where to send the browser to connect a Google account. */
   recentAuth: (data: {
     purpose: 'google-link' | 'google-unlink';
     password: string;
@@ -149,7 +149,7 @@ export const authAPI = {
   googleUnlink: mutates('/auth/me', (proof: string) =>
     api.delete('/auth/google', { headers: { 'X-Recent-Auth': proof } })
   ),
-  /** The owner's referral link and its results (PRD-23). */
+  /** The owner's referral link and its results. */
   referral: () =>
     api.get<{ code: string; link: string; joined: number; qualified: number; rewarded: number }>(
       '/auth/referral',
@@ -170,7 +170,7 @@ export const authAPI = {
   deleteAccount: (password?: string) =>
     api.delete('/auth/account', password ? { data: { password } } : undefined),
 
-  // E-mail links (plan §7.2). The answers never say whether an address has
+  // E-mail links. The answers never say whether an address has
   // an account; the locale picks the mail's language.
   forgotPassword: (email: string, locale?: string) =>
     api.post<{ message: string }>('/auth/forgot-password', { email, locale }),
@@ -266,7 +266,7 @@ export const filesAPI = {
 
 // ------------------------------------------------------------------ visitors
 
-/** A block still in force on a site (SEC-09). */
+/** A block still in force on a site. */
 export interface VisitorBlock {
   _id: string;
   visitorId: string | null;
@@ -285,7 +285,7 @@ export const visitorsAPI = {
   blocks: (siteId: string) =>
     api.get<{ blocks: VisitorBlock[] }>(`/visitors/blocks/${siteId}`, { cache: false }),
   unblock: (id: string) => api.delete(`/visitors/blocks/${id}`),
-  /** KVKK m.11: every conversation of this conversation's visitor on its site (SEC-17). */
+  /** KVKK m.11: every conversation of this conversation's visitor on its site. */
   erase: (conversationId: string) =>
     api.post<{ conversations: number; messages: number; files: number; events: number }>(
       '/visitors/erase',
@@ -324,7 +324,7 @@ export interface ConversationQuery {
   departmentId?: string;
   assignedTo?: string;
   priority?: string;
-  /** Only conversations with this tag (PRD-07). */
+  /** Only conversations with this tag. */
   tag?: string;
   /** 'snoozed' lists only the snoozed ones; otherwise they are left out. */
   view?: 'snoozed' | 'inbox';
@@ -441,7 +441,7 @@ export const conversationsAPI = {
     api.delete(`${CONVERSATIONS}/${siteId}/${conversationId}`)
   ),
 
-  // ------------------------------------------------- inbox tools (PRD-07)
+  // ------------------------------------------------- inbox tools
 
   setTags: mutates(CONVERSATIONS, (conversationId: string, tags: string[]) =>
     api.put<{ conversation: Conversation }>(`${CONVERSATIONS}/${conversationId}/tags`, { tags })
@@ -484,7 +484,7 @@ export const conversationsAPI = {
 
 const INTEGRATIONS = '/integrations';
 
-/** Slack, Telegram and webhooks (PRD-11). */
+/** Slack, Telegram and webhooks. */
 export const integrationsAPI = {
   list: () =>
     api.get<{ integrations: Integration[]; events: string[] }>(INTEGRATIONS, { cache: false }),
@@ -510,7 +510,7 @@ export const integrationsAPI = {
 
 const TAGS = '/conversation-tags';
 
-/** The workspace's conversation tags, with their colours (PRD-07). */
+/** The workspace's conversation tags, with their colours. */
 export const tagsAPI = {
   list: () => api.get<{ tags: ConversationTag[] }>(TAGS, { cache: false }),
   create: mutates(TAGS, (name: string, color?: string) =>
@@ -616,14 +616,14 @@ export const billingAPI = {
     api.post<CheckoutSession>('/billing/checkout', { plan, cycle }),
   /** A one-off link to Paddle's customer portal. */
   portal: () => api.post<{ url: string }>('/billing/portal'),
-  /** The subscription's invoices, issued by Paddle (BIL-06). */
+  /** The subscription's invoices, issued by Paddle. */
   invoices: () => api.get<{ invoices: Invoice[] }>('/billing/invoices', { cache: false }),
   /** A short-lived link to one invoice's PDF. */
   invoicePdf: (transactionId: string) =>
     api.get<{ url: string }>(`/billing/invoices/${encodeURIComponent(transactionId)}/pdf`, {
       cache: false
     }),
-  /** Sites and members, and which are on hold over the plan (BIL-04). */
+  /** Sites and members, and which are on hold over the plan. */
   overage: () => api.get<PlanOverage>('/billing/overage', { cache: false }),
   /** The owner's choice of what stays active; the rest goes on hold. */
   keep: mutates(['/sites', '/team'], (keepSiteIds: string[], keepMemberIds: string[]) =>
@@ -690,7 +690,7 @@ export const assistantAPI = {
   status: () => api.get<AssistantStatus>('/assistant/status', { cache: false }),
   /** Every site's switch, FAQ count and the last 30 days of activity. */
   overview: () => api.get<AssistantOverview>('/assistant/overview', { cache: false }),
-  /** Marks one of the assistant's answers as wrong, or takes the mark back (AI-06). */
+  /** Marks one of the assistant's answers as wrong, or takes the mark back. */
   flag: (messageId: string) => api.post<{ flagged: boolean }>('/assistant/feedback', { messageId }),
   unflag: (messageId: string) =>
     api.delete<{ flagged: boolean }>(`/assistant/feedback/${messageId}`)
@@ -703,7 +703,7 @@ export const analyticsAPI = {
   // cached answer would fight with the live one.
   getOverview: (range: string, siteId?: string | null) =>
     api.get<AnalyticsOverview>('/analytics/overview', { params: { range, siteId }, cache: false }),
-  /** Conversations started per weekday (Monday first) and hour, in `tz` (PRD-22). */
+  /** Conversations started per weekday (Monday first) and hour, in `tz`. */
   heatmap: (range: string, tz: string) =>
     api.get<{ timeZone: string; grid: number[][] }>('/analytics/heatmap', {
       params: { range, tz },

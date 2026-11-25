@@ -1,4 +1,4 @@
-// What a production deployment must have before it starts (plan §13.5).
+// What a production deployment must have before it starts.
 //
 // Every check is here, in one function, and the server refuses to boot with
 // the full list of what is wrong rather than the first item: an operator
@@ -41,7 +41,7 @@ export function productionConfigProblems(): string[] {
   if (jwt.length < 32 || looksPlaceholder(jwt)) {
     problems.push('JWT_SECRET must be a random value of at least 32 characters');
   }
-  // During a rotation (SEC-18) the old secret is still trusted for checking.
+  // During a rotation the old secret is still trusted for checking.
   const previous = value('JWT_SECRET_PREVIOUS');
   if (previous && (previous.length < 32 || looksPlaceholder(previous))) {
     problems.push('JWT_SECRET_PREVIOUS, when set, must be the old secret (32+ characters)');
@@ -82,7 +82,7 @@ export function productionConfigProblems(): string[] {
   }
 
   // Redis is reachable only on the Docker network and still asks for a
-  // password (SEC-12), so a neighbour container cannot read or wipe it.
+  // password, so a neighbour container cannot read or wipe it.
   const redisUrl = value('REDIS_URL');
   if (redisUrl) {
     const redisPassword = value('REDIS_PASSWORD') || urlPassword(redisUrl);
@@ -122,8 +122,8 @@ export function productionConfigProblems(): string[] {
     problems.push(`BILLING_ENABLED=true needs ${missing}`);
   }
 
-  // Upload decision A (plan §12): files live in S3-compatible storage. Local
-  // disk is a volume nothing backs up (DR-04), so it needs saying twice.
+  // Uploads live in S3-compatible storage. Local
+  // disk is a volume nothing backs up, so it needs saying twice.
   if (value('UPLOAD_STORAGE') === 'local') {
     if (value('ALLOW_LOCAL_UPLOADS') !== 'true') {
       problems.push(
@@ -152,24 +152,22 @@ export function productionConfigWarnings(): string[] {
   const warnings: string[] = [];
   if (!value('TURNSTILE_SECRET') || !value('TURNSTILE_SITE_KEY')) {
     warnings.push(
-      'TURNSTILE_SITE_KEY / TURNSTILE_SECRET are empty: the sign-up form has no bot check (SEC-06)'
+      'TURNSTILE_SITE_KEY / TURNSTILE_SECRET are empty: the sign-up form has no bot check'
     );
   }
-  // The rest of plan v10 appendix C (INF-04): each one costs something when
+  // The optional settings: each one costs something when
   // empty, nothing breaks.
   if (!value('SENTRY_DSN')) {
-    warnings.push('SENTRY_DSN is empty: errors stay in the server log only (OBS-01)');
+    warnings.push('SENTRY_DSN is empty: errors stay in the server log only');
   }
   if (!value('ALERT_WEBHOOK_URL')) {
-    warnings.push('ALERT_WEBHOOK_URL is empty: the watchdog has nobody to tell (OBS-04)');
+    warnings.push('ALERT_WEBHOOK_URL is empty: the watchdog has nobody to tell');
   }
   if (!value('BACKUP_REMOTE') || !value('BACKUP_AGE_RECIPIENT')) {
-    warnings.push(
-      'BACKUP_REMOTE / BACKUP_AGE_RECIPIENT are empty: backups stay on this server (DR-01)'
-    );
+    warnings.push('BACKUP_REMOTE / BACKUP_AGE_RECIPIENT are empty: backups stay on this server');
   }
   if (!value('BACKUP_PING_URL')) {
-    warnings.push('BACKUP_PING_URL is empty: a night without a backup goes unnoticed (DR-01)');
+    warnings.push('BACKUP_PING_URL is empty: a night without a backup goes unnoticed');
   }
   if (!value('SECURITY_CONTACT_EMAIL')) {
     warnings.push(
@@ -177,28 +175,28 @@ export function productionConfigWarnings(): string[] {
     );
   }
   if (!value('OPS_REPORT_EMAIL')) {
-    warnings.push('OPS_REPORT_EMAIL is empty: no weekly product report (OBS-07)');
+    warnings.push('OPS_REPORT_EMAIL is empty: no weekly product report');
   }
   const tier = value('GEMINI_TIER').toLowerCase();
   if (tier && tier !== 'free' && tier !== 'paid') {
-    warnings.push(`GEMINI_TIER=${tier} is not free or paid; free applies (AI-02)`);
+    warnings.push(`GEMINI_TIER=${tier} is not free or paid; free applies`);
   } else if (value('GEMINI_API_KEY') && tier !== 'paid') {
     warnings.push(
-      'GEMINI_TIER is free: the assistant does not answer visitors from the EEA, UK or Switzerland (AI-02, KARAR-AI-1)'
+      'GEMINI_TIER is free: the assistant does not answer visitors from the EEA, UK or Switzerland'
     );
   }
   if (!value('VAPID_PUBLIC_KEY') || !value('VAPID_PRIVATE_KEY')) {
     warnings.push(
-      'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are empty: no push notifications on phones or closed panels (PRD-09; npm run push:keys)'
+      'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are empty: no push notifications on phones or closed panels (npm run push:keys)'
     );
   }
   if (value('S3_ACL') && value('S3_ACL') !== 'private') {
-    warnings.push(`S3_ACL=${value('S3_ACL')}: uploaded files must stay private (SEC-08)`);
+    warnings.push(`S3_ACL=${value('S3_ACL')}: uploaded files must stay private`);
   }
   // Staging settings on a server that may be production.
   if (value('MAIL_ALLOWLIST_DOMAINS')) {
     warnings.push(
-      'MAIL_ALLOWLIST_DOMAINS is set: mail to every other domain is withheld — right for staging only (INF-03)'
+      'MAIL_ALLOWLIST_DOMAINS is set: mail to every other domain is withheld — right for staging only'
     );
   }
   if (String(process.env.SITE_NOINDEX).toLowerCase() === 'true') {

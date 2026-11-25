@@ -1,6 +1,6 @@
 'use strict';
 
-// How the widget script is served (plan v10 PERF-01, PERF-02): minified and
+// How the widget script is served: minified and
 // inside its gzip budget, with a short cache on the names whose content
 // changes with each deploy, and a year-long immutable cache only on the name
 // that carries the content hash.

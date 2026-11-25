@@ -1,5 +1,5 @@
-// What a visitor leaves in the pre-chat or offline form (plan v10 PRD-01,
-// PRD-05), checked against the site's settings: only the fields the site
+// What a visitor leaves in the pre-chat or offline form,
+// checked against the site's settings: only the fields the site
 // asks for, each within bounds, the required ones present, and the consent
 // box ticked when the site requires it. The time of consent is what is kept.
 

@@ -1,15 +1,15 @@
 'use strict';
 
-// The plan (6) §49 items that had no test of their own, and the audit rows
-// of §21 added with them:
+// Security checks that had no test of their own, and the audit rows
+// added with them:
 //
 //  - the panel API answers no CORS preflight from an unknown origin
 //  - SQL-looking search text is just text, and stays inside the tenant
 //  - an error answer carries no stack trace
 //  - adding, changing and deleting a site, and assigning a conversation,
 //    leave audit rows that say what changed but not the content
-//  - /.well-known/security.txt names where to report a vulnerability (SEC-10)
-//  - the CSP names a report endpoint that answers 204 and logs no URL (SEC-11)
+//  - /.well-known/security.txt names where to report a vulnerability
+//  - the CSP names a report endpoint that answers 204 and logs no URL
 //
 // Needs the running API. Run: npm run test:compose
 

@@ -1,4 +1,4 @@
-// The social preview image (plan v10 MKT-03): Facebook, LinkedIn, X and
+// The social preview image: Facebook, LinkedIn, X and
 // WhatsApp do not show SVG, so public/og-image.png (1200×630) is rendered
 // from public/og-image.svg. Run after changing the SVG:
 //   npx tsx scripts/og-image.ts

@@ -36,14 +36,3 @@ export function teamMemberDTO(account: PlainAccount): Record<string, unknown> {
     updatedAt: value.updatedAt
   };
 }
-
-/** The minimal public representation of an agent shown to visitors. */
-export function publicAgentDTO(account: PlainAccount): Record<string, unknown> {
-  const value = plain(account);
-  return {
-    _id: value._id,
-    name: value.name,
-    avatar: value.avatar ?? null,
-    status: value.status
-  };
-}

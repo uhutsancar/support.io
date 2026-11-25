@@ -1,6 +1,6 @@
 'use strict';
 
-// "Wrong answer" on an assistant answer (plan v10 AI-06):
+// "Wrong answer" on an assistant answer:
 //
 //  - an agent of the workspace marks it; a row lands in assistant_feedback
 //    and the answer carries `flagged`; the mark can be taken back

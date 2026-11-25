@@ -1,6 +1,6 @@
 'use strict';
 
-// Inviting agents (plan §7.3): the invited person chooses their own password,
+// Inviting agents: the invited person chooses their own password,
 // a link works once, and the rules about who may hand out which role hold.
 //
 // Needs the running API with the console mail transport. Run: npm test

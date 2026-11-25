@@ -1,6 +1,6 @@
-// Re-seals stored secrets under the new JWT_SECRET (plan v10 SEC-18).
+// Re-seals stored secrets under the new JWT_SECRET.
 // Run it after deploying with JWT_SECRET = the new value and
-// JWT_SECRET_PREVIOUS = the old one; docs/production-runbook.md §8.
+// JWT_SECRET_PREVIOUS = the old one.
 //   development:  npm run secrets:rotate -- [--dry-run]
 //   production:   docker compose ... exec backend npm run secrets:rotate:prod -- [--dry-run]
 // Loads .env before any module below reads it; see src/config/env.ts.

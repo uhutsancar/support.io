@@ -179,7 +179,6 @@ test('allowed origins are validated: no paths, no wildcards', async () => {
     ['https://*.example.com'],
     ['ftp://x.example']
   ]) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await api(`/api/sites/${tenant.site._id}`, {
       method: 'PUT',
       token: tenant.token,
@@ -422,7 +421,6 @@ test('every widget endpoint wants a widget session', async () => {
     ['GET', '/api/widget-config/public', undefined]
   ];
   for (const [method, path, body] of checks) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await api(path, { method, body });
     assert.equal(res.status, 401, `${method} ${path} answered without a session`);
   }

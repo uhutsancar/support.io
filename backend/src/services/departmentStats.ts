@@ -1,25 +1,16 @@
-// The counters a department keeps about its own workload.
+// The counters a department keeps about its own workload, shared by the REST
+// route and the socket handler that resolve a conversation.
 //
-// The rollup that runs when a conversation is resolved existed twice, verbatim
-// — thirty lines in `routes/conversations.ts` and the same thirty in the
-// socket handler's `resolve-conversation`. Two copies of an accumulator is a
-// particularly bad kind of duplication: they do not fail loudly when they
-// drift, they just produce different numbers depending on whether the agent
-// clicked "resolve" in the inbox or the socket closed the conversation, and
-// nobody can tell which figure is the right one afterwards.
-//
-// The arithmetic is a running mean kept without storing the samples:
+// The averages are running means kept without storing the samples:
 //
 //     new_average = (old_average * (n - 1) + sample) / n
 //
-// where `n` is the number of decided conversations *after* this one is counted.
-// That is why the met/breached counters are incremented before the averages
-// are folded in — reversing those two steps divides by the wrong n, which is a
-// mistake the duplicated copies were one edit away from making independently.
+// where `n` counts the decided conversations *after* this one, so the
+// met/breached counters are incremented before the averages are folded in.
 
 import Department from '../models/Department';
 import Team from '../models/Team';
-import type { Doc, Filter, UpdateSpec } from '../db/model';
+import type { Doc } from '../db/model';
 import type { ConversationDoc } from '../models/Conversation';
 import type { DepartmentDoc } from '../models/Department';
 import type { DepartmentSlaMetrics } from '../domain';
@@ -124,26 +115,4 @@ export async function recordAgentResolution(agentId: unknown): Promise<void> {
   await Team.findByIdAndUpdate(agentId, {
     $inc: { 'stats.resolvedConversations': 1 }
   });
-}
-
-/**
- * The agent's own counters when a conversation is handed to them.
- *
- * An agent can be a Team row or a User row, so the model is taken structurally:
- * both expose `findOneAndUpdate`, and this only needs that one method.
- */
-interface CounterUpdatable {
-  findOneAndUpdate(filter: Filter, update: UpdateSpec): PromiseLike<unknown>;
-}
-
-export async function recordAgentAssignment(
-  Model: CounterUpdatable,
-  agentId: unknown,
-  organizationId: string
-): Promise<void> {
-  if (!agentId) return;
-  await Model.findOneAndUpdate(
-    { _id: agentId, organizationId },
-    { $inc: { 'stats.activeConversations': 1, 'stats.totalConversations': 1 } }
-  );
 }

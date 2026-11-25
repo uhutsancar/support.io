@@ -1,5 +1,5 @@
-// A stand-in for the AI model's API, for the browser tests (plan v10 TST-01
-// #2). The API under test is started with
+// A stand-in for the AI model's API, for the browser tests.
+// The API under test is started with
 //
 //   GEMINI_API_KEY=test-key-not-a-real-one
 //   GEMINI_BASE_URL=http://127.0.0.1:<port>/v1beta

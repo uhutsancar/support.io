@@ -1,4 +1,4 @@
-// The public API in the browser (plan v10 PRD-12): on Pro the settings say
+// The public API in the browser: on Pro the settings say
 // the API is an Enterprise feature; on Enterprise the owner creates a key,
 // sees it once, the key reads the workspace through /api/v1, and revoked it
 // stops. The API documentation page lists every endpoint of the OpenAPI

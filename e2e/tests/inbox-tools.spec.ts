@@ -1,7 +1,7 @@
-// The inbox tools in the browser (plan v10 PRD-07): tagging a conversation
+// The inbox tools in the browser: tagging a conversation
 // and filtering by the tag, the keyboard (j/k and the "?" list), snoozing
 // into the snoozed view, and a bulk resolve from the ticked rows. The dialogs
-// are checked with axe while they are open (UX-02).
+// are checked with axe while they are open.
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';

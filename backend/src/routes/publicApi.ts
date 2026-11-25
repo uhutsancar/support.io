@@ -1,4 +1,4 @@
-// The public REST API, version 1 (plan v10 PRD-12).
+// The public REST API, version 1.
 //
 //   Authorization: Bearer sk_live_…     a workspace key (Settings → API keys)
 //

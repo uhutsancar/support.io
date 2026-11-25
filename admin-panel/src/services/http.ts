@@ -83,7 +83,7 @@ api.interceptors.response.use(
       );
     }
     // An organization that requires two-step verification blocks a member
-    // without it; the layout shows the set-up screen (SEC-04).
+    // without it; the layout shows the set-up screen.
     if (code === 'MFA_SETUP_REQUIRED') {
       window.dispatchEvent(new CustomEvent(MFA_SETUP_REQUIRED_EVENT));
     }

@@ -25,7 +25,6 @@ export async function outbox(address: string): Promise<OutboxMail[]> {
 /** The token in the newest mail to `address` whose link goes to `path`. */
 export async function tokenFromMail(address: string, path: string): Promise<string> {
   for (let attempt = 0; attempt < 20; attempt++) {
-    // eslint-disable-next-line no-await-in-loop
     const mails = await outbox(address);
     const pattern = new RegExp(`${path}[?]token=([A-Za-z0-9_%-]+)`);
     for (const m of mails) {
@@ -33,21 +32,9 @@ export async function tokenFromMail(address: string, path: string): Promise<stri
       if (match) return decodeURIComponent(match[1]);
     }
     // Some mails go out without being awaited by the request that caused them.
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   throw new Error(`no ${path} mail for ${address}`);
-}
-
-/** Verifies an address by following its verification link. */
-export async function verifyEmail(address: string): Promise<void> {
-  const token = await tokenFromMail(address, '/verify-email');
-  const res = await fetch(`${BASE}/api/auth/verify-email`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token })
-  });
-  assert.equal(res.status, 200, `verification failed for ${address}`);
 }
 
 /**
@@ -61,7 +48,7 @@ export async function setPlan(
 ): Promise<void> {
   const { query } = await import('../../src/db/pool');
   // A plan set on purpose ends the free trial every new workspace starts
-  // with (PRD-15); otherwise FREE would still read as PRO for two weeks.
+  // with; otherwise FREE would still read as PRO for two weeks.
   await query('UPDATE organizations SET plan_type = $2, trial_ends_at = NULL WHERE id = $1', [
     organizationId,
     plan
@@ -78,8 +65,8 @@ export interface SignUpResult {
 }
 
 /**
- * Signs up the way a person does since sign-up became e-mail first (plan v10
- * SEC-06): POST /api/auth/register only mails a link, and opening the link
+ * Signs up the way a person does since sign-up became e-mail first:
+ * POST /api/auth/register only mails a link, and opening the link
  * verifies the address and starts the session. The answer to the link is
  * returned in the shape the register call used to have — status 201,
  * `body.user`, the session cookie in the headers — so suites read it as

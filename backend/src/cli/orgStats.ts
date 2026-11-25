@@ -1,4 +1,4 @@
-// The product's numbers (plan v10 OBS-07): workspaces, live widgets,
+// The product's numbers: workspaces, live widgets,
 // sign-ups and activation, paying customers and an estimated MRR, and how
 // much the assistant resolves. Aggregates only.
 //   development:  npm run org:stats -- [days, default 7] [--json]

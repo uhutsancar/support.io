@@ -1,6 +1,6 @@
 'use strict';
 
-// A site's public help center (plan v10 PRD-10): off until the owner turns
+// A site's public help center: off until the owner turns
 // it on with an address of their own; then its active, site-wide FAQ entries
 // are a page anyone can read — grouped, searchable, escaped, marked up for
 // search engines or kept out of them — and the widget learns its address.
@@ -86,7 +86,6 @@ test('off until turned on; then the page, its search, its address in the widget'
     400
   );
   for (const bad of ['a', 'Büyük Harf', '-tire', 'x'.repeat(41), '../etc']) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await call(t.token, `/api/sites/${t.site._id}/help-center`, 'PUT', { slug: bad });
     assert.equal(res.status, 400, bad);
   }

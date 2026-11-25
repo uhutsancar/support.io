@@ -1,5 +1,5 @@
 /**
- * Asistanı açmadan önce site sahibinin onayı (plan v10 AI-04). Açıldığında
+ * Asistanı açmadan önce site sahibinin onayı. Açıldığında
  * sitenin SSS içeriği ve ziyaretçi soruları, kişisel veriler maskelenerek
  * yapay zekâ hizmet sağlayıcısına gider; sahip bunu kutuyu işaretleyerek
  * onaylar. Onay zamanı ve kişi denetim kaydına yazılır (ASSISTANT_ENABLED).

@@ -1,4 +1,4 @@
-// The referral months still to give (plan v10 PRD-23).
+// The referral months still to give.
 //   development:  npm run referrals:due
 //                 npm run referrals:due -- --given <referral id> "<what it was given with>"
 //   production:   docker compose ... exec backend npm run referrals:due:prod [-- --given …]

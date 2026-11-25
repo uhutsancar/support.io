@@ -1,6 +1,6 @@
 'use strict';
 
-// Plan limits, enforced on the server and race-proof (plan §8, §18):
+// Plan limits, enforced on the server and race-proof:
 //
 //  - sites and seats per plan, also under concurrent requests
 //  - the monthly conversation quota stops at the limit exactly, open
@@ -225,10 +225,8 @@ test('the owner is mailed once when 80% of the quota is used', async () => {
     [free.organizationId, currentPeriod(), line - 2]
   );
   for (let i = 0; i < 3; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const v = await joinAsVisitor(free.site.siteKey);
     sockets.push(v.socket);
-    // eslint-disable-next-line no-await-in-loop
     const r = await v.socket
       .timeout(10_000)
       .emitWithAck('send-message', { content: 'merhaba', clientMessageId: `c_w_${i}` });
@@ -254,7 +252,6 @@ test('paid features answer PLAN_UPGRADE_REQUIRED on the free plan', async () => 
     ['GET', '/api/audit', undefined]
   ];
   for (const [method, path, body] of checks) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await api(path, { method, token: free.token, body });
     assert.equal(res.status, 403, `${method} ${path} answered ${res.status}`);
     assert.equal(res.body.code, 'PLAN_UPGRADE_REQUIRED', `${method} ${path}`);

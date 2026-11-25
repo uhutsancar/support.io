@@ -1,5 +1,5 @@
 /**
- * The reply box with saved replies (plan v10 PRD-03): typing "/" opens a list
+ * The reply box with saved replies: typing "/" opens a list
  * of the organization's replies, filtered by what follows; ↑/↓ move, Enter
  * or Tab inserts, Esc closes. Variables are filled in as the reply goes in:
  * {{visitor.name}}, {{agent.name}}, {{site.name}}.

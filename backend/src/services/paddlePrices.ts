@@ -1,4 +1,4 @@
-// One source for the price a customer sees (plan v10 BIL-03).
+// One source for the price a customer sees.
 //
 // domain/plans.ts carries display prices; what is charged is the Paddle
 // price behind each plan (PADDLE_PRICE_*). The two can drift — a price edited

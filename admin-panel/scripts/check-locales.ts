@@ -1,4 +1,4 @@
-// Turkish and English must carry the same keys (plan v10 UX-06).
+// Turkish and English must carry the same keys.
 //
 // i18next falls back to Turkish for a key English lacks, so a missing
 // translation does not break anything visibly — it shows Turkish text to an

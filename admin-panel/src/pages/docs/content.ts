@@ -112,7 +112,7 @@ export const PLATFORMS: Platform[] = [
       }
     ]
   },
-  // Türk e-ticaret altyapıları (PRD-13). Menü adları altyapıların kendi yardım
+  // Türk e-ticaret altyapıları. Menü adları altyapıların kendi yardım
   // sayfalarından alındı; panelleri değişirse burası da güncellenir.
   {
     id: 'ikas',
@@ -514,7 +514,7 @@ export const OPTIONS: Array<{ attr: string; text: Text }> = [
   }
 ];
 
-/* ------------------------------------------------- gizlilik metni (LEG-04) */
+/* ------------------------------------------------- gizlilik metni */
 
 /**
  * The paragraph a customer adds to their own privacy notice. The customer is

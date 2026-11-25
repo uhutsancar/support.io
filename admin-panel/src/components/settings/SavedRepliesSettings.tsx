@@ -1,5 +1,5 @@
 /**
- * Ayarlar → Hazır yanıtlar (plan v10 PRD-03). Sahip ve yöneticiler ekler,
+ * Ayarlar → Hazır yanıtlar. Sahip ve yöneticiler ekler,
  * düzenler, siler; temsilciler yanıt kutusunda "/" ile kullanır. Bir yanıt
  * tüm sitelerde ya da tek bir sitede geçerlidir.
  */

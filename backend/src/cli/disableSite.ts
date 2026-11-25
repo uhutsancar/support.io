@@ -1,4 +1,4 @@
-// Blocks a site's widget for abuse — phishing, fraud, spam (plan v10 LEG-05)
+// Blocks a site's widget for abuse — phishing, fraud, spam
 // — or lifts the block. A blocked site's widget gets no session and a page
 // left open can send nothing more; the owner can read the history and delete
 // the site but cannot switch it back on: only this command does

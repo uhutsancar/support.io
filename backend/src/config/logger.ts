@@ -1,4 +1,4 @@
-// Structured logging (plan §11.3).
+// Structured logging.
 //
 // One JSON line per event in production, readable lines in development
 // (LOG_PRETTY is not needed: pino's default is JSON; development keeps the
@@ -10,7 +10,7 @@
 // Never logged: passwords, tokens, cookies, API keys, message contents, full
 // database URLs. Paths are logged without their query string, which can carry
 // tokens (verification and reset links). An e-mail address that ends up in a
-// logged object is masked to u***@d***.com (plan v10 SEC-16):
+// logged object is masked to u***@d***.com:
 // enough to tell two apart, not enough to write to.
 //
 // The rest of the code still uses console.* in places; those calls are moved

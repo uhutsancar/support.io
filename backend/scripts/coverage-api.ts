@@ -1,4 +1,4 @@
-// Runs the API for a coverage measurement (plan v10 TST-02).
+// Runs the API for a coverage measurement.
 //
 // The e2e suite calls a running API, so the code it exercises runs in that
 // process, not in the test runner. Started with NODE_V8_COVERAGE set, this

@@ -1,8 +1,8 @@
-// The referral programme (plan v10 PRD-23): a workspace shares its link; a
+// The referral programme: a workspace shares its link; a
 // workspace that signs up through it and whose first paid subscription
 // becomes active earns the referrer a free month — a one-time Paddle discount
 // (PADDLE_REFERRAL_DISCOUNT_ID, a 100% discount on one billing period that
-// the owner creates in Paddle [SAHİP]) applied to the referrer's next bill.
+// the owner creates in Paddle) applied to the referrer's next bill.
 //
 // The reward is given when it can be: the referrer must have a live paid
 // subscription and the discount must be configured. Until then it waits and

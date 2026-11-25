@@ -1,4 +1,4 @@
-// How long the workspace keeps conversations (plan v10 SEC-17).
+// How long the workspace keeps conversations.
 //
 //   GET /api/data-retention   owner/admin: the days in force and the plan's window
 //   PUT /api/data-retention   owner/admin: { days } within the window, or null

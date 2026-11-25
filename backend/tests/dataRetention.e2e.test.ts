@@ -1,6 +1,6 @@
 'use strict';
 
-// How long conversations are kept, and erasing a visitor (plan v10 SEC-17):
+// How long conversations are kept, and erasing a visitor:
 //
 //  - each plan's window: Free 90 days with no choice, Pro 30–365, Enterprise
 //    30–1830; the choice is audited

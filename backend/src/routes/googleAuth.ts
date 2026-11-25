@@ -1,4 +1,4 @@
-// Sign-in with Google (plan v10 PRD-14). services/googleSignIn.ts verifies
+// Sign-in with Google. services/googleSignIn.ts verifies
 // what Google says; this decides which account it opens.
 //
 //   GET    /api/auth/google/start      the sign-in and sign-up button
@@ -54,7 +54,7 @@ const AUDIENCE = 'support-chat:google-attempt';
 type Lang = 'tr' | 'en';
 interface Attempt extends GoogleAttempt {
   lang: Lang;
-  /** A referral link's code, kept for the workspace this may create (PRD-23). */
+  /** A referral link's code, kept for the workspace this may create. */
   ref?: string;
   /** Present when a signed-in account is connecting Google. */
   link?: { userId: string; userType: UserType; sv: number; authTime: number };

@@ -18,13 +18,13 @@ export const FEATURES = [
   'crm',
   'export',
   'audit',
-  // Requiring two-step verification of every member (SEC-04).
+  // Requiring two-step verification of every member.
   'security',
-  // Slack, Telegram and outgoing webhooks (PRD-11).
+  // Slack, Telegram and outgoing webhooks.
   'integrations',
-  // The public REST API with keys (PRD-12): Enterprise.
+  // The public REST API with keys: Enterprise.
   'api',
-  // The assistant also answers from the site's pages and PDFs (PRD-21).
+  // The assistant also answers from the site's pages and PDFs.
   'knowledge'
 ] as const;
 export type Feature = (typeof FEATURES)[number];
@@ -45,7 +45,7 @@ export interface AssistantLimits {
   answerChars: number;
   /** How long its answers are asked to be, in sentences. */
   sentences: number;
-  /** Pages and PDFs it may also answer from, per organization (PRD-21). */
+  /** Pages and PDFs it may also answer from, per organization. */
   knowledgeSources: number;
 }
 
@@ -58,10 +58,10 @@ export interface PlanLimits {
   monthlyConversations: number;
   /** Whether the widget must show "Powered by Supbort.io". */
   branding: boolean;
-  /** Saved replies the organization may keep (PRD-03). */
+  /** Saved replies the organization may keep. */
   savedReplies: number;
   /**
-   * How long a conversation is kept after its last message (SEC-17): the
+   * How long a conversation is kept after its last message: the
    * owner chooses within min–max; Free has no choice.
    */
   retention: { defaultDays: number; minDays: number; maxDays: number };

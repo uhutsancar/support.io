@@ -1,6 +1,6 @@
 'use strict';
 
-// Reports (plan v10 PRD-22): the conversations, agents and SLA breaches of a
+// Reports: the conversations, agents and SLA breaches of a
 // window as CSV or Excel on a plan with exports, safe to open in a
 // spreadsheet, audited; the week-by-hour heatmap in the viewer's time zone;
 // the SLA breach list; and Monday's summary mail, once per week, to whoever
@@ -105,7 +105,6 @@ test('agents and SLA breaches as an Excel workbook that unzips and reads back', 
     [id]
   );
   for (const report of ['sla', 'agents', 'conversations']) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await get(t, `/api/analytics/export?report=${report}&format=xlsx&range=30days`);
     assert.equal(res.status, 200, report);
     assert.equal(

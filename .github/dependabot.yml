@@ -1,4 +1,4 @@
-# Dependency updates (plan v10 SEC-02 / SUP-02).
+# Dependency updates.
 #
 # npm: weekly, patch and minor releases grouped into one PR per package so
 # the queue stays short; majors arrive one by one and are read before merge.

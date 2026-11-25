@@ -1,6 +1,6 @@
 'use strict';
 
-// robots.txt, sitemap.xml and X-Robots-Tag (plan v10 MKT-01, MKT-02): built
+// robots.txt, sitemap.xml and X-Robots-Tag: built
 // from the domain the API runs on, never a hard-coded one; private pages
 // carry noindex; the sitemap pairs every page with its other language.
 //

@@ -1,4 +1,4 @@
-// A new customer, from sign-up to a paid plan, in real browsers (plan §18):
+// A new customer, from sign-up to a paid plan, in real browsers:
 // register → "check your inbox" → the mailed link signs in → onboarding
 // creates the site → the
 // install code goes on a separate website → a visitor writes → the agent sees
@@ -9,7 +9,7 @@
 // The visitor and the agent are separate browser contexts, so they share no
 // cookies or storage. The upgrade is the webhook Paddle sends after a sandbox
 // payment, signed like Paddle signs it; paying in Paddle's own overlay needs
-// a sandbox account and is checked by hand (docs/production-runbook.md §7).
+// a sandbox account and is checked by hand.
 
 import { expect, test, type Page } from '@playwright/test';
 import { customerWebsite, mailedLink, paidSubscription } from './support';
@@ -138,7 +138,7 @@ test('a new customer answers their first visitor and upgrades', async ({ browser
     });
 
     await test.step('the trial ends in Free; paying for Pro raises the limits again', async () => {
-      // A new workspace starts on the free Pro trial (PRD-15).
+      // A new workspace starts on the free Pro trial.
       await panel.goto('/dashboard/billing');
       await expect(panel.getByText('Ücretsiz deneme').first()).toBeVisible();
       await expect(panel.getByText('1 / 3').first()).toBeVisible();

@@ -1,4 +1,4 @@
-// The inbox's keyboard shortcuts (plan v10 PRD-07):
+// The inbox's keyboard shortcuts:
 //
 //   j / k   next / previous conversation     e   mark as resolved
 //   a       assign to yourself               s   snooze

@@ -83,7 +83,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
           withCredentials: true,
           transports: ['websocket', 'polling'],
           reconnection: true,
-          // 1 s to 30 s with jitter, like the widget (PERF-06).
+          // 1 s to 30 s with jitter, like the widget.
           reconnectionDelay: 1000,
           reconnectionDelayMax: 30000,
           randomizationFactor: 0.5,

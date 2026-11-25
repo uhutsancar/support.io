@@ -1,5 +1,5 @@
 /**
- * "Ziyaretçiyi engelle" (plan v10 SEC-09). Konuşmanın ziyaretçisini bu sitede
+ * "Ziyaretçiyi engelle". Konuşmanın ziyaretçisini bu sitede
  * seçilen süre boyunca engeller; açık widget'ı hemen kapanır ve nazik bir
  * mesaj gösterir. Engeller Siteler → Sohbet ayarları'ndan kaldırılır.
  */

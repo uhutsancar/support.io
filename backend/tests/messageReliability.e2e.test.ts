@@ -1,6 +1,6 @@
 'use strict';
 
-// Message delivery that survives a bad connection (plan §6):
+// Message delivery that survives a bad connection:
 //
 //  - a resend with the same clientMessageId is the same message, for the
 //    visitor and for the agent, and the sender is told so in the ack
@@ -196,7 +196,6 @@ test('a client that was offline catches up with `after`, and only in its own con
 
   const sent: any[] = [];
   for (let i = 1; i <= 5; i++) {
-    // eslint-disable-next-line no-await-in-loop
     const ack = await emitWithAck(visitor.socket, 'send-message', {
       content: `mesaj ${i}`,
       clientMessageId: `c_catch_${i}`
@@ -265,7 +264,6 @@ test('the per-event socket budget drops what is over it', async () => {
     client.on('error', (e) => errors.push(e));
     const replies: Ack[] = [];
     for (let i = 0; i < 3; i++) {
-      // eslint-disable-next-line no-await-in-loop
       replies.push(await emitWithAck(client, 'send-message', { content: `m${i}` }));
     }
     assert.deepEqual(

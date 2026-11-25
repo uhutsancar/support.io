@@ -1,10 +1,10 @@
-// Sign-in with Google (plan v10 PRD-14): OpenID Connect, authorization code
+// Sign-in with Google: OpenID Connect, authorization code
 // flow with PKCE, a state bound to a short cookie and a nonce bound to the ID
 // token. Google's ID token is verified here — its RS256 signature against
 // Google's published keys, its issuer, its audience (our client id), its
 // expiry and its nonce — and only a verified address is accepted.
 //
-//   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET   the OAuth client [SAHİP]
+//   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET   the OAuth client
 //
 // Without both, the Google button is not shown and nothing here runs.
 //

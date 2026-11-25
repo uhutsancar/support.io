@@ -1,4 +1,4 @@
-// Errors the panel and the widget report (plan v10 OBS-01).
+// Errors the panel and the widget report.
 //
 //   POST /api/telemetry/panel   the panel's uncaught errors
 //   POST /api/widget/telemetry  the widget's failures, one in

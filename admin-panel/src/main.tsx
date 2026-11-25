@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-// Inter from our own origin (plan v10 PERF-08): no request to a font CDN, no
+// Inter from our own origin: no request to a font CDN, no
 // render-blocking stylesheet; latin and latin-ext (Turkish) load as needed.
 import '@fontsource-variable/inter';
 import './index.css';

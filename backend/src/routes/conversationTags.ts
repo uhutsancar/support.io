@@ -1,4 +1,4 @@
-// The organization's conversation tags (plan v10 PRD-07): a short list of
+// The organization's conversation tags: a short list of
 // names with a colour. Conversations keep the names (conversations.tags);
 // renaming or deleting a tag here changes every conversation that carries it.
 //

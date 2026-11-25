@@ -1,6 +1,6 @@
 'use strict';
 
-// Push notifications to the panel (plan v10 PRD-09): only the browsers'
+// Push notifications to the panel: only the browsers'
 // push services are accepted as endpoints, a subscription belongs to the
 // account that saved it, the events follow the desktop-notification choices
 // and the site access, nothing is pushed while the panel is open, and a
@@ -57,10 +57,8 @@ async function pushes(token: string): Promise<any[]> {
 async function pushCount(token: string, count: number): Promise<any[]> {
   let list: any[] = [];
   for (let i = 0; i < 30; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
     list = await pushes(token);
     if (list.length >= count) return list;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   return list;
@@ -114,7 +112,6 @@ test('a subscription: saved for the signed-in account, refused elsewhere, remove
     { ...subscription, keys: { p256dh: subscription.keys.p256dh, auth: 'x' } },
     { endpoint: subscription.endpoint }
   ]) {
-    // eslint-disable-next-line no-await-in-loop
     const res = await call(a.token, '/api/push/subscriptions', 'POST', body);
     assert.equal(res.status, 400, JSON.stringify(body));
   }

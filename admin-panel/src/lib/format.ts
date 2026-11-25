@@ -97,31 +97,6 @@ export function formatFileSize(bytes: number | null | undefined): string {
   return `${Math.round(value * 100) / 100} ${units[exponent]}`;
 }
 
-/** An amount of money in the organization's currency. */
-export function formatCurrency(value: number | null | undefined, currency = 'TRY'): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return NOT_MEASURED;
-  return new Intl.NumberFormat(LOCALE, { style: 'currency', currency }).format(value);
-}
-
-/** A percentage as `87%`, or `NOT_MEASURED` when there was nothing to divide. */
-export function formatPercent(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return NOT_MEASURED;
-  return `${Math.round(value)}%`;
-}
-
-/** The initials shown in an avatar when a person has no picture. */
-export function initialsOf(name: string | null | undefined): string {
-  if (!name) return '?';
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  );
-}
-
 // --------------------------------------------------------------------- helpers
 
 /** Parses whatever the API sent, or null when it is not a usable date. */

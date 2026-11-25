@@ -94,15 +94,6 @@ export function passwordProblemCode(
   return null;
 }
 
-/** Politikaya uymayan parola için kullanıcıya gösterilecek mesaj; uyuyorsa null. */
-export function passwordProblem(
-  password: unknown,
-  context: { email?: string } = {}
-): string | null {
-  const code = passwordProblemCode(password, context);
-  return code ? MESSAGES[code] : null;
-}
-
 /** Throws a 400 carrying the policy code when the password is refused. */
 export function assertPasswordAllowed(password: unknown, context: { email?: string } = {}): void {
   const code = passwordProblemCode(password, context);

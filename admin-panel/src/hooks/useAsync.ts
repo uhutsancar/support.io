@@ -1,25 +1,6 @@
-// Loading, failing and retrying — once, instead of in every page.
-//
-// Sixteen pages carried the same shape by hand:
-//
-//     const [loading, setLoading] = useState(true);
-//     const fetchX = async () => {
-//       try { setLoading(true); setX((await api.getAll()).data); }
-//       catch (error) { }                       // <- and 30 of these were empty
-//       finally { setLoading(false); }
-//     };
-//     useEffect(() => { fetchX(); }, []);
-//
-// Three things went wrong with that pattern here, every time:
-//
-//   * The catch was usually empty, so a failed request left the page showing an
-//     empty list that is indistinguishable from "you have no sites yet".
-//   * Nothing cancelled the request, so a component unmounted mid-flight called
-//     setState on a dead component.
-//   * `loading` started `true` and was only cleared in `finally`, so a page that
-//     threw before the try block span forever.
-//
-// The hooks below fix all three in one place.
+// Loading, failing and retrying in one place: every request reports its
+// error, is cancelled when the component unmounts, and never leaves a page
+// spinning.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import i18n from '../i18n';
@@ -82,7 +63,7 @@ export function errorMessage(error: unknown, fallback: string): string {
       }
     ).response;
     // An unexpected failure carries the request id the server logged it
-    // under (OBS-05): shown as a support code the customer can quote.
+    // under: shown as a support code the customer can quote.
     const requestId = typeof response?.data?.requestId === 'string' ? response.data.requestId : '';
     if (requestId && (response?.status ?? 500) >= 500) {
       return `${fallback} ${i18n.t('errors.supportCode', { code: requestId.slice(0, 8) })}`;
@@ -186,51 +167,4 @@ export function useAsync<T>(
   }, []);
 
   return { ...state, reload, setData };
-}
-
-/**
- * An action the user triggers — save, delete, invite — with its own pending flag.
- *
- * Returns the runner and whether it is in flight, so a submit button can
- * disable itself without the page keeping a second `saving` state of its own.
- *
- * A failure is reported through `onError` and the runner resolves to
- * `undefined`, so the caller checks the result rather than wrapping the call in
- * another try/catch — which is how the empty catches accumulated in the first
- * place.
- */
-export function useAction<TArgs extends unknown[], TResult>(
-  action: (...args: TArgs) => Promise<TResult>,
-  options: {
-    onError: (message: string) => void;
-    fallbackMessage: string;
-    onSuccess?: (result: TResult) => void;
-  }
-): { run: (...args: TArgs) => Promise<TResult | undefined>; pending: boolean } {
-  const [pending, setPending] = useState(false);
-
-  // Written in an effect, not during render; see the note in `useAsync`.
-  const optionsRef = useRef(options);
-  const actionRef = useRef(action);
-  useEffect(() => {
-    optionsRef.current = options;
-    actionRef.current = action;
-  });
-
-  const run = useCallback(async (...args: TArgs) => {
-    setPending(true);
-    try {
-      const result = await actionRef.current(...args);
-      optionsRef.current.onSuccess?.(result);
-      return result;
-    } catch (error) {
-      console.error('[useAction] failed', error);
-      optionsRef.current.onError(errorMessage(error, optionsRef.current.fallbackMessage));
-      return undefined;
-    } finally {
-      setPending(false);
-    }
-  }, []);
-
-  return { run, pending };
 }

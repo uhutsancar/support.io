@@ -1,4 +1,4 @@
-// Cloudflare Turnstile on the sign-up form (plan v10 SEC-06).
+// Cloudflare Turnstile on the sign-up form.
 //
 // The browser solves a challenge and hands us a one-time token; we ask
 // Cloudflare whether it is genuine. Turnstile is free, shows most people no

@@ -1,4 +1,4 @@
-// The mails a conversation sends on its own (plan v10 PRD-01, PRD-04).
+// The mails a conversation sends on its own.
 //
 //   unanswered chats  a visitor wrote and nobody answered within the site's
 //                     delay (3 minutes by default), or nobody was online at

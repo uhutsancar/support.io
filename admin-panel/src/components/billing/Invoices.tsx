@@ -1,5 +1,5 @@
 /**
- * The subscription's invoices (BIL-06). Paddle issues them, with the company
+ * The subscription's invoices. Paddle issues them, with the company
  * name and tax number entered at checkout; the PDF link it hands out is
  * short-lived, so it is fetched when the owner clicks.
  */

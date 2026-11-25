@@ -384,7 +384,7 @@ const loginAccountLimiter = createLimiter({
       typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : '';
     return email ? `acct:${email}` : `ip:${ipKeyGenerator(req.ip || '')}`;
   },
-  // One audit row per locked account per window (SEC-06), however many
+  // One audit row per locked account per window, however many
   // attempts keep hitting the lock: the trail should say it happened, not
   // fill up with the attacker's retries.
   onLimit: (req: Request) => {
@@ -467,8 +467,8 @@ const resendVerificationLimiter = createLimiter({
 });
 
 // Hesap ayarlari: sifre ve e-posta degistirme, iki adimli dogrulamayi
-// acip kapama, tum cihazlardan cikis. Kullanici basina saatte 5 (plan v10
-// SEC-03): mevcut sifreyi tahmin etmek icin bir oturumun elinde tutulacak
+// acip kapama, tum cihazlardan cikis. Kullanici basina saatte 5:
+// mevcut sifreyi tahmin etmek icin bir oturumun elinde tutulacak
 // yol kalmaz.
 const accountChangeLimiter = createLimiter({
   name: 'account-change',
@@ -502,7 +502,7 @@ const apiLimiter = createLimiter({
   max: limit(process.env.API_RATE_MAX, 1000, 1000000)
 });
 
-// Kurum basina yazma sinirlari (plan (6) §8.2). Plan limiti toplam site ve
+// Kurum basina yazma sinirlari. Plan limiti toplam site ve
 // koltuk sayisini tutar; bunlar sil-yeniden-olustur dongusunu ve davet
 // e-postalariyla rastgele adreslere spam atilmasini yavaslatir.
 function perOrganization(req: Request): string {
@@ -561,7 +561,7 @@ function handshakeIp(headers: Record<string, unknown>, address: string): string 
   return ipKeyGenerator(clientAddress(headers, address));
 }
 
-// Spam mode (SEC-09, services/chatSettings.ts): a visitor nobody on the team
+// Spam mode (services/chatSettings.ts): a visitor nobody on the team
 // has answered yet sends at most three messages a minute, and one with a link
 // every five minutes. Fixed, not tuned per environment: a site turns it on
 // because it is being flooded.

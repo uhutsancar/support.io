@@ -42,7 +42,7 @@ export interface UserDoc {
   totpSecretEnc: string | null;
   /** When two-step sign-in was switched on; null while off. */
   totpEnabledAt: Date | null;
-  /** Over the plan's seats after a downgrade: reads, cannot write (0015, BIL-04). */
+  /** Over the plan's seats after a downgrade: reads, cannot write (0015). */
   seatSuspendedAt: Date | null;
   /** The last 30-second step a code was accepted for; replays are refused. */
   totpLastStep: number | null;

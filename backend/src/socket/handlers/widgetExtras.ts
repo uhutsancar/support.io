@@ -1,5 +1,5 @@
-// The visitor's side of the forms, ratings and transcripts (plan v10
-// PRD-01, PRD-04, PRD-05, PRD-06). Installed on every widget socket next to
+// The visitor's side of the forms, ratings and transcripts.
+// Installed on every widget socket next to
 // the chat handlers in ./widget.ts.
 //
 //   visitor-contact     the pre-chat / offline form: name, address, phone,

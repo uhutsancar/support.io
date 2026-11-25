@@ -50,7 +50,7 @@
     "build": "npm run typecheck && tsx scripts/build-icons.ts && vite build && tsx scripts/public-pages.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview",
-    "icons": "tsx scripts/build-icons.ts",
+    "icons": "tsx scripts/build-icons.ts && tsx scripts/og-image.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write . --ignore-path ../.prettierignore",

@@ -1,4 +1,4 @@
-// Report files (plan v10 PRD-22): one table as CSV or as an Excel workbook.
+// Report files: one table as CSV or as an Excel workbook.
 //
 // CSV starts with a byte-order mark so Excel reads Turkish letters right, and
 // every cell that a spreadsheet would run as a formula — one starting with

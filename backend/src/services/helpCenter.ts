@@ -1,4 +1,4 @@
-// A site's public help center (plan v10 PRD-10): its active FAQ entries at
+// A site's public help center: its active FAQ entries at
 // /help/<slug>, grouped by category, searchable, readable without
 // JavaScript and by search engines — or kept out of them when the owner
 // asks (noindex). Written on the server: one small page, no panel bundle.

@@ -1,5 +1,5 @@
 // Time-based one-time passwords (RFC 6238 over RFC 4226), for two-step
-// sign-in with an authenticator app (plan v10 SEC-04).
+// sign-in with an authenticator app.
 //
 // Small enough to own instead of adding a dependency: HMAC-SHA1, 30-second
 // steps, 6 digits — the parameters every authenticator app defaults to.

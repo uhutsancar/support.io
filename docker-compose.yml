@@ -22,10 +22,8 @@ services:
       POSTGRES_DB: ${DB_NAME:-supportchat}
       POSTGRES_USER: ${DB_USER:-support_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-supportchat}
-    # Yalnizca bu makineden erisilir. Tum arayuzlere acik oldugunda varsayilan
-    # parolayla birlikte ayni agdaki (ortak Wi-Fi vb.) herkes gelistirme
-    # veritabanina baglanabiliyordu. Testler ve araclar localhost uzerinden
-    # baglandigi icin hicbir sey degismez; Redis de ayni sekilde bagli.
+    # Bound to this machine only: the default password must not be reachable
+    # from the local network. Redis is bound the same way.
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -34,12 +32,8 @@ services:
       timeout: 5s
       retries: 5
 
-  # Bu projeye ait, digerlerinden bagimsiz Redis.
-  #
-  # Makinede baska redis'ler var (local-redis 6379, motionmeet-redis 6380), bu
-  # yuzden hem konteyner adi hem host portu ayri tutulur. Yalnizca 127.0.0.1'e
-  # baglanir: redis kimlik dogrulamasi olmadan calisir ve tum arayuzlere acilmasi
-  # ag uzerinden acik bir kapi birakir.
+  # Runs without authentication, so it listens on 127.0.0.1 only. The host
+  # port defaults to 6381 to stay clear of another Redis on 6379.
   redis:
     image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
     container_name: support.io_redis
@@ -74,9 +68,6 @@ services:
     volumes:
       - ./backend:/usr/src/backend
       - backend_node_modules:/usr/src/backend/node_modules
-      # server.ts /demo'yu ../../demo yolundan sunar; bu klasor backend build
-      # context'inin disindadir, yani imajda yoktur. Baglanmazsa /demo 404 doner.
-      - ./demo:/usr/src/demo:ro
     environment:
       - PORT=3000
       - NODE_ENV=development
@@ -141,7 +132,7 @@ services:
       - PADDLE_PRICE_ENTERPRISE_YEARLY
       - PADDLE_API_KEY
       - PADDLE_CLIENT_TOKEN
-      # Web Push (PRD-09): a development pair in the root .env (npm run
+      # Web Push: a development pair in the root .env (npm run
       # push:keys); never committed. Without it push is off.
       - VAPID_PUBLIC_KEY
       - VAPID_PRIVATE_KEY
@@ -151,10 +142,10 @@ services:
       # Slack, Telegram and webhook calls are kept in memory too
       # (GET /api/dev/integration-outbox), never made, in development.
       - INTEGRATION_TRANSPORT=${INTEGRATION_TRANSPORT:-memory}
-      # Sign-in with Google (PRD-14) goes to a stand-in account chooser at
+      # Sign-in with Google goes to a stand-in account chooser at
       # /api/dev/google, never to Google, in development.
       - GOOGLE_SIGN_IN_TRANSPORT=${GOOGLE_SIGN_IN_TRANSPORT:-memory}
-      # Knowledge pages (PRD-21) come from a stand-in registry, not the web.
+      # Knowledge pages come from a stand-in registry, not the web.
       - KNOWLEDGE_TRANSPORT=${KNOWLEDGE_TRANSPORT:-memory}
     ports:
       - "${BACKEND_PORT:-5000}:3000"

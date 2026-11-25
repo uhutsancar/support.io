@@ -58,7 +58,7 @@ function loadAgents(filter: Filter) {
  */
 async function findBestAgents(conversation: Doc<ConversationDoc>, organizationId: string) {
   const { requiredSkills = [], department } = conversation;
-  // A seat over the plan's limit reads but does not reply (BIL-04): it is
+  // A seat over the plan's limit reads but does not reply: it is
   // never handed a conversation.
   const onlineInOrg: Filter = {
     organizationId,
@@ -140,7 +140,7 @@ async function autoAssignConversation(
       const assigned = await Conversation.findById(conversationId);
       if (assigned) {
         // Nothing on the socket tells the agent (the inbox shows it); a closed
-        // panel hears it by push (PRD-09).
+        // panel hears it by push.
         void pushConversationEvent('assigned', assigned, { assignee: candidate._id });
       }
       return {

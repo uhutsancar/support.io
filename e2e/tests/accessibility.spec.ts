@@ -1,4 +1,4 @@
-// Accessibility (plan v10 UX-01, UX-02): axe finds no serious or critical
+// Accessibility: axe finds no serious or critical
 // WCAG 2.2 AA problem in the widget (closed, open, in a conversation) or on
 // the panel's main pages, and the widget works from the keyboard — the
 // bubble is a button that says whether it is open, Esc closes and gives the
@@ -168,7 +168,7 @@ test('the panel: no serious axe problem on its pages', async ({ browser }) => {
   const owner = await (await browser.newContext()).newPage();
   await onboardedOwner(owner.request);
   const { sites } = await (await owner.request.get('/api/sites')).json();
-  // Every page of the panel (UX-02), not only the ones a customer meets first.
+  // Every page of the panel, not only the ones a customer meets first.
   const found: Record<string, string[]> = {};
   for (const path of [
     '/dashboard',

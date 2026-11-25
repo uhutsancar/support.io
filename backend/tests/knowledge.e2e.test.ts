@@ -1,6 +1,6 @@
 'use strict';
 
-// Knowledge sources (plan v10 PRD-21): pages of the site itself and PDFs the
+// Knowledge sources: pages of the site itself and PDFs the
 // assistant may also answer from.
 //
 // The pieces first, in this process: HTML to text, passages, robots.txt,
@@ -135,7 +135,6 @@ test('addresses into our own network are refused before any request', async () =
     ['http://169.254.169.254/latest/meta-data', ['169.254.169.254']],
     ['http://localhost:5000/api', ['localhost']]
   ] as const) {
-    // eslint-disable-next-line no-await-in-loop
     assert.equal(await code(readPage(url, [...domains])), 'unsafe', url);
   }
   assert.equal(await code(readPage('https://other.example/', ['magaza.example'])), 'not_on_site');
@@ -184,11 +183,9 @@ async function sources(t: Tenant) {
 
 async function settled(t: Tenant, count: number) {
   for (let i = 0; i < 80; i += 1) {
-    // eslint-disable-next-line no-await-in-loop
     const list = await sources(t);
     const done = list.sources.filter((s: { status: string }) => s.status !== 'pending');
     if (list.sources.length >= count && done.length === list.sources.length) return list;
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   throw new Error('sources did not settle');

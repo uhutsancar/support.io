@@ -1,4 +1,4 @@
-// Browser end-to-end tests (plan §18), run against a stack that is already up.
+// Browser end-to-end tests, run against a stack that is already up.
 //
 //   Local:  docker compose up -d   then   cd e2e && npm test
 //           (panel and API through Caddy on http://localhost, system Chrome
@@ -9,7 +9,7 @@
 // The tests also start a tiny "customer website" that embeds the widget with
 // the exact snippet the panel hands out.
 //
-// Projects (plan v10 UX-03, TST-01): every spec on desktop Chrome; the
+// Projects: every spec on desktop Chrome; the
 // widget's own specs again on phones and a tablet (iPhone 14 on WebKit, Pixel
 // 7 on Chromium, iPad on WebKit) and on desktop Firefox and Safari.
 

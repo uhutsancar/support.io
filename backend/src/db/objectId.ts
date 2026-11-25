@@ -10,9 +10,6 @@ const OBJECT_ID_RE = /^[0-9a-fA-F]{24}$/;
 const MACHINE_ID = crypto.randomBytes(5);
 let counter = crypto.randomBytes(3).readUIntBE(0, 3);
 
-/** Anything the code passes around where an identifier is expected. */
-export type IdLike = string | null | undefined | { _id?: unknown; toHexString?: () => string };
-
 export function generateId(): string {
   const buf = Buffer.allocUnsafe(12);
   buf.writeUInt32BE(Math.floor(Date.now() / 1000), 0);
@@ -46,11 +43,3 @@ export function toId(value: unknown): string | null {
   }
   return String(value);
 }
-
-// The timestamp is embedded in the first 4 bytes, mirroring ObjectId#getTimestamp.
-export function timestampFromId(id: unknown): Date | null {
-  if (!isValidObjectId(id)) return null;
-  return new Date(parseInt(String(id).slice(0, 8), 16) * 1000);
-}
-
-export { OBJECT_ID_RE };

@@ -76,7 +76,7 @@ export function assistantAvailable(): boolean {
   return assistantConfig() !== null && platformBlock() === null;
 }
 
-// One day may use at most a tenth of the month's answers (AI-07), so one
+// One day may use at most a tenth of the month's answers, so one
 // busy site cannot spend the workspace's month in an afternoon. A quota per
 // distinct limit, since each counter has one maximum.
 const dailyQuotas = new Map<number, ReturnType<typeof createQuota>>();
@@ -103,7 +103,7 @@ export function assistantActive(site: Pick<SiteDoc, 'assistantEnabled'>): boolea
 
 /**
  * Whether it answers this visitor: on the free tier, never one from the
- * EEA, Switzerland or the UK (./region.ts, AI-02).
+ * EEA, Switzerland or the UK (./region.ts).
  */
 export function assistantActiveFor(
   site: Pick<SiteDoc, 'assistantEnabled'>,
@@ -282,7 +282,7 @@ export async function compose(input: ComposeInput): Promise<Outcome | null> {
     return { kind: 'handoff', reason: 'unsupported' };
   }
   // Only links the FAQ itself contains survive; an answer that repeats the
-  // assistant's own instructions is not sent (AI-06).
+  // assistant's own instructions is not sent.
   const text = keepFaqLinks(
     parsed.answer,
     input.sources.map((s) => `${s.question} ${s.answer} ${s.url ?? ''}`).join(' ')

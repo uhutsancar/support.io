@@ -1,4 +1,4 @@
-// Keys for the public API (plan v10 PRD-12).
+// Keys for the public API.
 //
 //   sk_live_<40 characters>    shown once; the database keeps its SHA-256
 //

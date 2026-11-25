@@ -1,30 +1,10 @@
 // Request-scoped authorization: which tenant is calling, and may they touch
 // this row.
 //
-// Two patterns were repeated in almost every handler. The first was the tenant
-// check, written out 38 times:
-//
-//     const orgId = requireOrgId(req, res);
-//     if (!orgId) return;
-//
-// It is a guard, so it belongs in the middleware chain where the rest of the
-// guards already are — `auth`, `checkPermission`, `requirePlan`. Written inside
-// the handler it is easy to place after the first query, which is what happened
-// in `deals.ts` and `visitors.ts`: they read `req.user.organizationId` directly
-// and never checked it at all.
-//
-// The second was ownership resolution — load the row, load its site, compare
-// the organization — which `departments.ts` alone repeated six times:
-//
-//     const department = await Department.findById(req.params.id);
-//     if (!department) return res.status(404).json(...);
-//     const site = await Site.findById(department.siteId);
-//     if (!site || site.organizationId.toString() !== orgId.toString()) return ...
-//
-// Four lines where one of the four can be forgotten. `GET /team/:id/stats` did
-// forget it and read across tenants. The loaders below do the whole check in
-// one call and throw `notFound` when any part of it fails, so a missing row and
-// another tenant's row are indistinguishable from outside.
+// The tenant check is middleware, next to `auth`, `checkPermission` and
+// `requirePlan`. The loaders resolve a row together with its site and
+// organization in one call and throw `notFound` when any part fails, so a
+// missing row and another tenant's row look the same from outside.
 
 import Conversation from '../models/Conversation';
 import Department from '../models/Department';
@@ -108,11 +88,11 @@ export async function findOwnedSite(req: Request, siteId: unknown): Promise<Doc<
 export async function loadOwnedSite(req: Request, siteId: unknown): Promise<Doc<SiteDoc>> {
   const site = await findOwnedSite(req, siteId);
   if (!site) throw notFound('Site');
-  // A site over the plan's limit after a downgrade is read-only (BIL-04):
+  // A site over the plan's limit after a downgrade is read-only:
   // it can be looked at and deleted, not changed, until the owner keeps it
   // on the billing page or upgrades.
   if (req.method !== 'GET' && req.method !== 'HEAD') {
-    // Blocked by the platform for abuse (LEG-05): only support lifts it.
+    // Blocked by the platform for abuse: only support lifts it.
     if (site.blockedAt) {
       throw forbidden('This site was blocked by Supbort.io; contact support', 'SITE_BLOCKED');
     }
@@ -205,7 +185,7 @@ export async function loadAccessibleConversation(
     throw notFound('Conversation');
   }
   // The inbox of a blocked site, or of one over the plan's limit, is
-  // read-only here as on the socket (BIL-04, LEG-05): the REST moves —
+  // read-only here as on the socket: the REST moves —
   // assign, status, tags, snooze, merge — refused it no more than a reply.
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     const site = await Site.findById(conversation.siteId).select('blockedAt suspendedAt');

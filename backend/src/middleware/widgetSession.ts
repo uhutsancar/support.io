@@ -45,7 +45,7 @@ export async function siteForWidgetSession(
 ): Promise<Doc<SiteDoc> | null> {
   const site = await Site.findOne({ _id: claims.siteId, isActive: true });
   if (!site || !siteKeyMatches(site.siteKey, claims.kv)) return null;
-  // Over the plan's site limit (BIL-04), or blocked for abuse (LEG-05): the
+  // Over the plan's site limit, or blocked for abuse: the
   // widget stays silent.
   if (site.suspendedAt || site.blockedAt) return null;
   return site;
@@ -75,7 +75,7 @@ export const requireWidgetSession = asyncMiddleware(
     const origin = requestOrigin(req.headers);
     if (origin !== null && !siteAcceptsOrigin(site, origin)) throw originRefused();
 
-    // Blocked since the session was issued (SEC-09): no upload, no form.
+    // Blocked since the session was issued: no upload, no form.
     if (await isBlocked({ siteId: String(site._id), visitorId: claims.visitorId, ip: req.ip })) {
       throw forbidden('This visitor is blocked on the site', VISITOR_BLOCKED);
     }

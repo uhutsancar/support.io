@@ -244,7 +244,7 @@ fs.writeFileSync(
   path.join(OUT, 'site.webmanifest'),
   JSON.stringify(
     {
-      // The panel installs as an app (plan v10 PRD-09): its own id and scope,
+      // The panel installs as an app: its own id and scope,
       // opening on the dashboard.
       id: '/dashboard',
       name: BRAND_NAME,

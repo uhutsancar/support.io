@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Lets ports 80 and 443 accept connections from Cloudflare only (plan v10
-# SEC-13). Anyone who finds the server's address and skips Cloudflare — and
+# Lets ports 80 and 443 accept connections from Cloudflare only.
+# Anyone who finds the server's address and skips Cloudflare — and
 # with it the WAF, the rate limits and the TLS settings — gets no answer.
 #
 # Two layers, because Docker publishes Caddy's ports past UFW:
@@ -13,14 +13,14 @@
 #                `ufw reload` keeps it and --revert removes it.
 #
 # Before running it: Caddy must have a Cloudflare Origin CA certificate
-# (runbook §2) — a Let's Encrypt renewal cannot reach the server any more —
+# — a Let's Encrypt renewal cannot reach the server any more —
 # and the DNS record must be proxied (orange cloud).
 #
 #   sudo ./scripts/ufw-cloudflare.sh --dry-run   print what would be written
 #   sudo ./scripts/ufw-cloudflare.sh --apply     write it and reload UFW
 #   sudo ./scripts/ufw-cloudflare.sh --revert    back to 80/443 open to all
 #
-# Testing it (runbook §2): from a machine outside Cloudflare,
+# Testing it: from a machine outside Cloudflare,
 #   curl -m 5 -k https://<server IP>/health     → times out
 #   curl -m 5 https://<your domain>/health      → {"status":"ok"}
 # and `sudo iptables -L DOCKER-USER -n -v` shows the drops counting up.

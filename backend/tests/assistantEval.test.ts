@@ -1,6 +1,6 @@
 'use strict';
 
-// The assistant's evaluation set in mock mode (plan v10 AI-05): 80+ Turkish
+// The assistant's evaluation set in mock mode: 80+ Turkish
 // messages through the real decision code, against a stand-in model that
 // answers from the expected FAQ entry — or misbehaves on purpose for the
 // injection cases. What it pins is ours: who is handed over before the model,
@@ -11,7 +11,7 @@
 //   requests for a person / insults / card numbers reaching the model 0
 //
 // No database, no API. The live run against the real model is
-// `npm run assistant:eval -- --live` on the owner's machine (AI-05).
+// `npm run assistant:eval -- --live` on the owner's machine.
 
 // Loads .env before any module below reads it; see src/config/env.ts.
 import '../src/config/env';

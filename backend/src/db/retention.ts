@@ -57,7 +57,7 @@ async function sweepOnce() {
     console.error('Retention sweep failed for identity assertions:', errorText(error));
   }
   try {
-    // Data minimisation (plan §16): a visitor's IP address and device details
+    // Data minimisation: a visitor's IP address and device details
     // are kept while they matter for support and dropped 90 days after they
     // were last seen; the same for the IP and browser in the audit trail.
     await query(
@@ -75,7 +75,7 @@ async function sweepOnce() {
   }
   try {
     // An invitation names a person by e-mail; once it is accepted, revoked or
-    // expired it is history, kept 90 days for "who invited whom" (LEG-03).
+    // expired it is history, kept 90 days for "who invited whom".
     await query(
       `DELETE FROM invitations
         WHERE coalesce(accepted_at, revoked_at, expires_at) < now() - interval '${PERSONAL_DATA_DAYS} days'`
@@ -91,44 +91,44 @@ async function sweepOnce() {
     console.error('Subscription reconciliation failed:', errorText(error));
   }
   try {
-    // The free trial's reminder and its "it has ended" mail (PRD-15).
+    // The free trial's reminder and its "it has ended" mail.
     await sweepTrials();
   } catch (error) {
     console.error('Trial sweep failed:', errorText(error));
   }
   try {
     // Sites and seats over the plan in force, which can change by the clock
-    // alone (a trial or a paid period ending): on hold, or back (BIL-04).
+    // alone (a trial or a paid period ending): on hold, or back.
     await reconcileAllPlanLimits();
   } catch (error) {
     console.error('Plan limit reconciliation failed:', errorText(error));
   }
   try {
-    // Referral months that could not be given yet (PRD-23).
+    // Referral months that could not be given yet.
     await sweepReferralRewards();
   } catch (error) {
     console.error('Referral reward sweep failed:', errorText(error));
   }
   try {
-    // Knowledge pages a restart left half-fetched (PRD-21).
+    // Knowledge pages a restart left half-fetched.
     await resumePendingPages();
   } catch (error) {
     console.error('Knowledge resume failed:', errorText(error));
   }
   try {
-    // Monday's summary of the week for owners and managers (PRD-22).
+    // Monday's summary of the week for owners and managers.
     await sweepWeeklyReports();
   } catch (error) {
     console.error('Weekly report sweep failed:', errorText(error));
   }
   try {
-    // The set-up mails of the first month (PRD-08).
+    // The set-up mails of the first month.
     await sweepActivation();
   } catch (error) {
     console.error('Activation sweep failed:', errorText(error));
   }
   try {
-    // A sign-up nobody confirmed within a week is not an account (SEC-06):
+    // A sign-up nobody confirmed within a week is not an account:
     // its workspace goes, so an address typed by someone else does not stay
     // reserved. Such a workspace never had a session, so it holds nothing.
     const { rows } = await query<{ organization_id: string }>(
@@ -147,13 +147,13 @@ async function sweepOnce() {
   }
   try {
     // Conversations past the workspace's retention window, with their
-    // attachments, once a night (SEC-17).
+    // attachments, once a night.
     await nightlyPurge();
   } catch (error) {
     console.error('Retention purge failed:', errorText(error));
   }
   try {
-    // The owner's weekly numbers, Monday morning (OBS-07).
+    // The owner's weekly numbers, Monday morning.
     await weeklyReport();
   } catch (error) {
     console.error('Weekly report failed:', errorText(error));

@@ -1,6 +1,6 @@
 // Runs the evaluation set through the assistant's real decision code
 // (services/assistant compose(): policy, masking, the call, citation and
-// output checks) and scores it (plan v10 AI-05).
+// output checks) and scores it.
 //
 //   mock  a local stand-in for the model API. For answerable questions it
 //         answers from the expected entry; for injection cases it misbehaves

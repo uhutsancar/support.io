@@ -5,19 +5,19 @@
 //                           only: never sent to the panel or the widget,
 //                           never logged.
 //   GEMINI_MODEL            default gemini-3.5-flash-lite (stable; a preview or
-//                           experimental model is refused, AI-01)
+//                           experimental model is refused)
 //   GEMINI_TIER             free (default) or paid: which Gemini API terms the
 //                           key's project is under. On free, visitors from the
 //                           EEA, Switzerland and the UK are never sent to the
-//                           model (AI-02).
+//                           model.
 //   GEMINI_TIMEOUT_MS       one call's deadline, default 15 s
 //   GEMINI_RPM              calls per minute across all processes, default 10
 //   GEMINI_RPD              calls per day across all processes, default 900
-//   GEMINI_COST_PER_ANSWER  estimated cost of one answer, for org:list (AI-07)
+//   GEMINI_COST_PER_ANSWER  estimated cost of one answer, for org:list
 //   ASSISTANT_ENABLED       'false' switches the assistant off platform-wide
 //   ASSISTANT_KILL_SWITCH   'true' does the same in an emergency; the same
 //                           switch can be thrown without a restart with
-//                           `npm run assistant:kill -- on` (AI-07)
+//                           `npm run assistant:kill -- on`
 //
 // The two budgets keep usage inside Google's free tier (whose own limits are
 // per project and change over time; set these at or below what the project's

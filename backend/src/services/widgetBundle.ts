@@ -1,5 +1,5 @@
 // What every widget session answer carries that changes only when the owner
-// edits it (plan v10 PERF-04): the saved widget look, the public FAQ list and
+// edits it: the saved widget look, the public FAQ list and
 // whether the plan shows "Powered by". POST /api/widget/session runs on every
 // page view of every customer site, so these three reads are kept for
 // BUNDLE_TTL_SECONDS in the shared cache (db/cache.ts) and dropped at once

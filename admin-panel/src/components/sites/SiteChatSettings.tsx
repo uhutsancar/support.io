@@ -1,4 +1,4 @@
-// A site's chat behaviour (plan v10 PRD-01, PRD-04, PRD-05, PRD-06):
+// A site's chat behaviour:
 // unanswered-chat mails, the offline e-mail question, e-mailed replies, the
 // pre-chat form with its privacy-notice consent box, satisfaction ratings,
 // transcripts and spam protection. Read from and saved to

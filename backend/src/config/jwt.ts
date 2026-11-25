@@ -11,8 +11,8 @@ export function jwtSecret(): string {
 }
 
 /**
- * The secret JWT_SECRET replaced, while a rotation is under way (plan v10
- * SEC-18): tokens, links and sealed values made with it are still accepted,
+ * The secret JWT_SECRET replaced, while a rotation is under way:
+ * tokens, links and sealed values made with it are still accepted,
  * nothing new is made with it. Unset — or the same as JWT_SECRET — means
  * none.
  */

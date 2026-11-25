@@ -1,5 +1,5 @@
 /**
- * A dialog the way a screen reader and a keyboard expect it (plan v10 UX-02):
+ * A dialog the way a screen reader and a keyboard expect it:
  * named by its title, Tab stays inside, Esc closes, and focus goes back to
  * where it came from. ConfirmDialog and the inbox dialogs are built on it.
  */

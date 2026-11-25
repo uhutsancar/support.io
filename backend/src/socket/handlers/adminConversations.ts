@@ -140,7 +140,7 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
         { conversationId: conversation._id, isRead: false, senderType: 'visitor' },
         { isRead: true, readAt }
       );
-      // The visitor sees "seen" under their messages (UX-04).
+      // The visitor sees "seen" under their messages.
       if (read.modifiedCount) {
         ctx.toWidgetConversation(conversation._id, 'messages-seen', { readAt });
       }
@@ -194,8 +194,8 @@ export function installAdminConversationHandlers(ctx: SocketContext, socket: Adm
       ctx.reject(socket);
       return ack?.({ ok: false, code: 'NOT_FOUND' });
     }
-    // A site over the plan's limit (BIL-04) or blocked by the platform
-    // (LEG-05) is read-only: its widget is hidden, so a reply reaches nobody.
+    // A site over the plan's limit or blocked by the platform
+    // is read-only: its widget is hidden, so a reply reaches nobody.
     const hold = await siteHold(conversation.siteId);
     if (hold) {
       return refuse(

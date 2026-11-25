@@ -1,4 +1,4 @@
-// The assistant's evaluation set (plan v10 AI-05).
+// The assistant's evaluation set.
 //
 //   npm run assistant:eval              mock run: our policy and guards
 //   npm run assistant:eval -- --live    the real model, with GEMINI_API_KEY

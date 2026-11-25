@@ -1,4 +1,4 @@
-// Web Push keys (plan v10 PRD-09). The panel's phones and desktops get a
+// Web Push keys. The panel's phones and desktops get a
 // notification while the panel is closed, through the browser's push
 // service; VAPID is how that service knows the messages come from us.
 //

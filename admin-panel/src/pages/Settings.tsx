@@ -55,7 +55,7 @@ const Settings = () => {
                     onClick={setLightTheme}
                     className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
                       theme === 'light'
-                        ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
                     }`}
                   >
@@ -66,7 +66,7 @@ const Settings = () => {
                     onClick={setDarkTheme}
                     className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
                       theme === 'dark'
-                        ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-700 dark:text-gray-300'
                     }`}
                   >
@@ -113,7 +113,7 @@ const Settings = () => {
           <SecuritySettings />
           {(user?.role === 'owner' || user?.role === 'admin') && <ApiKeysSettings />}
           <ReferralCard />
-          {/* Veri ve gizlilik: KVKK/GDPR veri taşınabilirliği (plan §16). */}
+          {/* Veri ve gizlilik: KVKK/GDPR veri taşınabilirliği. */}
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 transition-colors duration-200">
             <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white mb-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />

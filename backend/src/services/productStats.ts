@@ -1,4 +1,4 @@
-// The product's numbers for the owner (plan v10 OBS-07): how many
+// The product's numbers for the owner: how many
 // workspaces use it, how many widgets are live, how sign-ups turn into
 // active and paying customers, and how much the assistant resolves.
 //
@@ -34,7 +34,7 @@ export interface ProductStats {
   estimatedMrr: { amount: number; currency: string };
   assistant: { conversations: number; resolved: number; resolvedRate: number };
   /**
-   * The first-use path of the window's sign-ups, step by step (UX-05): how
+   * The first-use path of the window's sign-ups, step by step: how
    * many got there and the median hours from sign-up. Each step is taken
    * from the record it leaves, so nothing extra is tracked.
    */

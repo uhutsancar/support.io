@@ -1,24 +1,6 @@
-// What the server tells the admin panel, as named operations.
-//
-// The same three-line incantation appeared in routes, services and the socket
-// handler alike:
-//
-//     const io = req.app.get('io');
-//     if (io) {
-//       io.of('/admin').to(`site:${conversation.siteId}`).emit('conversation-update', {
-//         conversationId: conversation._id,
-//         conversation: updated.toObject()
-//       });
-//     }
-//
-// Six copies of that one event, each free to spell the room, the event name or
-// the payload key slightly differently — and one of them did, sending the
-// document instead of `toObject()`, so the panel received a shape it did not
-// expect. None of it was checkable: `emit` takes any string and any payload.
-//
-// A notifier turns each broadcast into a method with a typed payload. The room
-// and the event name are decided here once, so a rename is a compile error
-// rather than a message quietly delivered to nobody.
+// What the server tells the admin panel, as named operations with typed
+// payloads. Rooms and event names are decided here once, so a rename is a
+// compile error rather than a message delivered to nobody.
 
 import { conversationRoom, siteRoom, userRoom } from './rooms';
 import { pushConversationEvent } from '../services/push';
@@ -107,7 +89,7 @@ export class AdminNotifier {
     assignedBy: unknown
   ): void {
     // The assignee is told wherever they are; the site room is told so the
-    // inbox shows the new owner. With the panel closed, by push (PRD-09).
+    // inbox shows the new owner. With the panel closed, by push.
     void pushConversationEvent('assigned', conversation, { assignee: agentId, actor: assignedBy });
     this.toUser(agentId, 'conversation-assigned', {
       conversationId: conversation._id,
@@ -190,7 +172,7 @@ export class WidgetNotifier {
     this.toConversation(conversationId, 'new-message', { message: plain(message) });
   }
 
-  /** The team has read the visitor's messages (UX-04). */
+  /** The team has read the visitor's messages. */
   messagesSeen(conversationId: unknown, readAt: Date): void {
     this.toConversation(conversationId, 'messages-seen', { readAt });
   }

@@ -51,7 +51,7 @@ export class PlanLimitError extends HttpError {
 /**
  * This month's new-conversation quota is used up. Open conversations go on;
  * the visitor who tried to start one is told to try again later, never shown
- * a billing message (plan §8.4).
+ * a billing message.
  */
 export class ConversationQuotaError extends HttpError {
   constructor() {
@@ -79,7 +79,7 @@ export function currentPeriod(at: Date = new Date()): string {
  * the clock as well as by webhooks: a cancelled plan lasts until its paid
  * period ends, a failed payment keeps it for the grace period
  * (domain/subscription.ts). Without one, organizations.plan_type does: the
- * free default, or a plan set by scripts/updatePlan.ts during the beta.
+ * free default, or a plan set with npm run plan:set during the beta.
  * An unknown value counts as FREE.
  */
 export async function getPlan(organizationId: string, client?: Runner | null): Promise<PlanType> {
@@ -101,7 +101,7 @@ export async function getPlan(organizationId: string, client?: Runner | null): P
     [organizationId]
   );
   if (!row) return 'FREE';
-  // A hand-set plan that billing may not move (SEC-05): the platform owner's
+  // A hand-set plan that billing may not move: the platform owner's
   // workspace, beta customers.
   if (row.billing_exempt) return isPlanType(row.plan_type) ? row.plan_type : 'FREE';
   if (isPlanType(row.sub_plan) && isSubscriptionStatus(row.status)) {
@@ -117,7 +117,7 @@ export async function getPlan(organizationId: string, client?: Runner | null): P
     );
   }
   const base: PlanType = isPlanType(row.plan_type) ? row.plan_type : 'FREE';
-  // The free trial (PRD-15) lifts a Free workspace to Pro until it ends.
+  // The free trial lifts a Free workspace to Pro until it ends.
   if (base === 'FREE' && trialRunning(row.trial_ends_at)) return 'PRO';
   return base;
 }

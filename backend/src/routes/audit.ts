@@ -47,7 +47,7 @@ router.get(
     }
 
     // Pages are numbered for the panel's pager; the cap keeps one request
-    // from asking the database to skip millions of rows (plan v10 PERF-03).
+    // from asking the database to skip millions of rows.
     // Conversations and messages page by cursor instead.
     const page = boundedInt(req.query.page, 1, MAX_PAGE);
     const limit = boundedInt(req.query.limit, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
