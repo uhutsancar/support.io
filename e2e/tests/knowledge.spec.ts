@@ -66,6 +66,12 @@ test('a page and a PDF become what the assistant knows', async ({ browser }) => 
     await expect(card.getByText('2 / 50 kaynak', { exact: false })).toBeVisible();
   });
 
+  // The notifications the steps above raised fade in and out; caught half
+  // transparent, axe reports their text as low contrast. They are transient,
+  // so the page is scanned once they have gone.
+  await expect(page.locator('[role="status"][aria-live="polite"]')).toHaveCount(0, {
+    timeout: 15_000
+  });
   const { violations } = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
