@@ -13,7 +13,7 @@ services:
   postgres:
     # The Debian (glibc) image production builds on (docker/postgres), so both
     # sort text the same way. Pinned by digest.
-    image: postgres:16.15-trixie@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
+    image: postgres:18.6-trixie@sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -34,7 +34,7 @@ services:
   # Runs without authentication, so it listens on 127.0.0.1 only. The backend
   # reaches it as redis:6379 on the project network.
   redis:
-    image: redis:7.4.11-alpine@sha256:d9436322172a5b482c187bf1f363d3c4fea086fcca6b9c8a94de8f0f39ed3193
+    image: redis:8.0.0-alpine@sha256:0779069b3c24a47a2f681855c1c01d046793e7c5f7d2b079c2aa0652c42eaf0e
     restart: unless-stopped
     command: >
       redis-server
