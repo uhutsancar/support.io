@@ -1,288 +1,271 @@
 # Supbort.io
 
-Live chat and an AI assistant for any website. A business adds one `<script>`
-tag to its site; visitors write from the chat bubble, the assistant answers
-common questions from the site's own FAQ, and the team handles everything else
-from one shared inbox.
+A live chat product for websites: a visitor writes from a chat bubble on any
+site, and the business's agents answer from a shared inbox in real time, with
+an optional FAQ assistant in between.
 
-The repository holds three parts: the API and real-time server (`backend/`),
-the marketing site and admin panel (`admin-panel/`), and the chat bubble that
-runs on customer sites (`backend/src/widget/`).
+The repository is named `support.io`; the product's user-facing name is
+Supbort.io ([backend/src/domain/brand.ts](backend/src/domain/brand.ts)). It
+runs locally with Docker Compose and needs no cloud account or API key. There
+is no public deployment.
 
-## Features
-
-| Area | What it does |
+| Visitor, on a customer's website | Agent, in the inbox |
 |---|---|
-| Chat bubble | One-line install, isolated from the host page with Shadow DOM, 8 languages, pre-chat and offline forms, ratings, transcripts by e-mail, file sharing, visitor identity verification |
-| AI assistant | Answers only from the site's FAQ and added knowledge sources (pages, PDFs), cites what it used, masks personal data, hands over to an agent when it has no answer or the visitor asks for a person |
-| Inbox | Real-time conversations, guaranteed delivery, assignment, internal notes, tags, snooze, merge, bulk actions, Turkish-aware search, keyboard shortcuts |
-| Team | Roles and permissions, e-mail invitations, departments and routing, team chat, desktop and mobile notifications (Web Push) |
-| Automation | Rule engine, proactive messages, saved replies, business hours, SLA tracking |
-| Insight | Analytics, agent performance, weekly summary e-mail, CSV export, live visitors, CRM deal pipeline, audit log |
-| Help center | Public FAQ pages per site, rendered by the server |
-| Integrations | Slack, Telegram, webhooks, a public REST API with API keys, WordPress plugin, Shopify extension, Google Tag Manager template |
-| Account | E-mail verification, Google sign-in, two-factor authentication (TOTP), password reset, data export, account and data deletion |
-| Billing | Monthly and yearly subscriptions through Paddle, free trial, plan limits enforced on the server, invoices, referral program |
+| ![A shop page with the chat bubble open: the visitor asked about changing a delivery address and the agent answered](.github/images/visitor-widget.png) | ![The agent inbox showing the same conversation, claimed and answered](.github/images/agent-inbox.png) |
 
-### Plans
+Both screenshots come from the local stack described below: a synthetic shop
+page with the install snippet, a new account, and one real exchange.
 
-| | Free | Pro | Enterprise |
+## Quick start
+
+You need Git, Docker with Compose v2 (Docker Desktop on Windows and macOS)
+and Node.js 22.12 or newer (`.nvmrc` names the version the images use). Every
+command below runs in the repository root and is the same in PowerShell and
+Bash unless two versions are shown.
+
+```sh
+git clone https://github.com/uhutsancar/support.io.git
+cd support.io
+node scripts/setup-env.mjs
+docker compose up -d --build --wait
+```
+
+`setup-env.mjs` creates `.env` (ports for Compose and a development Web Push
+key pair) and `backend/.env` (a random `JWT_SECRET`). It never overwrites a
+file that already exists. Both files are git-ignored.
+
+The first start builds the images, compiles the chat bubble and runs the 31
+database migrations; allow several minutes. `--wait` returns once every
+service reports healthy. To check by hand:
+
+```sh
+# Bash
+curl http://localhost/ready
+```
+
+```powershell
+# PowerShell
+Invoke-RestMethod http://localhost/ready
+```
+
+Both print `{"status":"ready"}` when the stack is up.
+
+| Service | Open on this machine | Port in the container | Set in `.env` |
 |---|---|---|---|
-| Sites | 1 | 3 | 25 |
-| Agents | 1 | 5 | 20 |
-| Conversations / month | 100 | 2,000 | 20,000 |
-| Assistant answers / month | 50 | 1,000 | 5,000 |
-| Price / month | 0 TL | 490 TL | 1,449 TL |
+| Caddy: panel, API, Socket.IO, `widget.js` | <http://localhost> | 80 | `PROXY_PORT=80` |
+| Panel (Vite dev server) | <http://localhost:5173> | 5173 | `ADMIN_PORT=5173` |
+| Backend API | <http://localhost:5000> | 3000 | `BACKEND_PORT=5000` |
+| PostgreSQL 16 | `127.0.0.1:5432` | 5432 | `POSTGRES_PORT=5432` |
+| Redis 7 | `127.0.0.1:6381` | 6379 | `REDIS_PORT=6381` |
 
-Limits and features are defined in one place: `backend/src/domain/plans.ts`.
+Use the Caddy address. If PostgreSQL already runs on this machine, set
+`POSTGRES_PORT=5433` (any free port works; the same goes for the others).
 
-## Stack
+Optional demo data, a seeded workspace with conversations, agents and reports:
 
-| Layer | Technology |
-|---|---|
-| API | Node.js 22, TypeScript, Express, Socket.IO with the Redis adapter, pino |
-| Database | PostgreSQL 16 with versioned SQL migrations (`backend/src/db/migrations`) |
-| Cache | Redis 7 |
-| Panel and site | React 18, Vite, Tailwind CSS, Radix UI, Motion, i18next (Turkish and English) |
-| Chat bubble | Dependency-free TypeScript, minified with esbuild |
-| Files | S3-compatible storage (AWS S3, Cloudflare R2, MinIO) or local disk |
-| Infrastructure | Docker Compose, Caddy, GitHub Actions, GHCR |
-| Services | Paddle (billing), Google Gemini (assistant), SMTP, Cloudflare Turnstile, Sentry-compatible error tracking |
-
-## Quick start with Docker
-
-Requires Docker with Compose.
-
-```bash
-echo "JWT_SECRET=$(openssl rand -base64 48)" > backend/.env
-
-docker compose up -d
-docker compose exec backend npm run db:seed   # optional demo data
+```sh
+npm run demo:seed     # refuses when the demo workspace already exists
+npm run demo:reset    # deletes only the demo workspace, then seeds it again
 ```
 
-The database is migrated when the backend starts.
+## Try a conversation
 
-| Address | What |
-|---|---|
-| `http://localhost` | Site, panel and API through Caddy |
-| `http://localhost:5000` | The API directly |
-| `http://localhost:5173` | The panel's Vite dev server |
+You need two separate browser windows: a normal one for the agent and a
+private one for the visitor, so the two do not share cookies.
 
-Demo account: `owner@demo.support.io` / `Demo1234!`. In development e-mails are
-not sent; they are printed to the backend log (`MAIL_PROVIDER=console`).
+**Quick tour with the demo account.** After `npm run demo:seed`, sign in at
+<http://localhost/en/login> as `owner@demo.support.io` / `Demo1234!`. The
+seeded inbox, reports, CRM and team are there to browse.
 
-Host ports can be changed in a `.env` file at the repository root:
+**From a new account, the full path:**
 
-```bash
-POSTGRES_PORT=5433
-BACKEND_PORT=5050
-ADMIN_PORT=5173
-PROXY_PORT=80
-REDIS_PORT=6381
-```
+1. Open <http://localhost/en/register>, fill in name, e-mail and password and
+   press **Sign Up**. Any address works; nothing is sent.
+2. Find the verification link. Development mail is printed to the backend log
+   and kept in memory:
+   ```sh
+   docker compose logs backend | grep verify-email          # Bash
+   docker compose logs backend | Select-String verify-email   # PowerShell
+   ```
+   or open `http://localhost/api/dev/outbox?to=<your address>`. Opening the
+   link verifies the address and signs you in.
+3. Onboarding asks how you plan to use the product, then for **Your website
+   URL**: enter `http://localhost:3001`. Press **Next** through the remaining
+   steps and **Complete**.
+4. Under **Sites**, copy the **Installation Code**. It names the public
+   address the product will have; for local use change its `src` to
+   `http://localhost/widget.js`.
+5. Make a page for it. Save the snippet inside a minimal `shop.html`
+   (`<!doctype html><html><body><h1>My shop</h1> …snippet… </body></html>`)
+   and serve it on port 3001 from the same folder:
+   ```sh
+   node -e "require('http').createServer((q,s)=>s.end(require('fs').readFileSync('shop.html'))).listen(3001)"
+   ```
+6. In the private window open <http://localhost:3001>, click the bubble,
+   start a chat and write a message.
+7. In the agent window open **Conversations**. The new conversation appears
+   at the top; open it, press **Claim Ticket** if shown, type in **Type your
+   message...** and press Enter. The answer appears in the visitor's bubble
+   at once.
+8. Reload the visitor page: the history is still there. Stop and start the
+   stack (`docker compose stop`, then `docker compose up -d --wait`) and it is
+   still there, as are files sent in the chat.
 
-## Without Docker
+## Features and optional services
 
-Requires Node.js 22 and PostgreSQL 16. Redis 7 is optional; without it the API
-runs as a single process.
+Everything in the core column runs on the local stack without a key.
 
-```bash
-npm run install:all
-```
+| Area | Works locally without a key | Needs for real use | Verified here |
+|---|---|---|---|
+| Chat bubble | One script tag, Shadow DOM, 8 languages, pre-chat and offline forms, ratings, file sharing, identity verification | — | Browser suite, phones and tablet emulated |
+| Inbox and team | Real-time inbox, assignment, notes, tags, snooze, merge, search, saved replies, roles, invitations, departments, team chat | — | Backend and browser suites |
+| Automation and insight | Rules, proactive messages, business hours, SLA, analytics, CSV export, CRM, audit log, help center | — | Backend suite |
+| Accounts | Sign-up with e-mail verification, password reset, TOTP two-factor, data export and deletion | — | Backend and browser suites |
+| E-mail | Printed to the log and kept at `/api/dev/outbox` | `MAIL_PROVIDER=smtp`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | Console outbox only; real delivery not tested |
+| File storage | Local disk (`backend/uploads`) | `UPLOAD_STORAGE=s3`, `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (`S3_ENDPOINT` for R2/MinIO) | Local disk only |
+| FAQ assistant (Google Gemini) | Off; conversations go to agents | `GEMINI_API_KEY` | Against a stand-in model (`e2e/fake-gemini.mjs`); the real API was not called |
+| Billing (Paddle) | Checkout off; plans and limits enforced; signed test webhooks accepted | `BILLING_ENABLED=true`, `PADDLE_API_KEY`, `PADDLE_CLIENT_TOKEN`, `PADDLE_WEBHOOK_SECRET`, price ids | Signed sandbox-shaped webhooks; no real payment |
+| Sign in with Google | A stand-in account chooser at `/api/dev/google` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Stand-in only |
+| Web Push | Kept in memory (`/api/dev/push-outbox`) with the local key pair | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `PUSH_TRANSPORT` unset | Chrome DevTools delivery in the browser suite |
+| Slack, Telegram, webhooks | Kept in memory (`/api/dev/integration-outbox`) | Workspace credentials entered in the panel | In-memory delivery only |
+| WordPress plugin | `integrations/wordpress/` | A WordPress site | Packaged locally; `e2e/tests/wordpress-plugin.spec.ts` runs against a throw-away WordPress container (not run in this verification) |
+| Shopify theme extension | `integrations/shopify/` | A Shopify store | Packaged locally; no automated test; not tried on Shopify |
+| Google Tag Manager template | `integrations/gtm/` | A GTM container | Packaged locally; `gtm-template.spec.ts` simulates it in the browser |
 
-`backend/.env`:
+None of the three install channels has been published to a marketplace.
+`node integrations/release.mjs <domain>` writes ready-to-upload copies with
+the production domain filled in to `integrations/dist/`.
 
-```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/supportio
-JWT_SECRET=at-least-32-random-characters
-REDIS_URL=redis://localhost:6379
-```
+**What the assistant sends to Gemini** (when a key is set and the business
+has switched it on): the site's FAQ entries, on plans with knowledge sources
+the best-matching passages of the site's pages and uploaded PDFs, and the
+visitor's latest message. E-mail addresses, phone numbers and long digit runs
+are masked first; a message with a card number, IBAN or Turkish ID number is
+not sent at all and goes to a person. No name, e-mail or earlier message is
+sent ([privacy.ts](backend/src/services/assistant/privacy.ts),
+[knowledge.ts](backend/src/services/assistant/knowledge.ts)).
 
-```bash
-cd backend && npm run dev        # API on port 5000
-cd admin-panel && npm run dev    # panel on port 3002
-```
-
-In development the panel calls the API at `http://localhost:5000`; set
-`VITE_API_URL` in `admin-panel/.env.development` to point it elsewhere.
-
-## Environment variables
-
-No `.env` file is committed, examples included. The tables list the settings
-you will usually touch; tuning values (rate limits, timeouts, pool sizes) have
-their defaults in code.
-
-### backend/.env
-
-| Variable | Purpose |
-|---|---|
-| `JWT_SECRET` | Required. The key session, widget and link signatures are derived from (32+ characters) |
-| `DATABASE_URL` | PostgreSQL connection. Falls back to `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSL` |
-| `REDIS_URL` | Socket.IO adapter and shared cache; needed to run more than one API process |
-| `PORT` | API port, 5000 by default |
-| `APP_BASE_URL` | The panel's address; links in e-mails use it |
-| `CORS_ORIGINS` | Comma-separated origins allowed to call the API. Required in production |
-| `MAIL_PROVIDER` | `console` or `smtp`, with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` |
-| `UPLOAD_STORAGE` | `local` or `s3`, with `S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`; `S3_ENDPOINT` and `S3_PUBLIC_URL` for R2 or MinIO |
-| `GEMINI_API_KEY` | Enables the AI assistant; live chat works without it. Tuned with `GEMINI_MODEL`, `GEMINI_RPM`, `GEMINI_RPD`, `GEMINI_TIER` |
-| `BILLING_ENABLED` | `true` opens checkout in the panel. Paddle: `PADDLE_ENV`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_CLIENT_TOKEN`, `PADDLE_PRICE_PRO`, `PADDLE_PRICE_PRO_YEARLY`, `PADDLE_PRICE_ENTERPRISE`, `PADDLE_PRICE_ENTERPRISE_YEARLY` |
-| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web Push; generate with `npm run push:keys` |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google sign-in; the button is hidden without them |
-| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` | Bot protection on the sign-up form |
-| `SENTRY_DSN` | Sentry-compatible error tracking |
-
-### admin-panel
-
-| Variable | Purpose |
-|---|---|
-| `VITE_API_URL` | API address. Empty in production, where the panel and API share an origin |
-| `VITE_SUPPORT_SITE_KEY` | The marketing site's own chat bubble. Demo key in development: `demo-site-key-0000-1111-2222` |
-| `VITE_PUBLIC_APP_ORIGIN` | The public address shown in install snippets |
-| `VITE_SUPPORT_EMAIL`, `VITE_SECURITY_EMAIL`, `VITE_STATUS_PAGE_URL` | Contact details shown on the site |
-
-### Root .env
-
-Compose host ports (above) and optional Paddle sandbox values in development.
-In production the server's `.env.production` takes its place;
-`docker-compose.prod.yml` lists every variable it passes on.
-
-## Installing the chat bubble
-
-```html
-<script src="https://app.example.com/widget.js" data-site-key="YOUR_SITE_KEY" async></script>
-```
-
-The panel shows each site's own snippet. Platform-specific guides live on the
-site at `/en/documentation` (`/dokumantasyon` in Turkish) and the API reference
-at `/en/documentation/api`. `/widget/v4/widget.js` pins the major version.
-
-## Commands
-
-### Repository root
-
-| Command | What it does |
-|---|---|
-| `npm run install:all` | Installs backend and panel dependencies |
-| `npm run check` | Typecheck and lint in both packages |
-| `npm run format` | Formats both packages with Prettier |
-
-### backend
-
-| Command | What it does |
-|---|---|
-| `npm run dev` | Builds the widget and starts the API in watch mode |
-| `npm run build`, `npm start` | Production build and start |
-| `npm run build:widget` | Rebuilds only the chat bubble (not watched by `dev`) |
-| `npm run db:migrate` | Applies pending migrations |
-| `npm run db:seed` | Creates the demo tenant |
-| `npm run db:schema` | Regenerates `schema.sql` from the migrations |
-| `npm run plan:set -- <email> <FREE\|PRO\|ENTERPRISE>` | Sets an organization's plan by hand |
-| `npm run org:list`, `npm run org:stats` | Lists organizations; product numbers and estimated MRR |
-| `npm run site:disable -- <site> --reason "…"` | Blocks a site's widget for abuse (`--enable` lifts it) |
-| `npm run secrets:rotate` | Re-seals stored secrets after a `JWT_SECRET` change |
-| `npm run assistant:kill -- on\|off\|status` | Stops or resumes the assistant on every site |
-| `npm run referrals:due` | Lists referral rewards still to give |
-| `npm run push:keys` | Generates a VAPID key pair for Web Push |
-| `npm run assistant:eval` | Scores the assistant's answers against sample questions |
-| `npm run loadtest`, `npm run reconnect-storm` | Load and reconnect tests against the Compose stack |
-
-Each CLI command has a `:prod` variant that runs the compiled code inside the
-production container, for example `npm run plan:set:prod`.
-
-### admin-panel
-
-| Command | What it does |
-|---|---|
-| `npm run dev` | Vite dev server on port 3002 |
-| `npm run build` | Typecheck, icons, production build and the public page list |
-| `npm run icons` | Regenerates the favicon, app icons and social preview image |
-
-## Tests
-
-```bash
-cd backend && npm run test:compose   # API end-to-end suite against the Compose stack
-cd e2e && npm ci && npm test         # Playwright browser tests
-```
-
-The backend suite creates fresh tenants and calls a running API; run it while
-nothing else is loading that API. The browser tests drive the panel and a
-stand-in customer website in two separate browsers: sign-up, e-mail
-verification, onboarding, a visitor's message, the agent's reply, upgrades,
-team invitations, the assistant, the mobile widget and accessibility.
-`E2E_APP_URL` points them at another stack.
-
-## Integrations
-
-| Folder | What |
-|---|---|
-| `integrations/wordpress` | WordPress plugin with a settings page and Turkish translation |
-| `integrations/shopify` | Shopify theme app extension |
-| `integrations/gtm` | Google Tag Manager template |
-
-Release packages are stamped with the production domain:
-
-```bash
-node integrations/release.mjs app.example.com   # writes integrations/dist/
-```
-
-## Production
-
-One server behind Cloudflare: Caddy, a single backend container, PostgreSQL
-with WAL-G continuous archiving, and Redis, the last two reachable only on the
-Docker network.
-
-| File | Role |
-|---|---|
-| `docker-compose.prod.yml` | Production services, resource limits, health checks |
-| `docker-compose.prod.build.yml` | Override for building the image locally |
-| `Caddyfile.prod` | TLS, security headers, Cloudflare IP ranges |
-| `backend/Dockerfile.prod` | Multi-stage build bundling the panel, widget and API into one image |
-| `docker/postgres` | PostgreSQL image with WAL-G |
-| `scripts/bootstrap-server.sh` | Sets up and hardens a fresh Ubuntu server and installs the cron jobs |
-| `scripts/deploy.sh`, `scripts/rollback.sh` | Deploys a signed image by digest and rolls back |
-| `scripts/smoke.sh` | Post-deploy checks against the live site |
-| `scripts/backup-postgres.sh`, `scripts/restore-postgres.sh`, `scripts/walg-backup.sh` | Nightly dumps, restore tests, base backups |
-| `scripts/watchdog.sh`, `scripts/ship-logs.sh` | Health alerts and log archiving |
-| `scripts/ufw-cloudflare.sh` | Opens ports 80 and 443 to Cloudflare only |
-
-The backend refuses to start in production while a required setting is
-missing or still a placeholder, and lists every problem at once
-(`backend/src/config/productionChecks.ts`).
-
-## CI/CD
-
-| Workflow | What it does |
-|---|---|
-| `ci.yml` | Typecheck, lint, formatting, schema and translation checks, dependency audit, backend e2e with coverage, Playwright, Lighthouse, size budgets, image build with a Trivy scan, gitleaks |
-| `codeql.yml` | Static security analysis |
-| `release.yml` | Builds, scans, pushes to GHCR and signs the image (Sigstore) from `main` and `v*` tags |
-| `deploy.yml` | Automatic staging deploys, production deploys after approval |
-| `image-scan.yml` | Weekly vulnerability scan of the running images |
-
-## Project layout
+## Architecture
 
 ```
+admin-panel/          React + Vite: marketing pages and the agent panel
 backend/
-  src/
-    server.ts        entry point
-    routes/          REST endpoints
-    socket/          Socket.IO events for the panel and the widget
-    services/        business logic (assistant, billing, automation, mail…)
-    models/          model layer over PostgreSQL
-    db/              connection pool, migrations, queries, seed
-    middleware/      auth, permissions, rate limits, CSP, uploads
-    widget/          the chat bubble and its translations
-    cli/             admin commands
-  scripts/           build, schema, load-test and test helpers
-  tests/             API end-to-end suite
-admin-panel/
-  src/
-    pages/           marketing pages and panel screens
-    components/      UI components
-    locales/         Turkish and English copy
-  scripts/           icons, public page list, translation checks
-e2e/                 Playwright tests
-integrations/        WordPress, Shopify, GTM
-docker/              production PostgreSQL image
-scripts/             server setup, deploys, backups
+  src/server.ts       Express + Socket.IO entry point
+  src/routes/         REST API (/api/*)
+  src/socket/         Socket.IO namespaces: widget and admin
+  src/widget/         the chat bubble (compiled to backend/public/widget.js)
+  src/db/             PostgreSQL pool, migrations, queries, demo seed
+  scripts/            schema, test, load-test and role-check tools
+docker/postgres/      role and extension preparation for PostgreSQL
+e2e/                  Playwright suite and the stand-in AI model
+integrations/         WordPress plugin, Shopify extension, GTM template
+scripts/              setup, verification, image scan, production tooling
 ```
+
+How one visitor message travels:
+
+1. The bubble loads `widget.js` from the backend and asks for a widget
+   session for its site key; the backend checks that the page's origin is one
+   the site allows and returns a signed visitor token.
+2. The bubble connects to the widget namespace of Socket.IO with that token
+   and sends `send-message` with a client message id. One visitor's messages
+   are handled strictly in order
+   ([socket/handlers/widget.ts](backend/src/socket/handlers/widget.ts)).
+3. The backend stores the message in PostgreSQL (opening the conversation on
+   the first one), then acknowledges it to the bubble. A resend with the same
+   client message id returns the same message instead of a second one.
+4. The message is emitted to the agents of that site in the admin namespace;
+   an agent restricted to other sites never receives it. Agents who are not
+   connected can get a Web Push notification.
+5. A client that was offline asks for the messages `after` the last one it
+   has and receives only its own conversation's.
+
+Redis carries the Socket.IO adapter (so several backend processes share
+rooms), rate-limit counters and a short-lived read cache. Each of these falls
+back to the process itself when Redis is unreachable. The panel and the
+bubble are separate builds: the panel is a single-page app served by Vite in
+development, the bubble a dependency-free script served by the backend.
+
+## Verification
+
+All checks run locally; no hosted CI is part of this setup. Results below are
+from 2026-11-26 on Windows 11 with Docker Desktop (Engine 29.9.3, Compose
+5.7.1), Node 24.22.1 on the host and Node 22.23.5 in the images.
+
+| Check | Command (repository root unless noted) | Result |
+|---|---|---|
+| Typecheck, lint, format, schema, locales, hard-coded text, production `npm audit`, removed-AI and secret scans | `npm run install:all` once, then `npm run verify` | 13 of 13 pass. Lint: 0 errors; 100 warnings in `backend`, 232 in `admin-panel` |
+| Builds, size budgets, public IPs and server secrets in built assets | `npm run verify -- --build` | Pass. `widget.js` 25.6 KB gzip (budget 35 KB); panel first load 148.2 KB gzip (budget 250 KB) |
+| Backend integration suite (against the running stack) | `cd backend` then `npm run test:compose` | 320 tests: 307 pass, 7 skipped, 6 failed in the full run and passed when re-run alone (see below) |
+| Database roles, migrations, backup and restore | `cd backend` then `npm run test:db-roles` | 3 of 3 pass |
+| First conversation in two browser contexts | `cd e2e` then `npm run test:stack -- first-chat --project=desktop-chrome` | Pass |
+| Image scan | `npm run scan:images` | See the limits below |
+
+`npm run install:all` runs `npm ci` in `backend`, `admin-panel` and `e2e`.
+The backend suite and the browser suite create tenants; point them at a stack
+whose data you do not mind. `test:stack` starts the stand-in AI model for the
+run and restores the backend's settings afterwards. `test:db-roles` starts a
+throw-away PostgreSQL container and removes it.
+
+Limits, stated plainly:
+
+- In the full backend run, three push tests failed because that stack had no
+  Web Push key pair (`setup-env.mjs` now writes one), and three tests timed
+  out on a busy machine; the four affected files passed 17 of 17 when run
+  alone. Skipped: five tests need the built panel (`npm run build:admin`
+  first) and one needs `REDIS_URL` in the test process.
+- The 332 lint warnings are mostly `no-explicit-any` and intentional
+  sequential `await`s; none is in a code path that changes authorization,
+  uploads, billing or socket handling.
+- Image scan (Trivy 0.58.1): the application image built from
+  `backend/Dockerfile.prod` and the Redis and Alpine images have no fixable
+  HIGH or CRITICAL finding. Open: Debian krb5, zstd and zlib fixes not yet in
+  the official `postgres:16.15-trixie` image, Go standard-library findings in
+  its `gosu` (partly accepted in `.trivyignore` until 2027-01-15), one
+  `golang.org/x/net` finding in Caddy 2.11.9, and npm's own bundled packages
+  in the Node build image (npm is not copied into the application image).
+- Browsers were Chrome, Playwright's WebKit and Firefox and their phone and
+  tablet emulations; no physical device was used. Load and Lighthouse figures
+  were not re-measured (`npm run loadtest` in `backend`, `lighthouserc.json`).
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `port is already allocated` | Another program holds a port. Change it in `.env` (table above) and run `docker compose up -d --wait` again. Avoid ports browsers refuse, such as 5060, 5061 and 6000: the panel calls the backend port directly. |
+| No verification mail | Nothing is sent in development. Use `docker compose logs backend` or `/api/dev/outbox?to=<address>` (step 2 above). |
+| The bubble does not appear | The snippet's `src` still names the public domain (change it to `http://localhost/widget.js`), or the page's origin is not the site's address. Check **Sites** and the browser console. |
+| Backend cannot reach the database | Inside Compose the backend uses `postgres:5432`; `DATABASE_URL` in `backend/.env` is ignored there. Host tools use `127.0.0.1:${POSTGRES_PORT}`. |
+| `PostgreSQL schema is not ready` | A migration has not run or was edited. In development the backend migrates on start: read the first lines of `docker compose logs backend`. |
+| `Demo organizasyonu ("Acme Yazılım (Demo)") zaten var.` | The demo workspace exists. `npm run demo:reset` replaces only it; other accounts stay. |
+| Restart without losing data | `docker compose stop` / `docker compose up -d`. Data lives in the `postgres_data` volume and uploads in `backend/uploads`. `docker compose down -v` deletes the volumes and every local account. |
+| A second copy on the same machine | Set `COMPOSE_PROJECT_NAME` and five different ports in that copy's `.env`. Projects share no containers, volumes or networks. |
+| A dependency change is not picked up | The `node_modules` volumes keep old packages: `docker compose down`, then `docker volume rm <project>_backend_node_modules <project>_admin_node_modules`, then start again. |
+
+## Maintenance, production tooling and license
+
+**Dependency updates.** Dependabot opens weekly npm, Docker and Compose PRs
+([.github/dependabot.yml](.github/dependabot.yml)). Before merging one, check
+out the branch and run `npm run install:all`, `npm run verify -- --build`,
+the backend and browser suites, and `npm run scan:images` for an image bump.
+
+**Database operations.** Production uses three roles: an administrator, a
+migration role that owns the schema, and a runtime role that only reads and
+writes rows; an optional backup role only reads.
+[docker/postgres/init-roles.sh](docker/postgres/init-roles.sh) prepares them
+and can be re-run on an existing or restored database. A database dump does
+not contain uploaded files: on a server they live in the `uploads_data`
+volume (or the S3 bucket) and are backed up separately.
+
+**Production tooling, not a supported install path.**
+`docker-compose.prod.yml`, `Caddyfile.prod` and the shell scripts in
+[scripts/](scripts/) (deploy, rollback, server bootstrap, firewall, backups,
+watchdog) were written for a single VPS behind Cloudflare, deploying images
+by digest from a registry, with the first deploy expecting a backup of the
+running database. They are kept for reference and were not rehearsed for
+this version; the backup and restore role handling in them matches the
+contract above.
+
+**License.** Not decided yet. The root and backend `package.json` files say
+`MIT`, but the repository has no `LICENSE` file or copyright notice; the
+owner has to choose and add one.
