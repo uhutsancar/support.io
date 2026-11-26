@@ -869,42 +869,17 @@ export default {
       free: {
         name: 'Free',
         tagline: 'For one-person teams and first trials.',
-        cta: 'Create an account',
-        features: [
-          '1 site',
-          '1 user',
-          'Unlimited conversations',
-          'Widget customisation',
-          'Help articles',
-          'Automation and proactive messages'
-        ]
+        cta: 'Create an account'
       },
       pro: {
         name: 'Pro',
         tagline: 'For support teams with more than one agent.',
-        cta: 'Try free for 14 days',
-        features: [
-          'Up to 10 sites',
-          'Unlimited users',
-          'Departments and auto-assignment',
-          'Analytics and reports',
-          'Live visitors and CRM',
-          'AI assistant',
-          'Data export'
-        ]
+        cta: 'Try free for 14 days'
       },
       enterprise: {
         name: 'Enterprise',
         tagline: 'For organisations with audit and compliance needs.',
-        cta: 'Get in touch',
-        features: [
-          'Everything in Pro',
-          'Unlimited sites',
-          'Audit logs',
-          'SSO',
-          'Custom retention period',
-          'Priority support'
-        ]
+        cta: 'Get in touch'
       }
     },
     matrix: {
@@ -921,8 +896,7 @@ export default {
       crm: 'CRM',
       aiAssist: 'AI assistant',
       export: 'Data export',
-      audit: 'Audit logs',
-      sso: 'SSO'
+      audit: 'Audit logs'
     },
     faq: {
       q1: {

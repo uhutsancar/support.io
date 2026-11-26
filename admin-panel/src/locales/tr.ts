@@ -871,42 +871,17 @@ export default {
       free: {
         name: 'Ücretsiz',
         tagline: 'Tek kişilik ekipler ve ilk denemeler için.',
-        cta: 'Hesap oluştur',
-        features: [
-          '1 site',
-          '1 kullanıcı',
-          'Sınırsız konuşma',
-          'Widget özelleştirme',
-          'SSS ve yardım içeriği',
-          'Otomasyon ve proaktif mesaj'
-        ]
+        cta: 'Hesap oluştur'
       },
       pro: {
         name: 'Pro',
         tagline: 'Birden fazla temsilcinin çalıştığı destek ekipleri için.',
-        cta: '14 gün ücretsiz dene',
-        features: [
-          '10 siteye kadar',
-          'Sınırsız kullanıcı',
-          'Departmanlar ve otomatik atama',
-          'Analitik ve raporlar',
-          'Canlı ziyaretçiler ve CRM',
-          'Yapay zekâ yardımcısı',
-          'Veri dışa aktarma'
-        ]
+        cta: '14 gün ücretsiz dene'
       },
       enterprise: {
         name: 'Kurumsal',
         tagline: 'Denetim ve uyumluluk gereksinimi olan kuruluşlar için.',
-        cta: 'İletişime geç',
-        features: [
-          'Pro’daki her şey',
-          'Sınırsız site',
-          'Denetim kayıtları',
-          'SSO',
-          'Özel veri saklama süresi',
-          'Öncelikli destek'
-        ]
+        cta: 'İletişime geç'
       }
     },
     matrix: {
@@ -923,8 +898,7 @@ export default {
       crm: 'CRM',
       aiAssist: 'Yapay zekâ yardımcısı',
       export: 'Veri dışa aktarma',
-      audit: 'Denetim kayıtları',
-      sso: 'SSO'
+      audit: 'Denetim kayıtları'
     },
     faq: {
       q1: {
