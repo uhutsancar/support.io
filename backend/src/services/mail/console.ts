@@ -2,8 +2,9 @@
 //
 // The outbox is what lets a developer — and the e2e suite — follow a
 // verification or reset link without a mail server. It is readable only
-// through GET /api/dev/outbox, which server.ts mounts outside production and
-// only while this transport is the one in use.
+// through GET /api/dev/outbox, which server.ts mounts only with
+// DEV_ROUTES=true, never in production, and only while this transport is the
+// one in use.
 
 import type { MailTransport, OutgoingMail } from './index';
 

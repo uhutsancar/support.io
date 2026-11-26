@@ -82,6 +82,7 @@ function backendEnv(role: keyof typeof roles, extra: Record<string, string> = {}
     JWT_SECRET: crypto.randomBytes(32).toString('hex'),
     UPLOAD_STORAGE: 'local',
     MAIL_PROVIDER: 'console',
+    DEV_ROUTES: 'true',
     GEMINI_API_KEY: '',
     AWS_ACCESS_KEY_ID: '',
     AWS_SECRET_ACCESS_KEY: '',
@@ -106,11 +107,11 @@ interface Server {
   output: () => string;
 }
 
-async function startServer(): Promise<Server> {
+async function startServer(extra: Record<string, string> = {}): Promise<Server> {
   const serverPort = 40000 + Math.floor(Math.random() * 20000);
   const child = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
     cwd: BACKEND,
-    env: backendEnv('runtime', { PORT: String(serverPort), MIGRATE_ON_BOOT: 'false' })
+    env: backendEnv('runtime', { PORT: String(serverPort), MIGRATE_ON_BOOT: 'false', ...extra })
   });
   let log = '';
   child.stdout?.on('data', (chunk) => (log += chunk));
@@ -284,8 +285,17 @@ test('existing database: preparation and migrations run again without touching d
   assert.equal(again.status, 0, again.stderr);
   assert.match(again.stdout, /up to date/);
 
-  const server = await startServer();
-  await stopServer(server);
+  // Started without DEV_ROUTES, as any server outside the development stack
+  // is: the helpers that hand out sign-in links must not exist.
+  const server = await startServer({ DEV_ROUTES: '' });
+  try {
+    for (const path of ['/api/dev/outbox?to=a@example.test', '/api/dev/metrics']) {
+      const res = await fetch(`${server.base}${path}`);
+      assert.equal(res.status, 404, `${path} without DEV_ROUTES`);
+    }
+  } finally {
+    await stopServer(server);
+  }
 
   assert.deepEqual(await snapshot(), before);
   const [kept] = await sql<{ content: string }>(

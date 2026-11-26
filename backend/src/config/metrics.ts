@@ -1,7 +1,7 @@
 // Process measurements for load tests: event-loop delay, CPU and
 // memory of this process, and how long chosen operations take.
 //
-// Read through GET /api/dev/metrics, which exists only outside production
+// Read through GET /api/dev/metrics, which exists only with DEV_ROUTES=true outside production
 // (server.ts); scripts/loadtest.ts resets it before a stage and reads it
 // after. The cost while nobody reads it is one histogram the runtime fills
 // and a bounded list of recent durations per operation.

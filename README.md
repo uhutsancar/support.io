@@ -88,7 +88,9 @@ seeded inbox, reports, CRM and team are there to browse.
    docker compose logs backend | Select-String verify-email   # PowerShell
    ```
    or open `http://localhost/api/dev/outbox?to=<your address>`. Opening the
-   link verifies the address and signs you in.
+   link verifies the address and signs you in. The `/api/dev` helpers exist
+   only because the development stack sets `DEV_ROUTES=true`; a server
+   without that flag, or in production, has none of them.
 3. Onboarding asks how you plan to use the product, then for **Your website
    URL**: enter `http://localhost:3001`. Press **Next** through the remaining
    steps and **Complete**.

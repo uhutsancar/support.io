@@ -32,8 +32,13 @@ export interface GoogleConfig {
   standIn: boolean;
 }
 
+// The stand-in chooser lives under /api/dev, so it needs DEV_ROUTES as well.
 function standIn(): boolean {
-  return process.env.NODE_ENV !== 'production' && process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory';
+  return (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.DEV_ROUTES === 'true' &&
+    process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory'
+  );
 }
 
 /** The OAuth client, or null when sign-in with Google is off. */

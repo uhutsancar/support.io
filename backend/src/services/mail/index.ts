@@ -5,7 +5,7 @@
 //   smtp     nodemailer over SMTP (SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS)
 //   console  development: the message is printed and kept in a small
 //            in-memory outbox the e2e suite and the developer can read
-//            (GET /api/dev/outbox, never mounted in production)
+//            (GET /api/dev/outbox, mounted only with DEV_ROUTES=true)
 //
 // Callers ask for a product message — a verification link, a reset link, an
 // invitation — and never build a raw mail; the wording lives in ./templates.

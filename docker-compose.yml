@@ -97,6 +97,9 @@ services:
       # Development mail is printed to the backend log and kept at
       # GET /api/dev/outbox; links in it point at this stack's Caddy port.
       - MAIL_PROVIDER=${MAIL_PROVIDER:-console}
+      # The /api/dev helpers (outbox, stand-ins, metrics) the tests and the
+      # README walkthrough use. Off on any server that does not set it.
+      - DEV_ROUTES=${DEV_ROUTES:-true}
       - APP_BASE_URL=${APP_BASE_URL:-http://localhost:${PROXY_PORT:-80}}
       # Redis: tanimliysa Socket.IO adapter'i devreye girer ve backend birden
       # fazla surec olarak calistirilabilir. Tanimsizken tek surec modunda calisir.

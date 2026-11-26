@@ -300,10 +300,16 @@ app.use('/api/api-keys', apiKeyRoutes);
 app.use('/api/v1', publicApiRoutes);
 app.use('/api/data-retention', dataRetentionRoutes);
 
+// Development and test helpers under /api/dev. They hand out verification
+// and reset links and change plans, so they are off unless DEV_ROUTES=true
+// is set explicitly (the development Compose stack does) and never mount in
+// production, whatever the flag says. A server that forgets NODE_ENV stays
+// closed.
+const devRoutes = !isProduction && process.env.DEV_ROUTES === 'true';
 // The development mail outbox: what the console transport "sent", so the
 // verification and reset links can be followed without a mail server. Never
 // mounted in production, nor when real SMTP is configured.
-if (!isProduction && mailProvider() === 'console') {
+if (devRoutes && mailProvider() === 'console') {
   app.get('/api/dev/outbox', (req: Request, res: Response) => {
     res.json({ mails: outboxFor(String(req.query.to || '')) });
   });
@@ -311,7 +317,7 @@ if (!isProduction && mailProvider() === 'console') {
 
 // The development integration outbox (INTEGRATION_TRANSPORT=memory): what
 // Slack, Telegram or a webhook of the signed-in workspace would have received.
-if (!isProduction && process.env.INTEGRATION_TRANSPORT === 'memory') {
+if (devRoutes && process.env.INTEGRATION_TRANSPORT === 'memory') {
   app.get('/api/dev/integration-outbox', auth, (req: Request, res: Response) => {
     res.json({ calls: integrationOutbox(String(req.user.organizationId)) });
   });
@@ -319,13 +325,13 @@ if (!isProduction && process.env.INTEGRATION_TRANSPORT === 'memory') {
 
 // The stand-in for Google's account chooser (GOOGLE_SIGN_IN_TRANSPORT=memory):
 // sign-in with Google without Google, for the browser tests. Never in production.
-if (!isProduction && process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory') {
+if (devRoutes && process.env.GOOGLE_SIGN_IN_TRANSPORT === 'memory') {
   app.use('/api/dev/google', standInGoogle);
 }
 
 // The stand-in for the web the knowledge sources read (KNOWLEDGE_TRANSPORT=
 // memory): a test says what an address answers. Never in production.
-if (!isProduction && process.env.KNOWLEDGE_TRANSPORT === 'memory') {
+if (devRoutes && process.env.KNOWLEDGE_TRANSPORT === 'memory') {
   app.post('/api/dev/knowledge-pages', auth, (req: Request, res: Response) => {
     const { url, body, status, contentType } = req.body || {};
     standInPage(String(url), {
@@ -339,7 +345,7 @@ if (!isProduction && process.env.KNOWLEDGE_TRANSPORT === 'memory') {
 
 // The development push outbox (PUSH_TRANSPORT=memory): what would have been
 // pushed to the signed-in workspace's devices. Never mounted in production.
-if (!isProduction && process.env.PUSH_TRANSPORT === 'memory') {
+if (devRoutes && process.env.PUSH_TRANSPORT === 'memory') {
   app.get('/api/dev/push-outbox', auth, (req: Request, res: Response) => {
     res.json({ pushes: pushOutbox(String(req.user.organizationId)) });
   });
@@ -348,7 +354,7 @@ if (!isProduction && process.env.PUSH_TRANSPORT === 'memory') {
 // Development only: ends the signed-in workspace's free trial at once, so the
 // browser tests can walk from the trial to Free to a paid plan without
 // waiting two weeks. Never mounted in production.
-if (!isProduction) {
+if (devRoutes) {
   app.post(
     '/api/dev/end-trial',
     auth,
@@ -364,7 +370,7 @@ if (!isProduction) {
 
 // Load-test measurements (config/metrics.ts, scripts/loadtest.ts). Outside
 // production only: they describe the process, not any tenant.
-if (!isProduction) {
+if (devRoutes) {
   app.get('/api/dev/metrics', (_req: Request, res: Response) => {
     res.set('Cache-Control', 'no-store').json(metricsSnapshot());
   });
