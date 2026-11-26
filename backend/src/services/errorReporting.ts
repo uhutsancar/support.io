@@ -14,7 +14,7 @@
 //
 //   SENTRY_DSN           https://<key>@<host>/<project>
 //   SENTRY_ENVIRONMENT   default NODE_ENV
-//   APP_RELEASE          the image's git sha, set by the release workflow
+//   APP_RELEASE          the image's git sha, set when the image is built
 //
 // At most EVENTS_PER_MINUTE events leave one process, and the same error
 // (type, message, top frame) once a minute: a failing loop cannot flood the

@@ -7,8 +7,8 @@
 # PG_ARCHIVE_MODE=on and its storage settings are given
 # (docker-compose.prod.yml).
 #
-# Built and pushed by the release workflow as
-# ghcr.io/<owner>/supportio-postgres:16.15-walg-3.0.9; the server only pulls.
+# Build it here and push it to a registry by hand; docker-compose.prod.yml
+# pulls it by digest (POSTGRES_IMAGE).
 ARG POSTGRES_IMAGE=postgres:16.15-trixie@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
 FROM ${POSTGRES_IMAGE}
 

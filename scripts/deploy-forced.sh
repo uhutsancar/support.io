@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Historical: the SSH entry point of the removed GitHub Actions deploy job;
+# kept for reference, not a supported path (see the README).
+#
 # The only thing the CI deploy key may run.
 #
 # In ~deploy/.ssh/authorized_keys on the server, the key GitHub Actions uses

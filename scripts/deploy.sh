@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Historical: written for the removed GitHub Actions release pipeline (signed
+# images in GHCR); kept for reference, not a supported path (see the README).
+#
 # Deploys one image to the production stack.
 #
 #   ./scripts/deploy.sh ghcr.io/<owner>/supportio@sha256:<64 hex>

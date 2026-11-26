@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Size budgets, checked in CI after both builds.
+// Size budgets, checked by `npm run verify -- --build` after both builds.
 //
 //   widget.js                     gzip ≤ 35 KB   — it loads on every page of
 //                                                  every customer's site

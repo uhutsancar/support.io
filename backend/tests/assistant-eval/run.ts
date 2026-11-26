@@ -6,9 +6,10 @@
 //         answers from the expected entry; for injection cases it misbehaves
 //         on purpose (./cases.ts `compromise`). What is measured is our code:
 //         decisions made before the model, what reaches it, what reaches the
-//         visitor. Runs in CI with every change.
+//         visitor. Runs with the backend test suite.
 //   live  the real API with the owner's key (scripts/assistant-eval.ts),
-//         measuring the model too. Never in CI; the key stays on that machine.
+//         measuring the model too. Never in the test suite; the key stays on that
+//         machine.
 
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';

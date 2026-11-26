@@ -1,16 +1,16 @@
 # Production stack: Cloudflare -> Caddy :443 -> backend:3000,
 # PostgreSQL and Redis reachable only on the Docker network.
 #
-# The backend runs a prebuilt image named by APP_IMAGE
-# (ghcr.io/<owner>/supportio:sha-xxxxxxx, built by .github/workflows/release.yml).
-# Nothing is built on the server; scripts/deploy.sh switches APP_IMAGE,
-# runs the migrations once and restarts. For a local production simulation
-# add docker-compose.prod.build.yml, which builds the image here.
+# Reference only: not a supported install path (see the README). It was
+# written for one VPS running a prebuilt image named by APP_IMAGE, pushed to a
+# registry by a release pipeline that no longer exists; scripts/deploy.sh
+# switches APP_IMAGE, runs the migrations once and restarts. To build the
+# image on this machine add docker-compose.prod.build.yml.
 #
 # Never add `ports:` to postgres or redis: published ports bypass UFW.
 #
-# Every third-party image is pinned by digest; Dependabot
-# proposes new digests weekly and the release workflow scans them (Trivy).
+# Every third-party image is pinned by digest; Dependabot proposes new
+# digests weekly and `npm run scan:images` scans them (Trivy).
 # Each service drops the Linux capabilities it does not need and cannot gain
 # new privileges. The memory and CPU ceilings are starting values for
 # a 2 vCPU / 4 GB server; adjust them from the staging measurements.
@@ -27,8 +27,8 @@ x-hardening: &hardening
 
 services:
   postgres:
-    # PostgreSQL 16 with WAL-G (docker/postgres), built and signed by the
-    # release workflow; its summary prints the reference to put here.
+    # PostgreSQL 16 with WAL-G, built from docker/postgres and pushed to a
+    # registry by hand; put its pinned reference here.
     image: ${POSTGRES_IMAGE:?POSTGRES_IMAGE is required, e.g. ghcr.io/<owner>/supportio-postgres:16.15-walg-3.0.9@sha256:...}
     restart: unless-stopped
     <<: *hardening

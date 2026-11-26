@@ -3,7 +3,9 @@
 # npm: weekly, patch and minor releases grouped into one PR per package so
 # the queue stays short; majors arrive one by one and are read before merge.
 # docker: the digests pinned in the Dockerfiles and Compose files.
-# github-actions: the commit SHAs the workflows are pinned to.
+# There is no CI: before merging one of these PRs, check it out and run the
+# local checks the README lists (npm run verify -- --build, the backend and
+# browser suites, and npm run scan:images for an image bump).
 version: 2
 updates:
   - package-ecosystem: npm
@@ -57,12 +59,4 @@ updates:
       day: tuesday
     groups:
       service-images:
-        patterns: ['*']
-
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: monthly
-    groups:
-      actions:
         patterns: ['*']
