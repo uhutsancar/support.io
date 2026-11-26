@@ -32,7 +32,8 @@ C="docker compose --env-file $ENV_FILE -f $COMPOSE_FILE_NAME"
 # A variable missing from the file is empty, not an error (see backup-postgres.sh).
 env_value() { { grep -E "^$1=" "$ENV_FILE" 2>/dev/null || true; } | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 DB_NAME="$(env_value DB_NAME)"; DB_NAME="${DB_NAME:-supportchat}"
-DB_USER="$(env_value DB_USER)"; DB_USER="${DB_USER:-support_user}"
+# Creating and dropping databases needs the administrator (POSTGRES_USER).
+DB_USER="$(env_value DB_ADMIN_USER)"; DB_USER="${DB_USER:-support_admin}"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -56,7 +57,12 @@ if [[ "$MODE" == "--into-production" ]]; then
   [[ "$answer" == "$DB_NAME" ]] || { echo "aborted"; exit 1; }
   $C stop backend
   psql -d postgres -c "DROP DATABASE IF EXISTS \"$DB_NAME\" WITH (FORCE)" -c "CREATE DATABASE \"$DB_NAME\" OWNER \"$DB_USER\""
-  $C exec -T postgres pg_restore -U "$DB_USER" -d "$DB_NAME" --no-owner < "$DUMP"
+  # Owners are kept (the roles live in this cluster): with --no-owner every
+  # table would belong to the administrator and the next migration, which
+  # runs as the migration role, could not alter them.
+  $C exec -T postgres pg_restore -U "$DB_USER" -d "$DB_NAME" --exit-on-error < "$DUMP"
+  # Database-level grants (CONNECT) are not part of a single-database dump.
+  $C exec -T postgres /docker-entrypoint-initdb.d/010-supportio-roles.sh "$DB_NAME"
   $C start backend
   echo "restored into $DB_NAME; check /ready and log in before announcing it"
   exit 0
@@ -67,7 +73,7 @@ psql -d postgres -c "CREATE DATABASE \"$TARGET\" OWNER \"$DB_USER\""
 cleanup_db() { psql -d postgres -c "DROP DATABASE IF EXISTS \"$TARGET\" WITH (FORCE)" > /dev/null || true; rm -rf "$WORK"; }
 trap cleanup_db EXIT
 
-$C exec -T postgres pg_restore -U "$DB_USER" -d "$TARGET" --no-owner < "$DUMP"
+$C exec -T postgres pg_restore -U "$DB_USER" -d "$TARGET" --exit-on-error < "$DUMP"
 
 echo "restored into $TARGET; checking"
 restored="$(psql -d "$TARGET" -At -c "SELECT max(version) FROM schema_migrations")"

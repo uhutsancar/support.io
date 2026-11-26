@@ -6,8 +6,9 @@
 // Kabuktan bagimsiz olmasi icin bir betik: PowerShell'de `VAR=x npm test`
 // soz dizimi calismaz, bu yuzden degiskenleri burada kuruyoruz.
 //
-// Yigin postgres'i 5433'te yayinlar (docker-compose.yml'deki POSTGRES_PORT).
-// Varsayilanlar yalnizca ortamda tanimli degilse uygulanir.
+// Portlar ve veritabani bilgileri docker-compose.yml ile ayni kaynaktan, kok
+// .env'den okunur (POSTGRES_PORT, BACKEND_PORT, DB_*). Varsayilanlar yalnizca
+// ortamda tanimli degilse uygulanir.
 
 import fs from 'fs';
 import path from 'path';
@@ -31,7 +32,9 @@ function rootEnv(name: string): string | undefined {
 // The Paddle defaults are the ones docker-compose.yml gives the backend when
 // the root .env sets none.
 const defaults = {
-  DATABASE_URL: 'postgresql://support_user:supportchat@localhost:5433/supportchat',
+  DATABASE_URL: `postgresql://${rootEnv('DB_USER') || 'support_user'}:${
+    rootEnv('DB_PASSWORD') || 'supportchat'
+  }@localhost:${rootEnv('POSTGRES_PORT') || '5432'}/${rootEnv('DB_NAME') || 'supportchat'}`,
   E2E_BASE_URL: `http://localhost:${rootEnv('BACKEND_PORT') || '5000'}`,
   PADDLE_WEBHOOK_SECRET: rootEnv('PADDLE_WEBHOOK_SECRET') || 'local-dev-paddle-webhook-secret',
   PADDLE_PRICE_PRO: rootEnv('PADDLE_PRICE_PRO') || 'pri_local_pro',

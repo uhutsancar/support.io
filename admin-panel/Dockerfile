@@ -6,7 +6,7 @@ RUN apk add --no-cache bash
 WORKDIR /usr/src/admin-panel
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy source (dev will mount the folder)
 COPY . .

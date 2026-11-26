@@ -14,6 +14,16 @@
 // 7 on Chromium, iPad on WebKit) and on desktop Firefox and Safari.
 
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+// The stack's address: E2E_APP_URL, else Caddy on the PROXY_PORT the root .env
+// gives docker compose. Exported to the specs, which build absolute URLs too.
+const rootEnv = join(__dirname, '..', '.env');
+const proxyPort = existsSync(rootEnv)
+  ? /^PROXY_PORT=(\d+)/m.exec(readFileSync(rootEnv, 'utf8'))?.[1]
+  : undefined;
+process.env.E2E_APP_URL ||= `http://localhost${proxyPort && proxyPort !== '80' ? `:${proxyPort}` : ''}`;
 
 const chromeChannel = process.env.CI ? undefined : 'chrome';
 const WIDGET_SPECS = /(mobile-widget|widget-lazy)\.spec\.ts/;
@@ -27,7 +37,7 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: process.env.E2E_APP_URL || 'http://localhost',
+    baseURL: process.env.E2E_APP_URL,
     locale: 'tr-TR',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure'

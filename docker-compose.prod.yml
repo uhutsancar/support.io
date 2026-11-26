@@ -67,6 +67,9 @@ services:
       DB_MIGRATION_PASSWORD: ${DB_MIGRATION_PASSWORD:?DB_MIGRATION_PASSWORD is required}
       DB_RUNTIME_USER: ${DB_RUNTIME_USER:-support_runtime}
       DB_RUNTIME_PASSWORD: ${DB_RUNTIME_PASSWORD:?DB_RUNTIME_PASSWORD is required}
+      # Optional read-only role for pg_dump (scripts/backup-postgres.sh).
+      DB_BACKUP_USER: ${DB_BACKUP_USER:-}
+      DB_BACKUP_PASSWORD: ${DB_BACKUP_PASSWORD:-}
       # WAL-G: continuous archive to its own bucket, encrypted. Used
       # only with PG_ARCHIVE_MODE=on.
       WALG_S3_PREFIX: ${WALG_S3_PREFIX:-}

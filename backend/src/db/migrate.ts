@@ -68,6 +68,7 @@ export function loadMigrations(dir: string = MIGRATIONS_DIR): Migration[] {
   });
 }
 
+/** Creates the ledger (migrator only) and keeps it writable by its owner alone. */
 async function ensureLedger(client: PoolClient): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -76,7 +77,31 @@ async function ensureLedger(client: PoolClient): Promise<void> {
       checksum    text NOT NULL,
       applied_at  timestamptz NOT NULL DEFAULT now()
     )`);
+  // ALTER DEFAULT PRIVILEGES hands every new table's write rights to the
+  // runtime role, this one included. The application only ever reads the
+  // ledger, so every other role keeps SELECT and loses the rest. Runs on each
+  // migration, which also repairs databases created before this rule.
+  await client.query(`
+    DO $$
+    DECLARE grantee text;
+    BEGIN
+      IF pg_has_role(current_user, (SELECT relowner FROM pg_class
+                                    WHERE oid = 'schema_migrations'::regclass), 'USAGE') THEN
+        FOR grantee IN
+          SELECT DISTINCT a.grantee::regrole::text
+          FROM pg_class c, aclexplode(c.relacl) a
+          WHERE c.oid = 'schema_migrations'::regclass
+            AND a.grantee <> 0 AND a.grantee <> c.relowner
+            AND a.privilege_type IN ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
+        LOOP
+          EXECUTE format('REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON schema_migrations FROM %s', grantee);
+        END LOOP;
+      END IF;
+    END $$`);
 }
+
+/** Thrown when this database is not ready for the code that is starting. */
+export class SchemaNotReadyError extends Error {}
 
 async function appliedLedger(client: PoolClient): Promise<Map<string, string>> {
   const { rows } = await client.query<{ version: string; checksum: string }>(
@@ -95,7 +120,9 @@ function checkUnchanged(migrations: Migration[], applied: Map<string, string>): 
   for (const migration of migrations) {
     const recorded = applied.get(migration.version);
     if (!recorded || recorded === migration.checksum) continue;
-    const message = `Migration ${migration.file} was edited after it was applied`;
+    const message =
+      `Migration ${migration.file} was edited after it was applied. ` +
+      'Restore the released text of that file and put the change in a new migration.';
     if (isProduction) throw new Error(message);
     console.warn(`[migrate] ${message}; the database keeps the earlier version.`);
   }
@@ -157,11 +184,25 @@ export async function runMigrations({
   });
 }
 
-/** The migrations this database still needs, without applying anything. */
+/**
+ * The migrations this database still needs, without applying or creating
+ * anything: the runtime role has no right to create tables, so it only reads
+ * the ledger. The advisory lock makes a boot that races a running migrator
+ * wait for it rather than report its half-finished state.
+ */
 export async function pendingMigrations(): Promise<string[]> {
   const migrations = loadMigrations();
   return withLock(async (client) => {
-    await ensureLedger(client);
+    const { rows } = await client.query<{ ledger: string | null }>(
+      "SELECT to_regclass('public.schema_migrations')::text AS ledger"
+    );
+    if (!rows[0]?.ledger) {
+      throw new SchemaNotReadyError(
+        'This database has no schema_migrations table, so it was never migrated. ' +
+          'Run the migrator as the migration role (`npm run db:migrate`, or ' +
+          '`node dist/db/migrate.js` in the image) and start the server again.'
+      );
+    }
     const applied = await appliedLedger(client);
     checkUnchanged(migrations, applied);
     return migrations.filter((m) => !applied.has(m.version)).map((m) => m.file);

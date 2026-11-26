@@ -4,7 +4,10 @@
   "description": "SaaS Customer Support Chat System",
   "private": true,
   "scripts": {
-    "install:all": "cd backend && npm install && cd ../admin-panel && npm install",
+    "setup": "node scripts/setup-env.mjs",
+    "install:all": "npm ci --prefix backend && npm ci --prefix admin-panel && npm ci --prefix e2e",
+    "demo:seed": "docker compose exec backend npm run db:seed",
+    "demo:reset": "docker compose exec backend npm run db:seed -- --reset",
     "dev:backend": "cd backend && npm run dev",
     "dev:admin": "cd admin-panel && npm run dev",
     "start:backend": "cd backend && npm start",
@@ -23,5 +26,8 @@
     "customer-service"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0 <25"
+  }
 }

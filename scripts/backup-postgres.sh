@@ -36,7 +36,10 @@ ENV_FILE=.env.production
 env_value() { { grep -E "^$1=" "$ENV_FILE" 2>/dev/null || true; } | tail -n1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//'; }
 
 DB_NAME="$(env_value DB_NAME)"; DB_NAME="${DB_NAME:-supportchat}"
-DB_USER="$(env_value DB_USER)"; DB_USER="${DB_USER:-support_user}"
+# pg_dump runs as the read-only backup role when one is configured, else
+# as the administrator; never as the runtime role, which cannot read every table.
+DB_ADMIN_USER="$(env_value DB_ADMIN_USER)"; DB_ADMIN_USER="${DB_ADMIN_USER:-support_admin}"
+DB_USER="$(env_value DB_BACKUP_USER)"; DB_USER="${DB_USER:-$DB_ADMIN_USER}"
 REMOTE="$(env_value BACKUP_REMOTE)"
 AGE_RECIPIENT="$(env_value BACKUP_AGE_RECIPIENT)"
 GPG_RECIPIENT="$(env_value BACKUP_GPG_RECIPIENT)"

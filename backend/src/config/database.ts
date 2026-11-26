@@ -7,7 +7,12 @@
 // server that finds one still pending refuses to start rather than run against
 // a schema it was not written for.
 import { pool, query } from '../db/pool';
-import { migrateOnBoot, pendingMigrations, runMigrations } from '../db/migrate';
+import {
+  migrateOnBoot,
+  pendingMigrations,
+  runMigrations,
+  SchemaNotReadyError
+} from '../db/migrate';
 import { startRetentionSweeps } from '../db/retention';
 
 /** The SQLSTATE and message behind whatever the driver threw. */
@@ -33,8 +38,9 @@ const connectDB = async () => {
       const pending = await pendingMigrations();
       if (pending.length) {
         console.error(
-          `Pending migrations: ${pending.join(', ')}. ` +
-            'Run `node dist/db/migrate.js` (scripts/deploy.sh does) before starting this release.'
+          `Pending migrations: ${pending.join(', ')}. The migrator stopped before them or ` +
+            'has not run for this release. Run `node dist/db/migrate.js` as the migration ' +
+            'role; a migration that fails there names the file and the database error.'
         );
         process.exit(1);
       }
@@ -48,6 +54,13 @@ const connectDB = async () => {
     // Narrowed rather than read off `unknown`: a driver that throws a string
     // would otherwise log "undefined" and hide the actual cause.
     const { code, message } = describeDriverError(error);
+    if (
+      error instanceof SchemaNotReadyError ||
+      /^Migration \S+ (was edited|failed)/.test(message)
+    ) {
+      console.error('PostgreSQL schema is not ready:', message);
+      process.exit(1);
+    }
     console.error('PostgreSQL connection failed:', message);
 
     if (code === 'ECONNREFUSED') {
@@ -56,6 +69,11 @@ const connectDB = async () => {
       console.error('Authentication failed. Check DB_USER and DB_PASSWORD.');
     } else if (code === '3D000') {
       console.error('The database named in DB_NAME does not exist.');
+    } else if (code === '42501') {
+      console.error(
+        'Permission denied: this role cannot do what the step above needs. The runtime ' +
+          'role only reads and writes application data; migrations need the migration role.'
+      );
     } else if (code === 'ENOTFOUND') {
       console.error('The database host could not be resolved.');
     }

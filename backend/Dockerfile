@@ -7,7 +7,7 @@ RUN apk add --no-cache bash netcat-openbsd
 WORKDIR /usr/src/backend
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copying full source is useful for image builds; in dev we'll mount the source as a volume.
 COPY . .

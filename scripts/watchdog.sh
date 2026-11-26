@@ -37,7 +37,8 @@ env_value() { { grep -E "^$1=" "$ENV_FILE" 2>/dev/null || true; } | tail -n1 | c
 
 WEBHOOK="$(env_value ALERT_WEBHOOK_URL)"
 DOMAIN="$(env_value APP_DOMAIN)"
-DB_USER="$(env_value DB_USER)"; DB_USER="${DB_USER:-support_user}"
+# Creating and dropping databases needs the administrator (POSTGRES_USER).
+DB_USER="$(env_value DB_ADMIN_USER)"; DB_USER="${DB_USER:-support_admin}"
 DB_NAME="$(env_value DB_NAME)"; DB_NAME="${DB_NAME:-supportchat}"
 DISK_PCT="${DISK_ALERT_PCT:-80}"
 MEM_PCT="${MEM_ALERT_PCT:-90}"
