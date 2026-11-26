@@ -55,7 +55,10 @@ export const isActiveConversationStatus = (status: unknown): boolean =>
   typeof status === 'string' &&
   (ACTIVE_CONVERSATION_STATUSES as readonly string[]).includes(status);
 
-export const CONVERSATION_CHANNELS = ['web-chat', 'email', 'whatsapp', 'phone'] as const;
+// The only channel conversations arrive through. The database constraint
+// still accepts 'email', 'whatsapp' and 'phone' (migration 0000); no code
+// creates them, so they are not offered here.
+export const CONVERSATION_CHANNELS = ['web-chat'] as const;
 export type ConversationChannel = (typeof CONVERSATION_CHANNELS)[number];
 
 // ------------------------------------------------------------------- priority

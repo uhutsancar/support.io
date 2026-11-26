@@ -179,10 +179,7 @@ async function channelDistribution(organizationId: OrgId, siteId: SiteId, days: 
   );
 
   const labels: Record<string, { name: string; color: string }> = {
-    'web-chat': { name: 'Web Chat', color: '#8B5CF6' },
-    email: { name: 'E-posta', color: '#3B82F6' },
-    whatsapp: { name: 'WhatsApp', color: '#10B981' },
-    phone: { name: 'Telefon', color: '#F59E0B' }
+    'web-chat': { name: 'Web Chat', color: '#8B5CF6' }
   };
 
   return rows.map((r) => ({
