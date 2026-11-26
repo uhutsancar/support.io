@@ -2030,12 +2030,12 @@ export default {
     consent: {
       title: 'Yapay zekâ asistanını açın',
       point1:
-        'Sitenizin herkese açık SSS içeriği ve ziyaretçilerin soruları, yanıt üretilmesi için yapay zekâ hizmet sağlayıcımıza iletilir; bu işlem yurt dışında gerçekleşebilir.',
+        'Sitenizin herkese açık SSS içeriği, bilgi kaynağı olarak eklediğiniz sayfa ve PDF’lerden pasajlar ve ziyaretçilerin soruları, yanıt üretilmesi için yapay zekâ hizmet sağlayıcımıza iletilir; bu işlem yurt dışında gerçekleşebilir.',
       point2:
         'Sorulardaki e-posta adresleri ve telefon numaraları gönderilmeden önce maskelenir; kart, IBAN veya kimlik numarası içeren sorular hiç gönderilmez.',
       point3:
         'Ziyaretçilerinize yapay zekâ ile yazıştıkları açıkça gösterilir. Sitenizin gizlilik metninde bunu belirtmenizi öneririz.',
-      box: 'SSS içeriğimin ve ziyaretçi sorularının, kişisel veriler maskelenerek yapay zekâ hizmet sağlayıcısına iletileceğini anladım ve onaylıyorum.',
+      box: 'SSS içeriğimin, bilgi kaynağı pasajlarımın ve ziyaretçi sorularının, kişisel veriler maskelenerek yapay zekâ hizmet sağlayıcısına iletileceğini anladım ve onaylıyorum.',
       confirm: 'Onayla ve aç'
     },
     settings: {

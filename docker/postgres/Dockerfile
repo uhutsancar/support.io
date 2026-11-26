@@ -9,7 +9,7 @@
 #
 # Built and pushed by the release workflow as
 # ghcr.io/<owner>/supportio-postgres:16.15-walg-3.0.9; the server only pulls.
-ARG POSTGRES_IMAGE=postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65
+ARG POSTGRES_IMAGE=postgres:16.15-trixie@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
 FROM ${POSTGRES_IMAGE}
 
 COPY init-roles.sh /docker-entrypoint-initdb.d/010-supportio-roles.sh

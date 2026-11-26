@@ -60,6 +60,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(port, '127.0.0.1', () => {
+// FAKE_GEMINI_HOST=0.0.0.0 lets the Docker stack reach it (e2e/run-stack.mjs).
+server.listen(port, process.env.FAKE_GEMINI_HOST || '127.0.0.1', () => {
   process.stdout.write(`fake Gemini on http://127.0.0.1:${port}/v1beta\n`);
 });

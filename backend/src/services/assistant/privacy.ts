@@ -1,8 +1,10 @@
 // What never reaches Gemini.
 //
-// The assistant sends the model the site's public FAQ entries and the
-// visitor's latest message — nothing else: no name, no e-mail, no earlier
-// messages, no page history. Even that one message is cleaned first:
+// The assistant sends the model the site's public FAQ entries, on plans with
+// knowledge sources the best-matching passages of the site's pages and
+// uploaded PDFs (./knowledge.ts), and the visitor's latest message — nothing
+// else: no name, no e-mail, no earlier messages, no page history. Even that
+// one message is cleaned first:
 //
 //   - a card number, an IBAN or a Turkish ID number stops the assistant
 //     altogether: the visitor is told not to share them in chat and is

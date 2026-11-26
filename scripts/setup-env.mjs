@@ -4,12 +4,23 @@
 // JWT_SECRET. A file that already exists is never rewritten; the script only
 // says what it found. Same command in PowerShell, cmd and Bash.
 
-import { randomBytes } from 'node:crypto';
+import { createECDH, randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+// A Web Push (VAPID) pair in the format web-push generates: the P-256 public
+// point and private scalar, base64url. Development keeps pushes in memory
+// (PUSH_TRANSPORT=memory), so the pair never signs a real delivery.
+const ecdh = createECDH('prime256v1');
+ecdh.generateKeys();
+const vapidPublic = ecdh.getPublicKey().toString('base64url');
+const scalar = ecdh.getPrivateKey();
+const vapidPrivate = Buffer.concat([Buffer.alloc(32 - scalar.length), scalar]).toString(
+  'base64url'
+);
 
 const files = [
   {
@@ -24,6 +35,10 @@ const files = [
       'BACKEND_PORT=5000',
       'POSTGRES_PORT=5432',
       'REDIS_PORT=6381',
+      '',
+      '# Local Web Push pair (development only).',
+      `VAPID_PUBLIC_KEY=${vapidPublic}`,
+      `VAPID_PRIVATE_KEY=${vapidPrivate}`,
       ''
     ]
   },

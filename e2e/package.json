@@ -4,7 +4,8 @@
   "description": "Browser end-to-end tests (Playwright) against a running stack",
   "scripts": {
     "test": "playwright test",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "test:stack": "node run-stack.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

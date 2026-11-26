@@ -20,7 +20,7 @@ import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { Client } from 'pg';
 
 const IMAGE =
-  'postgres:16.15-trixie@sha256:65b16a8b326e0cfbdf33fa7e783f2a0cb352a61448616ccccfd616ef42aa0f65';
+  'postgres:16.15-trixie@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657';
 const BACKEND = path.join(__dirname, '..');
 const INIT_SCRIPT = path.join(BACKEND, '..', 'docker', 'postgres', 'init-roles.sh');
 const INIT_IN_CONTAINER = '/docker-entrypoint-initdb.d/010-supportio-roles.sh';

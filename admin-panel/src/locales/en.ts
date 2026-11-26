@@ -2025,12 +2025,12 @@ export default {
     consent: {
       title: 'Switch on the AI assistant',
       point1:
-        'Your site’s public FAQ content and your visitors’ questions are sent to our AI service provider to produce answers; this may happen outside Türkiye.',
+        'Your site’s public FAQ content, the passages of the pages and PDFs you add as knowledge sources, and your visitors’ questions are sent to our AI service provider to produce answers; this may happen outside Türkiye.',
       point2:
         'E-mail addresses and phone numbers in questions are masked before they are sent; questions containing a card, IBAN or ID number are not sent at all.',
       point3:
         'Your visitors are clearly shown that they are writing with an AI. We recommend saying so in your site’s privacy notice.',
-      box: 'I understand and agree that my FAQ content and visitor questions, with personal data masked, are sent to the AI service provider.',
+      box: 'I understand and agree that my FAQ content, my knowledge-source passages and visitor questions, with personal data masked, are sent to the AI service provider.',
       confirm: 'Agree and switch on'
     },
     settings: {
