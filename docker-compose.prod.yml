@@ -95,7 +95,7 @@ services:
     logging: *logging
 
   redis:
-    image: redis:7.4.11-alpine@sha256:d9436322172a5b482c187bf1f363d3c4fea086fcca6b9c8a94de8f0f39ed3193
+    image: redis:8.0.0-alpine@sha256:0779069b3c24a47a2f681855c1c01d046793e7c5f7d2b079c2aa0652c42eaf0e
     restart: unless-stopped
     <<: *hardening
     cap_drop: [ALL]
