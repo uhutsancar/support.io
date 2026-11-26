@@ -189,31 +189,41 @@ development, the bubble a dependency-free script served by the backend.
 ## Verification
 
 All checks run locally; no hosted CI is part of this setup. Results below are
-from 2026-11-26 on Windows 11 with Docker Desktop (Engine 29.9.3, Compose
-5.7.1), Node 24.22.1 on the host and Node 22.23.5 in the images.
+from 2026-11-26, from a fresh clone of the `portfolio-hardening` branch on
+Windows 11 with Docker Desktop (Engine 29.9.3, Compose 5.7.1), Node 24.22.1
+on the host and Node 22.23.5 in the images.
 
 | Check | Command (repository root unless noted) | Result |
 |---|---|---|
 | Typecheck, lint, format, schema, locales, hard-coded text, production `npm audit`, removed-AI and secret scans | `npm run install:all` once, then `npm run verify` | 13 of 13 pass. Lint: 0 errors; 100 warnings in `backend`, 232 in `admin-panel` |
-| Builds, size budgets, public IPs and server secrets in built assets | `npm run verify -- --build` | Pass. `widget.js` 25.6 KB gzip (budget 35 KB); panel first load 148.2 KB gzip (budget 250 KB) |
-| Backend integration suite (against the running stack) | `cd backend` then `npm run test:compose` | 320 tests: 307 pass, 7 skipped, 6 failed in the full run and passed when re-run alone (see below) |
+| The above plus builds, size budgets, public IPs and server secrets in built assets | `npm run verify -- --build` | 18 of 18 pass. `widget.js` 25.6 KB gzip (budget 35 KB); panel first load 148.2 KB gzip (budget 250 KB) |
+| Backend integration suite, against the running stack | `cd backend` then `npm run test:compose` | 320 tests: 318 pass, 2 skipped, 0 fail |
 | Database roles, migrations, backup and restore | `cd backend` then `npm run test:db-roles` | 3 of 3 pass |
-| First conversation in two browser contexts | `cd e2e` then `npm run test:stack -- first-chat --project=desktop-chrome` | Pass |
+| Browser suite | `cd e2e` then `npm run test:stack` | 41 tests: 39 pass, 1 skipped, 1 flaky (see below) |
+| First conversation only | `cd e2e` then `npm run test:stack -- first-chat --project=desktop-chrome` | Pass |
 | Image scan | `npm run scan:images` | See the limits below |
 
 `npm run install:all` runs `npm ci` in `backend`, `admin-panel` and `e2e`.
-The backend suite and the browser suite create tenants; point them at a stack
-whose data you do not mind. `test:stack` starts the stand-in AI model for the
-run and restores the backend's settings afterwards. `test:db-roles` starts a
-throw-away PostgreSQL container and removes it.
+The backend and browser suites create tenants; point them at a stack whose
+data you do not mind, and run them one at a time on an otherwise idle
+machine. `test:stack` starts the stand-in AI model for the run and restores
+the backend's settings afterwards. `test:db-roles` starts a throw-away
+PostgreSQL container and removes it.
 
 Limits, stated plainly:
 
-- In the full backend run, three push tests failed because that stack had no
-  Web Push key pair (`setup-env.mjs` now writes one), and three tests timed
-  out on a busy machine; the four affected files passed 17 of 17 when run
-  alone. Skipped: five tests need the built panel (`npm run build:admin`
-  first) and one needs `REDIS_URL` in the test process.
+- Backend skips: the assistant kill-switch test needs `REDIS_URL` in the
+  test process, and the home-page head test needs the API to serve a built
+  panel (the development stack serves Vite). Five more tests need
+  `admin-panel/dist` and are skipped until `npm run build:admin` has run.
+  A first run started right after the browser suite failed 32 tests because
+  PostgreSQL restarted mid-run under heavy disk load; the same suite on the
+  idle stack passed as above.
+- Browser: the projects were Chrome (34 desktop tests), WebKit as
+  iPhone 14, iPad and desktop Safari, Chrome as Pixel 7, and Firefox. No
+  physical device was used. The WordPress spec is skipped without `WP_URL`.
+  `knowledge.spec.ts` failed once when its accessibility scan caught a
+  notification mid-animation, and passed when run again.
 - The 332 lint warnings are mostly `no-explicit-any` and intentional
   sequential `await`s; none is in a code path that changes authorization,
   uploads, billing or socket handling.
@@ -224,9 +234,8 @@ Limits, stated plainly:
   its `gosu` (partly accepted in `.trivyignore` until 2027-01-15), one
   `golang.org/x/net` finding in Caddy 2.11.9, and npm's own bundled packages
   in the Node build image (npm is not copied into the application image).
-- Browsers were Chrome, Playwright's WebKit and Firefox and their phone and
-  tablet emulations; no physical device was used. Load and Lighthouse figures
-  were not re-measured (`npm run loadtest` in `backend`, `lighthouserc.json`).
+- Load and Lighthouse figures were not re-measured (`npm run loadtest` in
+  `backend`, `lighthouserc.json`).
 
 ## Troubleshooting
 
