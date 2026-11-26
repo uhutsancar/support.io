@@ -145,6 +145,22 @@ const Conversations = () => {
   const userId = user?._id;
   const selfId = String(user?._id || user?.id || '');
 
+  // /api/team lists the members in `teams`; the owner signs in from `users`
+  // and is not among them. Without these two additions the owner cannot pick
+  // themselves, and a conversation assigned to the owner shows "Unassigned".
+  const assigneeOptions = (conversation: Conversation): TeamMember[] => {
+    const options = [...teamMembers];
+    const known = new Set(options.map((member) => String(member._id)));
+    const add = (id: string, name: unknown) => {
+      if (!id || known.has(id) || typeof name !== 'string' || !name) return;
+      known.add(id);
+      options.push({ _id: id, name } as TeamMember);
+    };
+    add(selfId, user?.name);
+    add(String(conversation.assignedAgent?._id || ''), conversation.assignedAgent?.name);
+    return options;
+  };
+
   // The thread as last rendered, for the reconnect catch-up below.
   const messagesRef = useRef<Message[]>(messages);
   useEffect(() => {
@@ -1353,7 +1369,7 @@ const Conversations = () => {
                           className="min-h-[44px] sm:min-h-0 px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           <option value="">{t('conversations.unassigned', 'Atanmamış')}</option>
-                          {teamMembers
+                          {assigneeOptions(selectedConversation)
                             .filter(
                               (member) =>
                                 canAssignAnyone ||
